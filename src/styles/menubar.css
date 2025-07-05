@@ -1,0 +1,208 @@
+/* TRAXIA MenuBar Styles */
+/* Import the CSS variables file before using this */
+/* @import 'path/to/css-variables.css'; */
+
+.traxia-navbar {
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-index-sticky);
+  font-family: var(--font-primary);
+}
+
+.traxia-navbar .container-fluid {
+  max-height: var(--navbar-height);
+}
+
+/* Hamburger Menu */
+.hamburger-menu {
+  background: none !important;
+  color: var(--color-text-secondary) !important;
+  text-decoration: none !important;
+  padding: var(--spacing-sm) !important;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-normal);
+  font-size: var(--font-size-base);
+}
+
+.hamburger-menu:hover {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-primary) !important;
+}
+
+.hamburger-menu:focus {
+  box-shadow: none !important;
+}
+
+/* TRAXIA Logo */
+.traxia-logo {
+  font-weight: var(--font-weight-bold) !important;
+  font-size: var(--font-size-lg) !important;
+  letter-spacing: var(--letter-spacing-widest);
+  color: var(--color-traxia-blue) !important;
+  text-decoration: none !important;
+  margin: 0 !important;
+  transition: var(--transition-normal);
+  font-family: var(--font-primary);
+  width: 169px;
+  height: 20x;
+}
+
+.traxia-logo:hover {
+  color: var(--color-primary) !important;
+  transform: scale(1.02);
+}
+
+/* User Menu */
+.user-menu {
+  background: none !important;
+  color: var(--color-text-secondary) !important;
+  text-decoration: none !important;
+  padding: var(--spacing-sm) !important;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-normal);
+  font-size: var(--font-size-base);
+}
+
+.user-menu:hover {
+  background: var(--color-bg-secondary) !important;
+  color: var(--color-primary) !important;
+}
+
+.user-menu:focus {
+  box-shadow: none !important;
+}
+
+/* Dropdown Styles */
+.traxia-dropdown {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-sm) 0;
+  margin-top: var(--spacing-sm);
+  min-width: 180px;
+  background: var(--color-bg-primary);
+  font-family: var(--font-primary);
+}
+
+.dropdown-item-traxia {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  border-radius: var(--border-radius-sm);
+  margin: var(--spacing-xs) var(--spacing-sm);
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+.dropdown-item-traxia:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-primary);
+}
+
+.dropdown-item-traxia.active {
+  background: var(--color-primary);
+  color: var(--color-text-white);
+  font-weight: var(--font-weight-medium);
+}
+
+.dropdown-item-traxia.text-danger:hover {
+  background: #f8d7da;
+  color: var(--color-danger);
+}
+
+/* Navbar Layout */
+.navbar-left,
+.navbar-right {
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-left {
+  justify-content: flex-start;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+}
+
+.navbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 68px;
+}
+
+/* Dropdown Toggle Arrows - Hide them */
+.hamburger-menu::after,
+.user-menu::after {
+  display: none !important;
+}
+
+/* Dropdown Header */
+.traxia-dropdown .dropdown-header {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* Dropdown Divider */
+.traxia-dropdown .dropdown-divider {
+  margin: var(--spacing-sm) var(--spacing-lg);
+  border-color: var(--color-border-light);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .traxia-logo {
+    font-size: var(--font-size-md) !important;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+  
+  .traxia-dropdown {
+    min-width: 160px;
+  }
+  
+  .dropdown-item-traxia {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Animation for dropdown */
+.traxia-dropdown {
+  animation: fadeInDown var(--transition-fast) ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus states for accessibility */
+.hamburger-menu:focus-visible,
+.user-menu:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.dropdown-item-traxia:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}

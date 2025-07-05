@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="google" content="notranslate" />
+    <meta name="robots" content="noimageindex, nofollow, nosnippet, notranslate" />
+    
+    <meta
+      name="description"
+      content="Traxxia - Business Analysis Platform"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <title>Traxxia</title>
+    
+    <!-- Block Google Translate completely -->
+    <style>
+      .goog-te-banner-frame,
+      .goog-te-menu-frame,
+      .skiptranslate,
+      .goog-te-gadget,
+      .goog-te-combo,
+      .goog-logo-link,
+      .goog-te-spinner-pos,
+      .goog-te-notification,
+      .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+      .VIpgJd-ZVi9od-l4eHX,
+      .goog-te-ftab,
+      #google_translate_element,
+      iframe[src*="translate.googleapis.com"],
+      iframe[src*="translate.google.com"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+        z-index: -9999 !important;
+      }
+      
+      body {
+        top: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+      }
+    </style>
+  </head>
+  <body class="notranslate" translate="no">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <div id="root"></div>
+    
+    <!-- Custom Translation System -->
+    <script type="text/javascript">
+      // Block all Google Translate functionality
+      window.google = window.google || {};
+      window.google.translate = {
+        TranslateElement: function() { return null; },
+        _cic: function() { return null; },
+        _cac: function() { return null; }
+      };
+      
+      // Override any Google Translate functions
+      if (window.googleTranslateElementInit) {
+        window.googleTranslateElementInit = function() { return false; };
+      }
+      
+      // Prevent any external translation scripts
+      const originalCreateElement = document.createElement;
+      document.createElement = function(tagName) {
+        const element = originalCreateElement.call(this, tagName);
+        if (tagName.toLowerCase() === 'script') {
+          const originalSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+          Object.defineProperty(element, 'src', {
+            get: originalSrc.get,
+            set: function(value) {
+              if (value && (value.includes('translate.google') || value.includes('translate.googleapis'))) {
+                console.log('Blocked Google Translate script:', value);
+                return;
+              }
+              originalSrc.set.call(this, value);
+            }
+          });
+        }
+        return element;
+      };
+      
+      // Block Google Translate CSS
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) {
+              if (node.tagName === 'LINK' || node.tagName === 'STYLE') {
+                if (node.href && (node.href.includes('translate.google') || node.href.includes('translate.googleapis'))) {
+                  node.remove();
+                }
+              }
+              if (node.tagName === 'IFRAME' && node.src && node.src.includes('translate.google')) {
+                node.remove();
+              }
+            }
+          });
+        });
+      });
+      
+      observer.observe(document.head, { childList: true, subtree: true });
+      observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+  </body>
+</html>

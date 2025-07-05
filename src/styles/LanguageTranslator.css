@@ -1,0 +1,153 @@
+/* Language Translator Styles */
+.language-translator {
+  position: fixed;
+  top: 10px;
+  right: 70px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.language-dropdown {
+  background-color: #fff;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+}
+
+.language-dropdown:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.language-dropdown:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.language-dropdown option {
+  padding: 8px;
+  font-size: 14px;
+  background-color: #fff;
+  color: #333;
+}
+
+/* Custom styling for mobile */
+@media (max-width: 768px) {
+  .language-translator {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .language-dropdown {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 80px;
+  }
+}
+
+/* COMPLETE Google Translate Blocker */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+.goog-te-menu-frame,
+#google_translate_element,
+.goog-te-gadget,
+.goog-te-combo,
+.goog-logo-link,
+.goog-te-spinner-pos,
+.goog-te-notification,
+.VIpgJd-ZVi9od-l4eHX-hSRGPd,
+.VIpgJd-ZVi9od-l4eHX,
+.goog-te-ftab,
+.skiptranslate,
+iframe[src*="translate.googleapis.com"],
+iframe[src*="translate.google.com"],
+div[id^="goog-gt-"],
+div[class^="goog-te-"],
+div[class*="VIpgJd"],
+.goog-te-menu2,
+.goog-te-menu-value,
+.goog-te-menu-value span,
+#goog-gt-tt,
+.goog-te-balloon-frame {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  z-index: -9999 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Prevent Google from modifying page layout */
+body {
+  top: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  position: relative !important;
+}
+
+body.goog-te-rtl,
+body.goog-te-ltr,
+body[style*="top:"] {
+  top: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  position: relative !important;
+}
+
+/* Block any Google Translate CSS injection */
+head style[data-href*="translate.googleapis.com"],
+head link[href*="translate.googleapis.com"],
+head style[data-href*="translate.google.com"],
+head link[href*="translate.google.com"] {
+  display: none !important;
+}
+
+/* Ensure text selection works properly */
+::selection {
+  background-color: #007bff;
+  color: white;
+}
+
+::-moz-selection {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Hide any remaining Google translate elements */
+[class*="goog-te"] {
+  display: none !important;
+}
+
+/* Force remove translate attributes that Google might add */
+[translate] {
+  translate: no !important;
+}
+
+/* Hide translate tooltips */
+.goog-tooltip {
+  display: none !important;
+}
+
+/* Block Google Translate popup/overlay */
+.goog-te-modal-frame,
+.goog-te-overlay {
+  display: none !important;
+}

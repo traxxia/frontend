@@ -1,0 +1,205 @@
+/* CSS Variables - Common Styles */
+/* Import this file in both Dashboard and MenuBar CSS files */
+
+:root {
+  /* Font Families */
+  --font-primary: 'Manrope', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --font-size-4xl: 32px;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+  --line-height-loose: 1.8;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.5px;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 1px;
+  --letter-spacing-wider: 1.5px;
+  --letter-spacing-widest: 2px;
+
+  /* Colors */
+  --color-primary: #007bff;
+  --color-primary-dark: #0056b3;
+  --color-primary-light: #66b3ff;
+  --color-secondary: #6c757d;
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
+  
+  /* Brand Colors */
+  --color-traxia-blue: #2c5aa0;
+  --color-traxia-blue-light: #4a7bc8;
+  --color-traxia-blue-dark: #1e3f73;
+
+  /* Text Colors */
+  --color-text-primary: #212529;
+  --color-text-secondary: #495057;
+  --color-text-muted: #6c757d;
+  --color-text-light: #adb5bd;
+  --color-text-white: #ffffff;
+  --color-text-black: #000000;
+  
+
+  /* Background Colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-light: #f1f3f4;
+  --color-bg-dark: #343a40;
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  --color-bg-item: #F8F9FE;
+  --color-bg-card: #ffffff;
+
+  /* Border Colors */
+  --color-border-light: #e9ecef;
+  --color-border-medium: #dee2e6;
+  --color-border-dark: #adb5bd;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  --spacing-5xl: 48px;
+
+  /* Border Radius */
+  --border-radius-xs: 4px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 15px;
+  --border-radius-2xl: 20px;
+  --border-radius-round: 50%;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-3xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Z-Index */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
+
+  /* Component Specific */
+  --navbar-height: 60px;
+  --card-padding: var(--spacing-xl);
+  --button-padding-x: var(--spacing-2xl);
+  --button-padding-y: var(--spacing-md);
+  
+  /* Progress Circle */
+  --progress-circle-size: 45px;
+  --progress-circle-size-sm: 35px;
+  --progress-circle-size-lg: 55px;
+
+  /* Business Card */
+  --business-card-max-width-mobile: 350px;
+  --business-card-max-width-desktop: 1000px;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  --gradient-traxia: linear-gradient(135deg, var(--color-traxia-blue) 0%, var(--color-traxia-blue-dark) 100%);
+  
+  /* Backdrop Blur */
+  --backdrop-blur: blur(10px);
+  
+  /* Container Max Widths */
+  --container-xs: 540px;
+  --container-sm: 720px;
+  --container-md: 960px;
+  --container-lg: 1140px;
+  --container-xl: 1320px;
+
+  /* Breakpoints (for reference in media queries) */
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+}
+
+/* Dark mode variables (optional for future use) 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #f8f9fa;
+    --color-text-secondary: #e9ecef;
+    --color-text-muted: #adb5bd;
+    --color-bg-primary: #212529;
+    --color-bg-secondary: #343a40;
+    --color-bg-light: #495057;
+    --color-border-light: #495057;
+    --color-border-medium: #6c757d;
+  }
+}*/
+
+/* Base font settings for the entire application */
+* {
+  font-family: var(--font-primary);
+}
+
+body {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Common utility classes using variables */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-md { font-size: var(--font-size-md); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+
+.font-light { font-weight: var(--font-weight-light); }
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.transition-fast { transition: all var(--transition-fast); }
+.transition-normal { transition: all var(--transition-normal); }
+.transition-slow { transition: all var(--transition-slow); }
