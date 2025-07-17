@@ -501,8 +501,7 @@ margin:0px;
   overflow-y: auto;
   padding: 20px;
   background: rgba(250, 250, 250, 0.9);
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px; 
   backdrop-filter: blur(8px);
 }
 
@@ -980,11 +979,11 @@ margin:0px;
 
 /* For the analysis results modal */
 .analysis-content {
-  max-height: 60vh;
+  max-height: max-content;
   overflow-y: auto;
-  padding: 15px;
+  padding: 0px;
   border-radius: 8px;
-  background-color: rgba(240, 240, 240, 0.3);
+  background-color: #fff;
 }
 
 /* Add variables if not already present */
@@ -1189,7 +1188,7 @@ margin:0px;
 
 .analysis-content {
   transition: all 0.3s ease;
-  margin-top: 20px;
+  margin-top: 0px;
 }
 
 .btn-primary {

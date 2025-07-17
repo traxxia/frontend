@@ -3406,3 +3406,62 @@
   border-color: #17a2b8;
   color: white;
 }
+
+/* Tooltip Styles */
+.question-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.question-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6c757d;
+  transition: color 0.2s ease;
+  margin-left: 4px;
+}
+
+.question-info-icon:hover {
+  color: #007bff;
+}
+
+/* Custom tooltip styling */
+.custom-tooltip {
+  font-size: 13px;
+  max-width: 300px;
+}
+
+.custom-tooltip .tooltip-inner {
+  background-color: #6610f2;
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.custom-tooltip .tooltip-arrow::before {
+  border-top-color: #6610f2;
+}
+
+/* Alternative: If you want the entire question title to be hoverable */
+.question-title-hoverable {
+  position: relative;
+  cursor: pointer;
+  border-bottom: 1px dotted #6c757d;
+  display: inline-block;
+}
+
+/* For better mobile experience */
+@media (max-width: 768px) {
+  .question-info-icon {
+    padding: 4px;
+  }
+  
+  .custom-tooltip {
+    font-size: 12px;
+    max-width: 250px;
+  }
+}

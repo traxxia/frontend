@@ -8,6 +8,10 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import AuditTrailPage from './pages/AuditTrailPage';
+import BusinessSetupPage from './pages/BusinessSetupPage';
+
+
 
 const App = () => {
   useEffect(() => {
@@ -48,6 +52,7 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/businesspage" element={<BusinessSetupPage />} />
           <Route
             path="/admin"
             element={
@@ -56,7 +61,16 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route 
+          path="/audit-trail" 
+          element={
+            <ProtectedRoute>
+              <AuditTrailPage />
+            </ProtectedRoute>
+          } 
+        />
         </Routes>
+        
       </div>
     </Router>
   );

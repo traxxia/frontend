@@ -1,7 +1,7 @@
-// CategoryItem.jsx - Fixed for Your Exact API Response Structure
+// CategoryItem.jsx - With Tooltip Support
 import React from 'react';
-import { Form, Collapse } from 'react-bootstrap';
-import { ChevronDown, ChevronRight, CheckCircle } from 'lucide-react';
+import { Form, Collapse, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { ChevronDown, ChevronRight, CheckCircle, Info } from 'lucide-react';
 
 const CategoryItem = ({
   category,
@@ -12,9 +12,13 @@ const CategoryItem = ({
   onAnswerChange,
   t // Translation function
 }) => {
-  // Debug logging to help identify data structure issues
-  console.log('CategoryItem received category:', category);
-  console.log('Category questions:', category?.questions);
+  // Function to render tooltip content
+  const renderTooltip = (question) => (
+    <Tooltip id={`tooltip-${question.id}`} className="custom-tooltip">
+      {/* You can customize what shows in the tooltip based on your question data structure */}
+      {question.tooltip || question.description || question.hint || 'Additional information for this question'}
+    </Tooltip>
+  );
 
   return (
     <div className="category-accordion-item">
@@ -58,8 +62,21 @@ const CategoryItem = ({
               return (
                 <div key={question.id} className="question-item">
                   <label className="question-label" htmlFor={`question-${question.id}`}>
-                    {/* Use the title property that was set in the transform function */}
-                    {question.title}
+                    <span className="question-title-wrapper">
+                      {/* Use the title property that was set in the transform function */}
+                      {question.title}
+                      
+                      {/* Tooltip trigger */}
+                      <OverlayTrigger
+                        placement="top"
+                        delay={{ show: 250, hide: 100 }}
+                        overlay={renderTooltip(question)}
+                      >
+                        <span className="question-info-icon">
+                          <Info size={16} />
+                        </span>
+                      </OverlayTrigger>
+                    </span>
                   </label>
                   <Form.Control
                     as="textarea"

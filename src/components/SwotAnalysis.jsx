@@ -28,7 +28,7 @@ const SwotAnalysis = ({ analysisResult }) => {
       {labels.length > 0 && (
         <>
           <br/>
-          <div className="table-responsive mb-4">
+          <div className="table-responsive">
             <table className="table table-bordered table-striped">
               <thead className="table-light">
                 <tr>

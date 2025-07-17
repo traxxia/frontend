@@ -1,28 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from 'react-bootstrap';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Download } from 'lucide-react';
 import AnalysisTypeSelector from './AnalysisTypeSelector';
 import AnalysisRenderer from './AnalysisRenderer';
 import { getIconComponent } from '../utils/iconUtils';
+
+// NEW: Import Save Components
+import SaveAnalysisButton from './SaveAnalysisButton';
 
 // Helper function to get default analysis type for a category
 const getDefaultAnalysisType = (category, analysisItems) => {
   const categoryItems = analysisItems.filter(item => item.category === category);
 
   if (category === 'analysis') {
-    // Look for SWOT analysis item first
     const swotItem = categoryItems.find(item => item.id === 'swot');
     if (swotItem) return 'swot';
 
-    // Fallback to first item and get its analysis type
     const firstItem = categoryItems[0];
     return firstItem ? getAnalysisTypeFromItemId(firstItem.id) : null;
   } else if (category === 'strategic') {
-    // Look for strategic analysis item first
     const strategicItem = categoryItems.find(item => item.id === 'strategic');
     if (strategicItem) return 'strategic';
 
-    // Fallback to first item and get its analysis type
     const firstItem = categoryItems[0];
     return firstItem ? getAnalysisTypeFromItemId(firstItem.id) : null;
   }
@@ -35,11 +34,9 @@ const getDefaultAnalysisItem = (category, analysisItems) => {
   const categoryItems = analysisItems.filter(item => item.category === category);
 
   if (category === 'analysis') {
-    // Look for SWOT analysis item first
     const swotItem = categoryItems.find(item => item.id === 'swot');
     return swotItem || categoryItems[0];
   } else if (category === 'strategic') {
-    // Look for strategic analysis item first
     const strategicItem = categoryItems.find(item => item.id === 'strategic');
     return strategicItem || categoryItems[0];
   }
@@ -66,10 +63,15 @@ const ExpandedAnalysisView = ({
   onAnalysisTypeSelect,
   onCloseExpandedView,
   onRegenerateAnalysis,
+  shouldAutoRegenerate, // NEW: Auto-regeneration status
+  lastAnswerChangeTime, // NEW: Last change time for UI feedback
+  surveyData, // NEW: Survey data for saving
+  businessName, // NEW: Business name for saving
   t // Translation function passed from parent
 }) => {
   const [translations, setTranslations] = useState({});
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Get translation function
   const translate = (key) => {
@@ -119,7 +121,171 @@ const ExpandedAnalysisView = ({
   const analysisResult = getCacheKey() ? analysisData[getCacheKey()] : null;
   const isLoading = getCacheKey() ? analysisLoading[getCacheKey()] : false;
 
-  // NEW: Enhanced tab click handler with proper caching logic
+  // Direct PDF Export - captures current UI content with same design
+  const handleExportToPDF = async () => {
+    setIsExporting(true);
+    
+    try {
+      // Method 1: Using html2pdf library (better quality)
+      const exportWithHtml2pdf = async () => {
+        try {
+          // Dynamically load html2pdf library
+          if (!window.html2pdf) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            document.head.appendChild(script);
+            
+            await new Promise((resolve) => {
+              script.onload = resolve;
+            });
+          }
+
+          const element = document.querySelector('.expanded-analysis-main .analysis-component-container') || 
+                         document.querySelector('.expanded-analysis-main') ||
+                         document.querySelector('.analysis-component-container');
+          
+          if (!element) {
+            alert(translate('no_content_to_export') || 'No content found to export');
+            return false;
+          }
+
+          const opt = {
+            margin: 1,
+            filename: `analysis-report-${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: '#ffffff'
+            },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+          };
+
+          await window.html2pdf().set(opt).from(element).save();
+          return true;
+        } catch (error) {
+          console.error('html2pdf error:', error);
+          return false;
+        }
+      };
+
+      // Method 2: Using browser print (fallback)
+      const exportWithPrint = () => {
+        try {
+          const element = document.querySelector('.expanded-analysis-main .analysis-component-container') || 
+                         document.querySelector('.expanded-analysis-main') ||
+                         document.querySelector('.analysis-component-container');
+          
+          if (!element) {
+            alert(translate('no_content_to_export') || 'No content found to export');
+            return false;
+          }
+
+          // Get current styles
+          const styleSheets = Array.from(document.styleSheets)
+            .map(styleSheet => {
+              try {
+                return Array.from(styleSheet.cssRules)
+                  .map(rule => rule.cssText)
+                  .join('\n');
+              } catch (e) {
+                return '';
+              }
+            })
+            .join('\n');
+
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Analysis Report</title>
+              <style>
+                ${styleSheets}
+                @media print {
+                  body { 
+                    margin: 20px !important; 
+                    font-family: Arial, sans-serif !important; 
+                    background: white !important;
+                  }
+                  button, .btn, .dropdown, .regenerate-analysis-btn {
+                    display: none !important;
+                  }
+                  table { 
+                    width: 100% !important; 
+                    border-collapse: collapse !important; 
+                    margin-bottom: 20px !important;
+                  }
+                  th, td { 
+                    border: 1px solid #ddd !important; 
+                    padding: 8px !important; 
+                  }
+                  .analysis-card, .card { 
+                    margin-bottom: 20px !important; 
+                    page-break-inside: avoid !important; 
+                    border: 1px solid #ddd !important;
+                    padding: 15px !important;
+                  }
+                  h1, h2, h3, h4, h5, h6 {
+                    page-break-after: avoid !important;
+                  }
+                  * {
+                    color: black !important;
+                  }
+                }
+                @page {
+                  margin: 20mm;
+                  size: A4;
+                }
+              </style>
+            </head>
+            <body>
+              <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
+                <h1>Analysis Report</h1>
+                <p>Generated: ${new Date().toLocaleDateString()}</p>
+              </div>
+              ${element.outerHTML}
+            </body>
+            </html>
+          `);
+          
+          printWindow.document.close();
+          setTimeout(() => {
+            printWindow.print();
+            setTimeout(() => printWindow.close(), 1000);
+          }, 1000);
+          
+          return true;
+        } catch (error) {
+          console.error('Print export error:', error);
+          return false;
+        }
+      };
+
+      // Try html2pdf first, fallback to print method
+      let success = false;
+      try {
+        success = await exportWithHtml2pdf();
+      } catch (error) {
+        console.log('Trying print method...');
+        success = exportWithPrint();
+      }
+
+      if (!success) {
+        // Final fallback - just print current page
+        window.print();
+      }
+
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(translate('export_error') || 'Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Enhanced tab click handler with proper caching logic
   const handleTabClick = async (item) => {
     console.log('Tab clicked:', item.id);
 
@@ -175,7 +341,7 @@ const ExpandedAnalysisView = ({
     }
   };
 
-  // NEW: Handle regenerate current analysis
+  // Handle regenerate current analysis
   const handleRegenerateCurrentAnalysis = async () => {
     if (!activeAnalysisItem || !selectedAnalysisType) {
       console.warn('No active analysis item or selected type for regeneration');
@@ -196,7 +362,7 @@ const ExpandedAnalysisView = ({
     }
   };
 
-  // NEW: Handle analysis type change with caching logic
+  // Handle analysis type change with caching logic
   const handleAnalysisTypeChange = async (analysisType, forceRefresh = false) => {
     if (!activeAnalysisItem) return;
 
@@ -220,7 +386,7 @@ const ExpandedAnalysisView = ({
     }
   };
 
-  // NEW: Analysis Header Component with regenerate button
+  // NEW: Enhanced Analysis Header Component with Save Button
   const AnalysisHeader = () => {
     if (!activeAnalysisItem) return null;
 
@@ -228,21 +394,73 @@ const ExpandedAnalysisView = ({
     const hasCachedData = cacheKey && analysisData[cacheKey] && analysisData[cacheKey].length > 0;
 
     return (
-      <div className="d-flex justify-content-end ms-auto">
-        <Button
-          variant="outline-primary"
-          size="sm"
-          onClick={handleRegenerateCurrentAnalysis}
-          disabled={isLoading || isRegenerating || !hasCachedData}
-          className="regenerate-analysis-btn"
-          title={!hasCachedData ? "Generate analysis first" : "Regenerate this analysis"}
-        >
-          <RefreshCw
-            size={14}
-            className={`me-1 ${(isLoading || isRegenerating) ? 'spinning' : ''}`}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        {/* Left side - Analysis info and auto-regeneration status */}
+        <div className="analysis-header-info">
+          <h5 className="mb-1">{activeAnalysisItem.title}</h5>
+          {shouldAutoRegenerate && (
+            <small className="text-info">
+              📝 {translate('analysis_will_update') || 'Analysis will update automatically after answer changes'}
+            </small>
+          )}
+          {lastAnswerChangeTime && (
+            <small className="text-muted d-block">
+              {translate('last_change') || 'Last change'}: {new Date(lastAnswerChangeTime).toLocaleTimeString()}
+            </small>
+          )}
+        </div>
+
+        {/* Right side - Action buttons */}
+        <div className="d-flex gap-2"> 
+          <Button
+            variant="outline-primary"
+            size="sm"
+            onClick={handleRegenerateCurrentAnalysis}
+            disabled={isLoading || isRegenerating || !hasCachedData}
+            className="regenerate-analysis-btn"
+            title={!hasCachedData ? "Generate analysis first" : "Regenerate this analysis"}
+          >
+            <RefreshCw
+              size={14}
+              className={`me-1 ${(isLoading || isRegenerating) ? 'spinning' : ''}`}
+            />
+            {isRegenerating ? (translate('regenerating') || 'Regenerating...') : (translate('regenerate') || 'Regenerate')}
+          </Button>
+
+          <SaveAnalysisButton
+            analysisData={analysisResult}
+            analysisType={selectedAnalysisType}
+            analysisFramework={activeAnalysisItem?.title}
+            category={activeAnalysisItem?.category}
+            businessName={businessName}
+            surveyData={surveyData}
+            disabled={isLoading || isRegenerating || !hasCachedData}
+            size="sm"
+            variant="success"
+            t={translate}
           />
-          {isRegenerating ? (translate('regenerating') || 'Regenerating...') : (translate('regenerate') || 'Regenerate')}
-        </Button> 
+          
+          {/* Direct PDF Export Button */}
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={handleExportToPDF}
+            disabled={isExporting || !hasCachedData}
+            title={!hasCachedData ? "Generate analysis first" : "Export current view as PDF"}
+          >
+            {isExporting ? (
+              <>
+                <RefreshCw size={14} className="spinning me-1" />
+                {translate('exporting') || 'Exporting...'}
+              </>
+            ) : (
+              <>
+                <Download size={14} className="me-1" />
+                {translate('export_pdf') || 'Export PDF'}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     );
   };
@@ -316,7 +534,7 @@ const ExpandedAnalysisView = ({
         <div className="expanded-analysis-main">
           {activeAnalysisItem ? (
             <>
-              {/* NEW: Analysis Header with regenerate button */}
+              {/* NEW: Enhanced Analysis Header with Save Button */}
               <AnalysisHeader />
 
               {/* Only show AnalysisTypeSelector if the item has multiple analysis types */}
@@ -356,6 +574,43 @@ const ExpandedAnalysisView = ({
           )}
         </div>
       </div>
+
+      {/* Add spinning animation CSS */}
+      <style jsx>{`
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .analysis-header-info h5 {
+          margin-bottom: 4px;
+        }
+
+        .analysis-header-info small {
+          font-size: 0.8rem;
+        }
+
+        .analysis-menu-bar {
+          border-bottom: 1px solid #e9ecef;
+          padding: 1rem;
+          background: white;
+        }
+
+        .expanded-analysis-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .expanded-analysis-main {
+          padding: 1.5rem;
+          flex: 1;
+        }
+      `}</style>
     </div>
   );
 };

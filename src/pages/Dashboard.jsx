@@ -42,7 +42,7 @@ const Dashboard = () => {
   const [analysisResult, setAnalysisResult] = useState("");
 
   const { businessData, loading: businessLoading, error: businessError } = useBusinessData("InsightForge Inc");
-  const { progressData, areAllQuestionsAnswered } = useProgressTracking(businessData);
+  const { progressData, areAllQuestionsAnswered } = useProgressTracking(null);
 
   const { answeredQuestions, totalQuestions, progress } = progressData;
 
@@ -75,75 +75,59 @@ ${t('growth_projection_details')}
   `;
 
   const businesses = useMemo(() => {
-    if (businessLoading || businessError || !businessData) {
-      return [];
-    }
-    return [
-      {
-        name: "InsightForge Inc",
-        progress: progressData.progress,
-        answeredQuestions: progressData.answeredQuestions,
-        totalQuestions: progressData.totalQuestions,
-        remaining: progressData.totalQuestions - progressData.answeredQuestions,
-        total: progressData.totalQuestions,
-      },
-    ];
-  }, [businessData, progressData, businessLoading, businessError]);
+  return [
+    {
+      name: "InsightForge Inc",
+      progress: progressData.progress,
+      answeredQuestions: progressData.answeredQuestions,
+      totalQuestions: progressData.totalQuestions,
+      remaining: progressData.totalQuestions - progressData.answeredQuestions,
+      total: progressData.totalQuestions,
+    },
+  ];
+}, [progressData]);
 
   const BusinessList = ({ businesses, viewType }) => (
-    <div className={`business-list ${viewType}`}>
-      {businessLoading && (
-        <div className="d-flex justify-content-center py-5">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">{t('loading_businesses')}</span>
-          </Spinner>
+  <div className={`business-list ${viewType}`}>
+    {businesses.length === 0 && (
+      <div className="text-center text-muted py-5">
+        {t('no_businesses_found')}
+      </div>
+    )}
+    {businesses.length > 0 && businesses.map((business, index) => (
+      <div
+        key={index}
+        className="business-item d-flex align-items-center p-3 border-bottom"
+        onClick={() => handleBusinessClick(business)}
+        style={{ cursor: "pointer" }}
+      >
+        <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
+          <CircularProgressbar
+            value={business.progress}
+            text={`${business.progress}%`}
+            styles={buildStyles({
+              pathColor: "#28a745",
+              textColor: "#000",
+              trailColor: "#ffffff",
+              textSize: "30px",
+            })}
+          />
         </div>
-      )}
-      {businessError && (
-        <div className="text-center text-danger py-5">
-          {t('error_loading_business_data')}
+        <div className="flex-grow-1">
+          <h6 className="mb-1">{business.name}</h6>
+          <small className="text-muted">
+            {t('questions_remaining')}: {business.remaining} {t('of')} {business.total}
+          </small>
         </div>
-      )}
-      {!businessLoading && !businessError && businesses.length === 0 && (
-        <div className="text-center text-muted py-5">
-          {t('no_businesses_found')}
-        </div>
-      )}
-      {!businessLoading && !businessError && businesses.length > 0 && businesses.map((business, index) => (
-        <div
-          key={index}
-          className="business-item d-flex align-items-center p-3 border-bottom"
-          onClick={() => handleBusinessClick(business)}
-          style={{ cursor: "pointer" }}
-        >
-          <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
-            <CircularProgressbar
-              value={business.progress}
-              text={`${business.progress}%`}
-              styles={buildStyles({
-                pathColor: "#28a745",
-                textColor: "#000",
-                trailColor: "#ffffff",
-                textSize: "30px",
-              })}
-            />
-          </div>
-          <div className="flex-grow-1">
-            <h6 className="mb-1">{business.name}</h6>
-            <small className="text-muted">
-              {t('questions_remaining')}: {business.remaining} {t('of')} {business.total}
-            </small>
-          </div>
-          <ArrowRight size={16} className="text-muted" />
-        </div>
-      ))}
-    </div>
-  );
+        <ArrowRight size={16} className="text-muted" />
+      </div>
+    ))}
+  </div>
+);
 
   // Event Handlers
   const handleBusinessClick = (business) => {
-    setSelectedBusiness(business);
-    setCurrentStep(STEPS.BUSINESS_DETAIL);
+     navigate('/businesspage');
   };
 
   const goToInsights = () => {

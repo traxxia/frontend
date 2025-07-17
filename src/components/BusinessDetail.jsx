@@ -1,4 +1,4 @@
-// BusinessDetail.jsx - Complete Updated Version with Auto-Regeneration on Answer Changes
+// BusinessDetail.jsx - Updated with Save Analysis Integration
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Button, Card, Row, Col, Nav, Alert, Spinner, Form } from "react-bootstrap";
 import { ArrowLeft } from "lucide-react";
@@ -17,6 +17,10 @@ import SaveStatus from "../components/SaveStatus";
 import AnalysisItem from "../components/AnalysisItem";
 import ExpandedAnalysisView from "../components/ExpandedAnalysisView";
 import CategoryItem from "../components/CategoryItem";
+
+// NEW: Import Save Components
+import SaveAnalysisButton from "../components/SaveAnalysisButton";
+import SaveAnalysisModal from "../components/SaveAnalysisModal";
 
 // Utils
 import { getAnalysisType } from "../utils/analysisHelpers";
@@ -61,7 +65,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedAnalysisType, setSelectedAnalysisType] = useState(null);
 
-  // NEW: Track actual answer changes (not just typing)
+  // Answer change tracking
   const [hasAnswerChanges, setHasAnswerChanges] = useState(false);
   const [originalAnswers, setOriginalAnswers] = useState({});
   const [lastAnswerChangeTime, setLastAnswerChangeTime] = useState(null);
@@ -80,6 +84,9 @@ const BusinessDetail = ({ businessName, onBack }) => {
   const isUserTypingRef = useRef(false);
   const typingTimeoutRef = useRef(null);
 
+  // NEW: Survey data state for saving analysis
+  const [surveyData, setSurveyData] = useState(null);
+
   // Custom Hooks
   const { businessData, setBusinessData, loading, error } = useBusinessData(businessName);
   const { analysisData, analysisLoading, generateAnalysis, clearAnalysisCache } = useAnalysisData();
@@ -92,6 +99,64 @@ const BusinessDetail = ({ businessName, onBack }) => {
     areAllQuestionsAnswered
   } = useProgressTracking(businessData);
 
+  // NEW: Format survey data when businessData changes
+  useEffect(() => {
+    if (businessData && businessData.categories) {
+      const formattedSurveyData = {
+        version: businessData.surveyVersion || 'latest',
+        questions: businessData.categories.flatMap(category => 
+          category.questions.map(question => ({
+            id: question.id || question.question_id,
+            question: question.question || question.question_text,
+            type: question.type || question.question_type || 'open-ended',
+            category_id: category.id || category.category_id,
+            category_name: category.name || category.category_name,
+            options: question.options || [],
+            nested: question.nested || null
+          }))
+        ),
+        answers: businessData.categories.flatMap(category =>
+          category.questions
+            .filter(question => question.answer && question.answer.trim())
+            .map(question => ({
+              question_id: question.id || question.question_id,
+              answer: question.answer,
+              selected_option: question.selected_option || null,
+              selected_options: question.selected_options || null,
+              rating: question.rating || null
+            }))
+        ),
+        completion_percentage: Math.round(
+          (progressData.answeredQuestions / progressData.totalQuestions) * 100
+        ) || 0,
+        submitted_at: new Date().toISOString(),
+        user: {
+          name: sessionStorage.getItem('userName') || 'User',
+          email: sessionStorage.getItem('userEmail') || 'user@example.com'
+        },
+        status: 'submitted'
+      };
+      
+      setSurveyData(formattedSurveyData);
+      console.log('📋 Survey data formatted for saving:', formattedSurveyData);
+    }
+  }, [businessData, progressData]);
+
+  // NEW: Store original answers when component loads
+  useEffect(() => {
+    if (businessData && businessData.categories && Object.keys(originalAnswers).length === 0) {
+      const initialAnswers = {};
+      businessData.categories.forEach(category => {
+        category.questions.forEach(question => {
+          const questionId = question.id || question.question_id;
+          initialAnswers[questionId] = question.answer || '';
+        });
+      });
+      setOriginalAnswers(initialAnswers);
+      console.log('💾 Original answers stored:', Object.keys(initialAnswers).length, 'questions');
+    }
+  }, [businessData, originalAnswers]);
+
   const toggleCategory = useCallback((categoryId) => { 
     setExpandedCategories(prev => ({
       ...prev,
@@ -99,7 +164,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     }));
   }, []);
 
-  // Question Processing Functions
+  // Question Processing Functions (keeping existing code)
   const questionProcessor = {
     normalizeQuestion(question) {
       return {
@@ -151,7 +216,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
       const advanced = [];
 
       if (groqCategorization) {
-        // Prepare questions list for indexing
         const questionsForAnalysis = categories.flatMap(category =>
           category.questions.map(question => ({
             id: question.question_id || question.id,
@@ -177,7 +241,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
             if (groqCategorization.basic && groqCategorization.basic.includes(globalIndex)) {
               basicQuestionsInCategory.push(normalizedQuestion);
             } else if (groqCategorization.phase1 && groqCategorization.phase1.includes(globalIndex)) {
-              // Backward compatibility
               basicQuestionsInCategory.push(normalizedQuestion);
             } else {
               advancedQuestionsInCategory.push(normalizedQuestion);
@@ -193,7 +256,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
           }
         });
       } else if (keywords) {
-        // Keyword-based categorization
         categories.forEach(category => {
           category.questions.forEach(question => {
             const questionText = (question.question_text || question.question || '').toLowerCase();
@@ -219,7 +281,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     }
   };
 
-  // NEW: Auto-regeneration logic
+  // Auto-regeneration logic (keeping existing code)
   const handleAutoRegeneration = useCallback(async () => {
     if (!isFullScreenAnalysis || !activeAnalysisItem || !selectedAnalysisType) {
       return;
@@ -228,7 +290,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
     console.log('🔄 Auto-regenerating analysis due to answer changes...');
     
     try {
-      // Clear existing cache for this analysis
       const currentLanguage = window.currentAppLanguage || 'en';
       const cacheKey = `${activeAnalysisItem.id}-${selectedAnalysisType}-${currentLanguage}`;
       
@@ -236,7 +297,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
         await clearAnalysisCache(cacheKey);
       }
       
-      // Force regenerate the current analysis
       await generateAnalysis(selectedAnalysisType, activeAnalysisItem.id, businessData, strategicBooks, true);
       
       console.log('✅ Auto-regeneration completed');
@@ -245,24 +305,22 @@ const BusinessDetail = ({ businessName, onBack }) => {
     }
   }, [isFullScreenAnalysis, activeAnalysisItem, selectedAnalysisType, businessData, strategicBooks, generateAnalysis, clearAnalysisCache]);
 
-  // NEW: Effect to trigger auto-regeneration when answers change
+  // Auto-regeneration effect (keeping existing code)
   useEffect(() => {
     if (!lastAnswerChangeTime || !shouldAutoRegenerate) {
       return;
     }
 
-    // Clear existing timer
     if (autoRegenerateTimerRef.current) {
       clearTimeout(autoRegenerateTimerRef.current);
     }
 
-    // Set a debounced auto-regeneration (wait 3 seconds after last change)
     autoRegenerateTimerRef.current = setTimeout(() => {
       if (isFullScreenAnalysis && activeAnalysisItem && selectedAnalysisType) {
         handleAutoRegeneration();
-        setShouldAutoRegenerate(false); // Reset flag after regeneration
+        setShouldAutoRegenerate(false);
       }
-    }, 3000); // 3 second delay
+    }, 3000);
 
     return () => {
       if (autoRegenerateTimerRef.current) {
@@ -271,7 +329,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     };
   }, [lastAnswerChangeTime, shouldAutoRegenerate, handleAutoRegeneration, isFullScreenAnalysis, activeAnalysisItem, selectedAnalysisType]);
 
-  // Utility Functions
+  // Utility Functions (keeping existing code)
   const utils = {
     isQuestionCompleted: (questionId) => {
       if (!businessData || !businessData.categories) return false;
@@ -301,7 +359,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     }
   };
 
-  // Effect to categorize questions when businessData changes
+  // Effect to categorize questions when businessData changes (keeping existing code)
   useEffect(() => {
     if (businessData &&
       businessData.categories &&
@@ -313,7 +371,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     }
   }, [businessData]);
 
-  // NEW: Check if answers actually changed
+  // Check for answer changes (keeping existing code)
   const checkForAnswerChanges = useCallback((questionId, newValue) => {
     const originalValue = originalAnswers[questionId] || '';
     const hasChanged = originalValue !== newValue;
@@ -328,7 +386,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     return hasChanged;
   }, [originalAnswers, hasAnswerChanges]);
 
-  // Optimized save function
+  // Optimized save function (keeping existing code)
   const saveAnswers = useCallback(async (forceUpdate = false) => {
     if (!businessData || isSaving) return;
 
@@ -352,7 +410,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     }
   }, [businessData, isSaving, t]);
 
-  // Manual save function
+  // Manual save function (keeping existing code)
   const handleManualSave = useCallback(async () => {
     isUserTypingRef.current = false;
     if (typingTimeoutRef.current) {
@@ -361,31 +419,26 @@ const BusinessDetail = ({ businessName, onBack }) => {
     await saveAnswers(true);
   }, [saveAnswers]);
 
-  // NEW: Enhanced answer change handler that detects actual changes
+  // Enhanced answer change handler (keeping existing code)
   const handleAnswerChange = useCallback((questionId, value) => { 
     console.log('📝 Answer being typed for question:', questionId);
 
-    // Mark that user is typing
     isUserTypingRef.current = true;
 
-    // Clear existing typing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Set user as not typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       isUserTypingRef.current = false;
     }, 2000);
 
-    // NEW: Check if this is an actual change from original
     const actualChange = checkForAnswerChanges(questionId, value);
     
     if (actualChange) {
       setLastAnswerChangeTime(Date.now());
       console.log('✅ Confirmed answer change - fresh analysis will be needed');
       
-      // If in expanded view, mark for immediate auto-regeneration
       if (isFullScreenAnalysis && activeAnalysisItem && selectedAnalysisType) {
         setShouldAutoRegenerate(true);
         console.log('🎯 Auto-regeneration scheduled (expanded view active)');
@@ -403,16 +456,13 @@ const BusinessDetail = ({ businessName, onBack }) => {
         categories: prevData.categories.map(category => ({
           ...category,
           questions: category.questions.map(question => {
-            // Check both possible ID fields
             const matchesId = question.id === questionId || question.question_id === questionId;
 
             if (matchesId) { 
               return {
                 ...question,
                 answer: value,
-                // Update answered status
                 answered: value.trim() !== "",
-                // Update user_answer structure for API compatibility
                 user_answer: {
                   ...question.user_answer,
                   answer: value
@@ -427,7 +477,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     });
   }, [setBusinessData, isFullScreenAnalysis, activeAnalysisItem, selectedAnalysisType, checkForAnswerChanges]);
 
-  // Auto-save effect
+  // Auto-save effect (keeping existing code)
   useEffect(() => {
     if (!businessData || loading || error) return;
 
@@ -450,7 +500,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     };
   }, [businessData, loading, error, saveAnswers]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount (keeping existing code)
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) {
@@ -471,11 +521,11 @@ const BusinessDetail = ({ businessName, onBack }) => {
     isComplete: isCategoryComplete(category),
     answeredCount: getAnsweredQuestionsInCategory(category),
     onToggle: () => toggleCategory(category.id),
-    onAnswerChange: handleAnswerChange, // This now includes auto-regeneration logic
+    onAnswerChange: handleAnswerChange,
     t
   });
 
-  // Analysis Handlers
+  // Analysis Handlers (keeping existing code)
   const handleAnalysisItemClick = useCallback(async (item) => {
     setActiveAnalysisItem(item);
     setIsAnimating(true);
@@ -484,7 +534,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
     const analysisType = getAnalysisType(item.id);
     setSelectedAnalysisType(analysisType);
 
-    // Reset auto-regeneration flags when opening new analysis
     setShouldAutoRegenerate(false);
 
     setTimeout(() => {
@@ -495,7 +544,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
     const currentLanguage = window.currentAppLanguage || 'en';
     const cacheKey = `${item.id}-${analysisType}-${currentLanguage}`;
     
-    // NEW: Check if we need fresh analysis based on answer changes
     const hasCachedData = analysisData[cacheKey] && analysisData[cacheKey].length > 0;
     const needsFreshAnalysis = hasAnswerChanges || !hasCachedData;
     
@@ -508,10 +556,8 @@ const BusinessDetail = ({ businessName, onBack }) => {
       console.log('🔄 Generating fresh analysis due to answer changes...');
       await generateAnalysis(analysisType, item.id, businessData, strategicBooks, true);
       
-      // Reset the answer change flag after generating fresh analysis
       if (hasAnswerChanges) {
         setHasAnswerChanges(false);
-        // Update original answers to current state
         const newAnswers = {};
         businessData.categories.forEach(category => {
           category.questions.forEach(question => {
@@ -537,13 +583,11 @@ const BusinessDetail = ({ businessName, onBack }) => {
     const analysisType = overrideAnalysisType || getAnalysisType(item.id);
     setSelectedAnalysisType(analysisType);
 
-    // Reset auto-regeneration flags when switching tabs
     setShouldAutoRegenerate(false);
 
     const currentLanguage = window.currentAppLanguage || 'en';
     const cacheKey = `${item.id}-${analysisType}-${currentLanguage}`;
     
-    // NEW: Check if we need fresh analysis based on answer changes or force refresh
     const hasCachedData = analysisData[cacheKey] && analysisData[cacheKey].length > 0;
     const needsFreshAnalysis = forceRefresh || hasAnswerChanges || !hasCachedData;
     
@@ -557,10 +601,8 @@ const BusinessDetail = ({ businessName, onBack }) => {
       console.log('🔄 Generating fresh analysis...');
       await generateAnalysis(analysisType, item.id, businessData, strategicBooks, true);
       
-      // Reset the answer change flag after generating fresh analysis
       if (hasAnswerChanges && !forceRefresh) {
         setHasAnswerChanges(false);
-        // Update original answers to current state
         const newAnswers = {};
         businessData.categories.forEach(category => {
           category.questions.forEach(question => {
@@ -581,13 +623,11 @@ const BusinessDetail = ({ businessName, onBack }) => {
 
     setSelectedAnalysisType(analysisType);
 
-    // Reset auto-regeneration flags when changing analysis type
     setShouldAutoRegenerate(false);
 
     const currentLanguage = window.currentAppLanguage || 'en';
     const cacheKey = `${activeAnalysisItem.id}-${analysisType}-${currentLanguage}`;
     
-    // NEW: Check if we need fresh analysis based on answer changes
     const hasCachedData = analysisData[cacheKey] && analysisData[cacheKey].length > 0;
     const needsFreshAnalysis = forceRefresh || hasAnswerChanges || !hasCachedData;
     
@@ -600,10 +640,8 @@ const BusinessDetail = ({ businessName, onBack }) => {
       console.log('🔄 Generating fresh analysis for new type...');
       await generateAnalysis(analysisType, activeAnalysisItem.id, businessData, strategicBooks, true);
       
-      // Reset the answer change flag after generating fresh analysis
       if (hasAnswerChanges && !forceRefresh) {
         setHasAnswerChanges(false);
-        // Update original answers to current state
         const newAnswers = {};
         businessData.categories.forEach(category => {
           category.questions.forEach(question => {
@@ -623,7 +661,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
     setIsAnimating(true);
     setIsFullScreenAnalysis(false);
 
-    // Clear auto-regeneration flags when closing (but keep hasAnswerChanges)
     setShouldAutoRegenerate(false);
     setLastAnswerChangeTime(null);
 
@@ -635,17 +672,13 @@ const BusinessDetail = ({ businessName, onBack }) => {
   }, []);
 
   const handleRegenerateAnalysis = useCallback(async (analysisType, frameworkId) => {
-    // Reset auto-regeneration flags when manually regenerating
     setShouldAutoRegenerate(false);
     setLastAnswerChangeTime(null);
     
     await generateAnalysis(analysisType, frameworkId, businessData, strategicBooks, true);
-    
-    // Manual regeneration doesn't reset answer change flag
-    // User might want to regenerate even without answer changes
   }, [generateAnalysis, businessData, strategicBooks]);
 
-  // Render States
+  // Render States (keeping existing code)
   if (loading) {
     return <LoadingState />;
   }
@@ -682,7 +715,6 @@ const BusinessDetail = ({ businessName, onBack }) => {
     );
   }
 
-  // Validate data structure
   if (!businessData.categories || !Array.isArray(businessData.categories)) {
     console.error('❌ Invalid categories structure:', businessData.categories);
     return (
@@ -722,7 +754,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
     t
   });
 
-  // NEW: Enhanced expanded analysis props with auto-regeneration status
+  // NEW: Enhanced expanded analysis props with save functionality
   const expandedAnalysisProps = {
     businessData,
     activeAnalysisItem,
@@ -735,12 +767,15 @@ const BusinessDetail = ({ businessName, onBack }) => {
     onAnalysisTypeSelect: handleAnalysisTypeSelect,
     onCloseExpandedView: handleCloseExpandedView,
     onRegenerateAnalysis: handleRegenerateAnalysis,
-    shouldAutoRegenerate, // Pass auto-regeneration status
-    lastAnswerChangeTime, // Pass last change time for UI feedback
+    shouldAutoRegenerate,
+    lastAnswerChangeTime,
+    // NEW: Pass survey data for saving
+    surveyData,
+    businessName: businessData.name || businessName,
     t
   };
 
-  // Simple Question Item Component
+  // Simple Question Item Component (keeping existing code)
   const QuestionItem = ({ question }) => (
     <div className="question-item mb-3 p-3 border rounded">
       <div className="question-header mb-2">
@@ -829,8 +864,7 @@ const BusinessDetail = ({ businessName, onBack }) => {
   );
 };
 
-// [Include all the existing MobileView, DesktopView, and other components exactly as they were]
-// Mobile View Component
+// Mobile View Component (keeping existing code)
 const MobileView = ({
   businessData,
   activeTab,
@@ -910,7 +944,7 @@ const MobileView = ({
   </Card>
 );
 
-// Mobile Tab Content Component
+// Mobile Tab Content Component (keeping existing code)
 const MobileTabContent = ({
   activeTab,
   questionTab,
@@ -930,7 +964,6 @@ const MobileTabContent = ({
   if (activeTab === "questions") {
     return (
       <div className="mobile-tab-content">
-        {/* Question Tabs */}
         <div className="d-flex justify-content-center mb-3">
           <Button
             variant={questionTab === QUESTION_TABS.BASIC ? "primary" : "outline-primary"}
@@ -955,19 +988,15 @@ const MobileTabContent = ({
           </Button>
         </div> 
 
-        {/* Show full ProgressSection only for Advanced tab */}
         {questionTab === QUESTION_TABS.ADVANCED && (
           <ProgressSection {...progressSectionProps} />
         )}
 
-        {/* Show Save Status for BOTH tabs */}
         <SaveStatus {...saveStatusProps} />
         
-        {/* Questions */}
         <div>
           {questionTab === QUESTION_TABS.BASIC ? (
             <div>
-              {/* Group basic questions by category */}
               {businessData.categories
                 .filter(category =>
                   category.questions.some(q =>
@@ -975,7 +1004,6 @@ const MobileTabContent = ({
                   )
                 )
                 .map(category => {
-                  // Create filtered category with only basic questions
                   const filteredCategory = {
                     ...category,
                     id: category.id || category.category_id,
@@ -1004,7 +1032,6 @@ const MobileTabContent = ({
                   <strong>Advanced Questions:</strong> Strategic deep dive questions
                 </small>
               </div>
-              {/* Group advanced questions by category */}
               {businessData.categories
                 .filter(category =>
                   category.questions.some(q =>
@@ -1012,7 +1039,6 @@ const MobileTabContent = ({
                   )
                 )
                 .map(category => {
-                  // Create filtered category with only advanced questions
                   const filteredCategory = {
                     ...category,
                     id: category.id || category.category_id,
@@ -1065,7 +1091,7 @@ const MobileTabContent = ({
   }
 };
 
-// Desktop View Component
+// Desktop View Component (keeping existing code)
 const DesktopView = ({
   businessData,
   analysisTab,
@@ -1140,7 +1166,7 @@ const DesktopView = ({
   </Card>
 );
 
-// Desktop Right Side Component
+// Desktop Right Side Component (keeping existing code)
 const DesktopRightSide = ({
   businessData,
   analysisTab,
@@ -1191,7 +1217,7 @@ const DesktopRightSide = ({
   </div>
 );
 
-// Desktop Left Side Component
+// Desktop Left Side Component (keeping existing code)
 const DesktopLeftSide = ({
   questionTab,
   setQuestionTab,
@@ -1207,7 +1233,6 @@ const DesktopLeftSide = ({
   t
 }) => (
   <div className="desktop-left-side">
-    {/* Question Tabs */}
     <div className="d-flex justify-content-center mb-3">
       <Button
         variant={questionTab === QUESTION_TABS.BASIC ? "primary" : "outline-primary"}
@@ -1236,10 +1261,8 @@ const DesktopLeftSide = ({
       </Button>
     </div>
     
-    {/* Show Save Status for BOTH tabs */}
     <SaveStatus {...saveStatusProps} />
 
-    {/* Show full ProgressSection only for Advanced tab */}
     {questionTab === QUESTION_TABS.ADVANCED && (
       <ProgressSection {...progressSectionProps} />
     )}
@@ -1247,7 +1270,6 @@ const DesktopLeftSide = ({
     <div>
       {questionTab === QUESTION_TABS.BASIC ? (
         <div>
-          {/* Group basic questions by category */}
           {businessData.categories
             .filter(category =>
               category.questions.some(q =>
@@ -1255,7 +1277,6 @@ const DesktopLeftSide = ({
               )
             )
             .map(category => {
-              // Create filtered category with only basic questions
               const filteredCategory = {
                 ...category,
                 id: category.id || category.category_id,
@@ -1284,7 +1305,6 @@ const DesktopLeftSide = ({
         </div>
       ) : (
         <div>
-          {/* Group advanced questions by category */}
           {businessData.categories
             .filter(category =>
               category.questions.some(q =>
@@ -1292,7 +1312,6 @@ const DesktopLeftSide = ({
               )
             )
             .map(category => {
-              // Create filtered category with only advanced questions
               const filteredCategory = {
                 ...category,
                 id: category.id || category.category_id,

@@ -157,35 +157,15 @@ Your analysis should be comprehensive, actionable, and tailored to the user's sp
 export const buildUserPrompt = (selectedType, businessData, strategicBooks) => {
   let userQA = `Please analyze the following survey responses and provide insights:\n`;
 
-  if (businessData?.categories) {
-    businessData.categories.forEach((category) => {
-      category.questions.forEach((question) => {
-        userQA += `\n<Question>\nMain Category: ${category.name}\n`;
-        userQA += `Sub Category: ${question.nested?.question || question.placeholder || 'N/A'}\n`;
-        userQA += `${question.title || question.question}\n`;
-        
-        if (question.type === "options" && question.answer && question.answer.selectedOption) {
-          userQA += `(Choices given below)\n`;
-          if (question.options) {
-            question.options.forEach((option) => {
-              userQA += `- ${option}\n`;
-            });
-          }
-          userQA += `</Question>\n<Answer>\nChoice: ${question.answer.selectedOption}`;
-          if (question.answer.description) {
-            userQA += `\nAdditional Information: ${question.answer.description}</Answer>`;
-          } else {
-            userQA += `\n</Answer>`;
-          }
-        } else if (question.answer) {
-          userQA += `</Question>\n<Answer>\n${question.answer.description || question.answer || ""}\n</Answer>`;
-        } else {
-          userQA += `</Question>\n<Answer>\nNo answer provided\n</Answer>`;
-        }
-      });
+  
+  // Use simple question/answer format for all data
+  if (businessData.categories && businessData.categories[0] && businessData.categories[0].questions) {
+    businessData.categories[0].questions.forEach((question) => {
+      userQA += `<Question>${question.question_text || question.question}</Question>\n`;
+      userQA += `<Answer>${question.answer?.description || question.user_answer?.answer || 'No answer provided'}</Answer>\n\n`;
     });
   }
-
+  
   const analysisName = typeof ANALYSIS_NAMES[selectedType] === 'function' 
     ? ANALYSIS_NAMES[selectedType]() 
     : ANALYSIS_NAMES[selectedType];
