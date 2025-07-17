@@ -4,21 +4,24 @@ import { useAnalysisData } from "../hooks/useAnalysisData";
 import "../styles/ChatComponent.css";
 
 const ChatComponent = ({ 
-  questions = [], 
-  phases = {}, 
   userAnswers = {},
   onBusinessDataUpdate, 
   onNewAnswer, 
   onAnalysisGenerated, 
-  onStrategicAnalysisGenerated 
+  onStrategicAnalysisGenerated,
+  onQuestionsLoaded // New callback to notify parent when questions are loaded
 }) => {
   const [currentInput, setCurrentInput] = useState('');
   const [messages, setMessages] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [phases, setPhases] = useState({});
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isGeneratingStrategic, setIsGeneratingStrategic] = useState(false);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [completedPhases, setCompletedPhases] = useState(new Set());
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const { generateAnalysis } = useAnalysisData();
   
@@ -26,6 +29,27 @@ const ChatComponent = ({
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
+
+  // Load questions on component mount
+  useEffect(() => {
+    loadQuestionsFromAPI();
+  }, []);
+
+  // Initialize first question when questions are loaded
+  useEffect(() => {
+    if (questions.length > 0 && !isInitialized) {
+      const currentQ = getCurrentQuestion();
+      if (currentQ) {
+        console.log('✅ Adding initial question to chat:', currentQ.id);
+        addMessage('bot', currentQ.question, {
+          questionId: currentQ.id,
+          phase: currentQ.phase,
+          severity: currentQ.severity
+        });
+        setIsInitialized(true);
+      }
+    }
+  }, [questions, isInitialized]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,29 +59,50 @@ const ChatComponent = ({
     checkPhaseCompletion();
   }, [userAnswers, questions]);
 
-  // Initialize with current question when questions are loaded
-  useEffect(() => {
-    console.log('🔍 ChatComponent useEffect:', {
-      questionsLength: questions.length,
-      userAnswersCount: Object.keys(userAnswers).length,
-      messagesLength: messages.length
-    });
+  const loadQuestionsFromAPI = async () => {
+    try {
+      console.log('📡 ChatComponent: Loading questions from API...');
+      const token = getAuthToken();
 
-    // Only initialize once when questions are available and no messages exist yet
-    if (questions.length > 0 && messages.length === 0) {
-      const currentQ = getCurrentQuestion();
-      console.log('🎯 Current question:', currentQ);
-      
-      if (currentQ) {
-        console.log('✅ Adding question to chat:', currentQ.id);
-        addMessage('bot', currentQ.question, {
-          questionId: currentQ.id,
-          phase: currentQ.phase,
-          severity: currentQ.severity
+      const response = await fetch(`${API_BASE_URL}/api/questions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const loadedQuestions = data.questions || [];
+        console.log('✅ ChatComponent: Questions loaded:', loadedQuestions.length);
+        
+        setQuestions(loadedQuestions);
+        
+        // Group questions by phase
+        const phaseGroups = {};
+        loadedQuestions.forEach(question => {
+          if (!phaseGroups[question.phase]) {
+            phaseGroups[question.phase] = [];
+          }
+          phaseGroups[question.phase].push(question);
         });
+        setPhases(phaseGroups);
+
+        // Notify parent that questions are loaded
+        if (onQuestionsLoaded) {
+          onQuestionsLoaded(loadedQuestions, phaseGroups);
+        }
+      } else {
+        console.error('Failed to load questions');
+        showToastMessage('Failed to load questions. Please refresh the page.', 'error');
       }
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      showToastMessage('Error loading questions. Please check your connection.', 'error');
+    } finally {
+      setIsLoadingQuestions(false);
     }
-  }, [questions]);
+  };
 
   const getCurrentQuestion = () => {
     if (questions.length === 0) return null;
@@ -78,7 +123,7 @@ const ChatComponent = ({
   };
 
   const addMessage = (type, text, metadata = {}) => {
-    // Prevent duplicate bot messages with same question ID
+    // Strict duplicate prevention for bot messages
     if (type === 'bot' && metadata.questionId) {
       const existingBotMessage = messages.find(msg => 
         msg.type === 'bot' && msg.questionId === metadata.questionId
@@ -334,17 +379,26 @@ const ChatComponent = ({
           : msg
       ));
       
+      // Add next question after a delay
       setTimeout(() => {
         const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
         const answeredCount = Object.keys(userAnswers).length + 1; // +1 for the answer we just added
         
         if (answeredCount < sortedQuestions.length) {
           const nextQuestion = sortedQuestions[answeredCount];
-          addMessage('bot', nextQuestion.question, { 
-            questionId: nextQuestion.id,
-            phase: nextQuestion.phase,
-            severity: nextQuestion.severity
-          });
+          
+          // Check if this question already exists in messages
+          const questionAlreadyExists = messages.some(msg => 
+            msg.type === 'bot' && msg.questionId === nextQuestion.id
+          );
+          
+          if (!questionAlreadyExists) {
+            addMessage('bot', nextQuestion.question, { 
+              questionId: nextQuestion.id,
+              phase: nextQuestion.phase,
+              severity: nextQuestion.severity
+            });
+          }
         }
       }, 800);
       
@@ -375,11 +429,24 @@ const ChatComponent = ({
     }
   };
 
-  if (questions.length === 0) {
+  // Show loading while questions are being fetched
+  if (isLoadingQuestions) {
     return (
       <div className="loading-container">
         <Loader size={24} className="spinner" />
         <div>Loading questions...</div>
+      </div>
+    );
+  }
+
+  // Show error if no questions loaded
+  if (questions.length === 0) {
+    return (
+      <div className="loading-container">
+        <div>❌ Failed to load questions</div>
+        <button onClick={loadQuestionsFromAPI} className="retry-button">
+          Retry
+        </button>
       </div>
     );
   }

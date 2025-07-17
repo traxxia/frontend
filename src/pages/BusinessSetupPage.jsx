@@ -18,14 +18,14 @@ const BusinessSetupPage = () => {
   const [strategicAnalysisResult, setStrategicAnalysisResult] = useState('');
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   
-  // Central questions state - loaded once here
+  // Questions will be received from ChatComponent
   const [questions, setQuestions] = useState([]);
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false); // Changed from true to false
   const [phases, setPhases] = useState({});
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
 
   const [businessData, setBusinessData] = useState({
     name: 'Your Business',
-    whatWeDo: 'Business description will appear here after answering questions',
+    whatWeDo: 'Business description will appear here after answering questions in the chat.',
     products: '',
     targetAudience: '',
     uniqueValue: ''
@@ -39,7 +39,7 @@ const BusinessSetupPage = () => {
   const answeredQuestions = Object.keys(userAnswers).length;
   const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
 
-  // Phase management logic (moved from PhaseManager)
+  // Phase management logic
   const PHASES = {
     INITIAL: 'initial',
     ESSENTIAL: 'essential', 
@@ -102,12 +102,6 @@ const BusinessSetupPage = () => {
   const currentPhase = getCurrentPhase();
   const unlockedFeatures = getUnlockedFeatures();
 
-  // Load questions once on component mount
-  useEffect(() => {
-    console.log('🔍 BusinessSetupPage useEffect - Loading questions...');
-    loadQuestionsFromAPI();
-  }, []); // Empty dependency array - only run once on mount
-
   useEffect(() => {
     const handleResize = () => {
       const newIsMobile = window.innerWidth <= 768;
@@ -124,47 +118,12 @@ const BusinessSetupPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [activeTab]);
 
-  const loadQuestionsFromAPI = async () => {
-    if (isLoadingQuestions) {
-      console.log('🚫 Questions already loading, skipping...');
-      return;
-    }
-
-    try {
-      console.log('📡 Loading questions from API...');
-      setIsLoadingQuestions(true);
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/questions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const loadedQuestions = data.questions || [];
-        console.log('✅ Questions loaded:', loadedQuestions.length);
-        setQuestions(loadedQuestions);
-        
-        // Group questions by phase
-        const phaseGroups = {};
-        loadedQuestions.forEach(question => {
-          if (!phaseGroups[question.phase]) {
-            phaseGroups[question.phase] = [];
-          }
-          phaseGroups[question.phase].push(question);
-        });
-        setPhases(phaseGroups);
-      } else {
-        console.error('Failed to load questions');
-      }
-    } catch (error) {
-      console.error('Error loading questions:', error);
-    } finally {
-      setIsLoadingQuestions(false);
-    }
+  // Callback when ChatComponent loads questions
+  const handleQuestionsLoaded = (loadedQuestions, loadedPhases) => {
+    console.log('📋 BusinessSetupPage: Questions received from ChatComponent:', loadedQuestions.length);
+    setQuestions(loadedQuestions);
+    setPhases(loadedPhases);
+    setQuestionsLoaded(true);
   };
 
   const loadExistingAnalysis = async () => {
@@ -273,18 +232,6 @@ const BusinessSetupPage = () => {
     window.history.back();
   };
 
-  if (isLoadingQuestions || questions.length === 0) {
-    return (
-      <div className="business-setup-container">
-        <MenuBar />
-        <div className="loading-container">
-          <Loader size={32} className="spinner" />
-          <p>Loading your business analysis...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="business-setup-container">
       <MenuBar />
@@ -299,7 +246,7 @@ const BusinessSetupPage = () => {
         </div>
       </div>
 
-      {isMobile && (
+      {isMobile && questionsLoaded && (
         <>
           <div className="mobile-tabs">
             <button
@@ -367,128 +314,129 @@ const BusinessSetupPage = () => {
           </div>
 
           <ChatComponent
-            questions={questions}
-            phases={phases}
             userAnswers={userAnswers}
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
             onAnalysisGenerated={handleAnalysisGenerated}
             onStrategicAnalysisGenerated={handleStrategicAnalysisGenerated}
+            onQuestionsLoaded={handleQuestionsLoaded}
           />
         </div>
 
-        <div className={`info-panel ${isMobile ? (activeTab === 'brief' || activeTab === 'analysis' || activeTab === 'strategic' ? 'active' : '') : ''}`}>
-          {!isMobile && (
-            <div className="desktop-tabs">
-              <button
-                className={`desktop-tab ${activeTab === 'brief' ? 'active' : ''}`}
-                onClick={() => setActiveTab('brief')}
-              >
-                Brief
-              </button>
-
-              {unlockedFeatures.analysis && (
+        {questionsLoaded && (
+          <div className={`info-panel ${isMobile ? (activeTab === 'brief' || activeTab === 'analysis' || activeTab === 'strategic' ? 'active' : '') : ''}`}>
+            {!isMobile && (
+              <div className="desktop-tabs">
                 <button
-                  className={`desktop-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('analysis')}
+                  className={`desktop-tab ${activeTab === 'brief' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('brief')}
                 >
-                  Analysis
+                  Brief
                 </button>
+
+                {unlockedFeatures.analysis && (
+                  <button
+                    className={`desktop-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('analysis')}
+                  >
+                    Analysis
+                  </button>
+                )}
+
+                {unlockedFeatures.analysis && unlockedFeatures.strategic && (
+                  <button
+                    className={`desktop-tab ${activeTab === 'strategic' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('strategic')}
+                  >
+                    S.T.R.A.T.E.G.I.C
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="info-panel-content">
+              {activeTab === 'brief' && (
+                <div className="brief-section">
+                  {!isMobile && (
+                    <div className="progress-area">
+                      <div className="progress-label">Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})</div>
+                      <div className="progress-track">
+                        <div className="progress-fill" style={{ width: `${actualProgress}%` }}></div>
+                      </div>
+                    </div>
+                  )}
+
+                  <EditableBriefSection
+                    questions={questions}
+                    userAnswers={userAnswers}
+                    businessData={businessData}
+                    onBusinessDataUpdate={handleBusinessDataUpdate}
+                  />
+
+                  {!unlockedFeatures.analysis && (
+                    <div className="unlock-hint">
+                      <h4>🔒 Unlock Business Analysis</h4>
+                      <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {unlockedFeatures.analysis && unlockedFeatures.strategic && (
-                <button
-                  className={`desktop-tab ${activeTab === 'strategic' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('strategic')}
-                >
-                  S.T.R.A.T.E.G.I.C
-                </button>
+              {activeTab === 'analysis' && unlockedFeatures.analysis && (
+                <div className="analysis-section">
+                  <div className="analysis-content">
+                    {isLoadingAnalysis ? (
+                      <div className="analysis-loading">
+                        <Loader size={24} className="spinner" />
+                        <span>Generating your business analysis...</span>
+                      </div>
+                    ) : analysisResult ? (
+                        <SwotAnalysis analysisResult={analysisResult} />
+                    ) : (
+                      <div className="analysis-empty">
+                        <p>Your SWOT analysis will appear here once generated.</p>
+                        <p>Continue the conversation to trigger analysis generation.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'strategic' && unlockedFeatures.analysis && unlockedFeatures.strategic && (
+                <div className="strategic-section">
+                  <div className="strategic-content">
+                    {isLoadingAnalysis ? (
+                      <div className="strategic-loading">
+                        <Loader size={24} className="spinner" />
+                        <span>Generating your strategic analysis...</span>
+                      </div>
+                    ) : strategicAnalysisResult ? (
+                      <StrategicAcronym analysisResult={strategicAnalysisResult} />
+                    ) : (
+                      <div className="strategic-empty">
+                        <p>Your STRATEGIC analysis will appear here once generated.</p>
+                        <p>Continue the conversation to trigger analysis generation.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'analysis' && !unlockedFeatures.analysis && (
+                <div className="locked-analysis">
+                  <div className="lock-icon">🔒</div>
+                  <h3>Analysis Locked</h3>
+                  <p className="description">
+                    Complete all initial phase questions to unlock your business analysis.
+                  </p>
+                  <p className="progress-info">
+                    Current Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions}) • Phase: {currentPhase.toUpperCase()}
+                  </p>
+                </div>
               )}
             </div>
-          )}
-
-          <div className="info-panel-content">
-            {activeTab === 'brief' && (
-              <div className="brief-section">
-                {!isMobile && (
-                  <div className="progress-area">
-                    <div className="progress-label">Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})</div>
-                    <div className="progress-track">
-                      <div className="progress-fill" style={{ width: `${actualProgress}%` }}></div>
-                    </div>
-                  </div>
-                )}
-
-                <EditableBriefSection
-                  questions={questions}
-                  userAnswers={userAnswers}
-                  businessData={businessData}
-                  onBusinessDataUpdate={handleBusinessDataUpdate}
-                />
-
-                {!unlockedFeatures.analysis && (
-                  <div className="unlock-hint">
-                    <h4>🔒 Unlock Business Analysis</h4>
-                    <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'analysis' && unlockedFeatures.analysis && (
-              <div className="analysis-section">
-                <div className="analysis-content">
-                  {isLoadingAnalysis ? (
-                    <div className="analysis-loading">
-                      <Loader size={24} className="spinner" />
-                      <span>Generating your business analysis...</span>
-                    </div>
-                  ) : analysisResult ? (
-                      <SwotAnalysis analysisResult={analysisResult} />
-                  ) : (
-                    <div className="analysis-empty">
-                      <p>Your SWOT analysis will appear here once generated.</p>
-                      <p>Continue the conversation to trigger analysis generation.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'strategic' && unlockedFeatures.analysis && unlockedFeatures.strategic && (
-              <div className="strategic-section">
-                <div className="strategic-content">
-                  {isLoadingAnalysis ? (
-                    <div className="strategic-loading">
-                      <Loader size={24} className="spinner" />
-                      <span>Generating your strategic analysis...</span>
-                    </div>
-                  ) : strategicAnalysisResult ? (
-                    <StrategicAcronym analysisResult={strategicAnalysisResult} />
-                  ) : (
-                    <div className="strategic-empty">
-                      <p>Your STRATEGIC analysis will appear here once generated.</p>
-                      <p>Continue the conversation to trigger analysis generation.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'analysis' && !unlockedFeatures.analysis && (
-              <div className="locked-analysis">
-                <div className="lock-icon">🔒</div>
-                <h3>Analysis Locked</h3>
-                <p className="description">
-                  Complete all initial phase questions to unlock your business analysis.
-                </p>
-                <p className="progress-info">
-                  Current Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions}) • Phase: {currentPhase.toUpperCase()}
-                </p>
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
