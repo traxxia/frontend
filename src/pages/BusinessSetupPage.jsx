@@ -357,6 +357,13 @@ const BusinessSetupPage = () => {
             <div className="info-panel-content">
               {activeTab === 'brief' && (
                 <div className="brief-section">
+                  {!unlockedFeatures.analysis && (
+                    <div className="unlock-hint">
+                      <h4>🔒 Unlock Business Analysis</h4>
+                      <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
+                    </div>
+                  )}<br></br>
+
                   {!isMobile && (
                     <div className="progress-area">
                       <div className="progress-label">Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})</div>
@@ -371,14 +378,7 @@ const BusinessSetupPage = () => {
                     userAnswers={userAnswers}
                     businessData={businessData}
                     onBusinessDataUpdate={handleBusinessDataUpdate}
-                  />
-
-                  {!unlockedFeatures.analysis && (
-                    <div className="unlock-hint">
-                      <h4>🔒 Unlock Business Analysis</h4>
-                      <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
-                    </div>
-                  )}
+                  /> 
                 </div>
               )}
 
