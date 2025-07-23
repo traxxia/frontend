@@ -122,8 +122,7 @@ const BusinessSetupPage = () => {
   }, [activeTab]);
 
   // Callback when ChatComponent loads questions
-  const handleQuestionsLoaded = (loadedQuestions, loadedPhases) => {
-    console.log('📋 BusinessSetupPage: Questions received from ChatComponent:', loadedQuestions.length);
+  const handleQuestionsLoaded = (loadedQuestions, loadedPhases) => { 
     setQuestions(loadedQuestions);
     setPhases(loadedPhases);
     setQuestionsLoaded(true);
@@ -208,8 +207,7 @@ const BusinessSetupPage = () => {
   };
 
   // Add this new method to handle answer updates from EditableBriefSection
-  const handleAnswerUpdate = (questionId, newAnswer) => {
-    console.log('📝 BusinessSetupPage: Updating answer for question', questionId, 'with:', newAnswer.substring(0, 50));
+  const handleAnswerUpdate = (questionId, newAnswer) => { 
     
     // Update the userAnswers state immediately
     setUserAnswers(prev => ({
@@ -234,14 +232,12 @@ const BusinessSetupPage = () => {
     }
   };
 
-  const handleAnalysisGenerated = (analysis) => {
-    console.log('📊 BusinessSetupPage: SWOT analysis received from ChatComponent');
+  const handleAnalysisGenerated = (analysis) => { 
     setAnalysisResult(analysis);
     setIsLoadingAnalysis(false);
   };
 
-  const handleStrategicAnalysisGenerated = (strategicAnalysis) => {
-    console.log('🎯 BusinessSetupPage: Strategic analysis received from ChatComponent');
+  const handleStrategicAnalysisGenerated = (strategicAnalysis) => { 
     setStrategicAnalysisResult(strategicAnalysis);
     setIsLoadingAnalysis(false);
   };
@@ -332,12 +328,9 @@ const BusinessSetupPage = () => {
       showToastMessage('Generating analysis...', 'info');
 
       // Trigger analysis generation from ChatComponent
-      if (window.triggerChatAnalysis) {
-        console.log('🔄 Triggering analysis via ChatComponent...');
+      if (window.triggerChatAnalysis) { 
         window.triggerChatAnalysis();
-      } else {
-        // Fallback: generate analysis directly
-        console.log('🔄 Generating analysis directly as fallback...');
+      } else { 
         const businessData = createBusinessDataForAnalysis();
         const strategicBooks = { part1: '', part2: '' };
 

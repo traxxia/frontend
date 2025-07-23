@@ -282,41 +282,28 @@ const ChatComponent = ({
   };
 
   const getCurrentQuestion = () => {
-    if (Object.keys(phases).length === 0) {
-      return null;
-    }
-    
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-    const answeredCount = Object.keys(userAnswers).length;
-    
-    if (pendingValidation) {
-      return pendingValidation.question;
-    }
-
-    if (phaseValidationPending) {
-      return null;
-    }
-    
-    const hasUnresolvedPhaseValidation = messages.some(msg => 
-      msg.type === 'bot' && 
-      msg.isPhaseValidation && 
-      !messages.some(userMsg => 
-        userMsg.type === 'user' && 
-        userMsg.questionId === msg.questionId &&
-        userMsg.timestamp > msg.timestamp
-      )
-    );
-    
-    if (hasUnresolvedPhaseValidation) {
-      return null;
-    }
-    
-    if (answeredCount < sortedQuestions.length) {
-      return sortedQuestions[answeredCount];
-    }
-    
+  if (Object.keys(phases).length === 0) return null;
+  
+  const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+  const answeredCount = Object.keys(userAnswers).length;
+  
+  if (pendingValidation) {
+    return pendingValidation.question;
+  }
+  
+  // Simple check: if we're waiting for phase validation response, don't show next question
+  if (phaseValidationPending) {
     return null;
-  };
+  }
+  
+  // Return next unanswered question
+  if (answeredCount < sortedQuestions.length) {
+    return sortedQuestions[answeredCount];
+  }
+  
+  return null;
+};
+
 
   const addMessage = (type, text, metadata = {}) => {
     if (type === 'bot' && metadata.questionId) {
@@ -490,112 +477,97 @@ const ChatComponent = ({
     };
   };
 
-  const proceedToNextQuestion = () => {
-    setPendingValidation(null);
-    
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-    const answeredCount = Object.keys(userAnswers).length;
-    
-    if (answeredCount < sortedQuestions.length) {
-      const nextQuestion = sortedQuestions[answeredCount];
-      
-      const questionAlreadyExists = messages.some(msg => 
-        msg.type === 'bot' && msg.questionId === nextQuestion.id && !msg.isFollowUp
-      );
-      
-      if (!questionAlreadyExists) {
-        addMessage('bot', nextQuestion.question, { 
-          questionId: nextQuestion.id,
-          phase: nextQuestion.phase,
-          severity: nextQuestion.severity
-        });
-      }
-    }
-  };
-
   // Dynamic handler for phase followup responses
   const handlePhaseFollowup = async (answer, currentPhaseBeingValidated) => {
-    // Add the followup answer to messages first
-    addMessage('user', answer, { 
-      questionId: `${currentPhaseBeingValidated}_phase_followup`,
-      phase: currentPhaseBeingValidated
+  addMessage('user', answer, { 
+    questionId: `${currentPhaseBeingValidated}_phase_followup`,
+    phase: currentPhaseBeingValidated
+  });
+  
+  setCurrentInput('');
+  
+  const phaseValidation = await validatePhaseWithML(currentPhaseBeingValidated, userAnswers);
+  
+  if (!phaseValidation.valid) {
+    addMessage('bot', phaseValidation.feedback || `I still need more specific information about the ${currentPhaseBeingValidated} phase. Can you elaborate further?`, {
+      questionId: `${currentPhaseBeingValidated}_phase_followup_2`,
+      isFollowUp: true,
+      phase: currentPhaseBeingValidated,
+      severity: 'mandatory',
+      isPhaseValidation: true
     });
-    
-    setCurrentInput('');
-    
-    // Use immediate state update callback instead of timeout
-    setMessages(prevMessages => {
-      const updatedMessages = [...prevMessages];
-      
-      // Process phase validation with updated messages
-      (async () => {
-        setIsValidatingPhase(true);
-        const phaseValidation = await validatePhaseWithML(currentPhaseBeingValidated, userAnswers);
-        
-        if (!phaseValidation.valid) {
-          addMessage('bot', phaseValidation.feedback || `I still need more specific information about the ${currentPhaseBeingValidated} phase. Can you elaborate further?`, {
-            questionId: `${currentPhaseBeingValidated}_phase_followup_2`,
-            isFollowUp: true,
-            phase: currentPhaseBeingValidated,
-            severity: 'mandatory',
-            isPhaseValidation: true
-          });
-          showToastMessage(`Please provide more specific details for the ${currentPhaseBeingValidated} phase.`, 'info');
-          setIsValidatingPhase(false);
-          return;
-        }
-        
-        // Phase validation passed
-        setPhaseValidationPending(false);
-        setIsValidatingPhase(false);
-        setCompletedPhases(prev => new Set([...prev, currentPhaseBeingValidated]));
-        
-        const phaseDisplayName = currentPhaseBeingValidated.charAt(0).toUpperCase() + currentPhaseBeingValidated.slice(1);
-        showToastMessage(`🎉 ${phaseDisplayName} phase completed successfully!`, 'success');
-        
-        if (currentPhaseBeingValidated === 'initial') {
-          generateAndShowAnalysis();
-        }
-        
-        proceedToNextQuestion();
-      })();
-      
-      return updatedMessages;
+    showToastMessage(`Please provide more specific details for the ${currentPhaseBeingValidated} phase.`, 'info');
+    return;
+  }
+  
+  // Phase validation passed
+  setPhaseValidationPending(false);
+  setCompletedPhases(prev => new Set([...prev, currentPhaseBeingValidated]));
+  
+  const phaseDisplayName = currentPhaseBeingValidated.charAt(0).toUpperCase() + currentPhaseBeingValidated.slice(1);
+  showToastMessage(`🎉 ${phaseDisplayName} phase completed successfully!`, 'success');
+  
+  if (currentPhaseBeingValidated === 'initial') {
+    generateAndShowAnalysis();
+  }
+  
+  // Directly add next question
+  const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+  const answeredCount = Object.keys(userAnswers).length;
+  
+  if (answeredCount < sortedQuestions.length) {
+    const nextQuestion = sortedQuestions[answeredCount];
+    addMessage('bot', nextQuestion.question, { 
+      questionId: nextQuestion.id,
+      phase: nextQuestion.phase,
+      severity: nextQuestion.severity
     });
-  };
+  }
+};
 
   // Dynamic handler for phase validation with updated messages
   const handlePhaseValidation = async (currentQuestion, answer, finalAnswer, updatedMessages) => {
-    setPhaseValidationPending(true);
+  setPhaseValidationPending(true);
+  
+  const phaseValidation = await validatePhaseWithML(currentQuestion.phase, userAnswers, updatedMessages);
+  
+  if (!phaseValidation.valid) {
+    addMessage('bot', phaseValidation.feedback || `I need more information to complete the ${currentQuestion.phase} phase. Can you provide additional details?`, {
+      questionId: `${currentQuestion.phase}_phase_followup`,
+      isFollowUp: true,
+      phase: currentQuestion.phase,
+      severity: 'mandatory',
+      isPhaseValidation: true
+    });
     
-    const phaseValidation = await validatePhaseWithML(currentQuestion.phase, userAnswers, updatedMessages);
-    
-    if (!phaseValidation.valid) {
-      addMessage('bot', phaseValidation.feedback || `I need more information to complete the ${currentQuestion.phase} phase. Can you provide additional details?`, {
-        questionId: `${currentQuestion.phase}_phase_followup`,
-        isFollowUp: true,
-        phase: currentQuestion.phase,
-        severity: 'mandatory',
-        isPhaseValidation: true
-      });
-      
-      showToastMessage(`Please provide additional details to complete the ${currentQuestion.phase} phase.`, 'info');
-      return;
-    }
-    
-    setPhaseValidationPending(false);
-    setCompletedPhases(prev => new Set([...prev, currentQuestion.phase]));
-    
-    const phaseDisplayName = currentQuestion.phase.charAt(0).toUpperCase() + currentQuestion.phase.slice(1);
-    showToastMessage(`🎉 ${phaseDisplayName} phase completed successfully!`, 'success');
-    
-    if (currentQuestion.phase === 'initial') {
-      generateAndShowAnalysis();
-    }
-    
-    proceedToNextQuestion();
-  };
-
+    showToastMessage(`Please provide additional details to complete the ${currentQuestion.phase} phase.`, 'info');
+    return;
+  }
+  
+  // Phase completed successfully
+  setPhaseValidationPending(false);
+  setCompletedPhases(prev => new Set([...prev, currentQuestion.phase]));
+  
+  const phaseDisplayName = currentQuestion.phase.charAt(0).toUpperCase() + currentQuestion.phase.slice(1);
+  showToastMessage(`🎉 ${phaseDisplayName} phase completed successfully!`, 'success');
+  
+  if (currentQuestion.phase === 'initial') {
+    generateAndShowAnalysis();
+  }
+  
+  // Directly add next question
+  const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+  const answeredCount = Object.keys(userAnswers).length;
+  
+  if (answeredCount < sortedQuestions.length) {
+    const nextQuestion = sortedQuestions[answeredCount];
+    addMessage('bot', nextQuestion.question, { 
+      questionId: nextQuestion.id,
+      phase: nextQuestion.phase,
+      severity: nextQuestion.severity
+    });
+  }
+};
   const handleSubmit = async () => {
     const currentQuestion = getCurrentQuestion();
 
