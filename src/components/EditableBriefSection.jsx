@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit3, Check, X } from 'lucide-react';
+import { Edit3, Check, X, Loader } from 'lucide-react';
 
-const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate }) => {
+const EditableBriefSection = ({ 
+  questions = [], 
+  userAnswers = {}, 
+  onAnswerUpdate,
+  // Add these new props
+  onAnalysisRegenerate,
+  isAnalysisRegenerating = false,
+  completedPhases = new Set() 
+}) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
   const [editedFields, setEditedFields] = useState(new Set());
+  const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   
   const inputRefs = useRef({});
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -37,6 +46,14 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
     setBriefFields(fields);
   };
 
+  const showToastMessage = (message, type = 'success') => {
+    setShowToast({ show: true, message, type });
+    
+    setTimeout(() => {
+      setShowToast({ show: false, message: '', type: 'success' });
+    }, 4000);
+  };
+
   const handleEdit = (field) => {
     setEditingField(field.key);
     
@@ -55,6 +72,7 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
     
     if (newValue.trim()) {
       try {
+        // Save to backend
         const token = getAuthToken();
         await fetch(`${API_BASE_URL}/api/answers/save`, {
           method: 'POST',
@@ -68,13 +86,29 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
           })
         });
 
+        // Update parent component with new answer
         if (onAnswerUpdate) {
           onAnswerUpdate(field.questionId, newValue.trim());
         }
 
         setEditedFields(prev => new Set([...prev, field.key]));
+        
+        // Show success message
+        showToastMessage('Answer updated successfully!', 'success');
+
+        // Check if initial phase is completed and trigger analysis regeneration
+        if (completedPhases.has('initial') && onAnalysisRegenerate) {
+          showToastMessage('Regenerating analysis with updated answers...', 'info');
+          
+          // Trigger analysis regeneration
+          setTimeout(() => {
+            onAnalysisRegenerate();
+          }, 500); // Small delay to ensure the answer update propagates
+        }
+
       } catch (error) {
         console.error('Error updating answer:', error);
+        showToastMessage('Failed to update answer. Please try again.', 'error');
       }
     }
     
@@ -105,6 +139,7 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
               className="edit-button"
               onClick={() => handleEdit(field)}
               type="button"
+              disabled={isAnalysisRegenerating}
             >
               <Edit3 size={14} />
             </button>
@@ -121,6 +156,7 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
               defaultValue={field.value || ''}
               onKeyDown={(e) => handleKeyPress(e, field)}
               placeholder={`Enter ${field.label.toLowerCase()}...`}
+              disabled={isAnalysisRegenerating}
               style={{ 
                 minHeight: '100px',
                 maxHeight: '200px',
@@ -132,13 +168,15 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
                 className="save-button"
                 onClick={() => handleSave(field)}
                 type="button"
+                disabled={isAnalysisRegenerating}
               >
-                <Check size={14} />
+                {isAnalysisRegenerating ? <Loader size={14} className="spinner" /> : <Check size={14} />}
               </button>
               <button
                 className="cancel-button"
                 onClick={handleCancel}
                 type="button"
+                disabled={isAnalysisRegenerating}
               >
                 <X size={14} />
               </button>
@@ -147,8 +185,8 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
         ) : (
           <p 
             className={`item-text ${isEmpty ? 'placeholder' : ''}`}
-            onClick={() => handleEdit(field)}
-            style={{ cursor: 'pointer' }}
+            onClick={() => !isAnalysisRegenerating && handleEdit(field)}
+            style={{ cursor: isAnalysisRegenerating ? 'not-allowed' : 'pointer' }}
           >
             {field.value || `Add ${field.label.toLowerCase()}...`}
             {isEdited && <span className="edited-indicator"> ✏️</span>}
@@ -160,6 +198,19 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
 
   return (
     <div className="brief-section">
+      {showToast.show && (
+        <div className={`simple-toast ${showToast.type}`}>
+          {showToast.message}
+        </div>
+      )}
+
+      {isAnalysisRegenerating && (
+        <div className="analysis-regenerating-banner">
+          <Loader size={16} className="spinner" />
+          <span>Regenerating analysis with updated answers...</span>
+        </div>
+      )}
+
       <div className="brief-content"> 
         <div className="brief-list">
           {briefFields.length > 0 ? (
@@ -177,6 +228,14 @@ const EditableBriefSection = ({ questions = [], userAnswers = {}, onAnswerUpdate
           <div className="brief-footer">
             <p className="brief-note">
               💡 Fields are automatically generated from your chat responses. Click any field to edit.
+              {completedPhases.has('initial') && (
+                <>
+                  <br />
+                  <span style={{ color: '#007bff', fontWeight: 'bold' }}>
+                    ⚡ Analysis will regenerate automatically when you update answers.
+                  </span>
+                </>
+              )}
             </p>
           </div>
         )}

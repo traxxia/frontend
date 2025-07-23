@@ -18,9 +18,9 @@ const BusinessSetupPage = () => {
   const [analysisResult, setAnalysisResult] = useState('');
   const [strategicAnalysisResult, setStrategicAnalysisResult] = useState('');
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   
-  // Questions will be received from ChatComponent
   const [questions, setQuestions] = useState([]);
   const [phases, setPhases] = useState({});
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
@@ -33,25 +33,19 @@ const BusinessSetupPage = () => {
     uniqueValue: ''
   });
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
   const { generateAnalysis } = useAnalysisData();
 
-  // Calculated values from questions and answers
+  // Calculated values
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(userAnswers).length;
   const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
 
-  // Phase management logic
+  // Phase management
   const PHASES = {
     INITIAL: 'initial',
     ESSENTIAL: 'essential', 
     GOOD: 'good',
     EXCELLENT: 'excellent'
-  };
-
-  const getQuestionsByPhase = (phase) => {
-    return questions.filter(q => q.phase === phase);
   };
 
   const getMandatoryQuestionsByPhase = (phase) => {
@@ -63,46 +57,21 @@ const BusinessSetupPage = () => {
     return mandatoryQuestions.every(q => userAnswers[q.id]);
   };
 
-  const getCurrentPhase = () => {
-    const phaseOrder = [PHASES.INITIAL, PHASES.ESSENTIAL, PHASES.GOOD, PHASES.EXCELLENT];
-    
-    for (let i = phaseOrder.length - 1; i >= 0; i--) {
-      if (isPhaseCompleted(phaseOrder[i])) {
-        return phaseOrder[i];
-      }
-    }
-    return PHASES.INITIAL;
-  };
-
   const getUnlockedFeatures = () => {
     const features = {
-      brief: true, // Always available
+      brief: true,
       analysis: false,
-      swot: false,
-      financial: false,
       strategic: false
     };
 
-    // Unlock analysis after initial phase
     if (isPhaseCompleted(PHASES.INITIAL)) {
       features.analysis = true;
-      features.swot = true;
-    }
-
-    // Unlock financial analysis after good phase
-    if (isPhaseCompleted(PHASES.GOOD)) {
-      features.financial = true;
-    }
-
-    // Unlock strategic analysis after excellent phase
-    if (isPhaseCompleted(PHASES.EXCELLENT)) {
       features.strategic = true;
     }
 
     return features;
   };
 
-  const currentPhase = getCurrentPhase();
   const unlockedFeatures = getUnlockedFeatures();
 
   useEffect(() => {
@@ -128,39 +97,6 @@ const BusinessSetupPage = () => {
     setQuestionsLoaded(true);
   };
 
-  const loadExistingAnalysis = async () => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/analysis/history?limit=1`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.analyses && data.analyses.length > 0) {
-          const analysisId = data.analyses[0]._id;
-          const analysisResponse = await fetch(`${API_BASE_URL}/api/analysis/${analysisId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (analysisResponse.ok) {
-            const analysisData = await analysisResponse.json();
-            setAnalysisResult(analysisData.analysis_result);
-          }
-        }
-      }
-    } catch (error) {
-      // Handle error silently
-    }
-  };
-
   const extractBusinessName = (text) => {
     const patterns = [
       /(?:we are|i am|this is|called|business is|company is)\s+([A-Z][a-zA-Z\s&.-]+?)(?:\.|,|$)/i,
@@ -176,19 +112,15 @@ const BusinessSetupPage = () => {
     return null;
   };
 
-  // Updated function without API call
   const handleBusinessDataUpdate = (updates) => {
     setBusinessData(prev => ({ ...prev, ...updates })); 
   };
 
   const handleNewAnswer = (questionId, answer) => {
-    setUserAnswers(prev => {
-      const newAnswers = {
-        ...prev,
-        [questionId]: answer
-      };
-      return newAnswers;
-    });
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
 
     const updates = {};
     if (questionId === 1) {
@@ -206,14 +138,18 @@ const BusinessSetupPage = () => {
     }
   };
 
-  // Add this new method to handle answer updates from EditableBriefSection
   const handleAnswerUpdate = (questionId, newAnswer) => { 
+    console.log('🔄 Updating answer for question', questionId, 'with:', newAnswer);
     
     // Update the userAnswers state immediately
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: newAnswer
-    }));
+    setUserAnswers(prev => {
+      const updated = {
+        ...prev,
+        [questionId]: newAnswer
+      };
+      console.log('📊 Updated userAnswers:', updated);
+      return updated;
+    });
 
     // Update business data if it's a relevant question
     const updates = {};
@@ -257,18 +193,75 @@ const BusinessSetupPage = () => {
     
     if (sortedQuestions[0] && userAnswers[sortedQuestions[0].id]) {
       const firstAnswer = userAnswers[sortedQuestions[0].id];
-      
-      const namePatterns = [
-        /(?:we are|i am|this is|called|business is|company is)\s+([A-Z][a-zA-Z\s&.-]+?)(?:\.|,|$)/i,
-        /^([A-Z][a-zA-Z\s&.-]+?)\s+(?:is|provides|offers|teaches)/i
-      ];
-      
-      for (const pattern of namePatterns) {
-        const match = firstAnswer.match(pattern);
-        if (match && match[1] && match[1].length <= 50) {
-          businessName = match[1].trim();
-          break;
+      const extractedName = extractBusinessName(firstAnswer);
+      if (extractedName) {
+        businessName = extractedName;
+      }
+    }
+
+    // Debug: Log all available questions and answers
+    console.log('🔍 All available questions:', sortedQuestions.length);
+    console.log('📝 All userAnswers keys:', Object.keys(userAnswers));
+    console.log('📊 UserAnswers content:', userAnswers);
+    
+    // Filter questions more carefully - ensure we include ALL answered questions
+    const questionsWithAnswers = sortedQuestions
+      .filter(question => {
+        const hasAnswer = userAnswers[question.id] && 
+                          typeof userAnswers[question.id] === 'string' && 
+                          userAnswers[question.id].trim() !== '';
+        
+        console.log(`Question ${question.id}: "${question.question}" - Has Answer: ${hasAnswer}`);
+        if (hasAnswer) {
+          console.log(`  Answer: "${userAnswers[question.id]}"`);
         }
+        
+        return hasAnswer;
+      })
+      .map(question => ({
+        question_id: question.id,
+        question_text: question.question,
+        title: question.question,
+        question: question.question,
+        question_type: 'open-ended',
+        type: 'open-ended',
+        phase: question.phase,
+        severity: question.severity,
+        placeholder: question.question,
+        nested: { question: question.question },
+        answer: {
+          description: userAnswers[question.id]
+        },
+        user_answer: {
+          answer: userAnswers[question.id]
+        },
+        answered: true
+      }));
+
+    console.log('✅ Final questions being sent to API:', questionsWithAnswers.length);
+    console.log('📋 Questions and answers for API:');
+    questionsWithAnswers.forEach((q, index) => {
+      console.log(`${index + 1}. Q${q.question_id}: "${q.question_text}"`);
+      console.log(`   Answer: "${q.answer.description}"`);
+    });
+
+    // Ensure we have exactly the number of questions we expect
+    const totalAnsweredQuestions = Object.keys(userAnswers).length;
+    if (questionsWithAnswers.length !== totalAnsweredQuestions) {
+      console.warn(`⚠️ Mismatch: Expected ${totalAnsweredQuestions} questions, but only ${questionsWithAnswers.length} passed filtering`);
+      
+      // Find missing questions
+      const includedQuestionIds = questionsWithAnswers.map(q => q.question_id);
+      const allAnsweredIds = Object.keys(userAnswers).map(id => parseInt(id));
+      const missingIds = allAnsweredIds.filter(id => !includedQuestionIds.includes(id));
+      
+      if (missingIds.length > 0) {
+        console.error('❌ Missing question IDs:', missingIds);
+        missingIds.forEach(id => {
+          const question = questions.find(q => q.id === id);
+          console.error(`  Missing Q${id}: "${question?.question || 'Unknown question'}"`);
+          console.error(`  Answer: "${userAnswers[id]}"`);
+        });
       }
     }
 
@@ -276,29 +269,9 @@ const BusinessSetupPage = () => {
       category_id: 1,
       category_name: 'Business Survey',
       name: 'Business Survey',
-      questions_answered: Object.keys(userAnswers).length,
+      questions_answered: questionsWithAnswers.length,
       total_questions: questions.length,
-      questions: sortedQuestions
-        .filter(question => userAnswers[question.id])
-        .map(question => ({
-          question_id: question.id,
-          question_text: question.question,
-          title: question.question,
-          question: question.question,
-          question_type: 'open-ended',
-          type: 'open-ended',
-          phase: question.phase,
-          severity: question.severity,
-          placeholder: question.question,
-          nested: { question: question.question },
-          answer: {
-            description: userAnswers[question.id]
-          },
-          user_answer: {
-            answer: userAnswers[question.id]
-          },
-          answered: true
-        }))
+      questions: questionsWithAnswers
     }];
 
     return {
@@ -316,7 +289,80 @@ const BusinessSetupPage = () => {
     };
   };
 
-  // Manual trigger for generating analyses
+  // Analysis regeneration function
+  const handleAnalysisRegeneration = async () => {
+    if (!isPhaseCompleted(PHASES.INITIAL)) {
+      showToastMessage('Initial phase must be completed to regenerate analysis.', 'warning');
+      return;
+    }
+
+    try {
+      setIsAnalysisRegenerating(true);
+      showToastMessage('Regenerating analysis with updated answers...', 'info');
+
+      // Small delay to ensure state has been updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const businessData = createBusinessDataForAnalysis();
+      const strategicBooks = { part1: '', part2: '' };
+
+      console.log('🚀 Starting analysis regeneration');
+      console.log('📊 Business data structure:', JSON.stringify(businessData, null, 2));
+      
+      // Debug the user prompt that will be sent to Groq
+      if (businessData.categories && businessData.categories[0] && businessData.categories[0].questions) {
+        let userQA = `Please analyze the following survey responses and provide insights:\n`;
+        businessData.categories[0].questions.forEach((question) => {
+          userQA += `<Question>${question.question_text || question.question}</Question>\n`;
+          userQA += `<Answer>${question.answer?.description || question.user_answer?.answer || 'No answer provided'}</Answer>\n\n`;
+        });
+        console.log('📝 User prompt that will be sent to Groq API:');
+        console.log(userQA);
+      }
+
+      // Generate SWOT analysis with updated data
+      const analysisResult = await generateAnalysis(
+        'swot',
+        'chatbot-session',
+        businessData,
+        strategicBooks,
+        true
+      );
+      
+      if (analysisResult && !analysisResult.startsWith('Error')) {
+        setAnalysisResult(analysisResult);
+        showToastMessage('📊 SWOT analysis regenerated successfully!', 'success');
+
+        // Generate strategic analysis with updated data
+        setTimeout(async () => {
+          const strategicResult = await generateAnalysis(
+            'strategic',
+            'chatbot-session-strategic',
+            businessData,
+            strategicBooks,
+            true
+          );
+          
+          if (strategicResult && !strategicResult.startsWith('Error')) {
+            setStrategicAnalysisResult(strategicResult);
+            showToastMessage('🎯 STRATEGIC analysis regenerated successfully!', 'success');
+          } else {
+            console.error('❌ Strategic analysis error:', strategicResult);
+          }
+        }, 2000);
+      } else {
+        console.error('❌ SWOT analysis error:', analysisResult);
+        showToastMessage('Failed to regenerate SWOT analysis. Please try again.', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error regenerating analysis:', error);
+      showToastMessage('Failed to regenerate analysis. Please try again.', 'error');
+    } finally {
+      setIsAnalysisRegenerating(false);
+    }
+  };
+
+  // Manual analysis generation
   const handleManualAnalysisGeneration = async () => {
     if (!isPhaseCompleted(PHASES.INITIAL)) {
       showToastMessage('Complete the initial phase to generate analysis.', 'warning');
@@ -327,50 +373,52 @@ const BusinessSetupPage = () => {
       setIsLoadingAnalysis(true);
       showToastMessage('Generating analysis...', 'info');
 
-      // Trigger analysis generation from ChatComponent
-      if (window.triggerChatAnalysis) { 
-        window.triggerChatAnalysis();
-      } else { 
-        const businessData = createBusinessDataForAnalysis();
-        const strategicBooks = { part1: '', part2: '' };
+      const businessData = createBusinessDataForAnalysis();
+      const strategicBooks = { part1: '', part2: '' };
 
-        // Generate SWOT analysis
-        const analysisResult = await generateAnalysis(
-          'swot',
-          'chatbot-session',
-          businessData,
-          strategicBooks,
-          true
-        );
-        
-        if (analysisResult && !analysisResult.startsWith('Error')) {
-          setAnalysisResult(analysisResult);
-          showToastMessage('📊 SWOT analysis generated successfully!', 'success');
+      // Generate SWOT analysis
+      const analysisResult = await generateAnalysis(
+        'swot',
+        'chatbot-session',
+        businessData,
+        strategicBooks,
+        true
+      );
+      
+      if (analysisResult && !analysisResult.startsWith('Error')) {
+        setAnalysisResult(analysisResult);
+        showToastMessage('📊 SWOT analysis generated successfully!', 'success');
 
-          // Generate strategic analysis
-          setTimeout(async () => {
-            const strategicResult = await generateAnalysis(
-              'strategic',
-              'chatbot-session-strategic',
-              businessData,
-              strategicBooks,
-              true
-            );
-            
-            if (strategicResult && !strategicResult.startsWith('Error')) {
-              setStrategicAnalysisResult(strategicResult);
-              showToastMessage('🎯 STRATEGIC analysis generated successfully!', 'success');
-            }
-          }, 2000);
-        }
+        // Generate strategic analysis
+        setTimeout(async () => {
+          const strategicResult = await generateAnalysis(
+            'strategic',
+            'chatbot-session-strategic',
+            businessData,
+            strategicBooks,
+            true
+          );
+          
+          if (strategicResult && !strategicResult.startsWith('Error')) {
+            setStrategicAnalysisResult(strategicResult);
+            showToastMessage('🎯 STRATEGIC analysis generated successfully!', 'success');
+          }
+        }, 2000);
       }
     } catch (error) {
-      console.error('Error generating analysis manually:', error);
+      console.error('Error generating analysis:', error);
       showToastMessage('Failed to generate analysis. Please try again.', 'error');
     } finally {
       setIsLoadingAnalysis(false);
     }
   };
+
+  // Get completed phases for the EditableBriefSection
+  const completedPhases = new Set();
+  if (isPhaseCompleted(PHASES.INITIAL)) completedPhases.add('initial');
+  if (isPhaseCompleted(PHASES.ESSENTIAL)) completedPhases.add('essential');
+  if (isPhaseCompleted(PHASES.GOOD)) completedPhases.add('good');
+  if (isPhaseCompleted(PHASES.EXCELLENT)) completedPhases.add('excellent');
 
   const handleBack = () => {
     window.history.back();
@@ -422,7 +470,7 @@ const BusinessSetupPage = () => {
               </button>
             )}
 
-            {unlockedFeatures.analysis && unlockedFeatures.strategic && (
+            {unlockedFeatures.strategic && (
               <button
                 className={`mobile-tab ${activeTab === 'strategic' ? 'active' : ''}`}
                 onClick={() => setActiveTab('strategic')}
@@ -493,7 +541,7 @@ const BusinessSetupPage = () => {
                   </button>
                 )}
 
-                {unlockedFeatures.analysis && unlockedFeatures.strategic && (
+                {unlockedFeatures.strategic && (
                   <button
                     className={`desktop-tab ${activeTab === 'strategic' ? 'active' : ''}`}
                     onClick={() => setActiveTab('strategic')}
@@ -512,7 +560,7 @@ const BusinessSetupPage = () => {
                       <h4>🔒 Unlock Business Analysis</h4>
                       <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
                     </div>
-                  )}<br></br>
+                  )}
 
                   {!isMobile && (
                     <div className="progress-area">
@@ -529,6 +577,9 @@ const BusinessSetupPage = () => {
                     businessData={businessData}
                     onBusinessDataUpdate={handleBusinessDataUpdate}
                     onAnswerUpdate={handleAnswerUpdate}
+                    onAnalysisRegenerate={handleAnalysisRegeneration}
+                    isAnalysisRegenerating={isAnalysisRegenerating}
+                    completedPhases={completedPhases}
                   /> 
                 </div>
               )}
@@ -536,10 +587,15 @@ const BusinessSetupPage = () => {
               {activeTab === 'analysis' && unlockedFeatures.analysis && (
                 <div className="analysis-section">
                   <div className="analysis-content">
-                    {isLoadingAnalysis ? (
+                    {isLoadingAnalysis || isAnalysisRegenerating ? (
                       <div className="analysis-loading">
                         <Loader size={24} className="spinner" />
-                        <span>Generating your business analysis...</span>
+                        <span>
+                          {isAnalysisRegenerating 
+                            ? 'Regenerating your business analysis...' 
+                            : 'Generating your business analysis...'
+                          }
+                        </span>
                       </div>
                     ) : analysisResult ? (
                       <SwotAnalysis analysisResult={analysisResult} />
@@ -562,13 +618,18 @@ const BusinessSetupPage = () => {
                 </div>
               )}
 
-              {activeTab === 'strategic' && unlockedFeatures.analysis && unlockedFeatures.strategic && (
+              {activeTab === 'strategic' && unlockedFeatures.strategic && (
                 <div className="strategic-section">
                   <div className="strategic-content">
-                    {isLoadingAnalysis ? (
+                    {isLoadingAnalysis || isAnalysisRegenerating ? (
                       <div className="strategic-loading">
                         <Loader size={24} className="spinner" />
-                        <span>Generating your strategic analysis...</span>
+                        <span>
+                          {isAnalysisRegenerating 
+                            ? 'Regenerating your strategic analysis...' 
+                            : 'Generating your strategic analysis...'
+                          }
+                        </span>
                       </div>
                     ) : strategicAnalysisResult ? (
                       <StrategicAcronym analysisResult={strategicAnalysisResult} />
@@ -599,7 +660,7 @@ const BusinessSetupPage = () => {
                     Complete all initial phase questions to unlock your business analysis.
                   </p>
                   <p className="progress-info">
-                    Current Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions}) • Phase: {currentPhase.toUpperCase()}
+                    Current Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})
                   </p>
                 </div>
               )}

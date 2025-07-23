@@ -122,37 +122,24 @@ const AnalysisRenderer = ({
   }
 
   const renderAnalysisComponent = () => {
-    try {
-      console.log('Rendering analysis component for type:', selectedAnalysisType);
-      
+    try {      
       switch (selectedAnalysisType) {
-        case 'swot':
-          console.log('Rendering SwotAnalysis');
-          // DON'T pass t prop - component handles translations internally
+        case 'swot':  
           return <SwotAnalysis analysisResult={analysisResult} />;
           
-        case 'porter':
-          console.log('Rendering PorterMatrix');
-          // DON'T pass t prop - component handles translations internally
+        case 'porter':  
           return <PorterMatrix porterText={analysisResult} />;
           
-        case 'bcg':
-          console.log('Rendering BCGMatrix');
-          // DON'T pass t prop - component handles translations internally
+        case 'bcg': 
           return <BCGMatrix analysisResult={analysisResult} />;
           
-        case 'valuechain':
-          console.log('Rendering ValueChainMatrix');
-          // DON'T pass t prop - component handles translations internally
+        case 'valuechain': 
           return <ValueChainMatrix analysisResult={analysisResult} />;
           
-        case 'strategic':
-          console.log('Rendering StrategicAcronym');
-          // DON'T pass t prop - component handles translations internally
+        case 'strategic': 
           return <StrategicAcronym analysisResult={analysisResult} />;
           
-        default:
-          console.log('Rendering default analysis view');
+        default: 
           const analysisDisplayName = getAnalysisDisplayName(selectedAnalysisType);
           
           return (
