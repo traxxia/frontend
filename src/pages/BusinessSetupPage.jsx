@@ -6,6 +6,7 @@ import StrategicAcronym from "../components/StrategicAcronym";
 import "../styles/businesspage.css"; 
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
+import { useAnalysisData } from "../hooks/useAnalysisData";
 
 const BusinessSetupPage = () => {
   const [activeTab, setActiveTab] = useState(() => {
@@ -17,6 +18,7 @@ const BusinessSetupPage = () => {
   const [analysisResult, setAnalysisResult] = useState('');
   const [strategicAnalysisResult, setStrategicAnalysisResult] = useState('');
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   
   // Questions will be received from ChatComponent
   const [questions, setQuestions] = useState([]);
@@ -33,6 +35,7 @@ const BusinessSetupPage = () => {
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
+  const { generateAnalysis } = useAnalysisData();
 
   // Calculated values from questions and answers
   const totalQuestions = questions.length;
@@ -174,23 +177,9 @@ const BusinessSetupPage = () => {
     return null;
   };
 
-  const handleBusinessDataUpdate = async (updates) => {
-    setBusinessData(prev => ({ ...prev, ...updates }));
-
-    try {
-      const token = getAuthToken();
-
-      await fetch(`${API_BASE_URL}/api/business-data/update`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates)
-      });
-    } catch (error) {
-      // Handle error silently
-    }
+  // Updated function without API call
+  const handleBusinessDataUpdate = (updates) => {
+    setBusinessData(prev => ({ ...prev, ...updates })); 
   };
 
   const handleNewAnswer = (questionId, answer) => {
@@ -218,14 +207,176 @@ const BusinessSetupPage = () => {
     }
   };
 
+  // Add this new method to handle answer updates from EditableBriefSection
+  const handleAnswerUpdate = (questionId, newAnswer) => {
+    console.log('📝 BusinessSetupPage: Updating answer for question', questionId, 'with:', newAnswer.substring(0, 50));
+    
+    // Update the userAnswers state immediately
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: newAnswer
+    }));
+
+    // Update business data if it's a relevant question
+    const updates = {};
+    if (questionId === 1) {
+      const businessName = extractBusinessName(newAnswer);
+      if (businessName) updates.name = businessName;
+      updates.whatWeDo = newAnswer;
+    } else if (questionId === 3) {
+      updates.targetAudience = newAnswer;
+    } else if (questionId === 4) {
+      updates.products = newAnswer;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setBusinessData(prev => ({ ...prev, ...updates }));
+    }
+  };
+
   const handleAnalysisGenerated = (analysis) => {
+    console.log('📊 BusinessSetupPage: SWOT analysis received from ChatComponent');
     setAnalysisResult(analysis);
     setIsLoadingAnalysis(false);
   };
 
   const handleStrategicAnalysisGenerated = (strategicAnalysis) => {
+    console.log('🎯 BusinessSetupPage: Strategic analysis received from ChatComponent');
     setStrategicAnalysisResult(strategicAnalysis);
     setIsLoadingAnalysis(false);
+  };
+
+  const showToastMessage = (message, type = 'success') => {
+    setShowToast({ show: true, message, type });
+    
+    setTimeout(() => {
+      setShowToast({ show: false, message: '', type: 'success' });
+    }, 4000);
+  };
+
+  const createBusinessDataForAnalysis = () => {
+    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+    
+    let businessName = 'Your Business';
+    
+    if (sortedQuestions[0] && userAnswers[sortedQuestions[0].id]) {
+      const firstAnswer = userAnswers[sortedQuestions[0].id];
+      
+      const namePatterns = [
+        /(?:we are|i am|this is|called|business is|company is)\s+([A-Z][a-zA-Z\s&.-]+?)(?:\.|,|$)/i,
+        /^([A-Z][a-zA-Z\s&.-]+?)\s+(?:is|provides|offers|teaches)/i
+      ];
+      
+      for (const pattern of namePatterns) {
+        const match = firstAnswer.match(pattern);
+        if (match && match[1] && match[1].length <= 50) {
+          businessName = match[1].trim();
+          break;
+        }
+      }
+    }
+
+    const categories = [{
+      category_id: 1,
+      category_name: 'Business Survey',
+      name: 'Business Survey',
+      questions_answered: Object.keys(userAnswers).length,
+      total_questions: questions.length,
+      questions: sortedQuestions
+        .filter(question => userAnswers[question.id])
+        .map(question => ({
+          question_id: question.id,
+          question_text: question.question,
+          title: question.question,
+          question: question.question,
+          question_type: 'open-ended',
+          type: 'open-ended',
+          phase: question.phase,
+          severity: question.severity,
+          placeholder: question.question,
+          nested: { question: question.question },
+          answer: {
+            description: userAnswers[question.id]
+          },
+          user_answer: {
+            answer: userAnswers[question.id]
+          },
+          answered: true
+        }))
+    }];
+
+    return {
+      id: 'chatbot-session',
+      name: businessName,
+      totalQuestions: questions.length,
+      categories: categories,
+      user: {
+        name: businessName,
+        company: businessName
+      },
+      survey: {
+        total_questions: questions.length
+      }
+    };
+  };
+
+  // Manual trigger for generating analyses
+  const handleManualAnalysisGeneration = async () => {
+    if (!isPhaseCompleted(PHASES.INITIAL)) {
+      showToastMessage('Complete the initial phase to generate analysis.', 'warning');
+      return;
+    }
+
+    try {
+      setIsLoadingAnalysis(true);
+      showToastMessage('Generating analysis...', 'info');
+
+      // Trigger analysis generation from ChatComponent
+      if (window.triggerChatAnalysis) {
+        console.log('🔄 Triggering analysis via ChatComponent...');
+        window.triggerChatAnalysis();
+      } else {
+        // Fallback: generate analysis directly
+        console.log('🔄 Generating analysis directly as fallback...');
+        const businessData = createBusinessDataForAnalysis();
+        const strategicBooks = { part1: '', part2: '' };
+
+        // Generate SWOT analysis
+        const analysisResult = await generateAnalysis(
+          'swot',
+          'chatbot-session',
+          businessData,
+          strategicBooks,
+          true
+        );
+        
+        if (analysisResult && !analysisResult.startsWith('Error')) {
+          setAnalysisResult(analysisResult);
+          showToastMessage('📊 SWOT analysis generated successfully!', 'success');
+
+          // Generate strategic analysis
+          setTimeout(async () => {
+            const strategicResult = await generateAnalysis(
+              'strategic',
+              'chatbot-session-strategic',
+              businessData,
+              strategicBooks,
+              true
+            );
+            
+            if (strategicResult && !strategicResult.startsWith('Error')) {
+              setStrategicAnalysisResult(strategicResult);
+              showToastMessage('🎯 STRATEGIC analysis generated successfully!', 'success');
+            }
+          }, 2000);
+        }
+      }
+    } catch (error) {
+      console.error('Error generating analysis manually:', error);
+      showToastMessage('Failed to generate analysis. Please try again.', 'error');
+    } finally {
+      setIsLoadingAnalysis(false);
+    }
   };
 
   const handleBack = () => {
@@ -235,6 +386,12 @@ const BusinessSetupPage = () => {
   return (
     <div className="business-setup-container">
       <MenuBar />
+
+      {showToast.show && (
+        <div className={`simple-toast ${showToast.type}`}>
+          {showToast.message}
+        </div>
+      )}
 
       <div className="sub-header">
         <div className="sub-header-content">
@@ -378,6 +535,7 @@ const BusinessSetupPage = () => {
                     userAnswers={userAnswers}
                     businessData={businessData}
                     onBusinessDataUpdate={handleBusinessDataUpdate}
+                    onAnswerUpdate={handleAnswerUpdate}
                   /> 
                 </div>
               )}
@@ -391,11 +549,20 @@ const BusinessSetupPage = () => {
                         <span>Generating your business analysis...</span>
                       </div>
                     ) : analysisResult ? (
-                        <SwotAnalysis analysisResult={analysisResult} />
+                      <SwotAnalysis analysisResult={analysisResult} />
                     ) : (
                       <div className="analysis-empty">
                         <p>Your SWOT analysis will appear here once generated.</p>
                         <p>Continue the conversation to trigger analysis generation.</p>
+                        {isPhaseCompleted(PHASES.INITIAL) && (
+                          <button 
+                            className="generate-analysis-btn"
+                            onClick={handleManualAnalysisGeneration}
+                            disabled={isLoadingAnalysis}
+                          >
+                            {isLoadingAnalysis ? 'Generating...' : 'Generate Analysis Now'}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -416,6 +583,15 @@ const BusinessSetupPage = () => {
                       <div className="strategic-empty">
                         <p>Your STRATEGIC analysis will appear here once generated.</p>
                         <p>Continue the conversation to trigger analysis generation.</p>
+                        {isPhaseCompleted(PHASES.INITIAL) && (
+                          <button 
+                            className="generate-analysis-btn"
+                            onClick={handleManualAnalysisGeneration}
+                            disabled={isLoadingAnalysis}
+                          >
+                            {isLoadingAnalysis ? 'Generating...' : 'Generate Strategic Analysis Now'}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
