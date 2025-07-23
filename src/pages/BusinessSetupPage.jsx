@@ -21,6 +21,10 @@ const BusinessSetupPage = () => {
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   
+  // New state for slide effect
+  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
+  const [isSliding, setIsSliding] = useState(false);
+  
   const [questions, setQuestions] = useState([]);
   const [phases, setPhases] = useState({});
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
@@ -90,6 +94,61 @@ const BusinessSetupPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [activeTab]);
 
+  // Handle analysis tab click with slide effect
+  const handleAnalysisTabClick = () => {
+    if (!unlockedFeatures.analysis) return;
+    
+    if (isMobile) {
+      setActiveTab('analysis');
+    } else {
+      if (!isAnalysisExpanded) {
+        // Expand to full screen
+        setIsSliding(true);
+        setIsAnalysisExpanded(true);
+        setActiveTab('analysis');
+        
+        // Animation duration should match CSS transition
+        setTimeout(() => {
+          setIsSliding(false);
+        }, 1000);
+      }
+    }
+  };
+
+  // Handle strategic tab click with slide effect
+  const handleStrategicTabClick = () => {
+    if (!unlockedFeatures.strategic) return;
+    
+    if (isMobile) {
+      setActiveTab('strategic');
+    } else {
+      if (!isAnalysisExpanded) {
+        // Expand to full screen
+        setIsSliding(true);
+        setIsAnalysisExpanded(true);
+        setActiveTab('strategic');
+        
+        // Animation duration should match CSS transition
+        setTimeout(() => {
+          setIsSliding(false);
+        }, 1000);
+      }
+    }
+  };
+
+  // Handle back from expanded analysis
+  const handleBackFromAnalysis = () => {
+    if (isAnalysisExpanded) {
+      setIsSliding(true);
+      setIsAnalysisExpanded(false);
+      setActiveTab('brief'); // Return to brief tab
+      
+      setTimeout(() => {
+        setIsSliding(false);
+      }, 1000);
+    }
+  };
+
   // Callback when ChatComponent loads questions
   const handleQuestionsLoaded = (loadedQuestions, loadedPhases) => { 
     setQuestions(loadedQuestions);
@@ -138,20 +197,16 @@ const BusinessSetupPage = () => {
     }
   };
 
-  const handleAnswerUpdate = (questionId, newAnswer) => { 
-    console.log('🔄 Updating answer for question', questionId, 'with:', newAnswer);
+  const handleAnswerUpdate = (questionId, newAnswer) => {  
     
-    // Update the userAnswers state immediately
     setUserAnswers(prev => {
       const updated = {
         ...prev,
         [questionId]: newAnswer
-      };
-      console.log('📊 Updated userAnswers:', updated);
+      }; 
       return updated;
     });
 
-    // Update business data if it's a relevant question
     const updates = {};
     if (questionId === 1) {
       const businessName = extractBusinessName(newAnswer);
@@ -197,24 +252,14 @@ const BusinessSetupPage = () => {
       if (extractedName) {
         businessName = extractedName;
       }
-    }
-
-    // Debug: Log all available questions and answers
-    console.log('🔍 All available questions:', sortedQuestions.length);
-    console.log('📝 All userAnswers keys:', Object.keys(userAnswers));
-    console.log('📊 UserAnswers content:', userAnswers);
+    } 
     
-    // Filter questions more carefully - ensure we include ALL answered questions
     const questionsWithAnswers = sortedQuestions
       .filter(question => {
         const hasAnswer = userAnswers[question.id] && 
                           typeof userAnswers[question.id] === 'string' && 
                           userAnswers[question.id].trim() !== '';
-        
-        console.log(`Question ${question.id}: "${question.question}" - Has Answer: ${hasAnswer}`);
-        if (hasAnswer) {
-          console.log(`  Answer: "${userAnswers[question.id]}"`);
-        }
+         
         
         return hasAnswer;
       })
@@ -237,32 +282,11 @@ const BusinessSetupPage = () => {
         },
         answered: true
       }));
+ 
 
-    console.log('✅ Final questions being sent to API:', questionsWithAnswers.length);
-    console.log('📋 Questions and answers for API:');
-    questionsWithAnswers.forEach((q, index) => {
-      console.log(`${index + 1}. Q${q.question_id}: "${q.question_text}"`);
-      console.log(`   Answer: "${q.answer.description}"`);
-    });
-
-    // Ensure we have exactly the number of questions we expect
     const totalAnsweredQuestions = Object.keys(userAnswers).length;
     if (questionsWithAnswers.length !== totalAnsweredQuestions) {
       console.warn(`⚠️ Mismatch: Expected ${totalAnsweredQuestions} questions, but only ${questionsWithAnswers.length} passed filtering`);
-      
-      // Find missing questions
-      const includedQuestionIds = questionsWithAnswers.map(q => q.question_id);
-      const allAnsweredIds = Object.keys(userAnswers).map(id => parseInt(id));
-      const missingIds = allAnsweredIds.filter(id => !includedQuestionIds.includes(id));
-      
-      if (missingIds.length > 0) {
-        console.error('❌ Missing question IDs:', missingIds);
-        missingIds.forEach(id => {
-          const question = questions.find(q => q.id === id);
-          console.error(`  Missing Q${id}: "${question?.question || 'Unknown question'}"`);
-          console.error(`  Answer: "${userAnswers[id]}"`);
-        });
-      }
     }
 
     const categories = [{
@@ -300,27 +324,11 @@ const BusinessSetupPage = () => {
       setIsAnalysisRegenerating(true);
       showToastMessage('Regenerating analysis with updated answers...', 'info');
 
-      // Small delay to ensure state has been updated
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const businessData = createBusinessDataForAnalysis();
       const strategicBooks = { part1: '', part2: '' };
 
-      console.log('🚀 Starting analysis regeneration');
-      console.log('📊 Business data structure:', JSON.stringify(businessData, null, 2));
-      
-      // Debug the user prompt that will be sent to Groq
-      if (businessData.categories && businessData.categories[0] && businessData.categories[0].questions) {
-        let userQA = `Please analyze the following survey responses and provide insights:\n`;
-        businessData.categories[0].questions.forEach((question) => {
-          userQA += `<Question>${question.question_text || question.question}</Question>\n`;
-          userQA += `<Answer>${question.answer?.description || question.user_answer?.answer || 'No answer provided'}</Answer>\n\n`;
-        });
-        console.log('📝 User prompt that will be sent to Groq API:');
-        console.log(userQA);
-      }
-
-      // Generate SWOT analysis with updated data
       const analysisResult = await generateAnalysis(
         'swot',
         'chatbot-session',
@@ -333,7 +341,6 @@ const BusinessSetupPage = () => {
         setAnalysisResult(analysisResult);
         showToastMessage('📊 SWOT analysis regenerated successfully!', 'success');
 
-        // Generate strategic analysis with updated data
         setTimeout(async () => {
           const strategicResult = await generateAnalysis(
             'strategic',
@@ -376,7 +383,6 @@ const BusinessSetupPage = () => {
       const businessData = createBusinessDataForAnalysis();
       const strategicBooks = { part1: '', part2: '' };
 
-      // Generate SWOT analysis
       const analysisResult = await generateAnalysis(
         'swot',
         'chatbot-session',
@@ -389,7 +395,6 @@ const BusinessSetupPage = () => {
         setAnalysisResult(analysisResult);
         showToastMessage('📊 SWOT analysis generated successfully!', 'success');
 
-        // Generate strategic analysis
         setTimeout(async () => {
           const strategicResult = await generateAnalysis(
             'strategic',
@@ -464,7 +469,7 @@ const BusinessSetupPage = () => {
             {unlockedFeatures.analysis && (
               <button
                 className={`mobile-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-                onClick={() => setActiveTab('analysis')}
+                onClick={handleAnalysisTabClick}
               >
                 Analysis
               </button>
@@ -473,7 +478,7 @@ const BusinessSetupPage = () => {
             {unlockedFeatures.strategic && (
               <button
                 className={`mobile-tab ${activeTab === 'strategic' ? 'active' : ''}`}
-                onClick={() => setActiveTab('strategic')}
+                onClick={handleStrategicTabClick}
               >
                 S.T.R.A.T.E.G.I.C
               </button>
@@ -496,8 +501,8 @@ const BusinessSetupPage = () => {
         </>
       )}
 
-      <div className="main-container">
-        <div className={`chat-section ${isMobile && activeTab !== 'chat' ? 'hidden' : ''}`}>
+      <div className={`main-container ${isAnalysisExpanded && !isMobile ? 'analysis-expanded' : ''} ${isSliding ? 'sliding' : ''}`}>
+        <div className={`chat-section ${isMobile && activeTab !== 'chat' ? 'hidden' : ''} ${isAnalysisExpanded && !isMobile ? 'slide-out' : ''}`}>
           <div className="welcome-area">
             <div className="logo-circle">
               <div className="dots-grid">
@@ -522,8 +527,118 @@ const BusinessSetupPage = () => {
         </div>
 
         {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (activeTab === 'brief' || activeTab === 'analysis' || activeTab === 'strategic' ? 'active' : '') : ''}`}>
-            {!isMobile && (
+          <div className={`info-panel ${isMobile ? (activeTab === 'brief' || activeTab === 'analysis' || activeTab === 'strategic' ? 'active' : '') : ''} ${isAnalysisExpanded && !isMobile ? 'expanded' : ''}`}>
+            {/* Desktop Analysis Expanded View */}
+            {!isMobile && isAnalysisExpanded && (
+              <div className="desktop-expanded-analysis">
+                <div className="expanded-analysis-view">
+                  {/* Use same header structure as normal view */}
+                  <div className="desktop-tabs">
+                    <button
+                      className="desktop-tab"
+                      onClick={handleBackFromAnalysis}
+                      disabled={isSliding}
+                    >
+                      ← Back to Overview
+                    </button>
+
+                    {unlockedFeatures.analysis && (
+                      <button
+                        className={`desktop-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('analysis')}
+                      >
+                        Analysis
+                      </button>
+                    )}
+
+                    {unlockedFeatures.strategic && (
+                      <button
+                        className={`desktop-tab ${activeTab === 'strategic' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('strategic')}
+                      >
+                        S.T.R.A.T.E.G.I.C
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="expanded-analysis-content">
+                    <div className="expanded-analysis-main">
+                      {activeTab === 'analysis' && (
+                        <div className="analysis-section">
+                          <div className="analysis-content">
+                            {isLoadingAnalysis || isAnalysisRegenerating ? (
+                              <div className="analysis-loading">
+                                <Loader size={24} className="spinner" />
+                                <span>
+                                  {isAnalysisRegenerating 
+                                    ? 'Regenerating your business analysis...' 
+                                    : 'Generating your business analysis...'
+                                  }
+                                </span>
+                              </div>
+                            ) : analysisResult ? (
+                              <SwotAnalysis analysisResult={analysisResult} />
+                            ) : (
+                              <div className="analysis-empty">
+                                <p>Your SWOT analysis will appear here once generated.</p>
+                                <p>Continue the conversation to trigger analysis generation.</p>
+                                {isPhaseCompleted(PHASES.INITIAL) && (
+                                  <button 
+                                    className="generate-analysis-btn"
+                                    onClick={handleManualAnalysisGeneration}
+                                    disabled={isLoadingAnalysis}
+                                  >
+                                    {isLoadingAnalysis ? 'Generating...' : 'Generate Analysis Now'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === 'strategic' && (
+                        <div className="strategic-section">
+                          <div className="strategic-content">
+                            {isLoadingAnalysis || isAnalysisRegenerating ? (
+                              <div className="strategic-loading">
+                                <Loader size={24} className="spinner" />
+                                <span>
+                                  {isAnalysisRegenerating 
+                                    ? 'Regenerating your strategic analysis...' 
+                                    : 'Generating your strategic analysis...'
+                                  }
+                                </span>
+                              </div>
+                            ) : strategicAnalysisResult ? (
+                              <StrategicAcronym analysisResult={strategicAnalysisResult} />
+                            ) : (
+                              <div className="strategic-empty">
+                                <p>Your STRATEGIC analysis will appear here once generated.</p>
+                                <p>Continue the conversation to trigger analysis generation.</p>
+                                {isPhaseCompleted(PHASES.INITIAL) && (
+                                  <button 
+                                    className="generate-analysis-btn"
+                                    onClick={handleManualAnalysisGeneration}
+                                    disabled={isLoadingAnalysis}
+                                  >
+                                    {isLoadingAnalysis ? 'Generating...' : 'Generate Strategic Analysis Now'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Normal Desktop Tabs */}
+            {!isMobile && !isAnalysisExpanded && (
               <div className="desktop-tabs">
                 <button
                   className={`desktop-tab ${activeTab === 'brief' ? 'active' : ''}`}
@@ -535,7 +650,7 @@ const BusinessSetupPage = () => {
                 {unlockedFeatures.analysis && (
                   <button
                     className={`desktop-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('analysis')}
+                    onClick={handleAnalysisTabClick}
                   >
                     Analysis
                   </button>
@@ -544,7 +659,7 @@ const BusinessSetupPage = () => {
                 {unlockedFeatures.strategic && (
                   <button
                     className={`desktop-tab ${activeTab === 'strategic' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('strategic')}
+                    onClick={handleStrategicTabClick}
                   >
                     S.T.R.A.T.E.G.I.C
                   </button>
@@ -552,122 +667,125 @@ const BusinessSetupPage = () => {
               </div>
             )}
 
-            <div className="info-panel-content">
-              {activeTab === 'brief' && (
-                <div className="brief-section">
-                  {!unlockedFeatures.analysis && (
-                    <div className="unlock-hint">
-                      <h4>🔒 Unlock Business Analysis</h4>
-                      <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
-                    </div>
-                  )}
-
-                  {!isMobile && (
-                    <div className="progress-area">
-                      <div className="progress-label">Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})</div>
-                      <div className="progress-track">
-                        <div className="progress-fill" style={{ width: `${actualProgress}%` }}></div>
-                      </div>
-                    </div>
-                  )}
-
-                  <EditableBriefSection
-                    questions={questions}
-                    userAnswers={userAnswers}
-                    businessData={businessData}
-                    onBusinessDataUpdate={handleBusinessDataUpdate}
-                    onAnswerUpdate={handleAnswerUpdate}
-                    onAnalysisRegenerate={handleAnalysisRegeneration}
-                    isAnalysisRegenerating={isAnalysisRegenerating}
-                    completedPhases={completedPhases}
-                  /> 
-                </div>
-              )}
-
-              {activeTab === 'analysis' && unlockedFeatures.analysis && (
-                <div className="analysis-section">
-                  <div className="analysis-content">
-                    {isLoadingAnalysis || isAnalysisRegenerating ? (
-                      <div className="analysis-loading">
-                        <Loader size={24} className="spinner" />
-                        <span>
-                          {isAnalysisRegenerating 
-                            ? 'Regenerating your business analysis...' 
-                            : 'Generating your business analysis...'
-                          }
-                        </span>
-                      </div>
-                    ) : analysisResult ? (
-                      <SwotAnalysis analysisResult={analysisResult} />
-                    ) : (
-                      <div className="analysis-empty">
-                        <p>Your SWOT analysis will appear here once generated.</p>
-                        <p>Continue the conversation to trigger analysis generation.</p>
-                        {isPhaseCompleted(PHASES.INITIAL) && (
-                          <button 
-                            className="generate-analysis-btn"
-                            onClick={handleManualAnalysisGeneration}
-                            disabled={isLoadingAnalysis}
-                          >
-                            {isLoadingAnalysis ? 'Generating...' : 'Generate Analysis Now'}
-                          </button>
-                        )}
+            {/* Normal Info Panel Content */}
+            {(!isAnalysisExpanded || isMobile) && (
+              <div className="info-panel-content">
+                {activeTab === 'brief' && (
+                  <div className="brief-section">
+                    {!unlockedFeatures.analysis && (
+                      <div className="unlock-hint">
+                        <h4>🔒 Unlock Business Analysis</h4>
+                        <p>Complete all initial phase questions to unlock SWOT analysis and strategic insights!</p>
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
 
-              {activeTab === 'strategic' && unlockedFeatures.strategic && (
-                <div className="strategic-section">
-                  <div className="strategic-content">
-                    {isLoadingAnalysis || isAnalysisRegenerating ? (
-                      <div className="strategic-loading">
-                        <Loader size={24} className="spinner" />
-                        <span>
-                          {isAnalysisRegenerating 
-                            ? 'Regenerating your strategic analysis...' 
-                            : 'Generating your strategic analysis...'
-                          }
-                        </span>
-                      </div>
-                    ) : strategicAnalysisResult ? (
-                      <StrategicAcronym analysisResult={strategicAnalysisResult} />
-                    ) : (
-                      <div className="strategic-empty">
-                        <p>Your STRATEGIC analysis will appear here once generated.</p>
-                        <p>Continue the conversation to trigger analysis generation.</p>
-                        {isPhaseCompleted(PHASES.INITIAL) && (
-                          <button 
-                            className="generate-analysis-btn"
-                            onClick={handleManualAnalysisGeneration}
-                            disabled={isLoadingAnalysis}
-                          >
-                            {isLoadingAnalysis ? 'Generating...' : 'Generate Strategic Analysis Now'}
-                          </button>
-                        )}
+                    {!isMobile && (
+                      <div className="progress-area">
+                        <div className="progress-label">Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})</div>
+                        <div className="progress-track">
+                          <div className="progress-fill" style={{ width: `${actualProgress}%` }}></div>
+                        </div>
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
 
-              {activeTab === 'analysis' && !unlockedFeatures.analysis && (
-                <div className="locked-analysis">
-                  <div className="lock-icon">🔒</div>
-                  <h3>Analysis Locked</h3>
-                  <p className="description">
-                    Complete all initial phase questions to unlock your business analysis.
-                  </p>
-                  <p className="progress-info">
-                    Current Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})
-                  </p>
-                </div>
-              )}
-            </div>
+                    <EditableBriefSection
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessData={businessData}
+                      onBusinessDataUpdate={handleBusinessDataUpdate}
+                      onAnswerUpdate={handleAnswerUpdate}
+                      onAnalysisRegenerate={handleAnalysisRegeneration}
+                      isAnalysisRegenerating={isAnalysisRegenerating}
+                      completedPhases={completedPhases}
+                    /> 
+                  </div>
+                )}
+
+                {activeTab === 'analysis' && unlockedFeatures.analysis && (
+                  <div className="analysis-section">
+                    <div className="analysis-content">
+                      {isLoadingAnalysis || isAnalysisRegenerating ? (
+                        <div className="analysis-loading">
+                          <Loader size={24} className="spinner" />
+                          <span>
+                            {isAnalysisRegenerating 
+                              ? 'Regenerating your business analysis...' 
+                              : 'Generating your business analysis...'
+                            }
+                          </span>
+                        </div>
+                      ) : analysisResult ? (
+                        <SwotAnalysis analysisResult={analysisResult} />
+                      ) : (
+                        <div className="analysis-empty">
+                          <p>Your SWOT analysis will appear here once generated.</p>
+                          <p>Continue the conversation to trigger analysis generation.</p>
+                          {isPhaseCompleted(PHASES.INITIAL) && (
+                            <button 
+                              className="generate-analysis-btn"
+                              onClick={handleManualAnalysisGeneration}
+                              disabled={isLoadingAnalysis}
+                            >
+                              {isLoadingAnalysis ? 'Generating...' : 'Generate Analysis Now'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'strategic' && unlockedFeatures.strategic && (
+                  <div className="strategic-section">
+                    <div className="strategic-content">
+                      {isLoadingAnalysis || isAnalysisRegenerating ? (
+                        <div className="strategic-loading">
+                          <Loader size={24} className="spinner" />
+                          <span>
+                            {isAnalysisRegenerating 
+                              ? 'Regenerating your strategic analysis...' 
+                              : 'Generating your strategic analysis...'
+                            }
+                          </span>
+                        </div>
+                      ) : strategicAnalysisResult ? (
+                        <StrategicAcronym analysisResult={strategicAnalysisResult} />
+                      ) : (
+                        <div className="strategic-empty">
+                          <p>Your STRATEGIC analysis will appear here once generated.</p>
+                          <p>Continue the conversation to trigger analysis generation.</p>
+                          {isPhaseCompleted(PHASES.INITIAL) && (
+                            <button 
+                              className="generate-analysis-btn"
+                              onClick={handleManualAnalysisGeneration}
+                              disabled={isLoadingAnalysis}
+                            >
+                              {isLoadingAnalysis ? 'Generating...' : 'Generate Strategic Analysis Now'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'analysis' && !unlockedFeatures.analysis && (
+                  <div className="locked-analysis">
+                    <div className="lock-icon">🔒</div>
+                    <h3>Analysis Locked</h3>
+                    <p className="description">
+                      Complete all initial phase questions to unlock your business analysis.
+                    </p>
+                    <p className="progress-info">
+                      Current Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </div> 
     </div>
   );
 };

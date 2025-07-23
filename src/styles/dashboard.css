@@ -335,7 +335,7 @@
 
 /* Analysis Section Styles */
 .analysis-section {
-  max-width: 1000px;
+  max-width: max-content;
   margin: 0 auto;
   font-family: var(--font-primary);
   padding: var(--spacing-2xl) 0; /* Add padding for better spacing */
