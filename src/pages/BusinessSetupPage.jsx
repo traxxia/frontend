@@ -41,8 +41,11 @@ const BusinessSetupPage = () => {
   }, []);
 
   const swotRef = useRef(null);
-  const pestleRef = useRef(null);
-  const porterRef = useRef(null);
+  const customerSegmentationRef = useRef(null);
+  const purchaseCriteriaRef = useRef(null);
+  const channelHeatmapRef = useRef(null);
+  const loyaltyNpsRef = useRef(null);
+  const capabilityHeatmapRef = useRef(null);
   const strategicRef = useRef(null);
 
   const handleOptionClick = (option) => {
@@ -52,10 +55,16 @@ const BusinessSetupPage = () => {
     setTimeout(() => {
       if (option === "SWOT" && swotRef.current) {
         swotRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "PESTLE" && pestleRef.current) {
-        pestleRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "Porter's Five Forces" && porterRef.current) {
-        porterRef.current.scrollIntoView({ behavior: "smooth" });
+      } else if (option === "Customer Segmentation" && customerSegmentationRef.current) {
+        customerSegmentationRef.current.scrollIntoView({ behavior: "smooth" });
+      } else if (option === "Purchase Criteria" && purchaseCriteriaRef.current) {
+        purchaseCriteriaRef.current.scrollIntoView({ behavior: "smooth" });
+      } else if (option === "Channel Heatmap" && channelHeatmapRef.current) {
+        channelHeatmapRef.current.scrollIntoView({ behavior: "smooth" });
+      } else if (option === "Loyalty/NPS" && loyaltyNpsRef.current) {
+        loyaltyNpsRef.current.scrollIntoView({ behavior: "smooth" });
+      } else if (option === "Capability Heatmap" && capabilityHeatmapRef.current) {
+        capabilityHeatmapRef.current.scrollIntoView({ behavior: "smooth" });
       } else if (option === "S.T.R.A.T.E.G.I.C") {
         setActiveTab("strategic");
         setTimeout(() => {
@@ -193,7 +202,7 @@ const BusinessSetupPage = () => {
 
       // Clone the content and clean it up for PDF
       const clonedElement = element.cloneNode(true);
-      
+
       // Remove interactive elements and edit buttons
       const elementsToRemove = clonedElement.querySelectorAll(
         '.edit-button, .save-button, .cancel-button, .edit-actions, .download-pdf-btn, button, .simple-toast'
@@ -333,24 +342,24 @@ const BusinessSetupPage = () => {
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
+
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-      
+
       const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
       const imgWidth = canvasWidth * ratio;
       const imgHeight = canvasHeight * ratio;
-      
+
       // Calculate how many pages we need
       const totalPages = Math.ceil(imgHeight / pdfHeight);
-      
+
       for (let i = 0; i < totalPages; i++) {
         if (i > 0) {
           pdf.addPage();
         }
-        
+
         const yOffset = -(pdfHeight * i);
         pdf.addImage(imgData, 'PNG', 0, yOffset, imgWidth, imgHeight);
       }
@@ -361,17 +370,17 @@ const BusinessSetupPage = () => {
 
       // Save the PDF
       pdf.save(filename);
-      
+
       return true;
     } catch (error) {
       console.error('Error generating PDF:', error);
-      
+
       // Remove loading indicator if it exists
       const loadingDiv = document.getElementById('pdf-loading-indicator');
       if (loadingDiv) {
         document.body.removeChild(loadingDiv);
       }
-      
+
       throw error;
     }
   };
@@ -385,16 +394,16 @@ const BusinessSetupPage = () => {
     try {
       setIsExportingPDF(true);
       showToastMessage("Generating comprehensive analysis PDF...", "info");
-      
+
       const filename = `${businessData.name.replace(/[^a-z0-9]/gi, '_')}_Complete_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
-      
+
       await exportCompleteToPDF(
-        'analysis-pdf-content', 
-        filename, 
-        businessData.name, 
+        'analysis-pdf-content',
+        filename,
+        businessData.name,
         'Complete Business Analysis Report'
       );
-      
+
       showToastMessage("📄 Complete analysis PDF downloaded successfully!", "success");
     } catch (error) {
       console.error("Error exporting analysis PDF:", error);
@@ -413,16 +422,16 @@ const BusinessSetupPage = () => {
     try {
       setIsExportingPDF(true);
       showToastMessage("Generating strategic analysis PDF...", "info");
-      
+
       const filename = `${businessData.name.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
-      
+
       await exportCompleteToPDF(
-        'strategic-pdf-content', 
-        filename, 
-        businessData.name, 
+        'strategic-pdf-content',
+        filename,
+        businessData.name,
         'S.T.R.A.T.E.G.I.C Analysis Report'
       );
-      
+
       showToastMessage("📄 Strategic analysis PDF downloaded successfully!", "success");
     } catch (error) {
       console.error("Error exporting strategic PDF:", error);
@@ -809,6 +818,35 @@ const BusinessSetupPage = () => {
     window.history.back();
   };
 
+  // Coming Soon Component
+  // Enhanced Coming Soon Component
+  const ComingSoonSection = ({ title, description, icon = "🚧", features = [], progress = 35, isNew = false }) => (
+    <div className="coming-soon-section">
+      {isNew && <div className="coming-soon-notification">NEW</div>}
+
+      <div className="coming-soon-icon">{icon}</div>
+
+      <h2 className="coming-soon-title">{title}</h2>
+
+      <p className="coming-soon-description">{description}</p>
+
+      <div className="coming-soon-badge">
+        <span>🔥</span>
+        Coming Soon
+      </div>
+
+      {features.length > 0 && (
+        <div className="coming-soon-features">
+          {features.map((feature, index) => (
+            <span key={index} className="feature-pill">
+              {feature}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="business-setup-container">
       <MenuBar />
@@ -821,7 +859,7 @@ const BusinessSetupPage = () => {
 
       <div className="sub-header">
         <div className="sub-header-content">
-          
+
           <button
             className="back-button"
             onClick={handleBack}
@@ -889,14 +927,12 @@ const BusinessSetupPage = () => {
       )}
 
       <div
-        className={`main-container ${
-          isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""
-        } ${isSliding ? "sliding" : ""}`}
+        className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""
+          } ${isSliding ? "sliding" : ""}`}
       >
         <div
-          className={`chat-section ${
-            isMobile && activeTab !== "chat" ? "hidden" : ""
-          } ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}
+          className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""
+            } ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}
         >
           <div className="welcome-area">
             <div className="logo-circle">
@@ -925,15 +961,14 @@ const BusinessSetupPage = () => {
 
         {questionsLoaded && (
           <div
-            className={`info-panel ${
-              isMobile
+            className={`info-panel ${isMobile
                 ? activeTab === "brief" ||
                   activeTab === "analysis" ||
                   activeTab === "strategic"
                   ? "active"
                   : ""
                 : ""
-            } ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}
+              } ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}
           >
             {/* Desktop Analysis Expanded View */}
             {!isMobile && isAnalysisExpanded && (
@@ -951,9 +986,8 @@ const BusinessSetupPage = () => {
 
                     {unlockedFeatures.analysis && (
                       <button
-                        className={`desktop-tab ${
-                          activeTab === "analysis" ? "active" : ""
-                        }`}
+                        className={`desktop-tab ${activeTab === "analysis" ? "active" : ""
+                          }`}
                         onClick={() => setActiveTab("analysis")}
                       >
                         Analysis
@@ -962,9 +996,8 @@ const BusinessSetupPage = () => {
 
                     {unlockedFeatures.strategic && (
                       <button
-                        className={`desktop-tab ${
-                          activeTab === "strategic" ? "active" : ""
-                        }`}
+                        className={`desktop-tab ${activeTab === "strategic" ? "active" : ""
+                          }`}
                         onClick={() => setActiveTab("strategic")}
                       >
                         S.T.R.A.T.E.G.I.C
@@ -1019,8 +1052,11 @@ const BusinessSetupPage = () => {
                             >
                               {[
                                 "SWOT",
-                                "PESTLE",
-                                "Porter's Five Forces",
+                                "Customer Segmentation",
+                                "Purchase Criteria",
+                                "Channel Heatmap",
+                                "Loyalty/NPS",
+                                "Capability Heatmap",
                               ].map((item) => (
                                 <div
                                   key={item}
@@ -1032,12 +1068,12 @@ const BusinessSetupPage = () => {
                                     color: "#374151",
                                   }}
                                   onMouseEnter={(e) =>
-                                    (e.currentTarget.style.backgroundColor =
-                                      "#f1f5f9")
+                                  (e.currentTarget.style.backgroundColor =
+                                    "#f1f5f9")
                                   }
                                   onMouseLeave={(e) =>
-                                    (e.currentTarget.style.backgroundColor =
-                                      "transparent")
+                                  (e.currentTarget.style.backgroundColor =
+                                    "transparent")
                                   }
                                 >
                                   {item}
@@ -1100,124 +1136,35 @@ const BusinessSetupPage = () => {
                                       businessName={businessData.name}
                                     />
                                   </div>
-                                  {/* Additional Analysis Below SWOT */}
-                                  <div ref={pestleRef} className="analysis-section">
-                                    <h2>PESTLE Analysis</h2>
-                                    <div className="analysis-table">
-                                      <div className="analysis-row">
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#fde2e2" }}
-                                        >
-                                          <strong>Political</strong>
-                                          <br />
-                                          Government policies, taxation, trade
-                                          regulations, and political stability.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#d1f0f0" }}
-                                        >
-                                          <strong>Economic</strong>
-                                          <br />
-                                          Interest rates, inflation, GDP growth,
-                                          and consumer spending.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#e3e0fb" }}
-                                        >
-                                          <strong>Social</strong>
-                                          <br />
-                                          Demographics, lifestyle changes,
-                                          education, and social trends.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#fbe8d3" }}
-                                        >
-                                          <strong>Technological</strong>
-                                          <br />
-                                          Innovation, automation, R&D, and digital
-                                          transformation.
-                                        </div>
-                                      </div>
-                                      <div className="analysis-row">
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#fff6d1" }}
-                                        >
-                                          <strong>Legal</strong>
-                                          <br />
-                                          Employment law, health regulations, and
-                                          consumer protection.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#d6f5d6" }}
-                                        >
-                                          <strong>Environmental</strong>
-                                          <br />
-                                          Sustainability, climate change policies,
-                                          and waste management.
-                                        </div>
-                                      </div>
-                                    </div>
+                                  {/* Additional Analysis Sections */}
+                                  <div ref={customerSegmentationRef}>
+                                    <ComingSoonSection
+                                      title="Customer Segmentation" icon="👥"
+                                    />
                                   </div>
 
-                                  <div ref={porterRef} className="analysis-section">
-                                    <h2>Porter's Five Forces</h2>
-                                    <div className="analysis-table">
-                                      <div className="analysis-row">
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#e0f7fa" }}
-                                        >
-                                          <strong>Competitive Rivalry</strong>
-                                          <br />
-                                          Market competition intensity and
-                                          differentiation.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#ffe0b2" }}
-                                        >
-                                          <strong>Supplier Power</strong>
-                                          <br />
-                                          Number of suppliers, uniqueness, and
-                                          switching costs.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#e1bee7" }}
-                                        >
-                                          <strong>Buyer Power</strong>
-                                          <br />
-                                          Customer influence, price sensitivity,
-                                          and volume.
-                                        </div>
-                                      </div>
-                                      <div className="analysis-row">
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#dcedc8" }}
-                                        >
-                                          <strong>Threat of Substitution</strong>
-                                          <br />
-                                          Availability of alternative products or
-                                          services.
-                                        </div>
-                                        <div
-                                          className="analysis-cell"
-                                          style={{ backgroundColor: "#ffcdd2" }}
-                                        >
-                                          <strong>Threat of New Entry</strong>
-                                          <br />
-                                          Barriers to entry and potential for new
-                                          competitors.
-                                        </div>
-                                      </div>
-                                    </div>
+                                  <div ref={purchaseCriteriaRef}>
+                                    <ComingSoonSection
+                                      title="Purchase Criteria" icon="🛒"
+                                    />
+                                  </div>
+
+                                  <div ref={channelHeatmapRef}>
+                                    <ComingSoonSection
+                                      title="Channel Heatmap" icon="📊"
+                                    />
+                                  </div>
+
+                                  <div ref={loyaltyNpsRef}>
+                                    <ComingSoonSection
+                                      title="Loyalty & NPS Analysis" icon="❤️"
+                                    />
+                                  </div>
+
+                                  <div ref={capabilityHeatmapRef}>
+                                    <ComingSoonSection
+                                      title="Capability Heatmap" icon="⚡"
+                                    />
                                   </div>
                                 </div>
                               </>
@@ -1303,9 +1250,8 @@ const BusinessSetupPage = () => {
             {!isMobile && !isAnalysisExpanded && (
               <div className="desktop-tabs">
                 <button
-                  className={`desktop-tab ${
-                    activeTab === "brief" ? "active" : ""
-                  }`}
+                  className={`desktop-tab ${activeTab === "brief" ? "active" : ""
+                    }`}
                   onClick={() => setActiveTab("brief")}
                 >
                   Brief
@@ -1313,9 +1259,8 @@ const BusinessSetupPage = () => {
 
                 {unlockedFeatures.analysis && (
                   <button
-                    className={`desktop-tab ${
-                      activeTab === "analysis" ? "active" : ""
-                    }`}
+                    className={`desktop-tab ${activeTab === "analysis" ? "active" : ""
+                      }`}
                     onClick={handleAnalysisTabClick}
                   >
                     Analysis
@@ -1324,9 +1269,8 @@ const BusinessSetupPage = () => {
 
                 {unlockedFeatures.strategic && (
                   <button
-                    className={`desktop-tab ${
-                      activeTab === "strategic" ? "active" : ""
-                    }`}
+                    className={`desktop-tab ${activeTab === "strategic" ? "active" : ""
+                      }`}
                     onClick={handleStrategicTabClick}
                   >
                     S.T.R.A.T.E.G.I.C
@@ -1383,7 +1327,7 @@ const BusinessSetupPage = () => {
                               zIndex: 1000,
                             }}
                           >
-                            {["SWOT", "PESTLE", "Porter's Five Forces"].map((item) => (
+                            {["SWOT", "Customer Segmentation", "Purchase Criteria", "Channel Heatmap", "Loyalty/NPS", "Capability Heatmap"].map((item) => (
                               <div
                                 key={item}
                                 onClick={() => handleOptionClick(item)}
@@ -1502,124 +1446,40 @@ const BusinessSetupPage = () => {
                                 businessName={businessData.name}
                               />
                             </div>
-                            {/* Additional Analysis Below SWOT */}
-                            <div ref={pestleRef} className="analysis-section">
-                              <h2>PESTLE Analysis</h2>
-                              <div className="analysis-table">
-                                <div className="analysis-row">
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#fde2e2" }}
-                                  >
-                                    <strong>Political</strong>
-                                    <br />
-                                    Government policies, taxation, trade
-                                    regulations, and political stability.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#d1f0f0" }}
-                                  >
-                                    <strong>Economic</strong>
-                                    <br />
-                                    Interest rates, inflation, GDP growth,
-                                    and consumer spending.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#e3e0fb" }}
-                                  >
-                                    <strong>Social</strong>
-                                    <br />
-                                    Demographics, lifestyle changes,
-                                    education, and social trends.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#fbe8d3" }}
-                                  >
-                                    <strong>Technological</strong>
-                                    <br />
-                                    Innovation, automation, R&D, and digital
-                                    transformation.
-                                  </div>
-                                </div>
-                                <div className="analysis-row">
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#fff6d1" }}
-                                  >
-                                    <strong>Legal</strong>
-                                    <br />
-                                    Employment law, health regulations, and
-                                    consumer protection.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#d6f5d6" }}
-                                  >
-                                    <strong>Environmental</strong>
-                                    <br />
-                                    Sustainability, climate change policies,
-                                    and waste management.
-                                  </div>
-                                </div>
-                              </div>
+                            {/* Additional Analysis Sections - Coming Soon */}
+                            <div ref={customerSegmentationRef}>
+                              <ComingSoonSection
+                                title="Customer Segmentation"
+                                description="Detailed customer segmentation analysis and insights"
+                              />
                             </div>
 
-                            <div ref={porterRef} className="analysis-section">
-                              <h2>Porter's Five Forces</h2>
-                              <div className="analysis-table">
-                                <div className="analysis-row">
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#e0f7fa" }}
-                                  >
-                                    <strong>Competitive Rivalry</strong>
-                                    <br />
-                                    Market competition intensity and
-                                    differentiation.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#ffe0b2" }}
-                                  >
-                                    <strong>Supplier Power</strong>
-                                    <br />
-                                    Number of suppliers, uniqueness, and
-                                    switching costs.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#e1bee7" }}
-                                  >
-                                    <strong>Buyer Power</strong>
-                                    <br />
-                                    Customer influence, price sensitivity,
-                                    and volume.
-                                  </div>
-                                </div>
-                                <div className="analysis-row">
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#dcedc8" }}
-                                  >
-                                    <strong>Threat of Substitution</strong>
-                                    <br />
-                                    Availability of alternative products or
-                                    services.
-                                  </div>
-                                  <div
-                                    className="analysis-cell"
-                                    style={{ backgroundColor: "#ffcdd2" }}
-                                  >
-                                    <strong>Threat of New Entry</strong>
-                                    <br />
-                                    Barriers to entry and potential for new
-                                    competitors.
-                                  </div>
-                                </div>
-                              </div>
+                            <div ref={purchaseCriteriaRef}>
+                              <ComingSoonSection
+                                title="Purchase Criteria"
+                                description="Analysis of customer purchase decision factors"
+                              />
+                            </div>
+
+                            <div ref={channelHeatmapRef}>
+                              <ComingSoonSection
+                                title="Channel Heatmap"
+                                description="Visual representation of distribution channel effectiveness"
+                              />
+                            </div>
+
+                            <div ref={loyaltyNpsRef}>
+                              <ComingSoonSection
+                                title="Loyalty/NPS"
+                                description="Customer loyalty and Net Promoter Score analysis"
+                              />
+                            </div>
+
+                            <div ref={capabilityHeatmapRef}>
+                              <ComingSoonSection
+                                title="Capability Heatmap"
+                                description="Organizational capabilities assessment and visualization"
+                              />
                             </div>
                           </div>
                         </>
@@ -1713,7 +1573,7 @@ const BusinessSetupPage = () => {
             )}
           </div>
         )}
-      </div> 
+      </div>
     </div>
   );
 };
