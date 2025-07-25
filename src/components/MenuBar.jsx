@@ -78,7 +78,7 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
                 </Dropdown.Item>
 
                 {/* NEW: Audit Trail / Saved Analyses Link */}
-                <Dropdown.Item
+                {/* <Dropdown.Item
                   onClick={handleAuditTrailClick}
                   className={`dropdown-item-traxia ${
                     isCurrentPage('/audit-trail') || isCurrentPage('/saved-analyses') ? 'active' : ''
@@ -86,10 +86,10 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
                 >
                   <Archive size={16} className="me-2" />
                   {t('saved_analyses') || 'Saved Analyses'}
-                </Dropdown.Item>
+                </Dropdown.Item> */}
 
                 {/* Admin Link (only for admins) */}
-                {isAdmin && (
+                {/* {isAdmin && (
                   <Dropdown.Item
                     onClick={handleAdminClick}
                     className={`dropdown-item-traxia ${isCurrentPage('/admin') ? 'active' : ''}`}
@@ -97,7 +97,7 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
                     <Settings size={16} className="me-2" />
                     {t('admin')}
                   </Dropdown.Item>
-                )}
+                )} */}
 
                 {/* Future: Reports Section (commented out, ready for future use) */}
                 {/*

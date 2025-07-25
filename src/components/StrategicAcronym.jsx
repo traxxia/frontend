@@ -1,8 +1,12 @@
-// StrategicAcronym.jsx - Updated Version with H5 Header Support
-import React from 'react';
+import React, { useState } from 'react';
+import { Download, Loader } from 'lucide-react';
 import { detectLanguage } from '../utils/translations';
+import { exportStrategicToPDF } from '../utils/pdfExport';
 
-const StrategicAcronym = ({ analysisResult }) => {
+const StrategicAcronym = ({ analysisResult, businessName = 'Your Business' }) => {
+  const [isExporting, setIsExporting] = useState(false);
+  const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+
   const lang = detectLanguage(analysisResult);
   
   // Hard-coded safe translations - no object dependencies
@@ -35,11 +39,34 @@ const StrategicAcronym = ({ analysisResult }) => {
   const strategicItems = extractStrategicItemsWithH5(analysisResult, lang);
   const conclusion = getStrategicConclusion(analysisResult, lang);
   const recommendations = getRecommendations(analysisResult, lang);
+
   
   // Debug logging
   console.log('Strategic Analysis Result:', analysisResult);
   console.log('Extracted Strategic Items:', strategicItems);
   console.log('Language detected:', lang);
+
+  const showToastMessage = (message, type = 'success') => {
+    setShowToast({ show: true, message, type });
+    setTimeout(() => {
+      setShowToast({ show: false, message: '', type: 'success' });
+    }, 4000);
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      showToastMessage('Generating PDF report...', 'info');
+      
+      await exportStrategicToPDF(businessName);
+      showToastMessage('📄 S.T.R.A.T.E.G.I.C Analysis PDF downloaded successfully!', 'success');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      showToastMessage('Failed to generate PDF. Please try again.', 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
   
   if (!strategicItems || strategicItems.length === 0 || strategicItems.every(item => item === null)) {
     return (
@@ -63,125 +90,214 @@ const StrategicAcronym = ({ analysisResult }) => {
 
   return (
     <>
-      <h5 className="mt-4 mb-3">
-        <strong>{getTranslation('title')}</strong>
-      </h5>
-      <div className="table-responsive mb-4">
-        <table className="table table-bordered">
-          <thead className="table-light">
-            <tr>
-              <th width="10%" className="text-center">Letter</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {acronymLetters.map((letter, index) => {
-              const item = strategicItems[index];
-              const styleClass = STRATEGIC_COLUMN_STYLES[index] || 'neutral-bg';
-              
-              return (
-                <tr key={`${letter}-${index}`}>
-                  <td className="text-center align-middle">
-                    <strong>{String(letter)}</strong>
-                  </td>
-                  <td className="p-2">
-                    {item ? (
-                      <div className={`strategic-item ${styleClass}`}>
-                        {/* Display the H5 header if available */}
-                        {item.header && (
-                          <div>
-                            <h5 className="strategic-header" style={{ 
-                              color: '#2c3e50',  
-                              paddingBottom: '8px',
-                              marginBottom: '1px'
-                            }}>
-                              {item.header}
-                            </h5>
-                          </div>
-                        )}
-                        
-                        {/* Display theory if available */}
-                        {item.theory && (
-                          <div className="mb-2">
-                            <strong>{getTranslation('theory')}</strong> {String(item.theory)}
-                          </div>
-                        )}
-                        
-                        {/* Display example if available */}
-                        {item.example && (
-                          <div className="mb-2">
-                            <strong>{getTranslation('example')}</strong> {String(item.example)}
-                          </div>
-                        )}
-                        
-                        {/* Display recommendation if available */}
-                        {item.recommendation && (
-                          <div className="mb-2">
-                            <strong>{lang === 'es' ? 'Recomendación:' : 'Recommendation:'}</strong> {String(item.recommendation)}
-                          </div>
-                        )}
-                        
-                        {/* Display main content */}
-                        {item.content && (
-                          <div className="mb-2">
-                            <div dangerouslySetInnerHTML={{ 
-                              __html: String(item.content).replace(/\n/g, "<br/>") 
-                            }} />
-                          </div>
-                        )}
-                        
-                        {/* Display bullet points if available */}
-                        {item.bulletPoints && Array.isArray(item.bulletPoints) && item.bulletPoints.length > 0 && (
-                          <div className="mt-2">
-                            <strong>{getTranslation('keyActions')}</strong>
-                            <ul className="mb-0 mt-1">
-                              {item.bulletPoints.map((bullet, bulletIndex) => (
-                                <li key={bulletIndex} className="mb-1">{String(bullet)}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-muted">
-                        {getTranslation('noData')} {String(letter)}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {showToast.show && (
+        <div className={`simple-toast ${showToast.type}`} style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 1000,
+          padding: '12px 16px',
+          borderRadius: '6px',
+          color: 'white',
+          fontSize: '14px',
+          fontWeight: '500',
+          backgroundColor: showToast.type === 'success' ? '#28a745' : 
+                          showToast.type === 'error' ? '#dc3545' : 
+                          showToast.type === 'warning' ? '#ffc107' : '#007bff'
+        }}>
+          {showToast.message}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h5 className="mt-4 mb-3" style={{ margin: 0 }}>
+          <strong>{getTranslation('title')}</strong>
+        </h5>
+        <button
+          onClick={handleExportPDF}
+          disabled={isExporting}
+          className="download-pdf-btn"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: isExporting ? 'not-allowed' : 'pointer',
+            opacity: isExporting ? 0.7 : 1,
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (!isExporting) {
+              e.target.style.backgroundColor = '#0056b3';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isExporting) {
+              e.target.style.backgroundColor = '#007bff';
+            }
+          }}
+        >
+          {isExporting ? (
+            <>
+              <Loader size={16} className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+              Generating PDF...
+            </>
+          ) : (
+            <>
+              <Download size={16} />
+              Download PDF
+            </>
+          )}
+        </button>
       </div>
-      
-      {/* Display recommendations if available */}
-      {recommendations && (
-        <div className="mt-4 recommendations-section">
-          <h5><strong>{getTranslation('recommendations')}</strong></h5>
-          <div className="recommendations-text">
-            <div dangerouslySetInnerHTML={{ 
-              __html: String(recommendations).replace(/\n/g, "<br/>") 
-            }} />
-          </div>
+
+      {/* PDF Content Container - This will be captured for PDF export */}
+      <div id="strategic-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+        <div className="table-responsive mb-4">
+          <table className="table table-bordered">
+            <thead className="table-light">
+              <tr>
+                <th width="10%" className="text-center">Letter</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {acronymLetters.map((letter, index) => {
+                const item = strategicItems[index];
+                const styleClass = STRATEGIC_COLUMN_STYLES[index] || 'neutral-bg';
+                
+                return (
+                  <tr key={`${letter}-${index}`}>
+                    <td className="text-center align-middle">
+                      <strong>{String(letter)}</strong>
+                    </td>
+                    <td className="p-2">
+                      {item ? (
+                        <div className={`strategic-item ${styleClass}`}>
+                          {/* Display the H5 header if available */}
+                          {item.header && (
+                            <div>
+                              <h5 className="strategic-header" style={{ 
+                                color: '#2c3e50',  
+                                paddingBottom: '8px',
+                                marginBottom: '1px'
+                              }}>
+                                {item.header}
+                              </h5>
+                            </div>
+                          )}
+                          
+                          {/* Display theory if available */}
+                          {item.theory && (
+                            <div className="mb-2">
+                              <strong>{getTranslation('theory')}</strong> {String(item.theory)}
+                            </div>
+                          )}
+                          
+                          {/* Display example if available */}
+                          {item.example && (
+                            <div className="mb-2">
+                              <strong>{getTranslation('example')}</strong> {String(item.example)}
+                            </div>
+                          )}
+                          
+                          {/* Display recommendation if available */}
+                          {item.recommendation && (
+                            <div className="mb-2">
+                              <strong>{lang === 'es' ? 'Recomendación:' : 'Recommendation:'}</strong> {String(item.recommendation)}
+                            </div>
+                          )}
+                          
+                          {/* Display main content */}
+                          {item.content && (
+                            <div className="mb-2">
+                              <div dangerouslySetInnerHTML={{ 
+                                __html: String(item.content).replace(/\n/g, "<br/>") 
+                              }} />
+                            </div>
+                          )}
+                          
+                          {/* Display bullet points if available */}
+                          {item.bulletPoints && Array.isArray(item.bulletPoints) && item.bulletPoints.length > 0 && (
+                            <div className="mt-2">
+                              <strong>{getTranslation('keyActions')}</strong>
+                              <ul className="mb-0 mt-1">
+                                {item.bulletPoints.map((bullet, bulletIndex) => (
+                                  <li key={bulletIndex} className="mb-1">{String(bullet)}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-muted">
+                          {getTranslation('noData')} {String(letter)}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
-      
-      {/* Display conclusion if available */}
-      {conclusion && (
-        <div className="mt-4 conclusion-section">
-          <h5><strong>{getTranslation('conclusion')}</strong></h5>
-          <div className="conclusion-text">
-            <div dangerouslySetInnerHTML={{ 
-              __html: String(conclusion).replace(/\n/g, "<br/>") 
-            }} />
+        
+        {/* Display recommendations if available */}
+        {recommendations && (
+          <div className="mt-4 recommendations-section">
+            <h5><strong>{getTranslation('recommendations')}</strong></h5>
+            <div className="recommendations-text">
+              <div dangerouslySetInnerHTML={{ 
+                __html: String(recommendations).replace(/\n/g, "<br/>") 
+              }} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        
+        {/* Display conclusion if available */}
+        {conclusion && (
+          <div className="mt-4 conclusion-section">
+            <h5><strong>{getTranslation('conclusion')}</strong></h5>
+            <div className="conclusion-text">
+              <div dangerouslySetInnerHTML={{ 
+                __html: String(conclusion).replace(/\n/g, "<br/>") 
+              }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+        .simple-toast {
+          animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </>
   );
 };
-
 // Updated helper function to extract strategic items with H5 header support
 const extractStrategicItemsWithH5 = (strategicContent, lang) => {
   if (!strategicContent) return [];

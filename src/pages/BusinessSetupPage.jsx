@@ -8,6 +8,7 @@ import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
 import { useAnalysisData } from "../hooks/useAnalysisData";
 import { ChevronDown, Download } from "lucide-react";
+import { exportAnalysisToPDF, exportStrategicToPDF } from "../utils/pdfExport";
 
 const BusinessSetupPage = () => {
   const [activeTab, setActiveTab] = useState(() => {
@@ -24,6 +25,9 @@ const BusinessSetupPage = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Go to section");
   const dropdownRef = useRef(null);
+
+  // PDF Export states
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   // ✅ Close dropdown on outside click
   useEffect(() => {
@@ -132,6 +136,47 @@ const BusinessSetupPage = () => {
   };
 
   const unlockedFeatures = getUnlockedFeatures();
+
+  // PDF Export Functions
+  const handleDownloadAnalysis = async () => {
+    if (!analysisResult) {
+      showToastMessage("No analysis available to export", "warning");
+      return;
+    }
+
+    try {
+      setIsExportingPDF(true);
+      showToastMessage("Generating comprehensive analysis PDF...", "info");
+      
+      await exportAnalysisToPDF(businessData.name);
+      showToastMessage("📄 Complete analysis PDF downloaded successfully!", "success");
+    } catch (error) {
+      console.error("Error exporting analysis PDF:", error);
+      showToastMessage("Failed to generate PDF. Please try again.", "error");
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
+  const handleDownloadStrategic = async () => {
+    if (!strategicAnalysisResult) {
+      showToastMessage("No strategic analysis available to export", "warning");
+      return;
+    }
+
+    try {
+      setIsExportingPDF(true);
+      showToastMessage("Generating strategic analysis PDF...", "info");
+      
+      await exportStrategicToPDF(businessData.name);
+      showToastMessage("📄 Strategic analysis PDF downloaded successfully!", "success");
+    } catch (error) {
+      console.error("Error exporting strategic PDF:", error);
+      showToastMessage("Failed to generate PDF. Please try again.", "error");
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -535,61 +580,59 @@ const BusinessSetupPage = () => {
         </div>
       </div>
 
-     {isMobile && questionsLoaded && (
-  <>
-    {/* ✅ Show progress at the top ONLY for brief, analysis, strategic tabs */}
-    {["chat","brief", "analysis", "strategic"].includes(activeTab) && (
-      <div className="progress-area">
-        <div className="progress-label">
-          Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})
-        </div>
-        <div className="progress-track">
-          <div
-            className="progress-fill"
-            style={{ width: `${actualProgress}%` }}
-          ></div>
-        </div>
-      </div>
-    )}
+      {isMobile && questionsLoaded && (
+        <>
+          {/* ✅ Show progress at the top ONLY for brief, analysis, strategic tabs */}
+          {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (
+            <div className="progress-area">
+              <div className="progress-label">
+                Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})
+              </div>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${actualProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
 
-    {/* Mobile Tabs */}
-    <div className="mobile-tabs">
-      <button
-        className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`}
-        onClick={() => setActiveTab("chat")}
-      >
-        Assistant
-      </button>
+          {/* Mobile Tabs */}
+          <div className="mobile-tabs">
+            <button
+              className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`}
+              onClick={() => setActiveTab("chat")}
+            >
+              Assistant
+            </button>
 
-      <button
-        className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`}
-        onClick={() => setActiveTab("brief")}
-      >
-        Brief
-      </button>
+            <button
+              className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`}
+              onClick={() => setActiveTab("brief")}
+            >
+              Brief
+            </button>
 
-      {unlockedFeatures.analysis && (
-        <button
-          className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`}
-          onClick={handleAnalysisTabClick}
-        >
-          Analysis
-        </button>
+            {unlockedFeatures.analysis && (
+              <button
+                className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`}
+                onClick={handleAnalysisTabClick}
+              >
+                Analysis
+              </button>
+            )}
+
+            {unlockedFeatures.strategic && (
+              <button
+                className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
+                onClick={handleStrategicTabClick}
+              >
+                S.T.R.A.T.E.G.I.C
+              </button>
+            )}
+          </div>
+        </>
       )}
-
-      {unlockedFeatures.strategic && (
-        <button
-          className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
-          onClick={handleStrategicTabClick}
-        >
-          S.T.R.A.T.E.G.I.C
-        </button>
-      )}
-    </div>
-  </>
-)}
-
-
 
       <div
         className={`main-container ${
@@ -751,6 +794,8 @@ const BusinessSetupPage = () => {
                         </div>
 
                         <button
+                          onClick={activeTab === "analysis" ? handleDownloadAnalysis : handleDownloadStrategic}
+                          disabled={isExportingPDF || (activeTab === "analysis" ? !analysisResult : !strategicAnalysisResult)}
                           style={{
                             backgroundColor: "#1a73e8",
                             color: "#fff",
@@ -761,11 +806,21 @@ const BusinessSetupPage = () => {
                             fontWeight: 500,
                             display: "flex",
                             alignItems: "center",
-                            cursor: "pointer",
+                            cursor: isExportingPDF ? "not-allowed" : "pointer",
+                            opacity: isExportingPDF || (activeTab === "analysis" ? !analysisResult : !strategicAnalysisResult) ? 0.6 : 1,
                           }}
                         >
-                          Download analysis{" "}
-                          <Download size={16} style={{ marginLeft: 8 }} />
+                          {isExportingPDF ? (
+                            <>
+                              <Loader size={16} className="spinner" style={{ marginRight: 8 }} />
+                              Generating PDF...
+                            </>
+                          ) : (
+                            <>
+                              Download {activeTab === "analysis" ? "analysis" : "strategic"}
+                              <Download size={16} style={{ marginLeft: 8 }} />
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -784,126 +839,129 @@ const BusinessSetupPage = () => {
                               </div>
                             ) : analysisResult ? (
                               <>
-                                <div ref={swotRef}>
-                                  <SwotAnalysis
-                                    analysisResult={analysisResult}
-                                  />
-                                </div>
-                                {/* Additional Analysis Below SWOT */}
-                                <div ref={pestleRef} className="analysis-section">
-                                  <h2>PESTLE Analysis</h2>
-                                  <div className="analysis-table">
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#fde2e2" }}
-                                      >
-                                        <strong>Political</strong>
-                                        <br />
-                                        Government policies, taxation, trade
-                                        regulations, and political stability.
+                                <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+                                  <div ref={swotRef}>
+                                    <SwotAnalysis
+                                      analysisResult={analysisResult}
+                                      businessName={businessData.name}
+                                    />
+                                  </div>
+                                  {/* Additional Analysis Below SWOT */}
+                                  <div ref={pestleRef} className="analysis-section">
+                                    <h2>PESTLE Analysis</h2>
+                                    <div className="analysis-table">
+                                      <div className="analysis-row">
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#fde2e2" }}
+                                        >
+                                          <strong>Political</strong>
+                                          <br />
+                                          Government policies, taxation, trade
+                                          regulations, and political stability.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#d1f0f0" }}
+                                        >
+                                          <strong>Economic</strong>
+                                          <br />
+                                          Interest rates, inflation, GDP growth,
+                                          and consumer spending.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#e3e0fb" }}
+                                        >
+                                          <strong>Social</strong>
+                                          <br />
+                                          Demographics, lifestyle changes,
+                                          education, and social trends.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#fbe8d3" }}
+                                        >
+                                          <strong>Technological</strong>
+                                          <br />
+                                          Innovation, automation, R&D, and digital
+                                          transformation.
+                                        </div>
                                       </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#d1f0f0" }}
-                                      >
-                                        <strong>Economic</strong>
-                                        <br />
-                                        Interest rates, inflation, GDP growth,
-                                        and consumer spending.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#e3e0fb" }}
-                                      >
-                                        <strong>Social</strong>
-                                        <br />
-                                        Demographics, lifestyle changes,
-                                        education, and social trends.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#fbe8d3" }}
-                                      >
-                                        <strong>Technological</strong>
-                                        <br />
-                                        Innovation, automation, R&D, and digital
-                                        transformation.
-                                      </div>
-                                    </div>
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#fff6d1" }}
-                                      >
-                                        <strong>Legal</strong>
-                                        <br />
-                                        Employment law, health regulations, and
-                                        consumer protection.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#d6f5d6" }}
-                                      >
-                                        <strong>Environmental</strong>
-                                        <br />
-                                        Sustainability, climate change policies,
-                                        and waste management.
+                                      <div className="analysis-row">
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#fff6d1" }}
+                                        >
+                                          <strong>Legal</strong>
+                                          <br />
+                                          Employment law, health regulations, and
+                                          consumer protection.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#d6f5d6" }}
+                                        >
+                                          <strong>Environmental</strong>
+                                          <br />
+                                          Sustainability, climate change policies,
+                                          and waste management.
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
 
-                                <div ref={porterRef} className="analysis-section">
-                                  <h2>Porter's Five Forces</h2>
-                                  <div className="analysis-table">
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#e0f7fa" }}
-                                      >
-                                        <strong>Competitive Rivalry</strong>
-                                        <br />
-                                        Market competition intensity and
-                                        differentiation.
+                                  <div ref={porterRef} className="analysis-section">
+                                    <h2>Porter's Five Forces</h2>
+                                    <div className="analysis-table">
+                                      <div className="analysis-row">
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#e0f7fa" }}
+                                        >
+                                          <strong>Competitive Rivalry</strong>
+                                          <br />
+                                          Market competition intensity and
+                                          differentiation.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#ffe0b2" }}
+                                        >
+                                          <strong>Supplier Power</strong>
+                                          <br />
+                                          Number of suppliers, uniqueness, and
+                                          switching costs.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#e1bee7" }}
+                                        >
+                                          <strong>Buyer Power</strong>
+                                          <br />
+                                          Customer influence, price sensitivity,
+                                          and volume.
+                                        </div>
                                       </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#ffe0b2" }}
-                                      >
-                                        <strong>Supplier Power</strong>
-                                        <br />
-                                        Number of suppliers, uniqueness, and
-                                        switching costs.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#e1bee7" }}
-                                      >
-                                        <strong>Buyer Power</strong>
-                                        <br />
-                                        Customer influence, price sensitivity,
-                                        and volume.
-                                      </div>
-                                    </div>
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#dcedc8" }}
-                                      >
-                                        <strong>Threat of Substitution</strong>
-                                        <br />
-                                        Availability of alternative products or
-                                        services.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#ffcdd2" }}
-                                      >
-                                        <strong>Threat of New Entry</strong>
-                                        <br />
-                                        Barriers to entry and potential for new
-                                        competitors.
+                                      <div className="analysis-row">
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#dcedc8" }}
+                                        >
+                                          <strong>Threat of Substitution</strong>
+                                          <br />
+                                          Availability of alternative products or
+                                          services.
+                                        </div>
+                                        <div
+                                          className="analysis-cell"
+                                          style={{ backgroundColor: "#ffcdd2" }}
+                                        >
+                                          <strong>Threat of New Entry</strong>
+                                          <br />
+                                          Barriers to entry and potential for new
+                                          competitors.
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -949,9 +1007,12 @@ const BusinessSetupPage = () => {
                                 </span>
                               </div>
                             ) : strategicAnalysisResult ? (
-                              <StrategicAcronym
-                                analysisResult={strategicAnalysisResult}
-                              />
+                              <div id="strategic-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+                                <StrategicAcronym
+                                  analysisResult={strategicAnalysisResult}
+                                  businessName={businessData.name}
+                                />
+                              </div>
                             ) : (
                               <div className="strategic-empty">
                                 <p>
@@ -1024,96 +1085,107 @@ const BusinessSetupPage = () => {
             {(!isAnalysisExpanded || isMobile) && (
               <div className="info-panel-content">
                 {activeTab === "analysis" && (
-  <div style={{ padding: "1rem", background: "#ffffffff" }}>
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        gap: "12px",
-        position: "relative",
-      }}
-    >
-      {/* Dropdown */}
-      <div ref={dropdownRef} style={{ position: "relative" }}>
-        <button
-          onClick={() => setShowDropdown((prev) => !prev)}
-          style={{
-            backgroundColor: "#fff",
-            color: "#1a73e8",
-            border: "1px solid #d1d5db",
-            borderRadius: "13px",
-            padding: "10px 18px",
-            fontSize: "14px",
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            cursor: "pointer",
-          }}
-        >
-          {selectedOption}
-          <ChevronDown size={16} style={{ marginLeft: 8 }} />
-        </button>
+                  <div style={{ padding: "1rem", background: "#ffffffff" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "12px",
+                        position: "relative",
+                      }}
+                    >
+                      {/* Dropdown */}
+                      <div ref={dropdownRef} style={{ position: "relative" }}>
+                        <button
+                          onClick={() => setShowDropdown((prev) => !prev)}
+                          style={{
+                            backgroundColor: "#fff",
+                            color: "#1a73e8",
+                            border: "1px solid #d1d5db",
+                            borderRadius: "13px",
+                            padding: "10px 18px",
+                            fontSize: "14px",
+                            fontWeight: 500,
+                            display: "flex",
+                            alignItems: "center",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {selectedOption}
+                          <ChevronDown size={16} style={{ marginLeft: 8 }} />
+                        </button>
 
-        {showDropdown && (
-          <div
-            style={{
-              position: "absolute",
-              top: "110%",
-              left: 0,
-              backgroundColor: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              minWidth: "180px",
-              zIndex: 1000,
-            }}
-          >
-            {["SWOT", "PESTLE", "Porter's Five Forces"].map((item) => (
-              <div
-                key={item}
-                onClick={() => handleOptionClick(item)}
-                style={{
-                  padding: "10px 14px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#374151",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#f1f5f9")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "transparent")
-                }
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                        {showDropdown && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "110%",
+                              left: 0,
+                              backgroundColor: "#fff",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                              minWidth: "180px",
+                              zIndex: 1000,
+                            }}
+                          >
+                            {["SWOT", "PESTLE", "Porter's Five Forces"].map((item) => (
+                              <div
+                                key={item}
+                                onClick={() => handleOptionClick(item)}
+                                style={{
+                                  padding: "10px 14px",
+                                  cursor: "pointer",
+                                  fontSize: "14px",
+                                  color: "#374151",
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = "#f1f5f9")
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = "transparent")
+                                }
+                              >
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
-      {/* Download Button */}
-      <button
-        style={{
-          backgroundColor: "#1a73e8",
-          color: "#fff",
-          border: "none",
-          borderRadius: "13px",
-          padding: "10px 18px",
-          fontSize: "14px",
-          fontWeight: 500,
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-        }}
-      >
-        Download analysis
-        <Download size={16} style={{ marginLeft: 8 }} />
-      </button>
-    </div>
-  </div>
-)}
-
+                      {/* Download Button */}
+                      <button
+                        onClick={handleDownloadAnalysis}
+                        disabled={isExportingPDF || !analysisResult}
+                        style={{
+                          backgroundColor: "#1a73e8",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "13px",
+                          padding: "10px 18px",
+                          fontSize: "14px",
+                          fontWeight: 500,
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: isExportingPDF || !analysisResult ? "not-allowed" : "pointer",
+                          opacity: isExportingPDF || !analysisResult ? 0.6 : 1,
+                        }}
+                      >
+                        {isExportingPDF ? (
+                          <>
+                            <Loader size={16} className="spinner" style={{ marginRight: 8 }} />
+                            Generating PDF...
+                          </>
+                        ) : (
+                          <>
+                            Download analysis
+                            <Download size={16} style={{ marginLeft: 8 }} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {activeTab === "brief" && (
                   <div className="brief-section">
@@ -1169,131 +1241,134 @@ const BusinessSetupPage = () => {
                         </div>
                       ) : analysisResult ? (
                         <>
-                                <div ref={swotRef}>
-                                  <SwotAnalysis
-                                    analysisResult={analysisResult}
-                                  />
-                                </div>
-                                {/* Additional Analysis Below SWOT */}
-                                <div ref={pestleRef} className="analysis-section">
-                                  <h2>PESTLE Analysis</h2>
-                                  <div className="analysis-table">
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#fde2e2" }}
-                                      >
-                                        <strong>Political</strong>
-                                        <br />
-                                        Government policies, taxation, trade
-                                        regulations, and political stability.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#d1f0f0" }}
-                                      >
-                                        <strong>Economic</strong>
-                                        <br />
-                                        Interest rates, inflation, GDP growth,
-                                        and consumer spending.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#e3e0fb" }}
-                                      >
-                                        <strong>Social</strong>
-                                        <br />
-                                        Demographics, lifestyle changes,
-                                        education, and social trends.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#fbe8d3" }}
-                                      >
-                                        <strong>Technological</strong>
-                                        <br />
-                                        Innovation, automation, R&D, and digital
-                                        transformation.
-                                      </div>
-                                    </div>
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#fff6d1" }}
-                                      >
-                                        <strong>Legal</strong>
-                                        <br />
-                                        Employment law, health regulations, and
-                                        consumer protection.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#d6f5d6" }}
-                                      >
-                                        <strong>Environmental</strong>
-                                        <br />
-                                        Sustainability, climate change policies,
-                                        and waste management.
-                                      </div>
-                                    </div>
+                          <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+                            <div ref={swotRef}>
+                              <SwotAnalysis
+                                analysisResult={analysisResult}
+                                businessName={businessData.name}
+                              />
+                            </div>
+                            {/* Additional Analysis Below SWOT */}
+                            <div ref={pestleRef} className="analysis-section">
+                              <h2>PESTLE Analysis</h2>
+                              <div className="analysis-table">
+                                <div className="analysis-row">
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#fde2e2" }}
+                                  >
+                                    <strong>Political</strong>
+                                    <br />
+                                    Government policies, taxation, trade
+                                    regulations, and political stability.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#d1f0f0" }}
+                                  >
+                                    <strong>Economic</strong>
+                                    <br />
+                                    Interest rates, inflation, GDP growth,
+                                    and consumer spending.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#e3e0fb" }}
+                                  >
+                                    <strong>Social</strong>
+                                    <br />
+                                    Demographics, lifestyle changes,
+                                    education, and social trends.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#fbe8d3" }}
+                                  >
+                                    <strong>Technological</strong>
+                                    <br />
+                                    Innovation, automation, R&D, and digital
+                                    transformation.
                                   </div>
                                 </div>
+                                <div className="analysis-row">
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#fff6d1" }}
+                                  >
+                                    <strong>Legal</strong>
+                                    <br />
+                                    Employment law, health regulations, and
+                                    consumer protection.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#d6f5d6" }}
+                                  >
+                                    <strong>Environmental</strong>
+                                    <br />
+                                    Sustainability, climate change policies,
+                                    and waste management.
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
 
-                                <div ref={porterRef} className="analysis-section">
-                                  <h2>Porter's Five Forces</h2>
-                                  <div className="analysis-table">
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#e0f7fa" }}
-                                      >
-                                        <strong>Competitive Rivalry</strong>
-                                        <br />
-                                        Market competition intensity and
-                                        differentiation.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#ffe0b2" }}
-                                      >
-                                        <strong>Supplier Power</strong>
-                                        <br />
-                                        Number of suppliers, uniqueness, and
-                                        switching costs.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#e1bee7" }}
-                                      >
-                                        <strong>Buyer Power</strong>
-                                        <br />
-                                        Customer influence, price sensitivity,
-                                        and volume.
-                                      </div>
-                                    </div>
-                                    <div className="analysis-row">
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#dcedc8" }}
-                                      >
-                                        <strong>Threat of Substitution</strong>
-                                        <br />
-                                        Availability of alternative products or
-                                        services.
-                                      </div>
-                                      <div
-                                        className="analysis-cell"
-                                        style={{ backgroundColor: "#ffcdd2" }}
-                                      >
-                                        <strong>Threat of New Entry</strong>
-                                        <br />
-                                        Barriers to entry and potential for new
-                                        competitors.
-                                      </div>
-                                    </div>
+                            <div ref={porterRef} className="analysis-section">
+                              <h2>Porter's Five Forces</h2>
+                              <div className="analysis-table">
+                                <div className="analysis-row">
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#e0f7fa" }}
+                                  >
+                                    <strong>Competitive Rivalry</strong>
+                                    <br />
+                                    Market competition intensity and
+                                    differentiation.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#ffe0b2" }}
+                                  >
+                                    <strong>Supplier Power</strong>
+                                    <br />
+                                    Number of suppliers, uniqueness, and
+                                    switching costs.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#e1bee7" }}
+                                  >
+                                    <strong>Buyer Power</strong>
+                                    <br />
+                                    Customer influence, price sensitivity,
+                                    and volume.
                                   </div>
                                 </div>
-                              </>
+                                <div className="analysis-row">
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#dcedc8" }}
+                                  >
+                                    <strong>Threat of Substitution</strong>
+                                    <br />
+                                    Availability of alternative products or
+                                    services.
+                                  </div>
+                                  <div
+                                    className="analysis-cell"
+                                    style={{ backgroundColor: "#ffcdd2" }}
+                                  >
+                                    <strong>Threat of New Entry</strong>
+                                    <br />
+                                    Barriers to entry and potential for new
+                                    competitors.
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </>
                       ) : (
                         <div className="analysis-empty">
                           <p>
@@ -1333,9 +1408,12 @@ const BusinessSetupPage = () => {
                           </span>
                         </div>
                       ) : strategicAnalysisResult ? (
-                        <StrategicAcronym
-                          analysisResult={strategicAnalysisResult}
-                        />
+                        <div id="strategic-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+                          <StrategicAcronym
+                            analysisResult={strategicAnalysisResult}
+                            businessName={businessData.name}
+                          />
+                        </div>
                       ) : (
                         <div className="strategic-empty">
                           <p>
