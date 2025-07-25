@@ -207,6 +207,7 @@ html, body {
   flex-basis: 50%;
 }
 
+
 .chat-section.slide-out,
 .main-container.analysis-expanded .chat-section {
   transform: translateX(-100%);
@@ -1699,3 +1700,203 @@ html, body {
     max-width: 100%;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.analysis-section {
+  margin-top: 2rem;
+}
+
+.analysis-table {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.analysis-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.analysis-cell {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  border: 1px solid #e5e7eb;
+  min-width: 200px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.analysis-section {
+  margin-top: 2rem;
+}
+
+.analysis-table {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.analysis-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.analysis-cell {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  border: 1px solid #e5e7eb;
+  min-width: 200px;
+}
+
+
+.expanded-analysis-view.mobile {
+  padding: 0.5rem;
+  font-size: 14px;
+}
+
+.expanded-analysis-view.desktop {
+  padding: 1.5rem;
+}
+.expanded-analysis-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* Add if missing: */
+  min-height: 100%;
+  width: 100%;
+}
+.analysis-section,
+.analysis-content {
+  display: block !important;
+  height: auto !important;
+  opacity: 1 !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.info-panel-content {
+  scrollbar-width: thin;              /* For Firefox */
+  scrollbar-color: #ccc transparent;  /* For Firefox */
+  overflow-y: auto;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+.info-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.info-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.info-panel-content::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
+}
+
+
+
+
+
+/* 🔽 Full width on mobile */
+@media (max-width: 768px) {
+  .chat-section {
+    width: 100%;
+    flex-basis: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e1e5e9; /* optional: gives separation on mobile */
+  }
+}
+
+
+
+@media (max-width: 768px) {
+  .progress-area {
+    margin: 12px 16px;
+  }
+
+  .progress-label {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .progress-track {
+    background-color: #eee;
+    height: 6px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    background-color: #4caf50;
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+  }
+}
+
+
+
+
+@media (max-width: 768px) {
+  .info-panel{
+    width: 100% !important;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+}
+
