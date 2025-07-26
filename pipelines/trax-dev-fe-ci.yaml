@@ -4,6 +4,7 @@ trigger:
   branches:
     include:
       - master
+      - develop
 
 variables:
   MAJOR: 1        # Increment manually for major changes
@@ -12,6 +13,7 @@ variables:
 
   SEMVER: $(MAJOR).$(MINOR).$(PATCH).$(Build.BuildId)
   IMAGE_VERSION: $(SEMVER)
+  IMAGE_NAME: trax_dev_frontend
 
 stages:
   - stage: BuildAndPush
@@ -22,28 +24,21 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
 
-        # variables:
-        #   - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-        #       - group: traxxia-frontend
+        variables:
+          - ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+              - group: trax-dev-fe-vg
 
         steps:
           - checkout: self
             clean: true
             fetchDepth: 1
 
-          # Dynamically set IMAGE_NAME
-          - ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
-            - script: echo "##vso[task.setvariable variable=IMAGE_NAME]traxxia_frontend"
-              displayName: 'Set IMAGE_NAME (master)'
-
           # Generate .env dynamically
-          # - script: |
-          #     cd docker/services/product-client
-          #     rm -f .env
-          #     echo 'NODE_PATH=$(NODE_PATH)' >> .env
-          #     cat .env
-          #     cd ../../..
-          #   displayName: 'Generated .env file ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'
+          - script: |
+              rm -f .env
+              echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
+              cat .env
+            displayName: 'Generated .env file ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'
 
           # - task: npmAuthenticate@0
           #   inputs:
@@ -53,7 +48,7 @@ stages:
           - task: Docker@2
             displayName: 'Build and Push Traxxia FE Docker Image to ACR'
             inputs:
-              containerRegistry: 'sc-traxxia'     # Use your ACR service connection
+              containerRegistry: 'trax-sc-dev-acr'     # Use your ACR service connection
               repository: $(IMAGE_NAME)
               command: buildAndPush
               Dockerfile: 'docker/Dockerfile'
