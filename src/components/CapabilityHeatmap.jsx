@@ -451,6 +451,7 @@ const CapabilityHeatmap = ({
 
       {/* Main Heatmap - Capabilities (Y-axis) vs Maturity Level (X-axis) */}
       <div className="ch-heatmap-container">
+        <div className="ch-heatmap-scroll">
         <div className="ch-heatmap-wrapper">
           <div className="ch-heatmap">
             {/* Header Row - Maturity Levels */}
@@ -519,6 +520,7 @@ const CapabilityHeatmap = ({
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div> 
     </div>

@@ -2135,3 +2135,31 @@ html, body {
   }
 }
 
+
+
+
+/* (Dropdown + Regenerate All + PDF Export) Responsive*/
+
+@media (max-width: 600px) {
+  .analysis-controls-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analysis-controls-wrapper > * {
+    width: 100%;
+  }
+
+  .analysis-controls-wrapper button {
+    justify-content: center;
+  }
+
+  .analysis-controls-wrapper .dropdown-wrapper {
+    width: 100%;
+  }
+
+  .analysis-controls-wrapper .dropdown-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

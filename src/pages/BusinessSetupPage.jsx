@@ -422,9 +422,10 @@ const BusinessSetupPage = () => {
 
   // Component for Analysis Controls (Dropdown + Regenerate All + PDF Export)
   const AnalysisControls = () => (
-    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-      <div ref={dropdownRef} style={{ position: "relative" }}>
+    <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+      <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
         <button
+        className="dropdown-button"
           onClick={() => setShowDropdown((prev) => !prev)}
           style={{
             backgroundColor: "#fff",

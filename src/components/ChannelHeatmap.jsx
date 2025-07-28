@@ -465,6 +465,7 @@ const ChannelHeatmap = ({
 
       {/* Heatmap */}
       <div className="ch-heatmap-container">
+        <div className="ch-heatmap-scroll">
         <div className="ch-heatmap-header-section">
           <h3 className="ch-section-title">Performance Heatmap</h3>
           {/* Legend moved to top right */}
@@ -548,6 +549,7 @@ const ChannelHeatmap = ({
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </div>

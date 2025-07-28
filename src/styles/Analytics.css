@@ -3083,3 +3083,209 @@
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ch-heatmap-scroll {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ch-heatmap {
+  min-width: 600px;
+}
+
+@media (max-width: 480px) {
+  .ch-heatmap {
+    min-width: 500px;
+  }
+
+  .ch-cell {
+    min-width: 60px;
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .ch-cell-header {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .ch-capability-name,
+  .ch-maturity-label,
+  .ch-maturity-level {
+    font-size: 12px;
+  }
+
+  .ch-level-indicator {
+    font-size: 10px;
+  }
+
+  .ch-tooltip {
+    font-size: 10px;
+    padding: 6px;
+    max-width: 200px;
+  }
+
+  .ch-tooltip-header {
+    font-weight: bold;
+  }
+
+  .ch-heatmap-row {
+    gap: 2px;
+  }
+
+  .ch-corner-label,
+  .ch-corner-sublabel {
+    font-size: 11px;
+  }
+
+  .ch-cell-corner {
+    padding: 6px;
+  }
+
+  .ch-heatmap-wrapper{
+    width: 800px;
+  }
+}
+
+
+.ch-heatmap-scroll {
+  display: contents; 
+}
+
+@media (max-width: 768px) {
+  .ch-heatmap-scroll {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .ch-heatmap-wrapper {
+    min-width: 600px; 
+  }
+}
+
+
+
+
+
+@media (max-width: 480px) {
+  .ch-heatmap-container {
+    position: relative;
+  }
+
+  .ch-heatmap-header-section {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #fff; 
+    z-index: 10;
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid #eee; 
+  }
+
+  .ch-heatmap-scroll {
+    padding-top: 8px; 
+  }
+}
+
+
+
+
+.ch-heatmap-scroll {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+
+
+@media (max-width: 480px) {
+  .ch-heatmap {
+    min-width: 500px;
+  }
+
+  .ch-heatmap-wrapper {
+    width: fit-content;
+  }
+
+  .ch-cell {
+    min-width: 60px;
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .ch-cell-header,
+  .ch-product-header,
+  .ch-channel-header {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .ch-product-name,
+  .ch-channel-name,
+  .ch-product-total,
+  .ch-channel-total {
+    font-size: 11px;
+  }
+
+  .ch-tooltip {
+    font-size: 10px;
+    padding: 6px;
+    max-width: 200px;
+  }
+
+  .ch-tooltip-header {
+    font-weight: bold;
+    font-size: 11px;
+  }
+
+  .ch-cell-volume {
+    font-size: 10px;
+  }
+
+  .ch-cell-content {
+    gap: 2px;
+  }
+
+  .ch-section-title {
+    font-size: 16px;
+  }
+
+  .ch-metric-value {
+    font-size: 18px;
+  }
+}
+
+
+
+@media (max-width: 600px) {
+  .radar-label {
+    font-size: 6.5px;
+  }
+}
