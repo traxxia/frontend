@@ -20,6 +20,7 @@ const EditableBriefSection = ({
   
   const inputRefs = useRef({});
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const getAuthToken = () => sessionStorage.getItem('token');
 
   useEffect(() => {
@@ -55,6 +56,156 @@ const EditableBriefSection = ({
     setTimeout(() => {
       setShowToast({ show: false, message: '', type: 'success' });
     }, 4000);
+  };
+
+  // Generate new analysis with updated answers
+  const regenerateAnalysisWithUpdatedAnswers = async () => {
+    try {
+      showToastMessage('Regenerating analysis with updated answers...', 'info');
+
+      const questionsArray = [];
+      const answersArray = [];
+
+      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+
+      sortedQuestions.forEach(question => {
+        if (userAnswers[question.id]) {
+          const cleanQuestion = String(question.question)
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          const cleanAnswer = String(userAnswers[question.id])
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          questionsArray.push(cleanQuestion);
+          answersArray.push(cleanAnswer);
+        }
+      });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No answered questions available for analysis');
+      }
+
+      const payload = {
+        questions: questionsArray,
+        answers: answersArray
+      };
+
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = `ML API returned ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.detail) {
+            errorMessage = `API Error: ${errorData.detail}`;
+          }
+        } catch (e) {
+          errorMessage = `API Error: ${responseText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        result = responseText;
+      }
+
+      let analysisContent;
+      if (typeof result === 'object' && result !== null) {
+        analysisContent = JSON.stringify(result);
+      } else {
+        analysisContent = String(result);
+      }
+
+      if (analysisContent) {
+        // Save the updated analysis to backend
+        await saveAnalysisToBackend(analysisContent, 'swot');
+        showToastMessage('Analysis regenerated successfully with updated answers!', 'success');
+        
+        // Trigger the parent component's regeneration callback if provided
+        if (onAnalysisRegenerate) {
+          onAnalysisRegenerate();
+        }
+      } else {
+        throw new Error('Empty or invalid response from analysis API');
+      }
+
+    } catch (error) {
+      console.error('Error regenerating analysis:', error);
+      showToastMessage('Failed to regenerate analysis. Please try again.', 'error');
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
+    try {
+      const token = getAuthToken();
+
+      // Get current session ID
+      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!currentResponse.ok) {
+        throw new Error('Failed to get current conversation');
+      }
+
+      const conversation = await currentResponse.json();
+      const sessionId = conversation.sessionId;
+
+      if (!sessionId) {
+        throw new Error('No active conversation session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          analysisType: analysisType,
+          analysisData: analysisData,
+          businessName: 'Updated Business Analysis'
+        })
+      });
+
+      if (response.ok) {
+        console.log(`📊 ${analysisType} analysis saved to backend after update`);
+        return true;
+      } else {
+        console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
+        return false;
+      }
+    } catch (error) {
+      console.error(`Error saving ${analysisType} analysis:`, error);
+      return false;
+    }
   };
 
   // Auto-save updated answer to conversation
@@ -149,12 +300,10 @@ const EditableBriefSection = ({
         showToastMessage('Answer updated and auto-saved successfully!', 'success');
 
         // Check if initial phase is completed and trigger analysis regeneration
-        if (completedPhases.has('initial') && onAnalysisRegenerate) {
-          showToastMessage('Regenerating analysis with updated answers...', 'info');
-          
-          // Trigger analysis regeneration
+        if (completedPhases.has('initial')) {
+          // Trigger analysis regeneration with updated answers
           setTimeout(() => {
-            onAnalysisRegenerate();
+            regenerateAnalysisWithUpdatedAnswers();
           }, 500);
         }
 
@@ -287,7 +436,7 @@ const EditableBriefSection = ({
                 <>
                   <br />
                   <span style={{ color: '#007bff', fontWeight: 'bold' }}>
-                    {t('briefNoteRegenerate')}
+                    {t('briefNoteRegenerate')} Analysis will be automatically regenerated when you update answers.
                   </span>
                 </>
               )}

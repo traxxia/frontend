@@ -45,74 +45,106 @@ const ChatComponent = ({
  
   const MAX_QUESTION_API_CALLS = 2;
   const MAX_PHASE_API_CALLS = 2;
+const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
+  try {
+    const token = getAuthToken();
 
+    const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: sessionId,
+        analysisType: analysisType,
+        analysisData: analysisData,
+        businessName: 'Generated Business Analysis'
+      })
+    });
+
+    if (response.ok) {
+      console.log(`📊 ${analysisType} analysis saved to backend`);
+      return true;
+    } else {
+      console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
+      return false;
+    }
+  } catch (error) {
+    console.error(`Error saving ${analysisType} analysis:`, error);
+    return false;
+  }
+};
   // NEW: Generate analysis using /find API
   const generateAnalysisWithFind = async () => {
-    try {
-      setIsGeneratingAnalysis(true);
-      showToastMessage('Generating your business analysis...', 'info');
+  try {
+    setIsGeneratingAnalysis(true);
+    showToastMessage('Generating your business analysis...', 'info');
 
-      // Prepare questions and answers arrays
-      const questionsArray = [];
-      const answersArray = [];
+    // Prepare questions and answers arrays
+    const questionsArray = [];
+    const answersArray = [];
 
-      // Sort questions by ID to maintain order
-      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-      
-      // Only include answered questions
-      sortedQuestions.forEach(question => {
-        if (userAnswers[question.id]) {
-          questionsArray.push(question.question);
-          answersArray.push(userAnswers[question.id]);
-        }
-      });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for analysis');
+    // Sort questions by ID to maintain order
+    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+    
+    // Only include answered questions
+    sortedQuestions.forEach(question => {
+      if (userAnswers[question.id]) {
+        questionsArray.push(question.question);
+        answersArray.push(userAnswers[question.id]);
       }
+    });
 
-      console.log('Sending to /find API:', {
+    if (questionsArray.length === 0) {
+      throw new Error('No answered questions available for analysis');
+    }
+
+    console.log('Sending to /find API:', {
+      questions: questionsArray,
+      answers: answersArray
+    });
+
+    const response = await fetch(`${ML_API_BASE_URL}/find`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
         questions: questionsArray,
         answers: answersArray
-      });
+      })
+    });
 
-      const response = await fetch(`${ML_API_BASE_URL}/find`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('Received from /find API:', result);
-
-      // The API should return analysis content that we can pass to SwotAnalysis
-      if (result && onAnalysisGenerated) {
-        // Assuming the API returns analysis in a format compatible with SwotAnalysis
-        // You may need to adjust this based on the actual API response structure
-        const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
-        onAnalysisGenerated(analysisContent);
-        showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
-      } else {
-        throw new Error('Invalid response from analysis API');
-      }
-
-    } catch (error) {
-      console.error('Error generating analysis:', error);
-      showToastMessage('Failed to generate analysis. Please try again.', 'error');
-    } finally {
-      setIsGeneratingAnalysis(false);
+    if (!response.ok) {
+      throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
     }
-  };
+
+    const result = await response.json();
+    console.log('Received from /find API:', result);
+
+    // The API should return analysis content that we can pass to SwotAnalysis
+    if (result && onAnalysisGenerated) {
+      // Assuming the API returns analysis in a format compatible with SwotAnalysis
+      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+      
+      // Save to backend before calling onAnalysisGenerated
+      await saveAnalysisToBackend(analysisContent, 'swot');
+      
+      onAnalysisGenerated(analysisContent);
+      showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
+    } else {
+      throw new Error('Invalid response from analysis API');
+    }
+
+  } catch (error) {
+    console.error('Error generating analysis:', error);
+    showToastMessage('Failed to generate analysis. Please try again.', 'error');
+  } finally {
+    setIsGeneratingAnalysis(false);
+  }
+};
  
   const autoSaveMessage = async (messageData) => {
     try { 

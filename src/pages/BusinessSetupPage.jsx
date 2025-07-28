@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { ArrowLeft, Loader, RefreshCw } from "lucide-react";
 import ChatComponent from "../components/ChatComponent";
 import SwotAnalysis from "../components/SwotAnalysis";
@@ -15,7 +15,7 @@ import PDFExportButton from "../components/PDFExportButton";
 import { useTranslation } from "../hooks/useTranslation";
 
 const BusinessSetupPage = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(() => {
     const isMobileView = window.innerWidth <= 768;
     return isMobileView ? "chat" : "brief";
@@ -27,16 +27,16 @@ const BusinessSetupPage = () => {
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
   const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
+  const [isLoadingLatestAnalysis, setIsLoadingLatestAnalysis] = useState(false);
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(t('goToSection'));
+  const [selectedOption, setSelectedOption] = useState(() => t('goToSection') || 'Go to Section');
   const dropdownRef = useRef(null);
   const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
   const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);
   const [channelHeatmapData, setChannelHeatmapData] = useState(null);
   const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
   const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
-
 
   // Refs for scrolling to sections
   const swotRef = useRef(null);
@@ -48,6 +48,8 @@ const BusinessSetupPage = () => {
   const strategicRef = useRef(null);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -59,6 +61,102 @@ const BusinessSetupPage = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Load latest analysis when analysis tab becomes active
+  useEffect(() => {
+    if (activeTab === "analysis" && unlockedFeatures.analysis) {
+      loadLatestAnalysis();
+    }
+  }, [activeTab]);
+
+  // Load latest analysis from backend
+  const loadLatestAnalysis = async () => {
+    try {
+      setIsLoadingLatestAnalysis(true);
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/swot`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setAnalysisResult(result.analysisData);
+        console.log('📊 Loaded latest analysis from backend');
+      } else if (response.status === 404) {
+        // No analysis found, generate new one if initial phase is completed
+        if (isPhaseCompleted(PHASES.INITIAL)) {
+          console.log('📊 No existing analysis found, generating new one...');
+          await generateAnalysisWithFind();
+        }
+      } else {
+        console.error('Failed to load latest analysis:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error loading latest analysis:', error);
+      // If no analysis exists and initial phase is completed, generate new one
+      if (isPhaseCompleted(PHASES.INITIAL)) {
+        console.log('📊 Error loading analysis, generating new one...');
+        await generateAnalysisWithFind();
+      }
+    } finally {
+      setIsLoadingLatestAnalysis(false);
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
+    try {
+      const token = getAuthToken();
+
+      // Get current session ID
+      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!currentResponse.ok) {
+        throw new Error('Failed to get current conversation');
+      }
+
+      const conversation = await currentResponse.json();
+      const sessionId = conversation.sessionId;
+
+      if (!sessionId) {
+        throw new Error('No active conversation session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          analysisType: analysisType,
+          analysisData: analysisData,
+          businessName: businessData.name
+        })
+      });
+
+      if (response.ok) {
+        console.log(`📊 ${analysisType} analysis saved to backend`);
+        return true;
+      } else {
+        console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
+        return false;
+      }
+    } catch (error) {
+      console.error(`Error saving ${analysisType} analysis:`, error);
+      return false;
+    }
+  };
 
   const handleCustomerSegmentationGenerated = (data) => {
     setCustomerSegmentationData(data);
@@ -131,16 +229,10 @@ const BusinessSetupPage = () => {
     uniqueValue: "",
   });
 
-   useEffect(() => {
-    setBusinessData((prev) => ({
-      ...prev,
-      name: t("yourBusiness"),
-      whatWeDo: t("whatWeDo"),
-    }));
-  }, [t]);
-
-
-
+  const translatedDefaults = useMemo(() => ({
+  name: t("yourBusiness"),
+  whatWeDo: t("whatWeDo"),
+}), [t]);
   const generateAnalysisWithFind = async () => {
     try {
       setIsLoadingAnalysis(true);
@@ -223,6 +315,10 @@ const BusinessSetupPage = () => {
 
       if (analysisContent) {
         setAnalysisResult(analysisContent);
+        
+        // Save the new analysis to backend
+        await saveAnalysisToBackend(analysisContent, 'swot');
+        
         showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
       } else {
         throw new Error('Empty or invalid response from analysis API');
@@ -546,6 +642,8 @@ const BusinessSetupPage = () => {
   const handleAnalysisGenerated = (analysis) => {
     setAnalysisResult(analysis);
     setIsLoadingAnalysis(false);
+    // Save to backend when analysis is generated from chat
+    saveAnalysisToBackend(analysis, 'swot');
   };
 
   const handleStrategicAnalysisGenerated = (strategicAnalysis) => {
@@ -608,6 +706,106 @@ const BusinessSetupPage = () => {
 
   const handleBack = () => {
     window.history.back();
+  };
+
+  // Render analysis content with loading state
+  const renderAnalysisContent = () => {
+    if (isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAll || isLoadingLatestAnalysis) {
+      return (
+        <div className="analysis-loading">
+          <Loader size={24} className="spinner" />
+          <span>
+            {isLoadingLatestAnalysis
+              ? "Loading latest analysis..."
+              : isRegeneratingAll
+              ? "Regenerating all analysis components..."
+              : isAnalysisRegenerating
+              ? "Regenerating your business analysis..."
+              : "Generating your business analysis..."}
+          </span>
+        </div>
+      );
+    }
+
+    if (analysisResult) {
+      return (
+        <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+          <div ref={swotRef}>
+            <SwotAnalysis
+              analysisResult={analysisResult}
+              businessName={businessData.name}
+            />
+          </div>
+          <div ref={customerSegmentationRef}>
+            <CustomerSegmentation
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleCustomerSegmentationGenerated}
+              key={`customer-segmentation-${getRegenerationKey('customerSegmentation')}`}
+            />
+          </div>
+          <div ref={purchaseCriteriaRef}>
+            <PurchaseCriteria
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handlePurchaseCriteriaGenerated}
+              key={`purchase-criteria-${getRegenerationKey('purchaseCriteria')}`}
+            />
+          </div>
+          <div ref={channelHeatmapRef}>
+            <ChannelHeatmap
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleChannelHeatmapGenerated}
+              key={`channel-heatmap-${getRegenerationKey('channelHeatmap')}`}
+            />
+          </div>
+          <div ref={loyaltyNpsRef}>
+            <LoyaltyNPS
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleLoyaltyNPSGenerated}
+              key={`loyalty-nps-${getRegenerationKey('loyaltyNPS')}`}
+            />
+          </div>
+          <div ref={capabilityHeatmapRef}>
+            <CapabilityHeatmap
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleCapabilityHeatmapGenerated}
+              key={`capability-heatmap-${getRegenerationKey('capabilityHeatmap')}`}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="analysis-empty">
+        <p>
+          {t("Your business analysis will appear here once generated.")}
+        </p>
+        <p>
+          <p>{t("Continue the conversation to trigger analysis generation.")}</p>
+        </p>
+        {isPhaseCompleted(PHASES.INITIAL) && (
+          <button
+            className="generate-analysis-btn"
+            onClick={handleManualAnalysisGeneration}
+            disabled={isLoadingAnalysis}
+          >
+            {isLoadingAnalysis
+              ? t("Generating...")
+              : t("Generate Analysis Now")}
+          </button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -749,97 +947,7 @@ const BusinessSetupPage = () => {
                       {activeTab === "analysis" && (
                         <div className="analysis-section">
                           <div className="analysis-content">
-                            {isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAll ? (
-                              <div className="analysis-loading">
-                                <Loader size={24} className="spinner" />
-                                <span>
-                                  {isRegeneratingAll
-                                    ? "Regenerating all analysis components..."
-                                    : isAnalysisRegenerating
-                                    ? "Regenerating your business analysis..."
-                                    : "Generating your business analysis..."}
-                                </span>
-                              </div>
-                            ) : analysisResult ? (
-                              <>
-                                <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
-                                  <div ref={swotRef}>
-                                    <SwotAnalysis
-                                      analysisResult={analysisResult}
-                                      businessName={businessData.name}
-                                    />
-                                  </div>
-                                  <div ref={customerSegmentationRef}>
-                                    <CustomerSegmentation
-                                      questions={questions}
-                                      userAnswers={userAnswers}
-                                      businessName={businessData.name}
-                                      onDataGenerated={handleCustomerSegmentationGenerated}
-                                      key={`customer-segmentation-${getRegenerationKey('customerSegmentation')}`}
-                                    />
-                                  </div>
-                                  <div ref={purchaseCriteriaRef}>
-                                    <PurchaseCriteria
-                                      questions={questions}
-                                      userAnswers={userAnswers}
-                                      businessName={businessData.name}
-                                      onDataGenerated={handlePurchaseCriteriaGenerated}
-                                      key={`purchase-criteria-${getRegenerationKey('purchaseCriteria')}`}
-                                    />
-                                  </div>
-
-                                  <div ref={channelHeatmapRef}>
-                                    <ChannelHeatmap
-                                      questions={questions}
-                                      userAnswers={userAnswers}
-                                      businessName={businessData.name}
-                                      onDataGenerated={handleChannelHeatmapGenerated}
-                                      key={`channel-heatmap-${getRegenerationKey('channelHeatmap')}`}
-                                    />
-                                  </div>
-
-                                  <div ref={loyaltyNpsRef}>
-                                    <LoyaltyNPS
-                                      questions={questions}
-                                      userAnswers={userAnswers}
-                                      businessName={businessData.name}
-                                      onDataGenerated={handleLoyaltyNPSGenerated}
-                                      key={`loyalty-nps-${getRegenerationKey('loyaltyNPS')}`}
-                                    />
-                                  </div>
-
-                                  <div ref={capabilityHeatmapRef}>
-                                    <CapabilityHeatmap
-                                      questions={questions}
-                                      userAnswers={userAnswers}
-                                      businessName={businessData.name}
-                                      onDataGenerated={handleCapabilityHeatmapGenerated}
-                                      key={`capability-heatmap-${getRegenerationKey('capabilityHeatmap')}`}
-                                    />
-                                  </div>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="analysis-empty">
-                                <p>
-                                  {t("Your business analysis will appear here once generated.")}
-                                </p>
-                                <p>
-                                  <p>{t("Continue the conversation to trigger analysis generation.")}</p>
-                                </p>
-                                {isPhaseCompleted(PHASES.INITIAL) && (
-                                  <button
-                                    className="generate-analysis-btn"
-                                    onClick={handleManualAnalysisGeneration}
-                                    disabled={isLoadingAnalysis}
-                                  >
-                                    {isLoadingAnalysis
-                                      ? t("Generating...")
-                                      : t("Generate Analysis Now")}
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                            {renderAnalysisContent()}
                           </div>
                         </div>
                       )}
@@ -925,99 +1033,7 @@ const BusinessSetupPage = () => {
                     )}
                     
                     <div className="analysis-content">
-                      {isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAll ? (
-                        <div className="analysis-loading">
-                          <Loader size={24} className="spinner" />
-                          <span>
-                            {isRegeneratingAll
-                              ? "Regenerating all analysis components..."
-                              : isAnalysisRegenerating
-                              ? "Regenerating your business analysis..."
-                              : "Generating your business analysis..."}
-                          </span>
-                        </div>
-                      ) : analysisResult ? (
-                        <>
-                          <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
-                            <div ref={swotRef}>
-                              <SwotAnalysis
-                                analysisResult={analysisResult}
-                                businessName={businessData.name}
-                              />
-                            </div>
-                            <div ref={customerSegmentationRef}>
-                              <CustomerSegmentation
-                                questions={questions}
-                                userAnswers={userAnswers}
-                                businessName={businessData.name}
-                                onDataGenerated={handleCustomerSegmentationGenerated}
-                                key={`customer-segmentation-mobile-${getRegenerationKey('customerSegmentation')}`}
-                              />
-                            </div>
-
-                            <div ref={purchaseCriteriaRef}>
-                              <PurchaseCriteria
-                                questions={questions}
-                                userAnswers={userAnswers}
-                                businessName={businessData.name}
-                                onDataGenerated={handlePurchaseCriteriaGenerated}
-                                key={`purchase-criteria-mobile-${getRegenerationKey('purchaseCriteria')}`}
-                              />
-                            </div>
-
-                            <div ref={channelHeatmapRef}>
-                              <ChannelHeatmap
-                                questions={questions}
-                                userAnswers={userAnswers}
-                                businessName={businessData.name}
-                                onDataGenerated={handleChannelHeatmapGenerated}
-                                key={`channel-heatmap-mobile-${getRegenerationKey('channelHeatmap')}`}
-                              />
-                            </div>
-
-                            <div ref={loyaltyNpsRef}>
-                              <LoyaltyNPS
-                                questions={questions}
-                                userAnswers={userAnswers}
-                                businessName={businessData.name}
-                                onDataGenerated={handleLoyaltyNPSGenerated}
-                                key={`loyalty-nps-mobile-${getRegenerationKey('loyaltyNPS')}`}
-                              />
-                            </div>
-
-                            <div ref={capabilityHeatmapRef}>
-                              <CapabilityHeatmap
-                                questions={questions}
-                                userAnswers={userAnswers}
-                                businessName={businessData.name}
-                                onDataGenerated={handleCapabilityHeatmapGenerated}
-                                key={`capability-heatmap-mobile-${getRegenerationKey('capabilityHeatmap')}`}
-                              />
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="analysis-empty">
-                          <p>
-                            Your business analysis will appear here once generated.
-                          </p>
-                          <p>
-                            Continue the conversation to trigger analysis
-                            generation.
-                          </p>
-                          {isPhaseCompleted(PHASES.INITIAL) && (
-                            <button
-                              className="generate-analysis-btn"
-                              onClick={handleManualAnalysisGeneration}
-                              disabled={isLoadingAnalysis}
-                            >
-                              {isLoadingAnalysis
-                                ? "Generating..."
-                                : "Generate Analysis Now"}
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      {renderAnalysisContent()}
                     </div>
                   </div>
                 )}
