@@ -1,118 +1,181 @@
 import React from 'react';
+import RegenerateButton from './RegenerateButton';
 import '../styles/dashboard.css';
-import { detectLanguage, analysisPatterns } from '../utils/translations';
+import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
 
-const SwotAnalysis = ({ analysisResult }) => {
-  const lang = detectLanguage(analysisResult);
-  const t = analysisPatterns[lang]?.swot || analysisPatterns['en'].swot;
-  
-  const introRegex = new RegExp(`^(.*?)(?=\\*\\*\\s*${t.title.replace('SWOT Analysis', 'SWOT Analysis|Análisis FODA')})`, 's');
-  const introMatch = introRegex.exec(analysisResult);
-  const introText = introMatch ? introMatch[1].trim() : "";
+const SwotAnalysis = ({ 
+  analysisResult, 
+  businessName, 
+  onRegenerate, 
+  isRegenerating = false,
+  canRegenerate = true 
+}) => {
+  // Parse the analysis result
+  let swotData = null;
+  let errorMessage = '';
 
-  const swotMatch = t.patterns.analysisHeader.exec(analysisResult);
-  const swotContent = swotMatch ? swotMatch[1].trim() : "";
+  try {
+    if (typeof analysisResult === 'string') {
+      // Parse JSON string from API
+      swotData = JSON.parse(analysisResult);
+    } else if (typeof analysisResult === 'object') {
+      // Already an object
+      swotData = analysisResult;
+    }
 
-  const conclusionMatch = t.patterns.conclusion.exec(analysisResult);
-  const conclusionText = conclusionMatch ? conclusionMatch[0] : "";
+    console.log('Parsed SWOT data:', swotData);
+  } catch (error) {
+    console.error('Error parsing analysis result:', error);
+    errorMessage = 'Failed to parse analysis data';
+  }
 
-  const swotData = extractAnalysisSections(swotContent, t.patterns.sections);
-  const labels = Object.keys(swotData);
+  // Render SWOT table if we have the correct data structure
+  if (swotData && (swotData.strengths || swotData.weaknesses || swotData.opportunities || swotData.threats)) {
+    return (
+      <div className="swot-analysis-container">
+        {/* Header with regenerate button */}
 
+        <div className="ln-header">
+          <div className="ln-title-section">
+            <Target className="ln-icon" size={24} />
+            <h2 className="ln-title">SWOT Analysis</h2>
+          </div>
+          <RegenerateButton
+              onRegenerate={onRegenerate}
+              isRegenerating={isRegenerating}
+              canRegenerate={canRegenerate}
+              sectionName="SWOT Analysis"
+              size="medium"
+            />
+        </div>
+
+         
+
+        <div className="table-responsive">
+          <table className="table table-bordered table-striped swot-table">
+            {/* Header Row with all 4 SWOT categories */}
+            <thead className="table-light">
+              <tr>
+                <th className="swot-header strengths-bg">
+                  <div className="swot-title">
+                    <strong>S</strong>trengths
+                  </div> 
+                </th>
+                <th className="swot-header weaknesses-bg">
+                  <div className="swot-title">
+                    <strong>W</strong>eaknesses
+                  </div> 
+                </th>
+                <th className="swot-header opportunities-bg">
+                  <div className="swot-title">
+                    <strong>O</strong>pportunities
+                  </div> 
+                </th>
+                <th className="swot-header threats-bg">
+                  <div className="swot-title">
+                    <strong>T</strong>hreats
+                  </div> 
+                </th>
+              </tr>
+            </thead>
+            {/* Content Row with all 4 SWOT results */}
+            <tbody>
+              <tr>
+                <td className="swot-cell">
+                  {renderSwotContent(swotData.strengths, 'strengths')}
+                </td>
+                <td className="swot-cell">
+                  {renderSwotContent(swotData.weaknesses, 'weaknesses')}
+                </td>
+                <td className="swot-cell">
+                  {renderSwotContent(swotData.opportunities, 'opportunities')}
+                </td>
+                <td className="swot-cell">
+                  {renderSwotContent(swotData.threats, 'threats')}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>          
+      </div>
+    );
+  }
+
+  // Fallback for unexpected data format
   return (
-    <>
-      <h4 className="text-center"><strong>{t.title}</strong></h4>
+    <div className="swot-analysis-container">
+      {/* Header with regenerate button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', padding: '0 1rem' }}>
+        <h4 className="text-center" style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
+          <strong>Business Analysis</strong>
+        </h4>
+        {onRegenerate && (
+          <RegenerateButton
+            onRegenerate={onRegenerate}
+            isRegenerating={isRegenerating}
+            canRegenerate={canRegenerate}
+            sectionName="SWOT Analysis"
+            size="medium"
+          />
+        )}
+      </div>
       
-      {introText && <div className="mb-3 intro-text">{introText}</div>}
-      
-      {labels.length > 0 && (
-        <>
-          <br/>
-          <div className="table-responsive">
-            <table className="table table-bordered table-striped">
-              <thead className="table-light">
-                <tr>
-                  {labels.map(label => <th key={label}>{String(label)}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  {labels.map(label => (
-                    <td key={label}>
-                      {renderAnalysisBoxes(swotData[label], label, 'swot')}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-                    
-      {conclusionText && (
-        <div className="mt-4 conclusion-section">
-          <h5><strong>{t.conclusion}</strong></h5>
-          <div className="conclusion-text">
-            <div dangerouslySetInnerHTML={{ 
-              __html: String(conclusionText).replace(/\n/g, "<br/>") 
-            }} />
-          </div>
+      {errorMessage ? (
+        <div className="alert alert-danger">
+          <h6>Error</h6>
+          <p>{errorMessage}</p>
+        </div>
+      ) : (
+        <div className="alert alert-info">
+          <h6>Raw Analysis Data</h6>
+          <pre style={{ 
+            background: '#f8f9fa', 
+            padding: '15px', 
+            borderRadius: '8px',
+            whiteSpace: 'pre-wrap',
+            fontSize: '14px',
+            maxHeight: '400px',
+            overflow: 'auto'
+          }}>
+            {typeof analysisResult === 'string' ? analysisResult : JSON.stringify(analysisResult, null, 2)}
+          </pre>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
-// Helper functions (same as before)
-const extractAnalysisSections = (analysisBlock, sectionPattern) => {
-  if (!sectionPattern || !analysisBlock) return {};
-  
-  const analysisData = {};
-  let m;
-  sectionPattern.lastIndex = 0;
-  
-  while ((m = sectionPattern.exec(analysisBlock)) !== null) {
-    const key = String(m[1] || '').trim();
-    const value = String(m[2] || '')
-      .split(/\n(?=\*\*|\d+\.\s)/)[0]
-      .trim()
-      .replace(/\n/g, "<br/>");
-    
-    if (key) {
-      analysisData[key] = value;
-    }
-    
-    if (!sectionPattern.global) break;
+// Helper function to render SWOT content
+const renderSwotContent = (content, category) => {
+  if (!content) {
+    return (
+      <div className={`analysis-box ${category}-bg`}>
+        <em>No {category} identified</em>
+      </div>
+    );
   }
-  
-  return analysisData;
-};
 
-const renderAnalysisBoxes = (content, label) => {
-  if (!content) return null;
-  
-  const normalizedLabel = String(label).toLowerCase().replace(/\s+/g, '-');
-  const bgClass = `${normalizedLabel}-bg`;
+  // Handle string content by splitting on common delimiters
+  const items = String(content)
+    .split(/[.,;]\s+/)
+    .filter(item => item.trim().length > 0)
+    .map(item => item.trim().replace(/[.,;]+$/, ''));
 
-  return String(content)
-    .split(/<br\s*\/?>\s*(?=<br\s*\/?>|[^<])/i)
-    .map((para) => String(para).trim())
-    .filter((para) =>
-      para !== "" &&
-      para !== "*" &&
-      para !== "<br/>*" &&
-      para !== "<br />*" &&
-      !/^\*+$/.test(para)
-    )
-    .map((para, idx) => {
-      return (
-        <div
-          key={idx}
-          className={`analysis-box ${bgClass}`}
-          dangerouslySetInnerHTML={{ __html: para }}
-        />
-      );
-    });
+  if (items.length <= 1) {
+    // Single item or short content
+    return (
+      <div className={`analysis-box ${category}-bg`}>
+        {String(content)}
+      </div>
+    );
+  }
+
+  // Multiple items
+  return items.map((item, index) => (
+    <div key={index} className={`analysis-box ${category}-bg`}>
+      {item}
+    </div>
+  ));
 };
 
 export default SwotAnalysis;

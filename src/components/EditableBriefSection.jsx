@@ -5,7 +5,7 @@ const EditableBriefSection = ({
   questions = [], 
   userAnswers = {}, 
   onAnswerUpdate,
-  // Add these new props
+  onBusinessDataUpdate,
   onAnalysisRegenerate,
   isAnalysisRegenerating = false,
   completedPhases = new Set() 
@@ -14,6 +14,7 @@ const EditableBriefSection = ({
   const [briefFields, setBriefFields] = useState([]);
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+  const [isSaving, setIsSaving] = useState(false);
   
   const inputRefs = useRef({});
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -54,6 +55,66 @@ const EditableBriefSection = ({
     }, 4000);
   };
 
+  // Auto-save updated answer to conversation
+  const autoSaveUpdatedAnswer = async (questionId, newAnswer) => {
+    try {
+      setIsSaving(true);
+      const token = getAuthToken();
+
+      // Get current conversation session
+      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!currentResponse.ok) {
+        throw new Error('Failed to get current conversation');
+      }
+
+      const conversation = await currentResponse.json();
+      const sessionId = conversation.sessionId;
+
+      if (!sessionId) {
+        throw new Error('No active conversation session found');
+      }
+
+      // Finalize the updated answer
+      const response = await fetch(`${API_BASE_URL}/api/conversation/finalize-answer`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          questionId: questionId,
+          finalAnswer: newAnswer.trim(),
+          attemptCount: 1 // This is an edit, so reset attempt count
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update business data if available
+        if (result.businessData && onBusinessDataUpdate) {
+          onBusinessDataUpdate(result.businessData);
+        }
+
+        return result;
+      } else {
+        throw new Error('Failed to save updated answer');
+      }
+    } catch (error) {
+      console.error('Auto-save updated answer error:', error);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleEdit = (field) => {
     setEditingField(field.key);
     
@@ -72,19 +133,8 @@ const EditableBriefSection = ({
     
     if (newValue.trim()) {
       try {
-        // Save to backend
-        const token = getAuthToken();
-        await fetch(`${API_BASE_URL}/api/answers/save`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            question_id: field.questionId,
-            answer: newValue.trim()
-          })
-        });
+        // Auto-save to conversation
+        await autoSaveUpdatedAnswer(field.questionId, newValue.trim());
 
         // Update parent component with new answer
         if (onAnswerUpdate) {
@@ -94,7 +144,7 @@ const EditableBriefSection = ({
         setEditedFields(prev => new Set([...prev, field.key]));
         
         // Show success message
-        showToastMessage('Answer updated successfully!', 'success');
+        showToastMessage('Answer updated and auto-saved successfully!', 'success');
 
         // Check if initial phase is completed and trigger analysis regeneration
         if (completedPhases.has('initial') && onAnalysisRegenerate) {
@@ -103,7 +153,7 @@ const EditableBriefSection = ({
           // Trigger analysis regeneration
           setTimeout(() => {
             onAnalysisRegenerate();
-          }, 500); // Small delay to ensure the answer update propagates
+          }, 500);
         }
 
       } catch (error) {
@@ -139,7 +189,7 @@ const EditableBriefSection = ({
               className="edit-button"
               onClick={() => handleEdit(field)}
               type="button"
-              disabled={isAnalysisRegenerating}
+              disabled={isAnalysisRegenerating || isSaving}
             >
               <Edit3 size={14} />
             </button>
@@ -156,7 +206,7 @@ const EditableBriefSection = ({
               defaultValue={field.value || ''}
               onKeyDown={(e) => handleKeyPress(e, field)}
               placeholder={`Enter ${field.label.toLowerCase()}...`}
-              disabled={isAnalysisRegenerating}
+              disabled={isAnalysisRegenerating || isSaving}
               style={{ 
                 minHeight: '100px',
                 maxHeight: '200px',
@@ -168,15 +218,15 @@ const EditableBriefSection = ({
                 className="save-button"
                 onClick={() => handleSave(field)}
                 type="button"
-                disabled={isAnalysisRegenerating}
+                disabled={isAnalysisRegenerating || isSaving}
               >
-                {isAnalysisRegenerating ? <Loader size={14} className="spinner" /> : <Check size={14} />}
+                {(isAnalysisRegenerating || isSaving) ? <Loader size={14} className="spinner" /> : <Check size={14} />}
               </button>
               <button
                 className="cancel-button"
                 onClick={handleCancel}
                 type="button"
-                disabled={isAnalysisRegenerating}
+                disabled={isAnalysisRegenerating || isSaving}
               >
                 <X size={14} />
               </button>
@@ -185,8 +235,8 @@ const EditableBriefSection = ({
         ) : (
           <p 
             className={`item-text ${isEmpty ? 'placeholder' : ''}`}
-            onClick={() => !isAnalysisRegenerating && handleEdit(field)}
-            style={{ cursor: isAnalysisRegenerating ? 'not-allowed' : 'pointer' }}
+            onClick={() => !(isAnalysisRegenerating || isSaving) && handleEdit(field)}
+            style={{ cursor: (isAnalysisRegenerating || isSaving) ? 'not-allowed' : 'pointer' }}
           >
             {field.value || `Add ${field.label.toLowerCase()}...`}
             {isEdited && <span className="edited-indicator"> ✏️</span>}
@@ -204,10 +254,13 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      {isAnalysisRegenerating && (
+      {(isAnalysisRegenerating || isSaving) && (
         <div className="analysis-regenerating-banner">
           <Loader size={16} className="spinner" />
-          <span>Regenerating analysis with updated answers...</span>
+          <span>
+            {isAnalysisRegenerating && 'Regenerating analysis with updated answers...'}
+            {isSaving && 'Auto-saving changes...'}
+          </span>
         </div>
       )}
 
@@ -232,7 +285,7 @@ const EditableBriefSection = ({
                 <>
                   <br />
                   <span style={{ color: '#007bff', fontWeight: 'bold' }}>
-                    ⚡ Analysis will regenerate automatically when you update answers.
+                    ⚡ Changes are auto-saved and analysis will regenerate automatically.
                   </span>
                 </>
               )}

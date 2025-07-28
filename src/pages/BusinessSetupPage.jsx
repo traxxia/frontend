@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Loader } from "lucide-react";
+import { ArrowLeft, Loader, RefreshCw } from "lucide-react";
 import ChatComponent from "../components/ChatComponent";
 import SwotAnalysis from "../components/SwotAnalysis";
-import StrategicAcronym from "../components/StrategicAcronym";
 import "../styles/businesspage.css";
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
-import { useAnalysisData } from "../hooks/useAnalysisData";
-import { ChevronDown, Download } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import CustomerSegmentation from "../components/CustomerSegmentation";
+import PurchaseCriteria from "../components/PurchaseCriteria";
+import ChannelHeatmap from "../components/ChannelHeatmap";
+import LoyaltyNPS from "../components/LoyaltyNPS";
+import CapabilityHeatmap from "../components/CapabilityHeatmap";
+import PDFExportButton from "../components/PDFExportButton";
 
 const BusinessSetupPage = () => {
   const [activeTab, setActiveTab] = useState(() => {
@@ -20,15 +24,28 @@ const BusinessSetupPage = () => {
   const [strategicAnalysisResult, setStrategicAnalysisResult] = useState("");
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
+  const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Go to section");
   const dropdownRef = useRef(null);
+  const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
+  const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);
+  const [channelHeatmapData, setChannelHeatmapData] = useState(null);
+  const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
+  const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
 
-  // PDF Export states
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  // Refs for scrolling to sections
+  const swotRef = useRef(null);
+  const customerSegmentationRef = useRef(null);
+  const purchaseCriteriaRef = useRef(null);
+  const channelHeatmapRef = useRef(null);
+  const loyaltyNpsRef = useRef(null);
+  const capabilityHeatmapRef = useRef(null);
+  const strategicRef = useRef(null);
 
-  // ✅ Close dropdown on outside click
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -40,13 +57,34 @@ const BusinessSetupPage = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const swotRef = useRef(null);
-  const customerSegmentationRef = useRef(null);
-  const purchaseCriteriaRef = useRef(null);
-  const channelHeatmapRef = useRef(null);
-  const loyaltyNpsRef = useRef(null);
-  const capabilityHeatmapRef = useRef(null);
-  const strategicRef = useRef(null);
+  const handleCustomerSegmentationGenerated = (data) => {
+    setCustomerSegmentationData(data);
+  };
+
+  const dropdownOptions = [
+    "SWOT",
+    "Customer Segmentation",
+    "Purchase Criteria",
+    "Channel Heatmap",
+    "Loyalty/NPS",
+    "Capability Heatmap"
+  ];
+
+  const handlePurchaseCriteriaGenerated = (data) => {
+    setPurchaseCriteriaData(data);
+  };
+
+  const handleChannelHeatmapGenerated = (data) => {
+    setChannelHeatmapData(data);
+  };
+
+  const handleLoyaltyNPSGenerated = (data) => {
+    setLoyaltyNPSData(data);
+  };
+
+  const handleCapabilityHeatmapGenerated = (data) => {
+    setCapabilityHeatmapData(data);
+  };
 
   const handleOptionClick = (option) => {
     setSelectedOption(option);
@@ -65,13 +103,6 @@ const BusinessSetupPage = () => {
         loyaltyNpsRef.current.scrollIntoView({ behavior: "smooth" });
       } else if (option === "Capability Heatmap" && capabilityHeatmapRef.current) {
         capabilityHeatmapRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "S.T.R.A.T.E.G.I.C") {
-        setActiveTab("strategic");
-        setTimeout(() => {
-          if (strategicRef.current) {
-            strategicRef.current.scrollIntoView({ behavior: "smooth" });
-          }
-        }, 200);
       }
     }, 100);
   };
@@ -82,7 +113,6 @@ const BusinessSetupPage = () => {
     type: "success",
   });
 
-  // New state for slide effect
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
 
@@ -92,24 +122,157 @@ const BusinessSetupPage = () => {
 
   const [businessData, setBusinessData] = useState({
     name: "Your Business",
-    whatWeDo:
-      "Business description will appear here after answering questions in the chat.",
+    whatWeDo: "Business description will appear here after answering questions in the chat.",
     products: "",
     targetAudience: "",
     uniqueValue: "",
   });
 
-  const { generateAnalysis } = useAnalysisData();
+  const generateAnalysisWithFind = async () => {
+    try {
+      setIsLoadingAnalysis(true);
+      showToastMessage('Generating your business analysis...', 'info');
 
-  // Calculated values
+      const questionsArray = [];
+      const answersArray = [];
+
+      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+
+      sortedQuestions.forEach(question => {
+        if (userAnswers[question.id]) {
+          const cleanQuestion = String(question.question)
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          const cleanAnswer = String(userAnswers[question.id])
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          questionsArray.push(cleanQuestion);
+          answersArray.push(cleanAnswer);
+        }
+      });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No answered questions available for analysis');
+      }
+
+      const payload = {
+        questions: questionsArray,
+        answers: answersArray
+      };
+
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = `ML API returned ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.detail) {
+            errorMessage = `API Error: ${errorData.detail}`;
+          }
+        } catch (e) {
+          errorMessage = `API Error: ${responseText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        result = responseText;
+      }
+
+      let analysisContent;
+      if (typeof result === 'object' && result !== null) {
+        analysisContent = JSON.stringify(result);
+      } else {
+        analysisContent = String(result);
+      }
+
+      if (analysisContent) {
+        setAnalysisResult(analysisContent);
+        showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
+      } else {
+        throw new Error('Empty or invalid response from analysis API');
+      }
+
+    } catch (error) {
+      if (error.message.includes('charmap')) {
+        showToastMessage('Text encoding error occurred. Please check your answers for special characters.', 'error');
+      } else if (error.message.includes('API Error:')) {
+        showToastMessage(error.message, 'error');
+      } else {
+        showToastMessage('Failed to generate analysis. Please try again.', 'error');
+      }
+    } finally {
+      setIsLoadingAnalysis(false);
+    }
+  };
+
+  // Unified regenerate all function
+  const regenerateAllAnalysis = async () => {
+    if (!isPhaseCompleted(PHASES.INITIAL)) {
+      showToastMessage(
+        "Initial phase must be completed to regenerate analysis.",
+        "warning"
+      );
+      return;
+    }
+
+    try {
+      setIsRegeneratingAll(true);
+      showToastMessage("Regenerating all analysis components...", "info");
+
+      // Clear existing data to trigger re-generation
+      setAnalysisResult("");
+      setCustomerSegmentationData(null);
+      setPurchaseCriteriaData(null);
+      setChannelHeatmapData(null);
+      setLoyaltyNPSData(null);
+      setCapabilityHeatmapData(null);
+
+      // Wait a moment for state to clear
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Regenerate SWOT analysis first
+      await generateAnalysisWithFind();
+
+      showToastMessage("All analysis components regenerated successfully!", "success");
+
+    } catch (error) {
+      console.error('Error regenerating all analysis:', error);
+      showToastMessage(
+        "Failed to regenerate some analysis components. Please try again.",
+        "error"
+      );
+    } finally {
+      setIsRegeneratingAll(false);
+    }
+  };
+
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(userAnswers).length;
-  const actualProgress =
-    totalQuestions > 0
-      ? Math.round((answeredQuestions / totalQuestions) * 100)
-      : 0;
+  const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
 
-  // Phase management
   const PHASES = {
     INITIAL: "initial",
     ESSENTIAL: "essential",
@@ -132,12 +295,10 @@ const BusinessSetupPage = () => {
     const features = {
       brief: true,
       analysis: false,
-      strategic: false,
     };
 
     if (isPhaseCompleted(PHASES.INITIAL)) {
       features.analysis = true;
-      features.strategic = true;
     }
 
     return features;
@@ -145,308 +306,118 @@ const BusinessSetupPage = () => {
 
   const unlockedFeatures = getUnlockedFeatures();
 
-  // Enhanced PDF Export Functions
-  const exportCompleteToPDF = async (elementId, filename, businessName, title) => {
-    try {
-      const element = document.getElementById(elementId);
-      if (!element) {
-        throw new Error(`Element with ID "${elementId}" not found`);
-      }
-
-      // Dynamic import for PDF libraries
-      const jsPDF = (await import('jspdf')).default;
-      const html2canvas = (await import('html2canvas')).default;
-
-      // Show loading state
-      const loadingDiv = document.createElement('div');
-      loadingDiv.id = 'pdf-loading-indicator';
-      loadingDiv.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        z-index: 10000;
-        text-align: center;
-      `;
-      loadingDiv.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 20px; height: 20px; border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-          Generating PDF...
-        </div>
-        <style>
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        </style>
-      `;
-      document.body.appendChild(loadingDiv);
-
-      // Create a temporary container for PDF content
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 800px;
-        background: white;
-        padding: 40px;
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        color: #333;
-      `;
-
-      // Clone the content and clean it up for PDF
-      const clonedElement = element.cloneNode(true);
-
-      // Remove interactive elements and edit buttons
-      const elementsToRemove = clonedElement.querySelectorAll(
-        '.edit-button, .save-button, .cancel-button, .edit-actions, .download-pdf-btn, button, .simple-toast'
-      );
-      elementsToRemove.forEach(el => el.remove());
-
-      // Style improvements for PDF
-      const styles = document.createElement('style');
-      styles.textContent = `
-        .pdf-header {
-          text-align: center;
-          margin-bottom: 30px;
-          padding-bottom: 20px;
-          border-bottom: 2px solid #007bff;
-        }
-        .pdf-title {
-          font-size: 24px;
-          font-weight: bold;
-          color: #007bff;
-          margin-bottom: 10px;
-        }
-        .pdf-subtitle {
-          font-size: 16px;
-          color: #666;
-          margin-bottom: 5px;
-        }
-        .pdf-date {
-          font-size: 12px;
-          color: #999;
-        }
-        .analysis-section, .strategic-section {
-          margin-bottom: 30px;
-        }
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 20px;
-        }
-        .table th, .table td {
-          border: 1px solid #ddd;
-          padding: 12px;
-          text-align: left;
-          vertical-align: top;
-        }
-        .table th {
-          background-color: #f8f9fa;
-          font-weight: bold;
-        }
-        .analysis-box {
-          margin-bottom: 8px;
-          padding: 8px;
-          border-radius: 4px;
-          border-left: 4px solid #007bff;
-          background-color: #f8f9fa;
-        }
-        .analysis-table {
-          width: 100%;
-          margin-bottom: 20px;
-        }
-        .analysis-row {
-          display: flex;
-          width: 100%;
-        }
-        .analysis-cell {
-          flex: 1;
-          padding: 15px;
-          margin: 5px;
-          border-radius: 8px;
-          border: 1px solid #ddd;
-        }
-        .strengths-bg { border-left-color: #28a745; background-color: #d4edda; }
-        .weaknesses-bg { border-left-color: #dc3545; background-color: #f8d7da; }
-        .opportunities-bg { border-left-color: #007bff; background-color: #d1ecf1; }
-        .threats-bg { border-left-color: #ffc107; background-color: #fff3cd; }
-        .strategic-item {
-          margin-bottom: 20px;
-          padding: 15px;
-          border: 1px solid #eee;
-          border-radius: 8px;
-          background-color: #f9f9f9;
-        }
-        h1, h2, h3, h4, h5 {
-          color: #007bff;
-          margin-bottom: 15px;
-        }
-        .conclusion-section {
-          margin-top: 30px;
-          padding: 20px;
-          background-color: #f8f9fa;
-          border-radius: 8px;
-          border-left: 4px solid #007bff;
-        }
-      `;
-
-      pdfContainer.appendChild(styles);
-
-      // Add header
-      const header = document.createElement('div');
-      header.className = 'pdf-header';
-      header.innerHTML = `
-        <div class="pdf-title">${title}</div>
-        <div class="pdf-subtitle">${businessName}</div>
-        <div class="pdf-date">Generated on ${new Date().toLocaleDateString()}</div>
-      `;
-      pdfContainer.appendChild(header);
-
-      // Add the cleaned content
-      pdfContainer.appendChild(clonedElement);
-
-      // Add footer
-      const footer = document.createElement('div');
-      footer.style.cssText = `
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 1px solid #ddd;
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-      `;
-      footer.innerHTML = `
-        <p>This report was generated by Traxia AI - Your Strategic Business Advisor</p>
-        <p>© ${new Date().getFullYear()} Traxia AI. All rights reserved.</p>
-      `;
-      pdfContainer.appendChild(footer);
-
-      document.body.appendChild(pdfContainer);
-
-      // Generate PDF
-      const canvas = await html2canvas(pdfContainer, {
-        width: 800,
-        height: pdfContainer.scrollHeight,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-
-      const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
-      const imgWidth = canvasWidth * ratio;
-      const imgHeight = canvasHeight * ratio;
-
-      // Calculate how many pages we need
-      const totalPages = Math.ceil(imgHeight / pdfHeight);
-
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-
-        const yOffset = -(pdfHeight * i);
-        pdf.addImage(imgData, 'PNG', 0, yOffset, imgWidth, imgHeight);
-      }
-
-      // Clean up
-      document.body.removeChild(pdfContainer);
-      document.body.removeChild(loadingDiv);
-
-      // Save the PDF
-      pdf.save(filename);
-
-      return true;
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-
-      // Remove loading indicator if it exists
-      const loadingDiv = document.getElementById('pdf-loading-indicator');
-      if (loadingDiv) {
-        document.body.removeChild(loadingDiv);
-      }
-
-      throw error;
-    }
+  // Generate unique keys for regeneration
+  const getRegenerationKey = (componentName) => {
+    return isRegeneratingAll ? Date.now() : 'normal';
   };
 
-  const handleDownloadAnalysis = async () => {
-    if (!analysisResult) {
-      showToastMessage("No analysis available to export", "warning");
-      return;
-    }
+  // Component for Analysis Controls (Dropdown + Regenerate All + PDF Export)
+  const AnalysisControls = () => (
+    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+      <div ref={dropdownRef} style={{ position: "relative" }}>
+        <button
+          onClick={() => setShowDropdown((prev) => !prev)}
+          style={{
+            backgroundColor: "#fff",
+            color: "#1a73e8",
+            border: "1px solid #d1d5db",
+            borderRadius: "13px",
+            padding: "10px 18px",
+            fontSize: "14px",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+        >
+          {selectedOption}
+          <ChevronDown size={16} style={{ marginLeft: 8 }} />
+        </button>
 
-    try {
-      setIsExportingPDF(true);
-      showToastMessage("Generating comprehensive analysis PDF...", "info");
+        {showDropdown && (
+          <div
+            style={{
+              position: "absolute",
+              top: "110%",
+              right: 0,
+              backgroundColor: "#fff",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              minWidth: "180px",
+              zIndex: 1000,
+            }}
+          >
+            {dropdownOptions.map((item) => (
+              <div
+                key={item}
+                onClick={() => handleOptionClick(item)}
+                style={{
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  color: "#374151",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#f1f5f9")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      const filename = `${businessData.name.replace(/[^a-z0-9]/gi, '_')}_Complete_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
+      {/* Unified Regenerate Button */}
+      <button
+        onClick={regenerateAllAnalysis}
+        disabled={isRegeneratingAll || isLoadingAnalysis || !unlockedFeatures.analysis}
+        style={{
+          backgroundColor: isRegeneratingAll ? "#f3f4f6" : "#10b981",
+          color: isRegeneratingAll ? "#6b7280" : "#fff",
+          border: "none",
+          borderRadius: "13px",
+          padding: "10px 18px",
+          fontSize: "14px",
+          fontWeight: 500,
+          display: "flex",
+          alignItems: "center",
+          cursor: isRegeneratingAll ? "not-allowed" : "pointer",
+          gap: "8px",
+          transition: "all 0.2s ease"
+        }}
+      >
+        {isRegeneratingAll ? (
+          <>
+            <Loader size={16} className="animate-spin" />
+            Regenerating...
+          </>
+        ) : (
+          <>
+            <RefreshCw size={16} />
+            Regenerate All
+          </>
+        )}
+      </button>
 
-      await exportCompleteToPDF(
-        'analysis-pdf-content',
-        filename,
-        businessData.name,
-        'Complete Business Analysis Report'
-      );
-
-      showToastMessage("📄 Complete analysis PDF downloaded successfully!", "success");
-    } catch (error) {
-      console.error("Error exporting analysis PDF:", error);
-      showToastMessage("Failed to generate PDF. Please try again.", "error");
-    } finally {
-      setIsExportingPDF(false);
-    }
-  };
-
-  const handleDownloadStrategic = async () => {
-    if (!strategicAnalysisResult) {
-      showToastMessage("No strategic analysis available to export", "warning");
-      return;
-    }
-
-    try {
-      setIsExportingPDF(true);
-      showToastMessage("Generating strategic analysis PDF...", "info");
-
-      const filename = `${businessData.name.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
-
-      await exportCompleteToPDF(
-        'strategic-pdf-content',
-        filename,
-        businessData.name,
-        'S.T.R.A.T.E.G.I.C Analysis Report'
-      );
-
-      showToastMessage("📄 Strategic analysis PDF downloaded successfully!", "success");
-    } catch (error) {
-      console.error("Error exporting strategic PDF:", error);
-      showToastMessage("Failed to generate PDF. Please try again.", "error");
-    } finally {
-      setIsExportingPDF(false);
-    }
-  };
+      <PDFExportButton
+        analysisResult={analysisResult}
+        businessName={businessData.name}
+        onToastMessage={showToastMessage}
+      />
+    </div>
+  );
 
   useEffect(() => {
     const handleResize = () => {
       const newIsMobile = window.innerWidth <= 768;
       setIsMobile(newIsMobile);
 
-      if (newIsMobile && (activeTab === "strategic" || activeTab === "brief")) {
+      if (newIsMobile && activeTab === "brief") {
         setActiveTab("chat");
       } else if (!newIsMobile && activeTab === "chat") {
         setActiveTab("brief");
@@ -457,7 +428,6 @@ const BusinessSetupPage = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [activeTab]);
 
-  // Handle analysis tab click with slide effect
   const handleAnalysisTabClick = () => {
     if (!unlockedFeatures.analysis) return;
 
@@ -465,12 +435,10 @@ const BusinessSetupPage = () => {
       setActiveTab("analysis");
     } else {
       if (!isAnalysisExpanded) {
-        // Expand to full screen
         setIsSliding(true);
         setIsAnalysisExpanded(true);
         setActiveTab("analysis");
 
-        // Animation duration should match CSS transition
         setTimeout(() => {
           setIsSliding(false);
         }, 1000);
@@ -478,33 +446,11 @@ const BusinessSetupPage = () => {
     }
   };
 
-  // Handle strategic tab click with slide effect
-  const handleStrategicTabClick = () => {
-    if (!unlockedFeatures.strategic) return;
-
-    if (isMobile) {
-      setActiveTab("strategic");
-    } else {
-      if (!isAnalysisExpanded) {
-        // Expand to full screen
-        setIsSliding(true);
-        setIsAnalysisExpanded(true);
-        setActiveTab("strategic");
-
-        // Animation duration should match CSS transition
-        setTimeout(() => {
-          setIsSliding(false);
-        }, 1000);
-      }
-    }
-  };
-
-  // Handle back from expanded analysis
   const handleBackFromAnalysis = () => {
     if (isAnalysisExpanded) {
       setIsSliding(true);
       setIsAnalysisExpanded(false);
-      setActiveTab("brief"); // Return to brief tab
+      setActiveTab("brief");
 
       setTimeout(() => {
         setIsSliding(false);
@@ -512,7 +458,6 @@ const BusinessSetupPage = () => {
     }
   };
 
-  // Callback when ChatComponent loads questions
   const handleQuestionsLoaded = (loadedQuestions, loadedPhases) => {
     setQuestions(loadedQuestions);
     setPhases(loadedPhases);
@@ -603,82 +548,6 @@ const BusinessSetupPage = () => {
     }, 4000);
   };
 
-  const createBusinessDataForAnalysis = () => {
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-
-    let businessName = "Your Business";
-
-    if (sortedQuestions[0] && userAnswers[sortedQuestions[0].id]) {
-      const firstAnswer = userAnswers[sortedQuestions[0].id];
-      const extractedName = extractBusinessName(firstAnswer);
-      if (extractedName) {
-        businessName = extractedName;
-      }
-    }
-
-    const questionsWithAnswers = sortedQuestions
-      .filter((question) => {
-        const hasAnswer =
-          userAnswers[question.id] &&
-          typeof userAnswers[question.id] === "string" &&
-          userAnswers[question.id].trim() !== "";
-
-        return hasAnswer;
-      })
-      .map((question) => ({
-        question_id: question.id,
-        question_text: question.question,
-        title: question.question,
-        question: question.question,
-        question_type: "open-ended",
-        type: "open-ended",
-        phase: question.phase,
-        severity: question.severity,
-        placeholder: question.question,
-        nested: { question: question.question },
-        answer: {
-          description: userAnswers[question.id],
-        },
-        user_answer: {
-          answer: userAnswers[question.id],
-        },
-        answered: true,
-      }));
-
-    const totalAnsweredQuestions = Object.keys(userAnswers).length;
-    if (questionsWithAnswers.length !== totalAnsweredQuestions) {
-      console.warn(
-        `⚠️ Mismatch: Expected ${totalAnsweredQuestions} questions, but only ${questionsWithAnswers.length} passed filtering`
-      );
-    }
-
-    const categories = [
-      {
-        category_id: 1,
-        category_name: "Business Survey",
-        name: "Business Survey",
-        questions_answered: questionsWithAnswers.length,
-        total_questions: questions.length,
-        questions: questionsWithAnswers,
-      },
-    ];
-
-    return {
-      id: "chatbot-session",
-      name: businessName,
-      totalQuestions: questions.length,
-      categories: categories,
-      user: {
-        name: businessName,
-        company: businessName,
-      },
-      survey: {
-        total_questions: questions.length,
-      },
-    };
-  };
-
-  // Analysis regeneration function
   const handleAnalysisRegeneration = async () => {
     if (!isPhaseCompleted(PHASES.INITIAL)) {
       showToastMessage(
@@ -694,52 +563,9 @@ const BusinessSetupPage = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const businessData = createBusinessDataForAnalysis();
-      const strategicBooks = { part1: "", part2: "" };
+      await generateAnalysisWithFind();
 
-      const analysisResult = await generateAnalysis(
-        "swot",
-        "chatbot-session",
-        businessData,
-        strategicBooks,
-        true
-      );
-
-      if (analysisResult && !analysisResult.startsWith("Error")) {
-        setAnalysisResult(analysisResult);
-        showToastMessage(
-          "📊 SWOT analysis regenerated successfully!",
-          "success"
-        );
-
-        setTimeout(async () => {
-          const strategicResult = await generateAnalysis(
-            "strategic",
-            "chatbot-session-strategic",
-            businessData,
-            strategicBooks,
-            true
-          );
-
-          if (strategicResult && !strategicResult.startsWith("Error")) {
-            setStrategicAnalysisResult(strategicResult);
-            showToastMessage(
-              "🎯 STRATEGIC analysis regenerated successfully!",
-              "success"
-            );
-          } else {
-            console.error("❌ Strategic analysis error:", strategicResult);
-          }
-        }, 2000);
-      } else {
-        console.error("❌ SWOT analysis error:", analysisResult);
-        showToastMessage(
-          "Failed to regenerate SWOT analysis. Please try again.",
-          "error"
-        );
-      }
     } catch (error) {
-      console.error("❌ Error regenerating analysis:", error);
       showToastMessage(
         "Failed to regenerate analysis. Please try again.",
         "error"
@@ -749,7 +575,6 @@ const BusinessSetupPage = () => {
     }
   };
 
-  // Manual analysis generation
   const handleManualAnalysisGeneration = async () => {
     if (!isPhaseCompleted(PHASES.INITIAL)) {
       showToastMessage(
@@ -759,55 +584,9 @@ const BusinessSetupPage = () => {
       return;
     }
 
-    try {
-      setIsLoadingAnalysis(true);
-      showToastMessage("Generating analysis...", "info");
-
-      const businessData = createBusinessDataForAnalysis();
-      const strategicBooks = { part1: "", part2: "" };
-
-      const analysisResult = await generateAnalysis(
-        "swot",
-        "chatbot-session",
-        businessData,
-        strategicBooks,
-        true
-      );
-
-      if (analysisResult && !analysisResult.startsWith("Error")) {
-        setAnalysisResult(analysisResult);
-        showToastMessage("📊 SWOT analysis generated successfully!", "success");
-
-        setTimeout(async () => {
-          const strategicResult = await generateAnalysis(
-            "strategic",
-            "chatbot-session-strategic",
-            businessData,
-            strategicBooks,
-            true
-          );
-
-          if (strategicResult && !strategicResult.startsWith("Error")) {
-            setStrategicAnalysisResult(strategicResult);
-            showToastMessage(
-              "🎯 STRATEGIC analysis generated successfully!",
-              "success"
-            );
-          }
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error generating analysis:", error);
-      showToastMessage(
-        "Failed to generate analysis. Please try again.",
-        "error"
-      );
-    } finally {
-      setIsLoadingAnalysis(false);
-    }
+    await generateAnalysisWithFind();
   };
 
-  // Get completed phases for the EditableBriefSection
   const completedPhases = new Set();
   if (isPhaseCompleted(PHASES.INITIAL)) completedPhases.add("initial");
   if (isPhaseCompleted(PHASES.ESSENTIAL)) completedPhases.add("essential");
@@ -818,35 +597,6 @@ const BusinessSetupPage = () => {
     window.history.back();
   };
 
-  // Coming Soon Component
-  // Enhanced Coming Soon Component
-  const ComingSoonSection = ({ title, description, icon = "🚧", features = [], progress = 35, isNew = false }) => (
-    <div className="coming-soon-section">
-      {isNew && <div className="coming-soon-notification">NEW</div>}
-
-      <div className="coming-soon-icon">{icon}</div>
-
-      <h2 className="coming-soon-title">{title}</h2>
-
-      <p className="coming-soon-description">{description}</p>
-
-      <div className="coming-soon-badge">
-        <span>🔥</span>
-        Coming Soon
-      </div>
-
-      {features.length > 0 && (
-        <div className="coming-soon-features">
-          {features.map((feature, index) => (
-            <span key={index} className="feature-pill">
-              {feature}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="business-setup-container">
       <MenuBar />
@@ -856,30 +606,27 @@ const BusinessSetupPage = () => {
           {showToast.message}
         </div>
       )}
-
-      <div className="sub-header">
-        <div className="sub-header-content">
-
-          <button
-            className="back-button"
-            onClick={handleBack}
-            aria-label="Go Back"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <span className="business-name">{businessData.name}</span>
-          <div className="header-spacer"></div>
+      
+      {!isAnalysisExpanded && (
+        <div className="sub-header">
+          <div className="sub-header-content">
+            <button
+              className="back-button"
+              onClick={handleBack}
+              aria-label="Go Back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <span className="business-name">{businessData.name}</span>
+            <div className="header-spacer"></div>
+          </div>
         </div>
-      </div>
+      )}
 
       {isMobile && questionsLoaded && (
         <>
-          {/* ✅ Show progress at the top ONLY for brief, analysis, strategic tabs */}
-          {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (
+          {["chat", "brief", "analysis"].includes(activeTab) && (
             <div className="progress-area">
-              <div className="progress-label">
-                Progress: {actualProgress}% ({answeredQuestions}/{totalQuestions})
-              </div>
               <div className="progress-track">
                 <div
                   className="progress-fill"
@@ -889,7 +636,6 @@ const BusinessSetupPage = () => {
             </div>
           )}
 
-          {/* Mobile Tabs */}
           <div className="mobile-tabs">
             <button
               className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`}
@@ -913,26 +659,15 @@ const BusinessSetupPage = () => {
                 Analysis
               </button>
             )}
-
-            {unlockedFeatures.strategic && (
-              <button
-                className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
-                onClick={handleStrategicTabClick}
-              >
-                S.T.R.A.T.E.G.I.C
-              </button>
-            )}
           </div>
         </>
       )}
 
       <div
-        className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""
-          } ${isSliding ? "sliding" : ""}`}
+        className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""} ${isSliding ? "sliding" : ""}`}
       >
         <div
-          className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""
-            } ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}
+          className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""} ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}
         >
           <div className="welcome-area">
             <div className="logo-circle">
@@ -962,167 +697,52 @@ const BusinessSetupPage = () => {
         {questionsLoaded && (
           <div
             className={`info-panel ${isMobile
-                ? activeTab === "brief" ||
-                  activeTab === "analysis" ||
-                  activeTab === "strategic"
-                  ? "active"
-                  : ""
+              ? activeTab === "brief" || activeTab === "analysis"
+                ? "active"
                 : ""
+              : ""
               } ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}
           >
-            {/* Desktop Analysis Expanded View */}
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
-                  {/* Use same header structure as normal view */}
-                  <div className="desktop-tabs">
-                    <button
-                      className="desktop-tab"
-                      onClick={handleBackFromAnalysis}
-                      disabled={isSliding}
-                    >
-                      ← Back to Overview
-                    </button>
-
-                    {unlockedFeatures.analysis && (
+                  <div className="desktop-tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: "0" }}>
                       <button
-                        className={`desktop-tab ${activeTab === "analysis" ? "active" : ""
-                          }`}
-                        onClick={() => setActiveTab("analysis")}
+                        className="desktop-tab"
+                        onClick={handleBackFromAnalysis}
+                        disabled={isSliding}
                       >
-                        Analysis
+                        ← Back to Overview
                       </button>
-                    )}
 
-                    {unlockedFeatures.strategic && (
-                      <button
-                        className={`desktop-tab ${activeTab === "strategic" ? "active" : ""
-                          }`}
-                        onClick={() => setActiveTab("strategic")}
-                      >
-                        S.T.R.A.T.E.G.I.C
-                      </button>
+                      {unlockedFeatures.analysis && (
+                        <button
+                          className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
+                          onClick={() => setActiveTab("analysis")}
+                        >
+                          Analysis
+                        </button>
+                      )}
+                    </div>
+                    
+                    {activeTab === "analysis" && unlockedFeatures.analysis && (
+                      <AnalysisControls />
                     )}
                   </div>
 
-                  {/* Content */}
                   <div className="expanded-analysis-content">
-                    <div style={{ padding: "1rem", background: "#ffffffff" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          gap: "12px",
-                          position: "relative",
-                        }}
-                      >
-                        <div ref={dropdownRef} style={{ position: "relative" }}>
-                          <button
-                            onClick={() => setShowDropdown((prev) => !prev)}
-                            style={{
-                              backgroundColor: "#fff",
-                              color: "#1a73e8",
-                              border: "1px solid #d1d5db",
-                              borderRadius: "13px",
-                              padding: "10px 18px",
-                              fontSize: "14px",
-                              fontWeight: 500,
-                              display: "flex",
-                              alignItems: "center",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {selectedOption}
-                            <ChevronDown size={16} style={{ marginLeft: 8 }} />
-                          </button>
-
-                          {showDropdown && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: "110%",
-                                left: 0,
-                                backgroundColor: "#fff",
-                                border: "1px solid #e5e7eb",
-                                borderRadius: "8px",
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                                minWidth: "180px",
-                                zIndex: 1000,
-                              }}
-                            >
-                              {[
-                                "SWOT",
-                                "Customer Segmentation",
-                                "Purchase Criteria",
-                                "Channel Heatmap",
-                                "Loyalty/NPS",
-                                "Capability Heatmap",
-                              ].map((item) => (
-                                <div
-                                  key={item}
-                                  onClick={() => handleOptionClick(item)}
-                                  style={{
-                                    padding: "10px 14px",
-                                    cursor: "pointer",
-                                    fontSize: "14px",
-                                    color: "#374151",
-                                  }}
-                                  onMouseEnter={(e) =>
-                                  (e.currentTarget.style.backgroundColor =
-                                    "#f1f5f9")
-                                  }
-                                  onMouseLeave={(e) =>
-                                  (e.currentTarget.style.backgroundColor =
-                                    "transparent")
-                                  }
-                                >
-                                  {item}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={activeTab === "analysis" ? handleDownloadAnalysis : handleDownloadStrategic}
-                          disabled={isExportingPDF || (activeTab === "analysis" ? !analysisResult : !strategicAnalysisResult)}
-                          style={{
-                            backgroundColor: "#1a73e8",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "13px",
-                            padding: "10px 18px",
-                            fontSize: "14px",
-                            fontWeight: 500,
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: isExportingPDF ? "not-allowed" : "pointer",
-                            opacity: isExportingPDF || (activeTab === "analysis" ? !analysisResult : !strategicAnalysisResult) ? 0.6 : 1,
-                          }}
-                        >
-                          {isExportingPDF ? (
-                            <>
-                              <Loader size={16} className="spinner" style={{ marginRight: 8 }} />
-                              Generating PDF...
-                            </>
-                          ) : (
-                            <>
-                              Download {activeTab === "analysis" ? "analysis" : "strategic"}
-                              <Download size={16} style={{ marginLeft: 8 }} />
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
                     <div className="expanded-analysis-main">
                       {activeTab === "analysis" && (
                         <div className="analysis-section">
                           <div className="analysis-content">
-                            {isLoadingAnalysis || isAnalysisRegenerating ? (
+                            {isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAll ? (
                               <div className="analysis-loading">
                                 <Loader size={24} className="spinner" />
                                 <span>
-                                  {isAnalysisRegenerating
+                                  {isRegeneratingAll
+                                    ? "Regenerating all analysis components..."
+                                    : isAnalysisRegenerating
                                     ? "Regenerating your business analysis..."
                                     : "Generating your business analysis..."}
                                 </span>
@@ -1136,34 +756,52 @@ const BusinessSetupPage = () => {
                                       businessName={businessData.name}
                                     />
                                   </div>
-                                  {/* Additional Analysis Sections */}
                                   <div ref={customerSegmentationRef}>
-                                    <ComingSoonSection
-                                      title="Customer Segmentation" icon="👥"
+                                    <CustomerSegmentation
+                                      questions={questions}
+                                      userAnswers={userAnswers}
+                                      businessName={businessData.name}
+                                      onDataGenerated={handleCustomerSegmentationGenerated}
+                                      key={`customer-segmentation-${getRegenerationKey('customerSegmentation')}`}
                                     />
                                   </div>
-
                                   <div ref={purchaseCriteriaRef}>
-                                    <ComingSoonSection
-                                      title="Purchase Criteria" icon="🛒"
+                                    <PurchaseCriteria
+                                      questions={questions}
+                                      userAnswers={userAnswers}
+                                      businessName={businessData.name}
+                                      onDataGenerated={handlePurchaseCriteriaGenerated}
+                                      key={`purchase-criteria-${getRegenerationKey('purchaseCriteria')}`}
                                     />
                                   </div>
 
                                   <div ref={channelHeatmapRef}>
-                                    <ComingSoonSection
-                                      title="Channel Heatmap" icon="📊"
+                                    <ChannelHeatmap
+                                      questions={questions}
+                                      userAnswers={userAnswers}
+                                      businessName={businessData.name}
+                                      onDataGenerated={handleChannelHeatmapGenerated}
+                                      key={`channel-heatmap-${getRegenerationKey('channelHeatmap')}`}
                                     />
                                   </div>
 
                                   <div ref={loyaltyNpsRef}>
-                                    <ComingSoonSection
-                                      title="Loyalty & NPS Analysis" icon="❤️"
+                                    <LoyaltyNPS
+                                      questions={questions}
+                                      userAnswers={userAnswers}
+                                      businessName={businessData.name}
+                                      onDataGenerated={handleLoyaltyNPSGenerated}
+                                      key={`loyalty-nps-${getRegenerationKey('loyaltyNPS')}`}
                                     />
                                   </div>
 
                                   <div ref={capabilityHeatmapRef}>
-                                    <ComingSoonSection
-                                      title="Capability Heatmap" icon="⚡"
+                                    <CapabilityHeatmap
+                                      questions={questions}
+                                      userAnswers={userAnswers}
+                                      businessName={businessData.name}
+                                      onDataGenerated={handleCapabilityHeatmapGenerated}
+                                      key={`capability-heatmap-${getRegenerationKey('capabilityHeatmap')}`}
                                     />
                                   </div>
                                 </div>
@@ -1171,7 +809,7 @@ const BusinessSetupPage = () => {
                             ) : (
                               <div className="analysis-empty">
                                 <p>
-                                  Your SWOT analysis will appear here once
+                                  Your business analysis will appear here once
                                   generated.
                                 </p>
                                 <p>
@@ -1194,205 +832,47 @@ const BusinessSetupPage = () => {
                           </div>
                         </div>
                       )}
-
-                      {activeTab === "strategic" && (
-                        <div ref={strategicRef} className="strategic-section">
-                          <div className="strategic-content">
-                            {isLoadingAnalysis || isAnalysisRegenerating ? (
-                              <div className="strategic-loading">
-                                <Loader size={24} className="spinner" />
-                                <span>
-                                  {isAnalysisRegenerating
-                                    ? "Regenerating your strategic analysis..."
-                                    : "Generating your strategic analysis..."}
-                                </span>
-                              </div>
-                            ) : strategicAnalysisResult ? (
-                              <div id="strategic-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
-                                <StrategicAcronym
-                                  analysisResult={strategicAnalysisResult}
-                                  businessName={businessData.name}
-                                />
-                              </div>
-                            ) : (
-                              <div className="strategic-empty">
-                                <p>
-                                  Your STRATEGIC analysis will appear here once
-                                  generated.
-                                </p>
-                                <p>
-                                  Continue the conversation to trigger analysis
-                                  generation.
-                                </p>
-                                {isPhaseCompleted(PHASES.INITIAL) && (
-                                  <button
-                                    className="generate-analysis-btn"
-                                    onClick={handleManualAnalysisGeneration}
-                                    disabled={isLoadingAnalysis}
-                                  >
-                                    {isLoadingAnalysis
-                                      ? "Generating..."
-                                      : "Generate Strategic Analysis Now"}
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Normal Desktop Tabs */}
             {!isMobile && !isAnalysisExpanded && (
-              <div className="desktop-tabs">
-                <button
-                  className={`desktop-tab ${activeTab === "brief" ? "active" : ""
-                    }`}
-                  onClick={() => setActiveTab("brief")}
-                >
-                  Brief
-                </button>
-
-                {unlockedFeatures.analysis && (
+              <div className="desktop-tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "0" }}>
                   <button
-                    className={`desktop-tab ${activeTab === "analysis" ? "active" : ""
-                      }`}
-                    onClick={handleAnalysisTabClick}
+                    className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
+                    onClick={() => setActiveTab("brief")}
                   >
-                    Analysis
+                    Brief
                   </button>
-                )}
 
-                {unlockedFeatures.strategic && (
-                  <button
-                    className={`desktop-tab ${activeTab === "strategic" ? "active" : ""
-                      }`}
-                    onClick={handleStrategicTabClick}
-                  >
-                    S.T.R.A.T.E.G.I.C
-                  </button>
+                  {unlockedFeatures.analysis && (
+                    <button
+                      className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
+                      onClick={handleAnalysisTabClick}
+                    >
+                      Analysis
+                    </button>
+                  )}
+                </div>
+                
+                {activeTab === "analysis" && unlockedFeatures.analysis && (
+                  <AnalysisControls />
                 )}
               </div>
             )}
 
-            {/* Normal Info Panel Content */}
             {(!isAnalysisExpanded || isMobile) && (
               <div className="info-panel-content">
-                {activeTab === "analysis" && (
-                  <div style={{ padding: "1rem", background: "#ffffffff" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: "12px",
-                        position: "relative",
-                      }}
-                    >
-                      {/* Dropdown */}
-                      <div ref={dropdownRef} style={{ position: "relative" }}>
-                        <button
-                          onClick={() => setShowDropdown((prev) => !prev)}
-                          style={{
-                            backgroundColor: "#fff",
-                            color: "#1a73e8",
-                            border: "1px solid #d1d5db",
-                            borderRadius: "13px",
-                            padding: "10px 18px",
-                            fontSize: "14px",
-                            fontWeight: 500,
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {selectedOption}
-                          <ChevronDown size={16} style={{ marginLeft: 8 }} />
-                        </button>
-
-                        {showDropdown && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "110%",
-                              left: 0,
-                              backgroundColor: "#fff",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "8px",
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                              minWidth: "180px",
-                              zIndex: 1000,
-                            }}
-                          >
-                            {["SWOT", "Customer Segmentation", "Purchase Criteria", "Channel Heatmap", "Loyalty/NPS", "Capability Heatmap"].map((item) => (
-                              <div
-                                key={item}
-                                onClick={() => handleOptionClick(item)}
-                                style={{
-                                  padding: "10px 14px",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                  color: "#374151",
-                                }}
-                                onMouseEnter={(e) =>
-                                  (e.currentTarget.style.backgroundColor = "#f1f5f9")
-                                }
-                                onMouseLeave={(e) =>
-                                  (e.currentTarget.style.backgroundColor = "transparent")
-                                }
-                              >
-                                {item}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Download Button */}
-                      <button
-                        onClick={handleDownloadAnalysis}
-                        disabled={isExportingPDF || !analysisResult}
-                        style={{
-                          backgroundColor: "#1a73e8",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "13px",
-                          padding: "10px 18px",
-                          fontSize: "14px",
-                          fontWeight: 500,
-                          display: "flex",
-                          alignItems: "center",
-                          cursor: isExportingPDF || !analysisResult ? "not-allowed" : "pointer",
-                          opacity: isExportingPDF || !analysisResult ? 0.6 : 1,
-                        }}
-                      >
-                        {isExportingPDF ? (
-                          <>
-                            <Loader size={16} className="spinner" style={{ marginRight: 8 }} />
-                            Generating PDF...
-                          </>
-                        ) : (
-                          <>
-                            Download analysis
-                            <Download size={16} style={{ marginLeft: 8 }} />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 {activeTab === "brief" && (
                   <div className="brief-section">
                     {!unlockedFeatures.analysis && (
                       <div className="unlock-hint">
                         <h4>🔒 Unlock Business Analysis</h4>
                         <p>
-                          Complete all initial phase questions to unlock SWOT
-                          analysis and strategic insights!
+                          Complete all initial phase questions to unlock business analysis and insights!
                         </p>
                       </div>
                     )}
@@ -1427,12 +907,20 @@ const BusinessSetupPage = () => {
 
                 {activeTab === "analysis" && unlockedFeatures.analysis && (
                   <div className="analysis-section">
+                    {isMobile && (
+                      <div style={{ padding: "1rem", background: "#ffffffff" }}>
+                        <AnalysisControls />
+                      </div>
+                    )}
+                    
                     <div className="analysis-content">
-                      {isLoadingAnalysis || isAnalysisRegenerating ? (
+                      {isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAll ? (
                         <div className="analysis-loading">
                           <Loader size={24} className="spinner" />
                           <span>
-                            {isAnalysisRegenerating
+                            {isRegeneratingAll
+                              ? "Regenerating all analysis components..."
+                              : isAnalysisRegenerating
                               ? "Regenerating your business analysis..."
                               : "Generating your business analysis..."}
                           </span>
@@ -1446,39 +934,53 @@ const BusinessSetupPage = () => {
                                 businessName={businessData.name}
                               />
                             </div>
-                            {/* Additional Analysis Sections - Coming Soon */}
                             <div ref={customerSegmentationRef}>
-                              <ComingSoonSection
-                                title="Customer Segmentation"
-                                description="Detailed customer segmentation analysis and insights"
+                              <CustomerSegmentation
+                                questions={questions}
+                                userAnswers={userAnswers}
+                                businessName={businessData.name}
+                                onDataGenerated={handleCustomerSegmentationGenerated}
+                                key={`customer-segmentation-mobile-${getRegenerationKey('customerSegmentation')}`}
                               />
                             </div>
 
                             <div ref={purchaseCriteriaRef}>
-                              <ComingSoonSection
-                                title="Purchase Criteria"
-                                description="Analysis of customer purchase decision factors"
+                              <PurchaseCriteria
+                                questions={questions}
+                                userAnswers={userAnswers}
+                                businessName={businessData.name}
+                                onDataGenerated={handlePurchaseCriteriaGenerated}
+                                key={`purchase-criteria-mobile-${getRegenerationKey('purchaseCriteria')}`}
                               />
                             </div>
 
                             <div ref={channelHeatmapRef}>
-                              <ComingSoonSection
-                                title="Channel Heatmap"
-                                description="Visual representation of distribution channel effectiveness"
+                              <ChannelHeatmap
+                                questions={questions}
+                                userAnswers={userAnswers}
+                                businessName={businessData.name}
+                                onDataGenerated={handleChannelHeatmapGenerated}
+                                key={`channel-heatmap-mobile-${getRegenerationKey('channelHeatmap')}`}
                               />
                             </div>
 
                             <div ref={loyaltyNpsRef}>
-                              <ComingSoonSection
-                                title="Loyalty/NPS"
-                                description="Customer loyalty and Net Promoter Score analysis"
+                              <LoyaltyNPS
+                                questions={questions}
+                                userAnswers={userAnswers}
+                                businessName={businessData.name}
+                                onDataGenerated={handleLoyaltyNPSGenerated}
+                                key={`loyalty-nps-mobile-${getRegenerationKey('loyaltyNPS')}`}
                               />
                             </div>
 
                             <div ref={capabilityHeatmapRef}>
-                              <ComingSoonSection
-                                title="Capability Heatmap"
-                                description="Organizational capabilities assessment and visualization"
+                              <CapabilityHeatmap
+                                questions={questions}
+                                userAnswers={userAnswers}
+                                businessName={businessData.name}
+                                onDataGenerated={handleCapabilityHeatmapGenerated}
+                                key={`capability-heatmap-mobile-${getRegenerationKey('capabilityHeatmap')}`}
                               />
                             </div>
                           </div>
@@ -1486,7 +988,7 @@ const BusinessSetupPage = () => {
                       ) : (
                         <div className="analysis-empty">
                           <p>
-                            Your SWOT analysis will appear here once generated.
+                            Your business analysis will appear here once generated.
                           </p>
                           <p>
                             Continue the conversation to trigger analysis
@@ -1501,52 +1003,6 @@ const BusinessSetupPage = () => {
                               {isLoadingAnalysis
                                 ? "Generating..."
                                 : "Generate Analysis Now"}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "strategic" && unlockedFeatures.strategic && (
-                  <div className="strategic-section">
-                    <div className="strategic-content">
-                      {isLoadingAnalysis || isAnalysisRegenerating ? (
-                        <div className="strategic-loading">
-                          <Loader size={24} className="spinner" />
-                          <span>
-                            {isAnalysisRegenerating
-                              ? "Regenerating your strategic analysis..."
-                              : "Generating your strategic analysis..."}
-                          </span>
-                        </div>
-                      ) : strategicAnalysisResult ? (
-                        <div id="strategic-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
-                          <StrategicAcronym
-                            analysisResult={strategicAnalysisResult}
-                            businessName={businessData.name}
-                          />
-                        </div>
-                      ) : (
-                        <div className="strategic-empty">
-                          <p>
-                            Your STRATEGIC analysis will appear here once
-                            generated.
-                          </p>
-                          <p>
-                            Continue the conversation to trigger analysis
-                            generation.
-                          </p>
-                          {isPhaseCompleted(PHASES.INITIAL) && (
-                            <button
-                              className="generate-analysis-btn"
-                              onClick={handleManualAnalysisGeneration}
-                              disabled={isLoadingAnalysis}
-                            >
-                              {isLoadingAnalysis
-                                ? "Generating..."
-                                : "Generate Strategic Analysis Now"}
                             </button>
                           )}
                         </div>

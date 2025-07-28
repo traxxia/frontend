@@ -338,7 +338,7 @@
   max-width: max-content;
   margin: 0 auto;
   font-family: var(--font-primary);
-  padding: var(--spacing-2xl) 0; /* Add padding for better spacing */
+  padding: 5px; /* Add padding for better spacing */
 }
 
 .analysis-section h5 {
