@@ -17,6 +17,7 @@ const ChannelHeatmap = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
   const { t } = useTranslation();
 
   // Add refs to track if API has been called and component mount
@@ -24,6 +25,96 @@ const ChannelHeatmap = ({
   const isMounted = useRef(false);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  // Load existing analysis from backend
+  const loadExistingAnalysis = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/channelHeatmap`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📊 Loaded existing channel heatmap from backend:', result.analysisData);
+        setHeatmapData(result.analysisData);
+        setHasLoadedFromBackend(true);
+        if (onDataGenerated) {
+          onDataGenerated(result.analysisData);
+        }
+        return true;
+      } else if (response.status === 404) {
+        console.log('📊 No existing channel heatmap found in backend');
+        setHasLoadedFromBackend(true);
+        return false;
+      } else {
+        console.error('Failed to load channel heatmap:', response.statusText);
+        setHasLoadedFromBackend(true);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error loading channel heatmap:', error);
+      setHasLoadedFromBackend(true);
+      return false;
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData) => {
+    try {
+      const token = getAuthToken();
+
+      // Get current session ID
+      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!currentResponse.ok) {
+        throw new Error('Failed to get current conversation');
+      }
+
+      const conversation = await currentResponse.json();
+      const sessionId = conversation.sessionId;
+
+      if (!sessionId) {
+        throw new Error('No active conversation session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          analysisType: 'channelHeatmap',
+          analysisData: analysisData,
+          businessName: businessName
+        })
+      });
+
+      if (response.ok) {
+        console.log('📊 Channel heatmap analysis saved to backend');
+        return true;
+      } else {
+        console.error('Failed to save channel heatmap analysis:', response.statusText);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error saving channel heatmap analysis:', error);
+      return false;
+    }
+  };
 
   const generateHeatmapData = async () => {
     try {
@@ -110,6 +201,10 @@ const ChannelHeatmap = ({
       if (result && result.channelHeatmap) {
         console.log('Setting heatmap data:', result.channelHeatmap);
         setHeatmapData(result.channelHeatmap);
+        
+        // Save to backend
+        await saveAnalysisToBackend(result.channelHeatmap);
+        
         if (onDataGenerated) {
           onDataGenerated(result.channelHeatmap);
         }
@@ -129,6 +224,7 @@ const ChannelHeatmap = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     hasCalledAPI.current = false; // Reset the flag for regeneration
+    setHasLoadedFromBackend(false); // Reset backend load flag
     if (onRegenerate) {
       // Use parent's regeneration logic
       onRegenerate();
@@ -139,29 +235,33 @@ const ChannelHeatmap = ({
     }
   };
 
-  // Auto-generate on mount if we have enough data - FIXED VERSION
+  // Load existing analysis on mount
   useEffect(() => {
     // Mark component as mounted
     isMounted.current = true;
 
-    const answeredCount = Object.keys(userAnswers).length;
+    const initializeComponent = async () => {
+      // First try to load existing analysis from backend
+      const hasExistingAnalysis = await loadExistingAnalysis();
+      
+      if (!hasExistingAnalysis) {
+        // If no existing analysis, check if we can generate new one
+        const answeredCount = Object.keys(userAnswers).length;
 
-    // Only call API if:
-    // 1. We have enough answers (3+)
-    // 2. We don't have heatmap data yet
-    // 3. We're not already loading
-    // 4. We haven't called the API before
-    // 5. Component is mounted
-    if (
-      answeredCount >= 3 &&
-      !heatmapData &&
-      !isLoading &&
-      !hasCalledAPI.current &&
-      isMounted.current
-    ) {
-      hasCalledAPI.current = true; // Set flag before calling API
-      generateHeatmapData();
-    }
+        if (
+          answeredCount >= 3 &&
+          !heatmapData &&
+          !isLoading &&
+          !hasCalledAPI.current &&
+          isMounted.current
+        ) {
+          hasCalledAPI.current = true; // Set flag before calling API
+          generateHeatmapData();
+        }
+      }
+    };
+
+    initializeComponent();
 
     // Cleanup function
     return () => {
@@ -171,6 +271,9 @@ const ChannelHeatmap = ({
 
   // Separate useEffect to handle prop changes (if needed)
   useEffect(() => {
+    // Only proceed if we've already tried loading from backend
+    if (!hasLoadedFromBackend) return;
+
     const answeredCount = Object.keys(userAnswers).length;
 
     // Only trigger if we have new data and haven't called API yet
@@ -184,7 +287,7 @@ const ChannelHeatmap = ({
       hasCalledAPI.current = true;
       generateHeatmapData();
     }
-  }, [userAnswers, questions]); // Only depend on actual data changes
+  }, [userAnswers, questions, hasLoadedFromBackend]); // Include hasLoadedFromBackend in dependencies
 
   // Get matrix value for a specific product-channel combination
   const getMatrixValue = (product, channel) => {
@@ -256,6 +359,8 @@ const ChannelHeatmap = ({
           <span>
             {isRegenerating
               ? t("Regenerating channel heatmap analysis...")
+              : !hasLoadedFromBackend
+              ? t("Loading channel heatmap analysis...")
               : t("Generating channel heatmap analysis...")
             }
           </span>
@@ -292,10 +397,12 @@ const ChannelHeatmap = ({
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate channel performance insights.`
-              : "Generate your channel heatmap to visualize product-channel performance."
+              : hasLoadedFromBackend
+              ? "Generate your channel heatmap to visualize product-channel performance."
+              : "Loading channel heatmap analysis..."
             }
           </p>
-          {answeredCount >= 3 && (
+          {answeredCount >= 3 && hasLoadedFromBackend && (
             <button onClick={() => {
               hasCalledAPI.current = false; // Reset flag for manual generation
               generateHeatmapData();

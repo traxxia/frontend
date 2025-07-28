@@ -23,8 +23,6 @@ const SwotAnalysis = ({
       // Already an object
       swotData = analysisResult;
     }
-
-    console.log('Parsed SWOT data:', swotData);
   } catch (error) {
     console.error('Error parsing analysis result:', error);
     errorMessage = 'Failed to parse analysis data';

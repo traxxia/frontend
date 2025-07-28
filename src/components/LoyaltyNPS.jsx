@@ -488,55 +488,7 @@ const LoyaltyNPS = ({
            
           {/* Score Interpretation - moved here, directly below the chart */}
           {createScoreInterpretation()}
-        </div>
-
-        {/* Segment Scores */}
-        {loyaltyData.segmentScores && loyaltyData.segmentScores.length > 0 && (
-          <div className="ln-segments-container">
-            <h3 className="ln-section-title">Score by Customer Segment</h3>
-            <div className="ln-segments">
-              {loyaltyData.segmentScores.map((segment, index) => {
-                const segmentClassification = getScoreClassification(segment.score, loyaltyData.method);
-                const maxScore = Math.max(...loyaltyData.segmentScores.map(s => s.score));
-                const percentage = (segment.score / maxScore) * 100;
-                
-                return (
-                  <div key={index} className="ln-segment-card">
-                    <div className="ln-segment-header">
-                      <h4 className="ln-segment-name">{segment.segment}</h4>
-                      <span 
-                        className="ln-segment-score"
-                        style={{ color: segmentClassification.color }}
-                      >
-                        {segment.score}
-                      </span>
-                    </div>
-                    <div className="ln-segment-bar-container">
-                      <div 
-                        className="ln-segment-bar"
-                        style={{ 
-                          width: `${percentage}%`,
-                          backgroundColor: segmentClassification.color
-                        }}
-                      ></div>
-                    </div>
-                    <div className="ln-segment-classification">
-                      <span 
-                        className="ln-classification-badge"
-                        style={{ 
-                          backgroundColor: `${segmentClassification.color}20`,
-                          color: segmentClassification.color
-                        }}
-                      >
-                        {segmentClassification.label}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        </div> 
       </div>
     </div>
   );
