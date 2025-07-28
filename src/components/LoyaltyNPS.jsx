@@ -15,13 +15,105 @@ const LoyaltyNPS = ({
   const [loyaltyData, setLoyaltyData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-   const { t } = useTranslation();
+  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
+  const { t } = useTranslation();
   
   // Add refs to track if API call is in progress or has been made
   const isGeneratingRef = useRef(false);
   const hasGeneratedRef = useRef(false);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  // Load existing analysis from backend
+  const loadExistingAnalysis = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/loyaltyNPS`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📊 Loaded existing loyalty NPS from backend:', result.analysisData);
+        setLoyaltyData(result.analysisData);
+        setHasLoadedFromBackend(true);
+        hasGeneratedRef.current = true;
+        if (onDataGenerated) {
+          onDataGenerated(result.analysisData);
+        }
+        return true;
+      } else if (response.status === 404) {
+        console.log('📊 No existing loyalty NPS found in backend');
+        setHasLoadedFromBackend(true);
+        return false;
+      } else {
+        console.error('Failed to load loyalty NPS:', response.statusText);
+        setHasLoadedFromBackend(true);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error loading loyalty NPS:', error);
+      setHasLoadedFromBackend(true);
+      return false;
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData) => {
+    try {
+      const token = getAuthToken();
+
+      // Get current session ID
+      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!currentResponse.ok) {
+        throw new Error('Failed to get current conversation');
+      }
+
+      const conversation = await currentResponse.json();
+      const sessionId = conversation.sessionId;
+
+      if (!sessionId) {
+        throw new Error('No active conversation session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          analysisType: 'loyaltyNPS',
+          analysisData: analysisData,
+          businessName: businessName
+        })
+      });
+
+      if (response.ok) {
+        console.log('📊 Loyalty NPS analysis saved to backend');
+        return true;
+      } else {
+        console.error('Failed to save loyalty NPS analysis:', response.statusText);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error saving loyalty NPS analysis:', error);
+      return false;
+    }
+  };
 
   const generateLoyaltyData = async () => {
     // Prevent multiple simultaneous calls
@@ -114,6 +206,10 @@ const LoyaltyNPS = ({
         console.log('Setting loyalty data:', result.loyaltyMetrics);
         setLoyaltyData(result.loyaltyMetrics);
         hasGeneratedRef.current = true;
+        
+        // Save to backend
+        await saveAnalysisToBackend(result.loyaltyMetrics);
+        
         if (onDataGenerated) {
           onDataGenerated(result.loyaltyMetrics);
         }
@@ -134,6 +230,7 @@ const LoyaltyNPS = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     hasGeneratedRef.current = false; // Reset the flag to allow regeneration
+    setHasLoadedFromBackend(false); // Reset backend load flag
     if (onRegenerate) {
       // Use parent's regeneration logic
       onRegenerate();
@@ -144,8 +241,34 @@ const LoyaltyNPS = ({
     }
   };
 
-  // Auto-generate on mount if we have enough data
+  // Load existing analysis on mount
   useEffect(() => {
+    const initializeComponent = async () => {
+      // First try to load existing analysis from backend
+      const hasExistingAnalysis = await loadExistingAnalysis();
+      
+      if (!hasExistingAnalysis) {
+        // If no existing analysis, check if we can generate new one
+        const answeredCount = Object.keys(userAnswers).length;
+        
+        if (answeredCount >= 3 && 
+            !loyaltyData && 
+            !isLoading && 
+            !hasGeneratedRef.current && 
+            !isRegenerating) {
+          generateLoyaltyData();
+        }
+      }
+    };
+
+    initializeComponent();
+  }, []); // Empty dependency array - only run on mount
+
+  // Separate useEffect to handle prop changes (if needed)
+  useEffect(() => {
+    // Only proceed if we've already tried loading from backend
+    if (!hasLoadedFromBackend) return;
+    
     const answeredCount = Object.keys(userAnswers).length;
     
     // Only generate if:
@@ -161,7 +284,7 @@ const LoyaltyNPS = ({
         !isRegenerating) {
       generateLoyaltyData();
     }
-  }, [userAnswers, questions, loyaltyData, isLoading, isRegenerating]);
+  }, [userAnswers, questions, loyaltyData, isLoading, isRegenerating, hasLoadedFromBackend]);
 
   // Get score classification based on NPS zones
   const getScoreClassification = (score, method = 'NPS') => {
@@ -338,6 +461,8 @@ const LoyaltyNPS = ({
           <span>
             {isRegenerating 
               ? t("Regenerating loyalty & NPS analysis...")
+              : !hasLoadedFromBackend
+              ? t("Loading loyalty & NPS analysis...")
               : t("Generating loyalty & NPS analysis...")
             }
           </span>
@@ -371,14 +496,22 @@ const LoyaltyNPS = ({
         <div className="empty-state">
           <Heart size={48} className="empty-icon" />
           <h3>Loyalty & NPS Analysis</h3>
-           
-          <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Capability Heatmap"
-          size="medium"
-        />
+          <p>
+            {answeredCount < 3
+              ? `Answer ${3 - answeredCount} more questions to generate loyalty & NPS insights.`
+              : hasLoadedFromBackend
+              ? "Generate your loyalty analysis to understand customer satisfaction and retention."
+              : "Loading loyalty & NPS analysis..."
+            }
+          </p>
+          {answeredCount >= 3 && hasLoadedFromBackend && (
+            <button onClick={() => {
+              hasGeneratedRef.current = false;
+              generateLoyaltyData();
+            }} className="generate-button">
+              Generate Analysis
+            </button>
+          )}
         </div>
       </div>
     );
@@ -399,7 +532,7 @@ const LoyaltyNPS = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
-          sectionName="Capability Heatmap"
+          sectionName="Loyalty & NPS"
           size="medium"
         />
       </div>

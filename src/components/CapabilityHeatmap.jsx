@@ -17,6 +17,7 @@ const CapabilityHeatmap = ({
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
   const { t } = useTranslation();
   
   // Add ref to track if API call is in progress or has been made
@@ -24,6 +25,97 @@ const CapabilityHeatmap = ({
   const hasGeneratedRef = useRef(false);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  // Load existing analysis from backend
+  const loadExistingAnalysis = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/capabilityHeatmap`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📊 Loaded existing capability heatmap from backend:', result.analysisData);
+        setCapabilityData(result.analysisData);
+        setHasLoadedFromBackend(true);
+        hasGeneratedRef.current = true;
+        if (onDataGenerated) {
+          onDataGenerated(result.analysisData);
+        }
+        return true;
+      } else if (response.status === 404) {
+        console.log('📊 No existing capability heatmap found in backend');
+        setHasLoadedFromBackend(true);
+        return false;
+      } else {
+        console.error('Failed to load capability heatmap:', response.statusText);
+        setHasLoadedFromBackend(true);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error loading capability heatmap:', error);
+      setHasLoadedFromBackend(true);
+      return false;
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData) => {
+    try {
+      const token = getAuthToken();
+
+      // Get current session ID
+      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!currentResponse.ok) {
+        throw new Error('Failed to get current conversation');
+      }
+
+      const conversation = await currentResponse.json();
+      const sessionId = conversation.sessionId;
+
+      if (!sessionId) {
+        throw new Error('No active conversation session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          analysisType: 'capabilityHeatmap',
+          analysisData: analysisData,
+          businessName: businessName
+        })
+      });
+
+      if (response.ok) {
+        console.log('📊 Capability heatmap analysis saved to backend');
+        return true;
+      } else {
+        console.error('Failed to save capability heatmap analysis:', response.statusText);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error saving capability heatmap analysis:', error);
+      return false;
+    }
+  };
 
   const generateCapabilityData = async () => {
     // Prevent multiple simultaneous calls
@@ -114,24 +206,30 @@ const CapabilityHeatmap = ({
 
       console.log('Parsed result from /capability-heatmap API:', result);
 
+      let dataToSave = null;
       if (result && result.capabilityHeatmap) {
         console.log('Setting capability data:', result.capabilityHeatmap);
         setCapabilityData(result.capabilityHeatmap);
-        hasGeneratedRef.current = true;
-        if (onDataGenerated) {
-          onDataGenerated(result.capabilityHeatmap);
-        }
+        dataToSave = result.capabilityHeatmap;
       } else if (result && result.capabilities) {
         // Handle direct response format
         console.log('Setting capability data (direct format):', result);
         setCapabilityData(result);
-        hasGeneratedRef.current = true;
-        if (onDataGenerated) {
-          onDataGenerated(result);
-        }
+        dataToSave = result;
       } else {
         console.error('Invalid response structure:', result);
         throw new Error('Invalid response structure from API');
+      }
+
+      if (dataToSave) {
+        hasGeneratedRef.current = true;
+        
+        // Save to backend
+        await saveAnalysisToBackend(dataToSave);
+        
+        if (onDataGenerated) {
+          onDataGenerated(dataToSave);
+        }
       }
 
     } catch (error) {
@@ -146,6 +244,7 @@ const CapabilityHeatmap = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     hasGeneratedRef.current = false; // Reset the flag to allow regeneration
+    setHasLoadedFromBackend(false); // Reset backend load flag
     if (onRegenerate) {
       // Use parent's regeneration logic
       onRegenerate();
@@ -156,8 +255,34 @@ const CapabilityHeatmap = ({
     }
   };
 
-  // Auto-generate on mount if we have enough data
+  // Load existing analysis on mount
   useEffect(() => {
+    const initializeComponent = async () => {
+      // First try to load existing analysis from backend
+      const hasExistingAnalysis = await loadExistingAnalysis();
+      
+      if (!hasExistingAnalysis) {
+        // If no existing analysis, check if we can generate new one
+        const answeredCount = Object.keys(userAnswers).length;
+        
+        if (answeredCount >= 3 && 
+            !capabilityData && 
+            !isLoading && 
+            !hasGeneratedRef.current && 
+            !isRegenerating) {
+          generateCapabilityData();
+        }
+      }
+    };
+
+    initializeComponent();
+  }, []); // Empty dependency array - only run on mount
+
+  // Separate useEffect to handle prop changes (if needed)
+  useEffect(() => {
+    // Only proceed if we've already tried loading from backend
+    if (!hasLoadedFromBackend) return;
+    
     const answeredCount = Object.keys(userAnswers).length;
     
     // Only generate if:
@@ -173,7 +298,7 @@ const CapabilityHeatmap = ({
         !isRegenerating) {
       generateCapabilityData();
     }
-  }, [userAnswers, questions, capabilityData, isLoading, isRegenerating]);
+  }, [userAnswers, questions, capabilityData, isLoading, isRegenerating, hasLoadedFromBackend]);
   
   // Get color based on capability level and type
   const getCellColor = (capability, maturityLevel) => {
@@ -216,6 +341,8 @@ const CapabilityHeatmap = ({
           <span>
             {isRegenerating 
               ? t("Regenerating capability heatmap analysis...")
+              : !hasLoadedFromBackend
+              ? t("Loading capability heatmap analysis...")
               : t("Generating capability heatmap analysis...")
             }
           </span>
@@ -252,10 +379,12 @@ const CapabilityHeatmap = ({
           <p>
             {answeredCount < 3 
               ? `Answer ${3 - answeredCount} more questions to generate capability insights.`
-              : "Generate your capability analysis to understand organizational strengths and development areas."
+              : hasLoadedFromBackend
+              ? "Generate your capability analysis to understand organizational strengths and development areas."
+              : "Loading capability heatmap analysis..."
             }
           </p>
-          {answeredCount >= 3 && (
+          {answeredCount >= 3 && hasLoadedFromBackend && (
             <button onClick={() => {
               hasGeneratedRef.current = false;
               generateCapabilityData();
