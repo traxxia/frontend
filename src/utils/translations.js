@@ -673,7 +673,7 @@ export const staticTranslations = {
     "Download analysis": "Download analysis",
   "analysis": "Analysis",
   "strategic": "S.T.R.A.T.E.G.I.C",
-   "goToSection": "Go to section",
+   "goToSection": "Go to Section",
    "RegenerateAll": "Regenerate All",
    "assistant": "Assistant",
    "validatingYourAnswer": "Validating your answer...",

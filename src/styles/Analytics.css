@@ -700,7 +700,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 12px;  
+  white-space: nowrap;
 }
 
 .ch-capability-name {
@@ -1090,7 +1091,7 @@
 
 .ch-tooltip-header {
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   color: #f3f4f6;
 }
 

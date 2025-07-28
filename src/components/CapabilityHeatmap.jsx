@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, TrendingUp, Settings, Calendar, Loader, Target, Award, Activity } from 'lucide-react';
-import '../styles/Analytics.css';
+import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react'; 
 import RegenerateButton from './RegenerateButton';
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -18,7 +17,6 @@ const CapabilityHeatmap = ({
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
-  const [viewMode, setViewMode] = useState('maturity'); // 'maturity' or 'gap'
   const { t } = useTranslation();
   
   // Add ref to track if API call is in progress or has been made
@@ -177,36 +175,38 @@ const CapabilityHeatmap = ({
     }
   }, [userAnswers, questions, capabilityData, isLoading, isRegenerating]);
   
-  // Get color based on value and view mode
-  const getCellColor = (capability) => {
-    if (viewMode === 'maturity') {
-      const level = capability.currentLevel;
-      const colors = ['#fee2e2', '#fed7aa', '#fef3c7', '#d1fae5', '#a7f3d0'];
-      return colors[level - 1] || '#f3f4f6';
+  // Get color based on capability level and type
+  const getCellColor = (capability, maturityLevel) => {
+    if (capability.currentLevel === maturityLevel) {
+      // This is the capability's current level - color based on type and impact
+      if (capability.type === 'strength') {
+        return capability.impact === 'high' ? '#10b981' : '#34d399'; // Green shades
+      } else {
+        return capability.impact === 'high' ? '#ef4444' : '#f87171'; // Red shades
+      }
+    } else if (capability.currentLevel > maturityLevel) {
+      // Capability is above this level - light fill
+      return '#f0fdf4'; // Very light green
     } else {
-      const gap = capability.targetLevel - capability.currentLevel;
-      if (gap === 0) return '#d1fae5'; // Green - at target
-      if (gap === 1) return '#fef3c7'; // Yellow - 1 level gap
-      if (gap === 2) return '#fed7aa'; // Orange - 2 level gap
-      return '#fee2e2'; // Red - 3+ level gap
+      // Capability is below this level - no fill
+      return '#f9fafb'; // Light gray
     }
   };
   
-  // Get text color for contrast
-  const getTextColor = (capability) => {
-    return '#1f2937';
-  };
-  
-  // Group capabilities by category - only if data exists
-  const categories = capabilityData?.capabilities ? [...new Set(capabilityData.capabilities.map(cap => cap.category))] : [];
-  const capabilitiesByCategory = categories.reduce((acc, category) => {
-    acc[category] = capabilityData.capabilities.filter(cap => cap.category === category);
-    return acc;
-  }, {});
+  // Get maturity levels from data or use default
+  const maturityLevels = capabilityData?.maturityScale?.levels || [
+    { level: 1, label: "Initial" },
+    { level: 2, label: "Developing" },
+    { level: 3, label: "Defined" },
+    { level: 4, label: "Managed" },
+    { level: 5, label: "Optimized" }
+  ];
 
-  // Get the maximum number of capabilities in any category for grid layout
-  const maxCapabilitiesPerCategory = categories.length > 0 ? Math.max(...categories.map(cat => capabilitiesByCategory[cat].length)) : 0;
- 
+  // Calculate metrics based on available data
+  const totalCapabilities = capabilityData?.capabilities?.length || 0;
+  const strengthsCount = capabilityData?.capabilities?.filter(c => c.type === 'strength').length || 0;
+  const weaknessesCount = capabilityData?.capabilities?.filter(c => c.type === 'weakness').length || 0;
+  const overallMaturity = capabilityData?.overallMaturity || 0;
 
   if (isLoading || isRegenerating) {
     return (
@@ -280,7 +280,7 @@ const CapabilityHeatmap = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
-          sectionName="Channel Heatmap"
+          sectionName="Capability Heatmap"
           size="medium"
         />
       </div>
@@ -292,27 +292,23 @@ const CapabilityHeatmap = ({
             <Activity size={20} />
             <span>Total Capabilities</span>
           </div>
-          <p className="ch-metric-value">{capabilityData.capabilities?.length || 0}</p>
+          <p className="ch-metric-value">{totalCapabilities}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-green">
           <div className="ch-metric-header">
             <Award size={20} />
-            <span>At Target Level</span>
+            <span>Strengths</span>
           </div>
-          <p className="ch-metric-value">
-            {capabilityData.capabilities?.filter(c => c.currentLevel >= c.targetLevel).length || 0}
-          </p>
+          <p className="ch-metric-value">{strengthsCount}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-red">
           <div className="ch-metric-header">
             <Target size={20} />
-            <span>Development Areas</span>
+            <span>Weaknesses</span>
           </div>
-          <p className="ch-metric-value">
-            {capabilityData.capabilities?.filter(c => c.currentLevel < c.targetLevel).length || 0}
-          </p>
+          <p className="ch-metric-value">{weaknessesCount}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-purple">
@@ -320,127 +316,71 @@ const CapabilityHeatmap = ({
             <TrendingUp size={20} />
             <span>Overall Maturity</span>
           </div>
-          <p className="ch-metric-value">{capabilityData.overallMaturity?.toFixed(1) || 'N/A'}</p>
+          <p className="ch-metric-value">{overallMaturity}</p>
         </div>
       </div>
 
-      {/* View Mode Toggle */}
-      <div className="ch-view-toggle">
-        <button 
-          className={`ch-toggle-btn ${viewMode === 'maturity' ? 'active' : ''}`}
-          onClick={() => setViewMode('maturity')}
-        >
-          Current Maturity
-        </button>
-        <button 
-          className={`ch-toggle-btn ${viewMode === 'gap' ? 'active' : ''}`}
-          onClick={() => setViewMode('gap')}
-        >
-          Capability Gap
-        </button>
-      </div>
-
-      {/* Legend */}
-      <div className="ch-heatmap-header-section">
-        <h3 className="ch-section-title">Capability Matrix</h3>
-        <div className="ch-legend-gradient">
-          <div 
-            className="ch-gradient-bar"
-            style={{
-              background: viewMode === 'maturity' 
-                ? 'linear-gradient(to right, #fee2e2, #fed7aa, #fef3c7, #d1fae5, #a7f3d0)'
-                : 'linear-gradient(to right, #d1fae5, #fef3c7, #fed7aa, #fee2e2)'
-            }}
-          ></div>
-          <div className="ch-gradient-labels">
-            <span>{viewMode === 'maturity' ? 'Low' : 'No Gap'}</span>
-            <span>{viewMode === 'maturity' ? 'High' : 'Large Gap'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Heatmap */}
+      {/* Main Heatmap - Capabilities (Y-axis) vs Maturity Level (X-axis) */}
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-wrapper">
           <div className="ch-heatmap">
-            {/* Header Row */}
+            {/* Header Row - Maturity Levels */}
             <div className="ch-heatmap-header">
-              <div className="ch-cell ch-cell-corner"></div>
-              {categories.map(category => (
-                <div key={category} className="ch-cell ch-cell-header ch-category-header">
-                  <div className="ch-category-name">{category}</div>
-                  <div className="ch-category-count">
-                    {capabilitiesByCategory[category].length} capabilities
-                  </div>
+              <div className="ch-cell ch-cell-corner">
+                <div className="ch-corner-label">Capabilities</div>
+                <div className="ch-corner-sublabel">vs Maturity</div>
+              </div>
+              {maturityLevels.map(level => (
+                <div key={level.level} className="ch-cell ch-cell-header ch-maturity-header">
+                  <div className="ch-maturity-level">Level {level.level}</div>
+                  <div className="ch-maturity-label">{level.label}</div>
                 </div>
               ))}
             </div>
 
-            {/* Data Rows */}
-            {Array.from({ length: maxCapabilitiesPerCategory }, (_, rowIndex) => (
-              <div key={rowIndex} className="ch-heatmap-row">
-                <div className="ch-cell ch-cell-header ch-row-header">
-                  Position {rowIndex + 1}
+            {/* Data Rows - One row per capability */}
+            {capabilityData.capabilities.map((capability, capIndex) => (
+              <div key={capability.name} className="ch-heatmap-row">
+                <div className="ch-cell ch-cell-header ch-capability-header">
+                  <div className="ch-capability-name">{capability.name}</div>
+                   
                 </div>
-                {categories.map(category => {
-                  const capability = capabilitiesByCategory[category][rowIndex];
-                  const cellKey = `${category}-${rowIndex}`;
+                
+                {/* Maturity level cells */}
+                {maturityLevels.map(level => {
+                  const cellKey = `${capability.name}-${level.level}`;
+                  const isCurrentLevel = capability.currentLevel === level.level;
                   
                   return (
                     <div
                       key={cellKey}
-                      className={`ch-cell ch-cell-data ${selectedCell === cellKey ? 'selected' : ''}`}
+                      className={`ch-cell ch-cell-data ${selectedCell === cellKey ? 'selected' : ''} ${isCurrentLevel ? 'active-level' : ''}`}
                       style={{
-                        backgroundColor: capability ? getCellColor(capability) : '#f9fafb',
-                        color: capability ? getTextColor(capability) : '#9ca3af',
-                        cursor: capability ? 'pointer' : 'default'
+                        backgroundColor: getCellColor(capability, level.level),
+                        cursor: 'pointer'
                       }}
-                      onClick={() => capability && setSelectedCell(cellKey === selectedCell ? null : cellKey)}
-                      onMouseEnter={() => capability && setHoveredCell(cellKey)}
+                      onClick={() => setSelectedCell(cellKey === selectedCell ? null : cellKey)}
+                      onMouseEnter={() => setHoveredCell(cellKey)}
                       onMouseLeave={() => setHoveredCell(null)}
                     >
-                      {capability ? (
-                        <div className="ch-cell-content">
-                          <div className="ch-cell-name">{capability.name}</div>
-                          <div className="ch-cell-values">
-                            {viewMode === 'maturity' ? (
-                              <>
-                                <div className="ch-cell-value">
-                                  {capability.currentLevel}/5
-                                </div>
-                                <div className="ch-cell-label">Current</div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="ch-cell-value">
-                                  {capability.targetLevel - capability.currentLevel > 0 ? '+' : ''}
-                                  {capability.targetLevel - capability.currentLevel}
-                                </div>
-                                <div className="ch-cell-label">Gap</div>
-                              </>
-                            )}
+                      <div className="ch-cell-content">
+                        {isCurrentLevel && (
+                          <div className="ch-level-indicator">
+                            <div className="ch-level-dot"></div>
+                            Current
                           </div>
-                          <div className="ch-cell-impact">
-                            <span className={`impact-badge impact-${capability.impact}`}>
-                              {capability.impact}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="ch-cell-empty">-</div>
-                      )}
+                        )}
+                      </div>
                       
                       {/* Tooltip */}
-                      {hoveredCell === cellKey && capability && (
+                      {hoveredCell === cellKey && (
                         <div className="ch-tooltip">
                           <div className="ch-tooltip-header">{capability.name}</div>
                           <div className="ch-tooltip-content">
                             <div>Category: {capability.category}</div>
-                            <div>Current Level: {capability.currentLevel}/5</div>
-                            <div>Target Level: {capability.targetLevel}/5</div>
-                            <div>Gap: {capability.targetLevel - capability.currentLevel}</div>
-                            <div>Impact: {capability.impact}</div>
                             <div>Type: {capability.type}</div>
+                            <div>Impact: {capability.impact}</div>
+                            {/* <div>Current Level: {capability.currentLevel} ({maturityLevels[capability.currentLevel - 1]?.label})</div> */}
                           </div>
                         </div>
                       )}
@@ -451,7 +391,7 @@ const CapabilityHeatmap = ({
             ))}
           </div>
         </div>
-      </div>
+      </div> 
     </div>
   );
 };

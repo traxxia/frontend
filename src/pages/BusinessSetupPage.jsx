@@ -29,7 +29,7 @@ const BusinessSetupPage = () => {
   const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(t("goToSection"));
+  const [selectedOption, setSelectedOption] = useState(t('goToSection'));
   const dropdownRef = useRef(null);
   const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
   const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);

@@ -955,11 +955,6 @@ const ChatComponent = ({
               {pendingValidation && ` • ${t("followUpRequired")}`}
               {isValidating && ` • ${t("validating")}`}
               {isSaving && ' • Auto-saving...'}
-              {process.env.NODE_ENV === 'development' && (
-                <span style={{ fontSize: '10px', color: '#999' }}>
-                  {' '}• API calls: Q{questionApiCalls[currentQuestion.id] || 0}/{MAX_QUESTION_API_CALLS}, P{phaseApiCalls[currentQuestion.phase] || 0}/{MAX_PHASE_API_CALLS}
-                </span>
-              )}
             </span>
           ) : (
             <span>✅ All questions completed!</span>
