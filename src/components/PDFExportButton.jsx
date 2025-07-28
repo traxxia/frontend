@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
+import { useTranslation } from "../hooks/useTranslation";
 
 const PDFExportButton = ({ 
   analysisResult, 
@@ -10,6 +11,7 @@ const PDFExportButton = ({
   style = {}
 }) => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const { t } = useTranslation();
 
   const exportCompleteToPDF = async (elementId, filename, businessName, title) => {
     try {
@@ -288,7 +290,7 @@ const PDFExportButton = ({
         </>
       ) : (
         <>
-          Download analysis
+          {t("Download analysis")}
           <Download size={16} style={{ marginLeft: 8 }} />
         </>
       )}

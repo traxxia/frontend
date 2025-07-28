@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Zap, TrendingUp, Settings, Calendar, Loader, Target, Award, Activity } from 'lucide-react';
 import '../styles/Analytics.css';
 import RegenerateButton from './RegenerateButton';
+import { useTranslation } from "../hooks/useTranslation";
 
 const CapabilityHeatmap = ({ 
   questions = [],
@@ -18,6 +19,7 @@ const CapabilityHeatmap = ({
   const [selectedCell, setSelectedCell] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [viewMode, setViewMode] = useState('maturity'); // 'maturity' or 'gap'
+  const { t } = useTranslation();
   
   // Add ref to track if API call is in progress or has been made
   const isGeneratingRef = useRef(false);
@@ -213,8 +215,8 @@ const CapabilityHeatmap = ({
           <Loader size={24} className="loading-spinner" />
           <span>
             {isRegenerating 
-              ? "Regenerating capability heatmap analysis..." 
-              : "Generating capability heatmap analysis..."
+              ? t("Regenerating capability heatmap analysis...")
+              : t("Generating capability heatmap analysis...")
             }
           </span>
         </div>
@@ -272,7 +274,7 @@ const CapabilityHeatmap = ({
       <div className="ch-header">
         <div className="ch-title-section">
           <Zap className="ch-icon" size={24} />
-          <h2 className="ch-title">Capability Heatmap</h2>
+          <h2 className="ch-title">{t("Capability Heatmap")}</h2>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}

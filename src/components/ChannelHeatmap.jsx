@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, TrendingUp, Layers, Calendar, Loader, Zap, Grid3x3 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/Analytics.css'; // We'll create this CSS file
+import { useTranslation } from "../hooks/useTranslation";
 
 const ChannelHeatmap = ({
   questions = [],
@@ -16,6 +17,7 @@ const ChannelHeatmap = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+  const { t } = useTranslation();
 
   // Add refs to track if API has been called and component mount
   const hasCalledAPI = useRef(false);
@@ -253,8 +255,8 @@ const ChannelHeatmap = ({
           <Loader size={24} className="loading-spinner" />
           <span>
             {isRegenerating
-              ? "Regenerating channel heatmap analysis..."
-              : "Generating channel heatmap analysis..."
+              ? t("Regenerating channel heatmap analysis...")
+              : t("Generating channel heatmap analysis...")
             }
           </span>
         </div>
@@ -314,7 +316,7 @@ const ChannelHeatmap = ({
       <div className="ch-header">
         <div className="ch-title-section">
           <Grid3x3 className="ch-icon" size={24} />
-          <h2 className="ch-title">Channel Heatmap</h2>
+          <h2 className="ch-title">{t("Channel Heatmap")}</h2>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}

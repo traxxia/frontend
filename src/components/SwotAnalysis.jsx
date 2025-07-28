@@ -2,6 +2,7 @@ import React from 'react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/dashboard.css';
 import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
+import { useTranslation } from "../hooks/useTranslation";
 
 const SwotAnalysis = ({ 
   analysisResult, 
@@ -29,6 +30,8 @@ const SwotAnalysis = ({
     errorMessage = 'Failed to parse analysis data';
   }
 
+    const { t } = useTranslation();
+
   // Render SWOT table if we have the correct data structure
   if (swotData && (swotData.strengths || swotData.weaknesses || swotData.opportunities || swotData.threats)) {
     return (
@@ -38,7 +41,7 @@ const SwotAnalysis = ({
         <div className="ln-header">
           <div className="ln-title-section">
             <Target className="ln-icon" size={24} />
-            <h2 className="ln-title">SWOT Analysis</h2>
+            <h2 className="ln-title">{t("SWOT Analysis")}</h2>
           </div>
           <RegenerateButton
               onRegenerate={onRegenerate}

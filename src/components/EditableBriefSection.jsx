@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Check, X, Loader } from 'lucide-react';
+import { useTranslation } from "../hooks/useTranslation";
 
 const EditableBriefSection = ({ 
   questions = [], 
@@ -15,6 +16,7 @@ const EditableBriefSection = ({
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useTranslation();
   
   const inputRefs = useRef({});
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -272,7 +274,7 @@ const EditableBriefSection = ({
             ))
           ) : (
             <div className="no-data">
-              <p>Your business information will appear here as you answer questions in the chat.</p>
+              <p>{t('businessInfoMessage')}</p>
             </div>
           )}
         </div>
@@ -280,12 +282,12 @@ const EditableBriefSection = ({
         {briefFields.length > 0 && (
           <div className="brief-footer">
             <p className="brief-note">
-              💡 Fields are automatically generated from your chat responses. Click any field to edit.
+              {t('briefNote')}
               {completedPhases.has('initial') && (
                 <>
                   <br />
                   <span style={{ color: '#007bff', fontWeight: 'bold' }}>
-                    ⚡ Changes are auto-saved and analysis will regenerate automatically.
+                    {t('briefNoteRegenerate')}
                   </span>
                 </>
               )}

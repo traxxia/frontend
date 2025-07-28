@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Loader } from "lucide-react";
 import "../styles/ChatComponent.css";
+import { useTranslation } from "../hooks/useTranslation";
 
 const ChatComponent = ({ 
   userAnswers = {},
@@ -23,6 +24,7 @@ const ChatComponent = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [pendingValidation, setPendingValidation] = useState(null);
   const [phaseValidationPending, setPhaseValidationPending] = useState(false);
+  const { t } = useTranslation();
   
   // Auto-save state
   const [sessionId, setSessionId] = useState(null);
@@ -924,7 +926,7 @@ const ChatComponent = ({
               phaseValidationPending 
                 ? "Please provide additional details about your business..." 
                 : currentQuestion 
-                  ? (pendingValidation ? "Please provide additional details..." : "Type your answer here...") 
+                  ? (pendingValidation ? "Please provide additional details..." : t("typeYourAnswer")) 
                   : "All questions completed!"
             }
             disabled={(!currentQuestion && !phaseValidationPending) || isValidating || isValidatingPhase || isSaving}
@@ -948,10 +950,10 @@ const ChatComponent = ({
             </span>
           ) : currentQuestion ? (
             <span>
-              Question {Object.keys(userAnswers).length + 1} of {questions.length} • 
-              Phase: {currentQuestion.phase.toUpperCase()}
-              {pendingValidation && ' • Follow-up required'}
-              {isValidating && ' • Validating...'}
+              {t("question")} {Object.keys(userAnswers).length + 1} {t("of")} {questions.length} • 
+              {t("phase")}: {currentQuestion.phase.toUpperCase()}
+              {pendingValidation && ` • ${t("followUpRequired")}`}
+              {isValidating && ` • ${t("validating")}`}
               {isSaving && ' • Auto-saving...'}
               {process.env.NODE_ENV === 'development' && (
                 <span style={{ fontSize: '10px', color: '#999' }}>

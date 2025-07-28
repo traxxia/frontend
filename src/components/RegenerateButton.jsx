@@ -1,5 +1,6 @@
 import React from 'react';
 import { RefreshCw, Loader } from 'lucide-react';
+import { useTranslation } from "../hooks/useTranslation";
 
 const RegenerateButton = ({ 
   onRegenerate, 
@@ -27,6 +28,7 @@ const RegenerateButton = ({
   };
 
   const currentSize = sizes[size] || sizes.small;
+  const { t } = useTranslation();
 
   return (
     <button
@@ -58,7 +60,7 @@ const RegenerateButton = ({
       ) : (
         <>
           <RefreshCw size={currentSize.iconSize} />
-          Regenerate
+          {t("regenerate")}
         </>
       )}
     </button>

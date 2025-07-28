@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Users, TrendingUp, Star, Calendar,Filter, Loader } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/Analytics.css'; // We'll create this CSS file
+import { useTranslation } from "../hooks/useTranslation";
 
 const CustomerSegmentation = ({
   questions = [],
@@ -19,6 +20,7 @@ const CustomerSegmentation = ({
   // Add refs to track if API has been called and component mount
   const hasCalledAPI = useRef(false);
   const isMounted = useRef(false);
+  const { t } = useTranslation();
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
 
@@ -224,8 +226,8 @@ const CustomerSegmentation = ({
           <Loader size={24} className="loading-spinner" />
           <span>
             {isRegenerating
-              ? "Regenerating customer segmentation analysis..."
-              : "Generating customer segmentation analysis..."
+              ? t("Regenerating customer segmentation analysis...")
+              : t("Generating customer segmentation analysis...")
             }
           </span>
         </div>
@@ -286,7 +288,7 @@ const CustomerSegmentation = ({
       <div className="cs-header">
         <div className="cs-title-section">
           <Users className="cs-icon" size={24} />
-          <h2 className="cs-title">Customer Segmentation</h2>
+          <h2 className="cs-title">{t("Customer Segmentation")}</h2>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}

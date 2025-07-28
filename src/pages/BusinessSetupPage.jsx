@@ -12,8 +12,10 @@ import ChannelHeatmap from "../components/ChannelHeatmap";
 import LoyaltyNPS from "../components/LoyaltyNPS";
 import CapabilityHeatmap from "../components/CapabilityHeatmap";
 import PDFExportButton from "../components/PDFExportButton";
+import { useTranslation } from "../hooks/useTranslation";
 
 const BusinessSetupPage = () => {
+    const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(() => {
     const isMobileView = window.innerWidth <= 768;
     return isMobileView ? "chat" : "brief";
@@ -27,13 +29,14 @@ const BusinessSetupPage = () => {
   const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedOption, setSelectedOption] = useState("Go to section");
+  const [selectedOption, setSelectedOption] = useState(t("goToSection"));
   const dropdownRef = useRef(null);
   const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
   const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);
   const [channelHeatmapData, setChannelHeatmapData] = useState(null);
   const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
   const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
+
 
   // Refs for scrolling to sections
   const swotRef = useRef(null);
@@ -121,12 +124,22 @@ const BusinessSetupPage = () => {
   const [questionsLoaded, setQuestionsLoaded] = useState(false);
 
   const [businessData, setBusinessData] = useState({
-    name: "Your Business",
-    whatWeDo: "Business description will appear here after answering questions in the chat.",
+    name: "",
+    whatWeDo: "",
     products: "",
     targetAudience: "",
     uniqueValue: "",
   });
+
+   useEffect(() => {
+    setBusinessData((prev) => ({
+      ...prev,
+      name: t("yourBusiness"),
+      whatWeDo: t("whatWeDo"),
+    }));
+  }, [t]);
+
+
 
   const generateAnalysisWithFind = async () => {
     try {
@@ -399,7 +412,7 @@ const BusinessSetupPage = () => {
         ) : (
           <>
             <RefreshCw size={16} />
-            Regenerate All
+            {t('RegenerateAll')}
           </>
         )}
       </button>
@@ -641,14 +654,14 @@ const BusinessSetupPage = () => {
               className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`}
               onClick={() => setActiveTab("chat")}
             >
-              Assistant
+              {t("assistant")}
             </button>
 
             <button
               className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`}
               onClick={() => setActiveTab("brief")}
             >
-              Brief
+              {t("brief")}
             </button>
 
             {unlockedFeatures.analysis && (
@@ -656,7 +669,7 @@ const BusinessSetupPage = () => {
                 className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`}
                 onClick={handleAnalysisTabClick}
               >
-                Analysis
+                {t("analysis")}
               </button>
             )}
           </div>
@@ -678,9 +691,9 @@ const BusinessSetupPage = () => {
                 <div className="dot"></div>
               </div>
             </div>
-            <h2 className="welcome-heading">Let's begin!</h2>
+            <h2 className="welcome-heading">{t("letsBegin")}</h2>
             <p className="welcome-text">
-              Welcome to Traxia AI - Your Strategic Business Advisor!
+              {t("welcomeToTraxia")}
             </p>
           </div>
 
@@ -713,7 +726,7 @@ const BusinessSetupPage = () => {
                         onClick={handleBackFromAnalysis}
                         disabled={isSliding}
                       >
-                        ← Back to Overview
+                        {t("backToOverview")}
                       </button>
 
                       {unlockedFeatures.analysis && (
@@ -721,7 +734,7 @@ const BusinessSetupPage = () => {
                           className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
                           onClick={() => setActiveTab("analysis")}
                         >
-                          Analysis
+                          {t("analysis")}
                         </button>
                       )}
                     </div>
@@ -809,12 +822,10 @@ const BusinessSetupPage = () => {
                             ) : (
                               <div className="analysis-empty">
                                 <p>
-                                  Your business analysis will appear here once
-                                  generated.
+                                  {t("Your business analysis will appear here once generated.")}
                                 </p>
                                 <p>
-                                  Continue the conversation to trigger analysis
-                                  generation.
+                                  <p>{t("Continue the conversation to trigger analysis generation.")}</p>
                                 </p>
                                 {isPhaseCompleted(PHASES.INITIAL) && (
                                   <button
@@ -823,8 +834,8 @@ const BusinessSetupPage = () => {
                                     disabled={isLoadingAnalysis}
                                   >
                                     {isLoadingAnalysis
-                                      ? "Generating..."
-                                      : "Generate Analysis Now"}
+                                      ? t("Generating...")
+                                      : t("Generate Analysis Now")}
                                   </button>
                                 )}
                               </div>
@@ -845,7 +856,7 @@ const BusinessSetupPage = () => {
                     className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
                     onClick={() => setActiveTab("brief")}
                   >
-                    Brief
+                     {t("brief")}
                   </button>
 
                   {unlockedFeatures.analysis && (
@@ -853,7 +864,7 @@ const BusinessSetupPage = () => {
                       className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
                       onClick={handleAnalysisTabClick}
                     >
-                      Analysis
+                       {t("analysis")}
                     </button>
                   )}
                 </div>
@@ -870,9 +881,9 @@ const BusinessSetupPage = () => {
                   <div className="brief-section">
                     {!unlockedFeatures.analysis && (
                       <div className="unlock-hint">
-                        <h4>🔒 Unlock Business Analysis</h4>
+                        <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
                         <p>
-                          Complete all initial phase questions to unlock business analysis and insights!
+                          {t("completePhaseMessage")}
                         </p>
                       </div>
                     )}
@@ -880,7 +891,7 @@ const BusinessSetupPage = () => {
                     {!isMobile && (
                       <div className="progress-area">
                         <div className="progress-label">
-                          Progress: {actualProgress}% ({answeredQuestions}/
+                          {t('progress')}: {actualProgress}% ({answeredQuestions}/
                           {totalQuestions})
                         </div>
                         <div className="progress-track">

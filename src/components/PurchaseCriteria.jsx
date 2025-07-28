@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/Analytics.css'; // We'll create this CSS file
+import { useTranslation } from "../hooks/useTranslation";
 
 const PurchaseCriteria = ({ 
   questions = [],
@@ -15,6 +16,7 @@ const PurchaseCriteria = ({
   const [criteriaData, setCriteriaData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
   
   // Use ref to track if API call is in progress to prevent duplicate calls
   const isGeneratingRef = useRef(false);
@@ -307,8 +309,8 @@ const PurchaseCriteria = ({
           <Loader size={24} className="loading-spinner" />
           <span>
             {isRegenerating 
-              ? "Regenerating purchase criteria analysis..." 
-              : "Generating purchase criteria analysis..."
+              ? t("Regenerating purchase criteria analysis...")
+              : t("Generating purchase criteria analysis...")
             }
           </span>
         </div>
@@ -362,7 +364,7 @@ const PurchaseCriteria = ({
       <div className="pc-header">
         <div className="pc-title-section">
           <Target className="pc-icon" size={24} />
-          <h2 className="pc-title">Purchase Criteria Matrix</h2>
+          <h2 className="pc-title">{t("Purchase Criteria Matrix")}</h2>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}

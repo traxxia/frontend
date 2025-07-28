@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import { useTranslation } from "../hooks/useTranslation";
 
 const LoyaltyNPS = ({ 
   questions = [],
@@ -14,6 +15,7 @@ const LoyaltyNPS = ({
   const [loyaltyData, setLoyaltyData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+   const { t } = useTranslation();
   
   // Add refs to track if API call is in progress or has been made
   const isGeneratingRef = useRef(false);
@@ -335,8 +337,8 @@ const LoyaltyNPS = ({
           <Loader size={24} className="loading-spinner" />
           <span>
             {isRegenerating 
-              ? "Regenerating loyalty & NPS analysis..." 
-              : "Generating loyalty & NPS analysis..."
+              ? t("Regenerating loyalty & NPS analysis...")
+              : t("Generating loyalty & NPS analysis...")
             }
           </span>
         </div>
@@ -391,7 +393,7 @@ const LoyaltyNPS = ({
       <div className="ln-header">
         <div className="ln-title-section">
           <Heart className="ln-icon" size={24} />
-          <h2 className="ln-title">Loyalty & NPS Score</h2>
+          <h2 className="ln-title">{t("Loyalty & NPS Score")}</h2>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}
