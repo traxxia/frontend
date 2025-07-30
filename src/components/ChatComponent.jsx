@@ -26,7 +26,7 @@ const ChatComponent = ({
   const [phaseValidationPending, setPhaseValidationPending] = useState(false);
   const { t } = useTranslation();
   
-  // Auto-save state
+  // Session state
   const [sessionId, setSessionId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -43,115 +43,21 @@ const ChatComponent = ({
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const getAuthToken = () => sessionStorage.getItem('token');
  
+  const [userPermissions, setUserPermissions] = useState(null);
   const MAX_QUESTION_API_CALLS = 2;
   const MAX_PHASE_API_CALLS = 2;
-const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
-  try {
-    const token = getAuthToken();
 
-    const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        sessionId: sessionId,
-        analysisType: analysisType,
-        analysisData: analysisData,
-        businessName: 'Generated Business Analysis'
-      })
-    });
-
-    if (response.ok) {
-      console.log(`📊 ${analysisType} analysis saved to backend`);
-      return true;
-    } else {
-      console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
-      return false;
-    }
-  } catch (error) {
-    console.error(`Error saving ${analysisType} analysis:`, error);
-    return false;
-  }
-};
-  // NEW: Generate analysis using /find API
-  const generateAnalysisWithFind = async () => {
-  try {
-    setIsGeneratingAnalysis(true);
-    showToastMessage('Generating your business analysis...', 'info');
-
-    // Prepare questions and answers arrays
-    const questionsArray = [];
-    const answersArray = [];
-
-    // Sort questions by ID to maintain order
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-    
-    // Only include answered questions
-    sortedQuestions.forEach(question => {
-      if (userAnswers[question.id]) {
-        questionsArray.push(question.question);
-        answersArray.push(userAnswers[question.id]);
-      }
-    });
-
-    if (questionsArray.length === 0) {
-      throw new Error('No answered questions available for analysis');
-    }
-
-    console.log('Sending to /find API:', {
-      questions: questionsArray,
-      answers: answersArray
-    });
-
-    const response = await fetch(`${ML_API_BASE_URL}/find`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    console.log('Received from /find API:', result);
-
-    // The API should return analysis content that we can pass to SwotAnalysis
-    if (result && onAnalysisGenerated) {
-      // Assuming the API returns analysis in a format compatible with SwotAnalysis
-      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
-      
-      // Save to backend before calling onAnalysisGenerated
-      await saveAnalysisToBackend(analysisContent, 'swot');
-      
-      onAnalysisGenerated(analysisContent);
-      showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
-    } else {
-      throw new Error('Invalid response from analysis API');
-    }
-
-  } catch (error) {
-    console.error('Error generating analysis:', error);
-    showToastMessage('Failed to generate analysis. Please try again.', 'error');
-  } finally {
-    setIsGeneratingAnalysis(false);
-  }
-};
- 
-  const autoSaveMessage = async (messageData) => {
-    try { 
-      setIsSaving(true);
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
+    try {
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/conversation/save-message`, {
+      if (!sessionId) {
+        throw new Error('No active session found');
+      }
+
+      // Note: This endpoint might need adjustment based on new backend structure
+      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -159,19 +65,135 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
         },
         body: JSON.stringify({
           sessionId: sessionId,
-          message: messageData
+          analysisType: analysisType,
+          analysisData: analysisData,
+          businessName: 'Generated Business Analysis'
         })
       });
 
       if (response.ok) {
-        const result = await response.json(); 
-        if (!sessionId && result.sessionId) { 
-          setSessionId(result.sessionId);
-        } 
-        return result;
+        console.log(`📊 ${analysisType} analysis saved to backend`);
+        return true;
       } else {
-        console.error('❌ Failed to save message:', response.statusText);
+        console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
+        return false;
       }
+    } catch (error) {
+      console.error(`Error saving ${analysisType} analysis:`, error);
+      return false;
+    }
+  };
+
+  // Generate analysis using /find API
+  const generateAnalysisWithFind = async () => {
+    try {
+      setIsGeneratingAnalysis(true);
+      showToastMessage('Generating your business analysis...', 'info');
+
+      // Prepare questions and answers arrays
+      const questionsArray = [];
+      const answersArray = [];
+
+      // Sort questions by question_id to maintain order
+      const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
+      
+      // Only include answered questions
+      sortedQuestions.forEach(question => {
+        if (userAnswers[question.question_id]) {
+          questionsArray.push(question.question_text);
+          answersArray.push(userAnswers[question.question_id]);
+        }
+      });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No answered questions available for analysis');
+      }
+
+      console.log('Sending to /find API:', {
+        questions: questionsArray,
+        answers: answersArray
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Received from /find API:', result);
+
+      if (result && onAnalysisGenerated) {
+        const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+        
+        // Save to backend before calling onAnalysisGenerated
+        await saveAnalysisToBackend(analysisContent, 'swot');
+        
+        onAnalysisGenerated(analysisContent);
+        showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
+      } else {
+        throw new Error('Invalid response from analysis API');
+      }
+
+    } catch (error) {
+      console.error('Error generating analysis:', error);
+      showToastMessage('Failed to generate analysis. Please try again.', 'error');
+    } finally {
+      setIsGeneratingAnalysis(false);
+    }
+  };
+
+  // Start or get existing session
+ const initializeSession = async () => {
+  try {
+    const token = getAuthToken();
+
+    const response = await fetch(`${API_BASE_URL}/api/user/start-session`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      setSessionId(result.session.session_id);
+      
+      // Store user permissions from API response
+      if (result.user_permissions) {
+        setUserPermissions(result.user_permissions);
+      }
+      
+      console.log('Session initialized:', result.session.session_id);
+      console.log('User permissions:', result.user_permissions);
+      return result.session;
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to initialize session');
+    }
+  } catch (error) {
+    console.error('Session initialization error:', error);
+    throw error;
+  }
+};
+  // Auto-save message
+  const autoSaveMessage = async (messageData) => {
+    try { 
+      setIsSaving(true);
+      // In the new backend, messages might be handled differently
+      console.log('Message to save:', messageData);
+      return { success: true };
     } catch (error) {
       console.error('❌ Auto-save message error:', error);
     } finally {
@@ -179,22 +201,25 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     }
   };
 
-  // Finalize answer after ML validation passes
-  const finalizeAnswer = async (questionId, finalAnswer, attemptCount = 1) => {
+  // Submit answer to backend
+  const submitAnswerToBackend = async (questionId, answer) => {
     try {
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/conversation/finalize-answer`, {
+      if (!sessionId) {
+        throw new Error('No active session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/user/submit-answer`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sessionId: sessionId,
-          questionId: questionId,
-          finalAnswer: finalAnswer,
-          attemptCount: attemptCount
+          session_id: sessionId,
+          question_id: questionId,
+          answer_text: answer
         })
       });
 
@@ -202,19 +227,17 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
         const result = await response.json();
         
         if (onNewAnswer) {
-          onNewAnswer(questionId, finalAnswer);
-        }
-
-        if (result.businessData && onBusinessDataUpdate) {
-          onBusinessDataUpdate(result.businessData);
+          onNewAnswer(result.question_id, answer);
         }
 
         return result;
       } else {
-        console.error('Failed to finalize answer:', response.statusText);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit answer');
       }
     } catch (error) {
-      console.error('Finalize answer error:', error);
+      console.error('Submit answer error:', error);
+      throw error;
     }
   };
 
@@ -223,79 +246,133 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     try {
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/conversation/complete-phase`, {
+      if (!sessionId) {
+        throw new Error('No active session found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/user/complete-phase`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sessionId: sessionId,
-          phase: phase
+          session_id: sessionId,
+          phase_name: phase
         })
       });
 
       if (response.ok) {
         const result = await response.json();
-        setCompletedPhases(new Set(result.completedPhases));
+        setCompletedPhases(prev => new Set([...prev, phase]));
         return result;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to complete phase');
       }
     } catch (error) {
       console.error('Complete phase error:', error);
+      throw error;
     }
   };
 
-  // Load current conversation on component mount
-  const loadCurrentConversation = async () => {
-    try {
-      const token = getAuthToken();
+  useEffect(() => { 
+    if (hasInitialized.current) { 
+      return;
+    }
 
-      const response = await fetch(`${API_BASE_URL}/api/conversation/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const conversation = await response.json();
+    const initializeChat = async () => { 
+      hasInitialized.current = true;  
+      
+      try { 
+        // Load questions first
+        const loadedQuestions = await loadQuestionsFromAPI();
         
-        if (conversation.sessionId) { 
-          setSessionId(conversation.sessionId);
+        // Initialize session
+        await initializeSession();
+         
+        if (loadedQuestions.length > 0) {
+          const firstQuestion = loadedQuestions.find(q => q.question_id === 1) || loadedQuestions[0];
           
-          if (conversation.messages && conversation.messages.length > 0) {
-            setMessages(conversation.messages);
-          }
+          const firstMessage = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            type: 'bot',
+            text: firstQuestion.question_text,
+            timestamp: new Date(),
+            questionId: firstQuestion.question_id,
+            phase: firstQuestion.phase,
+            severity: firstQuestion.severity,
+            isFollowUp: false,
+            isPhaseValidation: false
+          };
           
-          setCompletedPhases(new Set(conversation.progress?.completedPhases || []));
-          
-          if (conversation.questionApiCalls) {
-            setQuestionApiCalls(conversation.questionApiCalls);
-          }
-          if (conversation.phaseApiCalls) {
-            setPhaseApiCalls(conversation.phaseApiCalls);
-          }
-          
-          if (conversation.businessData && onBusinessDataUpdate) {
-            onBusinessDataUpdate(conversation.businessData);
-          }
-
-          if (conversation.finalAnswers && onNewAnswer) {
-            Object.values(conversation.finalAnswers).forEach(answer => {
-              onNewAnswer(answer.questionId, answer.finalAnswer);
-            });
-          }
-        }
+          setMessages([firstMessage]);
+          await autoSaveMessage(firstMessage);
+        }  
         
-        return conversation;
+      } catch (error) {
+        console.error('❌ Initialization error:', error);
+        hasInitialized.current = false;
+      }
+    };
+    
+    initializeChat();
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Load questions from API - Updated for new backend structure
+  const loadQuestionsFromAPI = async () => {
+  try {
+    const token = getAuthToken();
+
+    const response = await fetch(`${API_BASE_URL}/api/user/questions`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const loadedQuestions = data.questions || [];
+      
+      setQuestions(loadedQuestions);
+      
+      // Store user permissions from API response
+      if (data.user_permissions) {
+        setUserPermissions(data.user_permissions);
       }
       
-      return null;
-    } catch (error) {
-      console.error('Load conversation error:', error);
-      return null;
+      // Group questions by phase
+      const phaseGroups = {};
+      loadedQuestions.forEach(question => {
+        if (!phaseGroups[question.phase]) {
+          phaseGroups[question.phase] = [];
+        }
+        phaseGroups[question.phase].push(question);
+      });
+      setPhases(phaseGroups);
+
+      if (onQuestionsLoaded) {
+        onQuestionsLoaded(loadedQuestions, phaseGroups);
+      }
+      
+      return loadedQuestions;
+    } else {
+      const errorData = await response.json();
+      showToastMessage(errorData.message || 'Failed to load questions. Please refresh the page.', 'error');
+      return [];
     }
-  };
+  } catch (error) {
+    showToastMessage('Error loading questions. Please check your connection.', 'error');
+    return [];
+  } finally {
+    setIsLoadingQuestions(false);
+  }
+};
 
   const getPhaseQuestions = (phaseName) => {
     return phases[phaseName] || [];
@@ -307,7 +384,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     for (const phaseName of phaseOrder) {
       const phaseQuestions = getPhaseQuestions(phaseName);
       const mandatoryQuestions = phaseQuestions.filter(q => q.severity === 'mandatory');
-      const answeredMandatory = mandatoryQuestions.filter(q => userAnswers[q.id]);
+      const answeredMandatory = mandatoryQuestions.filter(q => userAnswers[q.question_id]);
       
       if (answeredMandatory.length < mandatoryQuestions.length) {
         return phaseName;
@@ -322,16 +399,16 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     
     const phaseQuestions = getPhaseQuestions(question.phase);
     const mandatoryQuestions = phaseQuestions.filter(q => q.severity === 'mandatory');
-    const sortedMandatoryQuestions = mandatoryQuestions.sort((a, b) => a.id - b.id);
+    const sortedMandatoryQuestions = mandatoryQuestions.sort((a, b) => a.question_id - b.question_id);
     
     const lastMandatoryQuestion = sortedMandatoryQuestions[sortedMandatoryQuestions.length - 1];
-    return lastMandatoryQuestion && lastMandatoryQuestion.id === question.id;
+    return lastMandatoryQuestion && lastMandatoryQuestion.question_id === question.question_id;
   };
 
   const getCurrentQuestion = () => {
     if (Object.keys(phases).length === 0) return null;
     
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
     const answeredCount = Object.keys(userAnswers).length;
     
     if (pendingValidation) {
@@ -373,97 +450,8 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
       await autoSaveMessage(messageData);
     }
   };
- 
-  useEffect(() => { 
-    if (hasInitialized.current) { 
-      return;
-    }
 
-    const initializeChat = async () => { 
-      hasInitialized.current = true;  
-      
-      try { 
-        const loadedQuestions = await loadQuestionsFromAPI();
-         
-        const conversation = await loadCurrentConversation(); 
-        const hasExistingMessages = conversation && conversation.messages && conversation.messages.length > 0;
- 
-        if (!hasExistingMessages && loadedQuestions.length > 0) {
-          const firstQuestion = loadedQuestions.find(q => q.id === 1) || loadedQuestions[0];
-          
-          const firstMessage = {
-            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            type: 'bot',
-            text: firstQuestion.question,
-            timestamp: new Date(),
-            questionId: firstQuestion.id,
-            phase: firstQuestion.phase,
-            severity: firstQuestion.severity,
-            isFollowUp: false,
-            isPhaseValidation: false
-          };
-          
-          setMessages([firstMessage]);
-          await autoSaveMessage(firstMessage);
-        }  
-        
-      } catch (error) {
-        console.error('❌ Initialization error:', error);
-        hasInitialized.current = false;
-      }
-    };
-    
-    initializeChat();
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const loadQuestionsFromAPI = async () => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/questions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const loadedQuestions = data.questions || [];
-        
-        setQuestions(loadedQuestions);
-        
-        const phaseGroups = {};
-        loadedQuestions.forEach(question => {
-          if (!phaseGroups[question.phase]) {
-            phaseGroups[question.phase] = [];
-          }
-          phaseGroups[question.phase].push(question);
-        });
-        setPhases(phaseGroups);
-
-        if (onQuestionsLoaded) {
-          onQuestionsLoaded(loadedQuestions, phaseGroups);
-        }
-        
-        return loadedQuestions;
-      } else {
-        showToastMessage('Failed to load questions. Please refresh the page.', 'error');
-        return [];
-      }
-    } catch (error) {
-      showToastMessage('Error loading questions. Please check your connection.', 'error');
-      return [];
-    } finally {
-      setIsLoadingQuestions(false);
-    }
-  };
-
-  // Updated validateAnswerWithML with call limit tracking
+  // Validate answer with ML
   const validateAnswerWithML = async (question, answer, questionId) => {
     try {
       const currentCalls = questionApiCalls[questionId] || 0;
@@ -505,7 +493,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     }
   };
 
-  // Updated validatePhaseWithML with call limit tracking
+  // Validate phase with ML
   const validatePhaseWithML = async (phaseName, phaseAnswers, messagesOverride = null) => {
     try {
       const currentCalls = phaseApiCalls[phaseName] || 0;
@@ -525,9 +513,9 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
         const answersArray = [];
 
         mandatoryQuestions.forEach(question => {
-          const answer = phaseAnswers[question.id];
+          const answer = phaseAnswers[question.question_id];
           if (answer) {
-            questionsArray.push(question.question);
+            questionsArray.push(question.question_text);
             answersArray.push(answer);
           }
         });
@@ -573,7 +561,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     const phaseMessages = messagesToUse.filter(msg => 
       msg.phase === phaseName || 
       (msg.questionId && (
-        msg.questionId.includes(`${phaseName}_phase_followup`) ||
+        msg.questionId.toString().includes(`${phaseName}_phase_followup`) ||
         msg.questionId === `${phaseName}_phase_followup` ||
         msg.questionId === `${phaseName}_phase_followup_2`
       ))
@@ -619,7 +607,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
 
   const triggerAnalysisGeneration = () => {
     if (completedPhases.has('initial')) {
-      generateAnalysisWithFind(); // Use new function
+      generateAnalysisWithFind();
     } else {
       showToastMessage('Complete the initial phase to generate analysis.', 'warning');
     }
@@ -629,7 +617,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     window.triggerChatAnalysis = triggerAnalysisGeneration;
   }, [completedPhases]);
 
-  // Updated handlers with API call limit checking
+  // Handle phase followup
   const handlePhaseFollowup = async (answer, currentPhaseBeingValidated) => {
     await addMessage('user', answer, { 
       questionId: `${currentPhaseBeingValidated}_phase_followup`,
@@ -659,16 +647,16 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     showToastMessage(`🎉 ${phaseDisplayName} phase completed successfully!`, 'success');
     
     if (currentPhaseBeingValidated === 'initial') {
-      generateAnalysisWithFind(); // Use new function
+      generateAnalysisWithFind();
     }
     
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
     const answeredCount = Object.keys(userAnswers).length;
     
     if (answeredCount < sortedQuestions.length) {
       const nextQuestion = sortedQuestions[answeredCount];
-      await addMessage('bot', nextQuestion.question, { 
-        questionId: nextQuestion.id,
+      await addMessage('bot', nextQuestion.question_text, { 
+        questionId: nextQuestion.question_id,
         phase: nextQuestion.phase,
         severity: nextQuestion.severity
       });
@@ -700,16 +688,16 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     showToastMessage(`🎉 ${phaseDisplayName} phase completed successfully!`, 'success');
     
     if (currentQuestion.phase === 'initial') {
-      generateAnalysisWithFind(); // Use new function
+      generateAnalysisWithFind();
     }
     
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
     const answeredCount = Object.keys(userAnswers).length;
     
     if (answeredCount < sortedQuestions.length) {
       const nextQuestion = sortedQuestions[answeredCount];
-      await addMessage('bot', nextQuestion.question, { 
-        questionId: nextQuestion.id,
+      await addMessage('bot', nextQuestion.question_text, { 
+        questionId: nextQuestion.question_id,
         phase: nextQuestion.phase,
         severity: nextQuestion.severity
       });
@@ -741,18 +729,18 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     }
 
     await addMessage('user', answer, { 
-      questionId: currentQuestion.id,
+      questionId: currentQuestion.question_id,
       phase: currentQuestion.phase
     });
     
     setCurrentInput('');
 
-    let questionTextForML = currentQuestion.question;
+    let questionTextForML = currentQuestion.question_text;
     let answerTextForML = answer;
     
     if (pendingValidation) {
       const lastBotMessage = messages
-        .filter(msg => msg.type === 'bot' && msg.isFollowUp && msg.questionId === currentQuestion.id)
+        .filter(msg => msg.type === 'bot' && msg.isFollowUp && msg.questionId === currentQuestion.question_id)
         .pop();
       
       if (lastBotMessage) {
@@ -761,11 +749,11 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
       }
     }
 
-    const validationResult = await validateAnswerWithML(questionTextForML, answerTextForML, currentQuestion.id);
+    const validationResult = await validateAnswerWithML(questionTextForML, answerTextForML, currentQuestion.question_id);
     
     if (!validationResult.valid && !validationResult.maxCallsReached) {
       await addMessage('bot', validationResult.feedback, {
-        questionId: currentQuestion.id,
+        questionId: currentQuestion.question_id,
         isFollowUp: true,
         phase: currentQuestion.phase,
         severity: currentQuestion.severity,
@@ -788,15 +776,20 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     }
  
     const finalAnswer = pendingValidation ? `${pendingValidation.originalAnswer} ${answer}` : answer;
-    const attemptCount = pendingValidation ? pendingValidation.attempt : 1;
     
     setPendingValidation(null);
     
-    await finalizeAnswer(currentQuestion.id, finalAnswer, attemptCount);
+    // Submit answer to backend
+    try {
+      await submitAnswerToBackend(currentQuestion.question_id, finalAnswer);
+    } catch (error) {
+      showToastMessage('Failed to save answer. Please try again.', 'error');
+      return;
+    }
     
-    const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
     const firstQuestion = sortedQuestions[0];
-    if (firstQuestion && currentQuestion.id === firstQuestion.id && onBusinessDataUpdate) {
+    if (firstQuestion && currentQuestion.question_id === firstQuestion.question_id && onBusinessDataUpdate) {
       const businessName = extractBusinessName(finalAnswer);
       if (businessName) {
         onBusinessDataUpdate({ name: businessName, whatWeDo: finalAnswer });
@@ -810,7 +803,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
       
       if (pendingValidation) {
         const lastBotMessage = messages
-          .filter(msg => msg.type === 'bot' && msg.isFollowUp && msg.questionId === currentQuestion.id)
+          .filter(msg => msg.type === 'bot' && msg.isFollowUp && msg.questionId === currentQuestion.question_id)
           .pop();
         
         if (lastBotMessage) {
@@ -820,7 +813,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
             type: 'user',
             text: answer,
             timestamp: new Date(),
-            questionId: currentQuestion.id,
+            questionId: currentQuestion.question_id,
             phase: currentQuestion.phase
           });
         }
@@ -830,7 +823,7 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
           type: 'user',
           text: answer,
           timestamp: new Date(),
-          questionId: currentQuestion.id,
+          questionId: currentQuestion.question_id,
           phase: currentQuestion.phase
         });
       }
@@ -843,8 +836,8 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     if (answeredCount < sortedQuestions.length) {
       const nextQuestion = sortedQuestions[answeredCount];
       
-      await addMessage('bot', nextQuestion.question, { 
-        questionId: nextQuestion.id,
+      await addMessage('bot', nextQuestion.question_text, { 
+        questionId: nextQuestion.question_id,
         phase: nextQuestion.phase,
         severity: nextQuestion.severity
       });
@@ -852,6 +845,16 @@ const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
       showToastMessage('🎉 Survey completed! Well done!', 'success');
     }
   };
+
+  const getUserPermissions = (userRole) => {
+  return {
+    can_view: userRole.can_view || userRole.role_name === 'super_admin' || userRole.role_name === 'company_admin',
+    can_answer: userRole.can_answer || userRole.role_name === 'super_admin' || userRole.role_name === 'company_admin',
+    can_admin: userRole.can_admin || userRole.role_name === 'super_admin',
+    is_admin: userRole.role_name === 'super_admin' || userRole.role_name === 'company_admin',
+    role: userRole.role_name
+  };
+};
 
   const extractBusinessName = (text) => {
     const patterns = [

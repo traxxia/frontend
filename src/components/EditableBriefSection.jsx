@@ -16,6 +16,7 @@ const EditableBriefSection = ({
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const { t } = useTranslation();
   
   const inputRefs = useRef({});
@@ -29,17 +30,42 @@ const EditableBriefSection = ({
     }
   }, [questions, userAnswers]);
 
+  // Get current session on component mount
+  useEffect(() => {
+    getCurrentSession();
+  }, []);
+
+  const getCurrentSession = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/user/start-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSessionId(result.session.session_id);
+      }
+    } catch (error) {
+      console.error('Error getting session:', error);
+    }
+  };
+
   const generateBriefFields = () => {
     const fields = [];
  
     Object.keys(userAnswers).forEach(questionId => {
-      const question = questions.find(q => q.id === parseInt(questionId));
+      const question = questions.find(q => q.question_id === parseInt(questionId));
       const answer = userAnswers[questionId];
       
       if (question && answer && answer.trim()) {
         fields.push({
           key: `question_${questionId}`,
-          label: question.question,
+          label: question.question_text,
           value: answer,
           questionId: parseInt(questionId)
         });
@@ -66,11 +92,11 @@ const EditableBriefSection = ({
       const questionsArray = [];
       const answersArray = [];
 
-      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+      const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
 
       sortedQuestions.forEach(question => {
-        if (userAnswers[question.id]) {
-          const cleanQuestion = String(question.question)
+        if (userAnswers[question.question_id]) {
+          const cleanQuestion = String(question.question_text)
             .replace(/[\u2018\u2019]/g, "'")
             .replace(/[\u201C\u201D]/g, '"')
             .replace(/[\u2013\u2014]/g, '-')
@@ -78,7 +104,7 @@ const EditableBriefSection = ({
             .replace(/[^\x00-\x7F]/g, '')
             .trim();
 
-          const cleanAnswer = String(userAnswers[question.id])
+          const cleanAnswer = String(userAnswers[question.question_id])
             .replace(/[\u2018\u2019]/g, "'")
             .replace(/[\u201C\u201D]/g, '"')
             .replace(/[\u2013\u2014]/g, '-')
@@ -162,25 +188,11 @@ const EditableBriefSection = ({
     try {
       const token = getAuthToken();
 
-      // Get current session ID
-      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!currentResponse.ok) {
-        throw new Error('Failed to get current conversation');
-      }
-
-      const conversation = await currentResponse.json();
-      const sessionId = conversation.sessionId;
-
       if (!sessionId) {
-        throw new Error('No active conversation session found');
+        throw new Error('No active session found');
       }
 
+      // Note: This endpoint might need to be updated based on the new backend structure
       const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
         method: 'POST',
         headers: {
@@ -208,43 +220,27 @@ const EditableBriefSection = ({
     }
   };
 
-  // Auto-save updated answer to conversation
+  // Auto-save updated answer using new backend API
   const autoSaveUpdatedAnswer = async (questionId, newAnswer) => {
     try {
       setIsSaving(true);
       const token = getAuthToken();
 
-      // Get current conversation session
-      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!currentResponse.ok) {
-        throw new Error('Failed to get current conversation');
-      }
-
-      const conversation = await currentResponse.json();
-      const sessionId = conversation.sessionId;
-
       if (!sessionId) {
-        throw new Error('No active conversation session found');
+        throw new Error('No active session found');
       }
 
-      // Finalize the updated answer
-      const response = await fetch(`${API_BASE_URL}/api/conversation/finalize-answer`, {
+      // Submit answer using the new backend API
+      const response = await fetch(`${API_BASE_URL}/api/user/submit-answer`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sessionId: sessionId,
-          questionId: questionId,
-          finalAnswer: newAnswer.trim(),
-          attemptCount: 1 // This is an edit, so reset attempt count
+          session_id: sessionId,
+          question_id: questionId,
+          answer_text: newAnswer.trim()
         })
       });
 
@@ -258,7 +254,8 @@ const EditableBriefSection = ({
 
         return result;
       } else {
-        throw new Error('Failed to save updated answer');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save updated answer');
       }
     } catch (error) {
       console.error('Auto-save updated answer error:', error);
@@ -286,7 +283,7 @@ const EditableBriefSection = ({
     
     if (newValue.trim()) {
       try {
-        // Auto-save to conversation
+        // Auto-save to conversation using new backend API
         await autoSaveUpdatedAnswer(field.questionId, newValue.trim());
 
         // Update parent component with new answer

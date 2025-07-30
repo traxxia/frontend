@@ -1,6 +1,7 @@
 import React from 'react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/dashboard.css';
+import '../styles/analysis-components.css';
 import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 

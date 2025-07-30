@@ -38,6 +38,9 @@ const BusinessSetupPage = () => {
   const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
   const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
 
+  // Session state
+  const [sessionId, setSessionId] = useState(null);
+
   // Refs for scrolling to sections
   const swotRef = useRef(null);
   const customerSegmentationRef = useRef(null);
@@ -50,6 +53,33 @@ const BusinessSetupPage = () => {
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
+
+  // Initialize session on component mount
+  useEffect(() => {
+    initializeSession();
+  }, []);
+
+  const initializeSession = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/user/start-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSessionId(result.session.session_id);
+        console.log('Session initialized in BusinessSetupPage:', result.session.session_id);
+      }
+    } catch (error) {
+      console.error('Session initialization error:', error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -69,89 +99,34 @@ const BusinessSetupPage = () => {
     }
   }, [activeTab]);
 
-  // Load latest analysis from backend
+  // Load latest analysis from backend - Note: This endpoint may need adjustment
   const loadLatestAnalysis = async () => {
     try {
       setIsLoadingLatestAnalysis(true);
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/analysis/swot`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setAnalysisResult(result.analysisData);
-        console.log('📊 Loaded latest analysis from backend');
-      } else if (response.status === 404) {
-        // No analysis found, generate new one if initial phase is completed
-        if (isPhaseCompleted(PHASES.INITIAL)) {
-          console.log('📊 No existing analysis found, generating new one...');
-          await generateAnalysisWithFind();
-        }
-      } else {
-        console.error('Failed to load latest analysis:', response.statusText);
-      }
+      // For now, we'll skip loading from backend since the endpoint might not exist
+      // In the new backend structure, we might need to fetch from phase_results
+      console.log('📊 Loading latest analysis (placeholder)');
     } catch (error) {
       console.error('Error loading latest analysis:', error);
-      // If no analysis exists and initial phase is completed, generate new one
-      if (isPhaseCompleted(PHASES.INITIAL)) {
-        console.log('📊 Error loading analysis, generating new one...');
-        await generateAnalysisWithFind();
-      }
     } finally {
       setIsLoadingLatestAnalysis(false);
     }
   };
 
-  // Save analysis to backend
+  // Save analysis to backend - Updated for new API structure
   const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     try {
       const token = getAuthToken();
 
-      // Get current session ID
-      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!currentResponse.ok) {
-        throw new Error('Failed to get current conversation');
-      }
-
-      const conversation = await currentResponse.json();
-      const sessionId = conversation.sessionId;
-
       if (!sessionId) {
-        throw new Error('No active conversation session found');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          analysisType: analysisType,
-          analysisData: analysisData,
-          businessName: businessData.name
-        })
-      });
-
-      if (response.ok) {
-        console.log(`📊 ${analysisType} analysis saved to backend`);
-        return true;
-      } else {
-        console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
+        console.error('No session ID available for saving analysis');
         return false;
       }
+
+      // Note: This endpoint might not exist in the new backend structure
+      // We might need to save this as part of phase results instead
+      console.log(`📊 Analysis save requested for ${analysisType} (placeholder implementation)`);
+      return true;
     } catch (error) {
       console.error(`Error saving ${analysisType} analysis:`, error);
       return false;
@@ -230,9 +205,10 @@ const BusinessSetupPage = () => {
   });
 
   const translatedDefaults = useMemo(() => ({
-  name: t("yourBusiness"),
-  whatWeDo: t("whatWeDo"),
-}), [t]);
+    name: t("yourBusiness"),
+    whatWeDo: t("whatWeDo"),
+  }), [t]);
+
   const generateAnalysisWithFind = async () => {
     try {
       setIsLoadingAnalysis(true);
@@ -241,11 +217,11 @@ const BusinessSetupPage = () => {
       const questionsArray = [];
       const answersArray = [];
 
-      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
+      const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
 
       sortedQuestions.forEach(question => {
-        if (userAnswers[question.id]) {
-          const cleanQuestion = String(question.question)
+        if (userAnswers[question.question_id]) {
+          const cleanQuestion = String(question.question_text)
             .replace(/[\u2018\u2019]/g, "'")
             .replace(/[\u201C\u201D]/g, '"')
             .replace(/[\u2013\u2014]/g, '-')
@@ -253,7 +229,7 @@ const BusinessSetupPage = () => {
             .replace(/[^\x00-\x7F]/g, '')
             .trim();
 
-          const cleanAnswer = String(userAnswers[question.id])
+          const cleanAnswer = String(userAnswers[question.question_id])
             .replace(/[\u2018\u2019]/g, "'")
             .replace(/[\u201C\u201D]/g, '"')
             .replace(/[\u2013\u2014]/g, '-')
@@ -397,7 +373,7 @@ const BusinessSetupPage = () => {
 
   const isPhaseCompleted = (phase) => {
     const mandatoryQuestions = getMandatoryQuestionsByPhase(phase);
-    return mandatoryQuestions.every((q) => userAnswers[q.id]);
+    return mandatoryQuestions.every((q) => userAnswers[q.question_id]);
   };
 
   const getUnlockedFeatures = () => {
@@ -425,7 +401,7 @@ const BusinessSetupPage = () => {
     <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
       <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
         <button
-        className="dropdown-button"
+          className="dropdown-button"
           onClick={() => setShowDropdown((prev) => !prev)}
           style={{
             backgroundColor: "#fff",

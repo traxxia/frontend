@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -13,22 +13,18 @@ import {
 } from "lucide-react";
 
 // Components
-import MenuBar from "../components/MenuBar";
-import BusinessDetail from "../components/BusinessDetail";
+import MenuBar from "../components/MenuBar"; 
 
 // Styles
 import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { useProgressTracking } from "../hooks/useProgressTracking";
-import { useBusinessData } from "../hooks/useBusinessData"; 
 import { useTranslation } from '../hooks/useTranslation';
 
 // Constants
 const STEPS = {
   WELCOME: 1,
   INSIGHTS: 2,
-  BUSINESS_DETAIL: 3
 };
 
 const Dashboard = () => {
@@ -37,16 +33,45 @@ const Dashboard = () => {
 
   // State
   const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState("");
 
-  const { businessData, loading: businessLoading, error: businessError } = useBusinessData("InsightForge Inc");
-  const { progressData, areAllQuestionsAnswered } = useProgressTracking(null);
+  // Onboarding state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
-  const { answeredQuestions, totalQuestions, progress } = progressData;
+  // Check if user has seen onboarding
+  useEffect(() => {
+    const onboardingCompleted = localStorage.getItem('onboarding_completed');
+    const isFirstVisit = !onboardingCompleted;
+    
+    if (isFirstVisit) {
+      // Show onboarding after a brief delay for better UX
+      setTimeout(() => {
+        setShowOnboarding(true);
+      }, 1000);
+    }
+    setHasSeenOnboarding(!!onboardingCompleted);
+  }, []);
 
-  // Hardcoded insights content translated as a single string (you might want to separate this later)
+  // Handle onboarding completion
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
+  };
+
+  const handleStartDemo = () => {
+    localStorage.setItem('onboarding_completed', 'true');
+    setHasSeenOnboarding(true);
+    setShowOnboarding(false);
+    // Optionally navigate to business creation or show success message
+    // navigate('/businesspage');
+  };
+
+  const handleShowOnboardingAgain = () => {
+    setShowOnboarding(true);
+  };
+
+  // Hardcoded insights content translated as a single string
   const hardcodedInsights = `
 ${t('business_analysis_results')}:
 
@@ -75,59 +100,60 @@ ${t('growth_projection_details')}
   `;
 
   const businesses = useMemo(() => {
-  return [
-    {
-      name: "InsightForge Inc",
-      progress: progressData.progress,
-      answeredQuestions: progressData.answeredQuestions,
-      totalQuestions: progressData.totalQuestions,
-      remaining: progressData.totalQuestions - progressData.answeredQuestions,
-      total: progressData.totalQuestions,
-    },
-  ];
-}, [progressData]);
+    return [
+      {
+        name: "InsightForge Inc",
+        progress: 60,
+        answeredQuestions: 3,
+        totalQuestions: 5,
+        remaining: 2,
+        total: 5,
+      },
+    ];
+  }, []);
 
   const BusinessList = ({ businesses, viewType }) => (
-  <div className={`business-list ${viewType}`}>
-    {businesses.length === 0 && (
-      <div className="text-center text-muted py-5">
-        {t('no_businesses_found')}
-      </div>
-    )}
-    {businesses.length > 0 && businesses.map((business, index) => (
-      <div
-        key={index}
-        className="business-item d-flex align-items-center p-3 border-bottom"
-        onClick={() => handleBusinessClick(business)}
-        style={{ cursor: "pointer" }}
-      >
-        <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
-          <CircularProgressbar
-            value={business.progress}
-            text={`${business.progress}%`}
-            styles={buildStyles({
-              pathColor: "#28a745",
-              textColor: "#000",
-              trailColor: "#ffffff",
-              textSize: "30px",
-            })}
-          />
+    <div className={`business-list ${viewType}`}>
+      {businesses.length === 0 && (
+        <div className="text-center text-muted py-5">
+          {t('no_businesses_found')}
+          
         </div>
-        <div className="flex-grow-1">
-          <h6 className="mb-1">{business.name}</h6>
-          <small className="text-muted">
-            {t('questions_remaining')}: {business.remaining} {t('of')} {business.total}
-          </small>
+      )}
+      {businesses.length > 0 && businesses.map((business, index) => (
+        <div
+          key={index}
+          className="business-item d-flex align-items-center p-3 border-bottom"
+          onClick={() => handleBusinessClick(business)}
+          style={{ cursor: "pointer" }}
+        >
+          <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
+            <CircularProgressbar
+              value={business.progress}
+              text={`${business.progress}%`}
+              styles={buildStyles({
+                pathColor: "#28a745",
+                textColor: "#000",
+                trailColor: "#ffffff",
+                textSize: "30px",
+              })}
+            />
+          </div>
+          <div className="flex-grow-1">
+            <h6 className="mb-1">{business.name}</h6>
+            <small className="text-muted">
+              {t('questions_remaining')}: {business.remaining} {t('of')} {business.total}
+            </small>
+          </div>
+          <ArrowRight size={16} className="text-muted" />
         </div>
-        <ArrowRight size={16} className="text-muted" />
-      </div>
-    ))}
-  </div>
-);
+      ))}
+    </div>
+  );
 
   // Event Handlers
   const handleBusinessClick = (business) => {
-     navigate('/businesspage');
+    navigate('/businesspage');
   };
 
   const goToInsights = () => {
@@ -136,7 +162,6 @@ ${t('growth_projection_details')}
 
   const goBackToWelcome = () => {
     setCurrentStep(STEPS.WELCOME);
-    setSelectedBusiness(null);
     setAnalysisResult("");
   };
 
@@ -152,6 +177,10 @@ ${t('growth_projection_details')}
     setAnalysisResult("");
   };
 
+  const handleCreateBusiness = () => {
+    navigate('/businesspage');
+  };
+
   // Renderers
   const renderWelcomeLayout = () => {
     return (
@@ -161,7 +190,19 @@ ${t('growth_projection_details')}
           <Card className="mobile-view-card d-md-none">
             <Card.Body className="p-0">
               <div className="p-4">
-                <h5 className="mb-3">{t('welcome')}</h5>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="mb-0">{t('welcome')}</h5>
+                  {hasSeenOnboarding && (
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm"
+                      onClick={handleShowOnboardingAgain}
+                      style={{ fontSize: '0.8rem' }}
+                    >
+                      📖 Tour
+                    </Button>
+                  )}
+                </div>
                 <p className="text-muted small mb-4">{t('welcome_message')}</p>
               </div>
               <div className="px-4 mb-4">
@@ -172,9 +213,11 @@ ${t('growth_projection_details')}
                 <Button 
                   variant="primary" 
                   className="w-100 create-business-btn" 
+                  onClick={handleCreateBusiness}
                 >
                   {t('create_business')}
                 </Button>
+                 
               </div>
             </Card.Body>
           </Card>
@@ -185,14 +228,22 @@ ${t('growth_projection_details')}
               <Row className="h-100 g-0">
                 <Col md={6} className="welcome-section">
                   <div>
-                    <h5 className="mb-4">{t('welcome')}</h5>
+                    <div className="d-flex justify-content-between align-items-start mb-4">
+                      <div>
+                        <h5 className="mb-2">{t('welcome')}</h5>
+                         
+                      </div>
+                    </div>
                     <p className="text-muted mb-4">{t('welcome_message')}</p>
                     <Button 
                       variant="primary" 
                       className="create-business-btn" 
+                      onClick={handleCreateBusiness}
                     >
                       {t('create_business')}
                     </Button>
+                    
+                     
                   </div>
                 </Col>
                 <Col md={6} className="businesses-section">
@@ -272,18 +323,13 @@ ${t('growth_projection_details')}
   // Main render
   return (
     <div className="dashboard-layout">
-      <MenuBar />
+      <MenuBar /> 
 
       <Container fluid className="p-0 main-content">
         {currentStep === STEPS.WELCOME ? (
           <div className="responsive-view-container">
             {renderWelcomeLayout()}
           </div>
-        ) : currentStep === STEPS.BUSINESS_DETAIL ? (
-          <BusinessDetail 
-            businessName={selectedBusiness?.name}
-            onBack={goBackToWelcome}
-          />
         ) : (
           <div className="px-4 py-4">
             <Row>

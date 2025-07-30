@@ -548,7 +548,7 @@
   padding: 0 !important;
   margin: 0; /* Add this */
   max-width: 100vw; /* Add this to prevent horizontal overflow */
-  overflow-x: hidden; /* Add this */
+  overflow-x: visible; /* Add this */
 }
 
 /* Fix for business detail component scrolling */
