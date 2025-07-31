@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap } from 'lucide-react';
+import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/Analytics.css'; // We'll create this CSS file
 import { useTranslation } from "../hooks/useTranslation";
@@ -11,20 +11,18 @@ const PurchaseCriteria = ({
   onDataGenerated,
   onRegenerate,
   isRegenerating = false,
-  canRegenerate = true
+  canRegenerate = true,
+  purchaseCriteriaData = null // Add this prop to receive data from parent
 }) => {
-  const [criteriaData, setCriteriaData] = useState(null);
+  const [criteriaData, setCriteriaData] = useState(purchaseCriteriaData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
   const { t } = useTranslation();
   
-  // Use ref to track if API call is in progress to prevent duplicate calls
-  const isGeneratingRef = useRef(false);
-  // Use ref to track if data has been generated to prevent re-generation on re-renders
-  const hasGeneratedRef = useRef(false);
+  // Add refs to track component mount
+  const isMounted = useRef(false);
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
@@ -36,12 +34,12 @@ const PurchaseCriteria = ({
     poor: '#EF4444'       // Red
   };
 
-  // Load existing analysis from backend
+  // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
     try {
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/analysis/purchaseCriteria`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -50,20 +48,26 @@ const PurchaseCriteria = ({
 
       if (response.ok) {
         const result = await response.json();
-        console.log('📊 Loaded existing purchase criteria from backend:', result.analysisData);
-        setCriteriaData(result.analysisData);
-        setHasLoadedFromBackend(true);
-        hasGeneratedRef.current = true;
-        if (onDataGenerated) {
-          onDataGenerated(result.analysisData);
+        const analysisMessages = result.chat_messages?.filter(msg => 
+          msg.metadata?.analysisType === 'purchaseCriteria' && msg.metadata?.analysisData
+        );
+        
+        if (analysisMessages && analysisMessages.length > 0) {
+          const latestAnalysis = analysisMessages[analysisMessages.length - 1];
+          console.log('📊 Loaded existing purchase criteria from backend:', latestAnalysis.metadata.analysisData);
+          setCriteriaData(latestAnalysis.metadata.analysisData);
+          setHasLoadedFromBackend(true);
+          if (onDataGenerated) {
+            onDataGenerated(latestAnalysis.metadata.analysisData);
+          }
+          return true;
+        } else {
+          console.log('📊 No existing purchase criteria found in backend');
+          setHasLoadedFromBackend(true);
+          return false;
         }
-        return true;
-      } else if (response.status === 404) {
-        console.log('📊 No existing purchase criteria found in backend');
-        setHasLoadedFromBackend(true);
-        return false;
       } else {
-        console.error('Failed to load purchase criteria:', response.statusText);
+        console.error('Failed to load conversation history:', response.statusText);
         setHasLoadedFromBackend(true);
         return false;
       }
@@ -74,239 +78,49 @@ const PurchaseCriteria = ({
     }
   };
 
-  // Save analysis to backend
-  const saveAnalysisToBackend = async (analysisData) => {
-    try {
-      const token = getAuthToken();
-
-      // Get current session ID
-      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!currentResponse.ok) {
-        throw new Error('Failed to get current conversation');
-      }
-
-      const conversation = await currentResponse.json();
-      const sessionId = conversation.sessionId;
-
-      if (!sessionId) {
-        throw new Error('No active conversation session found');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          analysisType: 'purchaseCriteria',
-          analysisData: analysisData,
-          businessName: businessName
-        })
-      });
-
-      if (response.ok) {
-        console.log('📊 Purchase criteria analysis saved to backend');
-        return true;
-      } else {
-        console.error('Failed to save purchase criteria analysis:', response.statusText);
-        return false;
-      }
-    } catch (error) {
-      console.error('Error saving purchase criteria analysis:', error);
-      return false;
-    }
-  };
-
-  const generateCriteriaData = async () => {
-    // Prevent duplicate calls
-    if (isGeneratingRef.current) {
-      console.log('API call already in progress, skipping...');
-      return;
-    }
-
-    try {
-      isGeneratingRef.current = true;
-      setIsLoading(true);
-      setError(null);
-
-      // Prepare questions and answers arrays
-      const questionsArray = [];
-      const answersArray = [];
-
-      // Sort questions by ID to maintain order
-      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-      
-      // Only include answered questions
-      sortedQuestions.forEach(question => {
-        if (userAnswers[question.id]) {
-          // Clean and sanitize text to avoid encoding issues
-          const cleanQuestion = String(question.question)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-            
-          const cleanAnswer = String(userAnswers[question.id])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-            
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        }
-      });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for purchase criteria analysis');
-      }
-
-      const payload = {
-        questions: questionsArray,
-        answers: answersArray
-      };
-
-      console.log('Sending to /purchase-criteria API:', payload);
-
-      const response = await fetch(`${ML_API_BASE_URL}/purchase-criteria`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
-      if (!response.ok) {
-        let errorMessage = `API returned ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = JSON.parse(responseText);
-          if (errorData.detail) {
-            errorMessage = `API Error: ${errorData.detail}`;
-          }
-        } catch (e) {
-          errorMessage = `API Error: ${responseText}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error('Invalid JSON response from API');
-      }
-
-      console.log('Parsed result from /purchase-criteria API:', result);
-
-      if (result && result.purchaseCriteria) {
-        console.log('Setting criteria data:', result.purchaseCriteria);
-        setCriteriaData(result.purchaseCriteria);
-        hasGeneratedRef.current = true; // Mark as generated
-        
-        // Save to backend
-        await saveAnalysisToBackend(result.purchaseCriteria);
-        
-        if (onDataGenerated) {
-          onDataGenerated(result.purchaseCriteria);
-        }
-      } else {
-        console.error('Invalid response structure:', result);
-        throw new Error('Invalid response structure from API');
-      }
-
-    } catch (error) {
-      console.error('Error generating purchase criteria:', error);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-      isGeneratingRef.current = false;
-    }
-  };
-
   // Handle regeneration
   const handleRegenerate = async () => {
-    // Reset the generation flag to allow regeneration
-    hasGeneratedRef.current = false;
-    setHasLoadedFromBackend(false); // Reset backend load flag
-    
     if (onRegenerate) {
       // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Use local regeneration logic
+      // Local regeneration (should not happen in new flow, but keep as fallback)
       setCriteriaData(null);
-      await generateCriteriaData();
+      setError(null);
     }
   };
 
+  // Update criteria data when prop changes
+  useEffect(() => {
+    if (purchaseCriteriaData && purchaseCriteriaData !== criteriaData) {
+      console.log('📊 Updating purchase criteria data from props:', purchaseCriteriaData);
+      setCriteriaData(purchaseCriteriaData);
+      if (onDataGenerated) {
+        onDataGenerated(purchaseCriteriaData);
+      }
+    }
+  }, [purchaseCriteriaData, criteriaData, onDataGenerated]);
+
   // Load existing analysis on mount
   useEffect(() => {
+    isMounted.current = true;
+    
     const initializeComponent = async () => {
-      // First try to load existing analysis from backend
-      const hasExistingAnalysis = await loadExistingAnalysis();
-      
-      if (!hasExistingAnalysis) {
-        // If no existing analysis, check if we can generate new one
-        const answeredCount = Object.keys(userAnswers).length;
-        
-        if (
-          answeredCount >= 3 && 
-          !criteriaData && 
-          !isLoading && 
-          !hasGeneratedRef.current &&
-          questions.length > 0 &&
-          !isGeneratingRef.current
-        ) {
-          console.log('Auto-generating criteria data...');
-          generateCriteriaData();
-        }
+      // Only load from backend if no data was provided via props
+      if (!purchaseCriteriaData) {
+        await loadExistingAnalysis();
+      } else {
+        setHasLoadedFromBackend(true);
       }
     };
 
     initializeComponent();
-  }, []); // Empty dependency array - only run on mount
 
-  // Separate useEffect to handle prop changes (if needed)
-  useEffect(() => {
-    // Only proceed if we've already tried loading from backend
-    if (!hasLoadedFromBackend) return;
-    
-    const answeredCount = Object.keys(userAnswers).length;
-    
-    // Only generate if:
-    // 1. We have at least 3 answers
-    // 2. We don't already have data
-    // 3. We're not currently loading
-    // 4. We haven't already generated data (prevents re-generation on re-renders)
-    // 5. There are questions available
-    if (
-      answeredCount >= 3 && 
-      !criteriaData && 
-      !isLoading && 
-      !hasGeneratedRef.current &&
-      questions.length > 0 &&
-      !isGeneratingRef.current
-    ) {
-      console.log('Auto-generating criteria data...');
-      generateCriteriaData();
-    }
-  }, [userAnswers, questions, criteriaData, isLoading, hasLoadedFromBackend]); // Added hasLoadedFromBackend to dependencies
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
+  }, []); // Empty dependency array - only run on mount
 
   // Create radar chart points
   const createRadarChart = () => {
@@ -455,8 +269,10 @@ const PurchaseCriteria = ({
           <h3>Analysis Error</h3>
           <p>{error}</p>
           <button onClick={() => {
-            hasGeneratedRef.current = false; // Reset flag for retry
-            generateCriteriaData();
+            setError(null);
+            if (onRegenerate) {
+              onRegenerate();
+            }
           }} className="retry-button">
             Retry Analysis
           </button>
@@ -476,18 +292,10 @@ const PurchaseCriteria = ({
             {answeredCount < 3 
               ? `Answer ${3 - answeredCount} more questions to generate purchase criteria insights.`
               : hasLoadedFromBackend
-              ? "Generate your purchase criteria analysis to understand customer decision factors."
+              ? "Purchase criteria analysis will be generated automatically after completing the initial phase."
               : "Loading purchase criteria analysis..."
             }
           </p>
-          {answeredCount >= 3 && hasLoadedFromBackend && (
-            <button onClick={() => {
-              hasGeneratedRef.current = false; // Reset flag for manual generation
-              generateCriteriaData();
-            }} className="generate-button">
-              Generate Analysis
-            </button>
-          )}
         </div>
       </div>
     );
@@ -503,13 +311,25 @@ const PurchaseCriteria = ({
           <Target className="pc-icon" size={24} />
           <h2 className="pc-title">{t("Purchase Criteria Matrix")}</h2>
         </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Purchase Criteria"
-          size="medium"
-        />
+        
+        {/* Regenerate Button */}
+        <button
+          onClick={handleRegenerate}
+          disabled={isRegenerating || !canRegenerate}
+          className="regenerate-button"
+        >
+          {isRegenerating ? (
+            <>
+              <Loader size={16} className="spinner" />
+              Regenerating...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={16} />
+              Regenerate
+            </>
+          )}
+        </button>
       </div>
 
       {/* Key Metrics */}

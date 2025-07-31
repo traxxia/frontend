@@ -356,7 +356,7 @@
   box-shadow: 0 2px 8px rgba(243, 156, 18, 0.15);
 }
 
-.message-bubble.follow-up .message-text {
+.message-bubble.bot.follow-up .message-text {
   color: #856404;
   font-weight: 500;
 }

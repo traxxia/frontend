@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Filter, Building2, Loader, Eye } from 'lucide-react';
+import { Users, Search, Loader, Plus } from 'lucide-react';
 
 const UserOverview = ({ onToast }) => {
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    role_name: 'answerer_user', // Default role
+    company_id: '', 
+    profile: {} 
+  });
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -26,17 +33,28 @@ const UserOverview = ({ onToast }) => {
     try {
       const token = getAuthToken();
 
-      // Load companies for filter
-      const companiesResponse = await fetch(`${API_BASE_URL}/api/super-admin/companies`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Load companies and roles in parallel
+      const [companiesResponse, rolesResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/super-admin/companies`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/api/roles`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
 
       if (companiesResponse.ok) {
         const companiesData = await companiesResponse.json();
         setCompanies(companiesData.companies);
+      }
+
+      if (rolesResponse.ok) {
+        const rolesData = await rolesResponse.json();
+        // Filter roles to only show user roles (not admin roles)
+        const userRoles = rolesData.roles.filter(role => 
+          ['viewer_user', 'answerer_user'].includes(role.role_name)
+        );
+        setRoles(userRoles);
       }
 
       await loadUsers();
@@ -50,8 +68,8 @@ const UserOverview = ({ onToast }) => {
     try {
       setIsLoading(true);
       const token = getAuthToken();
+      let url = `${API_BASE_URL}/api/admin/users`;
 
-      let url = `${API_BASE_URL}/api/company-admin/users`;
       if (selectedCompany) {
         url += `?company_id=${selectedCompany}`;
       }
@@ -77,41 +95,58 @@ const UserOverview = ({ onToast }) => {
     }
   };
 
-  const loadUserDetails = async (userId) => {
+  const addUser = async () => {
     try {
-      setIsLoadingDetails(true);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/user-data/${userId}`, {
+      const payload = { ...newUser };
+      if (!payload.name || !payload.email || !payload.password || !payload.role_name) {
+        onToast('Please fill in all required fields', 'warning');
+        return;
+      }
+
+      // Remove company_id if empty (let backend handle it based on user role)
+      if (!payload.company_id) {
+        delete payload.company_id;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/company-admin/users`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(payload)
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
-        setUserDetails(data);
+        onToast('User created successfully', 'success');
+        setShowAddUser(false);
+        setNewUser({ 
+          name: '', 
+          email: '', 
+          password: '', 
+          role_name: 'answerer_user', 
+          company_id: '', 
+          profile: {} 
+        });
+        await loadUsers();
       } else {
-        onToast('Failed to load user details', 'error');
+        onToast(data.message || 'User creation failed', 'error');
       }
     } catch (error) {
-      console.error('Error loading user details:', error);
-      onToast('Error loading user details', 'error');
-    } finally {
-      setIsLoadingDetails(false);
+      console.error('Error creating user:', error);
+      onToast('Error creating user', 'error');
     }
   };
 
-  const handleViewUser = (user) => {
-    setSelectedUser(user);
-    loadUserDetails(user._id);
-  };
-
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    return (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   if (isLoading) {
@@ -131,6 +166,9 @@ const UserOverview = ({ onToast }) => {
           <span className="stat-item">
             <strong>{filteredUsers.length}</strong> users found
           </span>
+          <button className="primary-btn" onClick={() => setShowAddUser(true)}>
+            <Plus size={16} /> Add User
+          </button>
         </div>
       </div>
 
@@ -140,40 +178,58 @@ const UserOverview = ({ onToast }) => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Search users by name or email..."
+            placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="filter-group">
-          <Filter size={16} />
-          <select
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-          >
-            <option value="">All Companies</option>
-            {companies.map(company => (
-              <option key={company._id} value={company._id}>
-                {company.company_name}
-              </option>
-            ))}
-          </select>
+        <select
+          value={selectedCompany}
+          onChange={(e) => setSelectedCompany(e.target.value)}
+        >
+          <option value="">All Companies</option>
+          {companies.map((company) => (
+            <option key={company._id} value={company._id}>
+              {company.company_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Users Table */}
+      {filteredUsers.length > 0 ? (
+        <div className="table-container">
+          <table className="company-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Company</th>
+                <th>Last Login</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map(user => (
+                <tr key={user.id}>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td>
+                    <span className={`status-badge ${user.status}`}>{user.status}</span>
+                  </td>
+                  <td>{user.role}</td>
+                  <td>{user.company_id || 'N/A'}</td>
+                  <td>{user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</td>
+                  <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      {/* Users Grid */}
-      <div className="users-grid">
-        {filteredUsers.map(user => (
-          <UserCard
-            key={user._id}
-            user={user}
-            onView={handleViewUser}
-          />
-        ))}
-      </div>
-
-      {filteredUsers.length === 0 && (
+      ) : (
         <div className="empty-state">
           <Users size={48} />
           <h3>No Users Found</h3>
@@ -181,219 +237,108 @@ const UserOverview = ({ onToast }) => {
         </div>
       )}
 
-      {/* User Details Modal */}
-      {selectedUser && (
-        <UserDetailsModal
-          user={selectedUser}
-          userDetails={userDetails}
-          isLoading={isLoadingDetails}
-          onClose={() => {
-            setSelectedUser(null);
-            setUserDetails(null);
-          }}
-        />
+      {/* Add User Modal */}
+      {showAddUser && (
+        <div className="modal-overlay">
+          <div className="modal-content medium">
+            <div className="modal-header">
+              <h3>Add New User</h3>
+              <button className="close-btn" onClick={() => setShowAddUser(false)}>×</button>
+            </div>
+
+            <div className="form-grid">
+              <input
+                type="text"
+                placeholder="Name *"
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email *"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password *"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                required
+              />
+
+              {/* Role Selection */}
+              <select
+                value={newUser.role_name}
+                onChange={(e) => setNewUser({ ...newUser, role_name: e.target.value })}
+                required
+              >
+                <option value="">Select Role *</option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.role_name}>
+                    {role.role_name === 'viewer_user' ? 'Viewer User' : 
+                     role.role_name === 'answerer_user' ? 'Answerer User' : 
+                     role.role_name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Company Selection (only for super_admin) */}
+              <select
+                value={newUser.company_id}
+                onChange={(e) => setNewUser({ ...newUser, company_id: e.target.value })}
+              >
+                <option value="">Select Company (optional)</option>
+                {companies.map(company => (
+                  <option key={company._id} value={company._id}>
+                    {company.company_name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Job Title (optional) */}
+              <input
+                type="text"
+                placeholder="Job Title (optional)"
+                value={newUser.profile.job_title || ''}
+                onChange={(e) => setNewUser({ 
+                  ...newUser, 
+                  profile: { ...newUser.profile, job_title: e.target.value }
+                })}
+              />
+            </div>
+
+            {/* Role Description */}
+            {newUser.role_name && (
+              <div className="role-description">
+                <small>
+                  {newUser.role_name === 'viewer_user' && 
+                    '👁️ Viewer User: Can view questions and results but cannot answer questions'}
+                  {newUser.role_name === 'answerer_user' && 
+                    '✏️ Answerer User: Can view and answer questions'}
+                </small>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button 
+                className="primary-btn" 
+                onClick={addUser}
+                disabled={!newUser.name || !newUser.email || !newUser.password || !newUser.role_name}
+              >
+                Create User
+              </button>
+              <button className="secondary-btn" onClick={() => setShowAddUser(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 };
+
 export default UserOverview;
-// UserCard Component
-const UserCard = ({ user, onView }) => {
-  const getRoleBadgeClass = (roleName) => {
-    switch (roleName) {
-      case 'super_admin': return 'role-super-admin';
-      case 'company_admin': return 'role-company-admin';
-      case 'answerer_user': return 'role-answerer';
-      case 'viewer_user': return 'role-viewer';
-      default: return 'role-default';
-    }
-  };
-
-  const formatRoleName = (roleName) => {
-    return roleName.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  return (
-    <div className="user-card">
-      <div className="user-header">
-        <div className="user-avatar">
-          {user.name.charAt(0).toUpperCase()}
-        </div>
-        <span className={`status-badge ${user.status}`}>
-          {user.status}
-        </span>
-      </div>
-
-      <div className="user-info">
-        <h3>{user.name}</h3>
-        <p className="user-email">{user.email}</p>
-        <span className={`role-badge ${getRoleBadgeClass(user.role?.role_name)}`}>
-          {formatRoleName(user.role?.role_name || 'Unknown')}
-        </span>
-      </div>
-
-      <div className="user-company">
-        <Building2 size={14} />
-        <span>{user.company?.company_name || 'No Company'}</span>
-      </div>
-
-      <div className="user-activity">
-        <div className="activity-item">
-          <span className="activity-label">Last Login:</span>
-          <span className="activity-value">
-            {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
-          </span>
-        </div>
-        <div className="activity-item">
-          <span className="activity-label">Joined:</span>
-          <span className="activity-value">
-            {new Date(user.created_at).toLocaleDateString()}
-          </span>
-        </div>
-      </div>
-
-      <div className="user-actions">
-        <button 
-          className="secondary-btn"
-          onClick={() => onView(user)}
-        >
-          <Eye size={14} />
-          View Details
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// UserDetailsModal Component
-const UserDetailsModal = ({ user, userDetails, isLoading, onClose }) => {
-  if (isLoading) {
-    return (
-      <div className="modal-overlay">
-        <div className="modal-content large">
-          <div className="loading-container">
-            <Loader size={24} className="spinner" />
-            <span>Loading user details...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content large">
-        <div className="modal-header">
-          <h3>User Details - {user.name}</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-
-        <div className="user-details">
-          {/* Basic Info */}
-          <div className="details-section">
-            <h4>Basic Information</h4>
-            <div className="details-grid">
-              <div className="detail-item">
-                <label>Name</label>
-                <span>{user.name}</span>
-              </div>
-              <div className="detail-item">
-                <label>Email</label>
-                <span>{user.email}</span>
-              </div>
-              <div className="detail-item">
-                <label>Role</label>
-                <span>{user.role?.role_name?.replace('_', ' ') || 'Unknown'}</span>
-              </div>
-              <div className="detail-item">
-                <label>Status</label>
-                <span className={`status-badge ${user.status}`}>{user.status}</span>
-              </div>
-              <div className="detail-item">
-                <label>Company</label>
-                <span>{user.company?.company_name || 'No Company'}</span>
-              </div>
-              <div className="detail-item">
-                <label>Last Login</label>
-                <span>{user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Activity Summary */}
-          {userDetails && (
-            <div className="details-section">
-              <h4>Activity Summary</h4>
-              <div className="activity-stats">
-                <div className="stat-card">
-                  <span className="stat-number">{userDetails.summary.total_sessions}</span>
-                  <span className="stat-label">Total Sessions</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-number">{userDetails.summary.total_answers}</span>
-                  <span className="stat-label">Answers Given</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-number">{userDetails.summary.completed_phases}</span>
-                  <span className="stat-label">Phases Completed</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Recent Sessions */}
-          {userDetails?.sessions && userDetails.sessions.length > 0 && (
-            <div className="details-section">
-              <h4>Recent Sessions</h4>
-              <div className="sessions-list">
-                {userDetails.sessions.slice(0, 5).map(session => (
-                  <div key={session._id} className="session-item">
-                    <div className="session-info">
-                      <span className="session-id">{session.session_id}</span>
-                      <span className={`session-status ${session.status}`}>
-                        {session.status}
-                      </span>
-                    </div>
-                    <div className="session-details">
-                      <span>Phase: {session.current_phase}</span>
-                      <span>Started: {new Date(session.started_at).toLocaleDateString()}</span>
-                      {session.last_activity && (
-                        <span>Last Activity: {new Date(session.last_activity).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recent Answers Preview */}
-          {userDetails?.answers && userDetails.answers.length > 0 && (
-            <div className="details-section">
-              <h4>Recent Answers ({userDetails.answers.length} total)</h4>
-              <div className="answers-preview">
-                {userDetails.answers.slice(0, 3).map(answer => (
-                  <div key={answer._id} className="answer-item">
-                    <div className="answer-question">
-                      <strong>Q:</strong> {answer.question_text}
-                    </div>
-                    <div className="answer-text">
-                      <strong>A:</strong> {answer.answer_text.substring(0, 150)}
-                      {answer.answer_text.length > 150 && '...'}
-                    </div>
-                    <div className="answer-meta">
-                      <span>Phase: {answer.phase}</span>
-                      <span>Answered: {new Date(answer.answered_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};

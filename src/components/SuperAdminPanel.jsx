@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Building2, 
   Users, 
@@ -19,42 +19,7 @@ import '../styles/superadmin.css';
 
 const SuperAdminPanel = () => {
   const [activeTab, setActiveTab] = useState('companies');
-  const [systemStats, setSystemStats] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-  const getAuthToken = () => sessionStorage.getItem('token');
-
-  useEffect(() => {
-    loadSystemStats();
-  }, []);
-
-  const loadSystemStats = async () => {
-    try {
-      setIsLoading(true);
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/system-overview`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSystemStats(data);
-      } else {
-        showToastMessage('Failed to load system stats', 'error');
-      }
-    } catch (error) {
-      console.error('Error loading system stats:', error);
-      showToastMessage('Error loading system stats', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const showToastMessage = (message, type = 'success') => {
     setShowToast({ show: true, message, type });
@@ -107,20 +72,7 @@ const SuperAdminPanel = () => {
             <Settings size={24} className="header-icon" />
             <h1>Super Admin Panel</h1>
           </div>
-          <div className="header-stats">
-            {systemStats && (
-              <>
-                <div className="stat-item">
-                  <span className="stat-value">{systemStats.system_statistics.companies.total}</span>
-                  <span className="stat-label">Companies</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">{systemStats.system_statistics.users.total}</span>
-                  <span className="stat-label">Total Users</span>
-                </div>
-              </>
-            )}
-          </div>
+          {/* Removed system stats section */}
         </div>
       </div>
 
@@ -143,14 +95,8 @@ const SuperAdminPanel = () => {
 
       {/* Main Content */}
       <div className="admin-content">
-        {isLoading ? (
-          <div className="loading-container">
-            <Loader size={24} className="spinner" />
-            <span>Loading system data...</span>
-          </div>
-        ) : (
-          renderContent()
-        )}
+        {/* Removed loading spinner for system stats */}
+        {renderContent()}
       </div>
     </div>
   );

@@ -16,7 +16,6 @@ const EditableBriefSection = ({
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
-  const [sessionId, setSessionId] = useState(null);
   const { t } = useTranslation();
   
   const inputRefs = useRef({});
@@ -29,31 +28,6 @@ const EditableBriefSection = ({
       generateBriefFields();
     }
   }, [questions, userAnswers]);
-
-  // Get current session on component mount
-  useEffect(() => {
-    getCurrentSession();
-  }, []);
-
-  const getCurrentSession = async () => {
-    try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/api/user/start-session`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setSessionId(result.session.session_id);
-      }
-    } catch (error) {
-      console.error('Error getting session:', error);
-    }
-  };
 
   const generateBriefFields = () => {
     const fields = [];
@@ -84,6 +58,7 @@ const EditableBriefSection = ({
     }, 4000);
   };
 
+  // Generate new analysis with updated answers
   // Generate new analysis with updated answers
   const regenerateAnalysisWithUpdatedAnswers = async () => {
     try {
@@ -126,7 +101,8 @@ const EditableBriefSection = ({
         answers: answersArray
       };
 
-      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+      // Generate SWOT Analysis
+      const swotResponse = await fetch(`${ML_API_BASE_URL}/find`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -135,46 +111,65 @@ const EditableBriefSection = ({
         body: JSON.stringify(payload)
       });
 
-      const responseText = await response.text();
+      const swotResponseText = await swotResponse.text();
 
-      if (!response.ok) {
-        let errorMessage = `ML API returned ${response.status}: ${response.statusText}`;
+      if (!swotResponse.ok) {
+        let errorMessage = `SWOT API returned ${swotResponse.status}: ${swotResponse.statusText}`;
         try {
-          const errorData = JSON.parse(responseText);
+          const errorData = JSON.parse(swotResponseText);
           if (errorData.detail) {
-            errorMessage = `API Error: ${errorData.detail}`;
+            errorMessage = `SWOT API Error: ${errorData.detail}`;
           }
         } catch (e) {
-          errorMessage = `API Error: ${responseText}`;
+          errorMessage = `SWOT API Error: ${swotResponseText}`;
         }
         throw new Error(errorMessage);
       }
 
-      let result;
+      let swotResult;
       try {
-        result = JSON.parse(responseText);
+        swotResult = JSON.parse(swotResponseText);
       } catch (e) {
-        result = responseText;
+        swotResult = swotResponseText;
       }
 
-      let analysisContent;
-      if (typeof result === 'object' && result !== null) {
-        analysisContent = JSON.stringify(result);
+      let swotAnalysisContent;
+      if (typeof swotResult === 'object' && swotResult !== null) {
+        swotAnalysisContent = JSON.stringify(swotResult);
       } else {
-        analysisContent = String(result);
+        swotAnalysisContent = String(swotResult);
       }
 
-      if (analysisContent) {
-        // Save the updated analysis to backend
-        await saveAnalysisToBackend(analysisContent, 'swot');
-        showToastMessage('Analysis regenerated successfully with updated answers!', 'success');
-        
-        // Trigger the parent component's regeneration callback if provided
-        if (onAnalysisRegenerate) {
-          onAnalysisRegenerate();
-        }
-      } else {
-        throw new Error('Empty or invalid response from analysis API');
+      // Generate Customer Segmentation Analysis
+      const customerSegmentResponse = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!customerSegmentResponse.ok) {
+        throw new Error(`Customer Segmentation API returned ${customerSegmentResponse.status}: ${customerSegmentResponse.statusText}`);
+      }
+
+      const customerSegmentResult = await customerSegmentResponse.json();
+
+      // Save both analyses
+      if (swotAnalysisContent) {
+        await saveAnalysisAsPhaseResult(swotAnalysisContent, 'swot');
+      }
+
+      if (customerSegmentResult && customerSegmentResult.customerSegmentation) {
+        await saveAnalysisAsPhaseResult(customerSegmentResult.customerSegmentation, 'customerSegmentation');
+      }
+
+      showToastMessage('Analysis regenerated successfully with updated answers!', 'success');
+      
+      // Trigger the parent component's regeneration callback if provided
+      if (onAnalysisRegenerate) {
+        onAnalysisRegenerate();
       }
 
     } catch (error) {
@@ -183,32 +178,33 @@ const EditableBriefSection = ({
     }
   };
 
-  // Save analysis to backend
-  const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
+  // Save analysis as chat message (using simplified backend structure)
+  const saveAnalysisAsPhaseResult = async (analysisData, analysisType = 'swot') => {
     try {
       const token = getAuthToken();
 
-      if (!sessionId) {
-        throw new Error('No active session found');
-      }
-
-      // Note: This endpoint might need to be updated based on the new backend structure
-      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
+      // Use the simplified chat message save endpoint
+      const response = await fetch(`${API_BASE_URL}/api/user/save-chat-message`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sessionId: sessionId,
-          analysisType: analysisType,
-          analysisData: analysisData,
-          businessName: 'Updated Business Analysis'
+          message_type: 'system',
+          message_text: `Analysis regenerated: ${analysisType}`,
+          question_id: null,
+          metadata: {
+            analysisType: analysisType,
+            analysisData: analysisData,
+            isAnalysisRegeneration: true,
+            phase: 'initial'
+          }
         })
       });
 
       if (response.ok) {
-        console.log(`📊 ${analysisType} analysis saved to backend after update`);
+        console.log(`📊 ${analysisType} analysis saved as chat message`);
         return true;
       } else {
         console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
@@ -220,38 +216,37 @@ const EditableBriefSection = ({
     }
   };
 
-  // Auto-save updated answer using new backend API
+  // Auto-save updated answer using simplified backend API
   const autoSaveUpdatedAnswer = async (questionId, newAnswer) => {
     try {
       setIsSaving(true);
       const token = getAuthToken();
 
-      if (!sessionId) {
-        throw new Error('No active session found');
+      // Find the question text
+      const question = questions.find(q => q.question_id === questionId);
+      if (!question) {
+        throw new Error('Question not found');
       }
 
-      // Submit answer using the new backend API
-      const response = await fetch(`${API_BASE_URL}/api/user/submit-answer`, {
+      // Use the save-answer endpoint from the simplified backend
+      const response = await fetch(`${API_BASE_URL}/api/user/save-answer`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          session_id: sessionId,
           question_id: questionId,
-          answer_text: newAnswer.trim()
+          question_text: question.question_text,
+          answer_text: newAnswer.trim(),
+          is_followup: false,
+          followup_parent_id: null
         })
       });
 
       if (response.ok) {
         const result = await response.json();
-        
-        // Update business data if available
-        if (result.businessData && onBusinessDataUpdate) {
-          onBusinessDataUpdate(result.businessData);
-        }
-
+        console.log('Answer updated successfully:', result);
         return result;
       } else {
         const errorData = await response.json();
@@ -283,7 +278,7 @@ const EditableBriefSection = ({
     
     if (newValue.trim()) {
       try {
-        // Auto-save to conversation using new backend API
+        // Auto-save to backend using simplified API
         await autoSaveUpdatedAnswer(field.questionId, newValue.trim());
 
         // Update parent component with new answer

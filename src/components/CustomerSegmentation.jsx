@@ -11,31 +11,30 @@ const CustomerSegmentation = ({
   onDataGenerated,
   onRegenerate,
   isRegenerating = false,
-  canRegenerate = true
+  canRegenerate = true,
+  customerSegmentationData = null // Add this prop to receive data from parent
 }) => {
-  const [segmentationData, setSegmentationData] = useState(null);
+  const [segmentationData, setSegmentationData] = useState(customerSegmentationData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
   
-  // Add refs to track if API has been called and component mount
-  const hasCalledAPI = useRef(false);
+  // Add refs to track component mount
   const isMounted = useRef(false);
   const { t } = useTranslation();
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   // Colors for the pie chart segments
   const SEGMENT_COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-  // Load existing analysis from backend
+  // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
     try {
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/analysis/customerSegmentation`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -44,19 +43,26 @@ const CustomerSegmentation = ({
 
       if (response.ok) {
         const result = await response.json();
-        console.log('📊 Loaded existing customer segmentation from backend:', result.analysisData);
-        setSegmentationData(result.analysisData);
-        setHasLoadedFromBackend(true);
-        if (onDataGenerated) {
-          onDataGenerated(result.analysisData);
+        const analysisMessages = result.chat_messages?.filter(msg => 
+          msg.metadata?.analysisType === 'customerSegmentation' && msg.metadata?.analysisData
+        );
+        
+        if (analysisMessages && analysisMessages.length > 0) {
+          const latestAnalysis = analysisMessages[analysisMessages.length - 1];
+          console.log('📊 Loaded existing customer segmentation from backend:', latestAnalysis.metadata.analysisData);
+          setSegmentationData(latestAnalysis.metadata.analysisData);
+          setHasLoadedFromBackend(true);
+          if (onDataGenerated) {
+            onDataGenerated(latestAnalysis.metadata.analysisData);
+          }
+          return true;
+        } else {
+          console.log('📊 No existing customer segmentation found in backend');
+          setHasLoadedFromBackend(true);
+          return false;
         }
-        return true;
-      } else if (response.status === 404) {
-        console.log('📊 No existing customer segmentation found in backend');
-        setHasLoadedFromBackend(true);
-        return false;
       } else {
-        console.error('Failed to load customer segmentation:', response.statusText);
+        console.error('Failed to load conversation history:', response.statusText);
         setHasLoadedFromBackend(true);
         return false;
       }
@@ -67,198 +73,39 @@ const CustomerSegmentation = ({
     }
   };
 
-  // Save analysis to backend
-  const saveAnalysisToBackend = async (analysisData) => {
-    try {
-      const token = getAuthToken();
-
-      // Get current session ID
-      const currentResponse = await fetch(`${API_BASE_URL}/api/conversation/current`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!currentResponse.ok) {
-        throw new Error('Failed to get current conversation');
-      }
-
-      const conversation = await currentResponse.json();
-      const sessionId = conversation.sessionId;
-
-      if (!sessionId) {
-        throw new Error('No active conversation session found');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/analysis/save`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sessionId: sessionId,
-          analysisType: 'customerSegmentation',
-          analysisData: analysisData,
-          businessName: businessName
-        })
-      });
-
-      if (response.ok) {
-        console.log('📊 Customer segmentation analysis saved to backend');
-        return true;
-      } else {
-        console.error('Failed to save customer segmentation analysis:', response.statusText);
-        return false;
-      }
-    } catch (error) {
-      console.error('Error saving customer segmentation analysis:', error);
-      return false;
-    }
-  };
-
-  const generateSegmentationData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Prepare questions and answers arrays
-      const questionsArray = [];
-      const answersArray = [];
-
-      // Sort questions by ID to maintain order
-      const sortedQuestions = [...questions].sort((a, b) => a.id - b.id);
-
-      // Only include answered questions
-      sortedQuestions.forEach(question => {
-        if (userAnswers[question.id]) {
-          // Clean and sanitize text to avoid encoding issues
-          const cleanQuestion = String(question.question)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          const cleanAnswer = String(userAnswers[question.id])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        }
-      });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for customer segmentation analysis');
-      }
-
-      const payload = {
-        questions: questionsArray,
-        answers: answersArray
-      };
-
-      console.log('Sending to /customer-segment API:', payload);
-
-      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
-      if (!response.ok) {
-        let errorMessage = `API returned ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = JSON.parse(responseText);
-          if (errorData.detail) {
-            errorMessage = `API Error: ${errorData.detail}`;
-          }
-        } catch (e) {
-          errorMessage = `API Error: ${responseText}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error('Invalid JSON response from API');
-      }
-
-      console.log('Parsed result from /customer-segment API:', result);
-
-      if (result && result.customerSegmentation) {
-        console.log('Setting segmentation data:', result.customerSegmentation);
-        setSegmentationData(result.customerSegmentation);
-        
-        // Save to backend
-        await saveAnalysisToBackend(result.customerSegmentation);
-        
-        if (onDataGenerated) {
-          onDataGenerated(result.customerSegmentation);
-        }
-      } else {
-        console.error('Invalid response structure:', result);
-        throw new Error('Invalid response structure from API');
-      }
-
-    } catch (error) {
-      console.error('Error generating customer segmentation:', error);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Handle regeneration
   const handleRegenerate = async () => {
-    hasCalledAPI.current = false; // Reset the flag for regeneration
-    setHasLoadedFromBackend(false); // Reset backend load flag
     if (onRegenerate) {
       // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Use local regeneration logic
+      // Local regeneration (should not happen in new flow, but keep as fallback)
       setSegmentationData(null);
-      await generateSegmentationData();
+      setError(null);
     }
   };
+
+  // Update segmentation data when prop changes
+  useEffect(() => {
+    if (customerSegmentationData && customerSegmentationData !== segmentationData) {
+      console.log('📊 Updating customer segmentation data from props:', customerSegmentationData);
+      setSegmentationData(customerSegmentationData);
+      if (onDataGenerated) {
+        onDataGenerated(customerSegmentationData);
+      }
+    }
+  }, [customerSegmentationData, segmentationData, onDataGenerated]);
 
   // Load existing analysis on mount
   useEffect(() => {
     isMounted.current = true;
     
     const initializeComponent = async () => {
-      // First try to load existing analysis from backend
-      const hasExistingAnalysis = await loadExistingAnalysis();
-      
-      if (!hasExistingAnalysis) {
-        // If no existing analysis, check if we can generate new one
-        const answeredCount = Object.keys(userAnswers).length;
-        
-        if (
-          answeredCount >= 3 && 
-          !segmentationData && 
-          !isLoading && 
-          !hasCalledAPI.current && 
-          isMounted.current
-        ) {
-          hasCalledAPI.current = true;
-          generateSegmentationData();
-        }
+      // Only load from backend if no data was provided via props
+      if (!customerSegmentationData) {
+        await loadExistingAnalysis();
+      } else {
+        setHasLoadedFromBackend(true);
       }
     };
 
@@ -269,26 +116,6 @@ const CustomerSegmentation = ({
       isMounted.current = false;
     };
   }, []); // Empty dependency array - only run on mount
-
-  // Separate useEffect to handle prop changes (if needed)
-  useEffect(() => {
-    // Only proceed if we've already tried loading from backend
-    if (!hasLoadedFromBackend) return;
-    
-    const answeredCount = Object.keys(userAnswers).length;
-    
-    // Only trigger if we have new data and haven't called API yet
-    if (
-      answeredCount >= 3 && 
-      !segmentationData && 
-      !isLoading && 
-      !hasCalledAPI.current && 
-      isMounted.current
-    ) {
-      hasCalledAPI.current = true;
-      generateSegmentationData();
-    }
-  }, [userAnswers, questions, hasLoadedFromBackend]); // Include hasLoadedFromBackend in dependencies
 
   // Create CSS pie chart data
   const createPieChartData = () => {
@@ -347,8 +174,10 @@ const CustomerSegmentation = ({
           <h3>Analysis Error</h3>
           <p>{error}</p>
           <button onClick={() => {
-            hasCalledAPI.current = false; // Reset flag for retry
-            generateSegmentationData();
+            setError(null);
+            if (onRegenerate) {
+              onRegenerate();
+            }
           }} className="retry-button">
             Retry Analysis
           </button>
@@ -368,18 +197,10 @@ const CustomerSegmentation = ({
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate customer segmentation insights.`
               : hasLoadedFromBackend
-              ? "Generate your customer segmentation analysis to understand your customer base better."
+              ? "Customer segmentation analysis will be generated automatically after completing the initial phase."
               : "Loading customer segmentation analysis..."
             }
           </p>
-          {answeredCount >= 3 && hasLoadedFromBackend && (
-            <button onClick={() => {
-              hasCalledAPI.current = false; // Reset flag for manual generation
-              generateSegmentationData();
-            }} className="generate-button">
-              Generate Analysis
-            </button>
-          )}
         </div>
       </div>
     );
