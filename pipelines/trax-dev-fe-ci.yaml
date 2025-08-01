@@ -11,7 +11,8 @@ variables:
   MINOR: 0        # Increment manually for minor features
   PATCH: $[counter(format('{0}.{1}', variables['MAJOR'], variables['MINOR']), 0)]
 
-  SEMVER: $(MAJOR).$(MINOR).$(PATCH).$(Build.BuildId)
+  # SEMVER: $(MAJOR).$(MINOR).$(PATCH).$(Build.BuildId)
+  SEMVER: $(MAJOR).$(MINOR).$(PATCH)
   IMAGE_VERSION: $(SEMVER)
   IMAGE_NAME: trax_dev_frontend
 
@@ -24,21 +25,10 @@ stages:
         pool:
           vmImage: 'ubuntu-latest'
 
-        variables:
-          - ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
-              - group: trax-dev-fe-vg
-
         steps:
           - checkout: self
             clean: true
             fetchDepth: 1
-
-          # Generate .env dynamically
-          - script: |
-              rm -f .env
-              echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
-              cat .env
-            displayName: 'Generated .env file ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'
 
           # - task: npmAuthenticate@0
           #   inputs:
