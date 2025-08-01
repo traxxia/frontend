@@ -11,24 +11,41 @@ const LoyaltyNPS = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  loyaltyNPSData = null // Add this prop to receive data from parent
+  loyaltyNPSData = null
 }) => {
   const [loyaltyData, setLoyaltyData] = useState(loyaltyNPSData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  const { t } = useTranslation();
   
-  // Add refs to track component mount
+  // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
+  const isLoadingRef = useRef(false);
+  const hasInitialized = useRef(false);
+  const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
+    if (isLoadingRef.current || hasLoadedFromBackend) {
+      console.log('📊 [LoyaltyNPS] Skipping API call - already loading or loaded');
+      return false;
+    }
+
     try {
+      isLoadingRef.current = true;
+      console.log('📊 [LoyaltyNPS] Loading from backend...');
+      
       const token = getAuthToken();
+      if (!token) {
+        console.log('📊 [LoyaltyNPS] No auth token available');
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
+        return false;
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
@@ -45,37 +62,46 @@ const LoyaltyNPS = ({
         
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 Loaded existing loyalty NPS from backend:', latestAnalysis.metadata.analysisData);
-          setLoyaltyData(latestAnalysis.metadata.analysisData);
-          setHasLoadedFromBackend(true);
-          if (onDataGenerated) {
-            onDataGenerated(latestAnalysis.metadata.analysisData);
+          console.log('📊 [LoyaltyNPS] Loaded existing data from backend');
+          
+          if (isMounted.current) {
+            setLoyaltyData(latestAnalysis.metadata.analysisData);
+            setHasLoadedFromBackend(true);
+            if (onDataGenerated) {
+              onDataGenerated(latestAnalysis.metadata.analysisData);
+            }
           }
           return true;
         } else {
-          console.log('📊 No existing loyalty NPS found in backend');
-          setHasLoadedFromBackend(true);
+          console.log('📊 [LoyaltyNPS] No existing data found in backend');
+          if (isMounted.current) {
+            setHasLoadedFromBackend(true);
+          }
           return false;
         }
       } else {
-        console.error('Failed to load conversation history:', response.statusText);
-        setHasLoadedFromBackend(true);
+        console.error('📊 [LoyaltyNPS] Failed to load conversation history:', response.statusText);
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
         return false;
       }
     } catch (error) {
-      console.error('Error loading loyalty NPS:', error);
-      setHasLoadedFromBackend(true);
+      console.error('📊 [LoyaltyNPS] Error loading data:', error);
+      if (isMounted.current) {
+        setHasLoadedFromBackend(true);
+      }
       return false;
+    } finally {
+      isLoadingRef.current = false;
     }
   };
 
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Local regeneration (should not happen in new flow, but keep as fallback)
       setLoyaltyData(null);
       setError(null);
     }
@@ -84,21 +110,34 @@ const LoyaltyNPS = ({
   // Update loyalty data when prop changes
   useEffect(() => {
     if (loyaltyNPSData && loyaltyNPSData !== loyaltyData) {
-      console.log('📊 Updating loyalty NPS data from props:', loyaltyNPSData);
+      console.log('📊 [LoyaltyNPS] Updating data from props');
       setLoyaltyData(loyaltyNPSData);
+      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(loyaltyNPSData);
       }
     }
-  }, [loyaltyNPSData, loyaltyData, onDataGenerated]);
+  }, [loyaltyNPSData]);
 
-  // Load existing analysis on mount
+  // Initialize component - only run once
   useEffect(() => {
+    if (hasInitialized.current) return;
+    
     isMounted.current = true;
+    hasInitialized.current = true;
     
     const initializeComponent = async () => {
-      // Only load from backend if no data was provided via props
-      if (!loyaltyNPSData) {
+      console.log('📊 [LoyaltyNPS] Initializing component', {
+        hasPropsData: !!loyaltyNPSData,
+        hasLoadedFromBackend,
+        isLoading: isLoadingRef.current
+      });
+
+      if (loyaltyNPSData) {
+        console.log('📊 [LoyaltyNPS] Using props data');
+        setLoyaltyData(loyaltyNPSData);
+        setHasLoadedFromBackend(true);
+      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
         await loadExistingAnalysis();
       } else {
         setHasLoadedFromBackend(true);
@@ -107,11 +146,11 @@ const LoyaltyNPS = ({
 
     initializeComponent();
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
+      isLoadingRef.current = false;
     };
-  }, []); // Empty dependency array - only run on mount
+  }, []);
 
   // Get score classification based on NPS zones
   const getScoreClassification = (score, method = 'NPS') => {

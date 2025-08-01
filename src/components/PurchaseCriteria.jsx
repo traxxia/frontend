@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
-import '../styles/Analytics.css'; // We'll create this CSS file
+import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 
 const PurchaseCriteria = ({ 
@@ -12,16 +12,18 @@ const PurchaseCriteria = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  purchaseCriteriaData = null // Add this prop to receive data from parent
+  purchaseCriteriaData = null
 }) => {
   const [criteriaData, setCriteriaData] = useState(purchaseCriteriaData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  const { t } = useTranslation();
   
-  // Add refs to track component mount
+  // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
+  const isLoadingRef = useRef(false);
+  const hasInitialized = useRef(false);
+  const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -36,8 +38,23 @@ const PurchaseCriteria = ({
 
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
+    if (isLoadingRef.current || hasLoadedFromBackend) {
+      console.log('📊 [PurchaseCriteria] Skipping API call - already loading or loaded');
+      return false;
+    }
+
     try {
+      isLoadingRef.current = true;
+      console.log('📊 [PurchaseCriteria] Loading from backend...');
+      
       const token = getAuthToken();
+      if (!token) {
+        console.log('📊 [PurchaseCriteria] No auth token available');
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
+        return false;
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
@@ -54,37 +71,46 @@ const PurchaseCriteria = ({
         
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 Loaded existing purchase criteria from backend:', latestAnalysis.metadata.analysisData);
-          setCriteriaData(latestAnalysis.metadata.analysisData);
-          setHasLoadedFromBackend(true);
-          if (onDataGenerated) {
-            onDataGenerated(latestAnalysis.metadata.analysisData);
+          console.log('📊 [PurchaseCriteria] Loaded existing data from backend');
+          
+          if (isMounted.current) {
+            setCriteriaData(latestAnalysis.metadata.analysisData);
+            setHasLoadedFromBackend(true);
+            if (onDataGenerated) {
+              onDataGenerated(latestAnalysis.metadata.analysisData);
+            }
           }
           return true;
         } else {
-          console.log('📊 No existing purchase criteria found in backend');
-          setHasLoadedFromBackend(true);
+          console.log('📊 [PurchaseCriteria] No existing data found in backend');
+          if (isMounted.current) {
+            setHasLoadedFromBackend(true);
+          }
           return false;
         }
       } else {
-        console.error('Failed to load conversation history:', response.statusText);
-        setHasLoadedFromBackend(true);
+        console.error('📊 [PurchaseCriteria] Failed to load conversation history:', response.statusText);
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
         return false;
       }
     } catch (error) {
-      console.error('Error loading purchase criteria:', error);
-      setHasLoadedFromBackend(true);
+      console.error('📊 [PurchaseCriteria] Error loading data:', error);
+      if (isMounted.current) {
+        setHasLoadedFromBackend(true);
+      }
       return false;
+    } finally {
+      isLoadingRef.current = false;
     }
   };
 
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Local regeneration (should not happen in new flow, but keep as fallback)
       setCriteriaData(null);
       setError(null);
     }
@@ -93,21 +119,34 @@ const PurchaseCriteria = ({
   // Update criteria data when prop changes
   useEffect(() => {
     if (purchaseCriteriaData && purchaseCriteriaData !== criteriaData) {
-      console.log('📊 Updating purchase criteria data from props:', purchaseCriteriaData);
+      console.log('📊 [PurchaseCriteria] Updating data from props');
       setCriteriaData(purchaseCriteriaData);
+      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(purchaseCriteriaData);
       }
     }
-  }, [purchaseCriteriaData, criteriaData, onDataGenerated]);
+  }, [purchaseCriteriaData]);
 
-  // Load existing analysis on mount
+  // Initialize component - only run once
   useEffect(() => {
+    if (hasInitialized.current) return;
+    
     isMounted.current = true;
+    hasInitialized.current = true;
     
     const initializeComponent = async () => {
-      // Only load from backend if no data was provided via props
-      if (!purchaseCriteriaData) {
+      console.log('📊 [PurchaseCriteria] Initializing component', {
+        hasPropsData: !!purchaseCriteriaData,
+        hasLoadedFromBackend,
+        isLoading: isLoadingRef.current
+      });
+
+      if (purchaseCriteriaData) {
+        console.log('📊 [PurchaseCriteria] Using props data');
+        setCriteriaData(purchaseCriteriaData);
+        setHasLoadedFromBackend(true);
+      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
         await loadExistingAnalysis();
       } else {
         setHasLoadedFromBackend(true);
@@ -116,11 +155,11 @@ const PurchaseCriteria = ({
 
     initializeComponent();
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
+      isLoadingRef.current = false;
     };
-  }, []); // Empty dependency array - only run on mount
+  }, []);
 
   // Create radar chart points
   const createRadarChart = () => {

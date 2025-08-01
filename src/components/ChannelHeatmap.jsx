@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, TrendingUp, Layers, Calendar, Loader, Zap, Grid3x3 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
-import '../styles/Analytics.css'; // We'll create this CSS file
+import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 
 const ChannelHeatmap = ({
@@ -12,25 +12,42 @@ const ChannelHeatmap = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  channelHeatmapData = null // Add this prop to receive data from parent
+  channelHeatmapData = null
 }) => {
   const [heatmapData, setHeatmapData] = useState(channelHeatmapData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  const { t } = useTranslation();
-
-  // Add refs to track component mount
+  
+  // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
+  const isLoadingRef = useRef(false);
+  const hasInitialized = useRef(false);
+  const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
+    if (isLoadingRef.current || hasLoadedFromBackend) {
+      console.log('📊 [ChannelHeatmap] Skipping API call - already loading or loaded');
+      return false;
+    }
+
     try {
+      isLoadingRef.current = true;
+      console.log('📊 [ChannelHeatmap] Loading from backend...');
+      
       const token = getAuthToken();
+      if (!token) {
+        console.log('📊 [ChannelHeatmap] No auth token available');
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
+        return false;
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
@@ -47,37 +64,46 @@ const ChannelHeatmap = ({
         
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 Loaded existing channel heatmap from backend:', latestAnalysis.metadata.analysisData);
-          setHeatmapData(latestAnalysis.metadata.analysisData);
-          setHasLoadedFromBackend(true);
-          if (onDataGenerated) {
-            onDataGenerated(latestAnalysis.metadata.analysisData);
+          console.log('📊 [ChannelHeatmap] Loaded existing data from backend');
+          
+          if (isMounted.current) {
+            setHeatmapData(latestAnalysis.metadata.analysisData);
+            setHasLoadedFromBackend(true);
+            if (onDataGenerated) {
+              onDataGenerated(latestAnalysis.metadata.analysisData);
+            }
           }
           return true;
         } else {
-          console.log('📊 No existing channel heatmap found in backend');
-          setHasLoadedFromBackend(true);
+          console.log('📊 [ChannelHeatmap] No existing data found in backend');
+          if (isMounted.current) {
+            setHasLoadedFromBackend(true);
+          }
           return false;
         }
       } else {
-        console.error('Failed to load conversation history:', response.statusText);
-        setHasLoadedFromBackend(true);
+        console.error('📊 [ChannelHeatmap] Failed to load conversation history:', response.statusText);
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
         return false;
       }
     } catch (error) {
-      console.error('Error loading channel heatmap:', error);
-      setHasLoadedFromBackend(true);
+      console.error('📊 [ChannelHeatmap] Error loading data:', error);
+      if (isMounted.current) {
+        setHasLoadedFromBackend(true);
+      }
       return false;
+    } finally {
+      isLoadingRef.current = false;
     }
   };
 
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Local regeneration (should not happen in new flow, but keep as fallback)
       setHeatmapData(null);
       setError(null);
     }
@@ -86,21 +112,34 @@ const ChannelHeatmap = ({
   // Update heatmap data when prop changes
   useEffect(() => {
     if (channelHeatmapData && channelHeatmapData !== heatmapData) {
-      console.log('📊 Updating channel heatmap data from props:', channelHeatmapData);
+      console.log('📊 [ChannelHeatmap] Updating data from props');
       setHeatmapData(channelHeatmapData);
+      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(channelHeatmapData);
       }
     }
-  }, [channelHeatmapData, heatmapData, onDataGenerated]);
+  }, [channelHeatmapData]);
 
-  // Load existing analysis on mount
+  // Initialize component - only run once
   useEffect(() => {
+    if (hasInitialized.current) return;
+    
     isMounted.current = true;
+    hasInitialized.current = true;
     
     const initializeComponent = async () => {
-      // Only load from backend if no data was provided via props
-      if (!channelHeatmapData) {
+      console.log('📊 [ChannelHeatmap] Initializing component', {
+        hasPropsData: !!channelHeatmapData,
+        hasLoadedFromBackend,
+        isLoading: isLoadingRef.current
+      });
+
+      if (channelHeatmapData) {
+        console.log('📊 [ChannelHeatmap] Using props data');
+        setHeatmapData(channelHeatmapData);
+        setHasLoadedFromBackend(true);
+      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
         await loadExistingAnalysis();
       } else {
         setHasLoadedFromBackend(true);
@@ -109,11 +148,11 @@ const ChannelHeatmap = ({
 
     initializeComponent();
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
+      isLoadingRef.current = false;
     };
-  }, []); // Empty dependency array - only run on mount
+  }, []);
 
   // Get matrix value for a specific product-channel combination
   const getMatrixValue = (product, channel) => {

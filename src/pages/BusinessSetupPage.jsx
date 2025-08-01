@@ -26,8 +26,12 @@ const BusinessSetupPage = () => {
   const [strategicAnalysisResult, setStrategicAnalysisResult] = useState("");
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
-  const [isRegeneratingAll, setIsRegeneratingAll] = useState(false);
   const [isLoadingLatestAnalysis, setIsLoadingLatestAnalysis] = useState(false);
+
+  // NEW: Add refs to prevent multiple API calls and manage regeneration state
+  const isRegeneratingAllRef = useRef(false);
+  const regenerationInProgressRef = useRef(false);
+  const analysisGenerationQueueRef = useRef(new Set());
 
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState(() => t('goToSection') || 'Go to Section');
@@ -129,87 +133,49 @@ const BusinessSetupPage = () => {
   }, [activeTab]);
 
   // Load latest analysis from chat history
-const loadLatestAnalysis = async () => {
-  try {
-    setIsLoadingLatestAnalysis(true);
-    
-    const token = getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+  const loadLatestAnalysis = async () => {
+    try {
+      setIsLoadingLatestAnalysis(true);
+      
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    if (response.ok) {
-      const result = await response.json();
-      
-      // Load SWOT analysis
-      const swotMessages = result.chat_messages?.filter(msg => 
-        msg.metadata?.analysisType === 'swot' && msg.metadata?.analysisData
-      );
-      
-      if (swotMessages && swotMessages.length > 0) {
-        const latestSwot = swotMessages[swotMessages.length - 1];
-        setAnalysisResult(latestSwot.metadata.analysisData);
-      }
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Load all analyses in parallel
+        const analysisTypes = [
+          { key: 'swot', setter: setAnalysisResult },
+          { key: 'customerSegmentation', setter: setCustomerSegmentationData },
+          { key: 'purchaseCriteria', setter: setPurchaseCriteriaData },
+          { key: 'loyaltyNPS', setter: setLoyaltyNPSData },
+          { key: 'channelHeatmap', setter: setChannelHeatmapData },
+          { key: 'capabilityHeatmap', setter: setCapabilityHeatmapData }
+        ];
 
-      // Load Customer Segmentation analysis
-      const customerSegmentationMessages = result.chat_messages?.filter(msg => 
-        msg.metadata?.analysisType === 'customerSegmentation' && msg.metadata?.analysisData
-      );
-      
-      if (customerSegmentationMessages && customerSegmentationMessages.length > 0) {
-        const latestCustomerSegmentation = customerSegmentationMessages[customerSegmentationMessages.length - 1];
-        setCustomerSegmentationData(latestCustomerSegmentation.metadata.analysisData);
+        analysisTypes.forEach(({ key, setter }) => {
+          const messages = result.chat_messages?.filter(msg => 
+            msg.metadata?.analysisType === key && msg.metadata?.analysisData
+          );
+          
+          if (messages && messages.length > 0) {
+            const latest = messages[messages.length - 1];
+            setter(latest.metadata.analysisData);
+          }
+        });
       }
-
-      // Load Purchase Criteria analysis
-      const purchaseCriteriaMessages = result.chat_messages?.filter(msg => 
-        msg.metadata?.analysisType === 'purchaseCriteria' && msg.metadata?.analysisData
-      );
-      
-      if (purchaseCriteriaMessages && purchaseCriteriaMessages.length > 0) {
-        const latestPurchaseCriteria = purchaseCriteriaMessages[purchaseCriteriaMessages.length - 1];
-        setPurchaseCriteriaData(latestPurchaseCriteria.metadata.analysisData);
-      }
-
-      // Load Loyalty NPS analysis
-      const loyaltyNPSMessages = result.chat_messages?.filter(msg => 
-        msg.metadata?.analysisType === 'loyaltyNPS' && msg.metadata?.analysisData
-      );
-      
-      if (loyaltyNPSMessages && loyaltyNPSMessages.length > 0) {
-        const latestLoyaltyNPS = loyaltyNPSMessages[loyaltyNPSMessages.length - 1];
-        setLoyaltyNPSData(latestLoyaltyNPS.metadata.analysisData);
-      }
-
-      // Load Channel Heatmap analysis
-      const channelHeatmapMessages = result.chat_messages?.filter(msg => 
-        msg.metadata?.analysisType === 'channelHeatmap' && msg.metadata?.analysisData
-      );
-      
-      if (channelHeatmapMessages && channelHeatmapMessages.length > 0) {
-        const latestChannelHeatmap = channelHeatmapMessages[channelHeatmapMessages.length - 1];
-        setChannelHeatmapData(latestChannelHeatmap.metadata.analysisData);
-      }
-
-      // Load Capability Heatmap analysis
-      const capabilityHeatmapMessages = result.chat_messages?.filter(msg => 
-        msg.metadata?.analysisType === 'capabilityHeatmap' && msg.metadata?.analysisData
-      );
-      
-      if (capabilityHeatmapMessages && capabilityHeatmapMessages.length > 0) {
-        const latestCapabilityHeatmap = capabilityHeatmapMessages[capabilityHeatmapMessages.length - 1];
-        setCapabilityHeatmapData(latestCapabilityHeatmap.metadata.analysisData);
-      }
+    } catch (error) {
+      console.error('Error loading latest analysis:', error);
+    } finally {
+      setIsLoadingLatestAnalysis(false);
     }
-  } catch (error) {
-    console.error('Error loading latest analysis:', error);
-  } finally {
-    setIsLoadingLatestAnalysis(false);
-  }
-};
+  };
+
   // Save analysis using chat message system
   const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
     try {
@@ -244,10 +210,17 @@ const loadLatestAnalysis = async () => {
     }
   };
 
-  const generateAnalysisWithFind = async () => {
+  // FIXED: Single analysis generation function with queue management
+  const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
+    // Check if this analysis is already being generated
+    if (analysisGenerationQueueRef.current.has(analysisType)) {
+      console.log(`📊 [BusinessSetupPage] ${analysisType} already in generation queue, skipping`);
+      return;
+    }
+
     try {
-      setIsLoadingAnalysis(true);
-      showToastMessage('Generating your business analysis...', 'info');
+      analysisGenerationQueueRef.current.add(analysisType);
+      console.log(`📊 [BusinessSetupPage] Starting ${analysisType} generation`);
 
       const questionsArray = [];
       const answersArray = [];
@@ -278,7 +251,7 @@ const loadLatestAnalysis = async () => {
       });
 
       if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for analysis');
+        throw new Error(`No answered questions available for ${analysisType} analysis`);
       }
 
       const payload = {
@@ -286,7 +259,7 @@ const loadLatestAnalysis = async () => {
         answers: answersArray
       };
 
-      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -295,472 +268,140 @@ const loadLatestAnalysis = async () => {
         body: JSON.stringify(payload)
       });
 
-      const responseText = await response.text();
-
       if (!response.ok) {
-        let errorMessage = `ML API returned ${response.status}: ${response.statusText}`;
+        throw new Error(`${analysisType} API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      let dataToSave = null;
+      if (analysisType === 'swot') {
+        // Handle SWOT response (might be text or object)
+        const responseText = await response.text();
         try {
-          const errorData = JSON.parse(responseText);
-          if (errorData.detail) {
-            errorMessage = `API Error: ${errorData.detail}`;
+          dataToSave = JSON.parse(responseText);
+          if (typeof dataToSave === 'object' && dataToSave !== null) {
+            dataToSave = JSON.stringify(dataToSave);
+          } else {
+            dataToSave = String(dataToSave);
           }
         } catch (e) {
-          errorMessage = `API Error: ${responseText}`;
+          dataToSave = responseText;
         }
-        throw new Error(errorMessage);
-      }
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (e) {
-        result = responseText;
-      }
-
-      let analysisContent;
-      if (typeof result === 'object' && result !== null) {
-        analysisContent = JSON.stringify(result);
+      } else if (result && result[dataKey]) {
+        dataToSave = result[dataKey];
+      } else if (result && (analysisType === 'capabilityHeatmap' && result.capabilities)) {
+        dataToSave = result; // Handle capability heatmap special case
       } else {
-        analysisContent = String(result);
+        throw new Error(`Invalid response structure from ${analysisType} API`);
       }
 
-      if (analysisContent) {
-        setAnalysisResult(analysisContent);
-        
-        // Save the new analysis to backend
-        await saveAnalysisToBackend(analysisContent, 'swot');
-        
-        showToastMessage('📊 Business analysis generated successfully! Check the Analysis tab.', 'success');
-      } else {
-        throw new Error('Empty or invalid response from analysis API');
+      if (dataToSave) {
+        setter(dataToSave);
+        await saveAnalysisToBackend(dataToSave, analysisType);
+        console.log(`📊 [BusinessSetupPage] ${analysisType} analysis generated successfully`);
       }
 
     } catch (error) {
-      if (error.message.includes('charmap')) {
-        showToastMessage('Text encoding error occurred. Please check your answers for special characters.', 'error');
-      } else if (error.message.includes('API Error:')) {
-        showToastMessage(error.message, 'error');
-      } else {
-        showToastMessage('Failed to generate analysis. Please try again.', 'error');
-      }
+      console.error(`📊 [BusinessSetupPage] Error generating ${analysisType} analysis:`, error);
+      throw error;
     } finally {
-      setIsLoadingAnalysis(false);
+      analysisGenerationQueueRef.current.delete(analysisType);
     }
   };
 
-  // Generate Customer Segmentation analysis
-  const generateCustomerSegmentationAnalysis = async () => {
-    try {
-      showToastMessage('Generating customer segmentation analysis...', 'info');
-
-      const questionsArray = [];
-      const answersArray = [];
-
-      const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
-
-      sortedQuestions.forEach(question => {
-        if (userAnswers[question.question_id]) {
-          const cleanQuestion = String(question.question_text)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          const cleanAnswer = String(userAnswers[question.question_id])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        }
-      });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for customer segmentation analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      if (result && result.customerSegmentation) {
-        setCustomerSegmentationData(result.customerSegmentation);
-        
-        // Save the customer segmentation analysis to backend
-        await saveAnalysisToBackend(result.customerSegmentation, 'customerSegmentation');
-        
-        showToastMessage('📊 Customer segmentation analysis generated successfully!', 'success');
-      } else {
-        throw new Error('Invalid response structure from customer segmentation API');
-      }
-
-    } catch (error) {
-      console.error('Error generating customer segmentation analysis:', error);
-      showToastMessage('Failed to generate customer segmentation analysis. Please try again.', 'error');
-    }
-  };
-
-  // Generate Purchase Criteria analysis
-  const generatePurchaseCriteriaAnalysis = async () => {
-    try {
-      showToastMessage('Generating purchase criteria analysis...', 'info');
-
-      const questionsArray = [];
-      const answersArray = [];
-
-      const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
-
-      sortedQuestions.forEach(question => {
-        if (userAnswers[question.question_id]) {
-          const cleanQuestion = String(question.question_text)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          const cleanAnswer = String(userAnswers[question.question_id])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        }
-      });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for purchase criteria analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/purchase-criteria`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      
-      if (result && result.purchaseCriteria) {
-        setPurchaseCriteriaData(result.purchaseCriteria);
-        
-        // Save the purchase criteria analysis to backend
-        await saveAnalysisToBackend(result.purchaseCriteria, 'purchaseCriteria');
-        
-        showToastMessage('📊 Purchase criteria analysis generated successfully!', 'success');
-      } else {
-        throw new Error('Invalid response structure from purchase criteria API');
-      }
-
-    } catch (error) {
-      console.error('Error generating purchase criteria analysis:', error);
-      showToastMessage('Failed to generate purchase criteria analysis. Please try again.', 'error');
-    }
-  };
-
-  const generateLoyaltyNPSAnalysis = async () => {
-  try {
-    showToastMessage('Generating loyalty & NPS analysis...', 'info');
-
-    const questionsArray = [];
-    const answersArray = [];
-
-    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
-
-    sortedQuestions.forEach(question => {
-      if (userAnswers[question.question_id]) {
-        const cleanQuestion = String(question.question_text)
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
-
-        const cleanAnswer = String(userAnswers[question.question_id])
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
-
-        questionsArray.push(cleanQuestion);
-        answersArray.push(cleanAnswer);
-      }
-    });
-
-    if (questionsArray.length === 0) {
-      throw new Error('No answered questions available for loyalty NPS analysis');
-    }
-
-    const response = await fetch(`${ML_API_BASE_URL}/loyalty-metrics`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    if (result && result.loyaltyMetrics) {
-      setLoyaltyNPSData(result.loyaltyMetrics);
-      
-      // Save the loyalty NPS analysis to backend
-      await saveAnalysisToBackend(result.loyaltyMetrics, 'loyaltyNPS');
-      
-      showToastMessage('📊 Loyalty & NPS analysis generated successfully!', 'success');
-    } else {
-      throw new Error('Invalid response structure from loyalty NPS API');
-    }
-
-  } catch (error) {
-    console.error('Error generating loyalty NPS analysis:', error);
-    showToastMessage('Failed to generate loyalty NPS analysis. Please try again.', 'error');
-  }
-};
-const generateChannelHeatmapAnalysis = async () => {
-  try {
-    showToastMessage('Generating channel heatmap analysis...', 'info');
-
-    const questionsArray = [];
-    const answersArray = [];
-
-    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
-
-    sortedQuestions.forEach(question => {
-      if (userAnswers[question.question_id]) {
-        const cleanQuestion = String(question.question_text)
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
-
-        const cleanAnswer = String(userAnswers[question.question_id])
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
-
-        questionsArray.push(cleanQuestion);
-        answersArray.push(cleanAnswer);
-      }
-    });
-
-    if (questionsArray.length === 0) {
-      throw new Error('No answered questions available for channel heatmap analysis');
-    }
-
-    const response = await fetch(`${ML_API_BASE_URL}/channel-heatmap`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    if (result && result.channelHeatmap) {
-      setChannelHeatmapData(result.channelHeatmap);
-      
-      // Save the channel heatmap analysis to backend
-      await saveAnalysisToBackend(result.channelHeatmap, 'channelHeatmap');
-      
-      showToastMessage('📊 Channel heatmap analysis generated successfully!', 'success');
-    } else {
-      throw new Error('Invalid response structure from channel heatmap API');
-    }
-
-  } catch (error) {
-    console.error('Error generating channel heatmap analysis:', error);
-    showToastMessage('Failed to generate channel heatmap analysis. Please try again.', 'error');
-  }
-};
-
-// Generate Capability Heatmap analysis
-const generateCapabilityHeatmapAnalysis = async () => {
-  try {
-    showToastMessage('Generating capability heatmap analysis...', 'info');
-
-    const questionsArray = [];
-    const answersArray = [];
-
-    const sortedQuestions = [...questions].sort((a, b) => a.question_id - b.question_id);
-
-    sortedQuestions.forEach(question => {
-      if (userAnswers[question.question_id]) {
-        const cleanQuestion = String(question.question_text)
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
-
-        const cleanAnswer = String(userAnswers[question.question_id])
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
-
-        questionsArray.push(cleanQuestion);
-        answersArray.push(cleanAnswer);
-      }
-    });
-
-    if (questionsArray.length === 0) {
-      throw new Error('No answered questions available for capability heatmap analysis');
-    }
-
-    const response = await fetch(`${ML_API_BASE_URL}/capability-heatmap`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`ML API returned ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    // Handle both possible response formats
-    let dataToSave = null;
-    if (result && result.capabilityHeatmap) {
-      dataToSave = result.capabilityHeatmap;
-    } else if (result && result.capabilities) {
-      dataToSave = result;
-    } else {
-      throw new Error('Invalid response structure from capability heatmap API');
-    }
-
-    if (dataToSave) {
-      setCapabilityHeatmapData(dataToSave);
-      
-      // Save the capability heatmap analysis to backend
-      await saveAnalysisToBackend(dataToSave, 'capabilityHeatmap');
-      
-      showToastMessage('📊 Capability heatmap analysis generated successfully!', 'success');
-    }
-
-  } catch (error) {
-    console.error('Error generating capability heatmap analysis:', error);
-    showToastMessage('Failed to generate capability heatmap analysis. Please try again.', 'error');
-  }
-};
-
-
-  // Unified regenerate all function
+  // FIXED: Unified regenerate all function with proper state management
   const regenerateAllAnalysis = async () => {
-  if (!isPhaseCompleted(PHASES.INITIAL)) {
-    showToastMessage(
-      "Initial phase must be completed to regenerate analysis.",
-      "warning"
-    );
-    return;
-  }
+    if (!isPhaseCompleted(PHASES.INITIAL)) {
+      showToastMessage(
+        "Initial phase must be completed to regenerate analysis.",
+        "warning"
+      );
+      return;
+    }
 
-  try {
-    setIsRegeneratingAll(true);
-    showToastMessage("Regenerating all analysis components...", "info");
+    if (isRegeneratingAllRef.current || regenerationInProgressRef.current) {
+      console.log('📊 [BusinessSetupPage] Regeneration already in progress, skipping');
+      return;
+    }
 
-    // Clear existing data to trigger re-generation
-    setAnalysisResult("");
-    setCustomerSegmentationData(null);
-    setPurchaseCriteriaData(null);
-    setChannelHeatmapData(null);
-    setLoyaltyNPSData(null);
-    setCapabilityHeatmapData(null);
+    try {
+      isRegeneratingAllRef.current = true;
+      regenerationInProgressRef.current = true;
+      setIsAnalysisRegenerating(true);
+      
+      showToastMessage("Regenerating all analysis components...", "info");
+      
+      // Clear existing data
+      setAnalysisResult("");
+      setCustomerSegmentationData(null);
+      setPurchaseCriteriaData(null);
+      setChannelHeatmapData(null);
+      setLoyaltyNPSData(null);
+      setCapabilityHeatmapData(null);
 
-    // Wait a moment for state to clear
-    await new Promise(resolve => setTimeout(resolve, 100));
+      // Clear the generation queue
+      analysisGenerationQueueRef.current.clear();
 
-    // Regenerate all analyses
-    await Promise.all([
-      generateAnalysisWithFind(),
-      generateCustomerSegmentationAnalysis(),
-      generatePurchaseCriteriaAnalysis(),
-      generateLoyaltyNPSAnalysis(),
-      generateChannelHeatmapAnalysis(),
-      generateCapabilityHeatmapAnalysis()
-    ]);
+      // Wait for state to clear
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-    showToastMessage("All analysis components regenerated successfully!", "success");
+      // Generate all analyses in parallel
+      const analysisPromises = [
+        generateSingleAnalysis('swot', 'find', null, setAnalysisResult),
+        generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
+        generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
+        generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
+        generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
+        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData)
+      ];
 
-  } catch (error) {
-    console.error('Error regenerating all analysis:', error);
-    showToastMessage(
-      "Failed to regenerate some analysis components. Please try again.",
-      "error"
-    );
-  } finally {
-    setIsRegeneratingAll(false);
-  }
-};
+      const results = await Promise.allSettled(analysisPromises);
+      
+      // Check for failures
+      const failures = results.filter(result => result.status === 'rejected');
+      
+      if (failures.length > 0) {
+        console.error('📊 [BusinessSetupPage] Some analyses failed:', failures);
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All analysis components regenerated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('📊 [BusinessSetupPage] Error regenerating all analysis:', error);
+      showToastMessage(
+        "Failed to regenerate analysis components. Please try again.",
+        "error"
+      );
+    } finally {
+      isRegeneratingAllRef.current = false;
+      regenerationInProgressRef.current = false;
+      setIsAnalysisRegenerating(false);
+      analysisGenerationQueueRef.current.clear();
+    }
+  };
+
+  // FIXED: Analysis regeneration handler for EditableBriefSection
+  const handleAnalysisRegeneration = async () => {
+    if (!isPhaseCompleted(PHASES.INITIAL)) {
+      showToastMessage(
+        "Initial phase must be completed to regenerate analysis.",
+        "warning"
+      );
+      return;
+    }
+
+    if (regenerationInProgressRef.current) {
+      console.log('📊 [BusinessSetupPage] Analysis regeneration already in progress');
+      return;
+    }
+
+    return regenerateAllAnalysis();
+  };
 
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(userAnswers).length;
@@ -768,7 +409,7 @@ const generateCapabilityHeatmapAnalysis = async () => {
 
   // Generate unique keys for regeneration
   const getRegenerationKey = (componentName) => {
-    return isRegeneratingAll ? Date.now() : 'normal';
+    return isRegeneratingAllRef.current ? Date.now() : 'normal';
   };
 
   const handleCustomerSegmentationGenerated = (data) => {
@@ -886,10 +527,10 @@ const generateCapabilityHeatmapAnalysis = async () => {
       {/* Unified Regenerate Button */}
       <button
         onClick={regenerateAllAnalysis}
-        disabled={isRegeneratingAll || isLoadingAnalysis || !unlockedFeatures.analysis}
+        disabled={isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current || !unlockedFeatures.analysis}
         style={{
-          backgroundColor: isRegeneratingAll ? "#f3f4f6" : "#10b981",
-          color: isRegeneratingAll ? "#6b7280" : "#fff",
+          backgroundColor: (isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? "#f3f4f6" : "#10b981",
+          color: (isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? "#6b7280" : "#fff",
           border: "none",
           borderRadius: "13px",
           padding: "10px 18px",
@@ -897,12 +538,12 @@ const generateCapabilityHeatmapAnalysis = async () => {
           fontWeight: 500,
           display: "flex",
           alignItems: "center",
-          cursor: isRegeneratingAll ? "not-allowed" : "pointer",
+          cursor: (isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? "not-allowed" : "pointer",
           gap: "8px",
           transition: "all 0.2s ease"
         }}
       >
-        {isRegeneratingAll ? (
+        {(isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? (
           <>
             <Loader size={16} className="animate-spin" />
             Regenerating...
@@ -1059,9 +700,20 @@ const generateCapabilityHeatmapAnalysis = async () => {
   };
 
   const handleLoyaltyNPSGeneratedFromChat = (loyaltyNPSData) => {
-  setLoyaltyNPSData(loyaltyNPSData);
-  // Data is already saved in chat component, no need to save again
-};
+    setLoyaltyNPSData(loyaltyNPSData);
+    // Data is already saved in chat component, no need to save again
+  };
+
+  const handleChannelHeatmapGeneratedFromChat = (channelHeatmapData) => {
+    setChannelHeatmapData(channelHeatmapData);
+    // Data is already saved in chat component, no need to save again
+  };
+
+  const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
+    setCapabilityHeatmapData(capabilityHeatmapData);
+    // Data is already saved in chat component, no need to save again
+  };
+
   const handleStrategicAnalysisGenerated = (strategicAnalysis) => {
     setStrategicAnalysisResult(strategicAnalysis);
     setIsLoadingAnalysis(false);
@@ -1075,67 +727,24 @@ const generateCapabilityHeatmapAnalysis = async () => {
     }, 4000);
   };
 
-  const handleAnalysisRegeneration = async () => {
-  if (!isPhaseCompleted(PHASES.INITIAL)) {
-    showToastMessage(
-      "Initial phase must be completed to regenerate analysis.",
-      "warning"
-    );
-    return;
-  }
+  // FIXED: Manual analysis generation function
+  const handleManualAnalysisGeneration = async () => {
+    if (!isPhaseCompleted(PHASES.INITIAL)) {
+      showToastMessage(
+        "Complete the initial phase to generate analysis.",
+        "warning"
+      );
+      return;
+    }
 
-  try {
-    setIsAnalysisRegenerating(true);
-    showToastMessage("Regenerating analysis with updated answers...", "info");
+    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) {
+      console.log('📊 [BusinessSetupPage] Analysis generation already in progress');
+      return;
+    }
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    return regenerateAllAnalysis();
+  };
 
-    await Promise.all([
-      generateAnalysisWithFind(),
-      generateCustomerSegmentationAnalysis(),
-      generatePurchaseCriteriaAnalysis(),
-      generateLoyaltyNPSAnalysis(),
-      generateChannelHeatmapAnalysis(),
-      generateCapabilityHeatmapAnalysis()
-    ]);
-
-  } catch (error) {
-    showToastMessage(
-      "Failed to regenerate analysis. Please try again.",
-      "error"
-    );
-  } finally {
-    setIsAnalysisRegenerating(false);
-  }
-};
-const handleChannelHeatmapGeneratedFromChat = (channelHeatmapData) => {
-  setChannelHeatmapData(channelHeatmapData);
-  // Data is already saved in chat component, no need to save again
-};
-
-const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
-  setCapabilityHeatmapData(capabilityHeatmapData);
-  // Data is already saved in chat component, no need to save again
-};
-
- const handleManualAnalysisGeneration = async () => {
-  if (!isPhaseCompleted(PHASES.INITIAL)) {
-    showToastMessage(
-      "Complete the initial phase to generate analysis.",
-      "warning"
-    );
-    return;
-  }
-
-  await Promise.all([
-    generateAnalysisWithFind(),
-    generateCustomerSegmentationAnalysis(),
-    generatePurchaseCriteriaAnalysis(),
-    generateLoyaltyNPSAnalysis(),
-    generateChannelHeatmapAnalysis(),
-    generateCapabilityHeatmapAnalysis()
-  ]);
-};
   const completedPhases = new Set();
   if (isPhaseCompleted(PHASES.INITIAL)) completedPhases.add("initial");
   if (isPhaseCompleted(PHASES.ESSENTIAL)) completedPhases.add("essential");
@@ -1148,14 +757,14 @@ const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
 
   // Render analysis content with loading state
   const renderAnalysisContent = () => {
-    if (isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAll || isLoadingLatestAnalysis) {
+    if (isLoadingAnalysis || isAnalysisRegenerating || isRegeneratingAllRef.current || regenerationInProgressRef.current || isLoadingLatestAnalysis) {
       return (
         <div className="analysis-loading">
           <Loader size={24} className="spinner" />
           <span>
             {isLoadingLatestAnalysis
               ? "Loading latest analysis..."
-              : isRegeneratingAll
+              : (isRegeneratingAllRef.current || regenerationInProgressRef.current)
               ? "Regenerating all analysis components..."
               : isAnalysisRegenerating
               ? "Regenerating your business analysis..."
@@ -1195,52 +804,50 @@ const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
             />
           </div>
           <div ref={channelHeatmapRef}>
-  <ChannelHeatmap
-    questions={questions}
-    userAnswers={userAnswers}
-    businessName={businessData.name}
-    onDataGenerated={handleChannelHeatmapGenerated}
-    onRegenerate={() => {
-      // Clear data and regenerate
-      setChannelHeatmapData(null);
-      generateChannelHeatmapAnalysis();
-    }}
-    isRegenerating={isRegeneratingAll} 
-    channelHeatmapData={channelHeatmapData}
-    key={`channel-heatmap-${getRegenerationKey('channelHeatmap')}`}
-  />
-</div>
+            <ChannelHeatmap
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleChannelHeatmapGenerated}
+              onRegenerate={() => {
+                // Individual regeneration disabled - use unified regeneration
+                console.log('Individual channel heatmap regeneration disabled');
+              }}
+              isRegenerating={isRegeneratingAllRef.current || regenerationInProgressRef.current} 
+              channelHeatmapData={channelHeatmapData}
+              key={`channel-heatmap-${getRegenerationKey('channelHeatmap')}`}
+            />
+          </div>
           <div ref={loyaltyNpsRef}>
-  <LoyaltyNPS
-    questions={questions}
-    userAnswers={userAnswers}
-    businessName={businessData.name}
-    onDataGenerated={handleLoyaltyNPSGenerated}
-    onRegenerate={() => { 
-      setLoyaltyNPSData(null);
-      generateLoyaltyNPSAnalysis();
-    }}
-    isRegenerating={isRegeneratingAll} 
-    loyaltyNPSData={loyaltyNPSData}
-    key={`loyalty-nps-${getRegenerationKey('loyaltyNPS')}`}
-  />
-</div>
+            <LoyaltyNPS
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleLoyaltyNPSGenerated}
+              onRegenerate={() => { 
+                // Individual regeneration disabled - use unified regeneration
+                console.log('Individual loyalty NPS regeneration disabled');
+              }}
+              isRegenerating={isRegeneratingAllRef.current || regenerationInProgressRef.current} 
+              loyaltyNPSData={loyaltyNPSData}
+              key={`loyalty-nps-${getRegenerationKey('loyaltyNPS')}`}
+            />
+          </div>
           <div ref={capabilityHeatmapRef}>
-  <CapabilityHeatmap
-    questions={questions}
-    userAnswers={userAnswers}
-    businessName={businessData.name}
-    onDataGenerated={handleCapabilityHeatmapGenerated}
-    onRegenerate={() => {
-      // Clear data and regenerate
-      setCapabilityHeatmapData(null);
-      generateCapabilityHeatmapAnalysis();
-    }}
-    isRegenerating={isRegeneratingAll} 
-    capabilityHeatmapData={capabilityHeatmapData}
-    key={`capability-heatmap-${getRegenerationKey('capabilityHeatmap')}`}
-  />
-</div>
+            <CapabilityHeatmap
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={handleCapabilityHeatmapGenerated}
+              onRegenerate={() => {
+                // Individual regeneration disabled - use unified regeneration
+                console.log('Individual capability heatmap regeneration disabled');
+              }}
+              isRegenerating={isRegeneratingAllRef.current || regenerationInProgressRef.current} 
+              capabilityHeatmapData={capabilityHeatmapData}
+              key={`capability-heatmap-${getRegenerationKey('capabilityHeatmap')}`}
+            />
+          </div>
         </div>
       );
     }
@@ -1257,9 +864,9 @@ const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
           <button
             className="generate-analysis-btn"
             onClick={handleManualAnalysisGeneration}
-            disabled={isLoadingAnalysis}
+            disabled={isLoadingAnalysis || regenerationInProgressRef.current || isRegeneratingAllRef.current}
           >
-            {isLoadingAnalysis
+            {(isLoadingAnalysis || regenerationInProgressRef.current || isRegeneratingAllRef.current)
               ? t("Generating...")
               : t("Generate Analysis Now")}
           </button>
@@ -1366,15 +973,17 @@ const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
           </div>
 
           <ChatComponent
-  userAnswers={userAnswers}
-  onBusinessDataUpdate={handleBusinessDataUpdate}
-  onNewAnswer={handleNewAnswer}
-  onAnalysisGenerated={handleAnalysisGenerated}
-  onCustomerSegmentationGenerated={handleCustomerSegmentationGeneratedFromChat}
-  onPurchaseCriteriaGenerated={handlePurchaseCriteriaGeneratedFromChat}
-  onLoyaltyNPSGenerated={handleLoyaltyNPSGeneratedFromChat} // Add this line
-  onQuestionsLoaded={handleQuestionsLoaded}
-/>
+            userAnswers={userAnswers}
+            onBusinessDataUpdate={handleBusinessDataUpdate}
+            onNewAnswer={handleNewAnswer}
+            onAnalysisGenerated={handleAnalysisGenerated}
+            onCustomerSegmentationGenerated={handleCustomerSegmentationGeneratedFromChat}
+            onPurchaseCriteriaGenerated={handlePurchaseCriteriaGeneratedFromChat}
+            onLoyaltyNPSGenerated={handleLoyaltyNPSGeneratedFromChat}
+            onChannelHeatmapGenerated={handleChannelHeatmapGeneratedFromChat}
+            onCapabilityHeatmapGenerated={handleCapabilityHeatmapGeneratedFromChat}
+            onQuestionsLoaded={handleQuestionsLoaded}
+          />
         </div>
 
         {questionsLoaded && (
@@ -1490,7 +1099,7 @@ const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={handleAnswerUpdate}
                       onAnalysisRegenerate={handleAnalysisRegeneration}
-                      isAnalysisRegenerating={isAnalysisRegenerating}
+                      isAnalysisRegenerating={isAnalysisRegenerating || regenerationInProgressRef.current || isRegeneratingAllRef.current}
                       completedPhases={completedPhases}
                     />
                   </div>

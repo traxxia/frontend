@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Building2, Loader, Eye } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils'; // Import the utility function
 import '../styles/CompanyManagement.css';
 
 // ------------------ CreateCompanyForm ------------------
@@ -188,8 +189,15 @@ const CompanyDetails = ({ company, onClose }) => {
             </div>
             <div className="detail-item">
               <label>Created</label>
-              <span>{new Date(company.created_at).toLocaleDateString()}</span>
+              <span>{formatDate(company.created_at)}</span>
             </div>
+            {/* Add more date fields if they exist */}
+            {company.updated_at && (
+              <div className="detail-item">
+                <label>Last Updated</label>
+                <span>{formatDate(company.updated_at)}</span>
+              </div>
+            )}
           </div>
 
           <div className="admin-section">
@@ -197,6 +205,10 @@ const CompanyDetails = ({ company, onClose }) => {
             <div className="admin-info">
               <p><strong>Name:</strong> {company.admin_name}</p>
               <p><strong>Email:</strong> {company.admin_email}</p>
+              {/* If admin has creation date */}
+              {company.admin_created_at && (
+                <p><strong>Admin Since:</strong> {formatDate(company.admin_created_at)}</p>
+              )}
             </div>
           </div>
 
@@ -350,7 +362,7 @@ const CompanyManagement = ({ onToast }) => {
       {paginatedCompanies.length > 0 ? (
         <>
           <div className="table-container">
-            <table className="company-table ">
+            <table className="company-table">
               <thead>
                 <tr>
                   <th>Company Name</th>
@@ -361,6 +373,7 @@ const CompanyManagement = ({ onToast }) => {
                   <th>Active Users</th>
                   <th>Admin Name</th>
                   <th>Admin Email</th>
+                  <th>Created Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -379,6 +392,7 @@ const CompanyManagement = ({ onToast }) => {
                     <td>{company.active_users}</td>
                     <td>{company.admin_name}</td>
                     <td>{company.admin_email}</td>
+                    <td>{formatDate(company.created_at)}</td>
                     <td>
                       <button 
                         className="secondary-btn small-btn"

@@ -11,7 +11,7 @@ const CapabilityHeatmap = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  capabilityHeatmapData = null // Add this prop to receive data from parent
+  capabilityHeatmapData = null
 }) => {
   const [capabilityData, setCapabilityData] = useState(capabilityHeatmapData);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,18 +19,35 @@ const CapabilityHeatmap = ({
   const [selectedCell, setSelectedCell] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  const { t } = useTranslation();
   
-  // Add refs to track component mount
+  // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
+  const isLoadingRef = useRef(false);
+  const hasInitialized = useRef(false);
+  const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
+    if (isLoadingRef.current || hasLoadedFromBackend) {
+      console.log('📊 [CapabilityHeatmap] Skipping API call - already loading or loaded');
+      return false;
+    }
+
     try {
+      isLoadingRef.current = true;
+      console.log('📊 [CapabilityHeatmap] Loading from backend...');
+      
       const token = getAuthToken();
+      if (!token) {
+        console.log('📊 [CapabilityHeatmap] No auth token available');
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
+        return false;
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
@@ -47,37 +64,46 @@ const CapabilityHeatmap = ({
         
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 Loaded existing capability heatmap from backend:', latestAnalysis.metadata.analysisData);
-          setCapabilityData(latestAnalysis.metadata.analysisData);
-          setHasLoadedFromBackend(true);
-          if (onDataGenerated) {
-            onDataGenerated(latestAnalysis.metadata.analysisData);
+          console.log('📊 [CapabilityHeatmap] Loaded existing data from backend');
+          
+          if (isMounted.current) {
+            setCapabilityData(latestAnalysis.metadata.analysisData);
+            setHasLoadedFromBackend(true);
+            if (onDataGenerated) {
+              onDataGenerated(latestAnalysis.metadata.analysisData);
+            }
           }
           return true;
         } else {
-          console.log('📊 No existing capability heatmap found in backend');
-          setHasLoadedFromBackend(true);
+          console.log('📊 [CapabilityHeatmap] No existing data found in backend');
+          if (isMounted.current) {
+            setHasLoadedFromBackend(true);
+          }
           return false;
         }
       } else {
-        console.error('Failed to load conversation history:', response.statusText);
-        setHasLoadedFromBackend(true);
+        console.error('📊 [CapabilityHeatmap] Failed to load conversation history:', response.statusText);
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
         return false;
       }
     } catch (error) {
-      console.error('Error loading capability heatmap:', error);
-      setHasLoadedFromBackend(true);
+      console.error('📊 [CapabilityHeatmap] Error loading data:', error);
+      if (isMounted.current) {
+        setHasLoadedFromBackend(true);
+      }
       return false;
+    } finally {
+      isLoadingRef.current = false;
     }
   };
 
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Local regeneration (should not happen in new flow, but keep as fallback)
       setCapabilityData(null);
       setError(null);
     }
@@ -86,21 +112,34 @@ const CapabilityHeatmap = ({
   // Update capability data when prop changes
   useEffect(() => {
     if (capabilityHeatmapData && capabilityHeatmapData !== capabilityData) {
-      console.log('📊 Updating capability heatmap data from props:', capabilityHeatmapData);
+      console.log('📊 [CapabilityHeatmap] Updating data from props');
       setCapabilityData(capabilityHeatmapData);
+      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(capabilityHeatmapData);
       }
     }
-  }, [capabilityHeatmapData, capabilityData, onDataGenerated]);
+  }, [capabilityHeatmapData]);
 
-  // Load existing analysis on mount
+  // Initialize component - only run once
   useEffect(() => {
+    if (hasInitialized.current) return;
+    
     isMounted.current = true;
+    hasInitialized.current = true;
     
     const initializeComponent = async () => {
-      // Only load from backend if no data was provided via props
-      if (!capabilityHeatmapData) {
+      console.log('📊 [CapabilityHeatmap] Initializing component', {
+        hasPropsData: !!capabilityHeatmapData,
+        hasLoadedFromBackend,
+        isLoading: isLoadingRef.current
+      });
+
+      if (capabilityHeatmapData) {
+        console.log('📊 [CapabilityHeatmap] Using props data');
+        setCapabilityData(capabilityHeatmapData);
+        setHasLoadedFromBackend(true);
+      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
         await loadExistingAnalysis();
       } else {
         setHasLoadedFromBackend(true);
@@ -109,11 +148,11 @@ const CapabilityHeatmap = ({
 
     initializeComponent();
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
+      isLoadingRef.current = false;
     };
-  }, []); // Empty dependency array - only run on mount
+  }, []);
   
   // Get color based on capability level and type
   const getCellColor = (capability, maturityLevel) => {

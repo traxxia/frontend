@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Loader, Plus } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils'; // Import the utility function
 
 const UserOverview = ({ onToast }) => {
   const [users, setUsers] = useState([]);
@@ -222,8 +223,8 @@ const UserOverview = ({ onToast }) => {
                   </td>
                   <td>{user.role}</td>
                   <td>{user.company_id || 'N/A'}</td>
-                  <td>{user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</td>
-                  <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td>{user.last_login ? formatDate(user.last_login) : 'Never'}</td>
+                  <td>{formatDate(user.created_at)}</td>
                 </tr>
               ))}
             </tbody>

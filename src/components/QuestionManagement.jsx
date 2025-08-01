@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, HelpCircle, Edit, Trash2, Loader, Save, X } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils'; // Import the utility function
 
 const QuestionManagement = ({ onToast }) => {
   const [questions, setQuestions] = useState([]);
@@ -304,8 +305,14 @@ const QuestionCard = ({
                 <strong>Assigned to:</strong> {question.assigned_to_companies} companies
               </span>
               <span className="detail-item">
-                <strong>Created:</strong> {new Date(question.created_at).toLocaleDateString()}
+                <strong>Created:</strong> {formatDate(question.created_at)}
               </span>
+              {/* Add more date fields if they exist */}
+              {question.updated_at && (
+                <span className="detail-item">
+                  <strong>Updated:</strong> {formatDate(question.updated_at)}
+                </span>
+              )}
             </div>
           </>
         )}

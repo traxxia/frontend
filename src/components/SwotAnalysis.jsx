@@ -29,29 +29,26 @@ const SwotAnalysis = ({
     errorMessage = 'Failed to parse analysis data';
   }
 
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
   // Render SWOT table if we have the correct data structure
   if (swotData && (swotData.strengths || swotData.weaknesses || swotData.opportunities || swotData.threats)) {
     return (
       <div className="swot-analysis-container">
         {/* Header with regenerate button */}
-
         <div className="ln-header">
           <div className="ln-title-section">
             <Target className="ln-icon" size={24} />
             <h2 className="ln-title">{t("SWOT Analysis")}</h2>
           </div>
           <RegenerateButton
-              onRegenerate={onRegenerate}
-              isRegenerating={isRegenerating}
-              canRegenerate={canRegenerate}
-              sectionName="SWOT Analysis"
-              size="medium"
-            />
+            onRegenerate={onRegenerate}
+            isRegenerating={isRegenerating}
+            canRegenerate={canRegenerate}
+            sectionName="SWOT Analysis"
+            size="medium"
+          />
         </div>
-
-         
 
         <div className="table-responsive">
           <table className="table table-bordered table-striped swot-table">

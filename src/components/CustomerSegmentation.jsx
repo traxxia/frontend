@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, TrendingUp, Star, Calendar, Filter, Loader } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
-import '../styles/Analytics.css'; // We'll create this CSS file
+import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 
 const CustomerSegmentation = ({
@@ -12,15 +12,17 @@ const CustomerSegmentation = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  customerSegmentationData = null // Add this prop to receive data from parent
+  customerSegmentationData = null
 }) => {
   const [segmentationData, setSegmentationData] = useState(customerSegmentationData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
   
-  // Add refs to track component mount
+  // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
+  const isLoadingRef = useRef(false);
+  const hasInitialized = useRef(false);
   const { t } = useTranslation();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -31,8 +33,23 @@ const CustomerSegmentation = ({
 
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
+    if (isLoadingRef.current || hasLoadedFromBackend) {
+      console.log('📊 [CustomerSegmentation] Skipping API call - already loading or loaded');
+      return false;
+    }
+
     try {
+      isLoadingRef.current = true;
+      console.log('📊 [CustomerSegmentation] Loading from backend...');
+      
       const token = getAuthToken();
+      if (!token) {
+        console.log('📊 [CustomerSegmentation] No auth token available');
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
+        return false;
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
         headers: {
@@ -49,37 +66,46 @@ const CustomerSegmentation = ({
         
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 Loaded existing customer segmentation from backend:', latestAnalysis.metadata.analysisData);
-          setSegmentationData(latestAnalysis.metadata.analysisData);
-          setHasLoadedFromBackend(true);
-          if (onDataGenerated) {
-            onDataGenerated(latestAnalysis.metadata.analysisData);
+          console.log('📊 [CustomerSegmentation] Loaded existing data from backend');
+          
+          if (isMounted.current) {
+            setSegmentationData(latestAnalysis.metadata.analysisData);
+            setHasLoadedFromBackend(true);
+            if (onDataGenerated) {
+              onDataGenerated(latestAnalysis.metadata.analysisData);
+            }
           }
           return true;
         } else {
-          console.log('📊 No existing customer segmentation found in backend');
-          setHasLoadedFromBackend(true);
+          console.log('📊 [CustomerSegmentation] No existing data found in backend');
+          if (isMounted.current) {
+            setHasLoadedFromBackend(true);
+          }
           return false;
         }
       } else {
-        console.error('Failed to load conversation history:', response.statusText);
-        setHasLoadedFromBackend(true);
+        console.error('📊 [CustomerSegmentation] Failed to load conversation history:', response.statusText);
+        if (isMounted.current) {
+          setHasLoadedFromBackend(true);
+        }
         return false;
       }
     } catch (error) {
-      console.error('Error loading customer segmentation:', error);
-      setHasLoadedFromBackend(true);
+      console.error('📊 [CustomerSegmentation] Error loading data:', error);
+      if (isMounted.current) {
+        setHasLoadedFromBackend(true);
+      }
       return false;
+    } finally {
+      isLoadingRef.current = false;
     }
   };
 
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      // Use parent's regeneration logic
       onRegenerate();
     } else {
-      // Local regeneration (should not happen in new flow, but keep as fallback)
       setSegmentationData(null);
       setError(null);
     }
@@ -88,21 +114,34 @@ const CustomerSegmentation = ({
   // Update segmentation data when prop changes
   useEffect(() => {
     if (customerSegmentationData && customerSegmentationData !== segmentationData) {
-      console.log('📊 Updating customer segmentation data from props:', customerSegmentationData);
+      console.log('📊 [CustomerSegmentation] Updating data from props');
       setSegmentationData(customerSegmentationData);
+      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(customerSegmentationData);
       }
     }
-  }, [customerSegmentationData, segmentationData, onDataGenerated]);
+  }, [customerSegmentationData]);
 
-  // Load existing analysis on mount
+  // Initialize component - only run once
   useEffect(() => {
+    if (hasInitialized.current) return;
+    
     isMounted.current = true;
+    hasInitialized.current = true;
     
     const initializeComponent = async () => {
-      // Only load from backend if no data was provided via props
-      if (!customerSegmentationData) {
+      console.log('📊 [CustomerSegmentation] Initializing component', {
+        hasPropsData: !!customerSegmentationData,
+        hasLoadedFromBackend,
+        isLoading: isLoadingRef.current
+      });
+
+      if (customerSegmentationData) {
+        console.log('📊 [CustomerSegmentation] Using props data');
+        setSegmentationData(customerSegmentationData);
+        setHasLoadedFromBackend(true);
+      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
         await loadExistingAnalysis();
       } else {
         setHasLoadedFromBackend(true);
@@ -111,11 +150,11 @@ const CustomerSegmentation = ({
 
     initializeComponent();
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
+      isLoadingRef.current = false;
     };
-  }, []); // Empty dependency array - only run on mount
+  }, []);
 
   // Create CSS pie chart data
   const createPieChartData = () => {
@@ -131,7 +170,7 @@ const CustomerSegmentation = ({
         color: SEGMENT_COLORS[index % SEGMENT_COLORS.length],
         startAngle,
         endAngle: runningTotal,
-        offset: runningTotal - (segment.percentage / 2) // For label positioning
+        offset: runningTotal - (segment.percentage / 2)
       };
     });
 
@@ -375,8 +414,6 @@ const CustomerSegmentation = ({
           </div>
         )}
       </div>
-
-      {/* Segments Details */}
     </div>
   );
 };

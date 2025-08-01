@@ -8,8 +8,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin Panel
-import ProtectedRoute from './components/ProtectedRoute';
-import AuditTrailPage from './pages/AuditTrailPage';
+import ProtectedRoute from './components/ProtectedRoute'; 
 import BusinessSetupPage from './pages/BusinessSetupPage';
 
 const App = () => {
@@ -72,15 +71,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          
-          <Route
-            path="/audit-trail"
-            element={
-              <ProtectedRoute>
-                <AuditTrailPage />
-              </ProtectedRoute>
-            }
-          />
+           
         </Routes>
       </div>
     </Router>

@@ -18,6 +18,7 @@ import {
   Hash,
   Bot
 } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils'; // Import the utility function
 import '../styles/UserHistory.css';
 
 const UserHistory = ({ onToast }) => {
@@ -320,12 +321,12 @@ const UserHistoryCard = ({
               </div>
               <div className="meta-item">
                 <Calendar size={14} />
-                <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
+                <span>Joined {formatDate(user.created_at)}</span>
               </div>
               {user.last_login && (
                 <div className="meta-item">
                   <Activity size={14} />
-                  <span>Last seen {new Date(user.last_login).toLocaleDateString()}</span>
+                  <span>Last seen {formatDate(user.last_login)}</span>
                 </div>
               )}
             </div>
@@ -460,7 +461,7 @@ const ChatHistory = ({ chatHistory }) => {
               <div className="message-header">
                 <span className="message-type">{message.message_type}</span>
                 <span className="message-time">
-                  {new Date(message.timestamp).toLocaleString()}
+                  {formatDate(message.timestamp)} {new Date(message.timestamp).toLocaleTimeString()}
                 </span>
                 {message.question_id && (
                   <span className="question-id">Q{message.question_id}</span>
@@ -515,7 +516,7 @@ const AnswersHistory = ({ answers }) => {
               </div>
               
               <div className="answer-meta">
-                <span>{new Date(answer.answered_at).toLocaleDateString()}</span>
+                <span>{formatDate(answer.answered_at)}</span>
                 <span>{answer.attempt_count} attempt{answer.attempt_count > 1 ? 's' : ''}</span>
               </div>
             </div>
@@ -604,7 +605,7 @@ const SessionsHistory = ({ sessions }) => {
               <div className="session-time">
                 <div className="time-label">Started</div>
                 <div className="time-value">
-                  {new Date(session.started_at).toLocaleString()}
+                  {formatDate(session.started_at)} {new Date(session.started_at).toLocaleTimeString()}
                 </div>
               </div>
               
@@ -612,7 +613,7 @@ const SessionsHistory = ({ sessions }) => {
                 <div className="session-time">
                   <div className="time-label">Last Activity</div>
                   <div className="time-value">
-                    {new Date(session.last_activity).toLocaleString()}
+                    {formatDate(session.last_activity)} {new Date(session.last_activity).toLocaleTimeString()}
                   </div>
                 </div>
               )}
@@ -621,7 +622,7 @@ const SessionsHistory = ({ sessions }) => {
                 <div className="session-time">
                   <div className="time-label">Completed</div>
                   <div className="time-value">
-                    {new Date(session.completedAt).toLocaleString()}
+                    {formatDate(session.completedAt)} {new Date(session.completedAt).toLocaleTimeString()}
                   </div>
                 </div>
               )}
@@ -672,7 +673,7 @@ const ResultsHistory = ({ results }) => {
               </h4>
               <div className="result-meta">
                 <span className="result-date">
-                  {new Date(result.generated_at).toLocaleDateString()}
+                  {formatDate(result.generated_at)}
                 </span>
                 {result.quality_score && (
                   <span className={`quality-badge ${getQualityClass(result.quality_score)}`}>
