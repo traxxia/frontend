@@ -42,6 +42,7 @@ stages:
               repository: $(IMAGE_NAME)
               command: buildAndPush
               Dockerfile: 'docker/Dockerfile'
+              buildContext: '.'
               tags: |
                 latest
                 $(IMAGE_VERSION)
