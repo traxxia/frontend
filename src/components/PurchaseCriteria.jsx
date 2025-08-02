@@ -4,7 +4,7 @@ import RegenerateButton from './RegenerateButton';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 
-const PurchaseCriteria = ({ 
+const PurchaseCriteria = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
@@ -18,7 +18,7 @@ const PurchaseCriteria = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  
+
   // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
   const isLoadingRef = useRef(false);
@@ -39,17 +39,14 @@ const PurchaseCriteria = ({
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
     if (isLoadingRef.current || hasLoadedFromBackend) {
-      console.log('📊 [PurchaseCriteria] Skipping API call - already loading or loaded');
       return false;
     }
 
     try {
       isLoadingRef.current = true;
-      console.log('📊 [PurchaseCriteria] Loading from backend...');
-      
+
       const token = getAuthToken();
       if (!token) {
-        console.log('📊 [PurchaseCriteria] No auth token available');
         if (isMounted.current) {
           setHasLoadedFromBackend(true);
         }
@@ -65,14 +62,13 @@ const PurchaseCriteria = ({
 
       if (response.ok) {
         const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg => 
+        const analysisMessages = result.chat_messages?.filter(msg =>
           msg.metadata?.analysisType === 'purchaseCriteria' && msg.metadata?.analysisData
         );
-        
+
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 [PurchaseCriteria] Loaded existing data from backend');
-          
+
           if (isMounted.current) {
             setCriteriaData(latestAnalysis.metadata.analysisData);
             setHasLoadedFromBackend(true);
@@ -82,7 +78,6 @@ const PurchaseCriteria = ({
           }
           return true;
         } else {
-          console.log('📊 [PurchaseCriteria] No existing data found in backend');
           if (isMounted.current) {
             setHasLoadedFromBackend(true);
           }
@@ -119,7 +114,6 @@ const PurchaseCriteria = ({
   // Update criteria data when prop changes
   useEffect(() => {
     if (purchaseCriteriaData && purchaseCriteriaData !== criteriaData) {
-      console.log('📊 [PurchaseCriteria] Updating data from props');
       setCriteriaData(purchaseCriteriaData);
       setHasLoadedFromBackend(true);
       if (onDataGenerated) {
@@ -131,19 +125,14 @@ const PurchaseCriteria = ({
   // Initialize component - only run once
   useEffect(() => {
     if (hasInitialized.current) return;
-    
+
     isMounted.current = true;
     hasInitialized.current = true;
-    
+
     const initializeComponent = async () => {
-      console.log('📊 [PurchaseCriteria] Initializing component', {
-        hasPropsData: !!purchaseCriteriaData,
-        hasLoadedFromBackend,
-        isLoading: isLoadingRef.current
-      });
 
       if (purchaseCriteriaData) {
-        console.log('📊 [PurchaseCriteria] Using props data');
+
         setCriteriaData(purchaseCriteriaData);
         setHasLoadedFromBackend(true);
       } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
@@ -164,12 +153,12 @@ const PurchaseCriteria = ({
   // Create radar chart points
   const createRadarChart = () => {
     if (!criteriaData?.criteria) return { points: '', viewBox: '0 0 200 200' };
-    
+
     const center = 100;
     const radius = 70;
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
-    
+
     const points = criteria.map((criterion, index) => {
       const angle = index * angleStep - Math.PI / 2; // Start from top
       const value = criterion.selfRating / criteriaData.scale.max;
@@ -177,22 +166,22 @@ const PurchaseCriteria = ({
       const y = center + radius * value * Math.sin(angle);
       return `${x},${y}`;
     }).join(' ');
-    
+
     return { points, viewBox: '0 0 200 200' };
   };
 
   // Create radar chart grid lines
   const createRadarGrid = () => {
     if (!criteriaData?.criteria) return [];
-    
+
     const center = 100;
     const radius = 70;
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
-    
+
     const gridLines = [];
     const levels = [0.2, 0.4, 0.6, 0.8, 1.0];
-    
+
     // Concentric polygons
     levels.forEach((level, levelIndex) => {
       const points = criteria.map((_, index) => {
@@ -201,7 +190,7 @@ const PurchaseCriteria = ({
         const y = center + radius * level * Math.sin(angle);
         return `${x},${y}`;
       }).join(' ');
-      
+
       gridLines.push(
         <polygon
           key={`level-${levelIndex}`}
@@ -213,13 +202,13 @@ const PurchaseCriteria = ({
         />
       );
     });
-    
+
     // Radial lines
     criteria.forEach((_, index) => {
       const angle = index * angleStep - Math.PI / 2;
       const x = center + radius * Math.cos(angle);
       const y = center + radius * Math.sin(angle);
-      
+
       gridLines.push(
         <line
           key={`radial-${index}`}
@@ -233,24 +222,24 @@ const PurchaseCriteria = ({
         />
       );
     });
-    
+
     return gridLines;
   };
 
   // Create radar chart labels
   const createRadarLabels = () => {
     if (!criteriaData?.criteria) return [];
-    
+
     const center = 100;
     const radius = 85;
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
-    
+
     return criteria.map((criterion, index) => {
       const angle = index * angleStep - Math.PI / 2;
       const x = center + radius * Math.cos(angle);
       const y = center + radius * Math.sin(angle);
-      
+
       return (
         <text
           key={`label-${index}`}
@@ -288,11 +277,11 @@ const PurchaseCriteria = ({
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
-            {isRegenerating 
+            {isRegenerating
               ? t("Regenerating purchase criteria analysis...")
               : !hasLoadedFromBackend
-              ? t("Loading purchase criteria analysis...")
-              : t("Generating purchase criteria analysis...")
+                ? t("Loading purchase criteria analysis...")
+                : t("Generating purchase criteria analysis...")
             }
           </span>
         </div>
@@ -328,11 +317,11 @@ const PurchaseCriteria = ({
           <Target size={48} className="empty-icon" />
           <h3>Purchase Criteria Analysis</h3>
           <p>
-            {answeredCount < 3 
+            {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate purchase criteria insights.`
               : hasLoadedFromBackend
-              ? "Purchase criteria analysis will be generated automatically after completing the initial phase."
-              : "Loading purchase criteria analysis..."
+                ? "Purchase criteria analysis will be generated automatically after completing the initial phase."
+                : "Loading purchase criteria analysis..."
             }
           </p>
         </div>
@@ -344,31 +333,21 @@ const PurchaseCriteria = ({
 
   return (
     <div className="purchase-criteria">
-      {/* Header with regenerate button */}
+      {/* Header with regenerate button - Updated to match CapabilityHeatmap style */}
       <div className="pc-header">
         <div className="pc-title-section">
           <Target className="pc-icon" size={24} />
           <h2 className="pc-title">{t("Purchase Criteria Matrix")}</h2>
         </div>
-        
-        {/* Regenerate Button */}
-        <button
-          onClick={handleRegenerate}
-          disabled={isRegenerating || !canRegenerate}
-          className="regenerate-button"
-        >
-          {isRegenerating ? (
-            <>
-              <Loader size={16} className="spinner" />
-              Regenerating...
-            </>
-          ) : (
-            <>
-              <RefreshCw size={16} />
-              Regenerate
-            </>
-          )}
-        </button>
+
+        {/* Updated Regenerate Button to use RegenerateButton component */}
+        <RegenerateButton
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          sectionName="Purchase Criteria"
+          size="medium"
+        />
       </div>
 
       {/* Key Metrics */}
@@ -397,8 +376,8 @@ const PurchaseCriteria = ({
             <span>Top Performer</span>
           </div>
           <p className="pc-metric-value">
-            {criteriaData.criteria?.reduce((max, criterion) => 
-              criterion.selfRating > max.selfRating ? criterion : max, 
+            {criteriaData.criteria?.reduce((max, criterion) =>
+              criterion.selfRating > max.selfRating ? criterion : max,
               criteriaData.criteria[0]
             )?.name || 'N/A'}
           </p>
@@ -414,7 +393,7 @@ const PurchaseCriteria = ({
             <svg className="radar-chart" viewBox={radarData.viewBox}>
               {/* Grid */}
               {createRadarGrid()}
-              
+
               {/* Data polygon */}
               <polygon
                 points={radarData.points}
@@ -423,7 +402,7 @@ const PurchaseCriteria = ({
                 strokeWidth="2"
                 className="radar-data"
               />
-              
+
               {/* Data points */}
               {criteriaData.criteria?.map((criterion, index) => {
                 const center = 100;
@@ -433,7 +412,7 @@ const PurchaseCriteria = ({
                 const value = criterion.selfRating / criteriaData.scale.max;
                 const x = center + radius * value * Math.cos(angle);
                 const y = center + radius * value * Math.sin(angle);
-                
+
                 return (
                   <circle
                     key={`point-${index}`}
@@ -447,7 +426,7 @@ const PurchaseCriteria = ({
                   />
                 );
               })}
-              
+
               {/* Labels */}
               {createRadarLabels()}
             </svg>
@@ -465,9 +444,9 @@ const PurchaseCriteria = ({
                   <span className="criteria-rating">{criterion.selfRating}/{criteriaData.scale.max}</span>
                 </div>
                 <div className="criteria-bar-container">
-                  <div 
-                    className="criteria-bar-fill" 
-                    style={{ 
+                  <div
+                    className="criteria-bar-fill"
+                    style={{
                       width: `${(criterion.selfRating / criteriaData.scale.max) * 100}%`,
                       backgroundColor: getPerformanceColor(criterion.selfRating)
                     }}
@@ -487,7 +466,7 @@ const PurchaseCriteria = ({
             ))}
           </div>
         </div>
-      </div>   
+      </div>
     </div>
   );
 };

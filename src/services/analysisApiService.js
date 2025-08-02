@@ -31,7 +31,7 @@ class AnalysisApiService {
       }
 
       const result = await response.json();
-      console.log(`✅ ${analysisType} analysis saved successfully:`, result);
+       
       return result;
       
     } catch (error) {
@@ -68,7 +68,7 @@ class AnalysisApiService {
       }
 
       const result = await response.json();
-      console.log(`✅ Retrieved ${analysisType} analysis:`, result);
+       
       return result;
       
     } catch (error) {
@@ -95,7 +95,7 @@ class AnalysisApiService {
       }
 
       const result = await response.json();
-      console.log('✅ Retrieved session analyses:', result);
+       
       return result;
       
     } catch (error) {
@@ -131,7 +131,7 @@ class AnalysisApiService {
       }
 
       const result = await response.json();
-      console.log('✅ Retrieved latest analyses:', result);
+       
       return result;
       
     } catch (error) {
@@ -164,7 +164,7 @@ class AnalysisApiService {
       }
 
       const result = await response.json();
-      console.log(`✅ Deleted ${analysisType} analysis:`, result);
+       
       return result;
       
     } catch (error) {

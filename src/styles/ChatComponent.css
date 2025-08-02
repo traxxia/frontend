@@ -163,6 +163,7 @@
 .message-text {
   white-space: pre-wrap;
   font-weight: 500;
+  padding:0px;
 }
 
 .message-timestamp {

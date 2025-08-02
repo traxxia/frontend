@@ -19,7 +19,7 @@ const ChannelHeatmap = ({
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  
+
   // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
   const isLoadingRef = useRef(false);
@@ -32,17 +32,14 @@ const ChannelHeatmap = ({
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
     if (isLoadingRef.current || hasLoadedFromBackend) {
-      console.log('📊 [ChannelHeatmap] Skipping API call - already loading or loaded');
       return false;
     }
 
     try {
       isLoadingRef.current = true;
-      console.log('📊 [ChannelHeatmap] Loading from backend...');
-      
+
       const token = getAuthToken();
       if (!token) {
-        console.log('📊 [ChannelHeatmap] No auth token available');
         if (isMounted.current) {
           setHasLoadedFromBackend(true);
         }
@@ -58,14 +55,13 @@ const ChannelHeatmap = ({
 
       if (response.ok) {
         const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg => 
+        const analysisMessages = result.chat_messages?.filter(msg =>
           msg.metadata?.analysisType === 'channelHeatmap' && msg.metadata?.analysisData
         );
-        
+
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 [ChannelHeatmap] Loaded existing data from backend');
-          
+
           if (isMounted.current) {
             setHeatmapData(latestAnalysis.metadata.analysisData);
             setHasLoadedFromBackend(true);
@@ -75,7 +71,6 @@ const ChannelHeatmap = ({
           }
           return true;
         } else {
-          console.log('📊 [ChannelHeatmap] No existing data found in backend');
           if (isMounted.current) {
             setHasLoadedFromBackend(true);
           }
@@ -112,7 +107,6 @@ const ChannelHeatmap = ({
   // Update heatmap data when prop changes
   useEffect(() => {
     if (channelHeatmapData && channelHeatmapData !== heatmapData) {
-      console.log('📊 [ChannelHeatmap] Updating data from props');
       setHeatmapData(channelHeatmapData);
       setHasLoadedFromBackend(true);
       if (onDataGenerated) {
@@ -124,19 +118,12 @@ const ChannelHeatmap = ({
   // Initialize component - only run once
   useEffect(() => {
     if (hasInitialized.current) return;
-    
+
     isMounted.current = true;
     hasInitialized.current = true;
-    
-    const initializeComponent = async () => {
-      console.log('📊 [ChannelHeatmap] Initializing component', {
-        hasPropsData: !!channelHeatmapData,
-        hasLoadedFromBackend,
-        isLoading: isLoadingRef.current
-      });
 
+    const initializeComponent = async () => {
       if (channelHeatmapData) {
-        console.log('📊 [ChannelHeatmap] Using props data');
         setHeatmapData(channelHeatmapData);
         setHasLoadedFromBackend(true);
       } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
@@ -225,8 +212,8 @@ const ChannelHeatmap = ({
             {isRegenerating
               ? t("Regenerating channel heatmap analysis...")
               : !hasLoadedFromBackend
-              ? t("Loading channel heatmap analysis...")
-              : t("Generating channel heatmap analysis...")
+                ? t("Loading channel heatmap analysis...")
+                : t("Generating channel heatmap analysis...")
             }
           </span>
         </div>
@@ -265,8 +252,8 @@ const ChannelHeatmap = ({
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate channel performance insights.`
               : hasLoadedFromBackend
-              ? "Channel heatmap analysis will be generated automatically after completing the initial phase."
-              : "Loading channel heatmap analysis..."
+                ? "Channel heatmap analysis will be generated automatically after completing the initial phase."
+                : "Loading channel heatmap analysis..."
             }
           </p>
         </div>
@@ -325,90 +312,90 @@ const ChannelHeatmap = ({
       {/* Heatmap */}
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
-        <div className="ch-heatmap-header-section">
-          <h3 className="ch-section-title">Performance Heatmap</h3>
-          {/* Legend moved to top right */}
-          {heatmapData.legend && (
-            <div className="ch-legend-gradient">
-              <div
-                className="ch-gradient-bar"
-                style={{
-                  background: `linear-gradient(90deg, ${heatmapData.legend.colorRange.low}, ${heatmapData.legend.colorRange.high})`
-                }}
-              ></div>
-              <div className="ch-gradient-labels">
-                <span>Low</span>
-                <span>High</span>
+          <div className="ch-heatmap-header-section">
+            <h3 className="ch-section-title">Performance Heatmap</h3>
+            {/* Legend moved to top right */}
+            {heatmapData.legend && (
+              <div className="ch-legend-gradient">
+                <div
+                  className="ch-gradient-bar"
+                  style={{
+                    background: `linear-gradient(90deg, ${heatmapData.legend.colorRange.low}, ${heatmapData.legend.colorRange.high})`
+                  }}
+                ></div>
+                <div className="ch-gradient-labels">
+                  <span>Low</span>
+                  <span>High</span>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <div className="ch-heatmap-wrapper">
-          <div className="ch-heatmap">
-            {/* Header row with channels */}
-            <div className="ch-heatmap-header">
-              <div className="ch-cell ch-cell-corner"></div>
-              {heatmapData.channels?.map((channel, index) => (
-                <div key={index} className="ch-cell ch-cell-header ch-channel-header">
-                  <span className="ch-channel-name">{channel}</span>
-                  <span className="ch-channel-total">
-                    Total: {getChannelTotal(channel).toFixed(1)}%
-                  </span>
+          <div className="ch-heatmap-wrapper">
+            <div className="ch-heatmap">
+              {/* Header row with channels */}
+              <div className="ch-heatmap-header">
+                <div className="ch-cell ch-cell-corner"></div>
+                {heatmapData.channels?.map((channel, index) => (
+                  <div key={index} className="ch-cell ch-cell-header ch-channel-header">
+                    <span className="ch-channel-name">{channel}</span>
+                    <span className="ch-channel-total">
+                      Total: {getChannelTotal(channel).toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Data rows */}
+              {heatmapData.products?.map((product, productIndex) => (
+                <div key={productIndex} className="ch-heatmap-row">
+                  <div className="ch-cell ch-cell-header ch-product-header">
+                    <span className="ch-product-name">{product}</span>
+                    <span className="ch-product-total">
+                      Total: {getProductTotal(product).toFixed(1)}%
+                    </span>
+                  </div>
+                  {heatmapData.channels?.map((channel, channelIndex) => {
+                    const cellData = getMatrixValue(product, channel);
+                    const cellValue = cellData?.value || 0;
+                    const cellColor = getHeatmapColor(cellValue);
+
+                    return (
+                      <div
+                        key={channelIndex}
+                        className={`ch-cell ch-cell-data ${selectedCell === `${productIndex}-${channelIndex}` ? 'selected' : ''}`}
+                        style={{ backgroundColor: cellColor }}
+                        onClick={() => setSelectedCell(`${productIndex}-${channelIndex}`)}
+                        onMouseEnter={() => setSelectedCell(`${productIndex}-${channelIndex}`)}
+                        onMouseLeave={() => setSelectedCell(null)}
+                      >
+                        <div className="ch-cell-content">
+                          <span className="ch-cell-value">{cellValue.toFixed(1)}%</span>
+                          {cellData?.volume && (
+                            <span className="ch-cell-volume">Vol: {cellData.volume}</span>
+                          )}
+                        </div>
+
+                        {/* Tooltip */}
+                        {selectedCell === `${productIndex}-${channelIndex}` && (
+                          <div className="ch-tooltip">
+                            <div className="ch-tooltip-header">
+                              {product} × {channel}
+                            </div>
+                            <div className="ch-tooltip-content">
+                              <div>Performance: {cellValue.toFixed(1)}%</div>
+                              {cellData?.volume && <div>Volume: {cellData.volume}</div>}
+                              {cellData?.metric && <div>Metric: {cellData.metric}</div>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
-
-            {/* Data rows */}
-            {heatmapData.products?.map((product, productIndex) => (
-              <div key={productIndex} className="ch-heatmap-row">
-                <div className="ch-cell ch-cell-header ch-product-header">
-                  <span className="ch-product-name">{product}</span>
-                  <span className="ch-product-total">
-                    Total: {getProductTotal(product).toFixed(1)}%
-                  </span>
-                </div>
-                {heatmapData.channels?.map((channel, channelIndex) => {
-                  const cellData = getMatrixValue(product, channel);
-                  const cellValue = cellData?.value || 0;
-                  const cellColor = getHeatmapColor(cellValue);
-
-                  return (
-                    <div
-                      key={channelIndex}
-                      className={`ch-cell ch-cell-data ${selectedCell === `${productIndex}-${channelIndex}` ? 'selected' : ''}`}
-                      style={{ backgroundColor: cellColor }}
-                      onClick={() => setSelectedCell(`${productIndex}-${channelIndex}`)}
-                      onMouseEnter={() => setSelectedCell(`${productIndex}-${channelIndex}`)}
-                      onMouseLeave={() => setSelectedCell(null)}
-                    >
-                      <div className="ch-cell-content">
-                        <span className="ch-cell-value">{cellValue.toFixed(1)}%</span>
-                        {cellData?.volume && (
-                          <span className="ch-cell-volume">Vol: {cellData.volume}</span>
-                        )}
-                      </div>
-
-                      {/* Tooltip */}
-                      {selectedCell === `${productIndex}-${channelIndex}` && (
-                        <div className="ch-tooltip">
-                          <div className="ch-tooltip-header">
-                            {product} × {channel}
-                          </div>
-                          <div className="ch-tooltip-content">
-                            <div>Performance: {cellValue.toFixed(1)}%</div>
-                            {cellData?.volume && <div>Volume: {cellData.volume}</div>}
-                            {cellData?.metric && <div>Metric: {cellData.metric}</div>}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
           </div>
-        </div>
         </div>
       </div>
     </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react'; 
+import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import { useTranslation } from "../hooks/useTranslation";
 
-const CapabilityHeatmap = ({ 
+const CapabilityHeatmap = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
@@ -19,7 +19,7 @@ const CapabilityHeatmap = ({
   const [selectedCell, setSelectedCell] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  
+
   // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
   const isLoadingRef = useRef(false);
@@ -32,17 +32,14 @@ const CapabilityHeatmap = ({
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
     if (isLoadingRef.current || hasLoadedFromBackend) {
-      console.log('📊 [CapabilityHeatmap] Skipping API call - already loading or loaded');
       return false;
     }
 
     try {
       isLoadingRef.current = true;
-      console.log('📊 [CapabilityHeatmap] Loading from backend...');
-      
+
       const token = getAuthToken();
       if (!token) {
-        console.log('📊 [CapabilityHeatmap] No auth token available');
         if (isMounted.current) {
           setHasLoadedFromBackend(true);
         }
@@ -58,14 +55,13 @@ const CapabilityHeatmap = ({
 
       if (response.ok) {
         const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg => 
+        const analysisMessages = result.chat_messages?.filter(msg =>
           msg.metadata?.analysisType === 'capabilityHeatmap' && msg.metadata?.analysisData
         );
-        
+
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 [CapabilityHeatmap] Loaded existing data from backend');
-          
+
           if (isMounted.current) {
             setCapabilityData(latestAnalysis.metadata.analysisData);
             setHasLoadedFromBackend(true);
@@ -75,7 +71,6 @@ const CapabilityHeatmap = ({
           }
           return true;
         } else {
-          console.log('📊 [CapabilityHeatmap] No existing data found in backend');
           if (isMounted.current) {
             setHasLoadedFromBackend(true);
           }
@@ -112,7 +107,6 @@ const CapabilityHeatmap = ({
   // Update capability data when prop changes
   useEffect(() => {
     if (capabilityHeatmapData && capabilityHeatmapData !== capabilityData) {
-      console.log('📊 [CapabilityHeatmap] Updating data from props');
       setCapabilityData(capabilityHeatmapData);
       setHasLoadedFromBackend(true);
       if (onDataGenerated) {
@@ -124,19 +118,13 @@ const CapabilityHeatmap = ({
   // Initialize component - only run once
   useEffect(() => {
     if (hasInitialized.current) return;
-    
+
     isMounted.current = true;
     hasInitialized.current = true;
-    
+
     const initializeComponent = async () => {
-      console.log('📊 [CapabilityHeatmap] Initializing component', {
-        hasPropsData: !!capabilityHeatmapData,
-        hasLoadedFromBackend,
-        isLoading: isLoadingRef.current
-      });
 
       if (capabilityHeatmapData) {
-        console.log('📊 [CapabilityHeatmap] Using props data');
         setCapabilityData(capabilityHeatmapData);
         setHasLoadedFromBackend(true);
       } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
@@ -153,7 +141,7 @@ const CapabilityHeatmap = ({
       isLoadingRef.current = false;
     };
   }, []);
-  
+
   // Get color based on capability level and type
   const getCellColor = (capability, maturityLevel) => {
     if (capability.currentLevel === maturityLevel) {
@@ -171,7 +159,7 @@ const CapabilityHeatmap = ({
       return '#f9fafb'; // Light gray
     }
   };
-  
+
   // Get maturity levels from data or use default
   const maturityLevels = capabilityData?.maturityScale?.levels || [
     { level: 1, label: "Initial" },
@@ -193,11 +181,11 @@ const CapabilityHeatmap = ({
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
-            {isRegenerating 
+            {isRegenerating
               ? t("Regenerating capability heatmap analysis...")
               : !hasLoadedFromBackend
-              ? t("Loading capability heatmap analysis...")
-              : t("Generating capability heatmap analysis...")
+                ? t("Loading capability heatmap analysis...")
+                : t("Generating capability heatmap analysis...")
             }
           </span>
         </div>
@@ -233,11 +221,11 @@ const CapabilityHeatmap = ({
           <Zap size={48} className="empty-icon" />
           <h3>Capability Heatmap Analysis</h3>
           <p>
-            {answeredCount < 3 
+            {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate capability insights.`
               : hasLoadedFromBackend
-              ? "Capability heatmap analysis will be generated automatically after completing the initial phase."
-              : "Loading capability heatmap analysis..."
+                ? "Capability heatmap analysis will be generated automatically after completing the initial phase."
+                : "Loading capability heatmap analysis..."
             }
           </p>
         </div>
@@ -300,75 +288,75 @@ const CapabilityHeatmap = ({
       {/* Main Heatmap - Capabilities (Y-axis) vs Maturity Level (X-axis) */}
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
-        <div className="ch-heatmap-wrapper">
-          <div className="ch-heatmap">
-            {/* Header Row - Maturity Levels */}
-            <div className="ch-heatmap-header">
-              <div className="ch-cell ch-cell-corner">
-                <div className="ch-corner-label">Capabilities</div>
-                <div className="ch-corner-sublabel">vs Maturity</div>
+          <div className="ch-heatmap-wrapper">
+            <div className="ch-heatmap">
+              {/* Header Row - Maturity Levels */}
+              <div className="ch-heatmap-header">
+                <div className="ch-cell ch-cell-corner">
+                  <div className="ch-corner-label">Capabilities</div>
+                  <div className="ch-corner-sublabel">vs Maturity</div>
+                </div>
+                {maturityLevels.map(level => (
+                  <div key={level.level} className="ch-cell ch-cell-header ch-maturity-header">
+                    <div className="ch-maturity-level">Level {level.level}</div>
+                    <div className="ch-maturity-label">{level.label}</div>
+                  </div>
+                ))}
               </div>
-              {maturityLevels.map(level => (
-                <div key={level.level} className="ch-cell ch-cell-header ch-maturity-header">
-                  <div className="ch-maturity-level">Level {level.level}</div>
-                  <div className="ch-maturity-label">{level.label}</div>
-                </div>
-              ))}
-            </div>
 
-            {/* Data Rows - One row per capability */}
-            {capabilityData.capabilities.map((capability, capIndex) => (
-              <div key={capability.name} className="ch-heatmap-row">
-                <div className="ch-cell ch-cell-header ch-capability-header">
-                  <div className="ch-capability-name">{capability.name}</div>
-                </div>
-                
-                {/* Maturity level cells */}
-                {maturityLevels.map(level => {
-                  const cellKey = `${capability.name}-${level.level}`;
-                  const isCurrentLevel = capability.currentLevel === level.level;
-                  
-                  return (
-                    <div
-                      key={cellKey}
-                      className={`ch-cell ch-cell-data ${selectedCell === cellKey ? 'selected' : ''} ${isCurrentLevel ? 'active-level' : ''}`}
-                      style={{
-                        backgroundColor: getCellColor(capability, level.level),
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => setSelectedCell(cellKey === selectedCell ? null : cellKey)}
-                      onMouseEnter={() => setHoveredCell(cellKey)}
-                      onMouseLeave={() => setHoveredCell(null)}
-                    >
-                      <div className="ch-cell-content">
-                        {isCurrentLevel && (
-                          <div className="ch-level-indicator">
-                            <div className="ch-level-dot"></div>
-                            Current
+              {/* Data Rows - One row per capability */}
+              {capabilityData.capabilities.map((capability, capIndex) => (
+                <div key={capability.name} className="ch-heatmap-row">
+                  <div className="ch-cell ch-cell-header ch-capability-header">
+                    <div className="ch-capability-name">{capability.name}</div>
+                  </div>
+
+                  {/* Maturity level cells */}
+                  {maturityLevels.map(level => {
+                    const cellKey = `${capability.name}-${level.level}`;
+                    const isCurrentLevel = capability.currentLevel === level.level;
+
+                    return (
+                      <div
+                        key={cellKey}
+                        className={`ch-cell ch-cell-data ${selectedCell === cellKey ? 'selected' : ''} ${isCurrentLevel ? 'active-level' : ''}`}
+                        style={{
+                          backgroundColor: getCellColor(capability, level.level),
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setSelectedCell(cellKey === selectedCell ? null : cellKey)}
+                        onMouseEnter={() => setHoveredCell(cellKey)}
+                        onMouseLeave={() => setHoveredCell(null)}
+                      >
+                        <div className="ch-cell-content">
+                          {isCurrentLevel && (
+                            <div className="ch-level-indicator">
+                              <div className="ch-level-dot"></div>
+                              Current
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Tooltip */}
+                        {hoveredCell === cellKey && (
+                          <div className="ch-tooltip">
+                            <div className="ch-tooltip-header">{capability.name}</div>
+                            <div className="ch-tooltip-content">
+                              <div>Category: {capability.category}</div>
+                              <div>Type: {capability.type}</div>
+                              <div>Impact: {capability.impact}</div>
+                            </div>
                           </div>
                         )}
                       </div>
-                      
-                      {/* Tooltip */}
-                      {hoveredCell === cellKey && (
-                        <div className="ch-tooltip">
-                          <div className="ch-tooltip-header">{capability.name}</div>
-                          <div className="ch-tooltip-content">
-                            <div>Category: {capability.category}</div>
-                            <div>Type: {capability.type}</div>
-                            <div>Impact: {capability.impact}</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        </div>
-      </div> 
+      </div>
     </div>
   );
 };

@@ -33,18 +33,15 @@ const CustomerSegmentation = ({
 
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
-    if (isLoadingRef.current || hasLoadedFromBackend) {
-      console.log('📊 [CustomerSegmentation] Skipping API call - already loading or loaded');
+    if (isLoadingRef.current || hasLoadedFromBackend) { 
       return false;
     }
 
     try {
-      isLoadingRef.current = true;
-      console.log('📊 [CustomerSegmentation] Loading from backend...');
+      isLoadingRef.current = true; 
       
       const token = getAuthToken();
-      if (!token) {
-        console.log('📊 [CustomerSegmentation] No auth token available');
+      if (!token) { 
         if (isMounted.current) {
           setHasLoadedFromBackend(true);
         }
@@ -65,8 +62,7 @@ const CustomerSegmentation = ({
         );
         
         if (analysisMessages && analysisMessages.length > 0) {
-          const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 [CustomerSegmentation] Loaded existing data from backend');
+          const latestAnalysis = analysisMessages[analysisMessages.length - 1]; 
           
           if (isMounted.current) {
             setSegmentationData(latestAnalysis.metadata.analysisData);
@@ -76,8 +72,7 @@ const CustomerSegmentation = ({
             }
           }
           return true;
-        } else {
-          console.log('📊 [CustomerSegmentation] No existing data found in backend');
+        } else { 
           if (isMounted.current) {
             setHasLoadedFromBackend(true);
           }
@@ -113,8 +108,7 @@ const CustomerSegmentation = ({
 
   // Update segmentation data when prop changes
   useEffect(() => {
-    if (customerSegmentationData && customerSegmentationData !== segmentationData) {
-      console.log('📊 [CustomerSegmentation] Updating data from props');
+    if (customerSegmentationData && customerSegmentationData !== segmentationData) { 
       setSegmentationData(customerSegmentationData);
       setHasLoadedFromBackend(true);
       if (onDataGenerated) {
@@ -130,15 +124,9 @@ const CustomerSegmentation = ({
     isMounted.current = true;
     hasInitialized.current = true;
     
-    const initializeComponent = async () => {
-      console.log('📊 [CustomerSegmentation] Initializing component', {
-        hasPropsData: !!customerSegmentationData,
-        hasLoadedFromBackend,
-        isLoading: isLoadingRef.current
-      });
+    const initializeComponent = async () => { 
 
-      if (customerSegmentationData) {
-        console.log('📊 [CustomerSegmentation] Using props data');
+      if (customerSegmentationData) { 
         setSegmentationData(customerSegmentationData);
         setHasLoadedFromBackend(true);
       } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
@@ -170,7 +158,7 @@ const CustomerSegmentation = ({
         color: SEGMENT_COLORS[index % SEGMENT_COLORS.length],
         startAngle,
         endAngle: runningTotal,
-        offset: runningTotal - (segment.percentage / 2)
+        offset: runningTotal - (segment.percentage / 2) // For label positioning
       };
     });
 
@@ -414,6 +402,8 @@ const CustomerSegmentation = ({
           </div>
         )}
       </div>
+
+      {/* Segments Details */}
     </div>
   );
 };

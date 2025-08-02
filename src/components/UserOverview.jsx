@@ -206,11 +206,9 @@ const UserOverview = ({ onToast }) => {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Status</th>
+                <th>Company</th> 
                 <th>Role</th>
-                <th>Company</th>
-                <th>Last Login</th>
-                <th>Joined</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -218,13 +216,11 @@ const UserOverview = ({ onToast }) => {
                 <tr key={user.id}>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
+                  <td>{user.company_name || 'N/A'}</td>  
+                  <td>{user.role}</td>
                   <td>
                     <span className={`status-badge ${user.status}`}>{user.status}</span>
                   </td>
-                  <td>{user.role}</td>
-                  <td>{user.company_id || 'N/A'}</td>
-                  <td>{user.last_login ? formatDate(user.last_login) : 'Never'}</td>
-                  <td>{formatDate(user.created_at)}</td>
                 </tr>
               ))}
             </tbody>

@@ -16,8 +16,9 @@ const EditableBriefSection = ({
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
+  const [allAnswers, setAllAnswers] = useState({}); // Store both main and follow-up answers
   
-  // NEW: Add refs to prevent multiple API calls
+  // Add refs to prevent multiple API calls
   const isRegeneratingRef = useRef(false);
   const pendingRegenerationRef = useRef(false);
   const regenerationTimeoutRef = useRef(null);
@@ -28,30 +29,184 @@ const EditableBriefSection = ({
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
+  // FIXED: Load both main answers and follow-up answers
   useEffect(() => {
-    if (questions.length > 0 && Object.keys(userAnswers).length > 0) {
+    loadAllAnswers();
+  }, [userAnswers]);
+
+  useEffect(() => { 
+    if (questions.length > 0 && Object.keys(allAnswers).length > 0) {
       generateBriefFields();
     }
-  }, [questions, userAnswers]);
+  }, [questions, allAnswers]);
 
-  const generateBriefFields = () => {
-    const fields = [];
- 
-    Object.keys(userAnswers).forEach(questionId => {
-      const question = questions.find(q => q.question_id === parseInt(questionId));
-      const answer = userAnswers[questionId];
+  // FIXED: Fetch all user progress including follow-ups
+  const loadAllAnswers = async () => {
+    try {
+      const token = getAuthToken();
       
-      if (question && answer && answer.trim()) {
+      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Combine main answers with follow-up answers
+        const combinedAnswers = { ...userAnswers };
+        
+        // Process conversation history to extract follow-up answers
+        if (data.conversation_history) {
+          data.conversation_history.forEach(conversation => {
+            const questionId = String(conversation.question_id);
+            
+            // Add main answer if exists
+            if (conversation.main_answer) {
+              combinedAnswers[questionId] = conversation.main_answer.answer_text;
+            }
+            
+            // Add follow-up answers if they exist
+            if (conversation.followup_answers && conversation.followup_answers.length > 0) {
+              conversation.followup_answers.forEach((followup, index) => {
+                const followupKey = `${questionId}_followup_${index + 1}`;
+                combinedAnswers[followupKey] = followup.answer_text;
+              });
+            }
+          });
+        } 
+        setAllAnswers(combinedAnswers);
+        
+      } else {
+        console.error('Failed to load conversation history');
+        // Fallback to just userAnswers
+        setAllAnswers(userAnswers);
+      }
+    } catch (error) {
+      console.error('Error loading all answers:', error);
+      // Fallback to just userAnswers
+      setAllAnswers(userAnswers);
+    }
+  };
+
+  // FIXED: Combine main answers with follow-up answers under the same question
+  const generateBriefFields = () => { 
+    const fields = [];
+    const questionAnswers = {}; // Group answers by question
+ 
+    // First, group all answers by question ID
+    Object.keys(allAnswers).forEach(answerKey => { 
+      let questionId = answerKey;
+      let isFollowUp = false;
+      let followupNumber = null;
+      
+      // Check if this is a follow-up answer
+      if (answerKey.includes('_followup_')) {
+        const parts = answerKey.split('_followup_');
+        questionId = parts[0];
+        followupNumber = parseInt(parts[1]);
+        isFollowUp = true;
+      }
+      
+      if (!questionAnswers[questionId]) {
+        questionAnswers[questionId] = {
+          mainAnswer: null,
+          followupAnswers: [],
+          originalKeys: {}
+        };
+      }
+      
+      const answer = allAnswers[answerKey];
+      if (answer && answer.trim()) {
+        if (isFollowUp) {
+          questionAnswers[questionId].followupAnswers.push({
+            text: answer,
+            number: followupNumber,
+            originalKey: answerKey
+          });
+        } else {
+          questionAnswers[questionId].mainAnswer = answer;
+          questionAnswers[questionId].originalKeys.main = answerKey;
+        }
+      }
+    });
+
+    // Now create fields with combined answers
+    Object.keys(questionAnswers).forEach(questionId => {
+      const questionData = questionAnswers[questionId];
+      
+      // Skip if no main answer
+      if (!questionData.mainAnswer) return;
+      
+      // FIXED: Handle both MongoDB ObjectIds and integer IDs
+      const question = questions.find(q => {
+        const qId = q._id || q.question_id;
+        const qIdStr = String(qId);
+        const questionIdStr = String(questionId);
+        
+        // Try exact string match first (for MongoDB ObjectIds)
+        if (qIdStr === questionIdStr) {
+          return true;
+        }
+        
+        // Try integer match (for backward compatibility)
+        if (q.question_id && q.question_id === parseInt(questionId)) {
+          return true;
+        }
+        
+        // Try partial match for shortened IDs
+        if (questionIdStr.length >= 3 && qIdStr.startsWith(questionIdStr)) {
+          return true;
+        }
+        
+        return false;
+      });
+      
+      if (question) {
+        const actualQuestionId = question._id || question.question_id;
+        
+        // Combine main answer with follow-up answers
+        let combinedAnswer = questionData.mainAnswer;
+        
+        if (questionData.followupAnswers.length > 0) {
+          // Sort follow-ups by number
+          questionData.followupAnswers.sort((a, b) => (a.number || 0) - (b.number || 0));
+          
+          // Append follow-ups to main answer
+          questionData.followupAnswers.forEach(followup => {
+            combinedAnswer += `. ${followup.text}`;
+          });
+        }
+        
         fields.push({
           key: `question_${questionId}`,
           label: question.question_text,
-          value: answer,
-          questionId: parseInt(questionId)
+          value: combinedAnswer,
+          questionId: actualQuestionId,
+          originalAnswerKey: questionData.originalKeys.main, // Main answer key for updates
+          isFollowUp: false, // This is now a combined field, not a follow-up
+          originalQuestionText: question.question_text,
+          hasFollowups: questionData.followupAnswers.length > 0,
+          followupCount: questionData.followupAnswers.length
         });
       }
     });
 
-    fields.sort((a, b) => a.questionId - b.questionId);
+    // Sort by question order
+    fields.sort((a, b) => {
+      const aIndex = questions.findIndex(q => (q._id || q.question_id) === a.questionId);
+      const bIndex = questions.findIndex(q => (q._id || q.question_id) === b.questionId);
+      
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      
+      // Fallback to string comparison
+      return String(a.questionId).localeCompare(String(b.questionId));
+    });                   
+    
     setBriefFields(fields);
   };
 
@@ -62,8 +217,7 @@ const EditableBriefSection = ({
       setShowToast({ show: false, message: '', type: 'success' });
     }, 4000);
   };
-
-  // FIXED: Debounced analysis regeneration to prevent multiple calls
+  
   const debouncedAnalysisRegeneration = () => {
     // Clear any existing timeout
     if (regenerationTimeoutRef.current) {
@@ -82,16 +236,14 @@ const EditableBriefSection = ({
     }, 1000); // Wait 1 second after the last edit before regenerating
   };
 
-  // FIXED: Single analysis regeneration function
+  // Single analysis regeneration function
   const triggerAnalysisRegeneration = async () => {
-    if (isRegeneratingRef.current) {
-      console.log('📊 [EditableBriefSection] Analysis regeneration already in progress, skipping');
+    if (isRegeneratingRef.current) { 
       return;
     }
 
     try {
-      isRegeneratingRef.current = true;
-      console.log('📊 [EditableBriefSection] Triggering analysis regeneration');
+      isRegeneratingRef.current = true; 
       
       showToastMessage('Regenerating analysis with updated answers...', 'info');
       
@@ -111,19 +263,36 @@ const EditableBriefSection = ({
     }
   };
 
-  // Auto-save updated answer using simplified backend API
-  const autoSaveUpdatedAnswer = async (questionId, newAnswer) => {
+  // FIXED: Auto-save updated answer with proper ID handling for both main and follow-up answers
+  const autoSaveUpdatedAnswer = async (field, newAnswer) => {
     try {
       setIsSaving(true);
       const token = getAuthToken();
 
-      // Find the question text
-      const question = questions.find(q => q.question_id === questionId);
+      // Find the question using both MongoDB ObjectId and integer ID
+      const question = questions.find(q => {
+        const qId = q._id || q.question_id;
+        const qIdStr = String(qId);
+        const questionIdStr = String(field.questionId);
+        
+        return qIdStr === questionIdStr || (q.question_id && q.question_id === parseInt(field.questionId));
+      });
+      
       if (!question) {
+        console.error('Question not found for ID:', field.questionId); 
         throw new Error('Question not found');
       }
 
-      // Use the save-answer endpoint from the simplified backend
+      // Use the actual question ID from the found question (prefer _id for MongoDB)
+      const actualQuestionId = question._id || question.question_id;
+      
+      // For follow-ups, we need to save with the follow-up question text, not the original
+      // But for now, we'll use the original question text and mark it as follow-up
+      const questionText = field.isFollowUp ? 
+        `${question.question_text} (Follow-up ${field.followupNumber})` : 
+        question.question_text;
+
+      // Use the save-answer endpoint
       const response = await fetch(`${API_BASE_URL}/api/user/save-answer`, {
         method: 'POST',
         headers: {
@@ -131,17 +300,16 @@ const EditableBriefSection = ({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          question_id: questionId,
-          question_text: question.question_text,
+          question_id: actualQuestionId,
+          question_text: questionText,
           answer_text: newAnswer.trim(),
-          is_followup: false,
-          followup_parent_id: null
+          is_followup: field.isFollowUp || false,
+          followup_parent_id: field.isFollowUp ? actualQuestionId : null
         })
       });
 
       if (response.ok) {
-        const result = await response.json();
-        console.log('📊 [EditableBriefSection] Answer updated successfully:', result);
+        const result = await response.json(); 
         return result;
       } else {
         const errorData = await response.json();
@@ -173,19 +341,26 @@ const EditableBriefSection = ({
     
     if (newValue.trim()) {
       try {
-        // Auto-save to backend using simplified API
-        await autoSaveUpdatedAnswer(field.questionId, newValue.trim());
+        // Auto-save to backend
+        await autoSaveUpdatedAnswer(field, newValue.trim());
 
-        // Update parent component with new answer
-        if (onAnswerUpdate) {
-          onAnswerUpdate(field.questionId, newValue.trim());
+        // Update local state
+        setAllAnswers(prev => ({
+          ...prev,
+          [field.originalAnswerKey]: newValue.trim()
+        }));
+
+        // Update parent component with new answer for main answers only
+        if (onAnswerUpdate && !field.isFollowUp) {
+          onAnswerUpdate(field.originalAnswerKey, newValue.trim());
         }
 
         setEditedFields(prev => new Set([...prev, field.key]));
         
-        showToastMessage('Answer updated and auto-saved successfully!', 'success');
+        const messageType = field.isFollowUp ? 'Follow-up answer' : 'Answer';
+        showToastMessage(`${messageType} updated and auto-saved successfully!`, 'success');
 
-        // FIXED: Use debounced regeneration instead of immediate call
+        // Use debounced regeneration instead of immediate call
         if (completedPhases.has('initial')) {
           debouncedAnalysisRegeneration();
         }
@@ -224,9 +399,11 @@ const EditableBriefSection = ({
     const isEdited = editedFields.has(field.key);
 
     return (
-      <div className={`brief-item ${isEdited ? 'edited' : ''}`}>
+      <div className={`brief-item ${isEdited ? 'edited' : ''} ${field.hasFollowups ? 'has-followups' : ''}`}>
         <div className="item-row">
-          <span className="item-label">{field.label}:</span>
+          <span className="item-label">
+            {field.label}             
+          </span>
           {!isEditing && (
             <button
               className="edit-button"
@@ -251,8 +428,8 @@ const EditableBriefSection = ({
               placeholder={`Enter ${field.label.toLowerCase()}...`}
               disabled={isAnalysisRegenerating || isSaving}
               style={{ 
-                minHeight: '100px',
-                maxHeight: '200px',
+                minHeight: field.hasFollowups ? '150px' : '100px',
+                maxHeight: '300px',
                 resize: 'vertical'
               }}
             />
@@ -276,14 +453,25 @@ const EditableBriefSection = ({
             </div>
           </div>
         ) : (
-          <p 
+          <div 
             className={`item-text ${isEmpty ? 'placeholder' : ''}`}
             onClick={() => !(isAnalysisRegenerating || isSaving) && handleEdit(field)}
             style={{ cursor: (isAnalysisRegenerating || isSaving) ? 'not-allowed' : 'pointer' }}
           >
-            {field.value || `Add ${field.label.toLowerCase()}...`}
+            {field.value ? (
+              <div className="answer-content">
+                {field.value.split('\n\nAdditional details: ').map((part, index) => (
+                  <div key={index} className={index === 0 ? 'main-answer' : 'followup-detail'}>
+                    {index > 0 && <strong className="detail-label">Additional details: </strong>}
+                    {part}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              `Add ${field.label.toLowerCase()}...`
+            )}
             {isEdited && <span className="edited-indicator"> ✏️</span>}
-          </p>
+          </div>
         )}
       </div>
     );
@@ -316,7 +504,26 @@ const EditableBriefSection = ({
             ))
           ) : (
             <div className="no-data">
-              <p>{t('businessInfoMessage')}</p>
+              <p>{t('businessInfoMessage') || 'Your business information will appear here as you answer questions in the chat.'}</p>
+              
+              {/* DEBUG: Show debug info only if there are answers but no fields generated */}
+              {process.env.NODE_ENV === 'development' && Object.keys(allAnswers).length > 0 && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  padding: '10px', 
+                  backgroundColor: '#f5f5f5', 
+                  fontSize: '12px',
+                  borderRadius: '4px'
+                }}>
+                  <strong>Debug Info (answers exist but no fields generated):</strong>
+                  <br />Questions: {questions.length}
+                  <br />All Answers: {Object.keys(allAnswers).length}
+                  <br />User Answers: {Object.keys(userAnswers).length}
+                  <br />Questions IDs: {questions.map(q => q._id || q.question_id).join(', ')}
+                  <br />All Answer Keys: {Object.keys(allAnswers).join(', ')}
+                  <br />User Answer Keys: {Object.keys(userAnswers).join(', ')}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -324,12 +531,12 @@ const EditableBriefSection = ({
         {briefFields.length > 0 && (
           <div className="brief-footer">
             <p className="brief-note">
-              {t('briefNote')}
+              {t('briefNote') || 'Click on any field to edit your business information.'}
               {completedPhases.has('initial') && (
                 <>
                   <br />
                   <span style={{ color: '#007bff', fontWeight: 'bold' }}>
-                    {t('briefNoteRegenerate')} Analysis will be automatically regenerated when you update answers.
+                    {t('briefNoteRegenerate') || 'Analysis will be automatically regenerated when you update answers.'}
                   </span>
                 </>
               )}

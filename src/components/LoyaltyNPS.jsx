@@ -3,7 +3,7 @@ import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } 
 import RegenerateButton from './RegenerateButton';
 import { useTranslation } from "../hooks/useTranslation";
 
-const LoyaltyNPS = ({ 
+const LoyaltyNPS = ({
   questions = [],
   userAnswers = {},
   businessName = "Your Business",
@@ -17,7 +17,7 @@ const LoyaltyNPS = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
-  
+
   // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
   const isLoadingRef = useRef(false);
@@ -30,17 +30,14 @@ const LoyaltyNPS = ({
   // Load existing analysis from backend (chat history)
   const loadExistingAnalysis = async () => {
     if (isLoadingRef.current || hasLoadedFromBackend) {
-      console.log('📊 [LoyaltyNPS] Skipping API call - already loading or loaded');
       return false;
     }
 
     try {
       isLoadingRef.current = true;
-      console.log('📊 [LoyaltyNPS] Loading from backend...');
-      
+
       const token = getAuthToken();
       if (!token) {
-        console.log('📊 [LoyaltyNPS] No auth token available');
         if (isMounted.current) {
           setHasLoadedFromBackend(true);
         }
@@ -56,14 +53,14 @@ const LoyaltyNPS = ({
 
       if (response.ok) {
         const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg => 
+        const analysisMessages = result.chat_messages?.filter(msg =>
           msg.metadata?.analysisType === 'loyaltyNPS' && msg.metadata?.analysisData
         );
-        
+
         if (analysisMessages && analysisMessages.length > 0) {
           const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-          console.log('📊 [LoyaltyNPS] Loaded existing data from backend');
-          
+
+
           if (isMounted.current) {
             setLoyaltyData(latestAnalysis.metadata.analysisData);
             setHasLoadedFromBackend(true);
@@ -73,7 +70,7 @@ const LoyaltyNPS = ({
           }
           return true;
         } else {
-          console.log('📊 [LoyaltyNPS] No existing data found in backend');
+
           if (isMounted.current) {
             setHasLoadedFromBackend(true);
           }
@@ -110,7 +107,7 @@ const LoyaltyNPS = ({
   // Update loyalty data when prop changes
   useEffect(() => {
     if (loyaltyNPSData && loyaltyNPSData !== loyaltyData) {
-      console.log('📊 [LoyaltyNPS] Updating data from props');
+
       setLoyaltyData(loyaltyNPSData);
       setHasLoadedFromBackend(true);
       if (onDataGenerated) {
@@ -122,19 +119,15 @@ const LoyaltyNPS = ({
   // Initialize component - only run once
   useEffect(() => {
     if (hasInitialized.current) return;
-    
+
     isMounted.current = true;
     hasInitialized.current = true;
-    
+
     const initializeComponent = async () => {
-      console.log('📊 [LoyaltyNPS] Initializing component', {
-        hasPropsData: !!loyaltyNPSData,
-        hasLoadedFromBackend,
-        isLoading: isLoadingRef.current
-      });
+
 
       if (loyaltyNPSData) {
-        console.log('📊 [LoyaltyNPS] Using props data');
+
         setLoyaltyData(loyaltyNPSData);
         setHasLoadedFromBackend(true);
       } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
@@ -178,18 +171,18 @@ const LoyaltyNPS = ({
 
     const { overallScore, method, scale } = loyaltyData;
     const classification = getScoreClassification(overallScore, method);
-    
+
     // Normalize score to 0-1 range for gauge
-    const normalizedScore = method === 'NPS' 
+    const normalizedScore = method === 'NPS'
       ? (overallScore + 100) / 200  // NPS is -100 to 100
       : overallScore / 100;         // CSAT and others are 0 to 100
-    
+
     const radius = 80;
     const strokeWidth = 12;
     const circumference = 2 * Math.PI * radius;
     const strokeDasharray = circumference * 0.75; // 3/4 circle
     const strokeDashoffset = strokeDasharray * (1 - normalizedScore);
-    
+
     // Calculate zones for NPS
     let zones = [];
     if (method === 'NPS' && scale?.zones) {
@@ -211,7 +204,7 @@ const LoyaltyNPS = ({
             strokeWidth={strokeWidth}
             strokeLinecap="round"
           />
-          
+
           {/* Zone arcs for NPS */}
           {zones.map((zone, index) => {
             const zoneLength = strokeDasharray * (zone.end - zone.start);
@@ -230,7 +223,7 @@ const LoyaltyNPS = ({
               />
             );
           })}
-          
+
           {/* Score arc */}
           <path
             d="M 30 100 A 80 80 0 0 1 170 100"
@@ -242,7 +235,7 @@ const LoyaltyNPS = ({
             strokeDashoffset={strokeDashoffset}
             className="gauge-progress"
           />
-          
+
           {/* Center score */}
           <text x="100" y="85" textAnchor="middle" className="gauge-score">
             {overallScore}
@@ -251,7 +244,7 @@ const LoyaltyNPS = ({
             {classification.label}
           </text>
         </svg>
-        
+
         {/* Scale labels */}
         <div className="gauge-scale">
           <span className="gauge-scale-min">{scale?.min || 0}</span>
@@ -294,7 +287,7 @@ const LoyaltyNPS = ({
               </div>
             </>
           )}
-          
+
           {loyaltyData.method !== 'NPS' && (
             <div className="ln-scale-range">
               <span>Scale: {loyaltyData.scale.min} to {loyaltyData.scale.max}</span>
@@ -325,11 +318,11 @@ const LoyaltyNPS = ({
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
-            {isRegenerating 
+            {isRegenerating
               ? t("Regenerating loyalty & NPS analysis...")
               : !hasLoadedFromBackend
-              ? t("Loading loyalty & NPS analysis...")
-              : t("Generating loyalty & NPS analysis...")
+                ? t("Loading loyalty & NPS analysis...")
+                : t("Generating loyalty & NPS analysis...")
             }
           </span>
         </div>
@@ -368,8 +361,8 @@ const LoyaltyNPS = ({
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate loyalty & NPS insights.`
               : hasLoadedFromBackend
-              ? "Loyalty & NPS analysis will be generated automatically after completing the initial phase."
-              : "Loading loyalty & NPS analysis..."
+                ? "Loyalty & NPS analysis will be generated automatically after completing the initial phase."
+                : "Loading loyalty & NPS analysis..."
             }
           </p>
         </div>
@@ -396,7 +389,7 @@ const LoyaltyNPS = ({
           size="medium"
         />
       </div>
-       
+
       {/* Key Metrics */}
       <div className="ln-metrics">
         <div className="ln-metric-card ln-metric-primary">
@@ -423,12 +416,12 @@ const LoyaltyNPS = ({
         {loyaltyData.trend && (
           <div className="ln-metric-card ln-metric-accent">
             <div className="ln-metric-header">
-              <trendIndicator.icon 
-                size={20} 
-                style={{ 
+              <trendIndicator.icon
+                size={20}
+                style={{
                   color: trendIndicator.color,
                   transform: `rotate(${trendIndicator.rotation}deg)`
-                }} 
+                }}
               />
               <span>Trend</span>
             </div>
@@ -471,10 +464,10 @@ const LoyaltyNPS = ({
         <div className="ln-chart-container">
           <h3 className="ln-section-title">Overall {loyaltyData.method} Score</h3>
           {createGaugeChart()}
-           
+
           {/* Score Interpretation - moved here, directly below the chart */}
           {createScoreInterpretation()}
-        </div> 
+        </div>
       </div>
     </div>
   );

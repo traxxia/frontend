@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { 
   Search, 
-  Filter, 
-  Eye, 
   Users, 
   Loader, 
   ChevronDown, 
@@ -16,9 +16,13 @@ import {
   Calendar,
   Activity,
   Hash,
-  Bot
+  Bot,
+  X,
+  ChevronLeft,
+  Info,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react';
-import { formatDate } from '../utils/dateUtils'; // Import the utility function
+import { formatDate } from '../utils/dateUtils';
 import '../styles/UserHistory.css';
 
 const UserHistory = ({ onToast }) => {
@@ -27,11 +31,16 @@ const UserHistory = ({ onToast }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedUser, setExpandedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState({});
-  const [isLoadingDetails, setIsLoadingDetails] = useState({});
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [userRole, setUserRole] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState({ key: 'last_login', direction: 'desc' });
+  const [showHowModal, setShowHowModal] = useState(false);
+
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -83,6 +92,7 @@ const UserHistory = ({ onToast }) => {
   useEffect(() => {
     if (isInitialized) {
       loadUsersWithActivity(selectedCompany);
+      setCurrentPage(1);
     }
   }, [selectedCompany, isInitialized, loadUsersWithActivity]);
 
@@ -121,7 +131,7 @@ const UserHistory = ({ onToast }) => {
     if (userDetails[userId]) return;
 
     try {
-      setIsLoadingDetails(prev => ({ ...prev, [userId]: true }));
+      setIsLoadingDetails(true);
       const token = getAuthToken();
 
       const response = await fetch(`${API_BASE_URL}/api/admin/user-data/${userId}`, {
@@ -141,17 +151,13 @@ const UserHistory = ({ onToast }) => {
       console.error('Error loading user history:', error);
       onToast('Error loading user history', 'error');
     } finally {
-      setIsLoadingDetails(prev => ({ ...prev, [userId]: false }));
+      setIsLoadingDetails(false);
     }
   };
 
-  const handleUserExpand = (userId) => {
-    if (expandedUser === userId) {
-      setExpandedUser(null);
-    } else {
-      setExpandedUser(userId);
-      loadUserHistory(userId);
-    }
+  const handleUserSelect = async (userId) => {
+    setSelectedUser(userId);
+    await loadUserHistory(userId);
   };
 
   const exportUserData = async (userId, userName) => {
@@ -193,6 +199,49 @@ const UserHistory = ({ onToast }) => {
     return matchesSearch;
   });
 
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (sortConfig.key === 'name') {
+      return sortConfig.direction === 'asc' 
+        ? a.name.localeCompare(b.name) 
+        : b.name.localeCompare(a.name);
+    } else if (sortConfig.key === 'last_login') {
+      const aDate = a.last_login ? new Date(a.last_login) : new Date(0);
+      const bDate = b.last_login ? new Date(b.last_login) : new Date(0);
+      return sortConfig.direction === 'asc' 
+        ? aDate - bDate 
+        : bDate - aDate;
+    } else if (sortConfig.key === 'created_at') {
+      const aDate = new Date(a.created_at);
+      const bDate = new Date(b.created_at);
+      return sortConfig.direction === 'asc' 
+        ? aDate - bDate 
+        : bDate - aDate;
+    } else if (sortConfig.key === 'activity') {
+      const aActivity = a.activity_summary?.total_answers || 0;
+      const bActivity = b.activity_summary?.total_answers || 0;
+      return sortConfig.direction === 'asc' 
+        ? aActivity - bActivity 
+        : bActivity - aActivity;
+    }
+    return 0;
+  });
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   if (isLoading) {
     return (
       <div className="user-history-loading">
@@ -211,13 +260,15 @@ const UserHistory = ({ onToast }) => {
             {userRole === 'super_admin' ? 'All users across all companies' : 'Your company users'} with activity
           </p>
         </div>
-        <div className="user-count-badge">
-          <span>{filteredUsers.length} users with history</span>
-        </div>
+        <div className="user-count-card">
+  <div className="count-number">{filteredUsers.length}</div>
+  <div className="count-label">Users with History</div>
+</div>
+
       </div>
 
       {/* Filters */}
-      <div className="user-history-filters">
+      {/* <div className="user-history-filters">
         <div className="search-container">
           <Search size={16} className="search-icon" />
           <input
@@ -243,166 +294,226 @@ const UserHistory = ({ onToast }) => {
             ))}
           </select>
         )}
-      </div>
+      </div> */}
 
-      {/* User History List */}
-      <div className="user-history-list">
-        {filteredUsers.map(user => (
-          <UserHistoryCard
-            key={user._id}
-            user={user}
-            isExpanded={expandedUser === user._id}
-            onExpand={() => handleUserExpand(user._id)}
-            userDetails={userDetails[user._id]}
-            isLoadingDetails={isLoadingDetails[user._id]}
-            onExport={() => exportUserData(user._id, user.name)}
-          />
-        ))}
-      </div>
+      {/* Compact Search Only */}
+{/* <div className="compact-search">
+  <Search size={16} className="compact-search-icon" />
+  <input
+    type="text"
+    placeholder="Search users..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div> */}
 
-      {filteredUsers.length === 0 && (
-        <div className="no-users-message">
-          <Users size={48} className="no-users-icon" />
-          <h3 className="no-users-title">No User History Found</h3>
-          <p className="no-users-subtitle">No users with chat history or activity found for the selected criteria</p>
+{/* Compact Search + Info Button */}
+<div className="search-container-row">
+  <div className="compact-search">
+    <Search size={18} className="compact-search-icon" />
+    <input
+      type="text"
+      placeholder="Search users..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
+
+  <button className="info-btn" onClick={() => setShowHowModal(true)}>
+    <Info size={18} /> How It Works
+  </button>
+</div>
+
+{/* Popup Modal with Bootstrap Carousel */}
+{showHowModal && (
+  <div className="popup-overlay" onClick={() => setShowHowModal(false)}>
+    <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
+      <h2 className="mb-3">How This Application Works</h2>
+
+      <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+        {/* Indicators */}
+        <div className="carousel-indicators">
+          <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="0" className="active"></button>
+          <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="1"></button>
+          <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="2"></button>
+        </div>
+
+        {/* Slides */}
+        <div className="carousel-inner">
+          <div className="carousel-item active">
+            <img src="/slides/slide1.jpeg" className="d-block w-100" alt="Step 1" />
+          </div>
+          <div className="carousel-item">
+            <img src="/slides/slide2.jpeg" className="d-block w-100" alt="Step 2" />
+          </div>
+          <div className="carousel-item">
+            <img src="/slides/slide3.jpeg" className="d-block w-100" alt="Step 3" />
+          </div>
+        </div>
+
+        {/* Navigation Arrows */}
+        <button className="carousel-control-prev" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="prev">
+          <span className="carousel-control-prev-icon"></span>
+          <span className="visually-hidden">Previous</span>
+        </button>
+        <button className="carousel-control-next" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="next">
+          <span className="carousel-control-next-icon"></span>
+          <span className="visually-hidden">Next</span>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
+      {/* User History Table */}
+      <div className="user-table-wrapper">
+  <table className="user-table">
+    <thead>
+      <tr>
+        <th onClick={() => requestSort('name')}>
+          <div className="header-content">
+            User
+            {sortConfig.key === 'name' && (
+              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+            )}
+          </div>
+        </th>
+        <th>Role</th>
+        <th>Company</th>
+        <th onClick={() => requestSort('created_at')}>
+          <div className="header-content">
+            Joined
+            {sortConfig.key === 'created_at' && (
+              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+            )}
+          </div>
+        </th>
+        <th onClick={() => requestSort('last_login')}>
+          <div className="header-content">
+            Last Activity
+            {sortConfig.key === 'last_login' && (
+              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+            )}
+          </div>
+        </th>
+        <th onClick={() => requestSort('activity')}>
+          <div className="header-content">
+            Activity
+            {sortConfig.key === 'activity' && (
+              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+            )}
+          </div>
+        </th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {currentItems.map(user => (
+        <tr key={user._id}>
+          <td className="cell-user">
+            <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
+            <div className="user-info">
+              <div className="user-name">{user.name}</div>
+              <div className="user-email">{user.email}</div>
+            </div>
+          </td>
+          <td><span className="badge-role">{formatRoleName(user.role?.role_name || 'Unknown')}</span></td>
+          <td>{user.company?.company_name || 'No Company'}</td>
+          <td>{formatDate(user.created_at)}</td>
+          <td>
+            {user.last_login ? (
+              <div className="last-login">
+                {formatDate(user.last_login)}
+                <span className="time-ago">{getTimeAgo(user.last_login)}</span>
+              </div>
+            ) : 'Never'}
+          </td>
+          <td>
+            <div className="activity-inline">
+              <span title="Answers"><MessageSquare size={14} /> {user.activity_summary?.total_answers || 0}</span>
+              <span title="Messages"><Hash size={14} /> {user.activity_summary?.total_chat_messages || 0}</span>
+              <span title="Sessions"><Clock size={14} /> {user.activity_summary?.total_sessions || 0}</span>
+            </div>
+          </td>
+          <td className="cell-actions">
+            <button className="secondary-btn small-btn" onClick={() => handleUserSelect(user._id)}>View</button>
+            <button className="btn-secondary" onClick={() => exportUserData(user._id, user.name)}>
+              <Download size={14} />
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+
+      
+
+      {/* User Details Modal */}
+      {selectedUser && (
+        <div className="user-details-modal">
+          <div className="modal-overlayas" onClick={() => setSelectedUser(null)} />
+          <div className="modal-content">
+            <UserDetailsPanel 
+              user={users.find(u => u._id === selectedUser)}
+              userDetails={userDetails[selectedUser]} 
+              isLoading={isLoadingDetails} 
+              onClose={() => setSelectedUser(null)}
+              onExport={() => exportUserData(selectedUser, users.find(u => u._id === selectedUser)?.name)}
+            />
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-// UserHistoryCard Component
-const UserHistoryCard = ({ 
-  user, 
-  isExpanded, 
-  onExpand, 
-  userDetails, 
-  isLoadingDetails,
-  onExport 
-}) => {
-  const getRoleBadgeClass = (roleName) => {
-    switch (roleName) {
-      case 'super_admin': return 'role-badge-super-admin';
-      case 'company_admin': return 'role-badge-company-admin';
-      case 'answerer_user': return 'role-badge-answerer';
-      case 'viewer_user': return 'role-badge-viewer';
-      default: return 'role-badge-default';
-    }
-  };
-
-  const formatRoleName = (roleName) => {
-    return roleName.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  return (
-    <div className="user-history-card">
-      <div className="user-card-header" onClick={onExpand}>
-        <div className="user-info-section">
-          <div className="user-avatar">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
-          
-          <div className="user-details">
-            <div className="user-name-section">
-              <h3 className="user-name">{user.name}</h3>
-              <span className={`role-badge ${getRoleBadgeClass(user.role?.role_name)}`}>
-                {formatRoleName(user.role?.role_name || 'Unknown')}
-              </span>
-            </div>
-            
-            <p className="user-email">{user.email}</p>
-            
-            <div className="user-meta">
-              <div className="meta-item">
-                <Building2 size={14} />
-                <span>{user.company?.company_name || 'No Company'}</span>
-              </div>
-              <div className="meta-item">
-                <Calendar size={14} />
-                <span>Joined {formatDate(user.created_at)}</span>
-              </div>
-              {user.last_login && (
-                <div className="meta-item">
-                  <Activity size={14} />
-                  <span>Last seen {formatDate(user.last_login)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="user-stats-section">
-          <div className="activity-stats">
-            <div className="stat-item">
-              <div className="stat-value">
-                <MessageSquare size={14} />
-                <span>{user.activity_summary?.total_answers || 0}</span>
-              </div>
-              <div className="stat-label">Answers</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">
-                <Hash size={14} />
-                <span>{user.activity_summary?.total_chat_messages || 0}</span>
-              </div>
-              <div className="stat-label">Messages</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">
-                <Clock size={14} />
-                <span>{user.activity_summary?.total_sessions || 0}</span>
-              </div>
-              <div className="stat-label">Sessions</div>
-            </div>
-          </div>
-          
-          <div className="expand-icon">
-            {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="user-expanded-content">
-          {isLoadingDetails ? (
-            <div className="loading-details">
-              <Loader size={16} className="loading-spinner" />
-              <span>Loading detailed history...</span>
-            </div>
-          ) : userDetails ? (
-            <UserHistoryContent userDetails={userDetails} onExport={onExport} />
-          ) : (
-            <div className="no-details">
-              <p>No detailed history data available for this user</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// UserHistoryContent Component
-const UserHistoryContent = ({ userDetails, onExport }) => {
+// UserDetailsPanel Component
+const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport }) => {
   const [activeTab, setActiveTab] = useState('chat');
 
   const tabs = [
-    { id: 'chat', label: 'Chat History', count: userDetails.chat_history?.length || 0, icon: MessageSquare },
-    { id: 'answers', label: 'Answers', count: userDetails.answers?.length || 0, icon: Hash },
-    { id: 'sessions', label: 'Sessions', count: userDetails.sessions?.length || 0, icon: Clock },
-    { id: 'results', label: 'Results', count: userDetails.phase_results?.length || 0, icon: Award }
+    { id: 'chat', label: 'Chat History', count: userDetails?.chat_history?.length || 0, icon: MessageSquare },
+    { id: 'answers', label: 'Answers', count: userDetails?.answers?.length || 0, icon: Hash },
+    { id: 'sessions', label: 'Sessions', count: userDetails?.sessions?.length || 0, icon: Clock },
+    { id: 'results', label: 'Results', count: userDetails?.phase_results?.length || 0, icon: Award }
   ];
 
   return (
-    <div className="user-history-content">
-      <div className="content-header">
-        <div className="activity-summary">
-          <strong>Total Activity:</strong> {userDetails.summary?.total_chat_messages || 0} messages, 
-          {' '}{userDetails.summary?.total_answers || 0} answers, 
-          {' '}{userDetails.summary?.total_sessions || 0} sessions
+    <div className="user-details-panel">
+      <div className="panel-header">
+        <div className="user-header-info">
+          <div className="user-avatar large">
+            {user?.name?.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h3>{user?.name}</h3>
+            <p className="user-email">{user?.email}</p>
+            <div className="user-meta">
+              <span className={`role-badge ${getRoleBadgeClass(user?.role?.role_name)}`}>
+                {formatRoleName(user?.role?.role_name || 'Unknown')}
+              </span>
+              <span className="company-badge">
+                <Building2 size={14} />
+                {user?.company?.company_name || 'No Company'}
+              </span>
+            </div>
+          </div>
         </div>
+        <button onClick={onClose} className="close-button">
+          <X size={20} />
+        </button>
+      </div>
+      
+      <div className="activity-summary">
+        <strong>Total Activity:</strong> {userDetails?.summary?.total_chat_messages || 0} messages, 
+        {' '}{userDetails?.summary?.total_answers || 0} answers, 
+        {' '}{userDetails?.summary?.total_sessions || 0} sessions
         <button onClick={onExport} className="export-button">
           <Download size={14} />
           <span>Export All Data</span>
@@ -417,26 +528,36 @@ const UserHistoryContent = ({ userDetails, onExport }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              disabled={isLoading}
             >
               <Icon size={16} />
               <span>{tab.label}</span>
-              <span className="tab-count">{tab.count}</span>
+              {tab.count > 0 && <span className="tab-count">{tab.count}</span>}
             </button>
           );
         })}
       </div>
 
       <div className="tab-content">
-        {activeTab === 'chat' && <ChatHistory chatHistory={userDetails.chat_history || []} />}
-        {activeTab === 'answers' && <AnswersHistory answers={userDetails.answers || []} />}
-        {activeTab === 'sessions' && <SessionsHistory sessions={userDetails.sessions || []} />}
-        {activeTab === 'results' && <ResultsHistory results={userDetails.phase_results || []} />}
+        {isLoading ? (
+          <div className="loading-details">
+            <Loader size={24} className="loading-spinner" />
+            <span>Loading detailed history...</span>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'chat' && <ChatHistory chatHistory={userDetails?.chat_history || []} />}
+            {activeTab === 'answers' && <AnswersHistory answers={userDetails?.answers || []} />}
+            {activeTab === 'sessions' && <SessionsHistory sessions={userDetails?.sessions || []} />}
+            {activeTab === 'results' && <ResultsHistory results={userDetails?.phase_results || []} />}
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-// ChatHistory Component
+// ChatHistory Component (same as before)
 const ChatHistory = ({ chatHistory }) => {
   if (chatHistory.length === 0) {
     return (
@@ -485,7 +606,7 @@ const ChatHistory = ({ chatHistory }) => {
   );
 };
 
-// AnswersHistory Component
+// AnswersHistory Component (same as before)
 const AnswersHistory = ({ answers }) => {
   if (answers.length === 0) {
     return (
@@ -571,7 +692,7 @@ const AnswersHistory = ({ answers }) => {
   );
 };
 
-// SessionsHistory Component
+// SessionsHistory Component (same as before)
 const SessionsHistory = ({ sessions }) => {
   if (sessions.length === 0) {
     return (
@@ -643,7 +764,7 @@ const SessionsHistory = ({ sessions }) => {
   );
 };
 
-// ResultsHistory Component
+// ResultsHistory Component (same as before)
 const ResultsHistory = ({ results }) => {
   if (results.length === 0) {
     return (
@@ -733,6 +854,34 @@ const ResultsHistory = ({ results }) => {
       </div>
     </div>
   );
+};
+
+// Helper functions
+const getRoleBadgeClass = (roleName) => {
+  switch (roleName) {
+    case 'super_admin': return 'role-badge-super-admin';
+    case 'company_admin': return 'role-badge-company-admin';
+    case 'answerer_user': return 'role-badge-answerer';
+    case 'viewer_user': return 'role-badge-viewer';
+    default: return 'role-badge-default';
+  }
+};
+
+const formatRoleName = (roleName) => {
+  return roleName.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+};
+
+const getTimeAgo = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  return `${Math.floor(diffInSeconds / 86400)}d ago`;
 };
 
 export default UserHistory;
