@@ -123,11 +123,11 @@ ${t('growth_projection_details')}
       {businesses.length > 0 && businesses.map((business, index) => (
         <div
           key={index}
-          className="business-item d-flex align-items-center p-3 border-bottom"
+          className="business-item d-flex align-items-center border-bottom"
           onClick={() => handleBusinessClick(business)}
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", padding:"1.5rem" }}
         >
-          <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
+          {/* <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
             <CircularProgressbar
               value={business.progress}
               text={`${business.progress}%`}
@@ -138,7 +138,7 @@ ${t('growth_projection_details')}
                 textSize: "30px",
               })}
             />
-          </div>
+          </div> */}
           <div className="flex-grow-1">
             <h6 className="mb-1">{business.name}</h6>
             {/* <small className="text-muted">
