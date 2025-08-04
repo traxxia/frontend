@@ -20,9 +20,19 @@ import {
   X,
   ChevronLeft,
   Info,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  FileText,
+  BarChart3,
+  Target,
+  TrendingUp
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
+import SwotAnalysis from '../components/SwotAnalysis';
+import CustomerSegmentation from '../components/CustomerSegmentation';
+import PurchaseCriteria from '../components/PurchaseCriteria';
+import ChannelHeatmap from '../components/ChannelHeatmap';
+import LoyaltyNPS from '../components/LoyaltyNPS';
+import CapabilityHeatmap from '../components/CapabilityHeatmap';
 import '../styles/UserHistory.css';
 
 const UserHistory = ({ onToast }) => {
@@ -39,8 +49,6 @@ const UserHistory = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: 'last_login', direction: 'desc' });
-  const [showHowModal, setShowHowModal] = useState(false);
-
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -256,203 +264,85 @@ const UserHistory = ({ onToast }) => {
       <div className="user-history-header">
         <div>
           <h2 className="user-history-title">User History & Chat Records</h2>
-          <p className="user-history-subtitle">
-            {userRole === 'super_admin' ? 'All users across all companies' : 'Your company users'} with activity
-          </p>
-        </div>
-        <div className="user-count-card">
-  <div className="count-number">{filteredUsers.length}</div>
-  <div className="count-label">Users with History</div>
-</div>
-
+           
+        </div> 
       </div>
 
-      {/* Filters */}
-      {/* <div className="user-history-filters">
-        <div className="search-container">
-          <Search size={16} className="search-icon" />
+      {/* Compact Search + Info Button */}
+      <div className="search-container-row">
+        <div className="compact-search">
+          <Search size={18} className="compact-search-icon" />
           <input
             type="text"
-            placeholder="Search users by name or email..."
+            placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
           />
         </div>
+
       
-        {userRole === 'super_admin' && companies.length > 0 && (
-          <select
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            className="company-select"
-          >
-            <option value="">All Companies</option>
-            {companies.map((company) => (
-              <option key={company._id} value={company._id}>
-                {company.company_name}
-              </option>
-            ))}
-          </select>
-        )}
-      </div> */}
-
-      {/* Compact Search Only */}
-{/* <div className="compact-search">
-  <Search size={16} className="compact-search-icon" />
-  <input
-    type="text"
-    placeholder="Search users..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div> */}
-
-{/* Compact Search + Info Button */}
-<div className="search-container-row">
-  <div className="compact-search">
-    <Search size={18} className="compact-search-icon" />
-    <input
-      type="text"
-      placeholder="Search users..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-  </div>
-
-  <button className="info-btn" onClick={() => setShowHowModal(true)}>
-    <Info size={18} /> How It Works
-  </button>
-</div>
-
-{/* Popup Modal with Bootstrap Carousel */}
-{showHowModal && (
-  <div className="popup-overlay" onClick={() => setShowHowModal(false)}>
-    <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
-      <h2 className="mb-3">How This Application Works</h2>
-
-      <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
-        {/* Indicators */}
-        <div className="carousel-indicators">
-          <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="0" className="active"></button>
-          <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="1"></button>
-          <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="2"></button>
-        </div>
-
-        {/* Slides */}
-        <div className="carousel-inner">
-          <div className="carousel-item active">
-            <img src="/slides/slide1.jpeg" className="d-block w-100" alt="Step 1" />
-          </div>
-          <div className="carousel-item">
-            <img src="/slides/slide2.jpeg" className="d-block w-100" alt="Step 2" />
-          </div>
-          <div className="carousel-item">
-            <img src="/slides/slide3.jpeg" className="d-block w-100" alt="Step 3" />
-          </div>
-        </div>
-
-        {/* Navigation Arrows */}
-        <button className="carousel-control-prev" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="prev">
-          <span className="carousel-control-prev-icon"></span>
-          <span className="visually-hidden">Previous</span>
-        </button>
-        <button className="carousel-control-next" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="next">
-          <span className="carousel-control-next-icon"></span>
-          <span className="visually-hidden">Next</span>
-        </button>
       </div>
-    </div>
-  </div>
-)}
 
-
-
-
+      {/* Popup Modal with Bootstrap Carousel */}
+      
 
       {/* User History Table */}
       <div className="user-table-wrapper">
-  <table className="user-table">
-    <thead>
-      <tr>
-        <th onClick={() => requestSort('name')}>
-          <div className="header-content">
-            User
-            {sortConfig.key === 'name' && (
-              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-            )}
-          </div>
-        </th>
-        <th>Role</th>
-        <th>Company</th>
-        <th onClick={() => requestSort('created_at')}>
-          <div className="header-content">
-            Joined
-            {sortConfig.key === 'created_at' && (
-              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-            )}
-          </div>
-        </th>
-        <th onClick={() => requestSort('last_login')}>
-          <div className="header-content">
-            Last Activity
-            {sortConfig.key === 'last_login' && (
-              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-            )}
-          </div>
-        </th>
-        <th onClick={() => requestSort('activity')}>
-          <div className="header-content">
-            Activity
-            {sortConfig.key === 'activity' && (
-              <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-            )}
-          </div>
-        </th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {currentItems.map(user => (
-        <tr key={user._id}>
-          <td className="cell-user">
-            <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
-            <div className="user-info">
-              <div className="user-name">{user.name}</div>
-              <div className="user-email">{user.email}</div>
-            </div>
-          </td>
-          <td><span className="badge-role">{formatRoleName(user.role?.role_name || 'Unknown')}</span></td>
-          <td>{user.company?.company_name || 'No Company'}</td>
-          <td>{formatDate(user.created_at)}</td>
-          <td>
-            {user.last_login ? (
-              <div className="last-login">
-                {formatDate(user.last_login)}
-                <span className="time-ago">{getTimeAgo(user.last_login)}</span>
-              </div>
-            ) : 'Never'}
-          </td>
-          <td>
-            <div className="activity-inline">
-              <span title="Answers"><MessageSquare size={14} /> {user.activity_summary?.total_answers || 0}</span>
-              <span title="Messages"><Hash size={14} /> {user.activity_summary?.total_chat_messages || 0}</span>
-              <span title="Sessions"><Clock size={14} /> {user.activity_summary?.total_sessions || 0}</span>
-            </div>
-          </td>
-          <td className="cell-actions">
-            <button className="secondary-btn small-btn" onClick={() => handleUserSelect(user._id)}>View</button>
-            <button className="btn-secondary" onClick={() => exportUserData(user._id, user.name)}>
-              <Download size={14} />
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+        <table className="user-table">
+          <thead>
+            <tr>
+              <th onClick={() => requestSort('name')}>
+                <div className="header-content">
+                  User
+                  {sortConfig.key === 'name' && (
+                    <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th>Role</th>
+              <th>Company</th>
+              <th onClick={() => requestSort('created_at')}>
+                <div className="header-content">
+                  Joined
+                  {sortConfig.key === 'created_at' && (
+                    <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th> 
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.map(user => (
+              <tr key={user._id}>
+                <td className="cell-user">
+                  <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
+                  <div className="user-info">
+                    <div className="user-name">{user.name}</div>
+                    <div className="user-email">{user.email}</div>
+                  </div>
+                </td>
+                <td><span className="badge-role">{formatRoleName(user.role?.role_name || 'Unknown')}</span></td>
+                <td>{user.company?.company_name || 'No Company'}</td>
+                <td>{formatDate(user.created_at)}</td>
+                 
+                <td className="cell-actions">
+                  <button className="secondary-btn small-btn" onClick={() => handleUserSelect(user._id)}>View</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-
-      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={paginate}
+        />
+      )}
 
       {/* User Details Modal */}
       {selectedUser && (
@@ -473,83 +363,215 @@ const UserHistory = ({ onToast }) => {
   );
 };
 
-// UserDetailsPanel Component
+// Enhanced UserDetailsPanel Component with Analysis Support
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport }) => {
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('conversation');
 
-  const tabs = [
-    { id: 'chat', label: 'Chat History', count: userDetails?.chat_history?.length || 0, icon: MessageSquare },
-    { id: 'answers', label: 'Answers', count: userDetails?.answers?.length || 0, icon: Hash },
-    { id: 'sessions', label: 'Sessions', count: userDetails?.sessions?.length || 0, icon: Clock },
-    { id: 'results', label: 'Results', count: userDetails?.phase_results?.length || 0, icon: Award }
-  ];
+  // Count conversation messages and analysis results
+  const conversationCount = userDetails?.conversation?.length || 0;
+  
+  // Enhanced analysis data parsing from user-data API response
+  const getAnalysisData = () => {
+    if (!userDetails) {
+      return null;
+    }
+
+    const analysisData = {
+      swot: null,
+      customerSegmentation: null,
+      purchaseCriteria: null,
+      channelHeatmap: null,
+      loyaltyNPS: null,
+      capabilityHeatmap: null,
+      businessName: user?.name || 'Business',
+      userAnswers: {},
+      questions: []
+    };
+
+    // Extract questions and answers from conversation data
+    if (userDetails.conversation && userDetails.conversation.length > 0) {
+      userDetails.conversation.forEach(phase => {
+        if (phase.questions && phase.questions.length > 0) {
+          phase.questions.forEach(qa => {
+            // Create a simple question object for the analysis components
+            const questionId = qa.question || `q_${Math.random()}`;
+            analysisData.questions.push({
+              _id: questionId,
+              question_id: questionId,
+              question_text: qa.question,
+              phase: phase.phase,
+              severity: phase.severity
+            });
+            analysisData.userAnswers[questionId] = qa.answer;
+          });
+        }
+      });
+    }
+
+    // Parse system results for analysis data
+    if (userDetails.system && userDetails.system.length > 0) {
+      userDetails.system.forEach(result => {
+        try {
+          let analysisResult;
+          
+          // Handle different data formats
+          if (typeof result.analysis_result === 'string') {
+            try {
+              analysisResult = JSON.parse(result.analysis_result);
+            } catch (e) {
+              // If JSON parsing fails, treat as raw string
+              analysisResult = result.analysis_result;
+            }
+          } else {
+            analysisResult = result.analysis_result;
+          }
+
+          // Detect SWOT analysis (check for SWOT-specific fields)
+          if (typeof analysisResult === 'string') {
+            // Check if string contains SWOT keywords
+            if (analysisResult.includes('strengths') || analysisResult.includes('weaknesses') || 
+                analysisResult.includes('opportunities') || analysisResult.includes('threats')) {
+              analysisData.swot = analysisResult;
+            }
+          } else if (analysisResult && typeof analysisResult === 'object') {
+            // Check for SWOT object structure
+            if (analysisResult.strengths || analysisResult.weaknesses || 
+                analysisResult.opportunities || analysisResult.threats) {
+              analysisData.swot = result.analysis_result;
+            }
+            
+            // Detect Customer Segmentation
+            else if (analysisResult.customerSegmentation || analysisResult.segments ||
+                    (analysisResult.demographic && analysisResult.behavioral)) {
+              analysisData.customerSegmentation = analysisResult.customerSegmentation || analysisResult;
+            }
+
+            // Detect Purchase Criteria
+            else if (analysisResult.purchaseCriteria || analysisResult.criteria ||
+                    analysisResult.purchase_factors) {
+              analysisData.purchaseCriteria = analysisResult.purchaseCriteria || analysisResult;
+            }
+
+            // Detect Channel Heatmap
+            else if (analysisResult.channelHeatmap || analysisResult.channels ||
+                    analysisResult.channel_effectiveness) {
+              analysisData.channelHeatmap = analysisResult.channelHeatmap || analysisResult;
+            }
+
+            // Detect Loyalty/NPS
+            else if (analysisResult.loyaltyMetrics || analysisResult.loyalty || analysisResult.nps) {
+              analysisData.loyaltyNPS = analysisResult.loyaltyMetrics || analysisResult;
+            }
+
+            // Detect Capability Heatmap
+            else if (analysisResult.capabilities || analysisResult.capabilityHeatmap ||
+                    analysisResult.capability_matrix) {
+              analysisData.capabilityHeatmap = analysisResult.capabilities || analysisResult;
+            }
+          }
+
+        } catch (error) {
+          console.error('Error parsing analysis result:', error);
+        }
+      });
+    }
+
+    return analysisData;
+  };
+
+  const analysisData = getAnalysisData();
+  const hasAnalysis = analysisData && (
+    analysisData.swot || 
+    analysisData.customerSegmentation || 
+    analysisData.purchaseCriteria || 
+    analysisData.channelHeatmap || 
+    analysisData.loyaltyNPS || 
+    analysisData.capabilityHeatmap
+  );
+  
+  const analysisCount = hasAnalysis ? Object.values(analysisData).filter(data => 
+    data !== null && data !== undefined && 
+    data !== analysisData.businessName && 
+    data !== analysisData.userAnswers && 
+    data !== analysisData.questions
+  ).length : 0;
 
   return (
     <div className="user-details-panel">
       <div className="panel-header">
-        <div className="user-header-info">
-          <div className="user-avatar large">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
+        <div className="user-header-info">          
           <div>
-            <h3>{user?.name}</h3>
-            <p className="user-email">{user?.email}</p>
-            <div className="user-meta">
+            <h3>{user?.name}</h3> 
+            {/* <div className="user-meta">
               <span className={`role-badge ${getRoleBadgeClass(user?.role?.role_name)}`}>
                 {formatRoleName(user?.role?.role_name || 'Unknown')}
-              </span>
-              <span className="company-badge">
-                <Building2 size={14} />
-                {user?.company?.company_name || 'No Company'}
-              </span>
-            </div>
+              </span> 
+              <span className="user-email">{user?.email}</span>
+            </div> */}
           </div>
         </div>
-        <button onClick={onClose} className="close-button">
-          <X size={20} />
-        </button>
+        <div className="panel-actions">
+          <button onClick={onExport} className="export-button">
+            <Download size={16} />
+            <span>Export Data</span>
+          </button>
+          <button onClick={onClose} className="close-button">
+            <X size={20} />
+          </button>
+        </div>
       </div>
       
-      <div className="activity-summary">
-        <strong>Total Activity:</strong> {userDetails?.summary?.total_chat_messages || 0} messages, 
-        {' '}{userDetails?.summary?.total_answers || 0} answers, 
-        {' '}{userDetails?.summary?.total_sessions || 0} sessions
-        <button onClick={onExport} className="export-button">
-          <Download size={14} />
-          <span>Export All Data</span>
-        </button>
-      </div>
+      {/* <div className="activity-summary">
+        <div className="summary-stats">
+          <div className="stat-item">
+            <MessageSquare size={16} />
+            <span>{conversationCount} Conversations</span>
+          </div>
+          {hasAnalysis && (
+            <div className="stat-item">
+              <Target size={16} />
+              <span>{analysisCount} Analysis Components</span>
+            </div>
+          )}
+        </div>
+      </div> */}
 
       <div className="tab-navigation">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-              disabled={isLoading}
-            >
-              <Icon size={16} />
-              <span>{tab.label}</span>
-              {tab.count > 0 && <span className="tab-count">{tab.count}</span>}
-            </button>
-          );
-        })}
+        <button
+          onClick={() => setActiveTab('conversation')}
+          className={`tab-button ${activeTab === 'conversation' ? 'active' : ''}`}
+          disabled={isLoading}
+        >
+          <FileText size={16} />
+          <span>Conversation</span>
+          {/* {conversationCount > 0 && <span className="tab-count">{conversationCount}</span>} */}
+        </button>
+
+        {hasAnalysis && (
+          <button
+            onClick={() => setActiveTab('analysis')}
+            className={`tab-button ${activeTab === 'analysis' ? 'active' : ''}`}
+            disabled={isLoading}
+          >
+            <Target size={16} />
+            <span>Analysis</span>
+            {/* <span className="tab-count">{analysisCount}</span> */}
+          </button>
+        )}
       </div>
 
       <div className="tab-content">
         {isLoading ? (
           <div className="loading-details">
             <Loader size={24} className="loading-spinner" />
-            <span>Loading detailed history...</span>
+            <span>Loading user data...</span>
           </div>
         ) : (
           <>
-            {activeTab === 'chat' && <ChatHistory chatHistory={userDetails?.chat_history || []} />}
-            {activeTab === 'answers' && <AnswersHistory answers={userDetails?.answers || []} />}
-            {activeTab === 'sessions' && <SessionsHistory sessions={userDetails?.sessions || []} />}
-            {activeTab === 'results' && <ResultsHistory results={userDetails?.phase_results || []} />}
+            {activeTab === 'conversation' && <ConversationTab conversation={userDetails?.conversation || []} />}
+            {activeTab === 'analysis' && hasAnalysis && (
+              <AnalysisTab analysisData={analysisData} />
+            )}
           </>
         )}
       </div>
@@ -557,47 +579,155 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport }) =
   );
 };
 
-// ChatHistory Component (same as before)
-const ChatHistory = ({ chatHistory }) => {
-  if (chatHistory.length === 0) {
+// New AnalysisTab Component
+const AnalysisTab = ({ analysisData }) => {
+  if (!analysisData) {
     return (
       <div className="empty-state">
-        <MessageSquare size={48} />
-        <p className="empty-title">No chat history</p>
-        <p className="empty-subtitle">This user hasn't engaged in any conversations yet</p>
+        <Target size={48} />
+        <p className="empty-title">No analysis available</p>
+        <p className="empty-subtitle">This user hasn't generated any business analysis yet</p>
       </div>
     );
   }
 
   return (
-    <div className="chat-history">
-      <div className="chat-messages">
-        {chatHistory.map((message, index) => (
-          <div key={message._id || index} className="chat-message">
-            <div className={`message-avatar ${message.message_type}`}>
-              {message.message_type === 'user' ? <User size={16} /> : <Bot size={16} />}
+    <div className="analysis-tab">
+      <div className="analysis-components">
+        {/* SWOT Analysis */}
+        {analysisData.swot && (
+          <div className="analysis-component">
+            <SwotAnalysis
+              analysisResult={analysisData.swot}
+              businessName={analysisData.businessName}
+              onRegenerate={null} // Read-only mode
+              isRegenerating={false}
+              canRegenerate={false}
+            />
+          </div>
+        )}
+
+        {/* Customer Segmentation */}
+        {analysisData.customerSegmentation && (
+          <div className="analysis-component">
+            <CustomerSegmentation
+              questions={analysisData.questions}
+              userAnswers={analysisData.userAnswers}
+              businessName={analysisData.businessName}
+              onDataGenerated={() => {}}
+              onRegenerate={null}
+              isRegenerating={false}
+              canRegenerate={false}
+              customerSegmentationData={analysisData.customerSegmentation}
+            />
+          </div>
+        )}
+
+        {/* Purchase Criteria */}
+        {analysisData.purchaseCriteria && (
+          <div className="analysis-component">
+            <PurchaseCriteria
+              questions={analysisData.questions}
+              userAnswers={analysisData.userAnswers}
+              businessName={analysisData.businessName}
+              onDataGenerated={() => {}}
+              onRegenerate={null}
+              isRegenerating={false}
+              canRegenerate={false}
+              purchaseCriteriaData={analysisData.purchaseCriteria}
+            />
+          </div>
+        )}
+
+        {/* Channel Heatmap */}
+        {analysisData.channelHeatmap && (
+          <div className="analysis-component">
+            <ChannelHeatmap
+              questions={analysisData.questions}
+              userAnswers={analysisData.userAnswers}
+              businessName={analysisData.businessName}
+              onDataGenerated={() => {}}
+              onRegenerate={null}
+              isRegenerating={false}
+              canRegenerate={false}
+              channelHeatmapData={analysisData.channelHeatmap}
+            />
+          </div>
+        )}
+
+        {/* Loyalty NPS */}
+        {analysisData.loyaltyNPS && (
+          <div className="analysis-component">
+            <LoyaltyNPS
+              questions={analysisData.questions}
+              userAnswers={analysisData.userAnswers}
+              businessName={analysisData.businessName}
+              onDataGenerated={() => {}}
+              onRegenerate={null}
+              isRegenerating={false}
+              canRegenerate={false}
+              loyaltyNPSData={analysisData.loyaltyNPS}
+            />
+          </div>
+        )}
+
+        {/* Capability Heatmap */}
+        {analysisData.capabilityHeatmap && (
+          <div className="analysis-component">
+            <CapabilityHeatmap
+              questions={analysisData.questions}
+              userAnswers={analysisData.userAnswers}
+              businessName={analysisData.businessName}
+              onDataGenerated={() => {}}
+              onRegenerate={null}
+              isRegenerating={false}
+              canRegenerate={false}
+              capabilityHeatmapData={analysisData.capabilityHeatmap}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ConversationTab Component
+const ConversationTab = ({ conversation }) => {
+  if (conversation.length === 0) {
+    return (
+      <div className="empty-state">
+        <FileText size={48} />
+        <p className="empty-title">No conversations</p>
+        <p className="empty-subtitle">This user hasn't started any conversations yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="conversation-tab">
+      <div className="conversation-list">
+        {conversation.map((phase, index) => (
+          <div key={index} className="conversation-phase">
+            <div className="phase-header">
+              <h4 className="phase-title">
+                {phase.phase.charAt(0).toUpperCase() + phase.phase.slice(1)} Phase
+              </h4>
+              <span className="phase-severity">{phase.severity}</span>
             </div>
             
-            <div className="message-content">
-              <div className="message-header">
-                <span className="message-type">{message.message_type}</span>
-                <span className="message-time">
-                  {formatDate(message.timestamp)} {new Date(message.timestamp).toLocaleTimeString()}
-                </span>
-                {message.question_id && (
-                  <span className="question-id">Q{message.question_id}</span>
-                )}
-              </div>
-              
-              <div className={`message-text ${message.message_type}`}>
-                <p>{message.message_text}</p>
-              </div>
-              
-              {message.metadata && Object.keys(message.metadata).length > 0 && (
-                <div className="message-metadata">
-                  <strong>Metadata:</strong> {JSON.stringify(message.metadata)}
+            <div className="questions-list">
+              {phase.questions.map((question, qIndex) => (
+                <div key={qIndex} className="question-item">
+                  <div className="question-header">
+                    <div className="question-text">{question.question}</div>
+                  </div>
+                  
+                  <div className="answer-section">
+                    <div className="answer-label">Answer:</div>
+                    <div className="answer-text">{question.answer}</div>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         ))}
@@ -606,252 +736,80 @@ const ChatHistory = ({ chatHistory }) => {
   );
 };
 
-// AnswersHistory Component (same as before)
-const AnswersHistory = ({ answers }) => {
-  if (answers.length === 0) {
-    return (
-      <div className="empty-state">
-        <Hash size={48} />
-        <p className="empty-title">No answers recorded</p>
-        <p className="empty-subtitle">This user hasn't answered any questions yet</p>
-      </div>
-    );
-  }
+// Pagination Component
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
 
-  return (
-    <div className="answers-history">
-      <div className="answers-list">
-        {answers.map((answer, index) => (
-          <div key={answer._id || index} className="answer-item">
-            <div className="answer-header">
-              <div className="answer-badges">
-                <span className="question-badge">Q{answer.question_id}</span>
-                {answer.phase && (
-                  <span className={`phase-badge ${answer.phase}`}>
-                    {answer.phase}
-                  </span>
-                )}
-                {answer.is_followup && (
-                  <span className="followup-badge">Follow-up</span>
-                )}
-              </div>
-              
-              <div className="answer-meta">
-                <span>{formatDate(answer.answered_at)}</span>
-                <span>{answer.attempt_count} attempt{answer.attempt_count > 1 ? 's' : ''}</span>
-              </div>
-            </div>
-            
-            <div className="question-section">
-              <div className="section-label">Question:</div>
-              <div className="question-text">{answer.question_text}</div>
-            </div>
-            
-            <div className="answer-section">
-              <div className="section-label">Answer:</div>
-              <div className="answer-text">{answer.answer_text}</div>
-            </div>
-            
-            {answer.confidence_score && (
-              <div className="confidence-section">
-                <span className="confidence-label">Confidence:</span>
-                <div className="confidence-bar">
-                  <div className="confidence-track">
-                    <div 
-                      className="confidence-fill" 
-                      style={{ width: `${answer.confidence_score * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="confidence-value">
-                    {Math.round(answer.confidence_score * 100)}%
-                  </span>
-                </div>
-              </div>
-            )}
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
 
-            {answer.related_chat_messages && answer.related_chat_messages.length > 0 && (
-              <div className="related-messages">
-                <div className="section-label">
-                  Related Chat Messages ({answer.related_chat_messages.length})
-                </div>
-                <div className="related-list">
-                  {answer.related_chat_messages.map((chat, idx) => (
-                    <div key={idx} className="related-message">
-                      <span className="message-sender">{chat.message_type}:</span> 
-                      {chat.message_text.substring(0, 100)}
-                      {chat.message_text.length > 100 && '...'}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
 
-// SessionsHistory Component (same as before)
-const SessionsHistory = ({ sessions }) => {
-  if (sessions.length === 0) {
-    return (
-      <div className="empty-state">
-        <Clock size={48} />
-        <p className="empty-title">No sessions recorded</p>
-        <p className="empty-subtitle">This user hasn't started any sessions yet</p>
-      </div>
-    );
-  }
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
 
-  return (
-    <div className="sessions-history">
-      <div className="sessions-list">
-        {sessions.map((session, index) => (
-          <div key={session._id || index} className="session-item">
-            <div className="session-header">
-              <div className="session-info">
-                <span className="session-id">{session.session_id}</span>
-                <span className={`session-status ${session.status}`}>
-                  {session.status}
-                </span>
-              </div>
-              
-              {session.current_phase && (
-                <span className="current-phase">Phase: {session.current_phase}</span>
-              )}
-            </div>
-            
-            <div className="session-details">
-              <div className="session-time">
-                <div className="time-label">Started</div>
-                <div className="time-value">
-                  {formatDate(session.started_at)} {new Date(session.started_at).toLocaleTimeString()}
-                </div>
-              </div>
-              
-              {session.last_activity && (
-                <div className="session-time">
-                  <div className="time-label">Last Activity</div>
-                  <div className="time-value">
-                    {formatDate(session.last_activity)} {new Date(session.last_activity).toLocaleTimeString()}
-                  </div>
-                </div>
-              )}
-              
-              {session.completedAt && (
-                <div className="session-time">
-                  <div className="time-label">Completed</div>
-                  <div className="time-value">
-                    {formatDate(session.completedAt)} {new Date(session.completedAt).toLocaleTimeString()}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {session.total_time_spent && (
-              <div className="session-duration">
-                <span className="duration-label">Duration: </span>
-                <span className="duration-value">
-                  {Math.round(session.total_time_spent)} minutes
-                </span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+    rangeWithDots.push(...range);
 
-// ResultsHistory Component (same as before)
-const ResultsHistory = ({ results }) => {
-  if (results.length === 0) {
-    return (
-      <div className="empty-state">
-        <Award size={48} />
-        <p className="empty-title">No phase results</p>
-        <p className="empty-subtitle">No analysis results have been generated yet</p>
-      </div>
-    );
-  }
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else {
+      rangeWithDots.push(totalPages);
+    }
 
-  const getQualityClass = (score) => {
-    if (score >= 80) return 'quality-excellent';
-    if (score >= 60) return 'quality-good';
-    if (score >= 40) return 'quality-fair';
-    return 'quality-poor';
+    return rangeWithDots;
   };
 
   return (
-    <div className="results-history">
-      <div className="results-list">
-        {results.map((result, index) => (
-          <div key={result._id || index} className="result-item">
-            <div className="result-header">
-              <h4 className="result-title">
-                {result.phase_name?.charAt(0).toUpperCase() + result.phase_name?.slice(1)} Phase Results
-              </h4>
-              <div className="result-meta">
-                <span className="result-date">
-                  {formatDate(result.generated_at)}
-                </span>
-                {result.quality_score && (
-                  <span className={`quality-badge ${getQualityClass(result.quality_score)}`}>
-                    Quality: {result.quality_score}/100
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            {result.result_data && (
-              <div className="result-data">
-                <div className="data-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Completion: </span>
-                    <span className="metric-value">{result.result_data.completion_percentage || 0}%</span>
-                  </div>
-                  <div className="metric">
-                    <span className="metric-label">Questions: </span>
-                    <span className="metric-value">{result.result_data.total_questions || 0}</span>
-                  </div>
-                </div>
-                {result.result_data.insights && (
-                  <div className="insights-section">
-                    <div className="section-label">Insights:</div>
-                    <p className="insights-text">{result.result_data.insights}</p>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {result.analysis_output && (
-              <div className="analysis-output">
-                {result.analysis_output.summary && (
-                  <div className="summary-section">
-                    <div className="section-label">Analysis Summary:</div>
-                    <p className="summary-text">{result.analysis_output.summary}</p>
-                  </div>
-                )}
-                
-                {result.analysis_output.recommendations && result.analysis_output.recommendations.length > 0 && (
-                  <div className="recommendations-section">
-                    <div className="section-label">Recommendations:</div>
-                    <ul className="recommendations-list">
-                      {result.analysis_output.recommendations.map((rec, idx) => (
-                        <li key={idx} className="recommendation-item">
-                          <span className="recommendation-bullet"></span>
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+    <div className="pagination-container">
+      <div className="pagination">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="pagination-btn pagination-prev"
+        >
+          <ChevronLeft size={16} />
+          Previous
+        </button>
+
+        <div className="pagination-numbers">
+          {getPageNumbers().map((number, index) => (
+            <button
+              key={index}
+              onClick={() => typeof number === 'number' && onPageChange(number)}
+              className={`pagination-number ${
+                number === currentPage ? 'active' : ''
+              } ${typeof number !== 'number' ? 'dots' : ''}`}
+              disabled={typeof number !== 'number'}
+            >
+              {number}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="pagination-btn pagination-next"
+        >
+          Next
+          <ChevronRight size={16} />
+        </button>
       </div>
+
+      {/* <div className="pagination-info">
+        Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, sortedUsers.length)} of {sortedUsers.length} users
+      </div> */}
     </div>
   );
 };

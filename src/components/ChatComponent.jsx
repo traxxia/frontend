@@ -463,56 +463,55 @@ const ChatComponent = ({
 
   // NEW: Validate all answers using analyze-all endpoint
   const validateAllAnswersWithML = async () => {
-    try {
-      setIsValidatingPhase(true);
-
-      // Get all initial phase questions and their answers
-      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-      
-      const questionsAndAnswers = initialQuestions.map(question => {
-        const questionId = question._id || question.question_id;
-        const answer = userAnswers[questionId];
-        
-        if (!answer) {
-          throw new Error(`Missing answer for question ${questionId}`);
-        }
-
-        return {
-          question: question.question_text,
-          answer: answer
-        };
-      });
-
-      if (questionsAndAnswers.length === 0) {
-        throw new Error('No questions and answers found for validation');
+  try { 
+    setIsValidatingPhase(true);
+ 
+    // Get all initial phase questions and their answers
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+     
+                    
+    const questionsAndAnswers = initialQuestions.map(question => { 
+      const questionId = question._id || question.question_id; 
+      const answer = userAnswers[questionId];
+       
+      if (!answer) { 
+        throw new Error(`Missing answer for question ${questionId}`);
       }
-
-      console.log('📝 Sending to analyze-all API:', questionsAndAnswers);
-
-      const mlResponse = await fetch(`${ML_API_BASE_URL}/analyze-all`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(questionsAndAnswers)
-      });
-
-      if (mlResponse.ok) {
-        const mlValidation = await mlResponse.json();
-        console.log('📝 Received from analyze-all API:', mlValidation);
-        return mlValidation;
-      } else {
-        console.error('❌ analyze-all ML API failed:', mlResponse.status, mlResponse.statusText);
-        return { valid: true, feedback: null };
-      }
-    } catch (error) {
-      console.error('❌ analyze-all ML API call error:', error.message);
-      return { valid: true, feedback: null };
-    } finally {
-      setIsValidatingPhase(false);
+ 
+      return {
+        question: question.question_text,
+        answer: answer
+      };
+    });
+ 
+    if (questionsAndAnswers.length === 0) { 
+      throw new Error('No questions and answers found for validation');
     }
-  };
+ 
+
+    const mlResponse = await fetch(`${ML_API_BASE_URL}/analyze_all`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(questionsAndAnswers)
+    });
+ 
+    if (mlResponse.ok) {
+      const mlValidation = await mlResponse.json(); 
+      return mlValidation;
+    } else {
+      console.error('❌ analyze-all ML API failed:', mlResponse.status, mlResponse.statusText);
+      return { valid: true, feedback: null };
+    }
+  } catch (error) {
+    console.error('❌ analyze-all ML API call error:', error.message);
+    return { valid: true, feedback: null };
+  } finally {
+    setIsValidatingPhase(false);
+  }
+};
 
   // Save user answer to backend
   const saveAnswer = async (questionId, questionText, answerText, isFollowup = false, followupParentId = null) => {
@@ -1041,214 +1040,336 @@ const ChatComponent = ({
   };
 
   // NEW: Handle phase validation followup
-  const handlePhaseValidationFollowup = async () => {
-    if (!phaseValidationPending) return;
+const handlePhaseValidationFollowup = async () => {
+  if (!phaseValidationPending) return;
 
-    const answer = currentInput.trim();
-    setCurrentInput('');
+  const answer = currentInput.trim();
+  setCurrentInput('');
 
-    // Add user message to chat
-    await addMessage('user', answer, {
-      questionId: `phase_validation_${phaseValidationAttempts + 1}`,
+  // Add user message to chat
+  await addMessage('user', answer, {
+    questionId: `phase_validation_${phaseValidationAttempts + 1}`,
+    phase: PHASES.INITIAL,
+    isPhaseValidation: true
+  });
+
+  const newAttemptCount = phaseValidationAttempts + 1;
+  setPhaseValidationAttempts(newAttemptCount);
+
+  // If we've reached 2 attempts, proceed with analysis generation
+  if (newAttemptCount >= 2) { 
+    setPhaseValidationPending(null);
+    setPhaseValidationAttempts(0);
+    
+    showToastMessage('🎉 Initial phase completed! Generating analysis...', 'success');
+    
+    // Generate all analyses
+    await Promise.all([
+      generateSWOTAnalysis(),
+      generateCustomerSegmentationAnalysis(),
+      generatePurchaseCriteriaAnalysis(),
+      generateLoyaltyNPSAnalysis(),
+      generateChannelHeatmapAnalysis(),
+      generateCapabilityHeatmapAnalysis()
+    ]);
+    
+    await moveToNextQuestion();
+    return;
+  } 
+  // Validate again with ML using current userAnswers (phase validation doesn't update userAnswers)
+  const mlValidation = await validateAllAnswersWithMLUpdated();
+
+  if (mlValidation.valid) { 
+    // Validation passed, complete phase
+    setPhaseValidationPending(null);
+    setPhaseValidationAttempts(0);
+    
+    showToastMessage('🎉 Initial phase completed! Generating analysis...', 'success');
+    
+    // Generate all analyses ONLY after validation passes
+    await Promise.all([
+      generateSWOTAnalysis(),
+      generateCustomerSegmentationAnalysis(),
+      generatePurchaseCriteriaAnalysis(),
+      generateLoyaltyNPSAnalysis(),
+      generateChannelHeatmapAnalysis(),
+      generateCapabilityHeatmapAnalysis()
+    ]);
+    
+    await moveToNextQuestion();
+  } else { 
+    // Still needs more details
+    const followupQuestion = mlValidation.feedback;
+
+    await addMessage('bot', followupQuestion, {
+      questionId: `phase_validation_${newAttemptCount + 1}`,
       phase: PHASES.INITIAL,
+      severity: 'mandatory',
       isPhaseValidation: true
     });
 
-    const newAttemptCount = phaseValidationAttempts + 1;
-    setPhaseValidationAttempts(newAttemptCount);
+    showToastMessage(`Please provide more details (${newAttemptCount}/2 attempts)`, 'info');
+  }
+};
+const validateAllAnswersWithMLUpdated = async (userAnswersData = null) => {
+  try {
+    setIsValidatingPhase(true);
 
-    // If we've reached 2 attempts, proceed with analysis generation
-    if (newAttemptCount >= 2) {
-      setPhaseValidationPending(null);
-      setPhaseValidationAttempts(0);
+    // Use provided userAnswersData or fall back to current userAnswers
+    const answersToUse = userAnswersData || userAnswers;
+
+    // Get all initial phase questions and their answers
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+    
+    const questionsAndAnswers = initialQuestions.map(question => {
+      const questionId = question._id || question.question_id;
+      const answer = answersToUse[questionId];
       
-      showToastMessage('🎉 Initial phase completed! Generating analysis...', 'success');
-      
-      // Generate all analyses
-      await Promise.all([
-        generateSWOTAnalysis(),
-        generateCustomerSegmentationAnalysis(),
-        generatePurchaseCriteriaAnalysis(),
-        generateLoyaltyNPSAnalysis(),
-        generateChannelHeatmapAnalysis(),
-        generateCapabilityHeatmapAnalysis()
-      ]);
-      
-      await moveToNextQuestion();
-      return;
-    }
-
-    // Validate again with ML
-    const mlValidation = await validateAllAnswersWithML();
-
-    if (mlValidation.valid) {
-      // Validation passed, complete phase
-      setPhaseValidationPending(null);
-      setPhaseValidationAttempts(0);
-      
-      showToastMessage('🎉 Initial phase completed! Generating analysis...', 'success');
-      
-      // Generate all analyses
-      await Promise.all([
-        generateSWOTAnalysis(),
-        generateCustomerSegmentationAnalysis(),
-        generatePurchaseCriteriaAnalysis(),
-        generateLoyaltyNPSAnalysis(),
-        generateChannelHeatmapAnalysis(),
-        generateCapabilityHeatmapAnalysis()
-      ]);
-      
-      await moveToNextQuestion();
-    } else {
-      // Still needs more details
-      const followupQuestion = mlValidation.feedback || 'Could you provide more specific details about your business to complete the initial analysis?';
-
-      await addMessage('bot', followupQuestion, {
-        questionId: `phase_validation_${newAttemptCount + 1}`,
-        phase: PHASES.INITIAL,
-        severity: 'mandatory',
-        isPhaseValidation: true
-      });
-
-      showToastMessage(`Please provide more details (${newAttemptCount}/2 attempts)`, 'info');
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!currentInput.trim()) return;
-
-    const answer = currentInput.trim();
-    setCurrentInput('');
-
-    // Handle phase validation followup
-    if (phaseValidationPending) {
-      await handlePhaseValidationFollowup();
-      return;
-    }
-
-    // Handle regular follow-up answers
-    if (pendingValidation) {
-      await addMessage('user', answer, {
-        questionId: pendingValidation.questionId,
-        phase: pendingValidation.phase,
-        isFollowUp: true
-      });
-
-      try {
-        const result = await saveAnswer(
-          pendingValidation.questionId,
-          pendingValidation.followupQuestion,
-          answer,
-          true,
-          pendingValidation.progressId
-        );
-
-        const newAttemptCount = followupAttempts + 1;
-        setFollowupAttempts(newAttemptCount);
-
-        if (newAttemptCount >= 2) {
-          setPendingValidation(null);
-          setFollowupAttempts(0);
-          await moveToNextQuestion();
-          return;
-        }
-
-        setIsValidatingAnswer(true);
-        const mlValidation = await validateAnswerWithML(pendingValidation.followupQuestion, answer);
-        setIsValidatingAnswer(false);
-
-        if (mlValidation.valid) {
-          setPendingValidation(null);
-          setFollowupAttempts(0);
-          await moveToNextQuestion();
-        } else {
-          const newFollowupQuestion = mlValidation.feedback || 'Could you provide more specific details?';
-
-          await addMessage('bot', newFollowupQuestion, {
-            questionId: pendingValidation.questionId,
-            phase: pendingValidation.phase,
-            severity: pendingValidation.severity,
-            isFollowUp: true
-          });
-
-          setPendingValidation(prev => ({
-            ...prev,
-            followupQuestion: newFollowupQuestion
-          }));
-
-          showToastMessage(`Please provide more details (${newAttemptCount}/2 attempts)`, 'info');
-        }
-
-      } catch (error) {
-        showToastMessage('Failed to save follow-up answer. Please try again.', 'error');
-        setIsValidatingAnswer(false);
+      if (!answer) {
+        throw new Error(`Missing answer for question ${questionId}`);
       }
 
-      return;
+      return {
+        question: question.question_text,
+        answer: answer
+      };
+    });
+
+    if (questionsAndAnswers.length === 0) {
+      throw new Error('No questions and answers found for validation');
     }
+ 
 
-    // Handle main question answer
-    if (!nextQuestion || !nextQuestion._id) {
-      console.error('🚫 nextQuestion is missing or incomplete:', nextQuestion);
-      showToastMessage('Unable to submit answer: Question is missing', 'error');
-      return;
+    const mlResponse = await fetch(`${ML_API_BASE_URL}/analyze_all`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(questionsAndAnswers)
+    });
+
+    if (mlResponse.ok) {
+      const mlValidation = await mlResponse.json(); 
+      return mlValidation;
+    } else {
+      console.error('❌ analyze-all ML API failed:', mlResponse.status, mlResponse.statusText);
+      return { valid: true, feedback: null };
     }
+  } catch (error) {
+    console.error('❌ analyze-all ML API call error:', error.message);
+    return { valid: true, feedback: null };
+  } finally {
+    setIsValidatingPhase(false);
+  }
+};
+const handleSubmit = async () => {
+  if (!currentInput.trim()) return;
 
-    const questionId = nextQuestion._id;
-    const questionText = nextQuestion.question_text;
+  const answer = currentInput.trim();
+  setCurrentInput('');
 
+  // Phase validation follow-up
+  if (phaseValidationPending) {
+    await handlePhaseValidationFollowup();
+    return;
+  }
+
+  // Regular follow-up answer
+  if (pendingValidation) {
+    // ... existing follow-up logic remains the same ...
     await addMessage('user', answer, {
-      questionId,
-      phase: nextQuestion.phase
+      questionId: pendingValidation.questionId,
+      phase: pendingValidation.phase,
+      isFollowUp: true
     });
 
     try {
       const result = await saveAnswer(
-        questionId,
-        questionText,
+        pendingValidation.questionId,
+        pendingValidation.followupQuestion,
         answer,
-        false,
-        null
+        true,
+        pendingValidation.progressId
       );
 
+      if (onNewAnswer) onNewAnswer(pendingValidation.questionId, answer);
+
+      const newAttemptCount = followupAttempts + 1;
+      setFollowupAttempts(newAttemptCount);
+
+      if (newAttemptCount >= 2) {
+        setPendingValidation(null);
+        setFollowupAttempts(0);
+        await moveToNextQuestion();
+        return;
+      }
+
       setIsValidatingAnswer(true);
-      const mlValidation = await validateAnswerWithML(questionText, answer);
+      const mlValidation = await validateAnswerWithML(pendingValidation.followupQuestion, answer);
       setIsValidatingAnswer(false);
 
-      if (!mlValidation.valid && mlValidation.feedback) {
-        const followupQuestion = mlValidation.feedback || 'Could you provide more details about this?';
+      if (mlValidation.valid) {
+        setPendingValidation(null);
+        setFollowupAttempts(0);
+        await moveToNextQuestion();
+      } else {
+        const newFollowupQuestion = mlValidation.feedback;
 
-        await addMessage('bot', followupQuestion, {
-          questionId,
-          phase: nextQuestion.phase,
-          severity: nextQuestion.severity,
+        await addMessage('bot', newFollowupQuestion, {
+          questionId: pendingValidation.questionId,
+          phase: pendingValidation.phase,
+          severity: pendingValidation.severity,
           isFollowUp: true
         });
 
-        setPendingValidation({
-          questionId,
-          originalQuestionText: questionText,
-          followupQuestion: followupQuestion,
-          progressId: result.progress_id,
-          phase: nextQuestion.phase,
-          severity: nextQuestion.severity
-        });
+        setPendingValidation(prev => ({
+          ...prev,
+          followupQuestion: newFollowupQuestion
+        }));
 
-        setFollowupAttempts(0);
-      } else {
-        // Check if this was the last question in initial phase
-        const isInitialPhaseNowComplete = checkInitialPhaseCompletedWithData({
-          ...userAnswers,
-          [questionId]: answer
-        });
+        showToastMessage(`Please provide more details (${newAttemptCount}/2 attempts)`, 'info');
+      }
+    } catch (error) {
+      showToastMessage('Failed to save follow-up answer. Please try again.', 'error');
+      setIsValidatingAnswer(false);
+    }
 
-        if (isInitialPhaseNowComplete && nextQuestion.phase === PHASES.INITIAL) {
-          // NEW: Trigger analyze-all validation
-          const phaseValidation = await validateAllAnswersWithML();
+    return;
+  }
+
+  // Main question answer
+  if (!nextQuestion || !nextQuestion._id) {
+    console.error('🚫 nextQuestion is missing or incomplete:', nextQuestion);
+    showToastMessage('Unable to submit answer: Question is missing', 'error');
+    return;
+  }
+
+  const questionId = nextQuestion._id;
+  const questionText = nextQuestion.question_text;
+
+  await addMessage('user', answer, {
+    questionId,
+    phase: nextQuestion.phase
+  });
+
+  try {
+    // Save answer first
+    const result = await saveAnswer(
+      questionId,
+      questionText,
+      answer,
+      false,
+      null
+    );
+
+    // Update userAnswers immediately with the new answer
+    if (onNewAnswer) onNewAnswer(questionId, answer);
+
+    // Create updated userAnswers object for phase completion check
+    const updatedUserAnswers = {
+      ...userAnswers,
+      [questionId]: answer
+    };
+
+    // Validate individual answer first
+    setIsValidatingAnswer(true);
+    const mlValidation = await validateAnswerWithML(questionText, answer);
+    setIsValidatingAnswer(false);
+
+    if (!mlValidation.valid && mlValidation.feedback) {
+      // Individual answer needs followup - handle normally
+      const followupQuestion = mlValidation.feedback;
+
+      await addMessage('bot', followupQuestion, {
+        questionId,
+        phase: nextQuestion.phase,
+        severity: nextQuestion.severity,
+        isFollowUp: true
+      });
+
+      setPendingValidation({
+        questionId,
+        originalQuestionText: questionText,
+        followupQuestion,
+        progressId: result.progress_id,
+        phase: nextQuestion.phase,
+        severity: nextQuestion.severity
+      });
+
+      setFollowupAttempts(0);
+      
+      // 🔥 CRITICAL FIX: Don't proceed to moveToNextQuestion yet
+      // The individual answer validation failed, so we need followup first
+      return;
+    } 
+
+    // Individual answer validation passed, now move to next question
+    await moveToNextQuestion();
+
+  } catch (error) {
+    console.error('Error in handleSubmit:', error);
+    showToastMessage(error.message || 'Failed to submit your answer', 'error');
+  }
+};
+
+  // Move to next question
+  // Move to next question
+// Move to next question
+const moveToNextQuestion = async () => {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/api/user/latest-progress`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      setCurrentProgress(data.progress);
+      
+      // 🔥 CRITICAL: Store the PREVIOUS nextQuestion before updating
+      const previousQuestion = nextQuestion;
+      
+      setNextQuestion(data.next_question);
+
+      if (data.user_answers && Object.keys(data.user_answers).length > 0) {
+        Object.entries(data.user_answers).forEach(([questionId, answer]) => {
+          if (onNewAnswer) {
+            onNewAnswer(questionId, answer);
+          }
+        });
+      }
+
+      // 🔥 CRITICAL FIX: Only check phase validation when we transition from having an initial phase question
+      // to NOT having an initial phase question (meaning we just completed the last one)
+      const freshUserAnswers = data.user_answers || {};
+      const wasLastInitialQuestion = previousQuestion && 
+                                   previousQuestion.phase === PHASES.INITIAL && 
+                                   previousQuestion.severity === "mandatory";
+      
+      const nextQuestionIsNotInitial = !data.next_question || 
+                                      data.next_question.phase !== PHASES.INITIAL ||
+                                      data.next_question.severity !== "mandatory";
+      
+      if (wasLastInitialQuestion && nextQuestionIsNotInitial) {
+        console.log('🎯 Just completed the FINAL initial phase mandatory question');
+        
+        const isInitialPhaseCompleted = checkInitialPhaseCompletedWithData(freshUserAnswers);
+        
+        if (isInitialPhaseCompleted) {
+          console.log('✅ All initial phase questions are completed - triggering analyze-all validation');
           
+          // Call analyze-all to validate phase completion
+          const phaseValidation = await validateAllAnswersWithMLUpdated(freshUserAnswers);
+
           if (!phaseValidation.valid && phaseValidation.feedback) {
-            // Start phase validation process
-            const phaseFollowupQuestion = phaseValidation.feedback || 'To complete the initial analysis, could you provide more comprehensive details about your business?';
+            console.log('❌ Phase validation failed - requesting more details');
+            
+            const phaseFollowupQuestion = phaseValidation.feedback;
 
             await addMessage('bot', phaseFollowupQuestion, {
               questionId: `phase_validation_1`,
@@ -1262,67 +1383,10 @@ const ChatComponent = ({
             showToastMessage('Please provide additional details to complete the initial phase analysis.', 'info');
             return;
           } else {
-            // Phase validation passed, generate analysis
+            console.log('✅ Phase validation passed - generating analysis');
             showToastMessage('🎉 Initial phase completed! Generating analysis...', 'success');
-            
-            await Promise.all([
-              generateSWOTAnalysis(),
-              generateCustomerSegmentationAnalysis(),
-              generatePurchaseCriteriaAnalysis(),
-              generateLoyaltyNPSAnalysis(),
-              generateChannelHeatmapAnalysis(),
-              generateCapabilityHeatmapAnalysis()
-            ]);
-          }
-        }
 
-        await moveToNextQuestion();
-      }
-
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      showToastMessage(error.message || 'Failed to submit your answer', 'error');
-    }
-  };
-
-  // Move to next question
-  const moveToNextQuestion = async () => {
-    try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/api/user/latest-progress`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        setCurrentProgress(data.progress);
-        setNextQuestion(data.next_question);
-
-        if (data.user_answers && Object.keys(data.user_answers).length > 0) {
-          Object.entries(data.user_answers).forEach(([questionId, answer]) => {
-            if (onNewAnswer) {
-              onNewAnswer(questionId, answer);
-            }
-          });
-        }
-
-        if (data.next_question) {
-          await addMessage('bot', data.next_question.question_text, {
-            questionId: data.next_question._id,
-            phase: data.next_question.phase,
-            severity: data.next_question.severity
-          });
-        } else {
-          showToastMessage('🎉 All questions completed!', 'success');
-
-          const freshUserAnswers = data.user_answers || {};
-          const isCompleted = checkInitialPhaseCompletedWithData(freshUserAnswers);
-
-          if (isCompleted && !isGeneratingAnalysis) {
+            // Generate analysis ONLY after analyze-all validation passes
             await Promise.all([
               generateSWOTAnalysis(),
               generateCustomerSegmentationAnalysis(),
@@ -1334,12 +1398,24 @@ const ChatComponent = ({
           }
         }
       }
-    } catch (error) {
-      console.error('Error loading next question:', error);
-      showToastMessage('Error loading next question. Please try again.', 'error');
-    }
-  };
 
+      // Show next question if available
+      if (data.next_question) {
+        await addMessage('bot', data.next_question.question_text, {
+          questionId: data.next_question._id,
+          phase: data.next_question.phase,
+          severity: data.next_question.severity
+        });
+      } else {
+        // No more questions at all
+        showToastMessage('🎉 All questions completed!', 'success');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading next question:', error);
+    showToastMessage('Error loading next question. Please try again.', 'error');
+  }
+};
   const showToastMessage = (message, type = 'success') => {
     setShowToast({ show: true, message, type });
     setTimeout(() => {

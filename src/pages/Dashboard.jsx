@@ -9,7 +9,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 import {
-  ArrowRight,
+  ArrowRight,Info
 } from "lucide-react";
 
 // Components
@@ -39,6 +39,7 @@ const Dashboard = () => {
   // Onboarding state
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [showHowModal, setShowHowModal] = useState(false);
 
   // Check if user has seen onboarding
   useEffect(() => {
@@ -221,7 +222,7 @@ ${t('growth_projection_details')}
               </div>
             </Card.Body>
           </Card>
-
+            
           {/* Desktop View */}
           <Card className="desktop-view-card d-none d-md-block">
             <Card.Body className="p-0 h-100">
@@ -241,9 +242,51 @@ ${t('growth_projection_details')}
                       onClick={handleCreateBusiness}
                     >
                       {t('create_business')}
-                    </Button>
+                    </Button><br /><br /><br />
+                  
                     
-                     
+                     < Button className="create-business-btn"  onClick={() => setShowHowModal(true)}>
+          <Info size={18} /> How It Works
+        </Button>
+{showHowModal && (
+        <div className="popup-overlay" onClick={() => setShowHowModal(false)}>
+          <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-3">How This Application Works</h2>
+
+            <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+              {/* Indicators */}
+              <div className="carousel-indicators">
+                <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="0" className="active"></button>
+                <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="2"></button>
+              </div>
+
+              {/* Slides */}
+              <div className="carousel-inner">
+                <div className="carousel-item active">
+                  <img src="/slides/slide1.jpeg" className="d-block w-100" alt="Step 1" />
+                </div>
+                <div className="carousel-item">
+                  <img src="/slides/slide2.jpeg" className="d-block w-100" alt="Step 2" />
+                </div>
+                <div className="carousel-item">
+                  <img src="/slides/slide3.jpeg" className="d-block w-100" alt="Step 3" />
+                </div>
+              </div>
+
+              {/* Navigation Arrows */}
+              <button className="carousel-control-prev" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="prev">
+                <span className="carousel-control-prev-icon"></span>
+                <span className="visually-hidden">Previous</span>
+              </button>
+              <button className="carousel-control-next" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="next">
+                <span className="carousel-control-next-icon"></span>
+                <span className="visually-hidden">Next</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
                   </div>
                 </Col>
                 <Col md={6} className="businesses-section">

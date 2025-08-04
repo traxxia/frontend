@@ -10,11 +10,12 @@ const UserOverview = ({ onToast }) => {
   const [selectedCompany, setSelectedCompany] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [newUser, setNewUser] = useState({ 
     name: '', 
     email: '', 
     password: '', 
-    role_name: 'answerer_user', // Default role
+    role_name: 'answerer_user', // Always answerer_user
     company_id: '', 
     profile: {} 
   });
@@ -98,10 +99,11 @@ const UserOverview = ({ onToast }) => {
 
   const addUser = async () => {
     try {
+      setIsCreating(true);
       const token = getAuthToken();
 
       const payload = { ...newUser };
-      if (!payload.name || !payload.email || !payload.password || !payload.role_name) {
+      if (!payload.name || !payload.email || !payload.password) {
         onToast('Please fill in all required fields', 'warning');
         return;
       }
@@ -140,6 +142,20 @@ const UserOverview = ({ onToast }) => {
     } catch (error) {
       console.error('Error creating user:', error);
       onToast('Error creating user', 'error');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    if (field.startsWith('profile.')) {
+      const profileField = field.replace('profile.', '');
+      setNewUser(prev => ({
+        ...prev,
+        profile: { ...prev.profile, [profileField]: value }
+      }));
+    } else {
+      setNewUser(prev => ({ ...prev, [field]: value }));
     }
   };
 
@@ -164,9 +180,9 @@ const UserOverview = ({ onToast }) => {
       <div className="section-header">
         <h2>All Users Overview</h2>
         <div className="header-stats">
-          <span className="stat-item">
+          {/* <span className="stat-item">
             <strong>{filteredUsers.length}</strong> users found
-          </span>
+          </span> */}
           <button className="primary-btn" onClick={() => setShowAddUser(true)}>
             <Plus size={16} /> Add User
           </button>
@@ -234,103 +250,112 @@ const UserOverview = ({ onToast }) => {
         </div>
       )}
 
-      {/* Add User Modal */}
+      {/* Add User Modal - Updated with same structure as Company Form */}
       {showAddUser && (
         <div className="modal-overlay">
-          <div className="modal-content medium">
+          <div className="modal-content centered">
             <div className="modal-header">
-              <h3>Add New User</h3>
-              <button className="close-btn" onClick={() => setShowAddUser(false)}>×</button>
+              <h3>Create New User</h3>
             </div>
 
-            <div className="form-grid">
-              <input
-                type="text"
-                placeholder="Name *"
-                value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email *"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password *"
-                value={newUser.password}
-                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                required
-              />
+            <form onSubmit={(e) => { e.preventDefault(); addUser(); }} className="company-form">
+              <div className="form-section">
+                <h4>User Information</h4>
+                <div className="form-grid">
+                  <div className="form-field">
+                    <label>Name *</label>
+                    <input
+                      type="text"
+                      value={newUser.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      required
+                      placeholder="John Doe"
+                    />
+                  </div>
 
-              {/* Role Selection */}
-              <select
-                value={newUser.role_name}
-                onChange={(e) => setNewUser({ ...newUser, role_name: e.target.value })}
-                required
-              >
-                <option value="">Select Role *</option>
-                {roles.map(role => (
-                  <option key={role.id} value={role.role_name}>
-                    {role.role_name === 'viewer_user' ? 'Viewer User' : 
-                     role.role_name === 'answerer_user' ? 'Answerer User' : 
-                     role.role_name}
-                  </option>
-                ))}
-              </select>
+                  <div className="form-field">
+                    <label>Email *</label>
+                    <input
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      required
+                      placeholder="john.doe@company.com"
+                    />
+                  </div>
 
-              {/* Company Selection (only for super_admin) */}
-              <select
-                value={newUser.company_id}
-                onChange={(e) => setNewUser({ ...newUser, company_id: e.target.value })}
-              >
-                <option value="">Select Company (optional)</option>
-                {companies.map(company => (
-                  <option key={company._id} value={company._id}>
-                    {company.company_name}
-                  </option>
-                ))}
-              </select>
-
-              {/* Job Title (optional) */}
-              <input
-                type="text"
-                placeholder="Job Title (optional)"
-                value={newUser.profile.job_title || ''}
-                onChange={(e) => setNewUser({ 
-                  ...newUser, 
-                  profile: { ...newUser.profile, job_title: e.target.value }
-                })}
-              />
-            </div>
-
-            {/* Role Description */}
-            {newUser.role_name && (
-              <div className="role-description">
-                <small>
-                  {newUser.role_name === 'viewer_user' && 
-                    '👁️ Viewer User: Can view questions and results but cannot answer questions'}
-                  {newUser.role_name === 'answerer_user' && 
-                    '✏️ Answerer User: Can view and answer questions'}
-                </small>
+                  <div className="form-field">
+                    <label>Password *</label>
+                    <input
+                      type="password"
+                      value={newUser.password}
+                      onChange={(e) => handleChange('password', e.target.value)}
+                      required
+                      placeholder="Minimum 8 characters"
+                      minLength="8"
+                    />
+                  </div>
+<div className="form-field">
+                    <label>Company</label>
+                    <select
+                      value={newUser.company_id}
+                      onChange={(e) => handleChange('company_id', e.target.value)}
+                    >
+                      <option value="">Select Company</option>
+                      {companies.map(company => (
+                        <option key={company._id} value={company._id}>
+                          {company.company_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label>Job Title</label>
+                    <input
+                      type="text"
+                      placeholder="Software Engineer (optional)"
+                      value={newUser.profile.job_title || ''}
+                      onChange={(e) => handleChange('profile.job_title', e.target.value)}
+                    />
+                  </div>
+                  
+                </div>
               </div>
-            )}
 
-            <div className="modal-actions">
-              <button 
-                className="primary-btn" 
-                onClick={addUser}
-                disabled={!newUser.name || !newUser.email || !newUser.password || !newUser.role_name}
-              >
-                Create User
-              </button>
-              <button className="secondary-btn" onClick={() => setShowAddUser(false)}>
-                Cancel
-              </button>
-            </div>
+              {/* Role Information */}
+              {/* <div className="form-section">
+                <div className="role-description">
+                  <small>
+                    ✏️ <strong>User Role:</strong> Answerer User - Can view and answer questions
+                  </small>
+                </div>
+              </div> */}
+
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="secondary-btn"
+                  onClick={() => setShowAddUser(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="primary-btn"
+                  disabled={isCreating || !newUser.name || !newUser.email || !newUser.password}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader size={14} className="spinner" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create User'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

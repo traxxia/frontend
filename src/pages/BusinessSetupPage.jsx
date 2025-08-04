@@ -384,23 +384,67 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
 
   // FIXED: Unified regenerate all function with proper state management
   const regenerateAllAnalysis = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage(
-        "Initial phase must be completed to regenerate analysis.",
-        "warning"
-      );
-      return;
+  if (!isPhaseCompleted(PHASES.INITIAL)) {
+    showToastMessage(
+      "Initial phase must be completed to regenerate analysis.",
+      "warning"
+    );
+    return;
+  }
+
+  if (isRegeneratingAllRef.current || regenerationInProgressRef.current) { 
+    return;
+  }
+
+  try {
+    isRegeneratingAllRef.current = true;
+    regenerationInProgressRef.current = true;
+    setIsAnalysisRegenerating(true);
+
+    showToastMessage("Validating phase completion...", "info");
+
+    // 🔥 FIRST: Validate with analyze-all API before generating analysis
+    const questionsArray = [];
+    const answersArray = [];
+
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+    
+    initialQuestions.forEach(question => {
+      const questionId = question._id || question.question_id;
+      if (userAnswers[questionId]) {
+        questionsArray.push(question.question_text);
+        answersArray.push(userAnswers[questionId]);
+      }
+    });
+
+    if (questionsArray.length === 0) {
+      throw new Error('No questions and answers found for validation');
     }
 
-    if (isRegeneratingAllRef.current || regenerationInProgressRef.current) { 
-      return;
+    const mlResponse = await fetch(`${ML_API_BASE_URL}/analyze_all`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        questions: questionsArray,
+        answers: answersArray
+      })
+    });
+
+    let shouldProceed = true;
+    if (mlResponse.ok) {
+      const mlValidation = await mlResponse.json(); 
+      
+      if (!mlValidation.valid) { 
+        showToastMessage("Phase validation suggests more details needed, but proceeding with analysis...", "warning");
+      } else { 
+      }
+    } else { 
     }
 
-    try {
-      isRegeneratingAllRef.current = true;
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-
+    if (shouldProceed) {
       showToastMessage("Regenerating all analysis components...", "info");
 
       // Clear existing data
@@ -416,6 +460,7 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
 
       // Wait for state to clear
       await new Promise(resolve => setTimeout(resolve, 200));
+
       // Generate all analyses in parallel
       const analysisPromises = [
         generateSingleAnalysis('swot', 'find', null, setAnalysisResult),
@@ -440,20 +485,22 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
       } else {
         showToastMessage("All analysis components regenerated successfully!", "success");
       }
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating all analysis:', error);
-      showToastMessage(
-        "Failed to regenerate analysis components. Please try again.",
-        "error"
-      );
-    } finally {
-      isRegeneratingAllRef.current = false;
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-      analysisGenerationQueueRef.current.clear();
     }
-  };
+
+  } catch (error) {
+    console.error('📊 [BusinessSetupPage] Error regenerating all analysis:', error);
+    showToastMessage(
+      "Failed to regenerate analysis components. Please try again.",
+      "error"
+    );
+  } finally {
+    isRegeneratingAllRef.current = false;
+    regenerationInProgressRef.current = false;
+    setIsAnalysisRegenerating(false);
+    analysisGenerationQueueRef.current.clear();
+  }
+};
+
 
   const handleAnalysisRegeneration = async () => {
     if (!isPhaseCompleted(PHASES.INITIAL)) {
