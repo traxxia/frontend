@@ -34,8 +34,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="company-form">
-          <div className="form-section">
-            <h4>Company Information</h4>
+          <div className="form-section"> 
             <div className="form-grid">
               <div className="form-field">
                 <label>Company Name *</label>
@@ -374,7 +373,7 @@ const CompanyManagement = ({ onToast }) => {
                   <th>Admin Name</th>
                   <th>Admin Email</th>
                   <th>Created Date</th>
-                  <th>Actions</th>
+                  {/* <th>Actions</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -393,7 +392,7 @@ const CompanyManagement = ({ onToast }) => {
                     <td>{company.admin_name}</td>
                     <td>{company.admin_email}</td>
                     <td>{formatDate(company.created_at)}</td>
-                    <td>
+                    {/* <td>
                       <button 
                         className="secondary-btn small-btn"
                         onClick={() => setSelectedCompany(company)}
@@ -401,7 +400,7 @@ const CompanyManagement = ({ onToast }) => {
                         <Eye size={14} />
                         View
                       </button>
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>

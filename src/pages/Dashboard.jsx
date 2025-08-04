@@ -9,7 +9,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 import {
-  ArrowRight, Info
+  ArrowRight, Info, X
 } from "lucide-react";
 
 // Components
@@ -103,7 +103,7 @@ ${t('growth_projection_details')}
   const businesses = useMemo(() => {
     return [
       {
-        name: "InsightForge Inc",
+        name: "InsightForge Inc", 
         progress: 60,
         answeredQuestions: 3,
         totalQuestions: 5,
@@ -118,7 +118,6 @@ ${t('growth_projection_details')}
       {businesses.length === 0 && (
         <div className="text-center text-muted py-5">
           {t('no_businesses_found')}
-
         </div>
       )}
       {businesses.length > 0 && businesses.map((business, index) => (
@@ -142,9 +141,9 @@ ${t('growth_projection_details')}
           </div>
           <div className="flex-grow-1">
             <h6 className="mb-1">{business.name}</h6>
-            <small className="text-muted">
+            {/* <small className="text-muted">
               {t('questions_remaining')}: {business.remaining} {t('of')} {business.total}
-            </small>
+            </small> */}
           </div>
           <ArrowRight size={16} className="text-muted" />
         </div>
@@ -180,6 +179,10 @@ ${t('growth_projection_details')}
 
   const handleCreateBusiness = () => {
     navigate('/businesspage');
+  };
+
+  const handleCloseModal = () => {
+    setShowHowModal(false);
   };
 
   // Renderers
@@ -218,7 +221,6 @@ ${t('growth_projection_details')}
                 >
                   {t('create_business')}
                 </Button>
-
               </div>
             </Card.Body>
           </Card>
@@ -232,57 +234,149 @@ ${t('growth_projection_details')}
                     <div className="d-flex justify-content-between align-items-start mb-4">
                       <div>
                         <h5 className="mb-2">{t('welcome')}</h5>
-
                       </div>
                     </div>
                     <p className="text-muted mb-4">{t('welcome_message')}</p>
                     <Button
                       variant="primary"
-                      className="create-business-btn"
+                      className="create-business-btn me-3"
                       onClick={handleCreateBusiness}
                     >
                       {t('create_business')}
-                    </Button> <span> </span>
-
-
-                    < Button className="create-business-btn" onClick={() => setShowHowModal(true)}>
-                      <Info size={18} /> How It Works
                     </Button>
-                    {showHowModal && (
-                      <div className="popup-overlay" onClick={() => setShowHowModal(false)}>
-                        <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
-                          <h2 className="mb-3">How This Application Works</h2>
 
-                          <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                    <Button 
+                      variant="primary"
+                      className="create-business-btn" 
+                      onClick={() => setShowHowModal(true)}
+                    >
+                      <Info size={18} className="me-2" /> 
+                      How It Works
+                    </Button>
+
+                    {/* Enhanced Modal with Carousel */}
+                    {showHowModal && (
+                      <div className="popup-overlay" onClick={handleCloseModal}>
+                        <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
+                          <button 
+                            className="close-button" 
+                            onClick={handleCloseModal}
+                            aria-label="Close modal"
+                          >
+                            <X size={20} />
+                          </button>
+                          
+                          <h2 className="mb-4">How This Application Works</h2>
+
+                          <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
                             {/* Indicators */}
                             <div className="carousel-indicators">
-                              <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="0" className="active"></button>
-                              <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="1"></button>
-                              <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="2"></button>
+                              <button 
+                                type="button" 
+                                data-bs-target="#howItWorksCarousel" 
+                                data-bs-slide-to="0" 
+                                className="active"
+                                aria-label="Slide 1"
+                              ></button>
+                              <button 
+                                type="button" 
+                                data-bs-target="#howItWorksCarousel" 
+                                data-bs-slide-to="1"
+                                aria-label="Slide 2"
+                              ></button>
+                              <button 
+                                type="button" 
+                                data-bs-target="#howItWorksCarousel" 
+                                data-bs-slide-to="2"
+                                aria-label="Slide 3"
+                              ></button>
+                              <button 
+                                type="button" 
+                                data-bs-target="#howItWorksCarousel" 
+                                data-bs-slide-to="3"
+                                aria-label="Slide 4"
+                              ></button>
                             </div>
 
                             {/* Slides */}
                             <div className="carousel-inner">
                               <div className="carousel-item active">
-                                <img src="/slides/slide1.jpeg" className="d-block w-100" alt="Step 1" />
+                                <img 
+                                  src="/slides/slide1.jpeg" 
+                                  className="d-block w-100" 
+                                  alt="Step 1: Create your business profile" 
+                                />
+                                <div className="carousel-caption d-none d-md-block">
+                                  <h5>Step 1: Create Your Business</h5>
+                                  <p>Start by setting up your business profile with basic information.</p>
+                                </div>
                               </div>
                               <div className="carousel-item">
-                                <img src="/slides/slide2.jpeg" className="d-block w-100" alt="Step 2" />
+                                <img 
+                                  src="/slides/slide2.jpeg" 
+                                  className="d-block w-100" 
+                                  alt="Step 2: Answer assessment questions" 
+                                />
+                                <div className="carousel-caption d-none d-md-block">
+                                  <h5>Step 2: Complete Assessment</h5>
+                                  <p>Answer questions about your business to get personalized insights.</p>
+                                </div>
                               </div>
                               <div className="carousel-item">
-                                <img src="/slides/slide3.jpeg" className="d-block w-100" alt="Step 3" />
+                                <img 
+                                  src="/slides/slide3.jpeg" 
+                                  className="d-block w-100" 
+                                  alt="Step 3: Get insights and recommendations" 
+                                />
+                                <div className="carousel-caption d-none d-md-block">
+                                  <h5>Step 3: Get Insights</h5>
+                                  <p>Receive detailed analysis and actionable recommendations.</p>
+                                </div>
+                              </div>
+                              <div className="carousel-item">
+                                <img 
+                                  src="/slides/slide4.PNG" 
+                                  className="d-block w-100" 
+                                  alt="Step 4: Track progress and optimize" 
+                                />
+                                <div className="carousel-caption d-none d-md-block">
+                                  <h5>Step 4: Track & Optimize</h5>
+                                  <p>Monitor your progress and continuously improve your business performance.</p>
+                                </div>
                               </div>
                             </div>
 
                             {/* Navigation Arrows */}
-                            <button className="carousel-control-prev" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="prev">
-                              <span className="carousel-control-prev-icon"></span>
+                            <button 
+                              className="carousel-control-prev" 
+                              type="button" 
+                              data-bs-target="#howItWorksCarousel" 
+                              data-bs-slide="prev"
+                              aria-label="Previous slide"
+                            >
+                              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
                               <span className="visually-hidden">Previous</span>
                             </button>
-                            <button className="carousel-control-next" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="next">
-                              <span className="carousel-control-next-icon"></span>
+                            <button 
+                              className="carousel-control-next" 
+                              type="button" 
+                              data-bs-target="#howItWorksCarousel" 
+                              data-bs-slide="next"
+                              aria-label="Next slide"
+                            >
+                              <span className="carousel-control-next-icon" aria-hidden="true"></span>
                               <span className="visually-hidden">Next</span>
                             </button>
+                          </div>
+
+                          <div className="text-center mt-4">
+                            <Button 
+                              variant="primary" 
+                              onClick={handleCloseModal}
+                              className="px-4"
+                            >
+                              Got it!
+                            </Button>
                           </div>
                         </div>
                       </div>

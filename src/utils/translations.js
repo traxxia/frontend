@@ -389,7 +389,7 @@ export const staticTranslations = {
     'error_loading_business': 'Error loading business data.',
     'no_businesses_found': 'No businesses found.',
     'enter_your_answer': 'Enter Your Answer',
-
+'super_admin_panel':'Super Admin Panel',
     // Business Detail page
     'questions': 'Questions',
     'analysis': 'ANALYSIS',
@@ -700,6 +700,7 @@ export const staticTranslations = {
   },
 
   es: {
+    "super_admin_panel": "Panel de Super Administrador",
      "sign_up": "Registrarse",
     "create_account_subtitle": "Crea tu cuenta para comenzar",
     "first_name": "Nombre",

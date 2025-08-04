@@ -11,13 +11,13 @@ const UserOverview = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [newUser, setNewUser] = useState({ 
-    name: '', 
-    email: '', 
-    password: '', 
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    password: '',
     role_name: 'answerer_user', // Always answerer_user
-    company_id: '', 
-    profile: {} 
+    company_id: '',
+    profile: {}
   });
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -53,7 +53,7 @@ const UserOverview = ({ onToast }) => {
       if (rolesResponse.ok) {
         const rolesData = await rolesResponse.json();
         // Filter roles to only show user roles (not admin roles)
-        const userRoles = rolesData.roles.filter(role => 
+        const userRoles = rolesData.roles.filter(role =>
           ['viewer_user', 'answerer_user'].includes(role.role_name)
         );
         setRoles(userRoles);
@@ -127,13 +127,13 @@ const UserOverview = ({ onToast }) => {
       if (response.ok) {
         onToast('User created successfully', 'success');
         setShowAddUser(false);
-        setNewUser({ 
-          name: '', 
-          email: '', 
-          password: '', 
-          role_name: 'answerer_user', 
-          company_id: '', 
-          profile: {} 
+        setNewUser({
+          name: '',
+          email: '',
+          password: '',
+          role_name: 'answerer_user',
+          company_id: '',
+          profile: {}
         });
         await loadUsers();
       } else {
@@ -222,7 +222,7 @@ const UserOverview = ({ onToast }) => {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Company</th> 
+                <th>Company</th>
                 <th>Role</th>
                 <th>Status</th>
               </tr>
@@ -232,7 +232,7 @@ const UserOverview = ({ onToast }) => {
                 <tr key={user.id}>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
-                  <td>{user.company_name || 'N/A'}</td>  
+                  <td>{user.company_name || 'N/A'}</td>
                   <td>{user.role}</td>
                   <td>
                     <span className={`status-badge ${user.status}`}>{user.status}</span>
@@ -260,7 +260,6 @@ const UserOverview = ({ onToast }) => {
 
             <form onSubmit={(e) => { e.preventDefault(); addUser(); }} className="company-form">
               <div className="form-section">
-                <h4>User Information</h4>
                 <div className="form-grid">
                   <div className="form-field">
                     <label>Name *</label>
@@ -295,8 +294,8 @@ const UserOverview = ({ onToast }) => {
                       minLength="8"
                     />
                   </div>
-<div className="form-field">
-                    <label>Company</label>
+                  <div className="form-field">
+                    <label>Company  *</label>
                     <select
                       value={newUser.company_id}
                       onChange={(e) => handleChange('company_id', e.target.value)}
@@ -318,7 +317,7 @@ const UserOverview = ({ onToast }) => {
                       onChange={(e) => handleChange('profile.job_title', e.target.value)}
                     />
                   </div>
-                  
+
                 </div>
               </div>
 
@@ -332,16 +331,16 @@ const UserOverview = ({ onToast }) => {
               </div> */}
 
               <div className="form-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="secondary-btn"
                   onClick={() => setShowAddUser(false)}
                   disabled={isCreating}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="primary-btn"
                   disabled={isCreating || !newUser.name || !newUser.email || !newUser.password}
                 >

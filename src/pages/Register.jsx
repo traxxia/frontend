@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaTimes, FaAngleLeft } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTimes, FaAngleLeft, FaSpinner } from 'react-icons/fa';
 import '../styles/Register.css';
 import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
 
@@ -13,10 +13,11 @@ const Register = () => {
 
   const [form, setForm] = useState({
     name: '',
-    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
+    company_id: '',
+    job_title: '',
     terms: false,
   });
   const [errors, setErrors] = useState({});
@@ -26,7 +27,61 @@ const Register = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [companiesError, setCompaniesError] = useState('');
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    setLoadingCompanies(true);
+    setCompaniesError('');
+    
+    try {
+      // Try public endpoint first (no auth required)
+      const response = await axios.get(`${API_BASE_URL}/api/companies`);
+      
+      if (response.data.success && response.data.companies) {
+        setCompanies(response.data.companies);
+        console.log(`✅ Loaded ${response.data.companies.length} companies`);
+      } else {
+        throw new Error('Invalid response format');
+      }
+
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      
+      // Try authenticated endpoint as fallback
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const authResponse = await axios.get(`${API_BASE_URL}/api/auth/companies`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (authResponse.data.success && authResponse.data.companies) {
+            setCompanies(authResponse.data.companies);
+            console.log(`✅ Loaded ${authResponse.data.companies.length} companies (authenticated)`);
+          } else {
+            throw new Error('Auth endpoint also failed');
+          }
+        } catch (authError) {
+          console.error('Authenticated fetch also failed:', authError);
+          setCompaniesError('Unable to load companies. Please try again later.');
+          setCompanies([]);
+        }
+      } else {
+        // No token and public endpoint failed
+        setCompaniesError('Unable to load companies. Please contact support.');
+        setCompanies([]);
+      }
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,16 +95,18 @@ const Register = () => {
   const validate = () => {
     const newErrors = {};
     if (!form.name.trim()) newErrors.name = t('first_name_required');
-    if (!form.lastName.trim()) newErrors.lastName = t('last_name_required');
     if (!form.email.trim()) {
       newErrors.email = t('email_required');
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
       newErrors.email = t('email_invalid');
     }
+    if (!form.company_id) {
+      newErrors.company_id = 'Company selection is required';
+    }
     if (!form.password) {
       newErrors.password = t('password_required');
-    } else if (form.password.length < 8) { // ENHANCED: Changed from 6 to 8 to match backend
-      newErrors.password = t('password_min_length_8'); // Update translation key
+    } else if (form.password.length < 8) {
+      newErrors.password = t('password_min_length_8');
     }
     if (!form.confirmPassword) {
       newErrors.confirmPassword = t('confirm_password_required');
@@ -70,65 +127,77 @@ const Register = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  e.preventDefault();
+  if (!validate()) return;
 
-    setIsSubmitting(true);
-    try {
-      // SECURITY FIX: REMOVED role parameter - backend will automatically set to 'user'
-      const userData = {
-        name: `${form.name.trim()} ${form.lastName.trim()}`, // Added trim() for security
-        email: form.email.trim().toLowerCase(), // Added trim() and toLowerCase() for consistency
-        password: form.password,
-        // CRITICAL FIX: Removed 'role: user' - this was the vulnerability!
-        // Backend now automatically assigns 'user' role and ignores any role parameter
-      };
-
-      const res = await axios.post(`${API_BASE_URL}/api/users`, userData);
-
-
-      setModalMessage(t('registration_successful'));
-      setIsError(false);
-      setShowSuccessModal(true);
-
-      // Reset form for security
-      setForm({
-        name: '',
-        lastName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        terms: false,
-      });
-
-      // setTimeout(() => (window.location.href = '/login'), 2000);
-    } catch (err) {
-      setIsSubmitting(false);
-
-      console.error('Registration error:', err.response?.data || err.message);
-
-      let errorMsg = t('registration_failed');
-
-      // Handle specific backend validation errors
-      if (err.response?.data?.message) {
-        errorMsg = err.response.data.message;
-
-        // Handle specific error cases
-        if (errorMsg.includes('email')) {
-          setErrors({ email: t('email_already_exists') });
-        } else if (errorMsg.includes('password')) {
-          setErrors({ password: errorMsg });
-        } else if (errorMsg.includes('name')) {
-          setErrors({ name: errorMsg });
-        }
+  setIsSubmitting(true);
+  try {
+    const userData = {
+      name: form.name.trim(),
+      email: form.email.trim().toLowerCase(),
+      password: form.password,
+      company_id: form.company_id,
+      profile: {
+        job_title: form.job_title.trim()
       }
+    };
 
-      setIsError(true);
-      setModalMessage(errorMsg);
-      setShowSuccessModal(true);
+    // Use the public registration endpoint (no authentication required)
+    const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
 
-      if (err.response?.data?.errors) setErrors(err.response.data.errors);
+    setModalMessage('Registration successful! Redirecting to login page...');
+    setIsError(false);
+    setShowSuccessModal(true);
+
+    // Reset form for security
+    setForm({
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      company_id: '',
+      job_title: '',
+      terms: false,
+    });
+
+    // Redirect to login page after showing success message
+    setTimeout(() => {
+      setShowSuccessModal(false);
+      navigate('/login');
+    }, 2000);
+
+  } catch (err) {
+    setIsSubmitting(false);
+
+    console.error('Registration error:', err.response?.data || err.message);
+
+    let errorMsg = 'Registration failed. Please try again.';
+
+    // Handle specific backend validation errors
+    if (err.response?.data?.message) {
+      errorMsg = err.response.data.message;
+
+      // Handle specific error cases
+      if (errorMsg.includes('email') || errorMsg.includes('Email')) {
+        setErrors({ email: 'This email is already registered' });
+      } else if (errorMsg.includes('password')) {
+        setErrors({ password: errorMsg });
+      } else if (errorMsg.includes('name')) {
+        setErrors({ name: errorMsg });
+      } else if (errorMsg.includes('company') || errorMsg.includes('Company')) {
+        setErrors({ company_id: errorMsg });
+      }
     }
+
+    setIsError(true);
+    setModalMessage(errorMsg);
+    setShowSuccessModal(true);
+
+    if (err.response?.data?.errors) setErrors(err.response.data.errors);
+  }
+};
+  const retryFetchCompanies = () => {
+    fetchCompanies();
   };
 
   return (
@@ -155,35 +224,21 @@ const Register = () => {
             <p className="register-subtitle">{t('create_account_subtitle')}</p>
 
             <div className="form-group1">
-              <label>{t('first_name')}</label>
+              <label>User Name *</label>
               <input
                 type="text"
                 name="name"
-                placeholder={t('enter_first_name')}
+                placeholder="Enter User name"
                 value={form.name}
                 onChange={handleChange}
                 className={errors.name ? 'error' : ''}
-                maxLength="50" // Added security: name length limit
+                maxLength="50"
               />
               {errors.name && <div className="error-message">{errors.name}</div>}
             </div>
 
             <div className="form-group1">
-              <label>{t('last_name')}</label>
-              <input
-                type="text"
-                name="lastName"
-                placeholder={t('enter_last_name')}
-                value={form.lastName}
-                onChange={handleChange}
-                className={errors.lastName ? 'error' : ''}
-                maxLength="50" // Added security: name length limit
-              />
-              {errors.lastName && <div className="error-message">{errors.lastName}</div>}
-            </div>
-
-            <div className="form-group1">
-              <label>{t('email')}</label>
+              <label>{t('email')} *</label>
               <input
                 type="email"
                 name="email"
@@ -191,13 +246,62 @@ const Register = () => {
                 value={form.email}
                 onChange={handleChange}
                 className={errors.email ? 'error' : ''}
-                autoComplete="email" // Added for better UX
+                autoComplete="email"
               />
               {errors.email && <div className="error-message">{errors.email}</div>}
             </div>
 
             <div className="form-group1">
-              <label>{t('password')}</label>
+              <label>Company *</label>
+              {loadingCompanies ? (
+                <div className="loading-select">
+                  <FaSpinner className="spinner" />
+                  Loading companies...
+                </div>
+              ) : companiesError ? (
+                <div className="company-error">
+                  <div className="error-message">{companiesError}</div>
+                  <button 
+                    type="button" 
+                    onClick={retryFetchCompanies}
+                    className="retry-button"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <select
+                  name="company_id"
+                  value={form.company_id}
+                  onChange={handleChange}
+                  className={errors.company_id ? 'error' : ''}
+                >
+                  <option value="">Select a company</option>
+                  {companies.map((company) => (
+                    <option key={company._id} value={company._id}>
+                      {company.company_name}
+                      {company.industry && ` - ${company.industry}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {errors.company_id && <div className="error-message">{errors.company_id}</div>}
+            </div>
+
+            <div className="form-group1">
+              <label>Job Title (Optional)</label>
+              <input
+                type="text"
+                name="job_title"
+                placeholder="Enter job title"
+                value={form.job_title}
+                onChange={handleChange}
+                maxLength="100"
+              />
+            </div>
+
+            <div className="form-group1">
+              <label>{t('password')} *</label>
               <div className="password-input-container">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -206,8 +310,8 @@ const Register = () => {
                   value={form.password}
                   onChange={handleChange}
                   className={errors.password ? 'error' : ''}
-                  minLength="8" // Added security: minimum password length
-                  autoComplete="new-password" // Added for better UX
+                  minLength="8"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -219,14 +323,13 @@ const Register = () => {
                 </button>
               </div>
               {errors.password && <div className="error-message">{errors.password}</div>}
-              {/* Added password requirements hint */}
               <small className="password-hint">
-                {t('password_requirements')} {/* "Password must be at least 8 characters long" */}
+                {t('password_requirements')}
               </small>
             </div>
 
             <div className="form-group1">
-              <label>{t('confirm_password')}</label>
+              <label>{t('confirm_password')} *</label>
               <div className="password-input-container">
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -235,7 +338,7 @@ const Register = () => {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   className={errors.confirmPassword ? 'error' : ''}
-                  autoComplete="new-password" // Added for better UX
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -262,7 +365,7 @@ const Register = () => {
             <button
               type="submit"
               className={`submit-button ${isSubmitting ? 'loading' : ''}`}
-              disabled={isSubmitting}
+              disabled={isSubmitting || loadingCompanies}
             >
               {isSubmitting ? t('creating_account') : t('create_account')}
             </button>

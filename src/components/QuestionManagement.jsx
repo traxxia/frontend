@@ -240,7 +240,7 @@ const QuestionManagement = ({ onToast }) => {
   }
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h2>Question Management</h2>
         <button 
