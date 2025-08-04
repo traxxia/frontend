@@ -9,11 +9,11 @@ import {
   Spinner,
 } from "react-bootstrap";
 import {
-  ArrowRight,Info
+  ArrowRight, Info
 } from "lucide-react";
 
 // Components
-import MenuBar from "../components/MenuBar"; 
+import MenuBar from "../components/MenuBar";
 
 // Styles
 import "../styles/dashboard.css";
@@ -45,7 +45,7 @@ const Dashboard = () => {
   useEffect(() => {
     const onboardingCompleted = localStorage.getItem('onboarding_completed');
     const isFirstVisit = !onboardingCompleted;
-    
+
     if (isFirstVisit) {
       // Show onboarding after a brief delay for better UX
       setTimeout(() => {
@@ -118,7 +118,7 @@ ${t('growth_projection_details')}
       {businesses.length === 0 && (
         <div className="text-center text-muted py-5">
           {t('no_businesses_found')}
-          
+
         </div>
       )}
       {businesses.length > 0 && businesses.map((business, index) => (
@@ -194,8 +194,8 @@ ${t('growth_projection_details')}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5 className="mb-0">{t('welcome')}</h5>
                   {hasSeenOnboarding && (
-                    <Button 
-                      variant="outline-primary" 
+                    <Button
+                      variant="outline-primary"
                       size="sm"
                       onClick={handleShowOnboardingAgain}
                       style={{ fontSize: '0.8rem' }}
@@ -211,18 +211,18 @@ ${t('growth_projection_details')}
                 <BusinessList businesses={businesses} viewType="mobile" />
               </div>
               <div className="px-4 pb-4">
-                <Button 
-                  variant="primary" 
-                  className="w-100 create-business-btn" 
+                <Button
+                  variant="primary"
+                  className="w-100 create-business-btn"
                   onClick={handleCreateBusiness}
                 >
                   {t('create_business')}
                 </Button>
-                 
+
               </div>
             </Card.Body>
           </Card>
-            
+
           {/* Desktop View */}
           <Card className="desktop-view-card d-none d-md-block">
             <Card.Body className="p-0 h-100">
@@ -232,61 +232,61 @@ ${t('growth_projection_details')}
                     <div className="d-flex justify-content-between align-items-start mb-4">
                       <div>
                         <h5 className="mb-2">{t('welcome')}</h5>
-                         
+
                       </div>
                     </div>
                     <p className="text-muted mb-4">{t('welcome_message')}</p>
-                    <Button 
-                      variant="primary" 
-                      className="create-business-btn" 
+                    <Button
+                      variant="primary"
+                      className="create-business-btn"
                       onClick={handleCreateBusiness}
                     >
                       {t('create_business')}
-                    </Button><br /><br /><br />
-                  
-                    
-                     < Button className="create-business-btn"  onClick={() => setShowHowModal(true)}>
-          <Info size={18} /> How It Works
-        </Button>
-{showHowModal && (
-        <div className="popup-overlay" onClick={() => setShowHowModal(false)}>
-          <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
-            <h2 className="mb-3">How This Application Works</h2>
+                    </Button> <span> </span>
 
-            <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
-              {/* Indicators */}
-              <div className="carousel-indicators">
-                <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="0" className="active"></button>
-                <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="1"></button>
-                <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="2"></button>
-              </div>
 
-              {/* Slides */}
-              <div className="carousel-inner">
-                <div className="carousel-item active">
-                  <img src="/slides/slide1.jpeg" className="d-block w-100" alt="Step 1" />
-                </div>
-                <div className="carousel-item">
-                  <img src="/slides/slide2.jpeg" className="d-block w-100" alt="Step 2" />
-                </div>
-                <div className="carousel-item">
-                  <img src="/slides/slide3.jpeg" className="d-block w-100" alt="Step 3" />
-                </div>
-              </div>
+                    < Button className="create-business-btn" onClick={() => setShowHowModal(true)}>
+                      <Info size={18} /> How It Works
+                    </Button>
+                    {showHowModal && (
+                      <div className="popup-overlay" onClick={() => setShowHowModal(false)}>
+                        <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
+                          <h2 className="mb-3">How This Application Works</h2>
 
-              {/* Navigation Arrows */}
-              <button className="carousel-control-prev" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="prev">
-                <span className="carousel-control-prev-icon"></span>
-                <span className="visually-hidden">Previous</span>
-              </button>
-              <button className="carousel-control-next" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="next">
-                <span className="carousel-control-next-icon"></span>
-                <span className="visually-hidden">Next</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                          <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                            {/* Indicators */}
+                            <div className="carousel-indicators">
+                              <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="0" className="active"></button>
+                              <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="1"></button>
+                              <button type="button" data-bs-target="#howItWorksCarousel" data-bs-slide-to="2"></button>
+                            </div>
+
+                            {/* Slides */}
+                            <div className="carousel-inner">
+                              <div className="carousel-item active">
+                                <img src="/slides/slide1.jpeg" className="d-block w-100" alt="Step 1" />
+                              </div>
+                              <div className="carousel-item">
+                                <img src="/slides/slide2.jpeg" className="d-block w-100" alt="Step 2" />
+                              </div>
+                              <div className="carousel-item">
+                                <img src="/slides/slide3.jpeg" className="d-block w-100" alt="Step 3" />
+                              </div>
+                            </div>
+
+                            {/* Navigation Arrows */}
+                            <button className="carousel-control-prev" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="prev">
+                              <span className="carousel-control-prev-icon"></span>
+                              <span className="visually-hidden">Previous</span>
+                            </button>
+                            <button className="carousel-control-next" type="button" data-bs-target="#howItWorksCarousel" data-bs-slide="next">
+                              <span className="carousel-control-next-icon"></span>
+                              <span className="visually-hidden">Next</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </Col>
                 <Col md={6} className="businesses-section">
@@ -307,9 +307,9 @@ ${t('growth_projection_details')}
     return (
       <div className="glass-card p-4">
         <div>
-          <Button 
-            variant="primary" 
-            onClick={goBackToWelcome} 
+          <Button
+            variant="primary"
+            onClick={goBackToWelcome}
             className="btn-back mb-4"
           >
             ← {t('back_to_welcome')}
@@ -318,7 +318,7 @@ ${t('growth_projection_details')}
 
         <div className="analysis-section">
           <h5 className="mb-4">{t('business_insights')}</h5>
-          
+
           <div className="insights-card p-4 border rounded">
             <div className="d-flex align-items-center justify-content-between mb-3">
               <div>
@@ -366,7 +366,7 @@ ${t('growth_projection_details')}
   // Main render
   return (
     <div className="dashboard-layout">
-      <MenuBar /> 
+      <MenuBar />
 
       <Container fluid className="p-0 main-content">
         {currentStep === STEPS.WELCOME ? (
