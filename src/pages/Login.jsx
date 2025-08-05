@@ -21,8 +21,7 @@ const Login = () => {
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
+
 
   // Use the translation hook
   const { t } = useTranslation();
@@ -37,16 +36,18 @@ const Login = () => {
         password,
       });
 
-      // Store user session data
+      // Store user session data - Updated to match backend response structure
       sessionStorage.setItem("token", res.data.token);
       sessionStorage.setItem("userId", res.data.user.id);
       sessionStorage.setItem("userName", res.data.user.name);
       sessionStorage.setItem("userEmail", res.data.user.email);
       sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("latestVersion", res.data.latest_version || "");
+      sessionStorage.setItem("userCompany", res.data.user.company || "");
+      
+      // Remove latestVersion as it's not in backend response
       sessionStorage.setItem(
         "isAdmin",
-        res.data.user.role === "admin" ? "true" : "false"
+        ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"
       );
 
       // IMPORTANT: Store the current language in session storage for the application
@@ -58,7 +59,9 @@ const Login = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error(err.response?.data || err.message);
-      alert(err.response?.data?.message || t("login_failed"));
+      // Updated error handling to match backend error response
+      const errorMessage = err.response?.data?.error || t("login_failed");
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -127,61 +130,12 @@ const Login = () => {
                   />
                 </button>
               </div>
-            </div>
-
-            {/* Terms and Conditions Checkbox */}
-            <div className="form-group terms-group">
-              <label className="terms-checkbox">
-                <input
-                  type="checkbox"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                />
-                <span>
-                  I agree to the{" "}
-                  <button
-                    type="button"
-                    className="terms-link"
-                    onClick={() => setShowTermsModal(true)}
-                  >
-                    Terms and Conditions
-                  </button>
-                </span>
-              </label>
-            </div>
-
-            {showTermsModal && (
-              <div className="terms-modal-overlay">
-                <div className="terms-modal">
-                  <h3>Terms and Conditions</h3>
-                  <div className="terms-content">
-                    <p>
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                      Nulla et euismod nulla.
-                    </p>
-                    <p>
-                      Suspendisse potenti. Etiam ac mauris lectus. Pellentesque
-                      habitant morbi tristique.
-                    </p>
-                    <p>
-                      By using this app, you agree to abide by these terms. This
-                      is dummy content.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowTermsModal(false)}
-                    className="close-terms-button"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
+            </div> 
 
             <button
               type="submit"
               className={`login-button ${isLoading ? "loading" : ""}`}
-              disabled={isLoading || !acceptTerms}
+              disabled={isLoading}
             >
               {isLoading ? t("signing_in") : t("login")}
             </button>

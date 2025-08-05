@@ -28,7 +28,7 @@ const QuestionManagement = ({ onToast }) => {
       setIsLoading(true);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/global-questions`, {
+      const response = await fetch(`${API_BASE_URL}/api/questions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -38,7 +38,23 @@ const QuestionManagement = ({ onToast }) => {
       if (response.ok) {
         const data = await response.json();
         setQuestions(data.questions);
-        setQuestionsByPhase(data.questionsByPhase || {});
+        
+        // Group questions by phase
+        const groupedQuestions = data.questions.reduce((acc, question) => {
+          const phase = question.phase || 'initial';
+          if (!acc[phase]) {
+            acc[phase] = [];
+          }
+          acc[phase].push(question);
+          return acc;
+        }, {});
+        
+        // Sort questions within each phase by order
+        Object.keys(groupedQuestions).forEach(phase => {
+          groupedQuestions[phase].sort((a, b) => (a.order || 0) - (b.order || 0));
+        });
+        
+        setQuestionsByPhase(groupedQuestions);
       } else {
         onToast('Failed to load questions', 'error');
       }
@@ -55,7 +71,7 @@ const QuestionManagement = ({ onToast }) => {
       setIsCreating(true);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/global-questions`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/questions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -66,12 +82,12 @@ const QuestionManagement = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        onToast(`Question created and assigned to ${data.assigned_to_companies} companies`, 'success');
+        onToast('Question created successfully', 'success');
         setShowCreateForm(false);
         loadQuestions();
       } else {
         const error = await response.json();
-        onToast(error.message || 'Failed to create question', 'error');
+        onToast(error.error || 'Failed to create question', 'error');
       }
     } catch (error) {
       console.error('Error creating question:', error);
@@ -86,7 +102,7 @@ const QuestionManagement = ({ onToast }) => {
       setIsUpdating(true);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/global-questions/${questionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/questions/${questionId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -96,12 +112,13 @@ const QuestionManagement = ({ onToast }) => {
       });
 
       if (response.ok) {
+        const data = await response.json();
         onToast('Question updated successfully', 'success');
         setEditingQuestion(null);
         loadQuestions();
       } else {
         const error = await response.json();
-        onToast(error.message || 'Failed to update question', 'error');
+        onToast(error.error || 'Failed to update question', 'error');
       }
     } catch (error) {
       console.error('Error updating question:', error);
@@ -120,7 +137,7 @@ const QuestionManagement = ({ onToast }) => {
       setDeletingQuestionId(questionId);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/global-questions/${questionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/questions/${questionId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,11 +146,12 @@ const QuestionManagement = ({ onToast }) => {
       });
 
       if (response.ok) {
+        const data = await response.json();
         onToast('Question deleted successfully', 'success');
         loadQuestions();
       } else {
         const error = await response.json();
-        onToast(error.message || 'Failed to delete question', 'error');
+        onToast(error.error || 'Failed to delete question', 'error');
       }
     } catch (error) {
       console.error('Error deleting question:', error);
@@ -143,44 +161,53 @@ const QuestionManagement = ({ onToast }) => {
     }
   };
 
-  const handleReorderQuestions = async (phase, reorderedQuestions) => {
-    try {
-      setIsReordering(true);
-      const token = getAuthToken();
+  const handleReorderQuestions = async (reorderedQuestions, phase) => {
+  try {
+    setIsReordering(true);
+    const token = getAuthToken();
 
-      const questionOrders = reorderedQuestions.map((question, index) => ({
-        id: question._id,
-        order: index + 1
-      }));
+    // Create the payload with phase information and relative ordering within the phase
+    const questionOrders = reorderedQuestions.map((question, index) => ({
+      question_id: question._id,
+      order: index + 1 // This will be the relative order within the phase
+    }));
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/global-questions/reorder`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          phase,
-          questionOrders
-        })
-      });
+    const response = await fetch(`${API_BASE_URL}/api/admin/questions/reorder`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        questions: questionOrders,
+        phase: phase // Pass the phase information
+      })
+    });
 
-      if (response.ok) {
-        const result = await response.json(); 
-        onToast(`Questions reordered in ${phase} phase`, 'success');
-        loadQuestions();
-      } else {
-        const error = await response.json();
-        console.error('Reorder error:', error);
-        onToast(error.message || 'Failed to reorder questions', 'error');
-      }
-    } catch (error) {
-      console.error('Error reordering questions:', error);
-      onToast('Error reordering questions', 'error');
-    } finally {
-      setIsReordering(false);
+    if (response.ok) {
+      const result = await response.json();
+      onToast('Questions reordered successfully', 'success');
+      
+      // Reload all questions to get the updated global ordering
+      loadQuestions();
+    } else {
+      const error = await response.json();
+      console.error('Reorder error:', error);
+      onToast(error.error || 'Failed to reorder questions', 'error');
+      
+      // Reload questions to revert to the correct order
+      loadQuestions();
     }
-  };
+  } catch (error) {
+    console.error('Error reordering questions:', error);
+    onToast('Error reordering questions', 'error');
+    
+    // Reload questions to revert to the correct order
+    loadQuestions();
+  } finally {
+    setIsReordering(false);
+  }
+};
 
   const handleDragStart = (e, question, phase) => {
     setDraggedItem({ question, phase });
@@ -193,36 +220,36 @@ const QuestionManagement = ({ onToast }) => {
   };
 
   const handleDrop = (e, targetQuestion, targetPhase) => {
-    e.preventDefault();
-    
-    if (!draggedItem || draggedItem.phase !== targetPhase) {
-      setDraggedItem(null);
-      return;
-    }
-
-    const phaseQuestions = [...(questionsByPhase[targetPhase] || [])];
-    const draggedIndex = phaseQuestions.findIndex(q => q._id === draggedItem.question._id);
-    const targetIndex = phaseQuestions.findIndex(q => q._id === targetQuestion._id);
-
-    if (draggedIndex === targetIndex) {
-      setDraggedItem(null);
-      return;
-    }
-
-    // Reorder the array
-    const [draggedQuestion] = phaseQuestions.splice(draggedIndex, 1);
-    phaseQuestions.splice(targetIndex, 0, draggedQuestion);
-
-    // Update local state immediately for better UX
-    setQuestionsByPhase(prev => ({
-      ...prev,
-      [targetPhase]: phaseQuestions
-    }));
-
-    // Send reorder request to backend
-    handleReorderQuestions(targetPhase, phaseQuestions);
+  e.preventDefault();
+  
+  if (!draggedItem || draggedItem.phase !== targetPhase) {
     setDraggedItem(null);
-  };
+    return;
+  }
+
+  const phaseQuestions = [...(questionsByPhase[targetPhase] || [])];
+  const draggedIndex = phaseQuestions.findIndex(q => q._id === draggedItem.question._id);
+  const targetIndex = phaseQuestions.findIndex(q => q._id === targetQuestion._id);
+
+  if (draggedIndex === targetIndex) {
+    setDraggedItem(null);
+    return;
+  }
+
+  // Reorder the array
+  const [draggedQuestion] = phaseQuestions.splice(draggedIndex, 1);
+  phaseQuestions.splice(targetIndex, 0, draggedQuestion);
+
+  // Update local state immediately for better UX
+  setQuestionsByPhase(prev => ({
+    ...prev,
+    [targetPhase]: phaseQuestions
+  }));
+
+  // Send reorder request to backend with phase information
+  handleReorderQuestions(phaseQuestions, targetPhase);
+  setDraggedItem(null);
+};
 
   const togglePhaseCollapse = (phase) => {
     setCollapsedPhases(prev => ({
@@ -325,8 +352,8 @@ const QuestionManagement = ({ onToast }) => {
               <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dee2e6' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ width: '30px', padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-                      Order
+                    <th style={{ width: '60px', padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                      #
                     </th>
                     <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>
                       Question Text
@@ -342,7 +369,7 @@ const QuestionManagement = ({ onToast }) => {
                 <tbody>
                   {phaseQuestions.length === 0 ? (
                     <tr>
-                      <td colSpan="5" style={{
+                      <td colSpan="4" style={{
                         padding: '40px',
                         textAlign: 'center',
                         color: '#6c757d',
@@ -408,12 +435,16 @@ const QuestionRow = ({
   const [editForm, setEditForm] = useState({
     question_text: question.question_text,
     phase: question.phase,
-    severity: question.severity
+    severity: question.severity,
+    order: question.order
   });
 
   const handleSave = () => {
     onUpdate(question._id, {
-      question_text: editForm.question_text
+      question_text: editForm.question_text,
+      phase: editForm.phase,
+      severity: editForm.severity,
+      order: editForm.order
     });
   };
 
@@ -430,7 +461,9 @@ const QuestionRow = ({
         <td style={{ padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
             <GripVertical size={14} style={{ color: '#6c757d' }} />
-            {question.order || index + 1}
+            <span style={{ fontWeight: 'bold', color: '#007bff' }}>
+              {index + 1}
+            </span>
           </div>
         </td>
         
@@ -451,16 +484,20 @@ const QuestionRow = ({
         </td>
         
         <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-          <span style={{
-            padding: '2px 8px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            backgroundColor: question.severity === 'mandatory' ? '#dc3545' : '#28a745',
-            color: 'white'
-          }}>
-            {question.severity}
-          </span>
+          <select
+            name="severity"
+            value={editForm.severity}
+            onChange={handleChange}
+            style={{
+              padding: '4px 8px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '12px'
+            }}
+          >
+            <option value="mandatory">Mandatory</option>
+            <option value="optional">Optional</option>
+          </select>
         </td>
          
         <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
@@ -520,7 +557,9 @@ const QuestionRow = ({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
           <GripVertical size={14} style={{ color: '#6c757d' }} />
-          {question.order || index + 1}
+          <span >
+            {index + 1}
+          </span>
         </div>
       </td>
        
@@ -595,7 +634,8 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     question_text: '',
     phase: 'initial',
-    severity: 'mandatory'
+    severity: 'mandatory',
+    order: 1
   });
 
   const getDefaultSeverity = (phase) => {

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { ArrowLeft, Loader, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader, RefreshCw, ChevronDown } from "lucide-react";
 import ChatComponent from "../components/ChatComponent";
 import SwotAnalysis from "../components/SwotAnalysis";
 import "../styles/businesspage.css";
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
-import { ChevronDown } from "lucide-react";
 import CustomerSegmentation from "../components/CustomerSegmentation";
 import PurchaseCriteria from "../components/PurchaseCriteria";
 import ChannelHeatmap from "../components/ChannelHeatmap";
@@ -13,76 +12,71 @@ import LoyaltyNPS from "../components/LoyaltyNPS";
 import CapabilityHeatmap from "../components/CapabilityHeatmap";
 import PDFExportButton from "../components/PDFExportButton";
 import { useTranslation } from "../hooks/useTranslation";
+import { useLocation } from 'react-router-dom';
 
 const BusinessSetupPage = () => {
+  const location = useLocation();
+  const business = location.state?.business;
+  const selectedBusinessId = location.state?.business?._id;
+  const selectedBusinessName = location.state?.business?.business_name;
   const { t } = useTranslation();
+
+  // UI State
   const [activeTab, setActiveTab] = useState(() => {
     const isMobileView = window.innerWidth <= 768;
     return isMobileView ? "chat" : "brief";
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
+  const [isSliding, setIsSliding] = useState(false);
+
+  // Data State
+  const [questions, setQuestions] = useState([]);
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [userAnswers, setUserAnswers] = useState({});
-  const [analysisResult, setAnalysisResult] = useState("");
-  const [strategicAnalysisResult, setStrategicAnalysisResult] = useState("");
-  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
-  const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
-  const [isLoadingLatestAnalysis, setIsLoadingLatestAnalysis] = useState(false);
+  const [completedQuestions, setCompletedQuestions] = useState(new Set());
+  const [businessData, setBusinessData] = useState({
+    name: business?.business_name || "",
+    whatWeDo: business?.business_purpose || "",
+    products: "",
+    targetAudience: "",
+    uniqueValue: "",
+  });
 
-  // Add refs to prevent multiple API calls and manage regeneration state
-  const isRegeneratingAllRef = useRef(false);
-  const regenerationInProgressRef = useRef(false);
-  const analysisGenerationQueueRef = useRef(new Set());
-
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(() => t('goToSection') || 'Go to Section');
-  const dropdownRef = useRef(null);
+  // Analysis State
   const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
   const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);
   const [channelHeatmapData, setChannelHeatmapData] = useState(null);
   const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
   const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
+  const [swotAnalysisResult, setSwotAnalysisResult] = useState("");
+  const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
 
-  // Refs for scrolling to sections
-  const swotRef = useRef(null);
-  const customerSegmentationRef = useRef(null);
-  const purchaseCriteriaRef = useRef(null);
-  const channelHeatmapRef = useRef(null);
-  const loyaltyNpsRef = useRef(null);
-  const capabilityHeatmapRef = useRef(null);
-  const strategicRef = useRef(null);
+  // Dropdown State
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(() => t('goToSection') || 'Go to Section');
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
+  // Toast State
   const [showToast, setShowToast] = useState({
     show: false,
     message: "",
     type: "success",
   });
 
-  const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
-  const [isSliding, setIsSliding] = useState(false);
+  // Refs
+  const swotRef = useRef(null);
+  const customerSegmentationRef = useRef(null);
+  const purchaseCriteriaRef = useRef(null);
+  const channelHeatmapRef = useRef(null);
+  const loyaltyNpsRef = useRef(null);
+  const capabilityHeatmapRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const isRegeneratingRef = useRef(false);
 
-  const [questions, setQuestions] = useState([]);
-  const [phases, setPhases] = useState({});
-  const [questionsLoaded, setQuestionsLoaded] = useState(false);
-  const currentRegeneratingAnalysisRef = useRef(null);
-const [hasAutoGenerated, setHasAutoGenerated] = useState(false);
-const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
-
-  const [businessData, setBusinessData] = useState({
-    name: "",
-    whatWeDo: "",
-    products: "",
-    targetAudience: "",
-    uniqueValue: "",
-  });
-
-  const translatedDefaults = useMemo(() => ({
-    name: t("yourBusiness"),
-    whatWeDo: t("whatWeDo"),
-  }), [t]);
+  // Constants
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
 
   const PHASES = {
     INITIAL: "initial",
@@ -91,599 +85,18 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
     EXCELLENT: "excellent",
   };
 
-  const getMandatoryQuestionsByPhase = (phase) => {
-    return questions.filter(
-      (q) => q.phase === phase && q.severity === "mandatory"
-    );
-  };
-
-  // FIXED: Updated isPhaseCompleted to handle both ID formats
-  const isPhaseCompleted = (phase) => {
-    const mandatoryQuestions = getMandatoryQuestionsByPhase(phase); 
-    
-    return mandatoryQuestions.every((q) => {
-      const questionId = q._id || q.question_id;
-      return userAnswers[questionId];
-    });
-  };
-
-  const getUnlockedFeatures = () => {
-    const features = {
-      brief: true,
-      analysis: false,
-    };
-
-    if (isPhaseCompleted(PHASES.INITIAL)) {
-      features.analysis = true;
-    }
-
-    return features;
-  };
-
-  const unlockedFeatures = getUnlockedFeatures();
-
-  // REACTIVE ANALYSIS TRIGGERING - Remove all timers
-   useEffect(() => {
-    // Only run if:
-    // 1. Questions are loaded
-    // 2. Initial phase is completed
-    // 3. We haven't auto-generated yet in this session
-    // 4. User just completed initial phase (shouldRegenerateAnalysis flag is set)
-    // 5. No analysis exists
-    if (
-      questionsLoaded && 
-      questions.length > 0 && 
-      isPhaseCompleted(PHASES.INITIAL) && 
-      !hasAutoGenerated && 
-      shouldRegenerateAnalysis &&
-      !analysisResult && 
-      !customerSegmentationData &&
-      !isRegeneratingAllRef.current &&
-      !regenerationInProgressRef.current
-    ) {
-       
-      regenerateAllAnalysis().then(() => {
-        setHasAutoGenerated(true);
-        setShouldRegenerateAnalysis(false);
-      });
-    }
-  }, [questionsLoaded, questions.length, shouldRegenerateAnalysis, hasAutoGenerated, analysisResult, customerSegmentationData]);
-
-
+  // Load existing analysis on component mount
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Load latest analysis when analysis tab becomes active
-  useEffect(() => {
-    if (activeTab === "analysis" && unlockedFeatures.analysis) {
-      loadLatestAnalysis();
+    if (selectedBusinessId && questionsLoaded) {
+      loadExistingAnalysis();
     }
-  }, [activeTab, unlockedFeatures.analysis]);
+  }, [selectedBusinessId, questionsLoaded]);
 
-  // FIXED: Load latest analysis without timers
-  const loadLatestAnalysis = async () => {
-    try {
-      setIsLoadingLatestAnalysis(true); 
-
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json(); 
-
-        // Load all analyses in parallel
-        const analysisTypes = [
-          { key: 'swot', setter: setAnalysisResult },
-          { key: 'customerSegmentation', setter: setCustomerSegmentationData },
-          { key: 'purchaseCriteria', setter: setPurchaseCriteriaData },
-          { key: 'loyaltyNPS', setter: setLoyaltyNPSData },
-          { key: 'channelHeatmap', setter: setChannelHeatmapData },
-          { key: 'capabilityHeatmap', setter: setCapabilityHeatmapData }
-        ];
-
-        let analysisFound = false;
-
-        analysisTypes.forEach(({ key, setter }) => {
-          const messages = result.chat_messages?.filter(msg =>
-            msg.metadata?.analysisType === key && msg.metadata?.analysisData
-          );
-
-          if (messages && messages.length > 0) {
-            const latest = messages[messages.length - 1]; 
-            setter(latest.metadata.analysisData);
-            analysisFound = true;
-          }
-        });
-
-        // IMPORTANT: Set hasAutoGenerated to true if analysis was found in backend
-        // This prevents auto-generation on page refresh
-        if (analysisFound) {
-          setHasAutoGenerated(true);
-        }
-        
-        // REMOVED: No automatic analysis triggering here
-        
-      }
-    } catch (error) {
-      console.error('Error loading latest analysis:', error);
-    } finally {
-      setIsLoadingLatestAnalysis(false);
-    }
-  };
-
-  // Save analysis using chat message system
-  const saveAnalysisToBackend = async (analysisData, analysisType = 'swot') => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/user/save-chat-message`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message_type: 'system',
-          message_text: `${analysisType.toUpperCase()} analysis generated`,
-          question_id: null,
-          metadata: {
-            analysisType: analysisType,
-            analysisData: analysisData,
-            isAnalysisGeneration: true
-          }
-        })
-      });
-
-      if (response.ok) { 
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error(`Error saving ${analysisType} analysis:`, error);
-      return false;
-    }
-  };
-
-  // FIXED: Single analysis generation function with queue management
-  const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
-    if (analysisGenerationQueueRef.current.has(analysisType)) { 
-      return;
-    }
-
-    try {
-      analysisGenerationQueueRef.current.add(analysisType);
-      currentRegeneratingAnalysisRef.current = analysisType; 
-
-      const questionsArray = [];
-      const answersArray = [];
-
-      // FIXED: Use consistent ID handling
-      const sortedQuestions = [...questions].sort((a, b) => (a._id || a.question_id) - (b._id || b.question_id));
-
-      sortedQuestions.forEach(question => {
-        const questionId = question._id || question.question_id;
-        if (userAnswers[questionId]) {
-          const cleanQuestion = String(question.question_text)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          const cleanAnswer = String(userAnswers[questionId])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
-
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        }
-      });
-
-      if (questionsArray.length === 0) {
-        throw new Error(`No answered questions available for ${analysisType} analysis`);
-      }
-
-      const payload = {
-        questions: questionsArray,
-        answers: answersArray
-      };
-
-      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        throw new Error(`${analysisType} API returned ${response.status}: ${response.statusText}`);
-      }
-
-      let dataToSave = null;
-
-      if (analysisType === 'swot') {
-        // Handle SWOT specifically - get raw text and clean it
-        const rawText = await response.text(); 
-        
-        try {
-          // Clean the response text
-          const cleanedText = rawText
-            .replace(/\\n/g, '\n')  // Replace \n with actual newlines
-            .replace(/\\\"/g, '"')  // Replace \" with actual quotes
-            .trim();
-           
-          
-          // Try to parse as JSON
-          const parsed = JSON.parse(cleanedText);
-          
-          // Validate the structure
-          if (parsed && typeof parsed === 'object' && 
-              (parsed.strengths || parsed.weaknesses || parsed.opportunities || parsed.threats)) {
-            dataToSave = cleanedText; // Save the cleaned JSON string
-          } else {
-            console.warn('SWOT response structure is invalid:', parsed);
-            dataToSave = rawText; // Fallback to raw text
-          }
-        } catch (e) {
-          console.warn('SWOT response was not valid JSON, using raw text:', e.message);
-          dataToSave = rawText;
-        }
-      } else {
-        // Handle other analysis types
-        const result = await response.json();
-        
-        if (analysisType === 'capabilityHeatmap') {
-          if (result && (result.capabilities || result[dataKey])) {
-            dataToSave = result.capabilities ? result : result[dataKey];
-          } else {
-            throw new Error(`Invalid response structure from ${analysisType} API - no capabilities found`);
-          }
-        } else if (result && result[dataKey]) {
-          dataToSave = result[dataKey];
-        } else {
-          console.error(`📊 API Response for ${analysisType}:`, result);
-          throw new Error(`Invalid response structure from ${analysisType} API - missing ${dataKey}`);
-        }
-      }
-
-      if (dataToSave) {
-        setter(dataToSave);
-        await saveAnalysisToBackend(dataToSave, analysisType); 
-      }
-
-    } catch (error) {
-      console.error(`📊 [BusinessSetupPage] Error generating ${analysisType} analysis:`, error);
-      throw error;
-    } finally {
-      analysisGenerationQueueRef.current.delete(analysisType);
-      if (currentRegeneratingAnalysisRef.current === analysisType) {
-        currentRegeneratingAnalysisRef.current = null;
-      }
-    }
-  };
-
-  // FIXED: Unified regenerate all function with proper state management
-  const regenerateAllAnalysis = async () => {
-  if (!isPhaseCompleted(PHASES.INITIAL)) {
-    showToastMessage(
-      "Initial phase must be completed to regenerate analysis.",
-      "warning"
-    );
-    return;
-  }
-
-  if (isRegeneratingAllRef.current || regenerationInProgressRef.current) { 
-    return;
-  }
-
-  try {
-    isRegeneratingAllRef.current = true;
-    regenerationInProgressRef.current = true;
-    setIsAnalysisRegenerating(true);
-
-    showToastMessage("Validating phase completion...", "info");
-
-    // 🔥 FIRST: Validate with analyze-all API before generating analysis
-    const questionsArray = [];
-    const answersArray = [];
-
-    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-    
-    initialQuestions.forEach(question => {
-      const questionId = question._id || question.question_id;
-      if (userAnswers[questionId]) {
-        questionsArray.push(question.question_text);
-        answersArray.push(userAnswers[questionId]);
-      }
-    });
-
-    if (questionsArray.length === 0) {
-      throw new Error('No questions and answers found for validation');
-    }
-
-    const mlResponse = await fetch(`${ML_API_BASE_URL}/analyze_all`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    let shouldProceed = true;
-    if (mlResponse.ok) {
-      const mlValidation = await mlResponse.json(); 
-      
-      if (!mlValidation.valid) { 
-        showToastMessage("Phase validation suggests more details needed, but proceeding with analysis...", "warning");
-      } else { 
-      }
-    } else { 
-    }
-
-    if (shouldProceed) {
-      showToastMessage("Regenerating all analysis components...", "info");
-
-      // Clear existing data
-      setAnalysisResult("");
-      setCustomerSegmentationData(null);
-      setPurchaseCriteriaData(null);
-      setChannelHeatmapData(null);
-      setLoyaltyNPSData(null);
-      setCapabilityHeatmapData(null);
-
-      // Clear the generation queue
-      analysisGenerationQueueRef.current.clear();
-
-      // Wait for state to clear
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Generate all analyses in parallel
-      const analysisPromises = [
-        generateSingleAnalysis('swot', 'find', null, setAnalysisResult),
-        generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
-        generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
-        generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
-        generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
-        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData)
-      ];
-
-      const results = await Promise.allSettled(analysisPromises);
-
-      // Check for failures
-      const failures = results.filter(result => result.status === 'rejected');
-
-      if (failures.length > 0) {
-        console.error('📊 [BusinessSetupPage] Some analyses failed:', failures);
-        showToastMessage(
-          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
-          failures.length < analysisPromises.length ? "warning" : "error"
-        );
-      } else {
-        showToastMessage("All analysis components regenerated successfully!", "success");
-      }
-    }
-
-  } catch (error) {
-    console.error('📊 [BusinessSetupPage] Error regenerating all analysis:', error);
-    showToastMessage(
-      "Failed to regenerate analysis components. Please try again.",
-      "error"
-    );
-  } finally {
-    isRegeneratingAllRef.current = false;
-    regenerationInProgressRef.current = false;
-    setIsAnalysisRegenerating(false);
-    analysisGenerationQueueRef.current.clear();
-  }
-};
-
-
-  const handleAnalysisRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage(
-        "Initial phase must be completed to regenerate analysis.",
-        "warning"
-      );
-      return;
-    }
-
-    if (regenerationInProgressRef.current) { 
-      return;
-    }
-
-    return regenerateAllAnalysis();
-  };
-
-  const totalQuestions = questions.length;
-  const answeredQuestions = Object.keys(userAnswers).length;
-  const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
-
-  // Generate unique keys for regeneration
-  const getRegenerationKey = (componentName) => {
-    return isRegeneratingAllRef.current ? Date.now() : `${componentName}-${Date.now()}`;
-  };
-
-  const handleCustomerSegmentationGenerated = (data) => {
-    setCustomerSegmentationData(data);
-  };
-
-  const dropdownOptions = [
-    "SWOT",
-    "Customer Segmentation",
-    "Purchase Criteria",
-    "Channel Heatmap",
-    "Loyalty/NPS",
-    "Capability Heatmap"
-  ];
-
-  const handlePurchaseCriteriaGenerated = (data) => {
-    setPurchaseCriteriaData(data);
-  };
-
-  const handleChannelHeatmapGenerated = (data) => {
-    setChannelHeatmapData(data);
-  };
-
-  const handleLoyaltyNPSGenerated = (data) => {
-    setLoyaltyNPSData(data);
-  };
-
-  const handleCapabilityHeatmapGenerated = (data) => {
-    setCapabilityHeatmapData(data);
-  };
-
-  const handleOptionClick = (option) => {
-    setSelectedOption(option);
-    setShowDropdown(false);
-
-    setTimeout(() => {
-      if (option === "SWOT" && swotRef.current) {
-        swotRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "Customer Segmentation" && customerSegmentationRef.current) {
-        customerSegmentationRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "Purchase Criteria" && purchaseCriteriaRef.current) {
-        purchaseCriteriaRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "Channel Heatmap" && channelHeatmapRef.current) {
-        channelHeatmapRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "Loyalty/NPS" && loyaltyNpsRef.current) {
-        loyaltyNpsRef.current.scrollIntoView({ behavior: "smooth" });
-      } else if (option === "Capability Heatmap" && capabilityHeatmapRef.current) {
-        capabilityHeatmapRef.current.scrollIntoView({ behavior: "smooth" });
-      }
-    }, 100);
-  };
-
-  // Component for Analysis Controls (Dropdown + Regenerate All + PDF Export)
-  const AnalysisControls = () => (
-    <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-      <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
-        <button
-          className="dropdown-button"
-          onClick={() => setShowDropdown((prev) => !prev)}
-          style={{
-            backgroundColor: "#fff",
-            color: "#1a73e8",
-            border: "1px solid #d1d5db",
-            borderRadius: "13px",
-            padding: "10px 18px",
-            fontSize: "14px",
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            cursor: "pointer",
-          }}
-        >
-          {selectedOption}
-          <ChevronDown size={16} style={{ marginLeft: 8 }} />
-        </button>
-
-        {showDropdown && (
-          <div
-            style={{
-              position: "absolute",
-              top: "110%",
-              right: 0,
-              backgroundColor: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              minWidth: "180px",
-              zIndex: 1000,
-            }}
-          >
-            {dropdownOptions.map((item) => (
-              <div
-                key={item}
-                onClick={() => handleOptionClick(item)}
-                style={{
-                  padding: "10px 14px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#374151",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#f1f5f9")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "transparent")
-                }
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Unified Regenerate Button */}
-      <button
-        onClick={regenerateAllAnalysis}
-        disabled={isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current || !unlockedFeatures.analysis}
-        style={{
-          backgroundColor: (isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? "#f3f4f6" : "#10b981",
-          color: (isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? "#6b7280" : "#fff",
-          border: "none",
-          borderRadius: "13px",
-          padding: "10px 18px",
-          fontSize: "14px",
-          fontWeight: 500,
-          display: "flex",
-          alignItems: "center",
-          cursor: (isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? "not-allowed" : "pointer",
-          gap: "8px",
-          transition: "all 0.2s ease"
-        }}
-      >
-        {(isRegeneratingAllRef.current || isAnalysisRegenerating || regenerationInProgressRef.current) ? (
-          <>
-            <Loader size={16} className="animate-spin" />
-            Regenerating...
-          </>
-        ) : (
-          <>
-            <RefreshCw size={16} />
-            {t('RegenerateAll')}
-          </>
-        )}
-      </button>
-
-      <PDFExportButton
-        analysisResult={analysisResult}
-        businessName={businessData.name}
-        onToastMessage={showToastMessage}
-      />
-    </div>
-  );
-
+  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       const newIsMobile = window.innerWidth <= 768;
       setIsMobile(newIsMobile);
-
       if (newIsMobile && activeTab === "brief") {
         setActiveTab("chat");
       } else if (!newIsMobile && activeTab === "chat") {
@@ -695,40 +108,49 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
     return () => window.removeEventListener("resize", handleResize);
   }, [activeTab]);
 
-  const handleAnalysisTabClick = () => {
-    if (!unlockedFeatures.analysis) return;
-
-    if (isMobile) {
-      setActiveTab("analysis");
-    } else {
-      if (!isAnalysisExpanded) {
-        setIsSliding(true);
-        setIsAnalysisExpanded(true);
-        setActiveTab("analysis");
-
-        setTimeout(() => {
-          setIsSliding(false);
-        }, 1000);
+  // Handle dropdown clicks outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
       }
-    }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Helper Functions
+  const showToastMessage = (message, type = "success") => {
+    setShowToast({ show: true, message, type });
+    setTimeout(() => {
+      setShowToast({ show: false, message: "", type: "success" });
+    }, 4000);
   };
 
-  const handleBackFromAnalysis = () => {
-    if (isAnalysisExpanded) {
-      setIsSliding(true);
-      setIsAnalysisExpanded(false);
-      setActiveTab("brief");
-
-      setTimeout(() => {
-        setIsSliding(false);
-      }, 1000);
-    }
+  const isPhaseCompleted = (phase) => {
+    const mandatoryQuestions = questions.filter(
+      (q) => q.phase === phase && q.severity === "mandatory"
+    );
+    
+    if (mandatoryQuestions.length === 0) return false;
+    
+    return mandatoryQuestions.every((q) => {
+      const questionId = q._id;
+      return userAnswers[questionId] && userAnswers[questionId].trim();
+    });
   };
 
-  const handleQuestionsLoaded = (loadedQuestions, loadedPhases) => {
-    setQuestions(loadedQuestions);
-    setPhases(loadedPhases);
-    setQuestionsLoaded(true);
+  const getUnlockedFeatures = () => {
+    // Check using completedQuestions set which is more reliable
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+    const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
+    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+    
+    return {
+      brief: true,
+      analysis: isInitialComplete
+    };
   };
 
   const extractBusinessName = (text) => {
@@ -746,43 +168,298 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
     return null;
   };
 
-  const handleBusinessDataUpdate = (updates) => {
-    setBusinessData((prev) => ({ ...prev, ...updates }));
+  // Load existing analysis from API
+  const loadExistingAnalysis = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.phase_analysis && data.phase_analysis.length > 0) {
+          loadExistingAnalysisData(data.phase_analysis);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading existing analysis:', error);
+    }
   };
 
-  // FIXED: Updated handleNewAnswer to be purely synchronous
-  const handleNewAnswer = (questionId, answer) => { 
+  const loadExistingAnalysisData = (phaseAnalysisArray) => {
+    try {
+      // Get the most recent analysis for each type
+      const latestAnalysisByType = {};
+      phaseAnalysisArray
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .forEach(analysis => {
+          const type = analysis.analysis_type;
+          if (!latestAnalysisByType[type]) {
+            latestAnalysisByType[type] = analysis;
+          }
+        });
+
+      // Load each analysis type
+      Object.values(latestAnalysisByType).forEach(analysis => {
+        const { analysis_type, analysis_data } = analysis;
+
+        switch (analysis_type) {
+          case 'swot':
+            setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data));
+            break;
+          case 'customerSegmentation':
+            setCustomerSegmentationData(analysis_data);
+            break;
+          case 'purchaseCriteria':
+            setPurchaseCriteriaData(analysis_data);
+            break;
+          case 'channelHeatmap':
+            setChannelHeatmapData(analysis_data);
+            break;
+          case 'loyaltyNPS':
+            setLoyaltyNPSData(analysis_data);
+            break;
+          case 'capabilityHeatmap':
+            setCapabilityHeatmapData(analysis_data);
+            break;
+        }
+      });
+
+      const analysisCount = Object.keys(latestAnalysisByType).length;
+      if (analysisCount > 0) {
+        showToastMessage(`✅ Loaded ${analysisCount} existing analysis components`, 'success');
+      }
+    } catch (error) {
+      console.error('Error loading existing analysis data:', error);
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData, analysisType) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phase: 'initial',
+          analysis_type: analysisType,
+          analysis_name: `${analysisType.toUpperCase()} Analysis`,
+          analysis_data: analysisData,
+          business_id: selectedBusinessId,
+          metadata: { generated_at: new Date().toISOString() }
+        })
+      });
+      return response.ok;
+    } catch (error) {
+      console.error(`Error saving ${analysisType} analysis:`, error);
+      return false;
+    }
+  };
+
+  // Generate individual analysis
+  const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => userAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          const cleanQuestion = String(question.question_text)
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          const cleanAnswer = String(userAnswers[question._id])
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          questionsArray.push(cleanQuestion);
+          answersArray.push(cleanAnswer);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error(`No answered questions available for ${analysisType} analysis`);
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`${analysisType} API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      let dataToSave = null;
+
+      if (analysisType === 'capabilityHeatmap') {
+        dataToSave = result.capabilities ? result : result[dataKey];
+      } else if (result && result[dataKey]) {
+        dataToSave = result[dataKey];
+      } else {
+        throw new Error(`Invalid response structure from ${analysisType} API`);
+      }
+
+      if (dataToSave) {
+        setter(dataToSave);
+        await saveAnalysisToBackend(dataToSave, analysisType);
+      }
+    } catch (error) {
+      console.error(`Error generating ${analysisType} analysis:`, error);
+      throw error;
+    }
+  };
+
+  // Generate SWOT analysis
+  const generateSWOTAnalysis = async () => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions.forEach(question => {
+        if (userAnswers[question._id]) {
+          questionsArray.push(question.question_text);
+          answersArray.push(userAnswers[question._id]);
+        }
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`SWOT API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+
+      setSwotAnalysisResult(analysisContent);
+      await saveAnalysisToBackend(analysisContent, 'swot');
+    } catch (error) {
+      console.error('Error generating SWOT analysis:', error);
+      throw error;
+    }
+  };
+
+  // Main function to regenerate all analysis
+  const regenerateAllAnalysis = async () => {
+    // Check current phase completion status
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+    const completedInitialQuestions = initialQuestions.filter(q => {
+      return userAnswers[q._id] && userAnswers[q._id].trim();
+    });
     
+    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
     
-    // Update user answers synchronously
-    setUserAnswers((prev) => {
-      const updated = {
+    if (!isInitialComplete) {
+      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
+      return;
+    }
+
+    if (isRegeneratingRef.current) {
+      return;
+    }
+
+    try {
+      isRegeneratingRef.current = true;
+      setIsAnalysisRegenerating(true);
+      showToastMessage("Regenerating all analysis components...", "info");
+
+      // Clear existing data
+      setSwotAnalysisResult("");
+      setCustomerSegmentationData(null);
+      setPurchaseCriteriaData(null);
+      setChannelHeatmapData(null);
+      setLoyaltyNPSData(null);
+      setCapabilityHeatmapData(null);
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Generate all analysis
+      const analysisPromises = [
+        generateSWOTAnalysis(),
+        generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
+        generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
+        generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
+        generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
+        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData)
+      ];
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All analysis components regenerated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error regenerating all analysis:', error);
+      showToastMessage("Failed to regenerate analysis components. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsAnalysisRegenerating(false);
+    }
+  };
+
+  // Event Handlers
+  const handleQuestionsLoaded = (loadedQuestions) => {
+    setQuestions(loadedQuestions);
+    setQuestionsLoaded(true);
+  };
+
+  const handleNewAnswer = (questionId, answer) => {
+    console.log('New answer received:', { questionId, answer: answer.substring(0, 50) + '...' });
+    
+    setUserAnswers(prev => {
+      const updatedAnswers = {
         ...prev,
-        [questionId]: answer,
+        [questionId]: answer
       };
       
-      // Check if this answer completes the initial phase
-      const wasInitialCompleted = isPhaseCompleted(PHASES.INITIAL);
-      
-      // Temporarily create the updated state to check completion
-      const tempAnswers = updated;
-      const willBeInitialCompleted = questions.filter(
-        (q) => q.phase === PHASES.INITIAL && q.severity === "mandatory"
-      ).every((q) => {
-        const qId = q._id || q.question_id;
-        return tempAnswers[qId];
-      });
-      
-      // If initial phase just got completed, set flag to regenerate
-      if (!wasInitialCompleted && willBeInitialCompleted && !hasAutoGenerated) {
-         
-        setShouldRegenerateAnalysis(true);
-      }
-      
-      return updated;
+      console.log('Updated userAnswers:', Object.keys(updatedAnswers));
+      return updatedAnswers;
     });
 
-    // Update business data
+    // Update business data based on specific questions
     const updates = {};
     if (questionId === 1) {
       const businessName = extractBusinessName(answer);
@@ -795,21 +472,100 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
     }
 
     if (Object.keys(updates).length > 0) {
-      setBusinessData((prev) => ({ ...prev, ...updates }));
+      setBusinessData(prev => ({ ...prev, ...updates }));
     }
   };
 
-  const handleAnswerUpdate = (questionId, newAnswer) => {
-   
-    
-    setUserAnswers((prev) => {
-      const updated = {
-        ...prev,
-        [questionId]: newAnswer,
-      };
-      return updated;
+  const handleQuestionCompleted = (questionId) => {
+    setCompletedQuestions(prev => {
+      const newCompletedSet = new Set([...prev, questionId]);
+      
+      // Check if initial phase is completed with the updated set
+      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+      const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
+      
+      console.log('Phase completion check:', {
+        totalInitialQuestions: initialQuestions.length,
+        completedInitialQuestions: completedInitialQuestions.length,
+        questionJustCompleted: questionId,
+        allCompletedQuestions: Array.from(newCompletedSet)
+      });
+      
+      if (completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0) {
+        // Initial phase just completed, trigger analysis generation
+        console.log('Initial phase completed, triggering analysis generation');
+        setTimeout(() => {
+          regenerateAllAnalysisForCompletion();
+        }, 100);
+      }
+      
+      return newCompletedSet;
     });
+  };
 
+  // Special function for auto-generation when phase is completed
+  const regenerateAllAnalysisForCompletion = async () => {
+    if (isRegeneratingRef.current) {
+      return;
+    }
+
+    try {
+      isRegeneratingRef.current = true;
+      setIsAnalysisRegenerating(true);
+      showToastMessage("Initial phase completed! Generating analysis...", "info");
+
+      // Clear existing data
+      setSwotAnalysisResult("");
+      setCustomerSegmentationData(null);
+      setPurchaseCriteriaData(null);
+      setChannelHeatmapData(null);
+      setLoyaltyNPSData(null);
+      setCapabilityHeatmapData(null);
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Generate all analysis
+      const analysisPromises = [
+        generateSWOTAnalysis(),
+        generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
+        generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
+        generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
+        generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
+        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData)
+      ];
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All analysis components generated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error generating analysis:', error);
+      showToastMessage("Failed to generate analysis components. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsAnalysisRegenerating(false);
+    }
+  };
+
+  const handleBusinessDataUpdate = (updates) => {
+    setBusinessData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleAnswerUpdate = (questionId, newAnswer) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: newAnswer
+    }));
+
+    // Update business data
     const updates = {};
     if (questionId === 1) {
       const businessName = extractBusinessName(newAnswer);
@@ -822,397 +578,335 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
     }
 
     if (Object.keys(updates).length > 0) {
-      setBusinessData((prev) => ({ ...prev, ...updates }));
+      setBusinessData(prev => ({ ...prev, ...updates }));
     }
-
-    // If initial phase is completed and we have existing analysis, 
-    // the EditableBriefSection will handle regeneration via onAnalysisRegenerate
   };
 
-  const handleAnalysisGenerated = (analysis) => {
-    setAnalysisResult(analysis);
-    setIsLoadingAnalysis(false);
-    // Save to backend when analysis is generated from chat
-    saveAnalysisToBackend(analysis, 'swot');
-  };
+  const handleAnalysisTabClick = () => {
+    const unlockedFeatures = getUnlockedFeatures();
+    if (!unlockedFeatures.analysis) return;
 
-  const handleCustomerSegmentationGeneratedFromChat = (customerSegmentationData) => {
-    setCustomerSegmentationData(customerSegmentationData);
-    // Data is already saved in chat component, no need to save again
-  };
-
-  const handlePurchaseCriteriaGeneratedFromChat = (purchaseCriteriaData) => {
-    setPurchaseCriteriaData(purchaseCriteriaData);
-    // Data is already saved in chat component, no need to save again
-  };
-
-  const handleLoyaltyNPSGeneratedFromChat = (loyaltyNPSData) => {
-    setLoyaltyNPSData(loyaltyNPSData);
-    // Data is already saved in chat component, no need to save again
-  };
-
-  const handleChannelHeatmapGeneratedFromChat = (channelHeatmapData) => {
-    setChannelHeatmapData(channelHeatmapData);
-    // Data is already saved in chat component, no need to save again
-  };
-
-  const handleCapabilityHeatmapGeneratedFromChat = (capabilityHeatmapData) => {
-    setCapabilityHeatmapData(capabilityHeatmapData);
-    // Data is already saved in chat component, no need to save again
-  };
-
-  const handleStrategicAnalysisGenerated = (strategicAnalysis) => {
-    setStrategicAnalysisResult(strategicAnalysis);
-    setIsLoadingAnalysis(false);
-  };
-
-  const showToastMessage = (message, type = "success") => {
-    setShowToast({ show: true, message, type });
-
-    setTimeout(() => {
-      setShowToast({ show: false, message: "", type: "success" });
-    }, 4000);
-  };
-
-  // FIXED: Manual analysis generation function
-  const handleManualAnalysisGeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage(
-        "Complete the initial phase to generate analysis.",
-        "warning"
-      );
-      return;
+    if (isMobile) {
+      setActiveTab("analysis");
+    } else {
+      if (!isAnalysisExpanded) {
+        setIsSliding(true);
+        setIsAnalysisExpanded(true);
+        setActiveTab("analysis");
+        setTimeout(() => setIsSliding(false), 1000);
+      }
     }
-
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
-
-    return regenerateAllAnalysis();
   };
 
-  const completedPhases = new Set();
-  if (isPhaseCompleted(PHASES.INITIAL)) completedPhases.add("initial");
-  if (isPhaseCompleted(PHASES.ESSENTIAL)) completedPhases.add("essential");
-  if (isPhaseCompleted(PHASES.GOOD)) completedPhases.add("good");
-  if (isPhaseCompleted(PHASES.EXCELLENT)) completedPhases.add("excellent");
+  const handleBackFromAnalysis = () => {
+    if (isAnalysisExpanded) {
+      setIsSliding(true);
+      setIsAnalysisExpanded(false);
+      setActiveTab("brief");
+      setTimeout(() => setIsSliding(false), 1000);
+    }
+  };
 
   const handleBack = () => {
     window.history.back();
   };
 
+  // Dropdown handlers
+  const dropdownOptions = [
+    "SWOT",
+    "Customer Segmentation", 
+    "Purchase Criteria",
+    "Channel Heatmap",
+    "Loyalty/NPS",
+    "Capability Heatmap"
+  ];
+
+  const handleOptionClick = (option) => {
+    setSelectedOption(option);
+    setShowDropdown(false);
+
+    setTimeout(() => {
+      const refMap = {
+        "SWOT": swotRef,
+        "Customer Segmentation": customerSegmentationRef,
+        "Purchase Criteria": purchaseCriteriaRef,
+        "Channel Heatmap": channelHeatmapRef,
+        "Loyalty/NPS": loyaltyNpsRef,
+        "Capability Heatmap": capabilityHeatmapRef
+      };
+
+      const targetRef = refMap[option];
+      if (targetRef?.current) {
+        targetRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  };
+
   // Individual regeneration handlers
-  const handleIndividualSwotRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
+  const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, setter, displayName) => {
+    return async () => {
+      // Check current phase completion using completedQuestions set
+      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+      const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
+      const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+      
+      if (!isInitialComplete || isRegeneratingRef.current) return;
 
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
-
-    try {
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-      currentRegeneratingAnalysisRef.current = 'swot';
-
-      showToastMessage("Regenerating SWOT analysis...", "info");
-
-      // Generate SWOT analysis
-      await generateSingleAnalysis('swot', 'find', null, setAnalysisResult);
-
-      showToastMessage("SWOT analysis regenerated successfully!", "success");
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating SWOT analysis:', error);
-      showToastMessage("Failed to regenerate SWOT analysis. Please try again.", "error");
-    } finally {
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-      currentRegeneratingAnalysisRef.current = null;
-    }
+      try {
+        showToastMessage(`Regenerating ${displayName} analysis...`, "info");
+        setter(null);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await generateSingleAnalysis(analysisType, endpoint, dataKey, setter);
+        showToastMessage(`${displayName} analysis regenerated successfully!`, "success");
+      } catch (error) {
+        showToastMessage(`Failed to regenerate ${displayName} analysis.`, "error");
+      }
+    };
   };
 
-  const handleIndividualCustomerSegmentationRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
+  // Analysis Controls Component
+  const AnalysisControls = () => {
+    const unlockedFeatures = getUnlockedFeatures();
+    
+    return (
+      <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
+          <button
+            className="dropdown-button"
+            onClick={() => setShowDropdown(prev => !prev)}
+            style={{
+              backgroundColor: "#fff",
+              color: "#1a73e8",
+              border: "1px solid #d1d5db",
+              borderRadius: "13px",
+              padding: "10px 18px",
+              fontSize: "14px",
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            {selectedOption}
+            <ChevronDown size={16} style={{ marginLeft: 8 }} />
+          </button>
 
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
+          {showDropdown && (
+            <div style={{
+              position: "absolute",
+              top: "110%",
+              right: 0,
+              backgroundColor: "#fff",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              minWidth: "180px",
+              zIndex: 1000,
+            }}>
+              {dropdownOptions.map((item) => (
+                <div
+                  key={item}
+                  onClick={() => handleOptionClick(item)}
+                  style={{
+                    padding: "10px 14px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "#374151",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f1f5f9"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-    try {
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating customer segmentation analysis...", "info");
+        <button
+          onClick={regenerateAllAnalysis}
+          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+          style={{
+            backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
+            color: (isAnalysisRegenerating) ? "#6b7280" : "#fff",
+            border: "none",
+            borderRadius: "13px",
+            padding: "10px 18px",
+            fontSize: "14px",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            cursor: (isAnalysisRegenerating) ? "not-allowed" : "pointer",
+            gap: "8px",
+            transition: "all 0.2s ease"
+          }}
+        >
+          {isAnalysisRegenerating ? (
+            <>
+              <Loader size={16} className="animate-spin" />
+              Regenerating...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={16} />
+              {t('RegenerateAll') || 'Regenerate All'}
+            </>
+          )}
+        </button>
 
-      setCustomerSegmentationData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      await generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData);
-
-      showToastMessage("Customer segmentation analysis regenerated successfully!", "success");
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating customer segmentation analysis:', error);
-      showToastMessage("Failed to regenerate customer segmentation analysis. Please try again.", "error");
-    } finally {
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-    }
+        <PDFExportButton
+          analysisResult={swotAnalysisResult}
+          businessName={businessData.name}
+          onToastMessage={showToastMessage}
+        />
+      </div>
+    );
   };
 
-  const handleIndividualPurchaseCriteriaRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
-
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
-
-    try {
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating purchase criteria analysis...", "info");
-
-      setPurchaseCriteriaData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      await generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData);
-
-      showToastMessage("Purchase criteria analysis regenerated successfully!", "success");
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating purchase criteria analysis:', error);
-      showToastMessage("Failed to regenerate purchase criteria analysis. Please try again.", "error");
-    } finally {
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-    }
-  };
-
-  const handleIndividualChannelHeatmapRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
-
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
-
-    try {
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating channel heatmap analysis...", "info");
-
-      setChannelHeatmapData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      await generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData);
-
-      showToastMessage("Channel heatmap analysis regenerated successfully!", "success");
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating channel heatmap analysis:', error);
-      showToastMessage("Failed to regenerate channel heatmap analysis. Please try again.", "error");
-    } finally {
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-    }
-  };
-
-  const handleIndividualLoyaltyNPSRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
-
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
-
-    try {
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating loyalty NPS analysis...", "info");
-
-      setLoyaltyNPSData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      await generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData);
-
-      showToastMessage("Loyalty NPS analysis regenerated successfully!", "success");
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating loyalty NPS analysis:', error);
-      showToastMessage("Failed to regenerate loyalty NPS analysis. Please try again.", "error");
-    } finally {
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-    }
-  };
-
-  const handleIndividualCapabilityHeatmapRegeneration = async () => {
-    if (!isPhaseCompleted(PHASES.INITIAL)) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
-
-    if (regenerationInProgressRef.current || isRegeneratingAllRef.current) { 
-      return;
-    }
-
-    try {
-      regenerationInProgressRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating capability heatmap analysis...", "info");
-
-      setCapabilityHeatmapData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      await generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData);
-
-      showToastMessage("Capability heatmap analysis regenerated successfully!", "success");
-
-    } catch (error) {
-      console.error('📊 [BusinessSetupPage] Error regenerating capability heatmap analysis:', error);
-      showToastMessage("Failed to regenerate capability heatmap analysis. Please try again.", "error");
-    } finally {
-      regenerationInProgressRef.current = false;
-      setIsAnalysisRegenerating(false);
-    }
-  };
-
-  // Render analysis content with loading state
+  // Render Analysis Content
   const renderAnalysisContent = () => {
-    if (isLoadingLatestAnalysis || isRegeneratingAllRef.current) {
+    const unlockedFeatures = getUnlockedFeatures();
+
+    if (!unlockedFeatures.analysis) {
       return (
-        <div className="analysis-loading">
-          <Loader size={24} className="spinner" />
-          <span>
-            {isLoadingLatestAnalysis
-              ? "Loading latest analysis..."
-              : "Regenerating all analysis components..."}
-          </span>
+        <div className="locked-analysis">
+          <div className="lock-icon">🔒</div>
+          <h3>Analysis Locked</h3>
+          <p>Complete all initial phase questions to unlock your business analysis.</p>
         </div>
       );
     }
 
-    // FIXED: Check if initial phase is completed, not just if analysisResult exists
-    if (isPhaseCompleted(PHASES.INITIAL)) {
+    if (isAnalysisRegenerating) {
       return (
-        <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
-          <div ref={swotRef}>
-            <SwotAnalysis
-              analysisResult={analysisResult}
-              businessName={businessData.name}
-              onRegenerate={handleIndividualSwotRegeneration}
-              isRegenerating={currentRegeneratingAnalysisRef.current === 'swot'}
-              canRegenerate={unlockedFeatures.analysis && !isRegeneratingAllRef.current && !regenerationInProgressRef.current}
-            />
-          </div>
-
-          <div ref={customerSegmentationRef}>
-            <CustomerSegmentation
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onDataGenerated={handleCustomerSegmentationGenerated}
-              onRegenerate={handleIndividualCustomerSegmentationRegeneration}
-              isRegenerating={currentRegeneratingAnalysisRef.current === 'customerSegmentation'}
-              canRegenerate={unlockedFeatures.analysis && !isRegeneratingAllRef.current && !regenerationInProgressRef.current}
-              customerSegmentationData={customerSegmentationData}
-              key={`customer-segmentation-${getRegenerationKey('customerSegmentation')}`}
-            />
-          </div>
-
-          <div ref={purchaseCriteriaRef}>
-            <PurchaseCriteria
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onDataGenerated={handlePurchaseCriteriaGenerated}
-              onRegenerate={handleIndividualPurchaseCriteriaRegeneration}
-              isRegenerating={currentRegeneratingAnalysisRef.current === 'purchaseCriteria'}
-              canRegenerate={unlockedFeatures.analysis && !isRegeneratingAllRef.current && !regenerationInProgressRef.current}
-              purchaseCriteriaData={purchaseCriteriaData}
-              key={`purchase-criteria-${getRegenerationKey('purchaseCriteria')}`}
-            />
-          </div>
-
-          <div ref={channelHeatmapRef}>
-            <ChannelHeatmap
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onDataGenerated={handleChannelHeatmapGenerated}
-              onRegenerate={handleIndividualChannelHeatmapRegeneration}
-              isRegenerating={currentRegeneratingAnalysisRef.current === 'channelHeatmap'}
-              canRegenerate={unlockedFeatures.analysis && !isRegeneratingAllRef.current && !regenerationInProgressRef.current}
-              channelHeatmapData={channelHeatmapData}
-              key={`channel-heatmap-${getRegenerationKey('channelHeatmap')}`}
-            />
-          </div>
-
-          <div ref={loyaltyNpsRef}>
-            <LoyaltyNPS
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onDataGenerated={handleLoyaltyNPSGenerated}
-              onRegenerate={handleIndividualLoyaltyNPSRegeneration}
-              isRegenerating={currentRegeneratingAnalysisRef.current === 'loyaltyNPS'}
-              canRegenerate={unlockedFeatures.analysis && !isRegeneratingAllRef.current && !regenerationInProgressRef.current}
-              loyaltyNPSData={loyaltyNPSData}
-              key={`loyalty-nps-${getRegenerationKey('loyaltyNPS')}`}
-            />
-          </div>
-
-          <div ref={capabilityHeatmapRef}>
-            <CapabilityHeatmap
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onDataGenerated={handleCapabilityHeatmapGenerated}
-              onRegenerate={handleIndividualCapabilityHeatmapRegeneration}
-              isRegenerating={currentRegeneratingAnalysisRef.current === 'capabilityHeatmap'}
-              canRegenerate={unlockedFeatures.analysis && !isRegeneratingAllRef.current && !regenerationInProgressRef.current}
-              capabilityHeatmapData={capabilityHeatmapData}
-              key={`capability-heatmap-${getRegenerationKey('capabilityHeatmap')}`}
-            />
-          </div>
+        <div className="analysis-loading">
+          <Loader size={24} className="spinner" />
+          <span>Regenerating all analysis components...</span>
         </div>
       );
     }
 
     return (
-      <div className="analysis-empty">
-        <p>{t("Your business analysis will appear here once generated.")}</p>
-        <p>{t("Continue the conversation to trigger analysis generation.")}</p>
-        {isPhaseCompleted(PHASES.INITIAL) && (
-          <button
-            className="generate-analysis-btn"
-            onClick={handleManualAnalysisGeneration}
-            disabled={
-              isLoadingAnalysis ||
-              regenerationInProgressRef.current ||
-              isRegeneratingAllRef.current
-            }
-          >
-            {(isLoadingAnalysis || regenerationInProgressRef.current || isRegeneratingAllRef.current)
-              ? t("Generating...")
-              : t("Generate Analysis Now")}
-          </button>
-        )}
+      <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+        <div ref={swotRef}>
+          <SwotAnalysis
+            analysisResult={swotAnalysisResult}
+            businessName={businessData.name}
+            questions={questions}
+            userAnswers={userAnswers}
+            saveAnalysisToBackend={saveAnalysisToBackend}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+
+        <div ref={customerSegmentationRef}>
+          <CustomerSegmentation
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onDataGenerated={setCustomerSegmentationData}
+            onRegenerate={createIndividualRegenerationHandler(
+              'customerSegmentation',
+              'customer-segment',
+              'customerSegmentation',
+              setCustomerSegmentationData,
+              'Customer segmentation'
+            )}
+            isRegenerating={false}
+            canRegenerate={!isAnalysisRegenerating}
+            customerSegmentationData={customerSegmentationData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+
+        <div ref={purchaseCriteriaRef}>
+          <PurchaseCriteria
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onDataGenerated={setPurchaseCriteriaData}
+            onRegenerate={createIndividualRegenerationHandler(
+              'purchaseCriteria',
+              'purchase-criteria',
+              'purchaseCriteria',
+              setPurchaseCriteriaData,
+              'Purchase criteria'
+            )}
+            isRegenerating={false}
+            canRegenerate={!isAnalysisRegenerating}
+            purchaseCriteriaData={purchaseCriteriaData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+
+        <div ref={channelHeatmapRef}>
+          <ChannelHeatmap
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onDataGenerated={setChannelHeatmapData}
+            onRegenerate={createIndividualRegenerationHandler(
+              'channelHeatmap',
+              'channel-heatmap',
+              'channelHeatmap',
+              setChannelHeatmapData,
+              'Channel heatmap'
+            )}
+            isRegenerating={false}
+            canRegenerate={!isAnalysisRegenerating}
+            channelHeatmapData={channelHeatmapData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+
+        <div ref={loyaltyNpsRef}>
+          <LoyaltyNPS
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onDataGenerated={setLoyaltyNPSData}
+            onRegenerate={createIndividualRegenerationHandler(
+              'loyaltyNPS',
+              'loyalty-metrics',
+              'loyaltyMetrics',
+              setLoyaltyNPSData,
+              'Loyalty NPS'
+            )}
+            isRegenerating={false}
+            canRegenerate={!isAnalysisRegenerating}
+            loyaltyNPSData={loyaltyNPSData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+
+        <div ref={capabilityHeatmapRef}>
+          <CapabilityHeatmap
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onDataGenerated={setCapabilityHeatmapData}
+            onRegenerate={createIndividualRegenerationHandler(
+              'capabilityHeatmap',
+              'capability-heatmap',
+              'capabilityHeatmap',
+              setCapabilityHeatmapData,
+              'Capability heatmap'
+            )}
+            isRegenerating={false}
+            canRegenerate={!isAnalysisRegenerating}
+            capabilityHeatmapData={capabilityHeatmapData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
       </div>
     );
   };
+
+  // Calculate progress
+  const totalQuestions = questions.length;
+  const answeredQuestions = completedQuestions.size;
+  const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+  const unlockedFeatures = getUnlockedFeatures();
 
   return (
     <div className="business-setup-container">
@@ -1271,48 +965,46 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
           className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""} ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}
         >
           <div className="welcome-area">
-            <button
-              className="back-button"
-              onClick={handleBack}
-              aria-label="Go Back"
-              style={{
-                position: "absolute",
-                top: "20px",
-                left: "20px",
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: "8px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#374151",
-                transition: "background-color 0.2s ease"
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = "#f3f4f6"}
-              onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
-            >
-              <ArrowLeft size={18} />
-            </button>
+            <div className="header-section">
+              <button
+                className="back-button"
+                onClick={handleBack}
+                aria-label="Go Back"
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  left: "0",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "8px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#374151",
+                  transition: "background-color 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = "#f3f4f6"}
+                onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+              >
+                <ArrowLeft size={18} />
+              </button>
+            </div>
 
-            <h2 className="welcome-heading">{t("letsBegin")}</h2>
+            <h2 className="welcome-heading">{selectedBusinessName || 'Business Analysis'}</h2>
             <p className="welcome-text">
-              {t("welcomeToTraxia")}
+              {t("letsBegin")} {t("welcomeToTraxia")}
             </p>
           </div>
 
           <ChatComponent
+            selectedBusinessId={selectedBusinessId}
             userAnswers={userAnswers}
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
-            onAnalysisGenerated={handleAnalysisGenerated}
-            onCustomerSegmentationGenerated={handleCustomerSegmentationGeneratedFromChat}
-            onPurchaseCriteriaGenerated={handlePurchaseCriteriaGeneratedFromChat}
-            onLoyaltyNPSGenerated={handleLoyaltyNPSGeneratedFromChat}
-            onChannelHeatmapGenerated={handleChannelHeatmapGeneratedFromChat}
-            onCapabilityHeatmapGenerated={handleCapabilityHeatmapGeneratedFromChat}
             onQuestionsLoaded={handleQuestionsLoaded}
+            onQuestionCompleted={handleQuestionCompleted}
           />
         </div>
 
@@ -1329,12 +1021,34 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
                   <div className="desktop-tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", gap: "0" }}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      position: "relative"
+                    }}>
                       <button
-                        className="desktop-tab"
+                        className="back-button"
                         onClick={handleBackFromAnalysis}
-                        disabled={isSliding}
+                        aria-label="Go Back"
+                        style={{
+                          backgroundColor: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#374151",
+                          transition: "background-color 0.2s ease",
+                          fontSize: "14px",
+                          gap: "6px"
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = "#f3f4f6"}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
                       >
+                        <ArrowLeft size={18} />
                         {t("backToOverview")}
                       </button>
 
@@ -1401,43 +1115,26 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
                     {!unlockedFeatures.analysis && (
                       <div className="unlock-hint">
                         <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
-                        <p>
-                          {t("completePhaseMessage")}
-                        </p>
-                      </div>
-                    )}
-
-                    {!isMobile && (
-                      <div className="progress-area">
-                        <div className="progress-label">
-                          {t('progress')}: {actualProgress}% ({answeredQuestions}/
-                          {totalQuestions})
-                        </div>
-                        <div className="progress-track">
-                          <div
-                            className="progress-fill"
-                            style={{ width: `${actualProgress}%` }}
-                          ></div>
-                        </div>
+                        <p>{t("completePhaseMessage")}</p>
                       </div>
                     )}
 
                     <EditableBriefSection
+                      selectedBusinessId={selectedBusinessId}
                       questions={questions}
                       userAnswers={userAnswers}
                       businessData={businessData}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={handleAnswerUpdate}
-                      onAnalysisRegenerate={handleAnalysisRegeneration}
-                      isAnalysisRegenerating={isAnalysisRegenerating || regenerationInProgressRef.current || isRegeneratingAllRef.current}
-                      completedPhases={completedPhases}
+                      onAnalysisRegenerate={regenerateAllAnalysis}
+                      isAnalysisRegenerating={isAnalysisRegenerating}
                     />
                   </div>
                 )}
 
-                {activeTab === "analysis" && unlockedFeatures.analysis && (
+                {activeTab === "analysis" && (
                   <div className="analysis-section">
-                    {isMobile && (
+                    {isMobile && unlockedFeatures.analysis && (
                       <div style={{ padding: "1rem", background: "#ffffffff" }}>
                         <AnalysisControls />
                       </div>
@@ -1446,21 +1143,6 @@ const [shouldRegenerateAnalysis, setShouldRegenerateAnalysis] = useState(false);
                     <div className="analysis-content">
                       {renderAnalysisContent()}
                     </div>
-                  </div>
-                )}
-
-                {activeTab === "analysis" && !unlockedFeatures.analysis && (
-                  <div className="locked-analysis">
-                    <div className="lock-icon">🔒</div>
-                    <h3>Analysis Locked</h3>
-                    <p className="description">
-                      Complete all initial phase questions to unlock your
-                      business analysis.
-                    </p>
-                    <p className="progress-info">
-                      Current Progress: {actualProgress}% ({answeredQuestions}/
-                      {totalQuestions})
-                    </p>
                   </div>
                 )}
               </div>

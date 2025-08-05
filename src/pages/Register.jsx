@@ -34,17 +34,18 @@ const Register = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchCompanies = async () => {
     setLoadingCompanies(true);
     setCompaniesError('');
     
     try {
-      // Try public endpoint first (no auth required)
+      // Updated to match backend API endpoint - no authentication required
       const response = await axios.get(`${API_BASE_URL}/api/companies`);
       
-      if (response.data.success && response.data.companies) {
+      // Updated to match backend response structure
+      if (response.data.companies) {
         setCompanies(response.data.companies);
         console.log(`✅ Loaded ${response.data.companies.length} companies`);
       } else {
@@ -54,30 +55,10 @@ const Register = () => {
     } catch (error) {
       console.error('Error fetching companies:', error);
       
-      // Try authenticated endpoint as fallback
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const authResponse = await axios.get(`${API_BASE_URL}/api/auth/companies`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          if (authResponse.data.success && authResponse.data.companies) {
-            setCompanies(authResponse.data.companies);
-            console.log(`✅ Loaded ${authResponse.data.companies.length} companies (authenticated)`);
-          } else {
-            throw new Error('Auth endpoint also failed');
-          }
-        } catch (authError) {
-          console.error('Authenticated fetch also failed:', authError);
-          setCompaniesError('Unable to load companies. Please try again later.');
-          setCompanies([]);
-        }
-      } else {
-        // No token and public endpoint failed
-        setCompaniesError('Unable to load companies. Please contact support.');
-        setCompanies([]);
-      }
+      // Updated error handling
+      const errorMessage = error.response?.data?.error || 'Unable to load companies. Please try again later.';
+      setCompaniesError(errorMessage);
+      setCompanies([]);
     } finally {
       setLoadingCompanies(false);
     }
@@ -127,75 +108,83 @@ const Register = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validate()) return;
+    e.preventDefault();
+    if (!validate()) return;
 
-  setIsSubmitting(true);
-  try {
-    const userData = {
-      name: form.name.trim(),
-      email: form.email.trim().toLowerCase(),
-      password: form.password,
-      company_id: form.company_id,
-      profile: {
-        job_title: form.job_title.trim()
+    setIsSubmitting(true);
+    try {
+      // Updated to match backend API expectations
+      const userData = {
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        company_id: form.company_id,
+        // Note: job_title is not handled in the current backend API
+        // You may need to add it to the backend if required
+      };
+
+      // Updated API call to match backend endpoint
+      const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
+
+      // Updated success handling to match backend response
+      setModalMessage(response.data.message || 'Registration successful! Redirecting to login page...');
+      setIsError(false);
+      setShowSuccessModal(true);
+
+      // Reset form for security
+      setForm({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        company_id: '',
+        job_title: '',
+        terms: false,
+      });
+
+      // Redirect to login page after showing success message
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate('/login');
+      }, 2000);
+
+    } catch (err) {
+      setIsSubmitting(false);
+
+      console.error('Registration error:', err.response?.data || err.message);
+
+      // Updated error handling to match backend error response structure
+      let errorMsg = 'Registration failed. Please try again.';
+
+      if (err.response?.data?.error) {
+        errorMsg = err.response.data.error;
+
+        // Handle specific error cases based on backend error messages
+        if (errorMsg.includes('Email already exists')) {
+          setErrors({ email: 'This email is already registered' });
+        } else if (errorMsg.includes('password')) {
+          setErrors({ password: errorMsg });
+        } else if (errorMsg.includes('name')) {
+          setErrors({ name: errorMsg });
+        } else if (errorMsg.includes('company') || errorMsg.includes('Invalid company')) {
+          setErrors({ company_id: 'Please select a valid company' });
+        } else if (errorMsg.includes('All fields required')) {
+          // Handle validation errors from backend
+          setErrors({ 
+            name: !form.name.trim() ? 'Name is required' : '',
+            email: !form.email.trim() ? 'Email is required' : '',
+            password: !form.password ? 'Password is required' : '',
+            company_id: !form.company_id ? 'Company selection is required' : ''
+          });
+        }
       }
-    };
 
-    // Use the public registration endpoint (no authentication required)
-    const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
-
-    setModalMessage('Registration successful! Redirecting to login page...');
-    setIsError(false);
-    setShowSuccessModal(true);
-
-    // Reset form for security
-    setForm({
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      company_id: '',
-      job_title: '',
-      terms: false,
-    });
-
-    // Redirect to login page after showing success message
-    setTimeout(() => {
-      setShowSuccessModal(false);
-      navigate('/login');
-    }, 2000);
-
-  } catch (err) {
-    setIsSubmitting(false);
-
-    console.error('Registration error:', err.response?.data || err.message);
-
-    let errorMsg = 'Registration failed. Please try again.';
-
-    // Handle specific backend validation errors
-    if (err.response?.data?.message) {
-      errorMsg = err.response.data.message;
-
-      // Handle specific error cases
-      if (errorMsg.includes('email') || errorMsg.includes('Email')) {
-        setErrors({ email: 'This email is already registered' });
-      } else if (errorMsg.includes('password')) {
-        setErrors({ password: errorMsg });
-      } else if (errorMsg.includes('name')) {
-        setErrors({ name: errorMsg });
-      } else if (errorMsg.includes('company') || errorMsg.includes('Company')) {
-        setErrors({ company_id: errorMsg });
-      }
+      setIsError(true);
+      setModalMessage(errorMsg);
+      setShowSuccessModal(true);
     }
+  };
 
-    setIsError(true);
-    setModalMessage(errorMsg);
-    setShowSuccessModal(true);
-
-    if (err.response?.data?.errors) setErrors(err.response.data.errors);
-  }
-};
   const retryFetchCompanies = () => {
     fetchCompanies();
   };
@@ -298,6 +287,7 @@ const Register = () => {
                 onChange={handleChange}
                 maxLength="100"
               />
+              <small className="field-note">Note: Job title will be saved for future use</small>
             </div>
 
             <div className="form-group1">

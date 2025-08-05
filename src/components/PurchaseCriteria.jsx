@@ -17,16 +17,11 @@ const PurchaseCriteria = ({
   const [criteriaData, setCriteriaData] = useState(purchaseCriteriaData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
 
-  // Add refs to track component mount and prevent multiple calls
+  // Add refs to track component mount
   const isMounted = useRef(false);
-  const isLoadingRef = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
 
   // Colors for different performance levels
   const PERFORMANCE_COLORS = {
@@ -34,71 +29,6 @@ const PurchaseCriteria = ({
     good: '#06B6D4',      // Blue
     average: '#F59E0B',   // Orange
     poor: '#EF4444'       // Red
-  };
-
-  // Load existing analysis from backend (chat history)
-  const loadExistingAnalysis = async () => {
-    if (isLoadingRef.current || hasLoadedFromBackend) {
-      return false;
-    }
-
-    try {
-      isLoadingRef.current = true;
-
-      const token = getAuthToken();
-      if (!token) {
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg =>
-          msg.metadata?.analysisType === 'purchaseCriteria' && msg.metadata?.analysisData
-        );
-
-        if (analysisMessages && analysisMessages.length > 0) {
-          const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-
-          if (isMounted.current) {
-            setCriteriaData(latestAnalysis.metadata.analysisData);
-            setHasLoadedFromBackend(true);
-            if (onDataGenerated) {
-              onDataGenerated(latestAnalysis.metadata.analysisData);
-            }
-          }
-          return true;
-        } else {
-          if (isMounted.current) {
-            setHasLoadedFromBackend(true);
-          }
-          return false;
-        }
-      } else {
-        console.error('📊 [PurchaseCriteria] Failed to load conversation history:', response.statusText);
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('📊 [PurchaseCriteria] Error loading data:', error);
-      if (isMounted.current) {
-        setHasLoadedFromBackend(true);
-      }
-      return false;
-    } finally {
-      isLoadingRef.current = false;
-    }
   };
 
   // Handle regeneration
@@ -115,7 +45,6 @@ const PurchaseCriteria = ({
   useEffect(() => {
     if (purchaseCriteriaData && purchaseCriteriaData !== criteriaData) {
       setCriteriaData(purchaseCriteriaData);
-      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(purchaseCriteriaData);
       }
@@ -129,24 +58,12 @@ const PurchaseCriteria = ({
     isMounted.current = true;
     hasInitialized.current = true;
 
-    const initializeComponent = async () => {
-
-      if (purchaseCriteriaData) {
-
-        setCriteriaData(purchaseCriteriaData);
-        setHasLoadedFromBackend(true);
-      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
-        await loadExistingAnalysis();
-      } else {
-        setHasLoadedFromBackend(true);
-      }
-    };
-
-    initializeComponent();
+    if (purchaseCriteriaData) {
+      setCriteriaData(purchaseCriteriaData);
+    }
 
     return () => {
       isMounted.current = false;
-      isLoadingRef.current = false;
     };
   }, []);
 
@@ -279,9 +196,7 @@ const PurchaseCriteria = ({
           <span>
             {isRegenerating
               ? t("Regenerating purchase criteria analysis...")
-              : !hasLoadedFromBackend
-                ? t("Loading purchase criteria analysis...")
-                : t("Generating purchase criteria analysis...")
+              : t("Generating purchase criteria analysis...")
             }
           </span>
         </div>
@@ -319,9 +234,7 @@ const PurchaseCriteria = ({
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate purchase criteria insights.`
-              : hasLoadedFromBackend
-                ? "Purchase criteria analysis will be generated automatically after completing the initial phase."
-                : "Loading purchase criteria analysis..."
+              : "Purchase criteria analysis will be generated automatically after completing the initial phase."
             }
           </p>
         </div>

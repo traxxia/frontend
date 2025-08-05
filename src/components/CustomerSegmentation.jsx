@@ -17,84 +17,14 @@ const CustomerSegmentation = ({
   const [segmentationData, setSegmentationData] = useState(customerSegmentationData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
   
-  // Add refs to track component mount and prevent multiple calls
+  // Add refs to track component mount
   const isMounted = useRef(false);
-  const isLoadingRef = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
   // Colors for the pie chart segments
   const SEGMENT_COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-  // Load existing analysis from backend (chat history)
-  const loadExistingAnalysis = async () => {
-    if (isLoadingRef.current || hasLoadedFromBackend) { 
-      return false;
-    }
-
-    try {
-      isLoadingRef.current = true; 
-      
-      const token = getAuthToken();
-      if (!token) { 
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg => 
-          msg.metadata?.analysisType === 'customerSegmentation' && msg.metadata?.analysisData
-        );
-        
-        if (analysisMessages && analysisMessages.length > 0) {
-          const latestAnalysis = analysisMessages[analysisMessages.length - 1]; 
-          
-          if (isMounted.current) {
-            setSegmentationData(latestAnalysis.metadata.analysisData);
-            setHasLoadedFromBackend(true);
-            if (onDataGenerated) {
-              onDataGenerated(latestAnalysis.metadata.analysisData);
-            }
-          }
-          return true;
-        } else { 
-          if (isMounted.current) {
-            setHasLoadedFromBackend(true);
-          }
-          return false;
-        }
-      } else {
-        console.error('📊 [CustomerSegmentation] Failed to load conversation history:', response.statusText);
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('📊 [CustomerSegmentation] Error loading data:', error);
-      if (isMounted.current) {
-        setHasLoadedFromBackend(true);
-      }
-      return false;
-    } finally {
-      isLoadingRef.current = false;
-    }
-  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -110,7 +40,6 @@ const CustomerSegmentation = ({
   useEffect(() => {
     if (customerSegmentationData && customerSegmentationData !== segmentationData) { 
       setSegmentationData(customerSegmentationData);
-      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(customerSegmentationData);
       }
@@ -124,23 +53,12 @@ const CustomerSegmentation = ({
     isMounted.current = true;
     hasInitialized.current = true;
     
-    const initializeComponent = async () => { 
-
-      if (customerSegmentationData) { 
-        setSegmentationData(customerSegmentationData);
-        setHasLoadedFromBackend(true);
-      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
-        await loadExistingAnalysis();
-      } else {
-        setHasLoadedFromBackend(true);
-      }
-    };
-
-    initializeComponent();
+    if (customerSegmentationData) { 
+      setSegmentationData(customerSegmentationData);
+    }
 
     return () => {
       isMounted.current = false;
-      isLoadingRef.current = false;
     };
   }, []);
 
@@ -183,8 +101,6 @@ const CustomerSegmentation = ({
           <span>
             {isRegenerating
               ? t("Regenerating customer segmentation analysis...")
-              : !hasLoadedFromBackend
-              ? t("Loading customer segmentation analysis...")
               : t("Generating customer segmentation analysis...")
             }
           </span>
@@ -223,9 +139,7 @@ const CustomerSegmentation = ({
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate customer segmentation insights.`
-              : hasLoadedFromBackend
-              ? "Customer segmentation analysis will be generated automatically after completing the initial phase."
-              : "Loading customer segmentation analysis..."
+              : "Customer segmentation analysis will be generated automatically after completing the initial phase."
             }
           </p>
         </div>
@@ -401,9 +315,7 @@ const CustomerSegmentation = ({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Segments Details */}
+      </div> 
     </div>
   );
 };

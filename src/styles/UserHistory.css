@@ -2986,18 +2986,14 @@
   gap: 6px;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 4px 8px;
+.welcome-section .btn-primary,
+.welcome-section .btn-secondary {
+  padding: 10px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
-
-
-
-
 .btn-secondary {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -3007,7 +3003,215 @@
   background: #f3f4f6;
 }
 
+.business-filter-section {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+}
 
+.business-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.business-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.business-filter-select {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.business-filter-select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.business-loading {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.selected-business-info {
+  margin-top: 1rem;
+}
+
+.business-info-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.business-info-card h4 {
+  margin: 0 0 0.5rem 0;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.business-details p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.business-stats-mini {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.stat-mini {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 4px;
+  color: #374151;
+}
+
+.business-context {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #0066cc;
+}
+
+.context-label {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.context-value {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.875rem;
+}
+
+.stats-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.tab-badge {
+  background: #0066cc;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  margin-left: 0.5rem;
+  font-weight: 500;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.company-filter-container {
+  margin: 1rem 0;
+  padding: 0 1rem;
+}
+
+.company-filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.875rem;
+  color: #374151;
+  min-width: 200px;
+}
+
+.businesses-tab {
+  padding: 1rem;
+}
+
+.businesses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.business-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.business-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.business-name {
+  margin: 0;
+  color: #111827;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.business-date {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.business-purpose,
+.business-description {
+  margin: 0.5rem 0;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.business-stats {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  color: #111827;
+  font-weight: 600;
+}
 
 /* Role Badge - Smaller, Bolder */
 .badge-role {

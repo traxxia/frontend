@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Loader, Plus } from 'lucide-react';
-import { formatDate } from '../utils/dateUtils'; // Import the utility function
 
 const UserOverview = ({ onToast }) => {
   const [users, setUsers] = useState([]);
@@ -15,9 +14,8 @@ const UserOverview = ({ onToast }) => {
     name: '',
     email: '',
     password: '',
-    role_name: 'answerer_user', // Always answerer_user
     company_id: '',
-    profile: {}
+    job_title: ''
   });
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -35,28 +33,23 @@ const UserOverview = ({ onToast }) => {
     try {
       const token = getAuthToken();
 
-      // Load companies and roles in parallel
-      const [companiesResponse, rolesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/super-admin/companies`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_BASE_URL}/api/roles`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
+      // Load companies in parallel - using the admin endpoint for super admin
+      const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
       if (companiesResponse.ok) {
         const companiesData = await companiesResponse.json();
         setCompanies(companiesData.companies);
-      }
-
-      if (rolesResponse.ok) {
-        const rolesData = await rolesResponse.json();
-        // Filter roles to only show user roles (not admin roles)
-        const userRoles = rolesData.roles.filter(role =>
-          ['viewer_user', 'answerer_user'].includes(role.role_name)
-        );
-        setRoles(userRoles);
+      } else {
+        // Fallback to public companies endpoint
+        const publicCompaniesResponse = await fetch(`${API_BASE_URL}/api/companies`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (publicCompaniesResponse.ok) {
+          const publicCompaniesData = await publicCompaniesResponse.json();
+          setCompanies(publicCompaniesData.companies);
+        }
       }
 
       await loadUsers();
@@ -72,9 +65,18 @@ const UserOverview = ({ onToast }) => {
       const token = getAuthToken();
       let url = `${API_BASE_URL}/api/admin/users`;
 
+      // Build query parameters properly
+      const params = new URLSearchParams();
       if (selectedCompany) {
-        url += `?company_id=${selectedCompany}`;
+        params.append('company_id', selectedCompany);
       }
+      
+      // Append query string if there are parameters
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      console.log('Loading users with URL:', url); // Debug log
 
       const response = await fetch(url, {
         headers: {
@@ -85,9 +87,23 @@ const UserOverview = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.users);
+        console.log('Users data received:', data); // Debug log
+        
+        // Map the backend response to match frontend expectations
+        const mappedUsers = data.users.map(user => ({
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          company_name: user.company_name || 'N/A',
+          role: user.role_name || 'user',
+          status: 'active', // Default status since backend doesn't seem to have this field
+          created_at: user.created_at
+        }));
+        setUsers(mappedUsers);
       } else {
-        onToast('Failed to load users', 'error');
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        onToast(`Failed to load users: ${errorData.error || 'Unknown error'}`, 'error');
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -102,18 +118,23 @@ const UserOverview = ({ onToast }) => {
       setIsCreating(true);
       const token = getAuthToken();
 
-      const payload = { ...newUser };
+      const payload = {
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password
+      };
+
       if (!payload.name || !payload.email || !payload.password) {
         onToast('Please fill in all required fields', 'warning');
         return;
       }
 
-      // Remove company_id if empty (let backend handle it based on user role)
-      if (!payload.company_id) {
-        delete payload.company_id;
+      // Add company_id if provided (for super admin)
+      if (newUser.company_id) {
+        payload.company_id = newUser.company_id;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/company-admin/users`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -131,13 +152,12 @@ const UserOverview = ({ onToast }) => {
           name: '',
           email: '',
           password: '',
-          role_name: 'answerer_user',
           company_id: '',
-          profile: {}
+          job_title: ''
         });
         await loadUsers();
       } else {
-        onToast(data.message || 'User creation failed', 'error');
+        onToast(data.error || data.message || 'User creation failed', 'error');
       }
     } catch (error) {
       console.error('Error creating user:', error);
@@ -147,16 +167,13 @@ const UserOverview = ({ onToast }) => {
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addUser();
+  };
+
   const handleChange = (field, value) => {
-    if (field.startsWith('profile.')) {
-      const profileField = field.replace('profile.', '');
-      setNewUser(prev => ({
-        ...prev,
-        profile: { ...prev.profile, [profileField]: value }
-      }));
-    } else {
-      setNewUser(prev => ({ ...prev, [field]: value }));
-    }
+    setNewUser(prev => ({ ...prev, [field]: value }));
   };
 
   const filteredUsers = users.filter(user => {
@@ -180,9 +197,6 @@ const UserOverview = ({ onToast }) => {
       <div className="section-header">
         <h2>All Users Overview</h2>
         <div className="header-stats">
-          {/* <span className="stat-item">
-            <strong>{filteredUsers.length}</strong> users found
-          </span> */}
           <button className="primary-btn" onClick={() => setShowAddUser(true)}>
             <Plus size={16} /> Add User
           </button>
@@ -203,7 +217,10 @@ const UserOverview = ({ onToast }) => {
 
         <select
           value={selectedCompany}
-          onChange={(e) => setSelectedCompany(e.target.value)}
+          onChange={(e) => {
+            console.log('Company filter changed to:', e.target.value); // Debug log
+            setSelectedCompany(e.target.value);
+          }}
         >
           <option value="">All Companies</option>
           {companies.map((company) => (
@@ -213,7 +230,6 @@ const UserOverview = ({ onToast }) => {
           ))}
         </select>
       </div>
-
       {/* Users Table */}
       {filteredUsers.length > 0 ? (
         <div className="table-container">
@@ -225,6 +241,7 @@ const UserOverview = ({ onToast }) => {
                 <th>Company</th>
                 <th>Role</th>
                 <th>Status</th>
+                <th>Created</th>
               </tr>
             </thead>
             <tbody>
@@ -233,9 +250,18 @@ const UserOverview = ({ onToast }) => {
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td>{user.company_name || 'N/A'}</td>
-                  <td>{user.role}</td>
+                  <td>
+                    <span className="role-badge">
+                      {user.role === 'user' ? 'User' : 
+                       user.role === 'company_admin' ? 'Company Admin' :
+                       user.role === 'super_admin' ? 'Super Admin' : user.role}
+                    </span>
+                  </td>
                   <td>
                     <span className={`status-badge ${user.status}`}>{user.status}</span>
+                  </td>
+                  <td>
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                   </td>
                 </tr>
               ))}
@@ -250,7 +276,7 @@ const UserOverview = ({ onToast }) => {
         </div>
       )}
 
-      {/* Add User Modal - Updated with same structure as Company Form */}
+      {/* Add User Modal */}
       {showAddUser && (
         <div className="modal-overlay">
           <div className="modal-content centered">
@@ -258,7 +284,7 @@ const UserOverview = ({ onToast }) => {
               <h3>Create New User</h3>
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); addUser(); }} className="company-form">
+            <div className="company-form">
               <div className="form-section">
                 <div className="form-grid">
                   <div className="form-field">
@@ -294,41 +320,33 @@ const UserOverview = ({ onToast }) => {
                       minLength="8"
                     />
                   </div>
+
                   <div className="form-field">
-                    <label>Company  *</label>
+                    <label>Company *</label>
                     <select
                       value={newUser.company_id}
                       onChange={(e) => handleChange('company_id', e.target.value)}
                     >
-                      <option value="">Select Company</option>
+                      <option value="">Select Company (Optional)</option>
                       {companies.map(company => (
                         <option key={company._id} value={company._id}>
                           {company.company_name}
                         </option>
                       ))}
-                    </select>
+                    </select> 
                   </div>
+
                   <div className="form-field">
                     <label>Job Title</label>
                     <input
                       type="text"
                       placeholder="Software Engineer (optional)"
-                      value={newUser.profile.job_title || ''}
-                      onChange={(e) => handleChange('profile.job_title', e.target.value)}
+                      value={newUser.job_title || ''}
+                      onChange={(e) => handleChange('job_title', e.target.value)}
                     />
                   </div>
-
                 </div>
               </div>
-
-              {/* Role Information */}
-              {/* <div className="form-section">
-                <div className="role-description">
-                  <small>
-                    ✏️ <strong>User Role:</strong> Answerer User - Can view and answer questions
-                  </small>
-                </div>
-              </div> */}
 
               <div className="form-actions">
                 <button
@@ -340,8 +358,9 @@ const UserOverview = ({ onToast }) => {
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
                   className="primary-btn"
+                  onClick={handleSubmit}
                   disabled={isCreating || !newUser.name || !newUser.email || !newUser.password}
                 >
                   {isCreating ? (
@@ -354,7 +373,7 @@ const UserOverview = ({ onToast }) => {
                   )}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

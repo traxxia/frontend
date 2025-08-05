@@ -34,9 +34,9 @@ const SuperAdminPanel = () => {
 
   const tabs = [
     { id: 'companies', label: 'Companies', icon: Building2 },
-    { id: 'questions', label: 'Questions', icon: HelpCircle },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'history', label: 'User History', icon: History }
+    { id: 'history', label: 'User History', icon: History },
+    { id: 'questions', label: 'Questions', icon: HelpCircle }
   ];
 
   const renderContent = () => {

@@ -16,83 +16,11 @@ const LoyaltyNPS = ({
   const [loyaltyData, setLoyaltyData] = useState(loyaltyNPSData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
 
-  // Add refs to track component mount and prevent multiple calls
+  // Add refs to track component mount
   const isMounted = useRef(false);
-  const isLoadingRef = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
-  // Load existing analysis from backend (chat history)
-  const loadExistingAnalysis = async () => {
-    if (isLoadingRef.current || hasLoadedFromBackend) {
-      return false;
-    }
-
-    try {
-      isLoadingRef.current = true;
-
-      const token = getAuthToken();
-      if (!token) {
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg =>
-          msg.metadata?.analysisType === 'loyaltyNPS' && msg.metadata?.analysisData
-        );
-
-        if (analysisMessages && analysisMessages.length > 0) {
-          const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-
-
-          if (isMounted.current) {
-            setLoyaltyData(latestAnalysis.metadata.analysisData);
-            setHasLoadedFromBackend(true);
-            if (onDataGenerated) {
-              onDataGenerated(latestAnalysis.metadata.analysisData);
-            }
-          }
-          return true;
-        } else {
-
-          if (isMounted.current) {
-            setHasLoadedFromBackend(true);
-          }
-          return false;
-        }
-      } else {
-        console.error('📊 [LoyaltyNPS] Failed to load conversation history:', response.statusText);
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('📊 [LoyaltyNPS] Error loading data:', error);
-      if (isMounted.current) {
-        setHasLoadedFromBackend(true);
-      }
-      return false;
-    } finally {
-      isLoadingRef.current = false;
-    }
-  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -107,9 +35,7 @@ const LoyaltyNPS = ({
   // Update loyalty data when prop changes
   useEffect(() => {
     if (loyaltyNPSData && loyaltyNPSData !== loyaltyData) {
-
       setLoyaltyData(loyaltyNPSData);
-      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(loyaltyNPSData);
       }
@@ -123,25 +49,12 @@ const LoyaltyNPS = ({
     isMounted.current = true;
     hasInitialized.current = true;
 
-    const initializeComponent = async () => {
-
-
-      if (loyaltyNPSData) {
-
-        setLoyaltyData(loyaltyNPSData);
-        setHasLoadedFromBackend(true);
-      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
-        await loadExistingAnalysis();
-      } else {
-        setHasLoadedFromBackend(true);
-      }
-    };
-
-    initializeComponent();
+    if (loyaltyNPSData) {
+      setLoyaltyData(loyaltyNPSData);
+    }
 
     return () => {
       isMounted.current = false;
-      isLoadingRef.current = false;
     };
   }, []);
 
@@ -320,9 +233,7 @@ const LoyaltyNPS = ({
           <span>
             {isRegenerating
               ? t("Regenerating loyalty & NPS analysis...")
-              : !hasLoadedFromBackend
-                ? t("Loading loyalty & NPS analysis...")
-                : t("Generating loyalty & NPS analysis...")
+              : t("Generating loyalty & NPS analysis...")
             }
           </span>
         </div>
@@ -360,9 +271,7 @@ const LoyaltyNPS = ({
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate loyalty & NPS insights.`
-              : hasLoadedFromBackend
-                ? "Loyalty & NPS analysis will be generated automatically after completing the initial phase."
-                : "Loading loyalty & NPS analysis..."
+              : "Loyalty & NPS analysis will be generated automatically after completing the initial phase."
             }
           </p>
         </div>

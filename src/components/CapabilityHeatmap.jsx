@@ -14,85 +14,13 @@ const CapabilityHeatmap = ({
   capabilityHeatmapData = null
 }) => {
   const [capabilityData, setCapabilityData] = useState(capabilityHeatmapData);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
-  const [hasLoadedFromBackend, setHasLoadedFromBackend] = useState(false);
 
-  // Add refs to track component mount and prevent multiple calls
   const isMounted = useRef(false);
-  const isLoadingRef = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-
-  // Load existing analysis from backend (chat history)
-  const loadExistingAnalysis = async () => {
-    if (isLoadingRef.current || hasLoadedFromBackend) {
-      return false;
-    }
-
-    try {
-      isLoadingRef.current = true;
-
-      const token = getAuthToken();
-      if (!token) {
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/user/conversation-history`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const analysisMessages = result.chat_messages?.filter(msg =>
-          msg.metadata?.analysisType === 'capabilityHeatmap' && msg.metadata?.analysisData
-        );
-
-        if (analysisMessages && analysisMessages.length > 0) {
-          const latestAnalysis = analysisMessages[analysisMessages.length - 1];
-
-          if (isMounted.current) {
-            setCapabilityData(latestAnalysis.metadata.analysisData);
-            setHasLoadedFromBackend(true);
-            if (onDataGenerated) {
-              onDataGenerated(latestAnalysis.metadata.analysisData);
-            }
-          }
-          return true;
-        } else {
-          if (isMounted.current) {
-            setHasLoadedFromBackend(true);
-          }
-          return false;
-        }
-      } else {
-        console.error('📊 [CapabilityHeatmap] Failed to load conversation history:', response.statusText);
-        if (isMounted.current) {
-          setHasLoadedFromBackend(true);
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('📊 [CapabilityHeatmap] Error loading data:', error);
-      if (isMounted.current) {
-        setHasLoadedFromBackend(true);
-      }
-      return false;
-    } finally {
-      isLoadingRef.current = false;
-    }
-  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -108,59 +36,41 @@ const CapabilityHeatmap = ({
   useEffect(() => {
     if (capabilityHeatmapData && capabilityHeatmapData !== capabilityData) {
       setCapabilityData(capabilityHeatmapData);
-      setHasLoadedFromBackend(true);
       if (onDataGenerated) {
         onDataGenerated(capabilityHeatmapData);
       }
     }
   }, [capabilityHeatmapData]);
 
-  // Initialize component - only run once
+  // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
 
     isMounted.current = true;
     hasInitialized.current = true;
 
-    const initializeComponent = async () => {
-
-      if (capabilityHeatmapData) {
-        setCapabilityData(capabilityHeatmapData);
-        setHasLoadedFromBackend(true);
-      } else if (!hasLoadedFromBackend && !isLoadingRef.current) {
-        await loadExistingAnalysis();
-      } else {
-        setHasLoadedFromBackend(true);
-      }
-    };
-
-    initializeComponent();
+    if (capabilityHeatmapData) {
+      setCapabilityData(capabilityHeatmapData);
+    }
 
     return () => {
       isMounted.current = false;
-      isLoadingRef.current = false;
     };
   }, []);
 
   // Get color based on capability level and type
   const getCellColor = (capability, maturityLevel) => {
     if (capability.currentLevel === maturityLevel) {
-      // This is the capability's current level - color based on type and impact
-      if (capability.type === 'strength') {
-        return capability.impact === 'high' ? '#10b981' : '#34d399'; // Green shades
-      } else {
-        return capability.impact === 'high' ? '#ef4444' : '#f87171'; // Red shades
-      }
+      return capability.type === 'strength'
+        ? capability.impact === 'high' ? '#10b981' : '#34d399'
+        : capability.impact === 'high' ? '#ef4444' : '#f87171';
     } else if (capability.currentLevel > maturityLevel) {
-      // Capability is above this level - light fill
-      return '#f0fdf4'; // Very light green
+      return '#f0fdf4';
     } else {
-      // Capability is below this level - no fill
-      return '#f9fafb'; // Light gray
+      return '#f9fafb';
     }
   };
 
-  // Get maturity levels from data or use default
   const maturityLevels = capabilityData?.maturityScale?.levels || [
     { level: 1, label: "Initial" },
     { level: 2, label: "Developing" },
@@ -169,25 +79,17 @@ const CapabilityHeatmap = ({
     { level: 5, label: "Optimized" }
   ];
 
-  // Calculate metrics based on available data
   const totalCapabilities = capabilityData?.capabilities?.length || 0;
   const strengthsCount = capabilityData?.capabilities?.filter(c => c.type === 'strength').length || 0;
   const weaknessesCount = capabilityData?.capabilities?.filter(c => c.type === 'weakness').length || 0;
   const overallMaturity = capabilityData?.overallMaturity || 0;
 
-  if (isLoading || isRegenerating) {
+  if (isRegenerating) {
     return (
       <div className="capability-heatmap">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? t("Regenerating capability heatmap analysis...")
-              : !hasLoadedFromBackend
-                ? t("Loading capability heatmap analysis...")
-                : t("Generating capability heatmap analysis...")
-            }
-          </span>
+          <span>{t("Regenerating capability heatmap analysis...")}</span>
         </div>
       </div>
     );
@@ -202,9 +104,7 @@ const CapabilityHeatmap = ({
           <p>{error}</p>
           <button onClick={() => {
             setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
+            if (onRegenerate) onRegenerate();
           }} className="retry-button">
             Retry Analysis
           </button>
@@ -223,9 +123,7 @@ const CapabilityHeatmap = ({
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate capability insights.`
-              : hasLoadedFromBackend
-                ? "Capability heatmap analysis will be generated automatically after completing the initial phase."
-                : "Loading capability heatmap analysis..."
+              : "Capability heatmap analysis will be generated automatically after completing the initial phase."
             }
           </p>
         </div>
@@ -235,7 +133,6 @@ const CapabilityHeatmap = ({
 
   return (
     <div className="capability-heatmap">
-      {/* Header */}
       <div className="ch-header">
         <div className="ch-title-section">
           <Zap className="ch-icon" size={24} />
@@ -250,7 +147,6 @@ const CapabilityHeatmap = ({
         />
       </div>
 
-      {/* Key Metrics */}
       <div className="ch-metrics">
         <div className="ch-metric-card ch-metric-blue">
           <div className="ch-metric-header">
@@ -285,12 +181,10 @@ const CapabilityHeatmap = ({
         </div>
       </div>
 
-      {/* Main Heatmap - Capabilities (Y-axis) vs Maturity Level (X-axis) */}
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
           <div className="ch-heatmap-wrapper">
             <div className="ch-heatmap">
-              {/* Header Row - Maturity Levels */}
               <div className="ch-heatmap-header">
                 <div className="ch-cell ch-cell-corner">
                   <div className="ch-corner-label">Capabilities</div>
@@ -304,26 +198,19 @@ const CapabilityHeatmap = ({
                 ))}
               </div>
 
-              {/* Data Rows - One row per capability */}
-              {capabilityData.capabilities.map((capability, capIndex) => (
+              {capabilityData.capabilities.map((capability) => (
                 <div key={capability.name} className="ch-heatmap-row">
                   <div className="ch-cell ch-cell-header ch-capability-header">
                     <div className="ch-capability-name">{capability.name}</div>
                   </div>
-
-                  {/* Maturity level cells */}
                   {maturityLevels.map(level => {
                     const cellKey = `${capability.name}-${level.level}`;
                     const isCurrentLevel = capability.currentLevel === level.level;
-
                     return (
                       <div
                         key={cellKey}
                         className={`ch-cell ch-cell-data ${selectedCell === cellKey ? 'selected' : ''} ${isCurrentLevel ? 'active-level' : ''}`}
-                        style={{
-                          backgroundColor: getCellColor(capability, level.level),
-                          cursor: 'pointer'
-                        }}
+                        style={{ backgroundColor: getCellColor(capability, level.level), cursor: 'pointer' }}
                         onClick={() => setSelectedCell(cellKey === selectedCell ? null : cellKey)}
                         onMouseEnter={() => setHoveredCell(cellKey)}
                         onMouseLeave={() => setHoveredCell(null)}
@@ -336,8 +223,6 @@ const CapabilityHeatmap = ({
                             </div>
                           )}
                         </div>
-
-                        {/* Tooltip */}
                         {hoveredCell === cellKey && (
                           <div className="ch-tooltip">
                             <div className="ch-tooltip-header">{capability.name}</div>

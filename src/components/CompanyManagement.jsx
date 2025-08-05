@@ -190,11 +190,10 @@ const CompanyDetails = ({ company, onClose }) => {
               <label>Created</label>
               <span>{formatDate(company.created_at)}</span>
             </div>
-            {/* Add more date fields if they exist */}
-            {company.updated_at && (
+            {company.logo_updated_at && (
               <div className="detail-item">
-                <label>Last Updated</label>
-                <span>{formatDate(company.updated_at)}</span>
+                <label>Logo Updated</label>
+                <span>{formatDate(company.logo_updated_at)}</span>
               </div>
             )}
           </div>
@@ -204,7 +203,6 @@ const CompanyDetails = ({ company, onClose }) => {
             <div className="admin-info">
               <p><strong>Name:</strong> {company.admin_name}</p>
               <p><strong>Email:</strong> {company.admin_email}</p>
-              {/* If admin has creation date */}
               {company.admin_created_at && (
                 <p><strong>Admin Since:</strong> {formatDate(company.admin_created_at)}</p>
               )}
@@ -215,15 +213,27 @@ const CompanyDetails = ({ company, onClose }) => {
             <h4>User Statistics</h4>
             <div className="stats-grid">
               <div className="stat-card">
-                <span className="stat-number">{company.total_users}</span>
+                <span className="stat-number">{company.total_users || 0}</span>
                 <span className="stat-label">Total Users</span>
               </div>
               <div className="stat-card">
-                <span className="stat-number">{company.active_users}</span>
+                <span className="stat-number">{company.active_users || 0}</span>
                 <span className="stat-label">Active Users</span>
               </div>
             </div>
           </div>
+
+          {company.logo && (
+            <div className="logo-section">
+              <h4>Company Logo</h4>
+              <img 
+                src={company.logo} 
+                alt={`${company.company_name} logo`}
+                className="company-logo-display"
+                style={{ maxWidth: '200px', maxHeight: '100px' }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -254,7 +264,12 @@ const CompanyManagement = ({ onToast }) => {
       setIsLoading(true);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/companies`, {
+      if (!token) {
+        onToast('Authentication required', 'error');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/companies`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -263,13 +278,19 @@ const CompanyManagement = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setCompanies(data.companies);
+        const companiesData = data.companies || [];
+        setCompanies(companiesData);
+      } else if (response.status === 403) {
+        onToast('Super admin access required', 'error');
+      } else if (response.status === 401) {
+        onToast('Authentication expired. Please login again.', 'error');
       } else {
-        onToast('Failed to load companies', 'error');
+        const error = await response.json().catch(() => ({}));
+        onToast(error.error || 'Failed to load companies', 'error');
       }
     } catch (error) {
       console.error('Error loading companies:', error);
-      onToast('Error loading companies', 'error');
+      onToast('Network error. Please check your connection.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -280,7 +301,12 @@ const CompanyManagement = ({ onToast }) => {
       setIsCreating(true);
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/super-admin/companies`, {
+      if (!token) {
+        onToast('Authentication required', 'error');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/companies`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -291,16 +317,20 @@ const CompanyManagement = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        onToast(`Company "${data.company.company_name}" created successfully`, 'success');
+        onToast(data.message || `Company "${formData.company_name}" created successfully`, 'success');
         setShowCreateForm(false);
-        loadCompanies();
+        loadCompanies(); // Reload the companies list
+      } else if (response.status === 403) {
+        onToast('Super admin access required', 'error');
+      } else if (response.status === 401) {
+        onToast('Authentication expired. Please login again.', 'error');
       } else {
-        const error = await response.json();
-        onToast(error.message || 'Failed to create company', 'error');
+        const error = await response.json().catch(() => ({}));
+        onToast(error.error || 'Failed to create company', 'error');
       }
     } catch (error) {
       console.error('Error creating company:', error);
-      onToast('Error creating company', 'error');
+      onToast('Network error. Please check your connection.', 'error');
     } finally {
       setIsCreating(false);
     }
@@ -373,7 +403,6 @@ const CompanyManagement = ({ onToast }) => {
                   <th>Admin Name</th>
                   <th>Admin Email</th>
                   <th>Created Date</th>
-                  {/* <th>Actions</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -392,42 +421,35 @@ const CompanyManagement = ({ onToast }) => {
                     <td>{company.admin_name}</td>
                     <td>{company.admin_email}</td>
                     <td>{formatDate(company.created_at)}</td>
-                    {/* <td>
-                      <button 
-                        className="secondary-btn small-btn"
-                        onClick={() => setSelectedCompany(company)}
-                      >
-                        <Eye size={14} />
-                        View
-                      </button>
-                    </td> */}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="pagination">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => prev - 1)}
-            >
-              Prev
-            </button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => prev + 1)}
-            >
-              Next
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+              >
+                Prev
+              </button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <div className="empty-state">
           <Building2 size={48} />
           <h3>No Companies Found</h3>
-          <p>Create your first company to get started</p>
+          <p>{searchTerm ? 'No companies match your search criteria' : 'Create your first company to get started'}</p>
         </div>
       )}
 
