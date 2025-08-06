@@ -41,7 +41,11 @@ const CapabilityHeatmap = ({
       }
     }
   }, [capabilityHeatmapData]);
-
+ useEffect(() => {
+  if (capabilityData && onDataGenerated) {
+    onDataGenerated(capabilityData);
+  }
+}, [capabilityData]);
   // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;

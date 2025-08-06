@@ -3033,6 +3033,7 @@
   background: white;
   font-size: 0.875rem;
   color: #374151;
+  max-width: fit-content;
 }
 
 .business-filter-select:focus {
@@ -3845,4 +3846,264 @@
   box-shadow: 
     -12px 0 0 #ef4444,
     -24px 0 0 #f59e0b;
+}
+/* Single Row Header Layout */
+.panel-header {
+  background: #fafbfc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 32px;
+  flex-shrink: 0;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Left Section - Business Select */
+.header-left {
+  flex: 0 0 auto;
+  min-width: 280px;
+}
+
+.business-filter-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.business-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.business-filter-select {
+  min-width: 200px;
+  max-width: 280px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 14px;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.business-filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.business-loading {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+/* Center Section - Username */
+.header-center {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.user-name-header {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email-header {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right Section - Actions */
+.header-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-export-btn,
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pdf-export-btn:hover,
+.export-button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.close-button {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.close-button:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header-row {
+    gap: 16px;
+  }
+  
+  .header-left {
+    min-width: 240px;
+  }
+  
+  .business-filter-select {
+    min-width: 180px;
+    max-width: 240px;
+  }
+  
+  .user-name-header {
+    font-size: 18px;
+  }
+  
+  .user-email-header {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  .panel-header {
+    padding: 16px 20px;
+  }
+  
+  .header-row {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .header-left,
+  .header-center,
+  .header-right {
+    flex: none;
+    width: 100%;
+  }
+  
+  .header-center {
+    text-align: left;
+    order: 1;
+  }
+  
+  .header-left {
+    order: 2;
+  }
+  
+  .header-right {
+    order: 3;
+    justify-content: flex-end;
+  }
+  
+  .business-filter-inline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .business-filter-select {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+  }
+  
+  .user-name-header,
+  .user-email-header {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-header {
+    padding: 12px 16px;
+  }
+  
+  .header-row {
+    gap: 12px;
+  }
+  
+  .user-name-header {
+    font-size: 16px;
+  }
+  
+  .user-email-header {
+    font-size: 12px;
+  }
+  
+  .pdf-export-btn,
+  .export-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .close-button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Alternative layout for very wide screens */
+@media (min-width: 1200px) {
+  .header-left {
+    min-width: 320px;
+  }
+  
+  .business-filter-select {
+    min-width: 220px;
+    max-width: 320px;
+  }
 }

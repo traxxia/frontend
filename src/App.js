@@ -8,7 +8,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin Panel
-import ProtectedRoute from './components/ProtectedRoute'; 
+import ProtectedRoute from './components/ProtectedRoute';
+
 import BusinessSetupPage from './pages/BusinessSetupPage';
 
 const App = () => {
@@ -52,7 +53,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/businesspage" element={<BusinessSetupPage />} />
           
-          {/* Regular Admin Route */}
+          {/* Regular Admin Route - kept for potential future use */}
           <Route
             path="/admin"
             element={
@@ -61,17 +62,17 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
-          {/* NEW: Super Admin Route */}
+          
+          {/* Super Admin Route - accessible by both admins and super admins */}
           <Route
             path="/super-admin"
             element={
-              <ProtectedRoute superAdminOnly={true}>
+              <ProtectedRoute adminOnly={true}>
                 <SuperAdminPage />
               </ProtectedRoute>
             }
           />
-           
+          
         </Routes>
       </div>
     </Router>

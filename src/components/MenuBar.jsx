@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Container, Dropdown } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Settings, Home, User, Archive, FileText, Shield } from 'lucide-react'; // Added Shield icon for Super Admin
+import { LogOut, Settings, Home, User, Archive, FileText, Shield } from 'lucide-react';
 import "../styles/menubar.css";
 import { useTranslation } from '../hooks/useTranslation';
 
-const MenuBar = ({ currentPage = "DASHBOARD" }) => {
+const MenuBar = ( ) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userName, setUserName] = useState('User');
   const [userRole, setUserRole] = useState('');
+  const [companyLogo, setCompanyLogo] = useState('');
+  const [companyName, setCompanyName] = useState('');
 
   const { t } = useTranslation();
 
@@ -19,10 +21,14 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
     const isAdminStored = sessionStorage.getItem('isAdmin');
     const userNameStored = sessionStorage.getItem('userName');
     const userRoleStored = sessionStorage.getItem('userRole');
+    const companyLogoStored = sessionStorage.getItem('companyLogo');
+    const companyNameStored = sessionStorage.getItem('companyName');
 
     setIsAdmin(isAdminStored === 'true');
     setUserName(userNameStored || 'User');
     setUserRole(userRoleStored || '');
+    setCompanyLogo(companyLogoStored || '');
+    setCompanyName(companyNameStored || '');
     
     // Check if user is super admin
     setIsSuperAdmin(userRoleStored === 'super_admin');
@@ -35,7 +41,7 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
 
   const isCurrentPage = (path) => location.pathname === path;
 
-  const handleAdminClick = () => navigate('/admin');
+  const handleAdminClick = () => navigate('/super-admin');
   const handleDashboardClick = () => navigate('/dashboard');
   const handleSuperAdminClick = () => navigate('/super-admin');
   
@@ -47,6 +53,33 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
       <Container fluid className="px-3 py-2">
         <div className="d-flex align-items-center justify-content-between w-100">
           
+          {/* Left side - Company Logo */}
+          <div className="navbar-left">
+            {companyLogo && (
+              <div 
+                className="company-logo"
+                onClick={() => navigate('/dashboard')}
+                style={{ cursor: 'pointer' }}
+              >
+                <img
+                  src={companyLogo}
+                  alt={companyName ? `${companyName} Logo` : t('company_logo_alt') || "Company Logo"}
+                  style={{ 
+                    height: '50px',
+                    maxWidth: '100px',
+                    marginLeft: '20px',
+                    objectFit: 'contain'
+                  }}
+                  onError={(e) => {
+                    // Hide the company logo if it fails to load
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Center - Traxxia Logo */}
           <div className="navbar-center">
             <Navbar.Brand
               className="traxia-logo"
@@ -61,6 +94,7 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
             </Navbar.Brand>
           </div>
 
+          {/* Right side - User Menu */}
           <div className="navbar-right">
             <Dropdown>
               <Dropdown.Toggle
@@ -76,6 +110,11 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
                   {userRole && (
                     <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                       Role: {userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </div>
+                  )}
+                  {companyName && (
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                      Company: {companyName}
                     </div>
                   )}
                 </Dropdown.Header>
@@ -120,7 +159,7 @@ const MenuBar = ({ currentPage = "DASHBOARD" }) => {
                 {isAdmin && !isSuperAdmin && (
                   <Dropdown.Item
                     onClick={handleAdminClick}
-                    className={`dropdown-item-traxia ${isCurrentPage('/admin') ? 'active' : ''}`}
+                    className={`dropdown-item-traxia ${isCurrentPage('/super-admin') ? 'active' : ''}`}
                   >
                     <Settings size={16} className="me-2" />
                     {t('admin')}

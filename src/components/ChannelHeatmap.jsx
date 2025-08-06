@@ -59,7 +59,11 @@ const ChannelHeatmap = ({
       isMounted.current = false;
     };
   }, []);
-
+   useEffect(() => {
+  if (heatmapData && onDataGenerated) {
+    onDataGenerated(heatmapData);
+  }
+}, [heatmapData]);
   // Get matrix value for a specific product-channel combination
   const getMatrixValue = (product, channel) => {
     if (!heatmapData?.matrix) return null;

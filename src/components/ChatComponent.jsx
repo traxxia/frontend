@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader } from "lucide-react";
+import { Send, Loader, SkipForward } from "lucide-react";
 import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -9,6 +9,7 @@ const ChatComponent = ({
   onNewAnswer,
   onQuestionsLoaded,
   onQuestionCompleted,
+  onPhaseCompleted
 }) => {
   // Core state
   const [currentInput, setCurrentInput] = useState('');
@@ -25,6 +26,7 @@ const ChatComponent = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidatingAnswer, setIsValidatingAnswer] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
 
   // Toast state
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
@@ -137,18 +139,18 @@ const ChatComponent = ({
       // Track completed questions
       if (conversation.completion_status === 'complete') {
         completedQuestionIds.add(questionId);
-        
+
         // Notify parent about completed question
         if (onQuestionCompleted) {
           onQuestionCompleted(questionId);
         }
-        
+
         // Get all answers for this completed question and concatenate them
         const allAnswers = conversation.conversation_flow
           .filter(item => item.type === 'answer')
           .map(a => a.text.trim())
           .filter(text => text.length > 0);
-        
+
         if (allAnswers.length > 0) {
           const concatenatedAnswer = allAnswers.join('. ');
           // Notify parent with concatenated answer for completed questions
@@ -352,14 +354,14 @@ const ChatComponent = ({
           if (conversationResponse.ok) {
             const conversationData = await conversationResponse.json();
             const questionConversation = conversationData.conversations.find(conv => conv.question_id === questionId);
-            
+
             if (questionConversation) {
               // Get all answers for this question and concatenate them
               const allAnswers = questionConversation.conversation_flow
                 .filter(item => item.type === 'answer')
                 .map(a => a.text.trim())
                 .filter(text => text.length > 0);
-              
+
               const concatenatedAnswer = allAnswers.join('. ');
               onNewAnswer?.(questionId, concatenatedAnswer);
             }
@@ -386,6 +388,83 @@ const ChatComponent = ({
       throw error;
     } finally {
       setIsSaving(false);
+    }
+  };
+  const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
+    console.log(`Phase ${phase} completed`);
+
+    if (phase === 'initial') {
+      setCompletedQuestions(updatedCompletedSet);
+
+      // Trigger analysis generation with fresh data fetch
+      if (onPhaseCompleted) {
+        await onPhaseCompleted('initial', updatedCompletedSet);
+      }
+    }
+  };
+  const PHASES = {
+    INITIAL: "initial",
+    ESSENTIAL: "essential",
+    GOOD: "good",
+    EXCELLENT: "excellent",
+  };
+  const handleQuestionCompleted = (questionId) => {
+    setCompletedQuestions(prev => {
+      const newCompletedSet = new Set([...prev, questionId]);
+
+      // Check if initial phase is completed with the updated set
+      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+      const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
+
+      console.log('Phase completion check:', {
+        totalInitialQuestions: initialQuestions.length,
+        completedInitialQuestions: completedInitialQuestions.length,
+        questionJustCompleted: questionId,
+        allCompletedQuestions: Array.from(newCompletedSet)
+      });
+
+      // Don't trigger analysis generation here - it will be triggered after save success
+      return newCompletedSet;
+    });
+  };
+  const saveSkippedQuestion = async (questionId) => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          question_id: questionId,
+          answer_text: '[Question Skipped]',
+          business_id: selectedBusinessId,
+          is_complete: false, // Changed from true to false
+          metadata: {
+            timestamp: new Date().toISOString(),
+            skipped: true
+          }
+        })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        // Notify parent about skipped question
+        onNewAnswer?.(questionId, '[Question Skipped]');
+        if (onQuestionCompleted) {
+          onQuestionCompleted(questionId);
+        }
+
+        const newCompletedSet = new Set([...completedQuestions, questionId]);
+        setCompletedQuestions(newCompletedSet);
+        return { ...result, updatedCompleted: newCompletedSet, wasCompleted: true };
+      } else {
+        throw new Error(result.error || 'Failed to skip question');
+      }
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -433,6 +512,47 @@ const ChatComponent = ({
     }
   };
 
+  // Handle skip functionality
+  const handleSkip = async () => {
+    if (isSkipping || (!nextQuestion && !pendingValidation)) return;
+
+    try {
+      setIsSkipping(true);
+
+      if (pendingValidation) {
+        // Skip follow-up question
+        addMessageLocally('user', '[Question Skipped]', {
+          questionId: pendingValidation.questionId,
+          phase: pendingValidation.phase,
+          isFollowUp: true
+        });
+
+        const saveResult = await saveSkippedQuestion(pendingValidation.questionId);
+
+        setPendingValidation(null);
+        setFollowupAttempts(0);
+
+        await moveToNextQuestion(saveResult.updatedCompleted);
+        showToastMessage('Question skipped', 'info');
+      } else if (nextQuestion) {
+        // Skip main question
+        addMessageLocally('user', '[Question Skipped]', {
+          questionId: nextQuestion._id,
+          phase: nextQuestion.phase
+        });
+
+        const saveResult = await saveSkippedQuestion(nextQuestion._id);
+        await moveToNextQuestion(saveResult.updatedCompleted);
+        showToastMessage('Question skipped', 'info');
+      }
+    } catch (error) {
+      console.error('Error skipping question:', error);
+      showToastMessage('Failed to skip question. Please try again.', 'error');
+    } finally {
+      setIsSkipping(false);
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
     if (!currentInput.trim() || processingAnswer.current) return;
@@ -475,15 +595,21 @@ const ChatComponent = ({
       const saveResult = await saveAnswer(pendingValidation.questionId, answer, shouldComplete);
 
       if (shouldComplete) {
-        // Complete follow-up and move to next question
         setPendingValidation(null);
         setFollowupAttempts(0);
 
         if (saveResult.wasCompleted) {
-          await moveToNextQuestion(saveResult.updatedCompleted);
-        } else {
-          await moveToNextQuestion();
+          const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+          const isInitialPhaseJustCompleted = initialQuestions.length > 0 &&
+            initialQuestions.every(q => saveResult.updatedCompleted.has(q._id));
+
+          if (isInitialPhaseJustCompleted && onPhaseCompleted) {
+            console.log('Initial phase completed via followup, triggering analysis generation');
+            await onPhaseCompleted('initial', saveResult.updatedCompleted);
+          }
         }
+
+        await moveToNextQuestion(saveResult.updatedCompleted);
       } else {
         // Continue with more follow-up questions
         const newFollowupQuestion = mlValidation.feedback;
@@ -509,7 +635,6 @@ const ChatComponent = ({
       setIsValidatingAnswer(false);
     }
   };
-
   const handleMainAnswer = async (answer) => {
     if (!nextQuestion?._id) {
       showToastMessage('Unable to submit answer: Question is missing', 'error');
@@ -534,7 +659,6 @@ const ChatComponent = ({
         await saveAnswer(questionId, answer, false);
 
         const followupQuestion = mlValidation.feedback;
-
         addMessageLocally('bot', followupQuestion, {
           questionId,
           phase: nextQuestion.phase,
@@ -554,14 +678,21 @@ const ChatComponent = ({
 
         setFollowupAttempts(0);
       } else {
-        // Answer is valid, save and move to next
+        // Answer is valid, save and complete
         const saveResult = await saveAnswer(questionId, answer, true);
 
         if (saveResult.wasCompleted) {
-          await moveToNextQuestion(saveResult.updatedCompleted);
-        } else {
-          await moveToNextQuestion();
+          const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+          const isInitialPhaseJustCompleted = initialQuestions.length > 0 &&
+            initialQuestions.every(q => saveResult.updatedCompleted.has(q._id));
+
+          if (isInitialPhaseJustCompleted && onPhaseCompleted) {
+            console.log('Initial phase just completed, triggering analysis generation');
+            await onPhaseCompleted('initial', saveResult.updatedCompleted);
+          }
         }
+
+        await moveToNextQuestion(saveResult.updatedCompleted);
       }
     } catch (error) {
       showToastMessage(error.message || 'Failed to submit your answer', 'error');
@@ -596,13 +727,26 @@ const ChatComponent = ({
   const isInputDisabled = (!nextQuestion && !pendingValidation) ||
     isSaving ||
     isValidatingAnswer ||
-    processingAnswer.current;
+    processingAnswer.current ||
+    isSkipping;
 
   const isSubmitDisabled = !currentInput.trim() ||
     (!nextQuestion && !pendingValidation) ||
     isSaving ||
     isValidatingAnswer ||
-    processingAnswer.current;
+    processingAnswer.current ||
+    isSkipping;
+
+  const isSkipDisabled = (!nextQuestion && !pendingValidation) ||
+    isSaving ||
+    isValidatingAnswer ||
+    processingAnswer.current ||
+    isSkipping;
+
+  const canShowSkipButton = (nextQuestion || pendingValidation) &&
+    !isSaving &&
+    !isValidatingAnswer &&
+    !processingAnswer.current;
 
   return (
     <div className="chat-container">
@@ -637,18 +781,32 @@ const ChatComponent = ({
             </div>
           ))}
 
-        {(isSaving || isValidatingAnswer) && (
+        {(isSaving || isValidatingAnswer || isSkipping) && (
           <div className="generating-analysis">
             <Loader size={16} className="spinner" />
             <span>
               {isSaving && 'Saving your answer...'}
               {isValidatingAnswer && 'Validating your answer...'}
+              {isSkipping && 'Skipping question...'}
             </span>
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Floating Skip Button in chat area */}
+      {canShowSkipButton && (
+        <button
+          onClick={handleSkip}
+          disabled={isSkipDisabled}
+          className="floating-skip-button"
+          title="Skip this question"
+        >
+          <SkipForward size={18} />
+          <span className="skip-text">Skip</span>
+        </button>
+      )}
 
       <div className="input-area">
         <div className="input-wrapper">
@@ -667,6 +825,7 @@ const ChatComponent = ({
             className="message-input"
             rows="2"
           />
+
           <button
             onClick={handleSubmit}
             disabled={isSubmitDisabled}
@@ -683,7 +842,7 @@ const ChatComponent = ({
           {pendingValidation ? (
             <span>
               Follow-up required • Please provide more details ({followupAttempts + 1}/2 attempts)
-              {(isSaving || isValidatingAnswer) && ' • Processing...'}
+              {(isSaving || isValidatingAnswer || isSkipping) && ' • Processing...'}
             </span>
           ) : nextQuestion ? (
             <span>
@@ -692,6 +851,7 @@ const ChatComponent = ({
               {isSaving && ` • Saving...`}
               {isValidatingAnswer && ` • Validating...`}
               {processingAnswer.current && ` • Processing...`}
+              {isSkipping && ` • Skipping...`}
             </span>
           ) : (
             <span>All questions completed!</span>

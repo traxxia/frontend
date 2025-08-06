@@ -13,6 +13,9 @@ import CapabilityHeatmap from "../components/CapabilityHeatmap";
 import PDFExportButton from "../components/PDFExportButton";
 import { useTranslation } from "../hooks/useTranslation";
 import { useLocation } from 'react-router-dom';
+import StrategicAnalysis from "../components/StrategicAnalysis";
+import PortersFiveForces from "../components/PortersFiveForces";
+import PestelAnalysis from "../components/PestelAnalysis";
 
 const BusinessSetupPage = () => {
   const location = useLocation();
@@ -51,7 +54,21 @@ const BusinessSetupPage = () => {
   const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
   const [swotAnalysisResult, setSwotAnalysisResult] = useState("");
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
+  const [strategicData, setStrategicData] = useState(null);
 
+  // Individual component regenerating states
+  const [isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating] = useState(false);
+  const [isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating] = useState(false);
+  const [isChannelHeatmapRegenerating, setIsChannelHeatmapRegenerating] = useState(false);
+  const [isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating] = useState(false);
+  const [isCapabilityHeatmapRegenerating, setIsCapabilityHeatmapRegenerating] = useState(false);
+  const [isStrategicRegenerating, setIsStrategicRegenerating] = useState(false);
+  const [portersData, setPortersData] = useState(null);
+  const [pestelData, setPestelData] = useState(null);
+  const [isPortersRegenerating, setIsPortersRegenerating] = useState(false);
+  const [isPestelRegenerating, setIsPestelRegenerating] = useState(false);
+  const portersRef = useRef(null);
+  const pestelRef = useRef(null);
   // Dropdown State
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState(() => t('goToSection') || 'Go to Section');
@@ -72,6 +89,7 @@ const BusinessSetupPage = () => {
   const capabilityHeatmapRef = useRef(null);
   const dropdownRef = useRef(null);
   const isRegeneratingRef = useRef(false);
+  const strategicRef = useRef(null);
 
   // Constants
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -132,9 +150,9 @@ const BusinessSetupPage = () => {
     const mandatoryQuestions = questions.filter(
       (q) => q.phase === phase && q.severity === "mandatory"
     );
-    
+
     if (mandatoryQuestions.length === 0) return false;
-    
+
     return mandatoryQuestions.every((q) => {
       const questionId = q._id;
       return userAnswers[questionId] && userAnswers[questionId].trim();
@@ -146,7 +164,7 @@ const BusinessSetupPage = () => {
     const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
     const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
     const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-    
+
     return {
       brief: true,
       analysis: isInitialComplete
@@ -226,13 +244,22 @@ const BusinessSetupPage = () => {
           case 'capabilityHeatmap':
             setCapabilityHeatmapData(analysis_data);
             break;
+          case 'porters':
+            setPortersData(analysis_data);
+            break;
+          case 'pestel':
+            setPestelData(analysis_data);
+            break;
+          case 'strategic':
+            setStrategicData(analysis_data);
+            break;
         }
       });
 
       const analysisCount = Object.keys(latestAnalysisByType).length;
-      if (analysisCount > 0) {
-        showToastMessage(`✅ Loaded ${analysisCount} existing analysis components`, 'success');
-      }
+      // if (analysisCount > 0) {
+      //   showToastMessage(`✅ Loaded ${analysisCount} existing analysis components`, 'success');
+      // }
     } catch (error) {
       console.error('Error loading existing analysis data:', error);
     }
@@ -263,15 +290,162 @@ const BusinessSetupPage = () => {
       return false;
     }
   };
+  const generatePortersAnalysis = async (freshAnswers = null) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+      const dataSource = freshAnswers || userAnswers;
 
+      questions
+        .filter(q => dataSource[q._id] && dataSource[q._id] !== '[Question Skipped]')
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(dataSource[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No answered questions available for Porter\'s Five Forces analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Porter's API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const portersContent = result.porters_analysis || result.porters || result;
+
+      setPortersData(portersContent);
+      await saveAnalysisToBackend(portersContent, 'porters');
+    } catch (error) {
+      console.error('Error generating Porter\'s Five Forces analysis:', error);
+      throw error;
+    }
+  };
+
+  const generatePestelAnalysis = async (freshAnswers = null) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+      const dataSource = freshAnswers || userAnswers;
+
+      questions
+        .filter(q => dataSource[q._id] && dataSource[q._id] !== '[Question Skipped]')
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(dataSource[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No answered questions available for PESTEL analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`PESTEL API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const pestelContent = result.pestel_analysis || result.pestel || result;
+
+      setPestelData(pestelContent);
+      await saveAnalysisToBackend(pestelContent, 'pestel');
+    } catch (error) {
+      console.error('Error generating PESTEL analysis:', error);
+      throw error;
+    }
+  };
+  const generateStrategicAnalysis = async (freshAnswers = null) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+      const dataSource = freshAnswers || userAnswers;
+
+      console.log('Generating strategic analysis with data:', Object.keys(dataSource).length, 'answers');
+
+      questions
+        .filter(q => dataSource[q._id] && dataSource[q._id] !== '[Question Skipped]')
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(dataSource[question._id]);
+        });
+
+      console.log('Strategic analysis: Processing', questionsArray.length, 'Q&A pairs');
+
+      if (questionsArray.length === 0) {
+        throw new Error('No answered questions available for strategic analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Strategic API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Strategic API response:', result);
+
+      // The API might return the data directly or in a nested structure
+      const strategicContent = result.strategic_analysis || result.strategic || result;
+
+      setStrategicData(strategicContent);
+      await saveAnalysisToBackend(strategicContent, 'strategic');
+      console.log('Strategic analysis completed and saved');
+    } catch (error) {
+      console.error('Error generating strategic analysis:', error);
+      throw error;
+    }
+  };
   // Generate individual analysis
   const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
     try {
       const questionsArray = [];
       const answersArray = [];
 
+      console.log(`Generating ${analysisType} analysis with current userAnswers:`, Object.keys(userAnswers).length);
+
       questions
-        .filter(q => userAnswers[q._id])
+        .filter(q => {
+          const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
+          console.log(`Question ${q._id}: ${hasAnswer ? 'HAS' : 'NO'} answer`);
+          return hasAnswer;
+        })
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           const cleanQuestion = String(question.question_text)
@@ -293,6 +467,8 @@ const BusinessSetupPage = () => {
           questionsArray.push(cleanQuestion);
           answersArray.push(cleanAnswer);
         });
+
+      console.log(`${analysisType} analysis: Processing ${questionsArray.length} Q&A pairs`);
 
       if (questionsArray.length === 0) {
         throw new Error(`No answered questions available for ${analysisType} analysis`);
@@ -328,13 +504,13 @@ const BusinessSetupPage = () => {
       if (dataToSave) {
         setter(dataToSave);
         await saveAnalysisToBackend(dataToSave, analysisType);
+        console.log(`${analysisType} analysis completed and saved`);
       }
     } catch (error) {
       console.error(`Error generating ${analysisType} analysis:`, error);
       throw error;
     }
   };
-
   // Generate SWOT analysis
   const generateSWOTAnalysis = async () => {
     try {
@@ -382,9 +558,9 @@ const BusinessSetupPage = () => {
     const completedInitialQuestions = initialQuestions.filter(q => {
       return userAnswers[q._id] && userAnswers[q._id].trim();
     });
-    
+
     const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-    
+
     if (!isInitialComplete) {
       showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
       return;
@@ -406,17 +582,23 @@ const BusinessSetupPage = () => {
       setChannelHeatmapData(null);
       setLoyaltyNPSData(null);
       setCapabilityHeatmapData(null);
-
+      setStrategicData(null); // Add this
+      setPortersData(null);
+      setPestelData(null);
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Generate all analysis
+      // Generate all analysis including strategic
       const analysisPromises = [
         generateSWOTAnalysis(),
         generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
         generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
         generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
         generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
-        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData)
+        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData),
+        generateStrategicAnalysis(),
+        generatePortersAnalysis(),
+        generatePestelAnalysis()
+
       ];
 
       const results = await Promise.allSettled(analysisPromises);
@@ -440,6 +622,7 @@ const BusinessSetupPage = () => {
     }
   };
 
+
   // Event Handlers
   const handleQuestionsLoaded = (loadedQuestions) => {
     setQuestions(loadedQuestions);
@@ -448,13 +631,13 @@ const BusinessSetupPage = () => {
 
   const handleNewAnswer = (questionId, answer) => {
     console.log('New answer received:', { questionId, answer: answer.substring(0, 50) + '...' });
-    
+
     setUserAnswers(prev => {
       const updatedAnswers = {
         ...prev,
         [questionId]: answer
       };
-      
+
       console.log('Updated userAnswers:', Object.keys(updatedAnswers));
       return updatedAnswers;
     });
@@ -479,33 +662,32 @@ const BusinessSetupPage = () => {
   const handleQuestionCompleted = (questionId) => {
     setCompletedQuestions(prev => {
       const newCompletedSet = new Set([...prev, questionId]);
-      
-      // Check if initial phase is completed with the updated set
-      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-      const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
-      
-      console.log('Phase completion check:', {
-        totalInitialQuestions: initialQuestions.length,
-        completedInitialQuestions: completedInitialQuestions.length,
-        questionJustCompleted: questionId,
-        allCompletedQuestions: Array.from(newCompletedSet)
+
+      console.log('Question completed:', {
+        questionId,
+        totalCompleted: newCompletedSet.size,
+        allCompleted: Array.from(newCompletedSet)
       });
-      
-      if (completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0) {
-        // Initial phase just completed, trigger analysis generation
-        console.log('Initial phase completed, triggering analysis generation');
-        setTimeout(() => {
-          regenerateAllAnalysisForCompletion();
-        }, 100);
-      }
-      
+
       return newCompletedSet;
     });
   };
+  const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
+    console.log(`Phase ${phase} completed with updated set:`, Array.from(updatedCompletedSet));
 
+    if (phase === 'initial') {
+      setCompletedQuestions(updatedCompletedSet);
+
+      // Generate analysis with fresh data from backend
+      console.log('Triggering analysis generation after phase completion');
+      await regenerateAllAnalysisForCompletion();
+    }
+  };
+  
   // Special function for auto-generation when phase is completed
   const regenerateAllAnalysisForCompletion = async () => {
     if (isRegeneratingRef.current) {
+      console.log('Analysis already in progress, skipping');
       return;
     }
 
@@ -521,17 +703,25 @@ const BusinessSetupPage = () => {
       setChannelHeatmapData(null);
       setLoyaltyNPSData(null);
       setCapabilityHeatmapData(null);
+      setStrategicData(null); // Add this
+      setPortersData(null);
+      setPestelData(null);
 
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Fetch fresh conversation data to get all answers
+      const freshAnswers = await getFreshConversationData();
 
-      // Generate all analysis
+      console.log('Starting analysis generation with fresh answers:', Object.keys(freshAnswers).length);
+
+      // Generate all analysis including strategic
       const analysisPromises = [
-        generateSWOTAnalysis(),
-        generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
-        generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
-        generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
-        generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
-        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData)
+        generateSWOTAnalysisWithData(freshAnswers),
+        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers),
+        generateSingleAnalysisWithData('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, freshAnswers),
+        generateSingleAnalysisWithData('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, freshAnswers),
+        generateSingleAnalysisWithData('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, freshAnswers),
+        generateSingleAnalysisWithData('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, freshAnswers),
+        generateStrategicAnalysis(freshAnswers), generatePortersAnalysis(freshAnswers),
+        generatePestelAnalysis(freshAnswers)
       ];
 
       const results = await Promise.allSettled(analysisPromises);
@@ -552,6 +742,150 @@ const BusinessSetupPage = () => {
     } finally {
       isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
+    }
+  };
+  
+  const generateSingleAnalysisWithData = async (analysisType, endpoint, dataKey, setter, freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id] && freshAnswers[q._id] !== '[Question Skipped]')
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      console.log(`${analysisType} analysis with fresh data - Q&A pairs:`, questionsArray.length);
+
+      if (questionsArray.length === 0) {
+        throw new Error(`No answered questions available for ${analysisType} analysis`);
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`${analysisType} API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      let dataToSave = null;
+
+      if (analysisType === 'capabilityHeatmap') {
+        dataToSave = result.capabilities ? result : result[dataKey];
+      } else if (result && result[dataKey]) {
+        dataToSave = result[dataKey];
+      } else {
+        throw new Error(`Invalid response structure from ${analysisType} API`);
+      }
+
+      if (dataToSave) {
+        setter(dataToSave);
+        await saveAnalysisToBackend(dataToSave, analysisType);
+        console.log(`${analysisType} analysis completed and saved`);
+      }
+    } catch (error) {
+      console.error(`Error generating ${analysisType} analysis:`, error);
+      throw error;
+    }
+  };
+
+  const getFreshConversationData = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch fresh conversation data');
+      }
+
+      const data = await response.json();
+      const freshAnswers = {};
+
+      // Extract all completed answers from backend
+      data.conversations?.forEach(conversation => {
+        if (conversation.completion_status === 'complete') {
+          const questionId = conversation.question_id;
+          const allAnswers = conversation.conversation_flow
+            .filter(item => item.type === 'answer')
+            .map(a => a.text.trim())
+            .filter(text => text.length > 0 && text !== '[Question Skipped]');
+
+          if (allAnswers.length > 0) {
+            freshAnswers[questionId] = allAnswers.join('. ');
+          }
+        }
+      });
+
+      console.log('Fresh answers from backend:', Object.keys(freshAnswers).length);
+
+      // Update local state with fresh data
+      setUserAnswers(prev => ({ ...prev, ...freshAnswers }));
+
+      return freshAnswers;
+    } catch (error) {
+      console.error('Error fetching fresh conversation data:', error);
+      // Fallback to current userAnswers
+      return userAnswers;
+    }
+  };
+
+  // In BusinessSetupPage.js - Add functions that use fresh data
+  const generateSWOTAnalysisWithData = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions.forEach(question => {
+        if (freshAnswers[question._id]) {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        }
+      });
+
+      console.log('SWOT analysis with fresh data - Q&A pairs:', questionsArray.length);
+
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`SWOT API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+
+      setSwotAnalysisResult(analysisContent);
+      await saveAnalysisToBackend(analysisContent, 'swot');
+    } catch (error) {
+      console.error('Error generating SWOT analysis:', error);
+      throw error;
     }
   };
 
@@ -597,12 +931,31 @@ const BusinessSetupPage = () => {
       }
     }
   };
+  const handleStrategicTabClick = () => {
+    const unlockedFeatures = getUnlockedFeatures();
+    if (!unlockedFeatures.analysis) return;
+
+    if (isMobile) {
+      setActiveTab("strategic");
+    } else {
+      // For desktop - always expand when clicking Strategic tab
+      if (!isAnalysisExpanded) {
+        setIsSliding(true);
+        setIsAnalysisExpanded(true);
+        setActiveTab("strategic");
+        setTimeout(() => setIsSliding(false), 1000);
+      } else {
+        // If already expanded, just switch to strategic tab
+        setActiveTab("strategic");
+      }
+    }
+  };
 
   const handleBackFromAnalysis = () => {
     if (isAnalysisExpanded) {
       setIsSliding(true);
       setIsAnalysisExpanded(false);
-      setActiveTab("brief");
+      setActiveTab("brief");  // Always go back to brief when collapsing
       setTimeout(() => setIsSliding(false), 1000);
     }
   };
@@ -614,11 +967,13 @@ const BusinessSetupPage = () => {
   // Dropdown handlers
   const dropdownOptions = [
     "SWOT",
-    "Customer Segmentation", 
+    "Customer Segmentation",
     "Purchase Criteria",
     "Channel Heatmap",
     "Loyalty/NPS",
-    "Capability Heatmap"
+    "Capability Heatmap",
+    "Porter's Five Forces",
+    "PESTEL Analysis" 
   ];
 
   const handleOptionClick = (option) => {
@@ -632,7 +987,10 @@ const BusinessSetupPage = () => {
         "Purchase Criteria": purchaseCriteriaRef,
         "Channel Heatmap": channelHeatmapRef,
         "Loyalty/NPS": loyaltyNpsRef,
-        "Capability Heatmap": capabilityHeatmapRef
+        "Capability Heatmap": capabilityHeatmapRef,
+        "Porter's Five Forces": portersRef,
+        "PESTEL Analysis": pestelRef,
+        "Strategic": strategicRef
       };
 
       const targetRef = refMap[option];
@@ -642,32 +1000,63 @@ const BusinessSetupPage = () => {
     }, 100);
   };
 
-  // Individual regeneration handlers
-  const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, setter, displayName) => {
+  // Individual regeneration handlers with loading state tracking
+  const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, setter, displayName, setIsRegenerating) => {
     return async () => {
       // Check current phase completion using completedQuestions set
       const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
       const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
       const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-      
+
       if (!isInitialComplete || isRegeneratingRef.current) return;
 
       try {
-        showToastMessage(`Regenerating ${displayName} analysis...`, "info");
+        setIsRegenerating(true);
+        showToastMessage(`Regenerating ${displayName}...`, "info");
         setter(null);
         await new Promise(resolve => setTimeout(resolve, 200));
-        await generateSingleAnalysis(analysisType, endpoint, dataKey, setter);
-        showToastMessage(`${displayName} analysis regenerated successfully!`, "success");
+
+        if (analysisType === 'porters') {
+          await generatePortersAnalysis();
+        } else if (analysisType === 'pestel') {
+          await generatePestelAnalysis();
+        } else if (analysisType === 'strategic') {
+          await generateStrategicAnalysis();
+        } else {
+          await generateSingleAnalysis(analysisType, endpoint, dataKey, setter);
+        }
+
+        showToastMessage(`${displayName} regenerated successfully!`, "success");
       } catch (error) {
-        showToastMessage(`Failed to regenerate ${displayName} analysis.`, "error");
+        showToastMessage(`Failed to regenerate ${displayName}.`, "error");
+      } finally {
+        setIsRegenerating(false);
       }
     };
   };
 
+  const handlePortersRegenerate = createIndividualRegenerationHandler(
+    'porters',
+    'porters-five-forces',
+    'porters',
+    setPortersData,
+    'Porter\'s Five Forces',
+    setIsPortersRegenerating
+  );
+
+  const handlePestelRegenerate = createIndividualRegenerationHandler(
+    'pestel',
+    'pestel-analysis',
+    'pestel',
+    setPestelData,
+    'PESTEL Analysis',
+    setIsPestelRegenerating
+  );
+
   // Analysis Controls Component
   const AnalysisControls = () => {
     const unlockedFeatures = getUnlockedFeatures();
-    
+
     return (
       <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
         <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
@@ -762,7 +1151,14 @@ const BusinessSetupPage = () => {
       </div>
     );
   };
-
+  const handleStrategicRegenerate = createIndividualRegenerationHandler(
+    'strategic',
+    'strategic-goals',
+    'strategic',
+    setStrategicData,
+    'Strategic analysis',
+    setIsStrategicRegenerating
+  );
   // Render Analysis Content
   const renderAnalysisContent = () => {
     const unlockedFeatures = getUnlockedFeatures();
@@ -810,9 +1206,10 @@ const BusinessSetupPage = () => {
               'customer-segment',
               'customerSegmentation',
               setCustomerSegmentationData,
-              'Customer segmentation'
+              'Customer segmentation',
+              setIsCustomerSegmentationRegenerating
             )}
-            isRegenerating={false}
+            isRegenerating={isCustomerSegmentationRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             customerSegmentationData={customerSegmentationData}
             selectedBusinessId={selectedBusinessId}
@@ -830,9 +1227,10 @@ const BusinessSetupPage = () => {
               'purchase-criteria',
               'purchaseCriteria',
               setPurchaseCriteriaData,
-              'Purchase criteria'
+              'Purchase criteria',
+              setIsPurchaseCriteriaRegenerating
             )}
-            isRegenerating={false}
+            isRegenerating={isPurchaseCriteriaRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             purchaseCriteriaData={purchaseCriteriaData}
             selectedBusinessId={selectedBusinessId}
@@ -850,9 +1248,10 @@ const BusinessSetupPage = () => {
               'channel-heatmap',
               'channelHeatmap',
               setChannelHeatmapData,
-              'Channel heatmap'
+              'Channel heatmap',
+              setIsChannelHeatmapRegenerating
             )}
-            isRegenerating={false}
+            isRegenerating={isChannelHeatmapRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             channelHeatmapData={channelHeatmapData}
             selectedBusinessId={selectedBusinessId}
@@ -870,9 +1269,10 @@ const BusinessSetupPage = () => {
               'loyalty-metrics',
               'loyaltyMetrics',
               setLoyaltyNPSData,
-              'Loyalty NPS'
+              'Loyalty NPS',
+              setIsLoyaltyNPSRegenerating
             )}
-            isRegenerating={false}
+            isRegenerating={isLoyaltyNPSRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             loyaltyNPSData={loyaltyNPSData}
             selectedBusinessId={selectedBusinessId}
@@ -890,14 +1290,41 @@ const BusinessSetupPage = () => {
               'capability-heatmap',
               'capabilityHeatmap',
               setCapabilityHeatmapData,
-              'Capability heatmap'
+              'Capability heatmap',
+              setIsCapabilityHeatmapRegenerating
             )}
-            isRegenerating={false}
+            isRegenerating={isCapabilityHeatmapRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             capabilityHeatmapData={capabilityHeatmapData}
             selectedBusinessId={selectedBusinessId}
           />
         </div>
+        <div ref={portersRef}>
+          <PortersFiveForces
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onRegenerate={handlePortersRegenerate}
+            isRegenerating={isPortersRegenerating}
+            canRegenerate={!isAnalysisRegenerating}
+            portersData={portersData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+
+        <div ref={pestelRef}>
+          <PestelAnalysis
+            questions={questions}
+            userAnswers={userAnswers}
+            businessName={businessData.name}
+            onRegenerate={handlePestelRegenerate}
+            isRegenerating={isPestelRegenerating}
+            canRegenerate={!isAnalysisRegenerating}
+            pestelData={pestelData}
+            selectedBusinessId={selectedBusinessId}
+          />
+        </div>
+ 
       </div>
     );
   };
@@ -920,7 +1347,7 @@ const BusinessSetupPage = () => {
 
       {isMobile && questionsLoaded && (
         <>
-          {["chat", "brief", "analysis"].includes(activeTab) && (
+          {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (  // Add "strategic" here
             <div className="progress-area">
               <div className="progress-track">
                 <div
@@ -954,9 +1381,19 @@ const BusinessSetupPage = () => {
                 {t("analysis")}
               </button>
             )}
+
+            {unlockedFeatures.analysis && (
+              <button
+                className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
+                onClick={handleStrategicTabClick}  // Use the expansion handler for mobile too
+              >
+                Strategic
+              </button>
+            )}
           </div>
         </>
       )}
+
 
       <div
         className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""} ${isSliding ? "sliding" : ""}`}
@@ -1005,18 +1442,20 @@ const BusinessSetupPage = () => {
             onNewAnswer={handleNewAnswer}
             onQuestionsLoaded={handleQuestionsLoaded}
             onQuestionCompleted={handleQuestionCompleted}
+            onPhaseCompleted={handlePhaseCompleted}
           />
         </div>
 
         {questionsLoaded && (
           <div
             className={`info-panel ${isMobile
-              ? activeTab === "brief" || activeTab === "analysis"
+              ? activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic"  // Add "strategic" here
                 ? "active"
                 : ""
               : ""
               } ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}
           >
+
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -1052,27 +1491,93 @@ const BusinessSetupPage = () => {
                         {t("backToOverview")}
                       </button>
 
+                      {/* Analysis Tab in expanded view */}
                       {unlockedFeatures.analysis && (
                         <button
                           className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
-                          onClick={() => setActiveTab("analysis")}
+                          onClick={() => setActiveTab("analysis")}  // Just switch tabs, don't collapse
                         >
                           {t("analysis")}
                         </button>
                       )}
+
+                      {/* Strategic Tab in expanded view */}
+                      {unlockedFeatures.analysis && (
+                        <button
+                          className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`}
+                          onClick={() => setActiveTab("strategic")}  // Just switch tabs, don't collapse
+                        >
+                          Strategic
+                        </button>
+                      )}
                     </div>
 
+                    {/* Show appropriate controls based on active tab */}
                     {activeTab === "analysis" && unlockedFeatures.analysis && (
                       <AnalysisControls />
+                    )}
+
+                    {activeTab === "strategic" && unlockedFeatures.analysis && (
+                      <div className="strategic-controls">
+                        <button
+                          onClick={handleStrategicRegenerate}
+                          disabled={isStrategicRegenerating}
+                          style={{
+                            backgroundColor: isStrategicRegenerating ? "#f3f4f6" : "#8b5cf6",
+                            color: isStrategicRegenerating ? "#6b7280" : "#fff",
+                            border: "none",
+                            borderRadius: "13px",
+                            padding: "10px 18px",
+                            fontSize: "14px",
+                            fontWeight: 500,
+                            display: "flex",
+                            alignItems: "center",
+                            cursor: isStrategicRegenerating ? "not-allowed" : "pointer",
+                            gap: "8px",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          {isStrategicRegenerating ? (
+                            <>
+                              <Loader size={16} className="animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={16} />
+                              Regenerate Strategic
+                            </>
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
+                      {/* Show Analysis content when analysis tab is active */}
                       {activeTab === "analysis" && (
                         <div className="analysis-section">
                           <div className="analysis-content">
                             {renderAnalysisContent()}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Show Strategic content when strategic tab is active */}
+                      {activeTab === "strategic" && (
+                        <div className="strategic-section">
+                          <div className="strategic-content">
+                            <StrategicAnalysis
+                              questions={questions}
+                              userAnswers={userAnswers}
+                              businessName={businessData.name}
+                              onRegenerate={handleStrategicRegenerate}
+                              isRegenerating={isStrategicRegenerating}
+                              canRegenerate={!isAnalysisRegenerating}
+                              strategicData={strategicData}
+                              selectedBusinessId={selectedBusinessId}
+                            />
                           </div>
                         </div>
                       )}
@@ -1095,12 +1600,23 @@ const BusinessSetupPage = () => {
                   {unlockedFeatures.analysis && (
                     <button
                       className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
-                      onClick={handleAnalysisTabClick}
+                      onClick={handleAnalysisTabClick}  // This already handles expansion
                     >
                       {t("analysis")}
                     </button>
                   )}
+
+                  {unlockedFeatures.analysis && (
+                    <button
+                      className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`}
+                      onClick={handleStrategicTabClick}  // This will now handle expansion too
+                    >
+                      Strategic
+                    </button>
+                  )}
                 </div>
+
+
 
                 {activeTab === "analysis" && unlockedFeatures.analysis && (
                   <AnalysisControls />
@@ -1142,6 +1658,61 @@ const BusinessSetupPage = () => {
 
                     <div className="analysis-content">
                       {renderAnalysisContent()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Strategic tab content - only show when initial phase is completed */}
+                {activeTab === "strategic" && unlockedFeatures.analysis && (
+                  <div className="strategic-section">
+                    {isMobile && (
+                      <div style={{ padding: "1rem", background: "#ffffffff" }}>
+                        <div className="analysis-controls-wrapper" style={{ display: "flex", justifyContent: "center" }}>
+                          <button
+                            onClick={handleStrategicRegenerate}
+                            disabled={isStrategicRegenerating}
+                            style={{
+                              backgroundColor: isStrategicRegenerating ? "#f3f4f6" : "#8b5cf6",
+                              color: isStrategicRegenerating ? "#6b7280" : "#fff",
+                              border: "none",
+                              borderRadius: "13px",
+                              padding: "10px 18px",
+                              fontSize: "14px",
+                              fontWeight: 500,
+                              display: "flex",
+                              alignItems: "center",
+                              cursor: isStrategicRegenerating ? "not-allowed" : "pointer",
+                              gap: "8px",
+                              transition: "all 0.2s ease"
+                            }}
+                          >
+                            {isStrategicRegenerating ? (
+                              <>
+                                <Loader size={16} className="animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw size={16} />
+                                Regenerate Strategic
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="strategic-content">
+                      <StrategicAnalysis
+                        questions={questions}
+                        userAnswers={userAnswers}
+                        businessName={businessData.name}
+                        onRegenerate={handleStrategicRegenerate}
+                        isRegenerating={isStrategicRegenerating}
+                        canRegenerate={!isAnalysisRegenerating}
+                        strategicData={strategicData}
+                        selectedBusinessId={selectedBusinessId}
+                      />
                     </div>
                   </div>
                 )}

@@ -74,7 +74,7 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Transform users to match expected format
         const transformedUsers = data.users.map(user => ({
           _id: user._id,
@@ -93,7 +93,7 @@ const UserHistory = ({ onToast }) => {
             total_answers: 0
           }
         }));
-        
+
         setUsers(transformedUsers);
       } else {
         onToast('Failed to load users', 'error');
@@ -154,7 +154,7 @@ const UserHistory = ({ onToast }) => {
 
   const loadUserHistory = async (userId, businessId = null) => {
     const cacheKey = businessId ? `${userId}_${businessId}` : userId;
-    
+
     if (userDetails[cacheKey]) return;
 
     try {
@@ -176,7 +176,7 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // The API now returns data in the format we expect
         const transformedData = {
           conversation: data.conversation || [],
@@ -189,7 +189,7 @@ const UserHistory = ({ onToast }) => {
           },
           user_info: data.user_info
         };
-        
+
         setUserDetails(prev => ({ ...prev, [cacheKey]: transformedData }));
       } else {
         const errorData = await response.json();
@@ -213,9 +213,9 @@ const UserHistory = ({ onToast }) => {
   const exportUserData = async (userId, userName) => {
     try {
       const token = getAuthToken();
-      
+
       const currentUserDetails = userDetails[userId];
-      
+
       if (!currentUserDetails) {
         onToast('Please view the user details first before exporting', 'warning');
         return;
@@ -251,12 +251,12 @@ const UserHistory = ({ onToast }) => {
 
       // Parse and organize analysis data
       const organizedAnalyses = {};
-      
+
       if (currentUserDetails.system) {
         currentUserDetails.system.forEach(result => {
           try {
             let analysisResult;
-            
+
             if (typeof result.analysis_result === 'string') {
               try {
                 analysisResult = JSON.parse(result.analysis_result);
@@ -269,7 +269,7 @@ const UserHistory = ({ onToast }) => {
 
             const analysisName = result.name?.toLowerCase() || '';
             let analysisType = 'other';
-            
+
             if (analysisName.includes('swot')) {
               analysisType = 'swotAnalysis';
             } else if (analysisName.includes('customer')) {
@@ -327,7 +327,7 @@ const UserHistory = ({ onToast }) => {
       const jsonString = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
-      
+
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
@@ -515,25 +515,35 @@ const UserHistory = ({ onToast }) => {
   );
 };
 
-// Enhanced UserDetailsPanel Component with Business Dropdown
+// Enhanced UserDetailsPanel Component with Business Dropdown Only (No "All")
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
   const [activeTab, setActiveTab] = useState('conversation');
-  const [selectedBusiness, setSelectedBusiness] = useState('all');
+  const [selectedBusiness, setSelectedBusiness] = useState('');
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
 
   // Get all user details (without business filter) to access businesses list
   const allUserDetails = userDetails[user._id] || {};
   const businesses = allUserDetails.businesses || [];
 
+  // Set default selected business when businesses load and load its data
+  useEffect(() => {
+    if (businesses.length > 0 && !selectedBusiness) {
+      const firstBusinessId = businesses[0]._id;
+      setSelectedBusiness(firstBusinessId);
+      // Automatically load data for the first business
+      handleBusinessChange(firstBusinessId);
+    }
+  }, [businesses, selectedBusiness]);
+
   // Get current display data based on selected business
   const getCurrentUserDetails = () => {
-    if (selectedBusiness === 'all') {
+    if (!selectedBusiness) {
       return allUserDetails;
     }
-    
+
     // Get data for specific business
     const businessCacheKey = `${user._id}_${selectedBusiness}`;
-    return userDetails[businessCacheKey] || allUserDetails;
+    return userDetails[businessCacheKey] || {};
   };
 
   const currentUserDetails = getCurrentUserDetails();
@@ -541,24 +551,22 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
   // Handle business selection change
   const handleBusinessChange = async (businessId) => {
+    if (!businessId) return;
+
     setSelectedBusiness(businessId);
-    
-    if (businessId !== 'all') {
-      setIsLoadingBusiness(true);
-      
-      try {
-        const businessCacheKey = `${user._id}_${businessId}`;
-        
-        // Check if we already have this business data
-        if (!userDetails[businessCacheKey]) {
-          await loadUserHistory(user._id, businessId);
-        }
-      } catch (error) {
-        console.error('Error loading business data:', error);
-        onToast('Error loading business data', 'error');
-      } finally {
-        setIsLoadingBusiness(false);
-      }
+    setIsLoadingBusiness(true);
+
+    try {
+      const businessCacheKey = `${user._id}_${businessId}`;
+
+      // Always load business-specific data
+      await loadUserHistory(user._id, businessId);
+
+    } catch (error) {
+      console.error('Error loading business data:', error);
+      onToast('Error loading business data', 'error');
+    } finally {
+      setIsLoadingBusiness(false);
     }
   };
 
@@ -651,165 +659,164 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
   // Get selected business name for display
   const getSelectedBusinessName = () => {
-    if (selectedBusiness === 'all') return 'All Businesses';
+    if (!selectedBusiness) return 'Select a Business';
     const business = businesses.find(b => b._id === selectedBusiness);
     return business ? business.business_name : 'Unknown Business';
   };
 
-  return (
-    <div className="user-details-panel">
-      <div className="panel-header">
-        <div className="user-header-info">
-          <div>
-            <h3>{user?.name}</h3>
-            <p>{user?.email}</p>
+  // Show message if no businesses exist
+  if (businesses.length === 0 && !isLoading) {
+    return (
+      <div className="user-details-panel">
+        <div className="panel-header">
+          <div className="user-header-info">
+            <div>
+              <h3>{user?.name}</h3>
+              <p>{user?.email}</p>
+            </div>
+          </div>
+          <div className="panel-actions">
+            <button onClick={onClose} className="close-button">
+              <X size={20} />
+            </button>
           </div>
         </div>
-        <div className="panel-actions">
-          <PDFExportComponent 
-            user={user}
-            userDetails={currentUserDetails}
-            onToast={onToast}
-            buttonText="Export PDF"
-            buttonSize="medium"
-            className="pdf-export-btn"
-          />
-          
-          <button onClick={onClose} className="close-button">
-            <X size={20} />
-          </button>
+
+        <div className="empty-state">
+          <Building2 size={48} />
+          <p className="empty-title">No businesses found</p>
+          <p className="empty-subtitle">This user hasn't created any businesses yet</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Business Filter Dropdown */}
+  return (
+    <div className="user-details-panel"> 
+<div className="panel-header">
+  <div className="header-row">
+    {/* Left: Business Select */}
+    <div className="header-left">
       {businesses.length > 0 && (
-        <div className="business-filter-section">
-          <div className="business-filter-container">
-            <label htmlFor="business-select" className="business-filter-label">
-              <Building2 size={16} />
-              View data for:
-            </label>
-            <select
-              id="business-select"
-              value={selectedBusiness}
-              onChange={(e) => handleBusinessChange(e.target.value)}
-              className="business-filter-select"
-              disabled={isLoadingBusiness}
-            >
-              <option value="all">All Businesses ({businesses.length})</option>
-              {businesses.map(business => (
-                <option key={business._id} value={business._id}>
-                  {business.business_name}
-                  {business.question_statistics && (
-                    ` (${business.question_statistics.progress_percentage}% complete)`
-                  )}
-                </option>
-              ))}
-            </select>
-            {isLoadingBusiness && (
-              <div className="business-loading">
-                <Loader size={16} className="loading-spinner" />
-              </div>
-            )}
-          </div>
-          
-          {selectedBusiness !== 'all' && (
-            <div className="selected-business-info">
-              <div className="business-info-card">
-                <h4>{getSelectedBusinessName()}</h4>
-                {(() => {
-                  const business = businesses.find(b => b._id === selectedBusiness);
-                  return business ? (
-                    <div className="business-details">
-                      <p><strong>Purpose:</strong> {business.business_purpose}</p>
-                      {business.description && (
-                        <p><strong>Description:</strong> {business.description}</p>
-                      )}
-                      {business.question_statistics && (
-                        <div className="business-stats-mini">
-                          <span className="stat-mini">
-                            {business.question_statistics.completed_questions}/
-                            {business.question_statistics.total_questions} questions
-                          </span>
-                          <span className="stat-mini">
-                            {business.question_statistics.progress_percentage}% complete
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ) : null;
-                })()}
-              </div>
+        <div className="business-filter-inline">
+          <label htmlFor="business-select" className="business-filter-label">
+            <Building2 size={16} />
+            Business:
+          </label>
+          <select
+            id="business-select"
+            value={selectedBusiness}
+            onChange={(e) => handleBusinessChange(e.target.value)}
+            className="business-filter-select"
+            disabled={isLoadingBusiness}
+          >
+            {businesses.map(business => (
+              <option key={business._id} value={business._id}>
+                {business.business_name}
+                {business.question_statistics && (
+                  ` (${business.question_statistics.progress_percentage}% complete)`
+                )}
+              </option>
+            ))}
+          </select>
+          {isLoadingBusiness && (
+            <div className="business-loading">
+              <Loader size={16} className="loading-spinner" />
             </div>
           )}
         </div>
       )}
+    </div>
 
-      <div className="admin-nav">
-        <button
-          onClick={() => setActiveTab('conversation')}
-          className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
-          disabled={isLoading || isLoadingBusiness}
-        >
-          <FileText size={16} />
-          <span>Conversation</span>
-          {conversationCount > 0 && (
-            <span className="tab-badge">{conversationCount}</span>
-          )}
-        </button>
+    {/* Center: Username */}
+    <div className="header-center">
+      <h3 className="user-name-header">{user?.name}</h3>
+      <p className="user-email-header">{user?.email}</p>
+    </div>
 
-        {hasAnalysis && (
-          <button
-            onClick={() => setActiveTab('analysis')}
-            className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-            disabled={isLoading || isLoadingBusiness}
-          >
-            <Target size={16} />
-            <span>Analysis</span>
-          </button>
-        )}
+    {/* Right: Actions */}
+    <div className="header-right">
+      <PDFExportComponent 
+        user={user}
+        userDetails={currentUserDetails}
+        onToast={onToast}
+        buttonText="Export PDF"
+        buttonSize="medium"
+        className=""
+      />
+      <button onClick={onClose} className="close-button">
+        <X size={20} />
+      </button>
+    </div>
+  </div>
+</div>
 
-        <button
-          onClick={() => setActiveTab('businesses')}
-          className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
-          disabled={isLoading}
-        >
-          <Building2 size={16} />
-          <span>Businesses</span>
-          <span className="tab-badge">{businesses.length}</span>
-        </button>
-      </div>
+      {/* Show content always when a business is selected, even if loading */}
+      {selectedBusiness && (
+        <>
+          <div className="admin-nav">
+            <button
+              onClick={() => setActiveTab('conversation')}
+              className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
+              disabled={isLoading || isLoadingBusiness}
+            >
+              <FileText size={16} />
+              <span>Conversation</span>
+              {!isLoadingBusiness && conversationCount > 0 && (
+                <span className="tab-badge">{conversationCount}</span>
+              )}
+            </button>
 
-      <div className="tab-content">
-        {(isLoading || isLoadingBusiness) ? (
-          <div className="loading-details">
-            <Loader size={24} className="loading-spinner" />
-            <span>
-              {isLoadingBusiness ? 'Loading business data...' : 'Loading user data...'}
-            </span>
+            <button
+              onClick={() => setActiveTab('analysis')}
+              className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+              disabled={isLoading || isLoadingBusiness}
+            >
+              <Target size={16} />
+              <span>Analysis</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('businesses')}
+              className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
+              disabled={isLoading}
+            >
+              <Building2 size={16} />
+              <span>Businesses</span>
+              <span className="tab-badge">{businesses.length}</span>
+            </button>
           </div>
-        ) : (
-          <>
-            {activeTab === 'conversation' && (
-              <ConversationTab 
-                conversation={currentUserDetails?.conversation || []} 
-                totalQuestions={currentUserDetails?.stats?.total_questions || 0}
-                completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
-                selectedBusiness={getSelectedBusinessName()}
-              />
+
+          <div className="tab-content">
+            {(isLoadingBusiness) ? (
+              <div className="loading-details">
+                <Loader size={24} className="loading-spinner" />
+                <span>Loading business data...</span>
+              </div>
+            ) : (
+              <>
+                {activeTab === 'conversation' && (
+                  <ConversationTab
+                    conversation={currentUserDetails?.conversation || []}
+                    totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+                    completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+                    selectedBusiness={getSelectedBusinessName()}
+                  />
+                )}
+                {activeTab === 'analysis' && (
+                  <AnalysisTab
+                    analysisData={analysisData}
+                    selectedBusiness={getSelectedBusinessName()}
+                  />
+                )}
+                {activeTab === 'businesses' && (
+                  <BusinessesTab businesses={businesses} />
+                )}
+              </>
             )}
-            {activeTab === 'analysis' && hasAnalysis && (
-              <AnalysisTab 
-                analysisData={analysisData} 
-                selectedBusiness={getSelectedBusinessName()}
-              />
-            )}
-            {activeTab === 'businesses' && (
-              <BusinessesTab businesses={businesses} />
-            )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -867,24 +874,21 @@ const BusinessesTab = ({ businesses }) => {
 };
 
 // Updated AnalysisTab Component with business context
-const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
+const AnalysisTab = ({ analysisData, selectedBusiness = 'Select a Business' }) => {
   if (!analysisData) {
     return (
       <div className="empty-state">
         <Target size={48} />
         <p className="empty-title">No analysis available</p>
         <p className="empty-subtitle">
-          {selectedBusiness !== 'All Businesses' 
-            ? `No analysis found for ${selectedBusiness}`
-            : 'This user hasn\'t generated any business analysis yet'
-          }
+          No analysis found for {selectedBusiness}
         </p>
       </div>
     );
   }
 
-  const hasAnyAnalysis = analysisData.swot || analysisData.customerSegmentation || 
-    analysisData.purchaseCriteria || analysisData.channelHeatmap || 
+  const hasAnyAnalysis = analysisData.swot || analysisData.customerSegmentation ||
+    analysisData.purchaseCriteria || analysisData.channelHeatmap ||
     analysisData.loyaltyNPS || analysisData.capabilityHeatmap;
 
   if (!hasAnyAnalysis) {
@@ -893,10 +897,7 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
         <Target size={48} />
         <p className="empty-title">No analysis available</p>
         <p className="empty-subtitle">
-          {selectedBusiness !== 'All Businesses' 
-            ? `No analysis generated for ${selectedBusiness} yet`
-            : 'This user hasn\'t generated any business analysis yet'
-          }
+          No analysis generated for {selectedBusiness} yet
         </p>
       </div>
     );
@@ -904,15 +905,11 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 
   return (
     <div className="analysis-tab">
-      <div className="business-context">
-        <span className="context-label">Analysis for:</span>
-        <span className="context-value">{selectedBusiness}</span>
-      </div>
-      
-      <div className="analysis-components">
+
+      <div className="analysis-components">s
         {/* SWOT Analysis */}
         {analysisData.swot && (
-          <div className="analysis-component">
+          <div className="analysis-component" data-analysis-type="swot">
             <SwotAnalysis
               analysisResult={analysisData.swot}
               businessName={analysisData.businessName}
@@ -925,7 +922,7 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 
         {/* Customer Segmentation */}
         {analysisData.customerSegmentation && (
-          <div className="analysis-component">
+          <div className="analysis-component" data-analysis-type="customerSegmentation">
             <CustomerSegmentation
               questions={analysisData.questions}
               userAnswers={analysisData.userAnswers}
@@ -941,7 +938,7 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 
         {/* Purchase Criteria */}
         {analysisData.purchaseCriteria && (
-          <div className="analysis-component">
+          <div className="analysis-component" data-analysis-type="purchaseCriteria">
             <PurchaseCriteria
               questions={analysisData.questions}
               userAnswers={analysisData.userAnswers}
@@ -957,7 +954,7 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 
         {/* Channel Heatmap */}
         {analysisData.channelHeatmap && (
-          <div className="analysis-component">
+          <div className="analysis-component" data-analysis-type="channelHeatmap">
             <ChannelHeatmap
               questions={analysisData.questions}
               userAnswers={analysisData.userAnswers}
@@ -973,7 +970,7 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 
         {/* Loyalty NPS */}
         {analysisData.loyaltyNPS && (
-          <div className="analysis-component">
+          <div className="analysis-component" data-analysis-type="loyaltyNPS">
             <LoyaltyNPS
               questions={analysisData.questions}
               userAnswers={analysisData.userAnswers}
@@ -989,7 +986,7 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 
         {/* Capability Heatmap */}
         {analysisData.capabilityHeatmap && (
-          <div className="analysis-component">
+          <div className="analysis-component" data-analysis-type="capabilityHeatmap">
             <CapabilityHeatmap
               questions={analysisData.questions}
               userAnswers={analysisData.userAnswers}
@@ -1008,21 +1005,16 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'All Businesses' }) => {
 };
 
 // ConversationTab Component - Updated to show business context
-const ConversationTab = ({ conversation, totalQuestions = 0, completedQuestions = 0, selectedBusiness = 'All Businesses' }) => {
+const ConversationTab = ({ conversation, totalQuestions = 0, completedQuestions = 0, selectedBusiness = 'Select a Business' }) => {
   if (conversation.length === 0) {
     return (
       <div className="empty-state">
         <FileText size={48} />
         <p className="empty-title">No completed conversations</p>
         <p className="empty-subtitle">
-          {selectedBusiness !== 'All Businesses' 
-            ? `No completed questions found for ${selectedBusiness}`
-            : `This user has ${completedQuestions} out of ${totalQuestions} questions completed across all businesses`
-          }
+          No completed questions found for {selectedBusiness}
         </p>
-        {completedQuestions === 0 && (
-          <p className="empty-help">Questions will appear here once the user completes them</p>
-        )}
+        <p className="empty-help">Questions will appear here once the user completes them</p>
       </div>
     );
   }
@@ -1034,11 +1026,7 @@ const ConversationTab = ({ conversation, totalQuestions = 0, completedQuestions 
     <div className="conversation-tab">
       {/* Stats Header */}
       <div className="conversation-stats">
-        <div className="business-context">
-          <span className="context-label">Viewing:</span>
-          <span className="context-value">{selectedBusiness}</span>
-        </div>
-        
+
         <div className="stats-row">
           <div className="stat-card">
             <div className="stat-number">{totalCompletedQuestions}</div>
@@ -1187,4 +1175,3 @@ const getTimeAgo = (dateString) => {
 };
 
 export default UserHistory;
- 

@@ -678,3 +678,211 @@ body.modal-open {
     height: 80vh;
     width: 120vh !important;
 }
+/* Logo Upload Styles */
+.logo-upload-container {
+  margin-top: 10px;
+}
+
+.logo-upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background-color: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.logo-upload-area:hover {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.logo-upload-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.logo-upload-button:hover {
+  color: #007bff;
+}
+
+.logo-upload-button span {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.logo-upload-button small {
+  font-size: 12px;
+  color: #888;
+}
+
+.logo-preview-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.logo-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 80px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  overflow: hidden;
+}
+
+.logo-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.remove-logo-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.remove-logo-btn:hover {
+  background: #ff3338;
+}
+
+.logo-preview-info {
+  flex: 1;
+}
+
+.logo-preview-info p {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.error-message {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  color: #c33;
+  font-size: 13px;
+}
+
+/* Company Details Logo Display */
+.logo-section {
+  margin-bottom: 20px;
+}
+
+.company-logo-display-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.company-logo-display {
+  max-width: 200px;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Table Logo Styles */
+.table-logo {
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.no-logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  color: #999;
+}
+
+/* Action button styles */
+.icon-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  background-color: #f0f0f0;
+  color: #007bff;
+}
+
+/* Form section spacing */
+.form-section h4 {
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 500;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .logo-preview-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .logo-preview {
+    width: 100px;
+    height: 60px;
+  }
+  
+  .company-logo-display {
+    max-width: 150px;
+    max-height: 75px;
+  }
+  
+  .table-logo {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .no-logo-placeholder {
+    width: 24px;
+    height: 24px;
+  }
+}
