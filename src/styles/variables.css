@@ -203,3 +203,22 @@ body {
 .transition-fast { transition: all var(--transition-fast); }
 .transition-normal { transition: all var(--transition-normal); }
 .transition-slow { transition: all var(--transition-slow); }
+
+[data-theme="dark"] {
+  --color-bg-primary: #121212;
+  --color-bg-secondary: #1e1e1e;
+  --color-bg-light: #2a2a2a;
+  --color-bg-card: #1f1f1f;
+  --color-text-primary: #f1f1f1;
+  --color-text-secondary: #cfcfcf;
+  --color-text-muted: #aaa;
+  --color-border-light: #444;
+  --color-border-medium: #555;
+
+  --color-primary: #90caf9;
+  --color-primary-dark: #42a5f5;
+  --color-primary-light: #e3f2fd;
+
+  --button-bg: #333;
+  --button-text: #fff;
+}

@@ -8,10 +8,12 @@ const PDFExportButton = ({
   onToastMessage,
   disabled = false,
   className = "",
-  style = {}
+  style = {},
+  channelHeatmapReady = false,
+  capabilityHeatmapReady = false
 }) => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
   const exportCompleteToPDF = async (elementId, filename, businessName, title) => {
     try {
@@ -51,60 +53,107 @@ const PDFExportButton = ({
       `;
       document.body.appendChild(loadingDiv);
 
+      // Set container width to match A4 page width (210mm ≈ 794px at 96 DPI)
       const pdfContainer = document.createElement('div');
       pdfContainer.style.cssText = `
         position: absolute;
         left: -9999px;
         top: 0;
-        width: 800px;
+        width: 1200px; /* Matches A4 width in pixels */
         background: white;
-        padding: 40px;
+        padding: 20px; /* Reduced padding to maximize content area */
         font-family: Arial, sans-serif;
         line-height: 1.6;
         color: #333;
       `;
 
       const clonedElement = element.cloneNode(true);
+      // Expand heatmap scroll areas for accurate html2canvas rendering
+const heatmapScrolls = clonedElement.querySelectorAll('.ch-heatmap-scroll');
+heatmapScrolls.forEach(scroll => {
+  scroll.style.overflow = 'visible';
+  scroll.style.maxWidth = 'none';
+  scroll.style.width = '100%';
+});
+
+// Widen the heatmap content wrapper so all cells are visible
+const heatmapWrappers = clonedElement.querySelectorAll('.ch-heatmap-wrapper');
+heatmapWrappers.forEach(wrapper => {
+  wrapper.style.minWidth = '400px'; // adjust based on how wide your heatmap is
+});
+const capabilityheatmap = clonedElement.querySelector('.capability-heatmap .ch-heatmap');
+if (capabilityheatmap) {
+  capabilityheatmap.style.width = '100%'; // Ensure capability heatmap is wide enough
+}
+// Remove tooltips which can cause overlapping issues
+const tooltips = clonedElement.querySelectorAll('.ch-tooltip');
+tooltips.forEach(t => t.remove());
 
       const elementsToRemove = clonedElement.querySelectorAll(
         '.edit-button, .save-button, .cancel-button, .edit-actions, .download-pdf-btn, button, .simple-toast'
       );
       elementsToRemove.forEach(el => el.remove());
 
+      // ===== FIX FOR CANVAS HEATMAPS =====
+      // Convert all canvas elements to images
+     // Convert all canvases in the cloned element into images before pdf capture
+const canvases = clonedElement.querySelectorAll('canvas');
+
+for (const canvas of canvases) {
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.width = canvas.width + 'px';
+    img.style.height = canvas.height + 'px';
+    img.style.display = 'block';
+    canvas.parentNode.replaceChild(img, canvas);
+    console.log("✅ Canvas converted to image for PDF export");
+  } catch (err) {
+    console.error("❌ Error converting canvas to image:", err);
+  }
+}
+
+
+
+      // Allow time for image processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // ===== END FIX =====
+
       const styles = document.createElement('style');
       styles.textContent = `
         .pdf-header {
           text-align: center;
-          margin-bottom: 30px;
-          padding-bottom: 20px;
+          margin-bottom: 20px;
+          padding-bottom: 15px;
           border-bottom: 2px solid #007bff;
         }
         .pdf-title {
-          font-size: 24px;
+          font-size: 22px; /* Slightly smaller for better fit */
           font-weight: bold;
           color: #007bff;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         .pdf-subtitle {
-          font-size: 16px;
+          font-size: 14px;
           color: #666;
           margin-bottom: 5px;
         }
         .pdf-date {
-          font-size: 12px;
+          font-size: 10px;
           color: #999;
         }
         .analysis-section, .strategic-section {
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
         .table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
         }
         .table th, .table td {
           border: 1px solid #ddd;
-          padding: 12px;
+          padding: 10px;
           text-align: left;
           vertical-align: top;
         }
@@ -113,15 +162,15 @@ const PDFExportButton = ({
           font-weight: bold;
         }
         .analysis-box {
-          margin-bottom: 8px;
-          padding: 8px;
+          margin-bottom: 6px;
+          padding: 6px;
           border-radius: 4px;
           border-left: 4px solid #007bff;
           background-color: #f8f9fa;
         }
         .analysis-table {
           width: 100%;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
         }
         .analysis-row {
           display: flex;
@@ -129,9 +178,9 @@ const PDFExportButton = ({
         }
         .analysis-cell {
           flex: 1;
-          padding: 15px;
-          margin: 5px;
-          border-radius: 8px;
+          padding: 12px;
+          margin: 4px;
+          border-radius: 6px;
           border: 1px solid #ddd;
         }
         .strengths-bg { border-left-color: #28a745; background-color: #d4edda; }
@@ -139,23 +188,36 @@ const PDFExportButton = ({
         .opportunities-bg { border-left-color: #007bff; background-color: #d1ecf1; }
         .threats-bg { border-left-color: #ffc107; background-color: #fff3cd; }
         .strategic-item {
-          margin-bottom: 20px;
-          padding: 15px;
+          margin-bottom: 15px;
+          padding: 12px;
           border: 1px solid #eee;
-          border-radius: 8px;
+          border-radius: 6px;
           background-color: #f9f9f9;
         }
         h1, h2, h3, h4, h5 {
           color: #007bff;
-          margin-bottom: 15px;
+          margin-bottom: 12px;
         }
         .conclusion-section {
-          margin-top: 30px;
-          padding: 20px;
+          margin-top: 20px;
+          padding: 15px;
           background-color: #f8f9fa;
-          border-radius: 8px;
+          border-radius: 6px;
           border-left: 4px solid #007bff;
         }
+        /* Heatmap specific styles */
+        .heatmap-container {
+          page-break-inside: avoid;
+          margin: 15px 0;
+        }
+        .canvas-replacement {
+          max-width: 100%;
+          height: auto;
+          border: 1px solid #eee;
+          border-radius: 4px;
+        }
+        
+  
       `;
 
       pdfContainer.appendChild(styles);
@@ -173,11 +235,11 @@ const PDFExportButton = ({
 
       const footer = document.createElement('div');
       footer.style.cssText = `
-        margin-top: 40px;
-        padding-top: 20px;
+        margin-top: 20px;
+        padding-top: 15px;
         border-top: 1px solid #ddd;
         text-align: center;
-        font-size: 12px;
+        font-size: 10px;
         color: #666;
       `;
       footer.innerHTML = `
@@ -188,26 +250,28 @@ const PDFExportButton = ({
 
       document.body.appendChild(pdfContainer);
 
+      // Render with high resolution and full A4 width
       const canvas = await html2canvas(pdfContainer, {
-        width: 800,
+        width: 1200, // A4 width in pixels
         height: pdfContainer.scrollHeight,
-        scale: 2,
+        scale: 2, // High resolution for clarity
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false // Disable console logging for better performance
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const canvasWidth = canvas.width; // 794px * scale (2) = 1588px
       const canvasHeight = canvas.height;
 
-      const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
-      const imgWidth = canvasWidth * ratio;
-      const imgHeight = canvasHeight * ratio;
+      // Scale to fit full A4 page width
+      const imgWidth = pdfWidth; // Use full A4 width (210mm)
+      const imgHeight = (canvasHeight / canvasWidth) * imgWidth; // Maintain aspect ratio
 
       const totalPages = Math.ceil(imgHeight / pdfHeight);
 
@@ -216,6 +280,7 @@ const PDFExportButton = ({
           pdf.addPage();
         }
 
+        // Adjust yOffset to start at top of page
         const yOffset = -(pdfHeight * i);
         pdf.addImage(imgData, 'PNG', 0, yOffset, imgWidth, imgHeight);
       }
@@ -241,6 +306,10 @@ const PDFExportButton = ({
       onToastMessage("No analysis available to export", "warning");
       return;
     }
+//     if (!channelHeatmapReady || !capabilityHeatmapReady) {
+//   onToastMessage("Please wait for all heatmaps to render before exporting.", "warning");
+//   return;
+// }
 
     try {
       setIsExportingPDF(true);
@@ -258,6 +327,7 @@ const PDFExportButton = ({
       onToastMessage("📄 Complete analysis PDF downloaded successfully!", "success");
     } catch (error) {
       onToastMessage("Failed to generate PDF. Please try again.", "error");
+      console.error("PDF generation error:", error);
     } finally {
       setIsExportingPDF(false);
     }

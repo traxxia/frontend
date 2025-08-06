@@ -72,6 +72,25 @@ body {
   overflow: hidden;
 }
 
+/* src/styles/Login.css */
+
+.theme-icon-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.theme-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color); /* Use CSS variable for theme-based color */
+}
+
+.theme-toggle-button:hover {
+  color: var(--primary-color);
+}
+
 /* Left Section - Branding */
 .login-left-section {
   flex: 1;
