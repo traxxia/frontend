@@ -209,6 +209,7 @@ const UserOverview = ({ onToast }) => {
           <Search size={16} />
           <input
             type="text"
+            className='form-control'
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -217,6 +218,7 @@ const UserOverview = ({ onToast }) => {
 
         <select
           value={selectedCompany}
+          
           onChange={(e) => {
             console.log('Company filter changed to:', e.target.value); // Debug log
             setSelectedCompany(e.target.value);
@@ -291,6 +293,7 @@ const UserOverview = ({ onToast }) => {
                     <label>Name *</label>
                     <input
                       type="text"
+                      className='form-control'
                       value={newUser.name}
                       onChange={(e) => handleChange('name', e.target.value)}
                       required
@@ -302,6 +305,7 @@ const UserOverview = ({ onToast }) => {
                     <label>Email *</label>
                     <input
                       type="email"
+                      className='form-control'
                       value={newUser.email}
                       onChange={(e) => handleChange('email', e.target.value)}
                       required
@@ -313,6 +317,7 @@ const UserOverview = ({ onToast }) => {
                     <label>Password *</label>
                     <input
                       type="password"
+                      className='form-control'
                       value={newUser.password}
                       onChange={(e) => handleChange('password', e.target.value)}
                       required
@@ -340,6 +345,7 @@ const UserOverview = ({ onToast }) => {
                     <label>Job Title</label>
                     <input
                       type="text"
+                      className='form-control'
                       placeholder="Software Engineer (optional)"
                       value={newUser.job_title || ''}
                       onChange={(e) => handleChange('job_title', e.target.value)}

@@ -243,6 +243,35 @@ body {
 .company-table tbody tr:nth-child(even) {
   background: #f9fafb;
 }
+[data-theme="dark"] .company-table tbody tr:nth-child(even) {
+  background: var(--text-light);
+}
+[data-theme="dark"] label  {
+  color: var(--color-text-dark) !important;
+}
+[data-theme="dark"] h4 {
+  color: var(--color-text-dark) !important;
+}
+[data-theme="dark"] input::placeholder {
+  color: var(--color-text-dark); /* or use a specific color like #aaa */
+  opacity: 0.3; /* optional: makes it slightly faded */
+}
+[data-theme="dark"] select {
+  background-color: var(--color-form-control); /* Darker background for dark mode */
+  appearance: none;
+}
+[data-theme="dark"] .form-field select {
+  color: var(--color-text-dark);
+  
+}
+[data-theme="dark"] .filters-section select {
+ 
+  color: var(--color-text-dark);
+}
+[data-theme="dark"] option {
+  color: var(--color-text-dark);
+}
+
 
 .company-table tbody tr:hover {
   background: rgba(79, 70, 229, 0.05);

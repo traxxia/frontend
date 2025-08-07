@@ -89,7 +89,7 @@ html, body {
 
 .header-left, 
 .header-right {
-  width: 40px;
+  width: fit-content;
   display: flex;
   justify-content: center;
 }
@@ -162,7 +162,69 @@ html, body {
   background: white; 
   box-shadow: 0 4px 4px -2px rgba(59, 130, 246, 0.15); /* Shadow only below */
 }
-/* ========== DESKTOP TABS ========== */
+[data-theme="dark"] .welcome-area {
+  background: var(--color-bg-primary); /* Dark mode background */
+   /* Dark mode border */
+}
+[data-theme="dark"] .welcome-area p  {
+  color: var(--color-text-dark); /* Dark mode text color */
+}
+[data-theme="dark"] .welcome-heading {
+  color: var(--color-text-dark); 
+}
+[data-theme="dark"] .chat-section {
+  background-color: var(--color-bg-primary); /* Dark mode text color */
+}
+[data-theme="dark"] .desktop-tabs{
+  background-color: var(--color-bg-primary); 
+}
+[data-theme="dark"] .desktop-tab {
+  color: var(--color-text-dark);
+}
+[data-theme="dark"] .info-panel {
+  background-color: var(--color-bg-primary); /* Dark mode text color */
+}
+[data-theme="dark"] .item-label {
+  color: var(--color-text-dark);
+}
+[data-theme="dark"] .item-text {
+  color: var(--color-text-dark);
+}
+[data-theme="dark"] .brief-item.edited:hover {
+  background-color: rgba(59, 58, 58, 0.338);
+}
+[data-theme="dark"] .input-area {
+  background-color: var(--color-bg-primary);
+}
+
+[data-theme="dark"] .messages-container {
+  background-color: var(--color-bg-primary);
+}
+[data-theme="dark"] .message-bubble.bot {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-dark);
+}
+[data-theme="dark"] textarea.message-input {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-dark) !important;
+}
+[data-theme=dark] .no-data {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-dark);
+  border: 2px dashed var(--color-border-secondary);
+}
+[data-theme="dark"] .back-button {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-dark) !important;
+}
+[data-theme="dark"] .expanded-analysis-content {
+  background-color: var(--color-bg-primary);
+}
+[data-theme="dark"] #analysis-pdf-content {
+  background-color: var(--color-bg-primary) !important;
+}
+/* =
+========= DESKTOP TABS ========== */
 .desktop-tabs {
   display: flex;
   border-bottom: 1px solid #e1e5e9;

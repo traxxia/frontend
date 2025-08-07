@@ -102,7 +102,7 @@ const MenuBar = ( ) => {
                 id="dropdown-user"
                 className="user-menu p-0 border-0 shadow-none"
               >
-                <User size={20} className="text-dark" />
+                <User size={20} className="navbar_icon"/>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
                 <Dropdown.Header className="text-muted small">

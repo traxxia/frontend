@@ -98,7 +98,7 @@ const Login = () => {
       </div>
 
       <div className="login-right-section">
-           <div className="theme-icon-toggle" style={{ position: "absolute", top: "20px", right: "20px" }}>
+           <div className="theme-icon-toggle" >
   <button onClick={toggleTheme} className="theme-toggle-button">
     <FontAwesomeIcon
       icon={theme === "dark" ? faSun : faMoon}

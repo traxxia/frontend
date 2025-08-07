@@ -88,6 +88,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                 <input
                   type="text"
                   name="company_name"
+                  className='form-control'
                   value={formData.company_name}
                   onChange={handleChange}
                   required
@@ -153,6 +154,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                 <input
                   type="text"
                   name="admin_name"
+                  className='form-control'
                   value={formData.admin_name}
                   onChange={handleChange}
                   required
@@ -165,6 +167,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                 <input
                   type="email"
                   name="admin_email"
+                  className='form-control'
                   value={formData.admin_email}
                   onChange={handleChange}
                   required
@@ -177,6 +180,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                 <input
                   type="password"
                   name="admin_password"
+                  className='form-control'
                   value={formData.admin_password}
                   onChange={handleChange}
                   required
