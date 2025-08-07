@@ -136,8 +136,8 @@ const ChatComponent = ({
 
       if (!question) return;
 
-      // Track completed questions
-      if (conversation.completion_status === 'complete') {
+      // Track completed and skipped questions
+      if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
         completedQuestionIds.add(questionId);
 
         // Notify parent about completed question
@@ -145,66 +145,86 @@ const ChatComponent = ({
           onQuestionCompleted(questionId);
         }
 
-        // Get all answers for this completed question and concatenate them
-        const allAnswers = conversation.conversation_flow
-          .filter(item => item.type === 'answer')
-          .map(a => a.text.trim())
-          .filter(text => text.length > 0);
+        // Handle skipped questions
+        if (conversation.completion_status === 'skipped') {
+          onNewAnswer?.(questionId, '[Question Skipped]');
+        } else {
+          // Get all answers for completed questions and concatenate them
+          const allAnswers = conversation.conversation_flow
+            .filter(item => item.type === 'answer')
+            .map(a => a.text.trim())
+            .filter(text => text.length > 0 && text !== '[Question Skipped]');
 
-        if (allAnswers.length > 0) {
-          const concatenatedAnswer = allAnswers.join('. ');
-          // Notify parent with concatenated answer for completed questions
-          onNewAnswer?.(questionId, concatenatedAnswer);
+          if (allAnswers.length > 0) {
+            const concatenatedAnswer = allAnswers.join('. ');
+            onNewAnswer?.(questionId, concatenatedAnswer);
+          }
         }
       }
 
-      // Add main question if there are interactions
-      if (conversation.conversation_flow.length > 0) {
+      // Add main question if there are interactions or if it's skipped
+      if (conversation.conversation_flow.length > 0 || conversation.is_skipped) {
         chatMessages.push({
           id: `${questionId}_main_question`,
           type: 'bot',
           text: question.question_text,
-          timestamp: new Date(conversation.conversation_flow[0].timestamp),
+          timestamp: new Date(conversation.conversation_flow[0]?.timestamp || new Date()),
           questionId: questionId,
           phase: conversation.phase,
           isFollowUp: false
         });
         askedQuestions.add(questionId);
-      }
 
-      // Process conversation flow
-      let followupQuestionCount = 0;
-
-      conversation.conversation_flow.forEach((interaction, index) => {
-        const messageId = `${questionId}_${interaction.timestamp}_${index}`;
-
-        if (interaction.type === 'question') {
-          // Follow-up question
-          followupQuestionCount++;
+        // If question is skipped, add the skip message
+        if (conversation.is_skipped) {
           chatMessages.push({
-            id: messageId,
-            type: 'bot',
-            text: interaction.text,
-            timestamp: new Date(interaction.timestamp),
-            questionId: questionId,
-            phase: conversation.phase,
-            isFollowUp: true
-          });
-        } else if (interaction.type === 'answer') {
-          // Answer (main or follow-up)
-          const isFollowupAnswer = followupQuestionCount > 0;
-
-          chatMessages.push({
-            id: messageId,
+            id: `${questionId}_skipped`,
             type: 'user',
-            text: interaction.text,
-            timestamp: new Date(interaction.timestamp),
+            text: '[Question Skipped]',
+            timestamp: new Date(conversation.last_updated || new Date()),
             questionId: questionId,
             phase: conversation.phase,
-            isFollowUp: isFollowupAnswer
+            isFollowUp: false,
+            isSkipped: true
           });
         }
-      });
+      }
+
+      // Process conversation flow for non-skipped questions
+      if (!conversation.is_skipped) {
+        let followupQuestionCount = 0;
+
+        conversation.conversation_flow.forEach((interaction, index) => {
+          const messageId = `${questionId}_${interaction.timestamp}_${index}`;
+
+          if (interaction.type === 'question') {
+            // Follow-up question
+            followupQuestionCount++;
+            chatMessages.push({
+              id: messageId,
+              type: 'bot',
+              text: interaction.text,
+              timestamp: new Date(interaction.timestamp),
+              questionId: questionId,
+              phase: conversation.phase,
+              isFollowUp: true
+            });
+          } else if (interaction.type === 'answer') {
+            // Answer (main or follow-up)
+            const isFollowupAnswer = followupQuestionCount > 0;
+
+            chatMessages.push({
+              id: messageId,
+              type: 'user',
+              text: interaction.text,
+              timestamp: new Date(interaction.timestamp),
+              questionId: questionId,
+              phase: conversation.phase,
+              isFollowUp: isFollowupAnswer
+            });
+          }
+        });
+      }
     });
 
     // Sort messages chronologically and update state
@@ -214,10 +234,10 @@ const ChatComponent = ({
 
     // Determine current state
     const lastConversation = conversationsData.conversations
-      .filter(conv => conv.conversation_flow.length > 0)
-      .sort((a, b) => new Date(b.last_updated) - new Date(a.last_updated))[0];
+      .filter(conv => conv.conversation_flow.length > 0 || conv.is_skipped)
+      .sort((a, b) => new Date(b.last_updated || b.created_at) - new Date(a.last_updated || a.created_at))[0];
 
-    if (lastConversation?.completion_status === 'incomplete') {
+    if (lastConversation?.completion_status === 'incomplete' && !lastConversation.is_skipped) {
       handleIncompleteConversation(lastConversation, questionMap, availableQuestions, completedQuestionIds, askedQuestions);
     } else {
       showNextQuestion(availableQuestions, completedQuestionIds, askedQuestions);
@@ -390,6 +410,7 @@ const ChatComponent = ({
       setIsSaving(false);
     }
   };
+
   const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
     console.log(`Phase ${phase} completed`);
 
@@ -402,12 +423,14 @@ const ChatComponent = ({
       }
     }
   };
+
   const PHASES = {
     INITIAL: "initial",
     ESSENTIAL: "essential",
     GOOD: "good",
     EXCELLENT: "excellent",
   };
+
   const handleQuestionCompleted = (questionId) => {
     setCompletedQuestions(prev => {
       const newCompletedSet = new Set([...prev, questionId]);
@@ -423,15 +446,16 @@ const ChatComponent = ({
         allCompletedQuestions: Array.from(newCompletedSet)
       });
 
-      // Don't trigger analysis generation here - it will be triggered after save success
       return newCompletedSet;
     });
   };
+
+  // Updated skip function to use the new API endpoint
   const saveSkippedQuestion = async (questionId) => {
     try {
       const token = getAuthToken();
 
-      const response = await fetch(`${API_BASE_URL}/api/conversations`, {
+      const response = await fetch(`${API_BASE_URL}/api/conversations/skip`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -439,13 +463,7 @@ const ChatComponent = ({
         },
         body: JSON.stringify({
           question_id: questionId,
-          answer_text: '[Question Skipped]',
-          business_id: selectedBusinessId,
-          is_complete: false, // Changed from true to false
-          metadata: {
-            timestamp: new Date().toISOString(),
-            skipped: true
-          }
+          business_id: selectedBusinessId
         })
       });
 
@@ -524,7 +542,8 @@ const ChatComponent = ({
         addMessageLocally('user', '[Question Skipped]', {
           questionId: pendingValidation.questionId,
           phase: pendingValidation.phase,
-          isFollowUp: true
+          isFollowUp: true,
+          isSkipped: true
         });
 
         const saveResult = await saveSkippedQuestion(pendingValidation.questionId);
@@ -538,7 +557,8 @@ const ChatComponent = ({
         // Skip main question
         addMessageLocally('user', '[Question Skipped]', {
           questionId: nextQuestion._id,
-          phase: nextQuestion.phase
+          phase: nextQuestion.phase,
+          isSkipped: true
         });
 
         const saveResult = await saveSkippedQuestion(nextQuestion._id);
@@ -635,6 +655,7 @@ const ChatComponent = ({
       setIsValidatingAnswer(false);
     }
   };
+
   const handleMainAnswer = async (answer) => {
     if (!nextQuestion?._id) {
       showToastMessage('Unable to submit answer: Question is missing', 'error');
@@ -767,8 +788,11 @@ const ChatComponent = ({
                 </div>
               )}
 
-              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''}`}>
-                <div className="message-text">{message.text}</div>
+              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''}`}>
+                <div className="message-text">
+                  {message.text}
+                  {message.isSkipped && <span className="skip-indicator"></span>}
+                </div>
                 <div className="message-timestamp">
                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {message.type === 'bot' && message.phase && (

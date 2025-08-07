@@ -20,7 +20,7 @@ const EditableBriefSection = ({
 
   const inputRefs = useRef({});
   const { t } = useTranslation();
-  
+
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
@@ -59,7 +59,7 @@ const EditableBriefSection = ({
     setTimeout(() => setShowToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
-  const autoSaveUpdatedAnswer = async (field, newAnswer) => {
+  const updateConversationAnswer = async (field, newAnswer) => {
     try {
       setIsSaving(true);
       const token = getAuthToken();
@@ -71,6 +71,7 @@ const EditableBriefSection = ({
 
       if (!question) throw new Error('Question not found');
 
+      // Use the existing POST endpoint with edit metadata
       const response = await fetch(`${API_BASE_URL}/api/conversations`, {
         method: 'POST',
         headers: {
@@ -85,19 +86,20 @@ const EditableBriefSection = ({
           is_complete: true,
           metadata: {
             from_editable_brief: true,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            is_edit: true
           }
         })
       });
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.error || 'Failed to save updated answer');
+        throw new Error(errData.error || 'Failed to update answer');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Auto-save error:', error);
+      console.error('Update conversation error:', error);
       throw error;
     } finally {
       setIsSaving(false);
@@ -121,9 +123,10 @@ const EditableBriefSection = ({
 
     if (newValue.trim()) {
       try {
-        await autoSaveUpdatedAnswer(field, newValue.trim());
+        // Update the conversation in backend
+        await updateConversationAnswer(field, newValue.trim());
 
-        // Notify parent component and wait for state update
+        // Update local state immediately
         if (onAnswerUpdate) {
           onAnswerUpdate(field.questionId, newValue.trim());
         }
@@ -131,11 +134,11 @@ const EditableBriefSection = ({
         setEditedFields(prev => new Set([...prev, field.key]));
         showToastMessage('Answer updated and saved!', 'success');
 
-        // Trigger analysis regeneration after a brief delay to ensure state updates
+        // Trigger analysis regeneration with the updated answer - PASS THE UPDATED ANSWER
         if (onAnalysisRegenerate) {
           setTimeout(() => {
-            onAnalysisRegenerate();
-          }, 200);
+            onAnalysisRegenerate(field.questionId, newValue.trim()); // Pass questionId and updated answer
+          }, 300);
         }
 
       } catch (error) {
@@ -240,7 +243,7 @@ const EditableBriefSection = ({
         <div className="analysis-regenerating-banner">
           <Loader size={16} className="spinner" />
           <span>
-            {isSaving && 'Auto-saving...'}
+            {isSaving && 'Saving changes...'}
             {isAnalysisRegenerating && 'Regenerating analysis...'}
           </span>
         </div>

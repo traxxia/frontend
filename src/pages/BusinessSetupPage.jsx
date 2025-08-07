@@ -55,7 +55,7 @@ const BusinessSetupPage = () => {
   const [swotAnalysisResult, setSwotAnalysisResult] = useState("");
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
   const [strategicData, setStrategicData] = useState(null);
-
+  const [hasAnalysisData, setHasAnalysisData] = useState(false);
   // Individual component regenerating states
   const [isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating] = useState(false);
   const [isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating] = useState(false);
@@ -155,21 +155,42 @@ const BusinessSetupPage = () => {
 
     return mandatoryQuestions.every((q) => {
       const questionId = q._id;
-      return userAnswers[questionId] && userAnswers[questionId].trim();
+      // Check if question is either answered OR completed (including skipped)
+      return (userAnswers[questionId] && userAnswers[questionId].trim()) ||
+        completedQuestions.has(questionId);
     });
   };
 
   const getUnlockedFeatures = () => {
-    // Check using completedQuestions set which is more reliable
+    // If questions aren't loaded yet, check if we have analysis data
+    if (!questionsLoaded || questions.length === 0) {
+      return {
+        brief: true,
+        analysis: hasAnalysisData
+      };
+    }
+
+    // Get initial phase mandatory questions
     const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+
+    if (initialQuestions.length === 0) {
+      return {
+        brief: true,
+        analysis: hasAnalysisData
+      };
+    }
+
+    // Check completion using completedQuestions set
     const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
-    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length;
 
     return {
       brief: true,
-      analysis: isInitialComplete
+      analysis: isInitialComplete || hasAnalysisData
     };
   };
+
+
 
   const extractBusinessName = (text) => {
     const patterns = [
@@ -185,7 +206,33 @@ const BusinessSetupPage = () => {
     }
     return null;
   };
+  const loadCompletedQuestionsFromAPI = (conversations) => {
+    const completedSet = new Set();
+    const answersMap = {};
 
+    conversations.forEach(conversation => {
+      if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
+        const questionId = conversation.question_id;
+        completedSet.add(questionId);
+
+        if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
+          answersMap[questionId] = '[Question Skipped]';
+        } else {
+          // Get all answers
+          const allAnswers = conversation.conversation_flow
+            .filter(item => item.type === 'answer')
+            .map(a => a.text.trim())
+            .filter(text => text.length > 0 && text !== '[Question Skipped]');
+
+          if (allAnswers.length > 0) {
+            answersMap[questionId] = allAnswers.join('. ');
+          }
+        }
+      }
+    });
+
+    return { completedSet, answersMap };
+  };
   // Load existing analysis from API
   const loadExistingAnalysis = async () => {
     try {
@@ -199,6 +246,20 @@ const BusinessSetupPage = () => {
 
       if (response.ok) {
         const data = await response.json();
+
+        // Load completed questions and answers from conversations
+        if (data.conversations && data.conversations.length > 0) {
+          const { completedSet, answersMap } = loadCompletedQuestionsFromAPI(data.conversations);
+
+          // Update both states
+          setCompletedQuestions(completedSet);
+          setUserAnswers(prev => ({ ...prev, ...answersMap }));
+
+          console.log('Loaded completed questions:', Array.from(completedSet));
+          console.log('Loaded user answers:', answersMap);
+        }
+
+        // Load analysis data
         if (data.phase_analysis && data.phase_analysis.length > 0) {
           loadExistingAnalysisData(data.phase_analysis);
         }
@@ -221,9 +282,12 @@ const BusinessSetupPage = () => {
           }
         });
 
+      let hasAnyAnalysis = false;
+
       // Load each analysis type
       Object.values(latestAnalysisByType).forEach(analysis => {
         const { analysis_type, analysis_data } = analysis;
+        hasAnyAnalysis = true; // Set flag if we have any analysis
 
         switch (analysis_type) {
           case 'swot':
@@ -256,10 +320,11 @@ const BusinessSetupPage = () => {
         }
       });
 
+      // Set the flag to show analysis tabs
+      setHasAnalysisData(hasAnyAnalysis);
+
       const analysisCount = Object.keys(latestAnalysisByType).length;
-      // if (analysisCount > 0) {
-      //   showToastMessage(`✅ Loaded ${analysisCount} existing analysis components`, 'success');
-      // }
+      console.log(`Loaded ${analysisCount} analysis components`);
     } catch (error) {
       console.error('Error loading existing analysis data:', error);
     }
@@ -297,15 +362,15 @@ const BusinessSetupPage = () => {
       const dataSource = freshAnswers || userAnswers;
 
       questions
-        .filter(q => dataSource[q._id] && dataSource[q._id] !== '[Question Skipped]')
+        .filter(q => dataSource[q._id]) // Include all questions with any answer (including skipped)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(dataSource[question._id]);
+          answersArray.push(dataSource[question._id]); // Includes '[Question Skipped]'
         });
 
       if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for Porter\'s Five Forces analysis');
+        throw new Error('No questions available for Porter\'s Five Forces analysis');
       }
 
       const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
@@ -342,15 +407,15 @@ const BusinessSetupPage = () => {
       const dataSource = freshAnswers || userAnswers;
 
       questions
-        .filter(q => dataSource[q._id] && dataSource[q._id] !== '[Question Skipped]')
+        .filter(q => dataSource[q._id]) // Include all questions with any answer (including skipped)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(dataSource[question._id]);
+          answersArray.push(dataSource[question._id]); // Includes '[Question Skipped]'
         });
 
       if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for PESTEL analysis');
+        throw new Error('No questions available for PESTEL analysis');
       }
 
       const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
@@ -385,20 +450,16 @@ const BusinessSetupPage = () => {
       const answersArray = [];
       const dataSource = freshAnswers || userAnswers;
 
-      console.log('Generating strategic analysis with data:', Object.keys(dataSource).length, 'answers');
-
       questions
-        .filter(q => dataSource[q._id] && dataSource[q._id] !== '[Question Skipped]')
+        .filter(q => dataSource[q._id]) // Include all questions with any answer (including skipped)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(dataSource[question._id]);
+          answersArray.push(dataSource[question._id]); // Includes '[Question Skipped]'
         });
 
-      console.log('Strategic analysis: Processing', questionsArray.length, 'Q&A pairs');
-
       if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for strategic analysis');
+        throw new Error('No questions available for strategic analysis');
       }
 
       const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
@@ -419,14 +480,10 @@ const BusinessSetupPage = () => {
       }
 
       const result = await response.json();
-      console.log('Strategic API response:', result);
-
-      // The API might return the data directly or in a nested structure
       const strategicContent = result.strategic_analysis || result.strategic || result;
 
       setStrategicData(strategicContent);
       await saveAnalysisToBackend(strategicContent, 'strategic');
-      console.log('Strategic analysis completed and saved');
     } catch (error) {
       console.error('Error generating strategic analysis:', error);
       throw error;
@@ -438,13 +495,10 @@ const BusinessSetupPage = () => {
       const questionsArray = [];
       const answersArray = [];
 
-      console.log(`Generating ${analysisType} analysis with current userAnswers:`, Object.keys(userAnswers).length);
-
       questions
         .filter(q => {
           const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
-          console.log(`Question ${q._id}: ${hasAnswer ? 'HAS' : 'NO'} answer`);
-          return hasAnswer;
+          return hasAnswer; // Include both answered and skipped questions
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
@@ -465,13 +519,11 @@ const BusinessSetupPage = () => {
             .trim();
 
           questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
+          answersArray.push(cleanAnswer); // This will include '[Question Skipped]'
         });
 
-      console.log(`${analysisType} analysis: Processing ${questionsArray.length} Q&A pairs`);
-
       if (questionsArray.length === 0) {
-        throw new Error(`No answered questions available for ${analysisType} analysis`);
+        throw new Error(`No questions available for ${analysisType} analysis`);
       }
 
       const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
@@ -504,7 +556,6 @@ const BusinessSetupPage = () => {
       if (dataToSave) {
         setter(dataToSave);
         await saveAnalysisToBackend(dataToSave, analysisType);
-        console.log(`${analysisType} analysis completed and saved`);
       }
     } catch (error) {
       console.error(`Error generating ${analysisType} analysis:`, error);
@@ -518,9 +569,9 @@ const BusinessSetupPage = () => {
       const answersArray = [];
 
       questions.forEach(question => {
-        if (userAnswers[question._id]) {
+        if (userAnswers[question._id]) { // Include both answered and skipped
           questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
+          answersArray.push(userAnswers[question._id]); // Includes '[Question Skipped]'
         }
       });
 
@@ -550,218 +601,78 @@ const BusinessSetupPage = () => {
       throw error;
     }
   };
-
-  // Main function to regenerate all analysis
-  const regenerateAllAnalysis = async () => {
-    // Check current phase completion status
-    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-    const completedInitialQuestions = initialQuestions.filter(q => {
-      return userAnswers[q._id] && userAnswers[q._id].trim();
-    });
-
-    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-
-    if (!isInitialComplete) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
-
-    if (isRegeneratingRef.current) {
-      return;
-    }
-
+  const generateSWOTAnalysisWithAnswers = async (answersToUse) => {
     try {
-      isRegeneratingRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating all analysis components...", "info");
+      const questionsArray = [];
+      const answersArray = [];
 
-      // Clear existing data
-      setSwotAnalysisResult("");
-      setCustomerSegmentationData(null);
-      setPurchaseCriteriaData(null);
-      setChannelHeatmapData(null);
-      setLoyaltyNPSData(null);
-      setCapabilityHeatmapData(null);
-      setStrategicData(null); // Add this
-      setPortersData(null);
-      setPestelData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Generate all analysis including strategic
-      const analysisPromises = [
-        generateSWOTAnalysis(),
-        generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData),
-        generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData),
-        generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData),
-        generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData),
-        generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData),
-        generateStrategicAnalysis(),
-        generatePortersAnalysis(),
-        generatePestelAnalysis()
-
-      ];
-
-      const results = await Promise.allSettled(analysisPromises);
-      const failures = results.filter(result => result.status === 'rejected');
-
-      if (failures.length > 0) {
-        showToastMessage(
-          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
-          failures.length < analysisPromises.length ? "warning" : "error"
-        );
-      } else {
-        showToastMessage("All analysis components regenerated successfully!", "success");
-      }
-
-    } catch (error) {
-      console.error('Error regenerating all analysis:', error);
-      showToastMessage("Failed to regenerate analysis components. Please try again.", "error");
-    } finally {
-      isRegeneratingRef.current = false;
-      setIsAnalysisRegenerating(false);
-    }
-  };
-
-
-  // Event Handlers
-  const handleQuestionsLoaded = (loadedQuestions) => {
-    setQuestions(loadedQuestions);
-    setQuestionsLoaded(true);
-  };
-
-  const handleNewAnswer = (questionId, answer) => {
-    console.log('New answer received:', { questionId, answer: answer.substring(0, 50) + '...' });
-
-    setUserAnswers(prev => {
-      const updatedAnswers = {
-        ...prev,
-        [questionId]: answer
-      };
-
-      console.log('Updated userAnswers:', Object.keys(updatedAnswers));
-      return updatedAnswers;
-    });
-
-    // Update business data based on specific questions
-    const updates = {};
-    if (questionId === 1) {
-      const businessName = extractBusinessName(answer);
-      if (businessName) updates.name = businessName;
-      updates.whatWeDo = answer;
-    } else if (questionId === 3) {
-      updates.targetAudience = answer;
-    } else if (questionId === 4) {
-      updates.products = answer;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      setBusinessData(prev => ({ ...prev, ...updates }));
-    }
-  };
-
-  const handleQuestionCompleted = (questionId) => {
-    setCompletedQuestions(prev => {
-      const newCompletedSet = new Set([...prev, questionId]);
-
-      console.log('Question completed:', {
-        questionId,
-        totalCompleted: newCompletedSet.size,
-        allCompleted: Array.from(newCompletedSet)
+      questions.forEach(question => {
+        if (answersToUse[question._id]) { // Include both answered and skipped
+          questionsArray.push(question.question_text);
+          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+        }
       });
 
-      return newCompletedSet;
-    });
-  };
-  const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
-    console.log(`Phase ${phase} completed with updated set:`, Array.from(updatedCompletedSet));
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
 
-    if (phase === 'initial') {
-      setCompletedQuestions(updatedCompletedSet);
-
-      // Generate analysis with fresh data from backend
-      console.log('Triggering analysis generation after phase completion');
-      await regenerateAllAnalysisForCompletion();
-    }
-  };
-  
-  // Special function for auto-generation when phase is completed
-  const regenerateAllAnalysisForCompletion = async () => {
-    if (isRegeneratingRef.current) {
-      console.log('Analysis already in progress, skipping');
-      return;
-    }
-
-    try {
-      isRegeneratingRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Initial phase completed! Generating analysis...", "info");
-
-      // Clear existing data
-      setSwotAnalysisResult("");
-      setCustomerSegmentationData(null);
-      setPurchaseCriteriaData(null);
-      setChannelHeatmapData(null);
-      setLoyaltyNPSData(null);
-      setCapabilityHeatmapData(null);
-      setStrategicData(null); // Add this
-      setPortersData(null);
-      setPestelData(null);
-
-      // Fetch fresh conversation data to get all answers
-      const freshAnswers = await getFreshConversationData();
-
-      console.log('Starting analysis generation with fresh answers:', Object.keys(freshAnswers).length);
-
-      // Generate all analysis including strategic
-      const analysisPromises = [
-        generateSWOTAnalysisWithData(freshAnswers),
-        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers),
-        generateSingleAnalysisWithData('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, freshAnswers),
-        generateSingleAnalysisWithData('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, freshAnswers),
-        generateSingleAnalysisWithData('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, freshAnswers),
-        generateSingleAnalysisWithData('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, freshAnswers),
-        generateStrategicAnalysis(freshAnswers), generatePortersAnalysis(freshAnswers),
-        generatePestelAnalysis(freshAnswers)
-      ];
-
-      const results = await Promise.allSettled(analysisPromises);
-      const failures = results.filter(result => result.status === 'rejected');
-
-      if (failures.length > 0) {
-        showToastMessage(
-          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
-          failures.length < analysisPromises.length ? "warning" : "error"
-        );
-      } else {
-        showToastMessage("All analysis components generated successfully!", "success");
+      if (!response.ok) {
+        throw new Error(`SWOT API returned ${response.status}`);
       }
 
+      const result = await response.json();
+      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+
+      setSwotAnalysisResult(analysisContent);
+      await saveAnalysisToBackend(analysisContent, 'swot');
     } catch (error) {
-      console.error('Error generating analysis:', error);
-      showToastMessage("Failed to generate analysis components. Please try again.", "error");
-    } finally {
-      isRegeneratingRef.current = false;
-      setIsAnalysisRegenerating(false);
+      console.error('Error generating SWOT analysis:', error);
+      throw error;
     }
   };
-  
-  const generateSingleAnalysisWithData = async (analysisType, endpoint, dataKey, setter, freshAnswers) => {
+  const generateSingleAnalysisWithAnswers = async (analysisType, endpoint, dataKey, setter, answersToUse) => {
     try {
       const questionsArray = [];
       const answersArray = [];
 
       questions
-        .filter(q => freshAnswers[q._id] && freshAnswers[q._id] !== '[Question Skipped]')
+        .filter(q => {
+          const hasAnswer = answersToUse[q._id] && answersToUse[q._id].trim();
+          return hasAnswer; // Include both answered and skipped questions
+        })
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(freshAnswers[question._id]);
+          const cleanQuestion = String(question.question_text)
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          const cleanAnswer = String(answersToUse[question._id])
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          questionsArray.push(cleanQuestion);
+          answersArray.push(cleanAnswer); // This will include '[Question Skipped]'
         });
 
-      console.log(`${analysisType} analysis with fresh data - Q&A pairs:`, questionsArray.length);
-
       if (questionsArray.length === 0) {
-        throw new Error(`No answered questions available for ${analysisType} analysis`);
+        throw new Error(`No questions available for ${analysisType} analysis`);
       }
 
       const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
@@ -794,7 +705,391 @@ const BusinessSetupPage = () => {
       if (dataToSave) {
         setter(dataToSave);
         await saveAnalysisToBackend(dataToSave, analysisType);
-        console.log(`${analysisType} analysis completed and saved`);
+      }
+    } catch (error) {
+      console.error(`Error generating ${analysisType} analysis:`, error);
+      throw error;
+    }
+  };
+
+  const generateStrategicAnalysisWithAnswers = async (answersToUse) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => answersToUse[q._id]) // Include all questions with any answer (including skipped)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for strategic analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Strategic API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      const strategicContent = result.strategic_analysis || result.strategic || result;
+
+      setStrategicData(strategicContent);
+      await saveAnalysisToBackend(strategicContent, 'strategic');
+    } catch (error) {
+      console.error('Error generating strategic analysis:', error);
+      throw error;
+    }
+  };
+
+  const generatePortersAnalysisWithAnswers = async (answersToUse) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => answersToUse[q._id]) // Include all questions with any answer (including skipped)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for Porter\'s Five Forces analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Porter's API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const portersContent = result.porters_analysis || result.porters || result;
+
+      setPortersData(portersContent);
+      await saveAnalysisToBackend(portersContent, 'porters');
+    } catch (error) {
+      console.error('Error generating Porter\'s Five Forces analysis:', error);
+      throw error;
+    }
+  };
+
+  const generatePestelAnalysisWithAnswers = async (answersToUse) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => answersToUse[q._id]) // Include all questions with any answer (including skipped)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for PESTEL analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`PESTEL API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const pestelContent = result.pestel_analysis || result.pestel || result;
+
+      setPestelData(pestelContent);
+      await saveAnalysisToBackend(pestelContent, 'pestel');
+    } catch (error) {
+      console.error('Error generating PESTEL analysis:', error);
+      throw error;
+    }
+  };
+  // Main function to regenerate all analysis
+  const regenerateAllAnalysis = async (updatedQuestionId = null, updatedAnswer = null) => {
+    // Check current phase completion status using completedQuestions
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+    const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
+    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+
+    if (!isInitialComplete) {
+      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
+      return;
+    }
+
+    if (isRegeneratingRef.current) {
+      return;
+    }
+
+    try {
+      isRegeneratingRef.current = true;
+      setIsAnalysisRegenerating(true);
+      showToastMessage("Regenerating all analysis components...", "info");
+
+      // Clear existing data
+      setSwotAnalysisResult("");
+      setCustomerSegmentationData(null);
+      setPurchaseCriteriaData(null);
+      setChannelHeatmapData(null);
+      setLoyaltyNPSData(null);
+      setCapabilityHeatmapData(null);
+      setStrategicData(null);
+      setPortersData(null);
+      setPestelData(null);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Get the latest answers including any updates
+      let answersToUse = { ...userAnswers };
+
+      // If we have an updated answer, include it immediately
+      if (updatedQuestionId && updatedAnswer) {
+        answersToUse[updatedQuestionId] = updatedAnswer;
+      }
+
+      // Generate all analysis with the updated answers
+      const analysisPromises = [
+        generateSWOTAnalysisWithAnswers(answersToUse),
+        generateSingleAnalysisWithAnswers('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, answersToUse),
+        generateSingleAnalysisWithAnswers('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, answersToUse),
+        generateSingleAnalysisWithAnswers('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, answersToUse),
+        generateSingleAnalysisWithAnswers('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, answersToUse),
+        generateSingleAnalysisWithAnswers('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, answersToUse),
+        generateStrategicAnalysisWithAnswers(answersToUse),
+        generatePortersAnalysisWithAnswers(answersToUse),
+        generatePestelAnalysisWithAnswers(answersToUse)
+      ];
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All analysis components regenerated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error regenerating all analysis:', error);
+      showToastMessage("Failed to regenerate analysis components. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsAnalysisRegenerating(false);
+    }
+  };
+
+  // Event Handlers
+  const handleQuestionsLoaded = (loadedQuestions) => {
+    setQuestions(loadedQuestions);
+    setQuestionsLoaded(true);
+  };
+
+  const handleNewAnswer = async (questionId, answer) => {
+    setUserAnswers(prev => {
+      const updatedAnswers = {
+        ...prev,
+        [questionId]: answer
+      };
+      return updatedAnswers;
+    });
+
+    // Update business data based on specific questions
+    const updates = {};
+    if (questionId === 1) {
+      const businessName = extractBusinessName(answer);
+      if (businessName) updates.name = businessName;
+      updates.whatWeDo = answer;
+    } else if (questionId === 3) {
+      updates.targetAudience = answer;
+    } else if (questionId === 4) {
+      updates.products = answer;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setBusinessData(prev => ({ ...prev, ...updates }));
+    }
+  };
+
+  const handleQuestionCompleted = async (questionId) => {
+    const newCompletedSet = new Set([...completedQuestions, questionId]);
+
+    // Update state first
+    setCompletedQuestions(newCompletedSet);
+
+    // Check if initial phase is completed with the new completed set
+    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+    const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
+
+
+    // If initial phase just got completed, trigger analysis generation
+    const wasInitialCompleted = initialQuestions.filter(q => completedQuestions.has(q._id)).length === initialQuestions.length;
+    const isInitialCompleted = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+
+    if (!wasInitialCompleted && isInitialCompleted) {
+      console.log('Initial phase just completed, triggering analysis generation');
+      await handlePhaseCompleted('initial', newCompletedSet);
+    }
+  };
+  const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
+    console.log(`Phase ${phase} completed with set:`, Array.from(updatedCompletedSet));
+
+    if (phase === 'initial') {
+      // Ensure the completed questions state is updated
+      setCompletedQuestions(updatedCompletedSet);
+
+      // Trigger analysis generation immediately
+      await regenerateAllAnalysisForCompletion(updatedCompletedSet);
+    }
+  };
+
+
+  // Special function for auto-generation when phase is completed
+  const regenerateAllAnalysisForCompletion = async (completedSet = null) => {
+    if (isRegeneratingRef.current) {
+      return;
+    }
+
+    try {
+      isRegeneratingRef.current = true;
+      setIsAnalysisRegenerating(true);
+      showToastMessage("Initial phase completed! Generating analysis...", "info");
+
+      // Clear existing data
+      setSwotAnalysisResult("");
+      setCustomerSegmentationData(null);
+      setPurchaseCriteriaData(null);
+      setChannelHeatmapData(null);
+      setLoyaltyNPSData(null);
+      setCapabilityHeatmapData(null);
+      setStrategicData(null);
+      setPortersData(null);
+      setPestelData(null);
+
+      // Fetch fresh conversation data to get all answers
+      const freshAnswers = await getFreshConversationData();
+
+      // Generate all analysis
+      const analysisPromises = [
+        generateSWOTAnalysisWithData(freshAnswers),
+        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers),
+        generateSingleAnalysisWithData('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, freshAnswers),
+        generateSingleAnalysisWithData('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, freshAnswers),
+        generateSingleAnalysisWithData('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, freshAnswers),
+        generateSingleAnalysisWithData('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, freshAnswers),
+        generateStrategicAnalysis(freshAnswers),
+        generatePortersAnalysis(freshAnswers),
+        generatePestelAnalysis(freshAnswers)
+      ];
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All analysis components generated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error generating analysis:', error);
+      showToastMessage("Failed to generate analysis components. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsAnalysisRegenerating(false);
+    }
+  };
+
+  const generateSingleAnalysisWithData = async (analysisType, endpoint, dataKey, setter, freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id]) // Include all questions with any answer (including skipped)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]); // Includes '[Question Skipped]'
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error(`No questions available for ${analysisType} analysis`);
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`${analysisType} API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      let dataToSave = null;
+
+      if (analysisType === 'capabilityHeatmap') {
+        dataToSave = result.capabilities ? result : result[dataKey];
+      } else if (result && result[dataKey]) {
+        dataToSave = result[dataKey];
+      } else {
+        throw new Error(`Invalid response structure from ${analysisType} API`);
+      }
+
+      if (dataToSave) {
+        setter(dataToSave);
+        await saveAnalysisToBackend(dataToSave, analysisType);
       }
     } catch (error) {
       console.error(`Error generating ${analysisType} analysis:`, error);
@@ -818,26 +1113,34 @@ const BusinessSetupPage = () => {
 
       const data = await response.json();
       const freshAnswers = {};
+      const freshCompletedSet = new Set();
 
-      // Extract all completed answers from backend
+      // Extract all completed answers from backend (including skipped)
       data.conversations?.forEach(conversation => {
-        if (conversation.completion_status === 'complete') {
+        if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
           const questionId = conversation.question_id;
-          const allAnswers = conversation.conversation_flow
-            .filter(item => item.type === 'answer')
-            .map(a => a.text.trim())
-            .filter(text => text.length > 0 && text !== '[Question Skipped]');
+          freshCompletedSet.add(questionId); // Track as completed
 
-          if (allAnswers.length > 0) {
-            freshAnswers[questionId] = allAnswers.join('. ');
+          if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
+            // For skipped questions, set the answer as '[Question Skipped]'
+            freshAnswers[questionId] = '[Question Skipped]';
+          } else {
+            // For completed questions, get all answers
+            const allAnswers = conversation.conversation_flow
+              .filter(item => item.type === 'answer')
+              .map(a => a.text.trim())
+              .filter(text => text.length > 0 && text !== '[Question Skipped]');
+
+            if (allAnswers.length > 0) {
+              freshAnswers[questionId] = allAnswers.join('. ');
+            }
           }
         }
       });
 
-      console.log('Fresh answers from backend:', Object.keys(freshAnswers).length);
-
-      // Update local state with fresh data
+      // Update both local states with fresh data
       setUserAnswers(prev => ({ ...prev, ...freshAnswers }));
+      setCompletedQuestions(prev => new Set([...prev, ...freshCompletedSet]));
 
       return freshAnswers;
     } catch (error) {
@@ -854,13 +1157,11 @@ const BusinessSetupPage = () => {
       const answersArray = [];
 
       questions.forEach(question => {
-        if (freshAnswers[question._id]) {
+        if (freshAnswers[question._id]) { // Include all questions with any answer (including skipped)
           questionsArray.push(question.question_text);
-          answersArray.push(freshAnswers[question._id]);
+          answersArray.push(freshAnswers[question._id]); // Includes '[Question Skipped]'
         }
       });
-
-      console.log('SWOT analysis with fresh data - Q&A pairs:', questionsArray.length);
 
       const response = await fetch(`${ML_API_BASE_URL}/find`, {
         method: 'POST',
@@ -973,7 +1274,7 @@ const BusinessSetupPage = () => {
     "Loyalty/NPS",
     "Capability Heatmap",
     "Porter's Five Forces",
-    "PESTEL Analysis" 
+    "PESTEL Analysis"
   ];
 
   const handleOptionClick = (option) => {
@@ -1324,7 +1625,7 @@ const BusinessSetupPage = () => {
             selectedBusinessId={selectedBusinessId}
           />
         </div>
- 
+
       </div>
     );
   };
@@ -1642,7 +1943,7 @@ const BusinessSetupPage = () => {
                       businessData={businessData}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={handleAnswerUpdate}
-                      onAnalysisRegenerate={regenerateAllAnalysis}
+                      onAnalysisRegenerate={regenerateAllAnalysis} // This now accepts (questionId, updatedAnswer)
                       isAnalysisRegenerating={isAnalysisRegenerating}
                     />
                   </div>

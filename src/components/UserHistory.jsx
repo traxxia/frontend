@@ -3,28 +3,15 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import {
   Search,
-  Users,
   Loader,
   ChevronDown,
   ChevronRight,
-  MessageSquare,
-  Award,
-  Clock,
-  Building2,
-  Download,
-  User,
-  Calendar,
-  Activity,
-  Hash,
-  Bot,
-  X,
   ChevronLeft,
-  Info,
-  ChevronRight as ChevronRightIcon,
+  Building2,
+  User,
+  X,
   FileText,
-  BarChart3,
-  Target,
-  TrendingUp
+  Target
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import SwotAnalysis from '../components/SwotAnalysis';
@@ -36,30 +23,43 @@ import CapabilityHeatmap from '../components/CapabilityHeatmap';
 import PDFExportComponent from '../components/PDFExportComponent';
 import '../styles/UserHistory.css';
 
-const UserHistory = ({ onToast }) => {
+// Constants
+const ITEMS_PER_PAGE = 10;
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+// Utility functions
+const getAuthToken = () => sessionStorage.getItem('token');
+const getUserInfo = () => JSON.parse(sessionStorage.getItem('user') || '{}');
+
+const formatRoleName = (roleName) => {
+  return roleName.split('_').map(word =>
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+};
+
+const transformUser = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  created_at: user.created_at,
+  role: { role_name: user.role_name || 'user' },
+  company: { company_name: user.company_name || 'No Company' },
+  activity_summary: { has_activity: true, total_answers: 0 }
+});
+
+// Custom hooks
+const useUserData = (onToast) => {
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCompany, setSelectedCompany] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userDetails, setUserDetails] = useState({});
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [userRole, setUserRole] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-  const getAuthToken = () => sessionStorage.getItem('token');
-
-  // Load users based on role and company filter
   const loadUsers = useCallback(async (companyId = '') => {
     try {
       setIsLoading(true);
       const token = getAuthToken();
-
+      
       let url = `${API_BASE_URL}/api/admin/users`;
       if (companyId && userRole === 'super_admin') {
         url += `?company_id=${companyId}`;
@@ -74,26 +74,7 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-
-        // Transform users to match expected format
-        const transformedUsers = data.users.map(user => ({
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          created_at: user.created_at,
-          role: {
-            role_name: user.role_name || 'user'
-          },
-          company: {
-            company_name: user.company_name || 'No Company'
-          },
-          // Add mock activity data since it's not in the new API
-          activity_summary: {
-            has_activity: true, // Assume all users have some activity
-            total_answers: 0
-          }
-        }));
-
+        const transformedUsers = data.users.map(transformUser);
         setUsers(transformedUsers);
       } else {
         onToast('Failed to load users', 'error');
@@ -104,30 +85,14 @@ const UserHistory = ({ onToast }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [API_BASE_URL, onToast, userRole]);
-
-  // Initialize data only once
-  useEffect(() => {
-    if (!isInitialized) {
-      loadInitialData();
-    }
-  }, [isInitialized]);
-
-  // Handle company selection change
-  useEffect(() => {
-    if (isInitialized) {
-      loadUsers(selectedCompany);
-      setCurrentPage(1);
-    }
-  }, [selectedCompany, isInitialized, loadUsers]);
+  }, [userRole, onToast]);
 
   const loadInitialData = async () => {
     try {
       const token = getAuthToken();
-      const userInfo = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const userInfo = getUserInfo();
       setUserRole(userInfo.role || '');
 
-      // Load companies for super admin
       if (userInfo.role === 'super_admin') {
         const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
           headers: {
@@ -142,7 +107,6 @@ const UserHistory = ({ onToast }) => {
         }
       }
 
-      // Load initial users
       await loadUsers();
       setIsInitialized(true);
     } catch (error) {
@@ -152,20 +116,31 @@ const UserHistory = ({ onToast }) => {
     }
   };
 
+  return {
+    users,
+    companies,
+    isLoading,
+    userRole,
+    isInitialized,
+    loadUsers,
+    loadInitialData
+  };
+};
+
+const useUserDetails = (onToast) => {
+  const [userDetails, setUserDetails] = useState({});
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
   const loadUserHistory = async (userId, businessId = null) => {
     const cacheKey = businessId ? `${userId}_${businessId}` : userId;
-
     if (userDetails[cacheKey]) return;
 
     try {
       setIsLoadingDetails(true);
       const token = getAuthToken();
-
-      // Use the new admin endpoint for comprehensive user data
+      
       let url = `${API_BASE_URL}/api/admin/user-data/${userId}`;
-      if (businessId) {
-        url += `?business_id=${businessId}`;
-      }
+      if (businessId) url += `?business_id=${businessId}`;
 
       const response = await fetch(url, {
         headers: {
@@ -176,8 +151,6 @@ const UserHistory = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-
-        // The API now returns data in the format we expect
         const transformedData = {
           conversation: data.conversation || [],
           system: data.system || [],
@@ -203,190 +176,222 @@ const UserHistory = ({ onToast }) => {
     }
   };
 
-  const handleUserSelect = async (userId) => {
-    setSelectedUser(userId);
-    // Load initial data (all businesses)
-    await loadUserHistory(userId);
-  };
+  return { userDetails, isLoadingDetails, loadUserHistory };
+};
 
-  // Enhanced export function
-  const exportUserData = async (userId, userName) => {
-    try {
-      const token = getAuthToken();
-
-      const currentUserDetails = userDetails[userId];
-
-      if (!currentUserDetails) {
-        onToast('Please view the user details first before exporting', 'warning');
-        return;
-      }
-
-      const currentUser = users.find(u => u._id === userId);
-
-      // Prepare the complete export data
-      const exportData = {
-        exportInfo: {
-          userName: userName,
-          userId: userId,
-          exportDate: new Date().toISOString(),
-          exportedBy: JSON.parse(sessionStorage.getItem('user') || '{}').name || 'Admin'
-        },
-        userProfile: {
-          name: currentUser?.name,
-          email: currentUser?.email,
-          role: currentUser?.role?.role_name,
-          company: currentUser?.company?.company_name,
-          joinedDate: currentUser?.created_at
-        },
-        conversationData: {
-          totalPhases: currentUserDetails.conversation?.length || 0,
-          phases: currentUserDetails.conversation || []
-        },
-        analysisResults: {
-          totalAnalyses: currentUserDetails.system?.length || 0,
-          analyses: currentUserDetails.system || []
-        },
-        questionsAndAnswers: []
-      };
-
-      // Parse and organize analysis data
-      const organizedAnalyses = {};
-
-      if (currentUserDetails.system) {
-        currentUserDetails.system.forEach(result => {
-          try {
-            let analysisResult;
-
-            if (typeof result.analysis_result === 'string') {
-              try {
-                analysisResult = JSON.parse(result.analysis_result);
-              } catch (e) {
-                analysisResult = result.analysis_result;
-              }
-            } else {
-              analysisResult = result.analysis_result;
-            }
-
-            const analysisName = result.name?.toLowerCase() || '';
-            let analysisType = 'other';
-
-            if (analysisName.includes('swot')) {
-              analysisType = 'swotAnalysis';
-            } else if (analysisName.includes('customer')) {
-              analysisType = 'customerSegmentation';
-            } else if (analysisName.includes('purchase')) {
-              analysisType = 'purchaseCriteria';
-            } else if (analysisName.includes('channel')) {
-              analysisType = 'channelHeatmap';
-            } else if (analysisName.includes('loyalty')) {
-              analysisType = 'loyaltyNPS';
-            } else if (analysisName.includes('capability')) {
-              analysisType = 'capabilityHeatmap';
-            }
-
-            organizedAnalyses[analysisType] = {
-              name: result.name,
-              data: analysisResult,
-              rawResult: result.analysis_result
-            };
-          } catch (error) {
-            console.error('Error parsing analysis for export:', error);
-          }
-        });
-      }
-
-      exportData.organizedAnalyses = organizedAnalyses;
-
-      // Extract Q&A in a readable format
-      if (currentUserDetails.conversation) {
-        currentUserDetails.conversation.forEach((phase, phaseIndex) => {
-          if (phase.questions) {
-            phase.questions.forEach((qa, qaIndex) => {
-              exportData.questionsAndAnswers.push({
-                phaseNumber: phaseIndex + 1,
-                phaseName: phase.phase,
-                phaseSeverity: phase.severity,
-                questionNumber: qaIndex + 1,
-                question: qa.question,
-                answer: qa.answer
-              });
-            });
-          }
-        });
-      }
-
-      // Create summary statistics
-      exportData.summary = {
-        totalQuestions: exportData.questionsAndAnswers.length,
-        totalAnalyses: Object.keys(organizedAnalyses).length,
-        analysisTypes: Object.keys(organizedAnalyses),
-        phases: currentUserDetails.conversation?.map(p => p.phase) || []
-      };
-
-      // Convert to JSON and download
-      const jsonString = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `${userName.replace(/\s+/g, '_')}_complete_analysis_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      onToast(`Exported complete analysis data for ${userName}`, 'success');
-
-    } catch (error) {
-      console.error('Error exporting user data:', error);
-      onToast('Error exporting user data', 'error');
-    }
-  };
+// Sorting and filtering utilities
+const useSortedFilteredUsers = (users, searchTerm) => {
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const searchLower = searchTerm.toLowerCase();
+    return user.name.toLowerCase().includes(searchLower) ||
+           user.email.toLowerCase().includes(searchLower);
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {
-    if (sortConfig.key === 'name') {
-      return sortConfig.direction === 'asc'
+    const { key, direction } = sortConfig;
+    
+    if (key === 'name') {
+      return direction === 'asc' 
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
-    } else if (sortConfig.key === 'created_at') {
-      const aDate = new Date(a.created_at);
-      const bDate = new Date(b.created_at);
-      return sortConfig.direction === 'asc'
-        ? aDate - bDate
-        : bDate - aDate;
-    } else if (sortConfig.key === 'activity') {
+    }
+    
+    if (key === 'created_at') {
+      const comparison = new Date(b.created_at) - new Date(a.created_at);
+      return direction === 'asc' ? -comparison : comparison;
+    }
+    
+    if (key === 'activity') {
       const aActivity = a.activity_summary?.total_answers || 0;
       const bActivity = b.activity_summary?.total_answers || 0;
-      return sortConfig.direction === 'asc'
-        ? aActivity - bActivity
-        : bActivity - aActivity;
+      return direction === 'asc' ? aActivity - bActivity : bActivity - aActivity;
     }
+    
     return 0;
   });
 
   const requestSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
+    const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
     setSortConfig({ key, direction });
   };
 
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+  return { sortedUsers, sortConfig, requestSort };
+};
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+// Analysis data parser
+const parseAnalysisData = (userDetails, user) => {
+  if (!userDetails) return null;
+
+  const analysisData = {
+    swot: null,
+    customerSegmentation: null,
+    purchaseCriteria: null,
+    channelHeatmap: null,
+    loyaltyNPS: null,
+    capabilityHeatmap: null,
+    businessName: user?.name || 'Business',
+    userAnswers: {},
+    questions: []
+  };
+
+  // Extract questions and answers
+  if (userDetails.conversation?.length > 0) {
+    userDetails.conversation.forEach(phase => {
+      phase.questions?.forEach(qa => {
+        const questionId = qa.question || `q_${Math.random()}`;
+        analysisData.questions.push({
+          _id: questionId,
+          question_id: questionId,
+          question_text: qa.question,
+          phase: phase.phase,
+          severity: phase.severity
+        });
+        analysisData.userAnswers[questionId] = qa.answer;
+      });
+    });
+  }
+
+  // Parse system results
+  userDetails.system?.forEach(result => {
+    try {
+      const analysisResult = typeof result.analysis_result === 'string'
+        ? JSON.parse(result.analysis_result)
+        : result.analysis_result;
+
+      const analysisName = result.name?.toLowerCase() || '';
+      
+      if (analysisName.includes('swot')) analysisData.swot = analysisResult;
+      else if (analysisName.includes('customer')) analysisData.customerSegmentation = analysisResult;
+      else if (analysisName.includes('purchase')) analysisData.purchaseCriteria = analysisResult;
+      else if (analysisName.includes('channel')) analysisData.channelHeatmap = analysisResult;
+      else if (analysisName.includes('loyalty')) analysisData.loyaltyNPS = analysisResult;
+      else if (analysisName.includes('capability')) analysisData.capabilityHeatmap = analysisResult;
+      
+    } catch (error) {
+      console.error('Error parsing analysis result:', error);
+    }
+  });
+
+  return analysisData;
+};
+
+// Export utility
+const exportUserData = async (user, userDetails, onToast) => {
+  try {
+    if (!userDetails) {
+      onToast('Please view the user details first before exporting', 'warning');
+      return;
+    }
+
+    const exportData = {
+      exportInfo: {
+        userName: user.name,
+        userId: user._id,
+        exportDate: new Date().toISOString(),
+        exportedBy: getUserInfo().name || 'Admin'
+      },
+      userProfile: {
+        name: user.name,
+        email: user.email,
+        role: user.role?.role_name,
+        company: user.company?.company_name,
+        joinedDate: user.created_at
+      },
+      conversationData: {
+        totalPhases: userDetails.conversation?.length || 0,
+        phases: userDetails.conversation || []
+      },
+      analysisResults: {
+        totalAnalyses: userDetails.system?.length || 0,
+        analyses: userDetails.system || []
+      },
+      questionsAndAnswers: []
+    };
+
+    // Extract Q&A data
+    userDetails.conversation?.forEach((phase, phaseIndex) => {
+      phase.questions?.forEach((qa, qaIndex) => {
+        exportData.questionsAndAnswers.push({
+          phaseNumber: phaseIndex + 1,
+          phaseName: phase.phase,
+          phaseSeverity: phase.severity,
+          questionNumber: qaIndex + 1,
+          question: qa.question,
+          answer: qa.answer
+        });
+      });
+    });
+
+    // Create summary
+    exportData.summary = {
+      totalQuestions: exportData.questionsAndAnswers.length,
+      totalAnalyses: userDetails.system?.length || 0,
+      phases: userDetails.conversation?.map(p => p.phase) || []
+    };
+
+    // Download file
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `${user.name.replace(/\s+/g, '_')}_analysis_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    onToast(`Exported analysis data for ${user.name}`, 'success');
+  } catch (error) {
+    console.error('Error exporting user data:', error);
+    onToast('Error exporting user data', 'error');
+  }
+};
+
+// Main Component
+const UserHistory = ({ onToast }) => {
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { users, companies, isLoading, userRole, isInitialized, loadUsers, loadInitialData } = useUserData(onToast);
+  const { userDetails, isLoadingDetails, loadUserHistory } = useUserDetails(onToast);
+  const { sortedUsers, sortConfig, requestSort } = useSortedFilteredUsers(users, searchTerm);
+
+  // Initialize data
+  useEffect(() => {
+    if (!isInitialized) loadInitialData();
+  }, [isInitialized, loadInitialData]);
+
+  // Handle company selection
+  useEffect(() => {
+    if (isInitialized) {
+      loadUsers(selectedCompany);
+      setCurrentPage(1);
+    }
+  }, [selectedCompany, isInitialized, loadUsers]);
+
+  const handleUserSelect = async (userId) => {
+    setSelectedUser(userId);
+    await loadUserHistory(userId);
+  };
+
+  const handleExport = () => {
+    const user = users.find(u => u._id === selectedUser);
+    const details = userDetails[selectedUser];
+    exportUserData(user, details, onToast);
+  };
+
+  // Pagination
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentItems = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedUsers.length / ITEMS_PER_PAGE);
 
   if (isLoading) {
     return (
@@ -400,168 +405,189 @@ const UserHistory = ({ onToast }) => {
   return (
     <div className="user-history-container">
       <div className="user-history-header">
-        <div>
-          <h2 className="user-history-title">User History & Chat Records</h2>
-        </div>
+        <h2 className="user-history-title">User History & Chat Records</h2>
       </div>
 
-      {/* Company Filter for Super Admin */}
+      {/* Company Filter */}
       {userRole === 'super_admin' && companies.length > 0 && (
-        <div className="company-filter-container">
-          <select
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            className="company-filter-select"
-          >
-            <option value="">All Companies</option>
-            {companies.map(company => (
-              <option key={company._id} value={company._id}>
-                {company.company_name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <CompanyFilter
+          companies={companies}
+          selectedCompany={selectedCompany}
+          onCompanyChange={setSelectedCompany}
+        />
       )}
 
-      {/* Search Container */}
-      <div className="search-container-row">
-        <div className="compact-search">
-          <Search size={18} className="compact-search-icon" />
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+      {/* Search */}
+      <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
-      {/* User History Table */}
-      <div className="user-table-wrapper">
-        <table className="user-table">
-          <thead>
-            <tr>
-              <th onClick={() => requestSort('name')}>
-                <div className="header-content">
-                  User
-                  {sortConfig.key === 'name' && (
-                    <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Company</th>
-              <th onClick={() => requestSort('created_at')}>
-                <div className="header-content">
-                  Joined
-                  {sortConfig.key === 'created_at' && (
-                    <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentItems.map(user => (
-              <tr key={user._id}>
-                <td className="cell-user">
-                  <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
-                  <div className="user-info">
-                    <div className="user-name">{user.name}</div>
-                  </div>
-                </td>
-                <td><div className="user-email">{user.email}</div></td>
-                <td><span className="badge-role">{formatRoleName(user.role?.role_name || 'Unknown')}</span></td>
-                <td>{user.company?.company_name || 'No Company'}</td>
-                <td>{formatDate(user.created_at)}</td>
-                <td className="cell-actions">
-                  <button className="secondary-btn small-btn" onClick={() => handleUserSelect(user._id)}>View</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Users Table */}
+      <UsersTable
+        users={currentItems}
+        sortConfig={sortConfig}
+        onSort={requestSort}
+        onUserSelect={handleUserSelect}
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={paginate}
+          onPageChange={setCurrentPage}
         />
       )}
 
       {/* User Details Modal */}
       {selectedUser && (
-        <div className="user-details-modal">
-          <div className="modal-overlayas" onClick={() => setSelectedUser(null)} />
-          <div className="modal-content">
-            <UserDetailsPanel
-              user={users.find(u => u._id === selectedUser)}
-              userDetails={userDetails}
-              isLoading={isLoadingDetails}
-              onClose={() => setSelectedUser(null)}
-              onExport={() => exportUserData(selectedUser, users.find(u => u._id === selectedUser)?.name)}
-              onToast={onToast}
-              loadUserHistory={loadUserHistory}
-            />
-          </div>
-        </div>
+        <UserDetailsModal
+          user={users.find(u => u._id === selectedUser)}
+          userDetails={userDetails}
+          isLoading={isLoadingDetails}
+          onClose={() => setSelectedUser(null)}
+          onExport={handleExport}
+          onToast={onToast}
+          loadUserHistory={loadUserHistory}
+        />
       )}
     </div>
   );
 };
 
-// Enhanced UserDetailsPanel Component with Business Dropdown Only (No "All")
+// Sub-components
+const CompanyFilter = ({ companies, selectedCompany, onCompanyChange }) => (
+  <div className="company-filter-container">
+    <select
+      value={selectedCompany}
+      onChange={(e) => onCompanyChange(e.target.value)}
+      className="company-filter-select"
+    >
+      <option value="">All Companies</option>
+      {companies.map(company => (
+        <option key={company._id} value={company._id}>
+          {company.company_name}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const SearchBar = ({ searchTerm, onSearchChange }) => (
+  <div className="search-container-row">
+    <div className="compact-search">
+      <Search size={18} className="compact-search-icon" />
+      <input
+        type="text"
+        placeholder="Search users..."
+        value={searchTerm}
+        className="form-control"
+        onChange={(e) => onSearchChange(e.target.value)}
+      />
+    </div>
+  </div>
+);
+
+const UsersTable = ({ users, sortConfig, onSort, onUserSelect }) => (
+  <div className="user-table-wrapper">
+    <table className="user-table">
+      <thead>
+        <tr>
+          <SortableHeader title="User" sortKey="name" sortConfig={sortConfig} onSort={onSort} />
+          <th>Email</th>
+          <th>Role</th>
+          <th>Company</th>
+          <SortableHeader title="Joined" sortKey="created_at" sortConfig={sortConfig} onSort={onSort} />
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users.map(user => (
+          <UserRow key={user._id} user={user} onUserSelect={onUserSelect} />
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const SortableHeader = ({ title, sortKey, sortConfig, onSort }) => (
+  <th onClick={() => onSort(sortKey)}>
+    <div className="header-content">
+      {title}
+      {sortConfig.key === sortKey && (
+        <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+      )}
+    </div>
+  </th>
+);
+
+const UserRow = ({ user, onUserSelect }) => (
+  <tr>
+    <td className="cell-user">
+      <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
+      <div className="user-info">
+        <div className="user-name">{user.name}</div>
+      </div>
+    </td>
+    <td><div className="user-email">{user.email}</div></td>
+    <td><span className="badge-role">{formatRoleName(user.role?.role_name || 'Unknown')}</span></td>
+    <td>{user.company?.company_name || 'No Company'}</td>
+    <td>{formatDate(user.created_at)}</td>
+    <td className="cell-actions">
+      <button className="secondary-btn small-btn" onClick={() => onUserSelect(user._id)}>
+        View
+      </button>
+    </td>
+  </tr>
+);
+
+const UserDetailsModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => (
+  <div className="user-details-modal">
+    <div className="modal-overlayas" onClick={onClose} />
+    <div className="modal-content">
+      <UserDetailsPanel
+        user={user}
+        userDetails={userDetails}
+        isLoading={isLoading}
+        onClose={onClose}
+        onExport={onExport}
+        onToast={onToast}
+        loadUserHistory={loadUserHistory}
+      />
+    </div>
+  </div>
+);
+
+// Enhanced UserDetailsPanel
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
-  const [activeTab, setActiveTab] = useState('conversation');
+  const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
 
-  // Get all user details (without business filter) to access businesses list
   const allUserDetails = userDetails[user._id] || {};
   const businesses = allUserDetails.businesses || [];
 
-  // Set default selected business when businesses load and load its data
+  // Auto-select first business
   useEffect(() => {
     if (businesses.length > 0 && !selectedBusiness) {
       const firstBusinessId = businesses[0]._id;
       setSelectedBusiness(firstBusinessId);
-      // Automatically load data for the first business
       handleBusinessChange(firstBusinessId);
     }
   }, [businesses, selectedBusiness]);
 
-  // Get current display data based on selected business
   const getCurrentUserDetails = () => {
-    if (!selectedBusiness) {
-      return allUserDetails;
-    }
-
-    // Get data for specific business
+    if (!selectedBusiness) return allUserDetails;
     const businessCacheKey = `${user._id}_${selectedBusiness}`;
     return userDetails[businessCacheKey] || {};
   };
 
-  const currentUserDetails = getCurrentUserDetails();
-  const conversationCount = currentUserDetails?.conversation?.length || 0;
-
-  // Handle business selection change
   const handleBusinessChange = async (businessId) => {
     if (!businessId) return;
-
+    
     setSelectedBusiness(businessId);
     setIsLoadingBusiness(true);
-
+    
     try {
-      const businessCacheKey = `${user._id}_${businessId}`;
-
-      // Always load business-specific data
       await loadUserHistory(user._id, businessId);
-
     } catch (error) {
       console.error('Error loading business data:', error);
       onToast('Error loading business data', 'error');
@@ -570,249 +596,35 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
     }
   };
 
-  // Enhanced analysis data parsing
-  const getAnalysisData = () => {
-    if (!currentUserDetails) {
-      return null;
-    }
+  const currentUserDetails = getCurrentUserDetails();
+  const analysisData = parseAnalysisData(currentUserDetails, user);
 
-    const analysisData = {
-      swot: null,
-      customerSegmentation: null,
-      purchaseCriteria: null,
-      channelHeatmap: null,
-      loyaltyNPS: null,
-      capabilityHeatmap: null,
-      businessName: user?.name || 'Business',
-      userAnswers: {},
-      questions: []
-    };
-
-    // Extract questions and answers from conversation data
-    if (currentUserDetails.conversation && currentUserDetails.conversation.length > 0) {
-      currentUserDetails.conversation.forEach(phase => {
-        if (phase.questions && phase.questions.length > 0) {
-          phase.questions.forEach(qa => {
-            const questionId = qa.question || `q_${Math.random()}`;
-            analysisData.questions.push({
-              _id: questionId,
-              question_id: questionId,
-              question_text: qa.question,
-              phase: phase.phase,
-              severity: phase.severity
-            });
-            analysisData.userAnswers[questionId] = qa.answer;
-          });
-        }
-      });
-    }
-
-    // Parse system results for analysis data
-    if (currentUserDetails.system && currentUserDetails.system.length > 0) {
-      currentUserDetails.system.forEach(result => {
-        try {
-          let analysisResult;
-
-          if (typeof result.analysis_result === 'string') {
-            try {
-              analysisResult = JSON.parse(result.analysis_result);
-            } catch (e) {
-              analysisResult = result.analysis_result;
-            }
-          } else {
-            analysisResult = result.analysis_result;
-          }
-
-          const analysisName = result.name?.toLowerCase() || '';
-
-          if (analysisName.includes('capability')) {
-            analysisData.capabilityHeatmap = analysisResult;
-          } else if (analysisName.includes('swot')) {
-            analysisData.swot = analysisResult;
-          } else if (analysisName.includes('customer')) {
-            analysisData.customerSegmentation = analysisResult;
-          } else if (analysisName.includes('purchase')) {
-            analysisData.purchaseCriteria = analysisResult;
-          } else if (analysisName.includes('channel')) {
-            analysisData.channelHeatmap = analysisResult;
-          } else if (analysisName.includes('loyalty')) {
-            analysisData.loyaltyNPS = analysisResult;
-          }
-        } catch (error) {
-          console.error('Error parsing analysis result:', error);
-        }
-      });
-    }
-
-    return analysisData;
-  };
-
-  const analysisData = getAnalysisData();
-  const hasAnalysis = analysisData && (
-    analysisData.swot ||
-    analysisData.customerSegmentation ||
-    analysisData.purchaseCriteria ||
-    analysisData.channelHeatmap ||
-    analysisData.loyaltyNPS ||
-    analysisData.capabilityHeatmap
-  );
-
-  // Get selected business name for display
-  const getSelectedBusinessName = () => {
-    if (!selectedBusiness) return 'Select a Business';
-    const business = businesses.find(b => b._id === selectedBusiness);
-    return business ? business.business_name : 'Unknown Business';
-  };
-
-  // Show message if no businesses exist
   if (businesses.length === 0 && !isLoading) {
-    return (
-      <div className="user-details-panel">
-        <div className="panel-header">
-          <div className="user-header-info">
-            <div>
-              <h3>{user?.name}</h3>
-              <p>{user?.email}</p>
-            </div>
-          </div>
-          <div className="panel-actions">
-            <button onClick={onClose} className="close-button">
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        <div className="empty-state">
-          <Building2 size={48} />
-          <p className="empty-title">No businesses found</p>
-          <p className="empty-subtitle">This user hasn't created any businesses yet</p>
-        </div>
-      </div>
-    );
+    return <EmptyBusinessState user={user} onClose={onClose} />;
   }
 
   return (
-    <div className="user-details-panel"> 
-<div className="panel-header">
-  <div className="header-row">
-    {/* Left: Business Select */}
-    <div className="header-left">
-      {businesses.length > 0 && (
-        <div className="business-filter-inline">
-          <label htmlFor="business-select" className="business-filter-label">
-            <Building2 size={16} />
-            Business:
-          </label>
-          <select
-            id="business-select"
-            value={selectedBusiness}
-            onChange={(e) => handleBusinessChange(e.target.value)}
-            className="business-filter-select"
-            disabled={isLoadingBusiness}
-          >
-            {businesses.map(business => (
-              <option key={business._id} value={business._id}>
-                {business.business_name}
-                {business.question_statistics && (
-                  ` (${business.question_statistics.progress_percentage}% complete)`
-                )}
-              </option>
-            ))}
-          </select>
-          {isLoadingBusiness && (
-            <div className="business-loading">
-              <Loader size={16} className="loading-spinner" />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-
-    {/* Center: Username */}
-    <div className="header-center">
-      <h3 className="user-name-header">{user?.name}</h3>
-      <p className="user-email-header">{user?.email}</p>
-    </div>
-
-    {/* Right: Actions */}
-    <div className="header-right">
-      <PDFExportComponent 
-        user={user}
-        userDetails={currentUserDetails}
-        onToast={onToast}
-        buttonText="Export PDF"
-        buttonSize="medium"
-        className=""
-      />
-      <button onClick={onClose} className="close-button">
-        <X size={20} />
-      </button>
-    </div>
-  </div>
-</div>
-
-      {/* Show content always when a business is selected, even if loading */}
+    <div className="user-details-panel">
+      <PanelHeader user={user} currentUserDetails={currentUserDetails} onClose={onClose} onExport={onExport} />
+      
       {selectedBusiness && (
         <>
-          <div className="admin-nav">
-            <button
-              onClick={() => setActiveTab('conversation')}
-              className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
-              disabled={isLoading || isLoadingBusiness}
-            >
-              <FileText size={16} />
-              <span>Conversation</span>
-              {!isLoadingBusiness && conversationCount > 0 && (
-                <span className="tab-badge">{conversationCount}</span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('analysis')}
-              className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-              disabled={isLoading || isLoadingBusiness}
-            >
-              <Target size={16} />
-              <span>Analysis</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('businesses')}
-              className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
-              disabled={isLoading}
-            >
-              <Building2 size={16} />
-              <span>Businesses</span>
-              <span className="tab-badge">{businesses.length}</span>
-            </button>
-          </div>
-
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} businesses={businesses} />
+          
           <div className="tab-content">
-            {(isLoadingBusiness) ? (
-              <div className="loading-details">
-                <Loader size={24} className="loading-spinner" />
-                <span>Loading business data...</span>
-              </div>
+            {isLoadingBusiness ? (
+              <LoadingState message="Loading business data..." />
             ) : (
-              <>
-                {activeTab === 'conversation' && (
-                  <ConversationTab
-                    conversation={currentUserDetails?.conversation || []}
-                    totalQuestions={currentUserDetails?.stats?.total_questions || 0}
-                    completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
-                    selectedBusiness={getSelectedBusinessName()}
-                  />
-                )}
-                {activeTab === 'analysis' && (
-                  <AnalysisTab
-                    analysisData={analysisData}
-                    selectedBusiness={getSelectedBusinessName()}
-                  />
-                )}
-                {activeTab === 'businesses' && (
-                  <BusinessesTab businesses={businesses} />
-                )}
-              </>
+              <TabContent
+                activeTab={activeTab}
+                businesses={businesses}
+                currentUserDetails={currentUserDetails}
+                analysisData={analysisData}
+                selectedBusiness={selectedBusiness}
+                selectedBusinessId={selectedBusiness}
+                onBusinessChange={handleBusinessChange}
+                isLoadingBusiness={isLoadingBusiness}
+              />
             )}
           </div>
         </>
@@ -821,7 +633,138 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   );
 };
 
-// New BusinessesTab Component
+const EmptyBusinessState = ({ user, onClose }) => (
+  <div className="user-details-panel">
+    <div className="panel-header">
+      <div className="user-header-info">
+        <div>
+          <h3>{user?.name}</h3>
+          <p>{user?.email}</p>
+        </div>
+      </div>
+      <div className="panel-actions">
+        <button onClick={onClose} className="close-button">
+          <X size={20} />
+        </button>
+      </div>
+    </div>
+    <div className="empty-state">
+      <Building2 size={48} />
+      <p className="empty-title">No businesses found</p>
+      <p className="empty-subtitle">This user hasn't created any businesses yet</p>
+    </div>
+  </div>
+);
+
+const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
+  <div className="panel-header">
+    <div className="header-row">
+      <div className="header-left">
+        <h3 className="user-name-header">User Name: {user?.name}</h3>
+      </div>
+      <div className="header-right">
+        <PDFExportComponent 
+          user={user}
+          userDetails={currentUserDetails}
+          onToast={() => {}}
+          buttonText="Export PDF"
+          buttonSize="medium"
+          className=""
+        />
+        <button onClick={onClose} className="close-button">
+          <X size={20} />
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const TabNavigation = ({ activeTab, onTabChange, businesses }) => (
+  <div className="admin-nav">
+    <button
+      onClick={() => onTabChange('businesses')}
+      className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
+    >
+      <Building2 size={16} />
+      <span>Businesses</span>
+      <span className="tab-badge">{businesses.length}</span>
+    </button>
+    <button
+      onClick={() => onTabChange('conversation')}
+      className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
+    >
+      <FileText size={16} />
+      <span>Conversation</span>
+    </button>
+    <button
+      onClick={() => onTabChange('analysis')}
+      className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+    >
+      <Target size={16} />
+      <span>Analysis</span>
+    </button>
+  </div>
+);
+
+const LoadingState = ({ message }) => (
+  <div className="loading-details">
+    <Loader size={24} className="loading-spinner" />
+    <span>{message}</span>
+  </div>
+);
+
+const TabContent = ({ 
+  activeTab, 
+  businesses, 
+  currentUserDetails, 
+  analysisData, 
+  selectedBusiness,
+  selectedBusinessId,
+  onBusinessChange,
+  isLoadingBusiness 
+}) => {
+  const getSelectedBusinessName = () => {
+    if (!selectedBusiness) return 'Select a Business';
+    const business = businesses.find(b => b._id === selectedBusiness);
+    return business?.business_name || 'Unknown Business';
+  };
+
+  switch (activeTab) {
+    case 'businesses':
+      return <BusinessesTab businesses={businesses} />;
+    case 'conversation':
+      return (
+        <ConversationTab
+          conversation={currentUserDetails?.conversation || []}
+          totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+          completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+          selectedBusiness={getSelectedBusinessName()}
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+        />
+      );
+    case 'analysis':
+      return (
+        <AnalysisTab
+          analysisData={analysisData}
+          selectedBusiness={getSelectedBusinessName()}
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+          completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+          conversationCount={currentUserDetails?.conversation?.length || 0}
+        />
+      );
+    default:
+      return null;
+  }
+};
+
+// BusinessesTab Component
 const BusinessesTab = ({ businesses }) => {
   if (businesses.length === 0) {
     return (
@@ -837,52 +780,235 @@ const BusinessesTab = ({ businesses }) => {
     <div className="businesses-tab">
       <div className="businesses-list">
         {businesses.map((business, index) => (
-          <div key={index} className="business-item">
-            <div className="business-header">
-              <h4 className="business-name">{business.business_name}</h4>
-              <span className="business-date">{formatDate(business.created_at)}</span>
-            </div>
-            <div className="business-purpose">
-              <strong>Purpose:</strong> {business.business_purpose}
-            </div>
-            {business.description && (
-              <div className="business-description">
-                <strong>Description:</strong> {business.description}
-              </div>
-            )}
-            {business.question_statistics && (
-              <div className="business-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Progress:</span>
-                  <span className="stat-value">{business.question_statistics.progress_percentage}%</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Completed:</span>
-                  <span className="stat-value">{business.question_statistics.completed_questions}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Total:</span>
-                  <span className="stat-value">{business.question_statistics.total_questions}</span>
-                </div>
-              </div>
-            )}
-          </div>
+          <BusinessCard key={index} business={business} />
         ))}
       </div>
     </div>
   );
 };
 
-// Updated AnalysisTab Component with business context
-const AnalysisTab = ({ analysisData, selectedBusiness = 'Select a Business' }) => {
+const BusinessCard = ({ business }) => (
+  <div className="business-item">
+    <div className="business-header">
+      <h5 className="business-name"><strong>Business Name:</strong> {business.business_name}</h5>
+      <span className="business-date">{formatDate(business.created_at)}</span>
+    </div>
+    <div className="business-purpose">
+      <strong>Purpose:</strong> {business.business_purpose}
+    </div>
+    {business.description && (
+      <div className="business-description">
+        <strong>Description:</strong> {business.description}
+      </div>
+    )}
+    {business.question_statistics && (
+      <BusinessStats stats={business.question_statistics} />
+    )}
+  </div>
+);
+
+const BusinessStats = ({ stats }) => (
+  <div className="business-stats">
+    <div className="stat-item">
+      <span className="stat-label">Progress:</span>
+      <span className="stat-value">{stats.progress_percentage}%</span>
+    </div>
+    <div className="stat-item">
+      <span className="stat-label">Completed:</span>
+      <span className="stat-value">{stats.completed_questions}</span>
+    </div>
+    <div className="stat-item">
+      <span className="stat-label">Total:</span>
+      <span className="stat-value">{stats.total_questions}</span>
+    </div>
+  </div>
+);
+
+// BusinessFilter Component (reusable)
+const BusinessFilter = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingBusiness }) => (
+  <div className="business-filter-inline">
+    <label htmlFor="business-select" className="business-filter-label">
+      Business:
+    </label>
+    <select
+      id="business-select"
+      value={selectedBusinessId}
+      onChange={(e) => onBusinessChange(e.target.value)}
+      className="business-filter-select"
+      disabled={isLoadingBusiness}
+    >
+      {businesses.map(business => (
+        <option key={business._id} value={business._id}>
+          {business.business_name}
+          {/* {business.question_statistics && (
+            ` (${business.question_statistics.progress_percentage}% complete)`
+          )} */}
+        </option>
+      ))}
+    </select>
+    {isLoadingBusiness && (
+      <div className="business-loading">
+        <Loader size={16} className="loading-spinner" />
+      </div>
+    )}
+  </div>
+);
+
+// StatsRow Component (reusable)
+const StatsRow = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingBusiness, stats }) => (
+  <div className="conversation-stats">
+    <div className="stats-row">
+      {businesses.length > 0 && (
+        <BusinessFilter
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+        />
+      )}
+      <div className="stat-card">
+        <div className="stat-number">{stats.completed}</div>
+        <div className="stat-label">Completed Questions</div>
+      </div>
+      {/* <div className="stat-card">
+        <div className="stat-number">{stats.phases}</div>
+        <div className="stat-label">Active Phases</div>
+      </div> */}
+      <div className="stat-card">
+        <div className="stat-number">{stats.progress}%</div>
+        <div className="stat-label">Progress</div>
+      </div>
+    </div>
+  </div>
+);
+
+// ConversationTab Component
+const ConversationTab = ({ 
+  conversation, 
+  totalQuestions = 0, 
+  completedQuestions = 0, 
+  selectedBusiness = 'Select a Business',
+  businesses = [],
+  selectedBusinessId = '',
+  onBusinessChange,
+  isLoadingBusiness = false
+}) => {
+  const totalCompletedQuestions = conversation.reduce((sum, phase) => sum + phase.questions.length, 0);
+  
+  const stats = {
+    completed: totalCompletedQuestions,
+    phases: conversation.length,
+    progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0
+  };
+
+  if (conversation.length === 0) {
+    return (
+      <div className="conversation-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+        />
+        <div className="empty-state">
+          <FileText size={48} />
+          <p className="empty-title">No completed conversations</p>
+          <p className="empty-subtitle">No completed questions found for {selectedBusiness}</p>
+          <p className="empty-help">Questions will appear here once the user completes them</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="conversation-tab">
+      <StatsRow
+        businesses={businesses}
+        selectedBusinessId={selectedBusinessId}
+        onBusinessChange={onBusinessChange}
+        isLoadingBusiness={isLoadingBusiness}
+        stats={stats}
+      />
+      <div className="conversation-list">
+        {conversation.map((phase, index) => (
+          <ConversationPhase key={index} phase={phase} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ConversationPhase = ({ phase }) => (
+  <div className="conversation-phase">
+    <div className="phase-header">
+      <h4 className="phase-title">
+        {phase.phase.charAt(0).toUpperCase() + phase.phase.slice(1)} Phase
+      </h4>
+      <div className="phase-meta">
+        <span className="phase-severity">{phase.severity}</span>
+        <span className="question-count">{phase.questions.length} questions</span>
+      </div>
+    </div>
+    <div className="questions-list">
+      {phase.questions?.map((question, qIndex) => (
+        <QuestionItem key={qIndex} question={question} />
+      ))}
+    </div>
+  </div>
+);
+
+const QuestionItem = ({ question }) => (
+  <div className="question-item">
+    <div className="question-header">
+      <div className="question-text">Q : {question.question}</div>
+      {/* {question.last_updated && (
+        <div className="question-timestamp">
+          {formatDate(question.last_updated)}
+        </div>
+      )} */}
+    </div>
+    <div className="answer-section"> 
+      <div className="answer-text">A : {question.answer}</div>
+    </div>
+  </div>
+);
+
+// AnalysisTab Component
+const AnalysisTab = ({ 
+  analysisData, 
+  selectedBusiness = 'Select a Business',
+  businesses = [],
+  selectedBusinessId = '',
+  onBusinessChange,
+  isLoadingBusiness = false,
+  totalQuestions = 0,
+  completedQuestions = 0,
+  conversationCount = 0
+}) => {
+  const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
+  
+  const stats = {
+    completed: totalCompletedQuestions,
+    phases: conversationCount,
+    progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
+  };
+
   if (!analysisData) {
     return (
-      <div className="empty-state">
-        <Target size={48} />
-        <p className="empty-title">No analysis available</p>
-        <p className="empty-subtitle">
-          No analysis found for {selectedBusiness}
-        </p>
+      <div className="analysis-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+        />
+        <div className="empty-state">
+          <Target size={48} />
+          <p className="empty-title">No analysis available</p>
+          <p className="empty-subtitle">No analysis found for {selectedBusiness}</p>
+        </div>
       </div>
     );
   }
@@ -893,201 +1019,81 @@ const AnalysisTab = ({ analysisData, selectedBusiness = 'Select a Business' }) =
 
   if (!hasAnyAnalysis) {
     return (
-      <div className="empty-state">
-        <Target size={48} />
-        <p className="empty-title">No analysis available</p>
-        <p className="empty-subtitle">
-          No analysis generated for {selectedBusiness} yet
-        </p>
+      <div className="analysis-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+        />
+        <div className="empty-state">
+          <Target size={48} />
+          <p className="empty-title">No analysis available</p>
+          <p className="empty-subtitle">No analysis generated for {selectedBusiness} yet</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="analysis-tab">
-
-      <div className="analysis-components">s
-        {/* SWOT Analysis */}
-        {analysisData.swot && (
-          <div className="analysis-component" data-analysis-type="swot">
-            <SwotAnalysis
-              analysisResult={analysisData.swot}
-              businessName={analysisData.businessName}
-              onRegenerate={null}
-              isRegenerating={false}
-              canRegenerate={false}
-            />
-          </div>
-        )}
-
-        {/* Customer Segmentation */}
-        {analysisData.customerSegmentation && (
-          <div className="analysis-component" data-analysis-type="customerSegmentation">
-            <CustomerSegmentation
-              questions={analysisData.questions}
-              userAnswers={analysisData.userAnswers}
-              businessName={analysisData.businessName}
-              onDataGenerated={() => { }}
-              onRegenerate={null}
-              isRegenerating={false}
-              canRegenerate={false}
-              customerSegmentationData={analysisData.customerSegmentation}
-            />
-          </div>
-        )}
-
-        {/* Purchase Criteria */}
-        {analysisData.purchaseCriteria && (
-          <div className="analysis-component" data-analysis-type="purchaseCriteria">
-            <PurchaseCriteria
-              questions={analysisData.questions}
-              userAnswers={analysisData.userAnswers}
-              businessName={analysisData.businessName}
-              onDataGenerated={() => { }}
-              onRegenerate={null}
-              isRegenerating={false}
-              canRegenerate={false}
-              purchaseCriteriaData={analysisData.purchaseCriteria}
-            />
-          </div>
-        )}
-
-        {/* Channel Heatmap */}
-        {analysisData.channelHeatmap && (
-          <div className="analysis-component" data-analysis-type="channelHeatmap">
-            <ChannelHeatmap
-              questions={analysisData.questions}
-              userAnswers={analysisData.userAnswers}
-              businessName={analysisData.businessName}
-              onDataGenerated={() => { }}
-              onRegenerate={null}
-              isRegenerating={false}
-              canRegenerate={false}
-              channelHeatmapData={analysisData.channelHeatmap}
-            />
-          </div>
-        )}
-
-        {/* Loyalty NPS */}
-        {analysisData.loyaltyNPS && (
-          <div className="analysis-component" data-analysis-type="loyaltyNPS">
-            <LoyaltyNPS
-              questions={analysisData.questions}
-              userAnswers={analysisData.userAnswers}
-              businessName={analysisData.businessName}
-              onDataGenerated={() => { }}
-              onRegenerate={null}
-              isRegenerating={false}
-              canRegenerate={false}
-              loyaltyNPSData={analysisData.loyaltyNPS}
-            />
-          </div>
-        )}
-
-        {/* Capability Heatmap */}
-        {analysisData.capabilityHeatmap && (
-          <div className="analysis-component" data-analysis-type="capabilityHeatmap">
-            <CapabilityHeatmap
-              questions={analysisData.questions}
-              userAnswers={analysisData.userAnswers}
-              businessName={analysisData.businessName}
-              onDataGenerated={() => { }}
-              onRegenerate={null}
-              isRegenerating={false}
-              canRegenerate={false}
-              capabilityHeatmapData={analysisData.capabilityHeatmap}
-            />
-          </div>
-        )}
-      </div>
+      <StatsRow
+        businesses={businesses}
+        selectedBusinessId={selectedBusinessId}
+        onBusinessChange={onBusinessChange}
+        isLoadingBusiness={isLoadingBusiness}
+        stats={stats}
+      />
+      <AnalysisComponents analysisData={analysisData} />
     </div>
   );
 };
 
-// ConversationTab Component - Updated to show business context
-const ConversationTab = ({ conversation, totalQuestions = 0, completedQuestions = 0, selectedBusiness = 'Select a Business' }) => {
-  if (conversation.length === 0) {
-    return (
-      <div className="empty-state">
-        <FileText size={48} />
-        <p className="empty-title">No completed conversations</p>
-        <p className="empty-subtitle">
-          No completed questions found for {selectedBusiness}
-        </p>
-        <p className="empty-help">Questions will appear here once the user completes them</p>
-      </div>
-    );
-  }
-
-  // Calculate total completed questions across all phases
-  const totalCompletedQuestions = conversation.reduce((sum, phase) => sum + phase.questions.length, 0);
+const AnalysisComponents = ({ analysisData }) => {
+  const analysisTypes = [
+    { key: 'swot', Component: SwotAnalysis },
+    { key: 'customerSegmentation', Component: CustomerSegmentation },
+    { key: 'purchaseCriteria', Component: PurchaseCriteria },
+    { key: 'channelHeatmap', Component: ChannelHeatmap },
+    { key: 'loyaltyNPS', Component: LoyaltyNPS },
+    { key: 'capabilityHeatmap', Component: CapabilityHeatmap }
+  ];
 
   return (
-    <div className="conversation-tab">
-      {/* Stats Header */}
-      <div className="conversation-stats">
+    <div className="analysis-components">
+      {analysisTypes.map(({ key, Component }) => {
+        if (!analysisData[key]) return null;
+        
+        const props = {
+          businessName: analysisData.businessName,
+          onRegenerate: null,
+          isRegenerating: false,
+          canRegenerate: false
+        };
 
-        <div className="stats-row">
-          <div className="stat-card">
-            <div className="stat-number">{totalCompletedQuestions}</div>
-            <div className="stat-label">Completed Questions</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">{conversation.length}</div>
-            <div className="stat-label">Active Phases</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0}%
-            </div>
-            <div className="stat-label">Progress</div>
-          </div>
-        </div>
-      </div>
+        // Add specific props for each component type
+        if (key === 'swot') {
+          props.analysisResult = analysisData[key];
+        } else {
+          props.questions = analysisData.questions;
+          props.userAnswers = analysisData.userAnswers;
+          props[`${key}Data`] = analysisData[key];
+          props.onDataGenerated = () => {};
+        }
 
-      <div className="conversation-list">
-        {conversation.map((phase, index) => (
-          <div key={index} className="conversation-phase">
-            <div className="phase-header">
-              <h4 className="phase-title">
-                {phase.phase.charAt(0).toUpperCase() + phase.phase.slice(1)} Phase
-              </h4>
-              <div className="phase-meta">
-                <span className="phase-severity">{phase.severity}</span>
-                <span className="question-count">{phase.questions.length} questions</span>
-              </div>
-            </div>
-
-            <div className="questions-list">
-              {phase.questions && phase.questions.map((question, qIndex) => (
-                <div key={qIndex} className="question-item">
-                  <div className="question-header">
-                    <div className="question-text">{question.question}</div>
-                    {question.last_updated && (
-                      <div className="question-timestamp">
-                        {formatDate(question.last_updated)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="answer-section">
-                    <div className="answer-label">Answer:</div>
-                    <div className="answer-text">{question.answer}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        return (
+          <div key={key} className="analysis-component" data-analysis-type={key}>
+            <Component {...props} />
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 };
 
 // Pagination Component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  if (totalPages <= 1) return null;
-
   const getPageNumbers = () => {
     const delta = 2;
     const range = [];
@@ -1135,8 +1141,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             <button
               key={index}
               onClick={() => typeof number === 'number' && onPageChange(number)}
-              className={`pagination-number ${number === currentPage ? 'active' : ''
-                } ${typeof number !== 'number' ? 'dots' : ''}`}
+              className={`pagination-number ${number === currentPage ? 'active' : ''} ${typeof number !== 'number' ? 'dots' : ''}`}
               disabled={typeof number !== 'number'}
             >
               {number}
@@ -1155,23 +1160,6 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       </div>
     </div>
   );
-};
-
-const formatRoleName = (roleName) => {
-  return roleName.split('_').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ');
-};
-
-const getTimeAgo = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
-
-  if (diffInSeconds < 60) return 'just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
 };
 
 export default UserHistory;

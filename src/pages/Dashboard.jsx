@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -10,9 +10,10 @@ import {
   Modal,
   Form,
   Alert,
+  Dropdown,
 } from "react-bootstrap";
 import {
-  ArrowRight, Info, X
+  ArrowRight, Info, X, MoreVertical, Trash2
 } from "lucide-react";
 
 // Components
@@ -24,20 +25,9 @@ import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 
-// Constants
-const STEPS = {
-  WELCOME: 1,
-  INSIGHTS: 2,
-};
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  // State
-  const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
-  const [isLoading, setIsLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState("");
 
   // Business management state
   const [businesses, setBusinesses] = useState([]);
@@ -49,32 +39,21 @@ const Dashboard = () => {
     description: ''
   });
   const [businessError, setBusinessError] = useState('');
-  const [businessSuccess, setBusinessSuccess] = useState('');
 
-  // Dynamic insights state
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
-  const [phaseAnalysis, setPhaseAnalysis] = useState([]);
-  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  // Delete business state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [businessToDelete, setBusinessToDelete] = useState(null);
+  const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  
+  // Success popup state
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Onboarding state
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  // Tour modal state
   const [showHowModal, setShowHowModal] = useState(false);
+
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // Check if user has seen onboarding
-  useEffect(() => {
-    const onboardingCompleted = sessionStorage.getItem('onboarding_completed');
-    const isFirstVisit = !onboardingCompleted;
-
-    if (isFirstVisit) {
-      // Show onboarding after a brief delay for better UX
-      setTimeout(() => {
-        setShowOnboarding(true);
-      }, 1000);
-    }
-    setHasSeenOnboarding(!!onboardingCompleted);
-  }, []);
 
   // Fetch businesses on component mount
   useEffect(() => {
@@ -93,9 +72,6 @@ const Dashboard = () => {
         return;
       }
 
-      console.log('Token exists:', token ? 'Yes' : 'No');
-      console.log('API URL:', `${API_BASE_URL}/api/businesses`);
-
       const response = await fetch(`${API_BASE_URL}/api/businesses`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -103,20 +79,16 @@ const Dashboard = () => {
         }
       });
 
-      console.log('Response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('Businesses data:', data);
         setBusinesses(data.businesses || []);
-        setBusinessError(''); // Clear any previous errors
+        setBusinessError('');
       } else {
         const errorData = await response.json();
         console.error('Failed to fetch businesses:', errorData);
 
-        // Handle authentication errors
         if (response.status === 401 || response.status === 403) {
-          sessionStorage.clear(); // Clear session data
+          sessionStorage.clear();
           navigate('/login');
         } else {
           setBusinessError(errorData.error || 'Failed to load businesses');
@@ -128,73 +100,56 @@ const Dashboard = () => {
     }
   };
 
-  const fetchPhaseAnalysis = async (businessId = null, phase = null) => {
+  const deleteBusiness = async (businessId) => {
     try {
-      setIsLoadingAnalysis(true);
+      setIsDeletingBusiness(true);
+      setDeleteError('');
+
       const token = sessionStorage.getItem('token');
-      let url = API_BASE_URL + '/api/phase-analysis?';
 
-      const params = new URLSearchParams();
-      if (businessId) params.append('business_id', businessId);
-      if (phase) params.append('phase', phase);
+      if (!token) {
+        setDeleteError('Authentication required. Please log in again.');
+        navigate('/login');
+        return;
+      }
 
-      const response = await fetch(url + params.toString(), {
+      const response = await fetch(`${API_BASE_URL}/api/businesses/${businessId}`, {
+        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
-        setPhaseAnalysis(data.analysis_results || []);
-        return data.analysis_results;
+        await fetchBusinesses();
+        setShowDeleteModal(false);
+        setBusinessToDelete(null);
+        
+        setSuccessMessage('Business and all associated data deleted successfully!');
+        setShowSuccessPopup(true);
+        
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          setSuccessMessage('');
+        }, 4000);
       } else {
-        console.error('Failed to fetch phase analysis');
+        console.error('Delete business error:', data);
+        
         if (response.status === 401 || response.status === 403) {
           sessionStorage.clear();
           navigate('/login');
+        } else {
+          setDeleteError(data.error || 'Failed to delete business');
         }
-        return [];
       }
     } catch (error) {
-      console.error('Error fetching phase analysis:', error);
-      return [];
+      console.error('Error deleting business:', error);
+      setDeleteError('Network error. Please try again.');
     } finally {
-      setIsLoadingAnalysis(false);
-    }
-  };
-
-  const fetchConversations = async (businessId = null, phase = null) => {
-    try {
-      const token = sessionStorage.getItem('token');
-      let url = API_BASE_URL + '/api/conversations?';
-
-      const params = new URLSearchParams();
-      if (businessId) params.append('business_id', businessId);
-      if (phase) params.append('phase', phase);
-
-      const response = await fetch(url + params.toString(), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data;
-      } else {
-        console.error('Failed to fetch conversations');
-        if (response.status === 401 || response.status === 403) {
-          sessionStorage.clear();
-          navigate('/login');
-        }
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-      return null;
+      setIsDeletingBusiness(false);
     }
   };
 
@@ -202,7 +157,6 @@ const Dashboard = () => {
     try {
       setIsCreatingBusiness(true);
       setBusinessError('');
-      setBusinessSuccess('');
 
       const token = sessionStorage.getItem('token');
 
@@ -224,25 +178,25 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setBusinessSuccess('Business created successfully!');
+        setSuccessMessage('Business created successfully!');
+        setShowSuccessPopup(true);
+        
         setBusinessFormData({
           business_name: '',
           business_purpose: '',
           description: ''
         });
 
-        // Refresh the business list
         await fetchBusinesses();
-
-        // Close modal after a brief delay
+        setShowCreateModal(false);
+        
         setTimeout(() => {
-          setShowCreateModal(false);
-          setBusinessSuccess('');
-        }, 1500);
+          setShowSuccessPopup(false);
+          setSuccessMessage('');
+        }, 4000);
       } else {
         console.error('Create business error:', data);
 
-        // Handle authentication errors
         if (response.status === 401 || response.status === 403) {
           sessionStorage.clear();
           navigate('/login');
@@ -258,26 +212,10 @@ const Dashboard = () => {
     }
   };
 
-  // Handle onboarding completion
-  const handleOnboardingClose = () => {
-    setShowOnboarding(false);
-  };
-
-  const handleStartDemo = () => {
-    sessionStorage.setItem('onboarding_completed', 'true');
-    setHasSeenOnboarding(true);
-    setShowOnboarding(false);
-  };
-
-  const handleShowOnboardingAgain = () => {
-    setShowOnboarding(true);
-  };
-
   // Business Modal Functions
   const handleShowCreateModal = () => {
     setShowCreateModal(true);
     setBusinessError('');
-    setBusinessSuccess('');
   };
 
   const handleCloseCreateModal = () => {
@@ -288,7 +226,6 @@ const Dashboard = () => {
       description: ''
     });
     setBusinessError('');
-    setBusinessSuccess('');
   };
 
   const handleFormChange = (e) => {
@@ -310,6 +247,25 @@ const Dashboard = () => {
     createBusiness();
   };
 
+  // Delete Modal Functions
+  const handleShowDeleteModal = (business) => {
+    setBusinessToDelete(business);
+    setShowDeleteModal(true);
+    setDeleteError('');
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setBusinessToDelete(null);
+    setDeleteError('');
+  };
+
+  const handleConfirmDelete = () => {
+    if (businessToDelete) {
+      deleteBusiness(businessToDelete._id);
+    }
+  };
+
   const BusinessList = ({ businesses, viewType }) => (
     <div className={`business-list ${viewType}`}>
       {businesses.length === 0 && (
@@ -318,7 +274,6 @@ const Dashboard = () => {
         </div>
       )}
       {businesses.length > 0 && businesses.map((business, index) => {
-        // Extract progress data from question_statistics
         const stats = business.question_statistics || {};
         const progress = stats.progress_percentage || 0;
         const completedQuestions = stats.completed_questions || 0;
@@ -328,12 +283,13 @@ const Dashboard = () => {
         return (
           <div
             key={business._id || index}
-            className="business-item d-flex align-items-center p-3 border-bottom"
-            onClick={() => handleBusinessClick(business)}
-            style={{ cursor: "pointer" }}
+            className="business-item d-flex align-items-center p-3 border-bottom position-relative"
           >
-            {/* Progress Circle */}
-            <div style={{ width: 60, height: 60 }} className="progress-circle me-3">
+            <div 
+              style={{ width: 60, height: 60, cursor: "pointer" }} 
+              className="progress-circle me-3"
+              onClick={() => handleBusinessClick(business)}
+            >
               <CircularProgressbar
                 value={progress}
                 text={`${Math.round(progress)}%`}
@@ -347,7 +303,11 @@ const Dashboard = () => {
               />
             </div>
 
-            <div className="flex-grow-1">
+            <div 
+              className="flex-grow-1"
+              onClick={() => handleBusinessClick(business)}
+              style={{ cursor: "pointer" }}
+            >
               <h6 className="mb-1">{business.business_name}</h6>
               <small className="text-muted">
                 {completedQuestions}/{totalQuestions} questions completed
@@ -358,7 +318,31 @@ const Dashboard = () => {
                 )}
               </small>
             </div>
-            <ArrowRight size={16} className="text-muted" />
+
+            <Dropdown align="end" className="me-2">
+              <Dropdown.Toggle
+                variant="link"
+                className="p-0 border-0 shadow-none"
+                style={{ color: '#6c757d' }}
+              >
+                <MoreVertical size={16} />
+              </Dropdown.Toggle>
+
+              <Dropdown.Menu>
+                {/* <Dropdown.Item onClick={() => handleBusinessClick(business)}>
+                  <ArrowRight size={16} className="me-2" />
+                  View Business
+                </Dropdown.Item>
+                <Dropdown.Divider /> */}
+                <Dropdown.Item 
+                  onClick={() => handleShowDeleteModal(business)}
+                  className="text-danger"
+                >
+                  <Trash2 size={16} className="me-2" />
+                  Delete Business
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           </div>
         );
       })}
@@ -370,417 +354,8 @@ const Dashboard = () => {
     navigate('/businesspage', { state: { business } });
   };
 
-  const handleViewInsights = async (business) => {
-    setSelectedBusiness(business);
-    setCurrentStep(STEPS.INSIGHTS);
-
-    // Fetch existing analysis for this business
-    await fetchPhaseAnalysis(business._id);
-  };
-
-  const goToInsights = () => {
-    setCurrentStep(STEPS.INSIGHTS);
-  };
-
-  const goBackToWelcome = () => {
-    setCurrentStep(STEPS.WELCOME);
-    setAnalysisResult("");
-    setSelectedBusiness(null);
-    setPhaseAnalysis([]);
-  };
-
-  const generateInsights = async () => {
-    if (!selectedBusiness) {
-      setBusinessError('Please select a business first');
-      return;
-    }
-
-    setIsLoading(true);
-    setAnalysisResult("");
-
-    try {
-      // Fetch conversations and existing analysis
-      const [conversationsData, analysisData] = await Promise.all([
-        fetchConversations(selectedBusiness._id),
-        fetchPhaseAnalysis(selectedBusiness._id)
-      ]);
-
-      if (conversationsData && conversationsData.conversations) {
-        // Generate dynamic insights based on conversations
-        const insights = generateDynamicInsights(conversationsData, analysisData);
-        setAnalysisResult(insights);
-      } else {
-        setAnalysisResult("No data available for analysis. Please complete the business assessment first.");
-      }
-    } catch (error) {
-      console.error('Error generating insights:', error);
-      setAnalysisResult("Failed to generate insights. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateDynamicInsights = (conversationsData, analysisData) => {
-    const { conversations, phase_analysis } = conversationsData;
-
-    let insights = `Business Analysis Report for ${selectedBusiness.business_name}\n\n`;
-
-    // Overview
-    insights += `📊 Assessment Overview:\n`;
-    insights += `• Total Questions: ${conversations.length}\n`;
-    insights += `• Completed: ${conversations.filter(c => c.completion_status === 'complete').length}\n`;
-    insights += `• Analysis Reports: ${phase_analysis.length}\n\n`;
-
-    // Phase Analysis Results
-    if (phase_analysis && phase_analysis.length > 0) {
-      insights += `🔍 Generated Analysis:\n\n`;
-
-      phase_analysis.forEach((analysis, index) => {
-        insights += `${index + 1}. ${analysis.analysis_name}\n`;
-        insights += `   Phase: ${analysis.phase || 'General'}\n`;
-        insights += `   Type: ${analysis.analysis_type || 'Unknown'}\n`;
-
-        if (typeof analysis.analysis_data === 'object') {
-          insights += `   Results: ${JSON.stringify(analysis.analysis_data, null, 2)}\n`;
-        } else {
-          insights += `   Results: ${analysis.analysis_data}\n`;
-        }
-        insights += `   Generated: ${new Date(analysis.created_at).toLocaleDateString()}\n\n`;
-      });
-    }
-
-    // Conversation Summary
-    if (conversations && conversations.length > 0) {
-      insights += `💬 Question & Answer Summary:\n\n`;
-
-      conversations.forEach((conv, index) => {
-        if (conv.completion_status === 'complete') {
-          insights += `${index + 1}. ${conv.question_text}\n`;
-          insights += `   Status: ✅ Complete\n`;
-          insights += `   Answers: ${conv.total_answers}\n`;
-          insights += `   Last Updated: ${new Date(conv.last_updated).toLocaleDateString()}\n\n`;
-        }
-      });
-
-      const incompleteQuestions = conversations.filter(c => c.completion_status !== 'complete');
-      if (incompleteQuestions.length > 0) {
-        insights += `⚠️ Pending Questions (${incompleteQuestions.length}):\n`;
-        incompleteQuestions.forEach((conv, index) => {
-          insights += `${index + 1}. ${conv.question_text}\n`;
-        });
-        insights += `\n`;
-      }
-    }
-
-    // Recommendations
-    insights += `🎯 Next Steps:\n`;
-    const completedCount = conversations.filter(c => c.completion_status === 'complete').length;
-    const totalCount = conversations.length;
-
-    if (completedCount === 0) {
-      insights += `• Start by completing the business assessment questions\n`;
-      insights += `• Focus on providing detailed answers for better insights\n`;
-    } else if (completedCount < totalCount) {
-      insights += `• Complete remaining ${totalCount - completedCount} questions\n`;
-      insights += `• Review and expand on previous answers if needed\n`;
-    } else {
-      insights += `• All assessment questions completed! 🎉\n`;
-      insights += `• Consider conducting periodic reviews to track progress\n`;
-      insights += `• Implement recommendations from the analysis reports\n`;
-    }
-
-    if (phase_analysis.length === 0) {
-      insights += `• Request detailed analysis reports for strategic planning\n`;
-    }
-
-    return insights;
-  };
-
-  const clearResults = () => {
-    setAnalysisResult("");
-  };
-
   const handleCloseModal = () => {
     setShowHowModal(false);
-  };
-
-  // Renderers - Always show split view
-  const renderWelcomeLayout = () => {
-    return (
-      <Row className="h-100 justify-content-center">
-        <Col xs={12} className="p-0">
-          {/* Mobile View */}
-          <Card className="mobile-view-card d-md-none">
-            <Card.Body className="p-0">
-              <div className="p-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="mb-0">{t('welcome')}</h5>
-                  {hasSeenOnboarding && (
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={handleShowOnboardingAgain}
-                      style={{ fontSize: '0.8rem' }}
-                    >
-                      📖 Tour
-                    </Button>
-                  )}
-                </div>
-                <p className="text-muted small mb-4">{t('welcome_message')}</p>
-              </div>
-              <div className="px-4 mb-4">
-                <h6 className="mb-3">{t('my_businesses')}</h6>
-                <BusinessList businesses={businesses} viewType="mobile" />
-              </div>
-              <div className="px-4 pb-4">
-                <Button
-                  variant="primary"
-                  className="w-100 create-business-btn"
-                  onClick={handleShowCreateModal}
-                >
-                  {t('create_business')}
-                </Button>
-              </div>
-            </Card.Body>
-          </Card>
-
-          {/* Desktop View - Always show split layout */}
-          <Card className="desktop-view-card d-none d-md-block">
-            <Card.Body className="p-0 h-100">
-              <Row className="h-100 g-0">
-                <Col md={6} className="welcome-section">
-                  <div>
-                    <div className="d-flex justify-content-between align-items-start mb-4">
-                      <div>
-                        <h5 className="mb-2">{t('welcome')}</h5>
-                      </div>
-                    </div>
-                    <p className="text-muted mb-4">{t('welcome_message')}</p>
-                    <Button
-                      variant="primary"
-                      className="create-business-btn me-3"
-                      onClick={handleShowCreateModal}
-                    >
-                      {t('create_business')}
-                    </Button>
-
-                    <Button
-                      variant="primary"
-                      className="create-business-btn"
-                      onClick={() => setShowHowModal(true)}
-                    >
-                      <Info size={18} className="me-2" />
-                      How It Works
-                    </Button>
-
-                    {/* How It Works Modal */}
-                    {showHowModal && (
-                      <div className="popup-overlay" onClick={handleCloseModal}>
-                        <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="close-button"
-                            onClick={handleCloseModal}
-                            aria-label="Close modal"
-                          >
-                            <X size={20} />
-                          </button>
-
-                          <h2 className="mb-4">How This Application Works</h2>
-
-                          <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-                            {/* Indicators */}
-                            <div className="carousel-indicators">
-                              <button
-                                type="button"
-                                data-bs-target="#howItWorksCarousel"
-                                data-bs-slide-to="0"
-                                className="active"
-                                aria-label="Slide 1"
-                              ></button>
-                              <button
-                                type="button"
-                                data-bs-target="#howItWorksCarousel"
-                                data-bs-slide-to="1"
-                                aria-label="Slide 2"
-                              ></button>
-                              <button
-                                type="button"
-                                data-bs-target="#howItWorksCarousel"
-                                data-bs-slide-to="2"
-                                aria-label="Slide 3"
-                              ></button>
-                              <button
-                                type="button"
-                                data-bs-target="#howItWorksCarousel"
-                                data-bs-slide-to="3"
-                                aria-label="Slide 4"
-                              ></button>
-                            </div>
-
-                            {/* Slides */}
-                            <div className="carousel-inner">
-                              <div className="carousel-item active">
-                                <img
-                                  src="/slides/slide1.jpeg"
-                                  className="d-block w-100"
-                                  alt="Step 1: Create your business profile"
-                                />
-                                <div className="carousel-caption d-none d-md-block">
-                                  <h5>Step 1: Create Your Business</h5>
-                                  <p>Start by setting up your business profile with basic information.</p>
-                                </div>
-                              </div>
-                              <div className="carousel-item">
-                                <img
-                                  src="/slides/slide2.jpeg"
-                                  className="d-block w-100"
-                                  alt="Step 2: Answer assessment questions"
-                                />
-                                <div className="carousel-caption d-none d-md-block">
-                                  <h5>Step 2: Complete Assessment</h5>
-                                  <p>Answer questions about your business to get personalized insights.</p>
-                                </div>
-                              </div>
-                              <div className="carousel-item">
-                                <img
-                                  src="/slides/slide3.jpeg"
-                                  className="d-block w-100"
-                                  alt="Step 3: Get insights and recommendations"
-                                />
-                                <div className="carousel-caption d-none d-md-block">
-                                  <h5>Step 3: Get Insights</h5>
-                                  <p>Receive detailed analysis and actionable recommendations.</p>
-                                </div>
-                              </div>
-                              <div className="carousel-item">
-                                <img
-                                  src="/slides/slide4.PNG"
-                                  className="d-block w-100"
-                                  alt="Step 4: Track progress and optimize"
-                                />
-                                <div className="carousel-caption d-none d-md-block">
-                                  <h5>Step 4: Track & Optimize</h5>
-                                  <p>Monitor your progress and continuously improve your business performance.</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Navigation Arrows */}
-                            <button
-                              className="carousel-control-prev"
-                              type="button"
-                              data-bs-target="#howItWorksCarousel"
-                              data-bs-slide="prev"
-                              aria-label="Previous slide"
-                            >
-                              <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                              <span className="visually-hidden">Previous</span>
-                            </button>
-                            <button
-                              className="carousel-control-next"
-                              type="button"
-                              data-bs-target="#howItWorksCarousel"
-                              data-bs-slide="next"
-                              aria-label="Next slide"
-                            >
-                              <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                              <span className="visually-hidden">Next</span>
-                            </button>
-                          </div>
-
-                          <div className="text-center mt-4">
-                            <Button
-                              variant="primary"
-                              onClick={handleCloseModal}
-                              className="px-4"
-                            >
-                              Got it!
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Col>
-
-                {/* RIGHT SIDE - ALWAYS VISIBLE */}
-                <Col md={6} className="businesses-section">
-                  <div>
-                    <h6 className="mb-4">{t('my_businesses')}</h6>
-                    <BusinessList businesses={businesses} viewType="desktop" />
-                  </div>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    );
-  };
-
-  const renderInsightsContent = () => {
-    return (
-      <div className="glass-card p-4">
-        <div>
-          <Button
-            variant="primary"
-            onClick={goBackToWelcome}
-            className="btn-back mb-4"
-          >
-            ← {t('back_to_welcome')}
-          </Button>
-        </div>
-
-        <div className="analysis-section">
-          <h5 className="mb-4">{t('business_insights')}</h5>
-
-          <div className="insights-card p-4 border rounded">
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <div>
-                <h6 className="mb-1">{t('generate_insights')}</h6>
-                <p className="text-muted mb-0">
-                  {selectedBusiness
-                    ? `Generate analysis for ${selectedBusiness.business_name}`
-                    : t('generate_insights_desc')
-                  }
-                </p>
-              </div>
-              <Button
-                variant="primary"
-                onClick={generateInsights}
-                disabled={isLoading || !selectedBusiness}
-              >
-                {isLoading ? (
-                  <>
-                    <Spinner size="sm" className="me-2" />
-                    {t('analyzing')}
-                  </>
-                ) : (
-                  t('generate_insights_btn')
-                )}
-              </Button>
-            </div>
-
-            {analysisResult && (
-              <div className="analysis-result mt-4 p-3 bg-light rounded">
-                <h6 className="mb-3">{t('analysis_results')}</h6>
-                <div className="analysis-content" style={{ whiteSpace: 'pre-line' }}>
-                  {analysisResult}
-                </div>
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  className="mt-3"
-                  onClick={clearResults}
-                >
-                  {t('clear_results')}
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
   };
 
   // Main render
@@ -789,19 +364,203 @@ const Dashboard = () => {
       <MenuBar />
 
       <Container fluid className="p-0 main-content">
-        {currentStep === STEPS.WELCOME ? (
-          <div className="responsive-view-container">
-            {renderWelcomeLayout()}
-          </div>
-        ) : (
-          <div className="px-4 py-4">
-            <Row>
-              <Col>
-                {renderInsightsContent()}
-              </Col>
-            </Row>
-          </div>
-        )}
+        <div className="responsive-view-container">
+          <Row className="h-100 justify-content-center">
+            <Col xs={12} className="p-0">
+              {/* Mobile View */}
+              <Card className="mobile-view-card d-md-none">
+                <Card.Body className="p-0">
+                  <div className="p-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="mb-0">{t('welcome')}</h5>
+                    </div>
+                    <p className="text-muted small mb-4">{t('welcome_message')}</p>
+                  </div>
+                  <div className="px-4 mb-4">
+                    <h6 className="mb-3">{t('my_businesses')}</h6>
+                    <BusinessList businesses={businesses} viewType="mobile" />
+                  </div>
+                  <div className="px-4 pb-4">
+                    <Button
+                      variant="primary"
+                      className="w-100 create-business-btn"
+                      onClick={handleShowCreateModal}
+                    >
+                      {t('create_business')}
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+
+              {/* Desktop View */}
+              <Card className="desktop-view-card d-none d-md-block">
+                <Card.Body className="p-0 h-100">
+                  <Row className="h-100 g-0">
+                    <Col md={6} className="welcome-section">
+                      <div>
+                        <div className="d-flex justify-content-between align-items-start mb-4">
+                          <div>
+                            <h5 className="mb-2">{t('welcome')}</h5>
+                          </div>
+                        </div>
+                        <p className="text-muted mb-4">{t('welcome_message')}</p>
+                        <Button
+                          variant="primary"
+                          className="create-business-btn me-3"
+                          onClick={handleShowCreateModal}
+                        >
+                          {t('create_business')}
+                        </Button>
+
+                        <Button
+                          variant="primary"
+                          className="create-business-btn"
+                          onClick={() => setShowHowModal(true)}
+                        >
+                          <Info size={18} className="me-2" />
+                          How It Works
+                        </Button>
+
+                        {/* How It Works Modal */}
+                        {showHowModal && (
+                          <div className="popup-overlay" onClick={handleCloseModal}>
+                            <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                className="close-button"
+                                onClick={handleCloseModal}
+                                aria-label="Close modal"
+                              >
+                                <X size={20} />
+                              </button>
+
+                              <h2 className="mb-4">How This Application Works</h2>
+
+                              <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+                                <div className="carousel-indicators">
+                                  <button
+                                    type="button"
+                                    data-bs-target="#howItWorksCarousel"
+                                    data-bs-slide-to="0"
+                                    className="active"
+                                    aria-label="Slide 1"
+                                  ></button>
+                                  <button
+                                    type="button"
+                                    data-bs-target="#howItWorksCarousel"
+                                    data-bs-slide-to="1"
+                                    aria-label="Slide 2"
+                                  ></button>
+                                  <button
+                                    type="button"
+                                    data-bs-target="#howItWorksCarousel"
+                                    data-bs-slide-to="2"
+                                    aria-label="Slide 3"
+                                  ></button>
+                                  <button
+                                    type="button"
+                                    data-bs-target="#howItWorksCarousel"
+                                    data-bs-slide-to="3"
+                                    aria-label="Slide 4"
+                                  ></button>
+                                </div>
+
+                                <div className="carousel-inner">
+                                  <div className="carousel-item active">
+                                    <img
+                                      src="/slides/slide1.jpeg"
+                                      className="d-block w-100"
+                                      alt="Step 1: Create your business profile"
+                                    />
+                                    <div className="carousel-caption d-none d-md-block">
+                                      <h5>Step 1: Create Your Business</h5>
+                                      <p>Start by setting up your business profile with basic information.</p>
+                                    </div>
+                                  </div>
+                                  <div className="carousel-item">
+                                    <img
+                                      src="/slides/slide2.jpeg"
+                                      className="d-block w-100"
+                                      alt="Step 2: Answer assessment questions"
+                                    />
+                                    <div className="carousel-caption d-none d-md-block">
+                                      <h5>Step 2: Complete Assessment</h5>
+                                      <p>Answer questions about your business to get personalized insights.</p>
+                                    </div>
+                                  </div>
+                                  <div className="carousel-item">
+                                    <img
+                                      src="/slides/slide3.jpeg"
+                                      className="d-block w-100"
+                                      alt="Step 3: Get insights and recommendations"
+                                    />
+                                    <div className="carousel-caption d-none d-md-block">
+                                      <h5>Step 3: Get Insights</h5>
+                                      <p>Receive detailed analysis and actionable recommendations.</p>
+                                    </div>
+                                  </div>
+                                  <div className="carousel-item">
+                                    <img
+                                      src="/slides/slide4.PNG"
+                                      className="d-block w-100"
+                                      alt="Step 4: Track progress and optimize"
+                                    />
+                                    <div className="carousel-caption d-none d-md-block">
+                                      <h5>Step 4: Track & Optimize</h5>
+                                      <p>Monitor your progress and continuously improve your business performance.</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  className="carousel-control-prev"
+                                  type="button"
+                                  data-bs-target="#howItWorksCarousel"
+                                  data-bs-slide="prev"
+                                  aria-label="Previous slide"
+                                >
+                                  <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                                  <span className="visually-hidden">Previous</span>
+                                </button>
+                                <button
+                                  className="carousel-control-next"
+                                  type="button"
+                                  data-bs-target="#howItWorksCarousel"
+                                  data-bs-slide="next"
+                                  aria-label="Next slide"
+                                >
+                                  <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                                  <span className="visually-hidden">Next</span>
+                                </button>
+                              </div>
+
+                              <div className="text-center mt-4">
+                                <Button
+                                  variant="primary"
+                                  onClick={handleCloseModal}
+                                  className="px-4"
+                                >
+                                  Got it!
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+
+                    {/* RIGHT SIDE - Business List */}
+                    <Col md={6} className="businesses-section">
+                      <div>
+                        <h6 className="mb-4">{t('my_businesses')}</h6>
+                        <BusinessList businesses={businesses} viewType="desktop" />
+                      </div>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </div>
       </Container>
 
       {/* Create Business Modal */}
@@ -814,11 +573,6 @@ const Dashboard = () => {
             {businessError && (
               <Alert variant="danger" className="mb-3">
                 {businessError}
-              </Alert>
-            )}
-            {businessSuccess && (
-              <Alert variant="success" className="mb-3">
-                {businessSuccess}
               </Alert>
             )}
 
@@ -885,6 +639,97 @@ const Dashboard = () => {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="success-popup-overlay">
+          <div className="success-popup">
+            <div className="success-popup-content">
+              <div className="success-icon">
+                ✅
+              </div>
+              <h5 className="mb-2">Success!</h5>
+              <p className="mb-3">{successMessage}</p>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setShowSuccessPopup(false);
+                  setSuccessMessage('');
+                }}
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Business Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={handleCloseDeleteModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="text-danger">
+            <Trash2 size={20} className="me-2" />
+            Delete Business
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {deleteError && (
+            <Alert variant="danger" className="mb-3">
+              {deleteError}
+            </Alert>
+          )}
+          
+          {businessToDelete && (
+            <div>
+              <p className="mb-3">Are you sure you want to delete <strong>"{businessToDelete.business_name}"</strong>?</p>
+              
+              <div className="alert alert-danger mb-3">
+                <h6 className="alert-heading mb-2">⚠️ This will permanently delete:</h6>
+                <ul className="mb-2">
+                  <li><strong>All question responses and conversations</strong></li>
+                  <li><strong>All generated analysis reports and insights</strong></li>
+                  <li><strong>All progress data and statistics</strong></li>
+                  <li><strong>The business profile itself</strong></li>
+                </ul>
+                <hr className="my-2" />
+                <p className="mb-0"><strong>This action cannot be undone!</strong></p>
+              </div>
+              
+              <div className="bg-light p-3 rounded">
+                <p className="mb-1"><strong>Business Purpose:</strong></p>
+                <p className="text-muted mb-0">{businessToDelete.business_purpose}</p>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={handleCloseDeleteModal}
+            disabled={isDeletingBusiness}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleConfirmDelete}
+            disabled={isDeletingBusiness}
+          >
+            {isDeletingBusiness ? (
+              <>
+                <Spinner size="sm" className="me-2" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 size={16} className="me-2" />
+                Delete Business
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );
