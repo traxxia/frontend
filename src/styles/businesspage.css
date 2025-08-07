@@ -248,6 +248,7 @@ html, body {
 .desktop-tab.active {
   color: #2563eb;
   border-bottom-color: #2563eb;
+  border-radius: 0%;
 }
 
 .desktop-tab:hover {
@@ -436,7 +437,7 @@ html, body {
   outline: none;
 }
 
-.send-btn {
+ .send-btn {
   background: #3b82f6;
   border: none;
   border-radius: 50%;
@@ -450,6 +451,7 @@ html, body {
   transition: background-color 0.2s;
 }
 
+
 .send-btn:hover:not(:disabled) {
   background: #2563eb;
 }
@@ -457,7 +459,7 @@ html, body {
 .send-btn:disabled {
   background: #d1d5db;
   cursor: not-allowed;
-}
+} 
 
 /* ========== INFO PANEL ========== */
 .info-panel {

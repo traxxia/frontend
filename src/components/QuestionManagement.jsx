@@ -327,7 +327,7 @@ const QuestionManagement = ({ onToast }) => {
 
         return (
           <div key={phase} style={{ marginBottom: '30px' }}>
-            <div 
+            <div className='question-tab'
               onClick={() => togglePhaseCollapse(phase)}
               style={{
                 backgroundColor: '#f8f9fa',
@@ -349,19 +349,19 @@ const QuestionManagement = ({ onToast }) => {
             </div>
 
             {!isCollapsed && (
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dee2e6' }}>
+              <table  className='question-table' style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dee2e6' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ width: '60px', padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                    <th className='question-th' style={{ width: '60px', padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
                       #
                     </th>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>
+                    <th className='question-th' style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>
                       Question Text
                     </th>
-                    <th style={{ width: '100px', padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                    <th className='question-th' style={{ width: '100px', padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
                       Severity
                     </th>
-                    <th style={{ width: '140px', padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                    <th className='question-th' style={{ width: '140px', padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
                       Actions
                     </th>
                   </tr>
@@ -369,7 +369,7 @@ const QuestionManagement = ({ onToast }) => {
                 <tbody>
                   {phaseQuestions.length === 0 ? (
                     <tr>
-                      <td colSpan="4" style={{
+                      <td className='question-td' colSpan="4" style={{
                         padding: '40px',
                         textAlign: 'center',
                         color: '#6c757d',
@@ -470,6 +470,7 @@ const QuestionRow = ({
         <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>
           <textarea
             name="question_text"
+            
             value={editForm.question_text}
             onChange={handleChange}
             style={{
@@ -549,7 +550,7 @@ const QuestionRow = ({
         cursor: 'move'
       }}
     >
-      <td style={{ 
+      <td className='question-td' style={{ 
         padding: '12px 8px', 
         textAlign: 'center', 
         border: '1px solid #dee2e6',
@@ -563,11 +564,11 @@ const QuestionRow = ({
         </div>
       </td>
        
-      <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>
+      <td className='question-td' style={{ padding: '12px', border: '1px solid #dee2e6' }}>
         {question.question_text}
       </td>
-      
-      <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+
+      <td className='question-td' style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
         <span style={{
           padding: '2px 8px',
           borderRadius: '12px',
@@ -580,7 +581,7 @@ const QuestionRow = ({
         </span>
       </td>
        
-      <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+      <td className='question-td' style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
           <button
             onClick={onEdit}
@@ -677,7 +678,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
       justifyContent: 'center',
       zIndex: 1000
     }}>
-      <div style={{
+      <div className='question-modal' style={{
         backgroundColor: 'white',
         padding: '24px',
         borderRadius: '8px',
@@ -731,7 +732,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
             </select>
           </div>
 
-          <div style={{ 
+          <div className='question-modal-tab'  style={{ 
             marginBottom: '20px', 
             padding: '12px', 
             backgroundColor: '#f8f9fa', 

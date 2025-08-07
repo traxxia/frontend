@@ -2670,6 +2670,7 @@
   align-items: center;
   cursor: pointer;
   transition: background 0.2s;
+  padding: 0%;
 }
 
 .close-button:hover {
@@ -4106,8 +4107,24 @@
 [data-theme="dark"] .user-table-wrapper tbody tr:nth-child(even) {
   background: var(--text-light);
 }
+[data-theme="dark"] .question-tab{
+  background: var(--color-bg-secondary) !important;
+}
 [data-theme="dark"] td {
   color: var(--color-text-dark);
+ 
+}
+[data-theme="dark"] .question-modal-tab {
+  color: var(--color-text-dark) !important;
+  background-color: var(--color-bg-secondary) !important;
+}
+[data-theme="dark"] textarea{
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-bg-secondary) !important;
+}
+[data-theme="dark"] .question-modal {
+  color: var(--color-text-secondary) !important;
+  background-color: var(--color-bg-secondary) !important;
 }
 [data-theme="dark"] .cell-user {
   color: var(--color-text-secondary);
@@ -4117,6 +4134,45 @@
 }
 [data-theme="dark"] .user-email {
   color: var(--color-text-primary);
+}
+[data-theme="dark"] .question-table {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+}
+[data-theme="dark"] .question-td {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+}
+[data-theme="dark"] .question-th {
+  color: var(--color-text);
+  
+}
+[data-theme="dark"] .answer-text,
+[data-theme="dark"] .panel-header {
+  color: var(--color-text-dark);
+  background-color: var(--color-bg-primary);
+}
+[data-theme="dark"] .user-name-header {
+  color: var(--color-text-dark);
+  background-color: var(--color-bg-primary);
+}
+[data-theme='dark'] .conversation-tab,
+[data-theme="dark"] .businesses-tab {
+  background-color: var(--color-bg-primary);
+}
+[data-theme="dark"] .phase-header,
+[data-theme="dark"] .stat-card {
+  background-color: var(--color-bg-secondary);
+}
+[data-theme="dark"] .question-text,
+[data-theme='dark'] .stat-number,
+[data-theme="dark"] .nav-tab,
+[data-theme="dark"] .business-date,
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .stat-label,
+[data-theme='dark'] .business-purpose,
+[data-theme="dark"] .business-name{
+  color: var(--color-text-dark);
 }
 [data-theme="dark"] .user-history-table th,
 [data-theme="dark"] .user-table td  {
