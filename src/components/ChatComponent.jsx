@@ -140,11 +140,6 @@ const ChatComponent = ({
       if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
         completedQuestionIds.add(questionId);
 
-        // Notify parent about completed question
-        if (onQuestionCompleted) {
-          onQuestionCompleted(questionId);
-        }
-
         // Handle skipped questions
         if (conversation.completion_status === 'skipped') {
           onNewAnswer?.(questionId, '[Question Skipped]');
@@ -392,7 +387,8 @@ const ChatComponent = ({
 
           // Notify parent about completed question
           if (onQuestionCompleted) {
-            onQuestionCompleted(questionId);
+            console.log('ChatComponent: Calling onQuestionCompleted for:', questionId);
+            await onQuestionCompleted(questionId);
           }
 
           const newCompletedSet = new Set([...completedQuestions, questionId]);
@@ -411,43 +407,12 @@ const ChatComponent = ({
     }
   };
 
-  const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
-    console.log(`Phase ${phase} completed`);
-
-    if (phase === 'initial') {
-      setCompletedQuestions(updatedCompletedSet);
-
-      // Trigger analysis generation with fresh data fetch
-      if (onPhaseCompleted) {
-        await onPhaseCompleted('initial', updatedCompletedSet);
-      }
-    }
-  };
-
+  // Phase constants
   const PHASES = {
     INITIAL: "initial",
     ESSENTIAL: "essential",
     GOOD: "good",
     EXCELLENT: "excellent",
-  };
-
-  const handleQuestionCompleted = (questionId) => {
-    setCompletedQuestions(prev => {
-      const newCompletedSet = new Set([...prev, questionId]);
-
-      // Check if initial phase is completed with the updated set
-      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-      const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
-
-      console.log('Phase completion check:', {
-        totalInitialQuestions: initialQuestions.length,
-        completedInitialQuestions: completedInitialQuestions.length,
-        questionJustCompleted: questionId,
-        allCompletedQuestions: Array.from(newCompletedSet)
-      });
-
-      return newCompletedSet;
-    });
   };
 
   // Updated skip function to use the new API endpoint
@@ -472,7 +437,8 @@ const ChatComponent = ({
         // Notify parent about skipped question
         onNewAnswer?.(questionId, '[Question Skipped]');
         if (onQuestionCompleted) {
-          onQuestionCompleted(questionId);
+          console.log('ChatComponent: Calling onQuestionCompleted for skipped question:', questionId);
+          await onQuestionCompleted(questionId);
         }
 
         const newCompletedSet = new Set([...completedQuestions, questionId]);
@@ -617,18 +583,6 @@ const ChatComponent = ({
       if (shouldComplete) {
         setPendingValidation(null);
         setFollowupAttempts(0);
-
-        if (saveResult.wasCompleted) {
-          const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-          const isInitialPhaseJustCompleted = initialQuestions.length > 0 &&
-            initialQuestions.every(q => saveResult.updatedCompleted.has(q._id));
-
-          if (isInitialPhaseJustCompleted && onPhaseCompleted) {
-            console.log('Initial phase completed via followup, triggering analysis generation');
-            await onPhaseCompleted('initial', saveResult.updatedCompleted);
-          }
-        }
-
         await moveToNextQuestion(saveResult.updatedCompleted);
       } else {
         // Continue with more follow-up questions
@@ -665,6 +619,13 @@ const ChatComponent = ({
     const questionId = nextQuestion._id;
     const questionText = nextQuestion.question_text;
 
+    console.log('ChatComponent: Handling main answer for question:', {
+      questionId,
+      questionText,
+      phase: nextQuestion.phase,
+      severity: nextQuestion.severity
+    });
+
     addMessageLocally('user', answer, {
       questionId,
       phase: nextQuestion.phase
@@ -700,18 +661,14 @@ const ChatComponent = ({
         setFollowupAttempts(0);
       } else {
         // Answer is valid, save and complete
+        console.log('ChatComponent: Answer is valid, saving as complete');
         const saveResult = await saveAnswer(questionId, answer, true);
 
-        if (saveResult.wasCompleted) {
-          const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-          const isInitialPhaseJustCompleted = initialQuestions.length > 0 &&
-            initialQuestions.every(q => saveResult.updatedCompleted.has(q._id));
-
-          if (isInitialPhaseJustCompleted && onPhaseCompleted) {
-            console.log('Initial phase just completed, triggering analysis generation');
-            await onPhaseCompleted('initial', saveResult.updatedCompleted);
-          }
-        }
+        console.log('ChatComponent: Save result:', {
+          wasCompleted: saveResult.wasCompleted,
+          questionId,
+          completedQuestions: saveResult.updatedCompleted ? Array.from(saveResult.updatedCompleted) : 'none'
+        });
 
         await moveToNextQuestion(saveResult.updatedCompleted);
       }

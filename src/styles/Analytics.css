@@ -14,7 +14,19 @@
 .customer-segmentation,
 .swot-analysis-container,
 .loyalty-nps,
-.purchase-criteria {
+.purchase-criteria,
+.maturity-score-analysis,
+.productivity-metrics-analysis,
+.organizational-culture-analysis,
+.channel-effectiveness-analysis,
+.strategic-positioning-radar,
+.strategic-goals-container,
+.expanded-capability-heatmap,
+.strategic-radar-container,
+.culture-profile,
+.productivity-metrics,
+.maturity-container ,
+.channel-effectiveness-map {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 

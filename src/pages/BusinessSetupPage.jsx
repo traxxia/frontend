@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Loader, RefreshCw, ChevronDown } from "lucide-react";
 import ChatComponent from "../components/ChatComponent";
 import SwotAnalysis from "../components/SwotAnalysis";
@@ -16,6 +16,17 @@ import { useLocation } from 'react-router-dom';
 import StrategicAnalysis from "../components/StrategicAnalysis";
 import PortersFiveForces from "../components/PortersFiveForces";
 import PestelAnalysis from "../components/PestelAnalysis";
+import FullSWOTPortfolio from "../components/FullSWOTPortfolio";
+import PhaseManager from "../components/PhaseManager";
+import CompetitiveAdvantageMatrix from "../components/CompetitiveAdvantageMatrix";
+import ChannelEffectivenessMap from "../components/ChannelEffectivenessMap";
+import ExpandedCapabilityHeatmap from "../components/ExpandedCapabilityHeatmap";
+import StrategicGoals from "../components/StrategicGoals";
+import StrategicPositioningRadar from "../components/StrategicPositioningRadar";
+import OrganizationalCultureProfile from "../components/OrganizationalCultureProfile";
+import ProductivityMetrics from "../components/ProductivityMetrics";
+import MaturityScoreLight from "../components/MaturityScoreLight";
+
 
 const BusinessSetupPage = () => {
   const location = useLocation();
@@ -23,6 +34,11 @@ const BusinessSetupPage = () => {
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
   const { t } = useTranslation();
+
+  // Constants
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
 
   // UI State
   const [activeTab, setActiveTab] = useState(() => {
@@ -47,15 +63,22 @@ const BusinessSetupPage = () => {
   });
 
   // Analysis State
+  const [hasAnalysisData, setHasAnalysisData] = useState(false);
+  const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
+  const [swotAnalysisResult, setSwotAnalysisResult] = useState("");
   const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
   const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);
   const [channelHeatmapData, setChannelHeatmapData] = useState(null);
   const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
   const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
-  const [swotAnalysisResult, setSwotAnalysisResult] = useState("");
-  const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
   const [strategicData, setStrategicData] = useState(null);
-  const [hasAnalysisData, setHasAnalysisData] = useState(false);
+  const [portersData, setPortersData] = useState(null);
+  const [pestelData, setPestelData] = useState(null);
+  const [fullSwotData, setFullSwotData] = useState(null);
+  const competitiveAdvantageRef = useRef(null);
+  const [competitiveAdvantageData, setCompetitiveAdvantageData] = useState(null);
+  const [isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating] = useState(false);
+
   // Individual component regenerating states
   const [isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating] = useState(false);
   const [isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating] = useState(false);
@@ -63,12 +86,38 @@ const BusinessSetupPage = () => {
   const [isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating] = useState(false);
   const [isCapabilityHeatmapRegenerating, setIsCapabilityHeatmapRegenerating] = useState(false);
   const [isStrategicRegenerating, setIsStrategicRegenerating] = useState(false);
-  const [portersData, setPortersData] = useState(null);
-  const [pestelData, setPestelData] = useState(null);
   const [isPortersRegenerating, setIsPortersRegenerating] = useState(false);
   const [isPestelRegenerating, setIsPestelRegenerating] = useState(false);
-  const portersRef = useRef(null);
-  const pestelRef = useRef(null);
+  const [isFullSwotRegenerating, setIsFullSwotRegenerating] = useState(false);
+  const [channelEffectivenessData, setChannelEffectivenessData] = useState(null);
+  const [isChannelEffectivenessRegenerating, setIsChannelEffectivenessRegenerating] = useState(false);
+  const [expandedCapabilityData, setExpandedCapabilityData] = useState(null);
+  const [isExpandedCapabilityRegenerating, setIsExpandedCapabilityRegenerating] = useState(false);
+  const [strategicGoalsData, setStrategicGoalsData] = useState(null);
+  const [isStrategicGoalsRegenerating, setIsStrategicGoalsRegenerating] = useState(false);
+  const [strategicRadarData, setStrategicRadarData] = useState(null);
+  const [isStrategicRadarRegenerating, setIsStrategicRadarRegenerating] = useState(false);
+  const [cultureProfileData, setCultureProfileData] = useState(null);
+  const [isCultureProfileRegenerating, setIsCultureProfileRegenerating] = useState(false);
+  const [productivityData, setProductivityData] = useState(null);
+  const [isProductivityRegenerating, setIsProductivityRegenerating] = useState(false);
+  const [maturityData, setMaturityData] = useState(null);
+  const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
+
+  // 3. ADD THESE REFS with your other refs
+  const cultureProfileRef = useRef(null);
+  const productivityRef = useRef(null);
+  const maturityScoreRef = useRef(null);
+  // Add these refs with your other refs
+  const strategicGoalsRef = useRef(null);
+  const strategicRadarRef = useRef(null);
+  // Add this ref with your other refs
+  const expandedCapabilityRef = useRef(null);
+
+  // STEP 3: Add ref for navigation (with your other refs)
+  const channelEffectivenessRef = useRef(null);
+
+  const [selectedPhase, setSelectedPhase] = useState('initial');
   // Dropdown State
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState(() => t('goToSection') || 'Go to Section');
@@ -90,25 +139,941 @@ const BusinessSetupPage = () => {
   const dropdownRef = useRef(null);
   const isRegeneratingRef = useRef(false);
   const strategicRef = useRef(null);
+  const portersRef = useRef(null);
+  const pestelRef = useRef(null);
+  const fullSwotRef = useRef(null);
 
-  // Constants
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const getAvailablePhases = () => {
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
+    const phases = [];
 
-  const PHASES = {
-    INITIAL: "initial",
-    ESSENTIAL: "essential",
-    GOOD: "good",
-    EXCELLENT: "excellent",
+    // Always show initial phase if analysis is unlocked
+    if (unlockedFeatures.analysis) {
+      phases.push({
+        key: 'initial',
+        name: 'Initial Phase',
+        unlocked: true
+      });
+    }
+
+    // Show essential phase (locked or unlocked)
+    phases.push({
+      key: 'essential',
+      name: 'Essential Phase',
+      unlocked: unlockedFeatures.fullSwot
+    });
+
+    return phases;
   };
+
+  // ADD THIS COMPONENT near your other components:
+  const PhaseTabsComponent = () => {
+    const availablePhases = getAvailablePhases();
+
+    if (availablePhases.length === 0) return null;
+
+    // Get phase-specific dropdown options
+    const getPhaseSpecificOptions = (phase) => {
+      const baseOptions = {
+        initial: [
+          "SWOT",
+          "Purchase Criteria",
+          "Channel Heatmap",
+          "Loyalty/NPS",
+          "Capability Heatmap",
+          "Porter's Five Forces",
+          "PESTEL Analysis"
+        ],
+        essential: [
+          "Full SWOT Portfolio",
+          "Customer Segmentation",
+          "Competitive Advantage",
+          "Channel Effectiveness",
+          "Expanded Capability Heatmap",
+          "Strategic Goals",
+          "Strategic Positioning Radar",
+          "Organizational Culture Profile",
+          "Productivity Metrics",
+          "Maturity Score"
+        ]
+      };
+
+      return baseOptions[phase] || [];
+    };
+
+    const currentPhaseOptions = getPhaseSpecificOptions(selectedPhase);
+    const currentPhaseLabel = selectedPhase === 'initial' ? 'Initial Phase' : 'Essential Phase';
+
+    return (
+      <>
+        <div className="phase-tabs-container">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div className="phase-tabs-nav">
+              {availablePhases.map(phase => (
+                <button
+                  key={phase.key}
+                  onClick={() => setSelectedPhase(phase.key)}
+                  className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''}`}
+                >
+                  {phase.name}
+                </button>
+              ))}
+            </div> 
+          </div>
+
+          <div className="phase-dropdown-section">
+            <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
+              <button
+                className="dropdown-button"
+                onClick={() => setShowDropdown(prev => !prev)}
+                style={{
+                  backgroundColor: "#fff",
+                  color: "#3b82f6",
+                  border: "1px solid #e1e5e9",
+                  borderRadius: "10px",
+                  padding: "10px 18px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease", 
+                  boxShadow:"0 2px 8px rgba(59, 130, 246, 0.15)",
+                  minWidth: "180px",
+                  justifyContent: "space-between"
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = "#3b82f6";
+                  e.target.style.transform = "translateY(-1px)"; 
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = "#e2e8f0";
+                  e.target.style.transform = "translateY(0)"; 
+                }}
+              >
+                <span>Go to Section</span>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    marginLeft: 8,
+                    transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                />
+              </button>
+
+              {showDropdown && (
+                <div style={{
+                  position: "absolute",
+                  top: "110%",
+                  right: 0,
+                  backgroundColor: "#fff",
+                  border: "2px solid #e2e8f0",
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                  minWidth: "220px",
+                  zIndex: 1000,
+                  maxHeight:"300px",
+                  overflowY: "scroll",
+                  backdropFilter: "blur(20px)"
+                }}>
+                  {/* Phase Header */}
+                  <div style={{
+                    padding: "12px 16px",
+                    backgroundColor: selectedPhase === 'essential' ? "#fef3c7" : "#dbeafe",
+                    borderBottom: "1px solid #e2e8f0",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: selectedPhase === 'essential' ? "#92400e" : "#1e40af",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px"
+                  }}>
+                    {currentPhaseLabel} Sections
+                  </div>
+
+                  {/* Options */}
+                  {currentPhaseOptions.map((item, index) => (
+                    <div
+                      key={item}
+                      onClick={() => handleOptionClick(item)}
+                      style={{
+                        padding: "12px 16px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        color: "#374151",
+                        fontWeight: 500,
+                        borderBottom: index < currentPhaseOptions.length - 1 ? "1px solid #f1f5f9" : "none",
+                        transition: "all 0.2s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = selectedPhase === 'essential' ? "#fef3c7" : "#dbeafe";
+                        e.currentTarget.style.color = selectedPhase === 'essential' ? "#92400e" : "#1e40af";
+                        e.currentTarget.style.paddingLeft = "20px";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#374151";
+                        e.currentTarget.style.paddingLeft = "16px";
+                      }}
+                    >
+                      <span style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        backgroundColor: selectedPhase === 'essential' ? "#f59e0b" : "#3b82f6",
+                        flexShrink: 0
+                      }}></span>
+                      {item}
+                    </div>
+                  ))}
+
+                  {currentPhaseOptions.length === 0 && (
+                    <div style={{
+                      padding: "16px",
+                      textAlign: "center",
+                      color: "#6b7280",
+                      fontSize: "14px",
+                      fontStyle: "italic"
+                    }}>
+                      No sections available for this phase
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  // Functions for phase completion auto-generation
+  const regenerateAllAnalysisForCompletion = async (completedSet = null) => {
+    if (isRegeneratingRef.current) return;
+
+    try {
+      isRegeneratingRef.current = true;
+      setIsAnalysisRegenerating(true);
+      showToastMessage("Initial phase completed! Generating analysis...", "info");
+
+      clearAllAnalysisData();
+      const freshAnswers = await getFreshConversationData();
+
+      const analysisPromises = [
+        generateSWOTAnalysisWithData(freshAnswers),
+        // REMOVE THIS LINE: generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers),
+        generateSingleAnalysisWithData('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, freshAnswers),
+        generateSingleAnalysisWithData('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, freshAnswers),
+        generateSingleAnalysisWithData('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, freshAnswers),
+        generateSingleAnalysisWithData('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, freshAnswers),
+        generateStrategicAnalysis(freshAnswers),
+        generatePortersAnalysis(freshAnswers),
+        generatePestelAnalysis(freshAnswers)
+      ];
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All analysis components generated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error generating analysis:', error);
+      showToastMessage("Failed to generate analysis components. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsAnalysisRegenerating(false);
+    }
+  };
+  const generateChannelEffectiveness = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for channel effectiveness analysis');
+      }
+
+      console.log('Calling Channel Effectiveness API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/channel-effectiveness`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Channel Effectiveness API Error Response:', errorText);
+        throw new Error(`Channel Effectiveness API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Channel Effectiveness API Response:', result);
+
+      // Handle different possible response structures
+      let channelContent = null;
+      if (result.channelEffectiveness) {
+        channelContent = result;
+      } else if (result.channel_effectiveness) {
+        channelContent = { channelEffectiveness: result.channel_effectiveness };
+      } else {
+        channelContent = { channelEffectiveness: result };
+      }
+
+      setChannelEffectivenessData(channelContent);
+      await saveAnalysisToBackend(channelContent, 'channelEffectiveness');
+
+      console.log('Channel Effectiveness Map generated successfully:', channelContent);
+      return channelContent;
+
+    } catch (error) {
+      console.error('Error generating Channel Effectiveness Map:', error);
+      throw error;
+    }
+  };
+  const generateExpandedCapability = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for expanded capability analysis');
+      }
+
+      console.log('Calling Expanded Capability API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/expanded-capability-heatmap`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Expanded Capability API Error Response:', errorText);
+        throw new Error(`Expanded Capability API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Expanded Capability API Response:', result);
+
+      // Handle different possible response structures
+      let expandedCapabilityContent = null;
+      if (result.expandedCapabilityHeatmap) {
+        expandedCapabilityContent = result;
+      } else if (result.expanded_capability_heatmap) {
+        expandedCapabilityContent = { expandedCapabilityHeatmap: result.expanded_capability_heatmap };
+      } else {
+        expandedCapabilityContent = { expandedCapabilityHeatmap: result };
+      }
+
+      setExpandedCapabilityData(expandedCapabilityContent);
+      await saveAnalysisToBackend(expandedCapabilityContent, 'expandedCapability');
+
+      console.log('Expanded Capability Heatmap generated successfully:', expandedCapabilityContent);
+      return expandedCapabilityContent;
+
+    } catch (error) {
+      console.error('Error generating Expanded Capability Heatmap:', error);
+      throw error;
+    }
+  };
+  const generateStrategicGoals = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for strategic goals analysis');
+      }
+
+      console.log('Calling Strategic Goals API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Strategic Goals API Error Response:', errorText);
+        throw new Error(`Strategic Goals API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Strategic Goals API Response:', result);
+
+      // Handle different possible response structures
+      let strategicGoalsContent = null;
+      if (result.strategicGoals) {
+        strategicGoalsContent = result;
+      } else if (result.strategic_goals) {
+        strategicGoalsContent = { strategicGoals: result.strategic_goals };
+      } else {
+        strategicGoalsContent = { strategicGoals: result };
+      }
+
+      setStrategicGoalsData(strategicGoalsContent);
+      await saveAnalysisToBackend(strategicGoalsContent, 'strategicGoals');
+
+      console.log('Strategic Goals generated successfully:', strategicGoalsContent);
+      return strategicGoalsContent;
+
+    } catch (error) {
+      console.error('Error generating Strategic Goals:', error);
+      throw error;
+    }
+  };
+
+  const generateStrategicRadar = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for strategic positioning radar analysis');
+      }
+
+      console.log('Calling Strategic Positioning Radar API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-positioning-radar`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Strategic Positioning Radar API Error Response:', errorText);
+        throw new Error(`Strategic Positioning Radar API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Strategic Positioning Radar API Response:', result);
+
+      // Handle different possible response structures
+      let strategicRadarContent = null;
+      if (result.strategicRadar) {
+        strategicRadarContent = result;
+      } else if (result.strategic_radar) {
+        strategicRadarContent = { strategicRadar: result.strategic_radar };
+      } else {
+        strategicRadarContent = { strategicRadar: result };
+      }
+
+      setStrategicRadarData(strategicRadarContent);
+      await saveAnalysisToBackend(strategicRadarContent, 'strategicRadar');
+
+      console.log('Strategic Positioning Radar generated successfully:', strategicRadarContent);
+      return strategicRadarContent;
+
+    } catch (error) {
+      console.error('Error generating Strategic Positioning Radar:', error);
+      throw error;
+    }
+  };
+
+  const generateCultureProfile = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for culture profile analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/culture-profile`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Culture Profile API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      let cultureContent = null;
+      if (result.cultureProfile) {
+        cultureContent = result;
+      } else if (result.culture_profile) {
+        cultureContent = { cultureProfile: result.culture_profile };
+      } else {
+        cultureContent = { cultureProfile: result };
+      }
+
+      setCultureProfileData(cultureContent);
+      await saveAnalysisToBackend(cultureContent, 'cultureProfile');
+      return cultureContent;
+    } catch (error) {
+      console.error('Error generating Culture Profile:', error);
+      throw error;
+    }
+  };
+
+  const generateProductivityMetrics = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for productivity metrics analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/productivity-metrics`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Productivity Metrics API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      let productivityContent = null;
+      if (result.productivityMetrics) {
+        productivityContent = result;
+      } else if (result.productivity_metrics) {
+        productivityContent = { productivityMetrics: result.productivity_metrics };
+      } else {
+        productivityContent = { productivityMetrics: result };
+      }
+
+      setProductivityData(productivityContent);
+      await saveAnalysisToBackend(productivityContent, 'productivityMetrics');
+      return productivityContent;
+    } catch (error) {
+      console.error('Error generating Productivity Metrics:', error);
+      throw error;
+    }
+  };
+
+  const generateMaturityScore = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for maturity score analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/maturity-score-light`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Maturity Score API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      let maturityContent = null;
+      if (result.maturityScore) {
+        maturityContent = result;
+      } else if (result.maturity_score) {
+        maturityContent = { maturityScore: result.maturity_score };
+      } else {
+        maturityContent = { maturityScore: result };
+      }
+
+      setMaturityData(maturityContent);
+      await saveAnalysisToBackend(maturityContent, 'maturityScore');
+      return maturityContent;
+    } catch (error) {
+      console.error('Error generating Maturity Score:', error);
+      throw error;
+    }
+  };
+
+  const generateFullSwotPortfolioForCompletion = async (completedSet = null) => {
+    if (isRegeneratingRef.current) {
+      console.log('Already regenerating, skipping essential phase generation');
+      return;
+    }
+
+    try {
+      isRegeneratingRef.current = true;
+      setIsFullSwotRegenerating(true);
+      setIsCompetitiveAdvantageRegenerating(true);
+      setIsChannelEffectivenessRegenerating(true);
+      setIsExpandedCapabilityRegenerating(true);
+      setIsStrategicGoalsRegenerating(true);
+      setIsStrategicRadarRegenerating(true);
+      setIsCultureProfileRegenerating(true);
+      setIsProductivityRegenerating(true);
+      setIsMaturityRegenerating(true);
+      // ADD Customer Segmentation loading state
+      setIsCustomerSegmentationRegenerating(true);
+
+      showToastMessage("Essential phase completed! Generating all essential analyses...", "info");
+
+      // Clear existing data
+      setFullSwotData(null);
+      setCompetitiveAdvantageData(null);
+      setChannelEffectivenessData(null);
+      setExpandedCapabilityData(null);
+      setStrategicGoalsData(null);
+      setStrategicRadarData(null);
+      setCultureProfileData(null);
+      setProductivityData(null);
+      setMaturityData(null);
+      // ADD Customer Segmentation clear
+      setCustomerSegmentationData(null);
+
+      const freshAnswers = await getFreshConversationData();
+
+      // Generate ALL TEN essential phase analyses (including Customer Segmentation)
+      const analysisPromises = [
+        generateFullSwotPortfolio(freshAnswers),
+        generateCompetitiveAdvantage(freshAnswers),
+        generateChannelEffectiveness(freshAnswers),
+        generateExpandedCapability(freshAnswers),
+        generateStrategicGoals(freshAnswers),
+        generateStrategicRadar(freshAnswers),
+        generateCultureProfile(freshAnswers),
+        generateProductivityMetrics(freshAnswers),
+        generateMaturityScore(freshAnswers),
+        // ADD Customer Segmentation generation
+        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers)
+      ];
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} essential analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All essential phase analyses generated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error generating essential phase analysis:', error);
+      showToastMessage("Failed to generate essential phase analysis. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsFullSwotRegenerating(false);
+      setIsCompetitiveAdvantageRegenerating(false);
+      setIsChannelEffectivenessRegenerating(false);
+      setIsExpandedCapabilityRegenerating(false);
+      setIsStrategicGoalsRegenerating(false);
+      setIsStrategicRadarRegenerating(false);
+      setIsCultureProfileRegenerating(false);
+      setIsProductivityRegenerating(false);
+      setIsMaturityRegenerating(false);
+      // ADD Customer Segmentation reset
+      setIsCustomerSegmentationRegenerating(false);
+    }
+  };
+
+  // ADD this new function to your BusinessSetupPage:
+  const generateCompetitiveAdvantage = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for competitive advantage analysis');
+      }
+
+      console.log('Calling Competitive Advantage API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Competitive Advantage API Error Response:', errorText);
+        throw new Error(`Competitive Advantage API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Competitive Advantage API Response:', result);
+
+      // Handle different possible response structures
+      let competitiveContent = null;
+      if (result.competitiveAdvantage) {
+        competitiveContent = result;
+      } else if (result.competitive_advantage) {
+        competitiveContent = { competitiveAdvantage: result.competitive_advantage };
+      } else {
+        competitiveContent = { competitiveAdvantage: result };
+      }
+
+      setCompetitiveAdvantageData(competitiveContent);
+      await saveAnalysisToBackend(competitiveContent, 'competitiveAdvantage');
+
+      console.log('Competitive Advantage Matrix generated successfully:', competitiveContent);
+      return competitiveContent;
+
+    } catch (error) {
+      console.error('Error generating Competitive Advantage Matrix:', error);
+      throw error;
+    }
+  };
+
+
+  // Load existing analysis data
+  const loadExistingAnalysisData = (phaseAnalysisArray) => {
+    try {
+      const latestAnalysisByType = {};
+      phaseAnalysisArray
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .forEach(analysis => {
+          const type = analysis.analysis_type;
+          if (!latestAnalysisByType[type]) {
+            latestAnalysisByType[type] = analysis;
+          }
+        });
+
+      let hasAnyAnalysis = false;
+
+      Object.values(latestAnalysisByType).forEach(analysis => {
+        const { analysis_type, analysis_data } = analysis;
+        hasAnyAnalysis = true;
+
+        switch (analysis_type) {
+          case 'swot':
+            setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data));
+            break;
+          case 'fullSwot':
+            setFullSwotData(analysis_data);
+            break;
+          case 'competitiveAdvantage':
+            setCompetitiveAdvantageData(analysis_data);
+            break;
+          case 'expandedCapability':
+            setExpandedCapabilityData(analysis_data);
+            break;
+          case 'strategicGoals': // ADD this case
+            setStrategicGoalsData(analysis_data);
+            break;
+          case 'strategicRadar': // ADD this case
+            setStrategicRadarData(analysis_data);
+            break;
+          case 'customerSegmentation':
+            setCustomerSegmentationData(analysis_data);
+            break;
+          case 'cultureProfile':
+            setCultureProfileData(analysis_data);
+            break;
+          case 'productivityMetrics':
+            setProductivityData(analysis_data);
+            break;
+          case 'maturityScore':
+            setMaturityData(analysis_data);
+            break;
+          case 'purchaseCriteria':
+            setPurchaseCriteriaData(analysis_data);
+            break;
+          case 'channelHeatmap':
+            setChannelHeatmapData(analysis_data);
+            break;
+          case 'loyaltyNPS':
+            setLoyaltyNPSData(analysis_data);
+            break;
+          case 'capabilityHeatmap':
+            setCapabilityHeatmapData(analysis_data);
+            break;
+          case 'porters':
+            setPortersData(analysis_data);
+            break;
+          case 'pestel':
+            setPestelData(analysis_data);
+            break;
+          case 'strategic':
+            setStrategicData(analysis_data);
+            break;
+          case 'channelEffectiveness':
+            setChannelEffectivenessData(analysis_data);
+            break;
+        }
+      });
+
+      setHasAnalysisData(hasAnyAnalysis);
+      console.log(`Loaded ${Object.keys(latestAnalysisByType).length} analysis components`);
+    } catch (error) {
+      console.error('Error loading existing analysis data:', error);
+    }
+  };
+  // Initialize PhaseManager
+  const phaseManager = PhaseManager({
+    questions,
+    questionsLoaded,
+    completedQuestions,
+    userAnswers,
+    selectedBusinessId,
+    onCompletedQuestionsUpdate: (completedSet, answersMap) => {
+      setCompletedQuestions(completedSet);
+      setUserAnswers(prev => ({ ...prev, ...answersMap }));
+    },
+    onCompletedPhasesUpdate: (phases) => {
+      // Handle phase updates if needed
+    },
+    onAnalysisGeneration: regenerateAllAnalysisForCompletion,
+    onFullSwotGeneration: generateFullSwotPortfolioForCompletion,
+    onAnalysisDataLoad: loadExistingAnalysisData, // Add this callback
+    API_BASE_URL,
+    getAuthToken
+  });
 
   // Load existing analysis on component mount
   useEffect(() => {
-    if (selectedBusinessId && questionsLoaded) {
-      loadExistingAnalysis();
+    if (selectedBusinessId && questionsLoaded && questions.length > 0) {
+      // Small delay to ensure all states are initialized
+      setTimeout(() => {
+        phaseManager.loadExistingAnalysis();
+      }, 100);
     }
-  }, [selectedBusinessId, questionsLoaded]);
+  }, [selectedBusinessId, questionsLoaded, questions.length]);
 
   // Handle window resize
   useEffect(() => {
@@ -146,52 +1111,6 @@ const BusinessSetupPage = () => {
     }, 4000);
   };
 
-  const isPhaseCompleted = (phase) => {
-    const mandatoryQuestions = questions.filter(
-      (q) => q.phase === phase && q.severity === "mandatory"
-    );
-
-    if (mandatoryQuestions.length === 0) return false;
-
-    return mandatoryQuestions.every((q) => {
-      const questionId = q._id;
-      // Check if question is either answered OR completed (including skipped)
-      return (userAnswers[questionId] && userAnswers[questionId].trim()) ||
-        completedQuestions.has(questionId);
-    });
-  };
-
-  const getUnlockedFeatures = () => {
-    // If questions aren't loaded yet, check if we have analysis data
-    if (!questionsLoaded || questions.length === 0) {
-      return {
-        brief: true,
-        analysis: hasAnalysisData
-      };
-    }
-
-    // Get initial phase mandatory questions
-    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-
-    if (initialQuestions.length === 0) {
-      return {
-        brief: true,
-        analysis: hasAnalysisData
-      };
-    }
-
-    // Check completion using completedQuestions set
-    const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
-    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length;
-
-    return {
-      brief: true,
-      analysis: isInitialComplete || hasAnalysisData
-    };
-  };
-
-
-
   const extractBusinessName = (text) => {
     const patterns = [
       /(?:we are|i am|this is|called|business is|company is)\s+([A-Z][a-zA-Z\s&.-]+?)(?:\.|,|$)/i,
@@ -205,129 +1124,6 @@ const BusinessSetupPage = () => {
       }
     }
     return null;
-  };
-  const loadCompletedQuestionsFromAPI = (conversations) => {
-    const completedSet = new Set();
-    const answersMap = {};
-
-    conversations.forEach(conversation => {
-      if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
-        const questionId = conversation.question_id;
-        completedSet.add(questionId);
-
-        if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
-          answersMap[questionId] = '[Question Skipped]';
-        } else {
-          // Get all answers
-          const allAnswers = conversation.conversation_flow
-            .filter(item => item.type === 'answer')
-            .map(a => a.text.trim())
-            .filter(text => text.length > 0 && text !== '[Question Skipped]');
-
-          if (allAnswers.length > 0) {
-            answersMap[questionId] = allAnswers.join('. ');
-          }
-        }
-      }
-    });
-
-    return { completedSet, answersMap };
-  };
-  // Load existing analysis from API
-  const loadExistingAnalysis = async () => {
-    try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Load completed questions and answers from conversations
-        if (data.conversations && data.conversations.length > 0) {
-          const { completedSet, answersMap } = loadCompletedQuestionsFromAPI(data.conversations);
-
-          // Update both states
-          setCompletedQuestions(completedSet);
-          setUserAnswers(prev => ({ ...prev, ...answersMap }));
-
-          console.log('Loaded completed questions:', Array.from(completedSet));
-          console.log('Loaded user answers:', answersMap);
-        }
-
-        // Load analysis data
-        if (data.phase_analysis && data.phase_analysis.length > 0) {
-          loadExistingAnalysisData(data.phase_analysis);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading existing analysis:', error);
-    }
-  };
-
-  const loadExistingAnalysisData = (phaseAnalysisArray) => {
-    try {
-      // Get the most recent analysis for each type
-      const latestAnalysisByType = {};
-      phaseAnalysisArray
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .forEach(analysis => {
-          const type = analysis.analysis_type;
-          if (!latestAnalysisByType[type]) {
-            latestAnalysisByType[type] = analysis;
-          }
-        });
-
-      let hasAnyAnalysis = false;
-
-      // Load each analysis type
-      Object.values(latestAnalysisByType).forEach(analysis => {
-        const { analysis_type, analysis_data } = analysis;
-        hasAnyAnalysis = true; // Set flag if we have any analysis
-
-        switch (analysis_type) {
-          case 'swot':
-            setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data));
-            break;
-          case 'customerSegmentation':
-            setCustomerSegmentationData(analysis_data);
-            break;
-          case 'purchaseCriteria':
-            setPurchaseCriteriaData(analysis_data);
-            break;
-          case 'channelHeatmap':
-            setChannelHeatmapData(analysis_data);
-            break;
-          case 'loyaltyNPS':
-            setLoyaltyNPSData(analysis_data);
-            break;
-          case 'capabilityHeatmap':
-            setCapabilityHeatmapData(analysis_data);
-            break;
-          case 'porters':
-            setPortersData(analysis_data);
-            break;
-          case 'pestel':
-            setPestelData(analysis_data);
-            break;
-          case 'strategic':
-            setStrategicData(analysis_data);
-            break;
-        }
-      });
-
-      // Set the flag to show analysis tabs
-      setHasAnalysisData(hasAnyAnalysis);
-
-      const analysisCount = Object.keys(latestAnalysisByType).length;
-      console.log(`Loaded ${analysisCount} analysis components`);
-    } catch (error) {
-      console.error('Error loading existing analysis data:', error);
-    }
   };
 
   // Save analysis to backend
@@ -355,140 +1151,7 @@ const BusinessSetupPage = () => {
       return false;
     }
   };
-  const generatePortersAnalysis = async (freshAnswers = null) => {
-    try {
-      const questionsArray = [];
-      const answersArray = [];
-      const dataSource = freshAnswers || userAnswers;
 
-      questions
-        .filter(q => dataSource[q._id]) // Include all questions with any answer (including skipped)
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(dataSource[question._id]); // Includes '[Question Skipped]'
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No questions available for Porter\'s Five Forces analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Porter's API returned ${response.status}`);
-      }
-
-      const result = await response.json();
-      const portersContent = result.porters_analysis || result.porters || result;
-
-      setPortersData(portersContent);
-      await saveAnalysisToBackend(portersContent, 'porters');
-    } catch (error) {
-      console.error('Error generating Porter\'s Five Forces analysis:', error);
-      throw error;
-    }
-  };
-
-  const generatePestelAnalysis = async (freshAnswers = null) => {
-    try {
-      const questionsArray = [];
-      const answersArray = [];
-      const dataSource = freshAnswers || userAnswers;
-
-      questions
-        .filter(q => dataSource[q._id]) // Include all questions with any answer (including skipped)
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(dataSource[question._id]); // Includes '[Question Skipped]'
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No questions available for PESTEL analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`PESTEL API returned ${response.status}`);
-      }
-
-      const result = await response.json();
-      const pestelContent = result.pestel_analysis || result.pestel || result;
-
-      setPestelData(pestelContent);
-      await saveAnalysisToBackend(pestelContent, 'pestel');
-    } catch (error) {
-      console.error('Error generating PESTEL analysis:', error);
-      throw error;
-    }
-  };
-  const generateStrategicAnalysis = async (freshAnswers = null) => {
-    try {
-      const questionsArray = [];
-      const answersArray = [];
-      const dataSource = freshAnswers || userAnswers;
-
-      questions
-        .filter(q => dataSource[q._id]) // Include all questions with any answer (including skipped)
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(dataSource[question._id]); // Includes '[Question Skipped]'
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No questions available for strategic analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Strategic API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      const strategicContent = result.strategic_analysis || result.strategic || result;
-
-      setStrategicData(strategicContent);
-      await saveAnalysisToBackend(strategicContent, 'strategic');
-    } catch (error) {
-      console.error('Error generating strategic analysis:', error);
-      throw error;
-    }
-  };
   // Generate individual analysis
   const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
     try {
@@ -498,7 +1161,7 @@ const BusinessSetupPage = () => {
       questions
         .filter(q => {
           const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
-          return hasAnswer; // Include both answered and skipped questions
+          return hasAnswer;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
@@ -519,7 +1182,7 @@ const BusinessSetupPage = () => {
             .trim();
 
           questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer); // This will include '[Question Skipped]'
+          answersArray.push(cleanAnswer);
         });
 
       if (questionsArray.length === 0) {
@@ -562,54 +1225,261 @@ const BusinessSetupPage = () => {
       throw error;
     }
   };
-  // Generate SWOT analysis
-  const generateSWOTAnalysis = async () => {
+
+  // Main function to regenerate all analysis
+  const regenerateAllAnalysis = async (updatedQuestionId = null, updatedAnswer = null, forceRegenerate = false) => {
+    if (!phaseManager.canRegenerateAnalysis() && !forceRegenerate) {
+      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
+      return;
+    }
+
+    if (isRegeneratingRef.current) {
+      return;
+    }
+
     try {
-      const questionsArray = [];
-      const answersArray = [];
+      isRegeneratingRef.current = true;
+      setIsAnalysisRegenerating(true);
 
-      questions.forEach(question => {
-        if (userAnswers[question._id]) { // Include both answered and skipped
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]); // Includes '[Question Skipped]'
-        }
-      });
-
-      const response = await fetch(`${ML_API_BASE_URL}/find`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`SWOT API returned ${response.status}`);
+      if (forceRegenerate || (updatedQuestionId && updatedAnswer)) {
+        showToastMessage("Regenerating all analysis components...", "info");
       }
 
-      const result = await response.json();
-      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+      clearAllAnalysisData();
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      setSwotAnalysisResult(analysisContent);
-      await saveAnalysisToBackend(analysisContent, 'swot');
+      let answersToUse = { ...userAnswers };
+      if (updatedQuestionId && updatedAnswer) {
+        answersToUse[updatedQuestionId] = updatedAnswer;
+      }
+
+      // Generate initial phase analysis (REMOVED Customer Segmentation)
+      const analysisPromises = [
+        generateSWOTAnalysisWithAnswers(answersToUse),
+        // REMOVED: generateSingleAnalysisWithAnswers('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, answersToUse),
+        generateSingleAnalysisWithAnswers('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, answersToUse),
+        generateSingleAnalysisWithAnswers('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, answersToUse),
+        generateSingleAnalysisWithAnswers('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, answersToUse),
+        generateSingleAnalysisWithAnswers('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, answersToUse),
+        generateStrategicAnalysisWithAnswers(answersToUse),
+        generatePortersAnalysisWithAnswers(answersToUse),
+        generatePestelAnalysisWithAnswers(answersToUse)
+      ];
+
+      if (phaseManager.canGenerateFullSwot()) {
+        analysisPromises.push(generateFullSwotPortfolio(answersToUse));
+        // ADD Customer Segmentation to essential phase regeneration
+        analysisPromises.push(generateSingleAnalysisWithAnswers('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, answersToUse));
+      }
+
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        if (forceRegenerate || (updatedQuestionId && updatedAnswer)) {
+          showToastMessage("All analysis components regenerated successfully!", "success");
+        }
+      }
+
     } catch (error) {
-      console.error('Error generating SWOT analysis:', error);
-      throw error;
+      console.error('Error regenerating all analysis:', error);
+      showToastMessage("Failed to regenerate analysis components. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsAnalysisRegenerating(false);
     }
   };
+
+  // Clear all analysis data
+  const clearAllAnalysisData = () => {
+    setSwotAnalysisResult("");
+    setPurchaseCriteriaData(null);
+    setChannelHeatmapData(null);
+    setLoyaltyNPSData(null);
+    setCapabilityHeatmapData(null);
+    setStrategicData(null);
+    setPortersData(null);
+    setPestelData(null);
+
+    if (phaseManager.canGenerateFullSwot()) {
+      setFullSwotData(null);
+      setCompetitiveAdvantageData(null);
+      setChannelEffectivenessData(null);
+      setExpandedCapabilityData(null);
+      setStrategicGoalsData(null); // ADD this line
+      setStrategicRadarData(null);
+      setCustomerSegmentationData(null);
+    }
+  };
+  // Event Handlers
+  const handleQuestionsLoaded = (loadedQuestions) => {
+    setQuestions(loadedQuestions);
+    setQuestionsLoaded(true);
+  };
+
+  const handleNewAnswer = async (questionId, answer) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+
+    // Update business data based on specific questions
+    const updates = {};
+    if (questionId === 1) {
+      const businessName = extractBusinessName(answer);
+      if (businessName) updates.name = businessName;
+      updates.whatWeDo = answer;
+    } else if (questionId === 3) {
+      updates.targetAudience = answer;
+    } else if (questionId === 4) {
+      updates.products = answer;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setBusinessData(prev => ({ ...prev, ...updates }));
+    }
+  };
+
+  const handleQuestionCompleted = async (questionId) => {
+    console.log('=== QUESTION COMPLETED ===');
+    console.log('Question ID:', questionId);
+
+    // Update completed questions first
+    const newCompletedSet = new Set([...completedQuestions, questionId]);
+    setCompletedQuestions(newCompletedSet);
+
+    // Check phases AFTER updating state
+    setTimeout(async () => {
+      const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
+
+      // FIX: Simple dynamic essential phase logic - ALL essential questions must be completed
+      const essentialQuestions = questions.filter(q => q.phase === 'essential');
+
+      const completedInitial = initialQuestions.filter(q => newCompletedSet.has(q._id));
+      const completedEssential = essentialQuestions.filter(q => newCompletedSet.has(q._id));
+
+      console.log('Phase Check After Completion:', {
+        initialTotal: initialQuestions.length,
+        initialCompleted: completedInitial.length,
+        essentialTotal: essentialQuestions.length,
+        completedEssential: completedEssential.length,
+        completedQuestions: Array.from(newCompletedSet)
+      });
+
+      // Check Initial Phase (unchanged)
+      if (initialQuestions.length > 0 && completedInitial.length === initialQuestions.length) {
+        console.log('✅ Initial Phase Complete - should generate analysis');
+        if (!hasAnalysisData) {
+          await regenerateAllAnalysisForCompletion();
+        }
+      }
+
+      // FIX: Essential Phase - require completing ALL essential questions (regardless of severity)
+      if (essentialQuestions.length > 0 && completedEssential.length === essentialQuestions.length) {
+        console.log('✅ Essential Phase Complete - should generate Full SWOT and Competitive Advantage');
+        console.log(`Completed ALL ${completedEssential.length}/${essentialQuestions.length} essential questions`);
+
+        // Generate both Full SWOT and Competitive Advantage when essential phase completes
+        if (!fullSwotData || !competitiveAdvantageData) {
+          await generateFullSwotPortfolioForCompletion();
+        }
+      }
+    }, 100);
+
+    return newCompletedSet;
+  };
+
+
+  const handleBusinessDataUpdate = (updates) => {
+    setBusinessData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleAnswerUpdate = (questionId, newAnswer) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: newAnswer
+    }));
+
+    // Update business data
+    const updates = {};
+    if (questionId === 1) {
+      const businessName = extractBusinessName(newAnswer);
+      if (businessName) updates.name = businessName;
+      updates.whatWeDo = newAnswer;
+    } else if (questionId === 3) {
+      updates.targetAudience = newAnswer;
+    } else if (questionId === 4) {
+      updates.products = newAnswer;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setBusinessData(prev => ({ ...prev, ...updates }));
+    }
+  };
+
+  // Navigation handlers
+  const handleAnalysisTabClick = () => {
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
+    if (!unlockedFeatures.analysis) return;
+
+    if (isMobile) {
+      setActiveTab("analysis");
+    } else {
+      if (!isAnalysisExpanded) {
+        setIsSliding(true);
+        setIsAnalysisExpanded(true);
+        setActiveTab("analysis");
+        setTimeout(() => setIsSliding(false), 1000);
+      }
+    }
+  };
+
+  const handleStrategicTabClick = () => {
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
+    if (!unlockedFeatures.analysis) return;
+
+    if (isMobile) {
+      setActiveTab("strategic");
+    } else {
+      if (!isAnalysisExpanded) {
+        setIsSliding(true);
+        setIsAnalysisExpanded(true);
+        setActiveTab("strategic");
+        setTimeout(() => setIsSliding(false), 1000);
+      } else {
+        setActiveTab("strategic");
+      }
+    }
+  };
+
+  const handleBackFromAnalysis = () => {
+    if (isAnalysisExpanded) {
+      setIsSliding(true);
+      setIsAnalysisExpanded(false);
+      setActiveTab("brief");
+      setTimeout(() => setIsSliding(false), 1000);
+    }
+  };
+
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  // Analysis generation functions
   const generateSWOTAnalysisWithAnswers = async (answersToUse) => {
     try {
       const questionsArray = [];
       const answersArray = [];
 
       questions.forEach(question => {
-        if (answersToUse[question._id]) { // Include both answered and skipped
+        if (answersToUse[question._id]) {
           questionsArray.push(question.question_text);
-          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+          answersArray.push(answersToUse[question._id]);
         }
       });
 
@@ -639,6 +1509,7 @@ const BusinessSetupPage = () => {
       throw error;
     }
   };
+
   const generateSingleAnalysisWithAnswers = async (analysisType, endpoint, dataKey, setter, answersToUse) => {
     try {
       const questionsArray = [];
@@ -647,7 +1518,7 @@ const BusinessSetupPage = () => {
       questions
         .filter(q => {
           const hasAnswer = answersToUse[q._id] && answersToUse[q._id].trim();
-          return hasAnswer; // Include both answered and skipped questions
+          return hasAnswer;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
@@ -668,7 +1539,7 @@ const BusinessSetupPage = () => {
             .trim();
 
           questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer); // This will include '[Question Skipped]'
+          answersArray.push(cleanAnswer);
         });
 
       if (questionsArray.length === 0) {
@@ -718,11 +1589,11 @@ const BusinessSetupPage = () => {
       const answersArray = [];
 
       questions
-        .filter(q => answersToUse[q._id]) // Include all questions with any answer (including skipped)
+        .filter(q => answersToUse[q._id])
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+          answersArray.push(answersToUse[question._id]);
         });
 
       if (questionsArray.length === 0) {
@@ -763,11 +1634,11 @@ const BusinessSetupPage = () => {
       const answersArray = [];
 
       questions
-        .filter(q => answersToUse[q._id]) // Include all questions with any answer (including skipped)
+        .filter(q => answersToUse[q._id])
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+          answersArray.push(answersToUse[question._id]);
         });
 
       if (questionsArray.length === 0) {
@@ -807,11 +1678,11 @@ const BusinessSetupPage = () => {
       const answersArray = [];
 
       questions
-        .filter(q => answersToUse[q._id]) // Include all questions with any answer (including skipped)
+        .filter(q => answersToUse[q._id])
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(answersToUse[question._id]); // Includes '[Question Skipped]'
+          answersArray.push(answersToUse[question._id]);
         });
 
       if (questionsArray.length === 0) {
@@ -844,202 +1715,163 @@ const BusinessSetupPage = () => {
       throw error;
     }
   };
-  // Main function to regenerate all analysis
-  const regenerateAllAnalysis = async (updatedQuestionId = null, updatedAnswer = null) => {
-    // Check current phase completion status using completedQuestions
-    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-    const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
-    const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
 
-    if (!isInitialComplete) {
-      showToastMessage("Initial phase must be completed to regenerate analysis.", "warning");
-      return;
-    }
-
-    if (isRegeneratingRef.current) {
-      return;
-    }
-
+  const generateFullSwotPortfolio = async (freshAnswers = null) => {
     try {
-      isRegeneratingRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Regenerating all analysis components...", "info");
+      const questionsArray = [];
+      const answersArray = [];
+      const dataSource = freshAnswers || userAnswers;
 
-      // Clear existing data
-      setSwotAnalysisResult("");
-      setCustomerSegmentationData(null);
-      setPurchaseCriteriaData(null);
-      setChannelHeatmapData(null);
-      setLoyaltyNPSData(null);
-      setCapabilityHeatmapData(null);
-      setStrategicData(null);
-      setPortersData(null);
-      setPestelData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      questions
+        .filter(q => dataSource[q._id] && dataSource[q._id].trim() !== '')
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(dataSource[question._id]);
+        });
 
-      // Get the latest answers including any updates
-      let answersToUse = { ...userAnswers };
-
-      // If we have an updated answer, include it immediately
-      if (updatedQuestionId && updatedAnswer) {
-        answersToUse[updatedQuestionId] = updatedAnswer;
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for Full SWOT Portfolio analysis');
       }
 
-      // Generate all analysis with the updated answers
-      const analysisPromises = [
-        generateSWOTAnalysisWithAnswers(answersToUse),
-        generateSingleAnalysisWithAnswers('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, answersToUse),
-        generateSingleAnalysisWithAnswers('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, answersToUse),
-        generateSingleAnalysisWithAnswers('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, answersToUse),
-        generateSingleAnalysisWithAnswers('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, answersToUse),
-        generateSingleAnalysisWithAnswers('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, answersToUse),
-        generateStrategicAnalysisWithAnswers(answersToUse),
-        generatePortersAnalysisWithAnswers(answersToUse),
-        generatePestelAnalysisWithAnswers(answersToUse)
-      ];
+      console.log('Calling Full SWOT Portfolio API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length,
+        questions: questionsArray,
+        answers: answersArray
+      });
 
-      const results = await Promise.allSettled(analysisPromises);
-      const failures = results.filter(result => result.status === 'rejected');
+      // THIS IS THE KEY FIX - Call the correct API endpoint
+      const response = await fetch(`${ML_API_BASE_URL}/full-swot-portfolio`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
 
-      if (failures.length > 0) {
-        showToastMessage(
-          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
-          failures.length < analysisPromises.length ? "warning" : "error"
-        );
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Full SWOT API Error Response:', errorText);
+        throw new Error(`Full SWOT Portfolio API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Full SWOT API Response:', result);
+
+      // Handle different possible response structures
+      let fullSwotContent = null;
+      if (result.swotPortfolio) {
+        fullSwotContent = result;
+      } else if (result.swot_portfolio) {
+        fullSwotContent = { swotPortfolio: result.swot_portfolio };
+      } else if (result.portfolio) {
+        fullSwotContent = { swotPortfolio: result.portfolio };
       } else {
-        showToastMessage("All analysis components regenerated successfully!", "success");
+        // Assume the entire result is the portfolio
+        fullSwotContent = { swotPortfolio: result };
       }
+
+      setFullSwotData(fullSwotContent);
+      await saveAnalysisToBackend(fullSwotContent, 'fullSwot');
+
+      console.log('Full SWOT Portfolio generated successfully:', fullSwotContent);
+      return fullSwotContent;
 
     } catch (error) {
-      console.error('Error regenerating all analysis:', error);
-      showToastMessage("Failed to regenerate analysis components. Please try again.", "error");
-    } finally {
-      isRegeneratingRef.current = false;
-      setIsAnalysisRegenerating(false);
+      console.error('Error generating Full SWOT Portfolio analysis:', error);
+      throw error;
     }
   };
 
-  // Event Handlers
-  const handleQuestionsLoaded = (loadedQuestions) => {
-    setQuestions(loadedQuestions);
-    setQuestionsLoaded(true);
-  };
-
-  const handleNewAnswer = async (questionId, answer) => {
-    setUserAnswers(prev => {
-      const updatedAnswers = {
-        ...prev,
-        [questionId]: answer
-      };
-      return updatedAnswers;
-    });
-
-    // Update business data based on specific questions
-    const updates = {};
-    if (questionId === 1) {
-      const businessName = extractBusinessName(answer);
-      if (businessName) updates.name = businessName;
-      updates.whatWeDo = answer;
-    } else if (questionId === 3) {
-      updates.targetAudience = answer;
-    } else if (questionId === 4) {
-      updates.products = answer;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      setBusinessData(prev => ({ ...prev, ...updates }));
-    }
-  };
-
-  const handleQuestionCompleted = async (questionId) => {
-    const newCompletedSet = new Set([...completedQuestions, questionId]);
-
-    // Update state first
-    setCompletedQuestions(newCompletedSet);
-
-    // Check if initial phase is completed with the new completed set
-    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-    const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
-
-
-    // If initial phase just got completed, trigger analysis generation
-    const wasInitialCompleted = initialQuestions.filter(q => completedQuestions.has(q._id)).length === initialQuestions.length;
-    const isInitialCompleted = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-
-    if (!wasInitialCompleted && isInitialCompleted) {
-      console.log('Initial phase just completed, triggering analysis generation');
-      await handlePhaseCompleted('initial', newCompletedSet);
-    }
-  };
-  const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
-    console.log(`Phase ${phase} completed with set:`, Array.from(updatedCompletedSet));
-
-    if (phase === 'initial') {
-      // Ensure the completed questions state is updated
-      setCompletedQuestions(updatedCompletedSet);
-
-      // Trigger analysis generation immediately
-      await regenerateAllAnalysisForCompletion(updatedCompletedSet);
-    }
-  };
-
-
-  // Special function for auto-generation when phase is completed
-  const regenerateAllAnalysisForCompletion = async (completedSet = null) => {
-    if (isRegeneratingRef.current) {
-      return;
-    }
-
+  const getFreshConversationData = async () => {
     try {
-      isRegeneratingRef.current = true;
-      setIsAnalysisRegenerating(true);
-      showToastMessage("Initial phase completed! Generating analysis...", "info");
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      // Clear existing data
-      setSwotAnalysisResult("");
-      setCustomerSegmentationData(null);
-      setPurchaseCriteriaData(null);
-      setChannelHeatmapData(null);
-      setLoyaltyNPSData(null);
-      setCapabilityHeatmapData(null);
-      setStrategicData(null);
-      setPortersData(null);
-      setPestelData(null);
-
-      // Fetch fresh conversation data to get all answers
-      const freshAnswers = await getFreshConversationData();
-
-      // Generate all analysis
-      const analysisPromises = [
-        generateSWOTAnalysisWithData(freshAnswers),
-        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers),
-        generateSingleAnalysisWithData('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, freshAnswers),
-        generateSingleAnalysisWithData('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, freshAnswers),
-        generateSingleAnalysisWithData('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, freshAnswers),
-        generateSingleAnalysisWithData('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, freshAnswers),
-        generateStrategicAnalysis(freshAnswers),
-        generatePortersAnalysis(freshAnswers),
-        generatePestelAnalysis(freshAnswers)
-      ];
-
-      const results = await Promise.allSettled(analysisPromises);
-      const failures = results.filter(result => result.status === 'rejected');
-
-      if (failures.length > 0) {
-        showToastMessage(
-          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
-          failures.length < analysisPromises.length ? "warning" : "error"
-        );
-      } else {
-        showToastMessage("All analysis components generated successfully!", "success");
+      if (!response.ok) {
+        throw new Error('Failed to fetch fresh conversation data');
       }
 
+      const data = await response.json();
+      const freshAnswers = {};
+      const freshCompletedSet = new Set();
+
+      data.conversations?.forEach(conversation => {
+        if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
+          const questionId = conversation.question_id;
+          freshCompletedSet.add(questionId);
+
+          if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
+            freshAnswers[questionId] = '[Question Skipped]';
+          } else {
+            const allAnswers = conversation.conversation_flow
+              .filter(item => item.type === 'answer')
+              .map(a => a.text.trim())
+              .filter(text => text.length > 0 && text !== '[Question Skipped]');
+
+            if (allAnswers.length > 0) {
+              freshAnswers[questionId] = allAnswers.join('. ');
+            }
+          }
+        }
+      });
+
+      setUserAnswers(prev => ({ ...prev, ...freshAnswers }));
+      setCompletedQuestions(prev => new Set([...prev, ...freshCompletedSet]));
+
+      return freshAnswers;
     } catch (error) {
-      console.error('Error generating analysis:', error);
-      showToastMessage("Failed to generate analysis components. Please try again.", "error");
-    } finally {
-      isRegeneratingRef.current = false;
-      setIsAnalysisRegenerating(false);
+      console.error('Error fetching fresh conversation data:', error);
+      return userAnswers;
+    }
+  };
+
+  const generateSWOTAnalysisWithData = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions.forEach(question => {
+        if (freshAnswers[question._id]) {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        }
+      });
+
+      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`SWOT API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+
+      setSwotAnalysisResult(analysisContent);
+      await saveAnalysisToBackend(analysisContent, 'swot');
+    } catch (error) {
+      console.error('Error generating SWOT analysis:', error);
+      throw error;
     }
   };
 
@@ -1049,11 +1881,11 @@ const BusinessSetupPage = () => {
       const answersArray = [];
 
       questions
-        .filter(q => freshAnswers[q._id]) // Include all questions with any answer (including skipped)
+        .filter(q => freshAnswers[q._id])
         .sort((a, b) => (a.order || 0) - (b.order || 0))
         .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(freshAnswers[question._id]); // Includes '[Question Skipped]'
+          answersArray.push(freshAnswers[question._id]);
         });
 
       if (questionsArray.length === 0) {
@@ -1097,73 +1929,24 @@ const BusinessSetupPage = () => {
     }
   };
 
-  const getFreshConversationData = async () => {
-    try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch fresh conversation data');
-      }
-
-      const data = await response.json();
-      const freshAnswers = {};
-      const freshCompletedSet = new Set();
-
-      // Extract all completed answers from backend (including skipped)
-      data.conversations?.forEach(conversation => {
-        if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
-          const questionId = conversation.question_id;
-          freshCompletedSet.add(questionId); // Track as completed
-
-          if (conversation.completion_status === 'skipped' || conversation.is_skipped) {
-            // For skipped questions, set the answer as '[Question Skipped]'
-            freshAnswers[questionId] = '[Question Skipped]';
-          } else {
-            // For completed questions, get all answers
-            const allAnswers = conversation.conversation_flow
-              .filter(item => item.type === 'answer')
-              .map(a => a.text.trim())
-              .filter(text => text.length > 0 && text !== '[Question Skipped]');
-
-            if (allAnswers.length > 0) {
-              freshAnswers[questionId] = allAnswers.join('. ');
-            }
-          }
-        }
-      });
-
-      // Update both local states with fresh data
-      setUserAnswers(prev => ({ ...prev, ...freshAnswers }));
-      setCompletedQuestions(prev => new Set([...prev, ...freshCompletedSet]));
-
-      return freshAnswers;
-    } catch (error) {
-      console.error('Error fetching fresh conversation data:', error);
-      // Fallback to current userAnswers
-      return userAnswers;
-    }
-  };
-
-  // In BusinessSetupPage.js - Add functions that use fresh data
-  const generateSWOTAnalysisWithData = async (freshAnswers) => {
+  const generateStrategicAnalysis = async (freshAnswers) => {
     try {
       const questionsArray = [];
       const answersArray = [];
 
-      questions.forEach(question => {
-        if (freshAnswers[question._id]) { // Include all questions with any answer (including skipped)
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
           questionsArray.push(question.question_text);
-          answersArray.push(freshAnswers[question._id]); // Includes '[Question Skipped]'
-        }
-      });
+          answersArray.push(freshAnswers[question._id]);
+        });
 
-      const response = await fetch(`${ML_API_BASE_URL}/find`, {
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for strategic analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -1176,140 +1959,113 @@ const BusinessSetupPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`SWOT API returned ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Strategic API returned ${response.status}: ${errorText}`);
       }
 
       const result = await response.json();
-      const analysisContent = typeof result === 'string' ? result : JSON.stringify(result);
+      const strategicContent = result.strategic_analysis || result.strategic || result;
 
-      setSwotAnalysisResult(analysisContent);
-      await saveAnalysisToBackend(analysisContent, 'swot');
+      setStrategicData(strategicContent);
+      await saveAnalysisToBackend(strategicContent, 'strategic');
     } catch (error) {
-      console.error('Error generating SWOT analysis:', error);
+      console.error('Error generating strategic analysis:', error);
       throw error;
     }
   };
 
-  const handleBusinessDataUpdate = (updates) => {
-    setBusinessData(prev => ({ ...prev, ...updates }));
-  };
+  const generatePortersAnalysis = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
 
-  const handleAnswerUpdate = (questionId, newAnswer) => {
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: newAnswer
-    }));
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
 
-    // Update business data
-    const updates = {};
-    if (questionId === 1) {
-      const businessName = extractBusinessName(newAnswer);
-      if (businessName) updates.name = businessName;
-      updates.whatWeDo = newAnswer;
-    } else if (questionId === 3) {
-      updates.targetAudience = newAnswer;
-    } else if (questionId === 4) {
-      updates.products = newAnswer;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      setBusinessData(prev => ({ ...prev, ...updates }));
-    }
-  };
-
-  const handleAnalysisTabClick = () => {
-    const unlockedFeatures = getUnlockedFeatures();
-    if (!unlockedFeatures.analysis) return;
-
-    if (isMobile) {
-      setActiveTab("analysis");
-    } else {
-      if (!isAnalysisExpanded) {
-        setIsSliding(true);
-        setIsAnalysisExpanded(true);
-        setActiveTab("analysis");
-        setTimeout(() => setIsSliding(false), 1000);
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for Porter\'s Five Forces analysis');
       }
-    }
-  };
-  const handleStrategicTabClick = () => {
-    const unlockedFeatures = getUnlockedFeatures();
-    if (!unlockedFeatures.analysis) return;
 
-    if (isMobile) {
-      setActiveTab("strategic");
-    } else {
-      // For desktop - always expand when clicking Strategic tab
-      if (!isAnalysisExpanded) {
-        setIsSliding(true);
-        setIsAnalysisExpanded(true);
-        setActiveTab("strategic");
-        setTimeout(() => setIsSliding(false), 1000);
-      } else {
-        // If already expanded, just switch to strategic tab
-        setActiveTab("strategic");
+      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Porter's API returned ${response.status}`);
       }
+
+      const result = await response.json();
+      const portersContent = result.porters_analysis || result.porters || result;
+
+      setPortersData(portersContent);
+      await saveAnalysisToBackend(portersContent, 'porters');
+    } catch (error) {
+      console.error('Error generating Porter\'s Five Forces analysis:', error);
+      throw error;
     }
   };
 
-  const handleBackFromAnalysis = () => {
-    if (isAnalysisExpanded) {
-      setIsSliding(true);
-      setIsAnalysisExpanded(false);
-      setActiveTab("brief");  // Always go back to brief when collapsing
-      setTimeout(() => setIsSliding(false), 1000);
-    }
-  };
+  const generatePestelAnalysis = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
 
-  const handleBack = () => {
-    window.history.back();
-  };
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
 
-  // Dropdown handlers
-  const dropdownOptions = [
-    "SWOT",
-    "Customer Segmentation",
-    "Purchase Criteria",
-    "Channel Heatmap",
-    "Loyalty/NPS",
-    "Capability Heatmap",
-    "Porter's Five Forces",
-    "PESTEL Analysis"
-  ];
-
-  const handleOptionClick = (option) => {
-    setSelectedOption(option);
-    setShowDropdown(false);
-
-    setTimeout(() => {
-      const refMap = {
-        "SWOT": swotRef,
-        "Customer Segmentation": customerSegmentationRef,
-        "Purchase Criteria": purchaseCriteriaRef,
-        "Channel Heatmap": channelHeatmapRef,
-        "Loyalty/NPS": loyaltyNpsRef,
-        "Capability Heatmap": capabilityHeatmapRef,
-        "Porter's Five Forces": portersRef,
-        "PESTEL Analysis": pestelRef,
-        "Strategic": strategicRef
-      };
-
-      const targetRef = refMap[option];
-      if (targetRef?.current) {
-        targetRef.current.scrollIntoView({ behavior: "smooth" });
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for PESTEL analysis');
       }
-    }, 100);
+
+      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`PESTEL API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      const pestelContent = result.pestel_analysis || result.pestel || result;
+
+      setPestelData(pestelContent);
+      await saveAnalysisToBackend(pestelContent, 'pestel');
+    } catch (error) {
+      console.error('Error generating PESTEL analysis:', error);
+      throw error;
+    }
   };
 
-  // Individual regeneration handlers with loading state tracking
+  // Individual regeneration handlers
   const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, setter, displayName, setIsRegenerating) => {
     return async () => {
-      // Check current phase completion using completedQuestions set
-      const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-      const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
-      const isInitialComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-
-      if (!isInitialComplete || isRegeneratingRef.current) return;
+      if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
 
       try {
         setIsRegenerating(true);
@@ -1318,11 +2074,17 @@ const BusinessSetupPage = () => {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         if (analysisType === 'porters') {
-          await generatePortersAnalysis();
+          await generatePortersAnalysisWithAnswers(userAnswers);
         } else if (analysisType === 'pestel') {
-          await generatePestelAnalysis();
+          await generatePestelAnalysisWithAnswers(userAnswers);
         } else if (analysisType === 'strategic') {
-          await generateStrategicAnalysis();
+          await generateStrategicAnalysisWithAnswers(userAnswers);
+        } else if (analysisType === 'fullSwot') {
+          await generateFullSwotPortfolio();
+        } else if (analysisType === 'competitiveAdvantage') {  // ADD THIS CASE
+          await generateCompetitiveAdvantage(userAnswers);
+        } else if (analysisType === 'channelEffectiveness') {
+          await generateChannelEffectiveness(userAnswers);
         } else {
           await generateSingleAnalysis(analysisType, endpoint, dataKey, setter);
         }
@@ -1336,99 +2098,78 @@ const BusinessSetupPage = () => {
     };
   };
 
-  const handlePortersRegenerate = createIndividualRegenerationHandler(
-    'porters',
-    'porters-five-forces',
-    'porters',
-    setPortersData,
-    'Porter\'s Five Forces',
-    setIsPortersRegenerating
-  );
+  const handleOptionClick = (option) => {
+    setShowDropdown(false);
 
-  const handlePestelRegenerate = createIndividualRegenerationHandler(
-    'pestel',
-    'pestel-analysis',
-    'pestel',
-    setPestelData,
-    'PESTEL Analysis',
-    setIsPestelRegenerating
-  );
+    setTimeout(() => {
+      const refMap = {
+        // Initial Phase Refs
+        "SWOT": swotRef,
+        "Purchase Criteria": purchaseCriteriaRef,
+        "Channel Heatmap": channelHeatmapRef,
+        "Loyalty/NPS": loyaltyNpsRef,
+        "Capability Heatmap": capabilityHeatmapRef,
+        "Porter's Five Forces": portersRef,
+        "PESTEL Analysis": pestelRef,
+
+        // Essential Phase Refs
+        "Full SWOT Portfolio": fullSwotRef,
+        "Customer Segmentation": customerSegmentationRef,
+        "Competitive Advantage": competitiveAdvantageRef,
+        "Channel Effectiveness": channelEffectivenessRef,
+        "Expanded Capability Heatmap": expandedCapabilityRef,
+        "Strategic Goals": strategicGoalsRef,
+        "Strategic Positioning Radar": strategicRadarRef,
+        "Organizational Culture Profile": cultureProfileRef,
+        "Productivity Metrics": productivityRef,
+        "Maturity Score": maturityScoreRef
+      };
+
+      const targetRef = refMap[option];
+      if (targetRef?.current) {
+        targetRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    }, 100);
+  };
 
   // Analysis Controls Component
   const AnalysisControls = () => {
-    const unlockedFeatures = getUnlockedFeatures();
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
     return (
       <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
-          <button
-            className="dropdown-button"
-            onClick={() => setShowDropdown(prev => !prev)}
-            style={{
-              backgroundColor: "#fff",
-              color: "#1a73e8",
-              border: "1px solid #d1d5db",
-              borderRadius: "13px",
-              padding: "10px 18px",
-              fontSize: "14px",
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-            }}
-          >
-            {selectedOption}
-            <ChevronDown size={16} style={{ marginLeft: 8 }} />
-          </button>
-
-          {showDropdown && (
-            <div style={{
-              position: "absolute",
-              top: "110%",
-              right: 0,
-              backgroundColor: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              minWidth: "180px",
-              zIndex: 1000,
-            }}>
-              {dropdownOptions.map((item) => (
-                <div
-                  key={item}
-                  onClick={() => handleOptionClick(item)}
-                  style={{
-                    padding: "10px 14px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    color: "#374151",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f1f5f9"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Remove the old dropdown from here since it's now in PhaseTabsComponent */}
 
         <button
-          onClick={regenerateAllAnalysis}
+          onClick={() => regenerateAllAnalysis(null, null, true)}
           disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
           style={{
             backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
             color: (isAnalysisRegenerating) ? "#6b7280" : "#fff",
             border: "none",
-            borderRadius: "13px",
+            borderRadius: "10px",
             padding: "10px 18px",
             fontSize: "14px",
-            fontWeight: 500,
+            fontWeight: 600,
             display: "flex",
             alignItems: "center",
             cursor: (isAnalysisRegenerating) ? "not-allowed" : "pointer",
             gap: "8px",
-            transition: "all 0.2s ease"
+            transition: "all 0.2s ease",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
+          }}
+          onMouseEnter={(e) => {
+            if (!isAnalysisRegenerating) {
+              e.target.style.transform = "translateY(-1px)";
+              e.target.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "translateY(0)";
+            e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
           }}
         >
           {isAnalysisRegenerating ? (
@@ -1452,17 +2193,10 @@ const BusinessSetupPage = () => {
       </div>
     );
   };
-  const handleStrategicRegenerate = createIndividualRegenerationHandler(
-    'strategic',
-    'strategic-goals',
-    'strategic',
-    setStrategicData,
-    'Strategic analysis',
-    setIsStrategicRegenerating
-  );
+
   // Render Analysis Content
   const renderAnalysisContent = () => {
-    const unlockedFeatures = getUnlockedFeatures();
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
     if (!unlockedFeatures.analysis) {
       return (
@@ -1483,8 +2217,9 @@ const BusinessSetupPage = () => {
       );
     }
 
-    return (
-      <div id="analysis-pdf-content" style={{ backgroundColor: 'white', padding: '0' }}>
+    // Initial Phase Components
+    const initialPhaseComponents = (
+      <div id="analysis-pdf-content" style={{ backgroundColor: 'white' }}>
         <div ref={swotRef}>
           <SwotAnalysis
             analysisResult={swotAnalysisResult}
@@ -1496,26 +2231,6 @@ const BusinessSetupPage = () => {
           />
         </div>
 
-        <div ref={customerSegmentationRef}>
-          <CustomerSegmentation
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessData.name}
-            onDataGenerated={setCustomerSegmentationData}
-            onRegenerate={createIndividualRegenerationHandler(
-              'customerSegmentation',
-              'customer-segment',
-              'customerSegmentation',
-              setCustomerSegmentationData,
-              'Customer segmentation',
-              setIsCustomerSegmentationRegenerating
-            )}
-            isRegenerating={isCustomerSegmentationRegenerating}
-            canRegenerate={!isAnalysisRegenerating}
-            customerSegmentationData={customerSegmentationData}
-            selectedBusinessId={selectedBusinessId}
-          />
-        </div>
 
         <div ref={purchaseCriteriaRef}>
           <PurchaseCriteria
@@ -1600,12 +2315,20 @@ const BusinessSetupPage = () => {
             selectedBusinessId={selectedBusinessId}
           />
         </div>
+
         <div ref={portersRef}>
           <PortersFiveForces
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}
-            onRegenerate={handlePortersRegenerate}
+            onRegenerate={createIndividualRegenerationHandler(
+              'porters',
+              'porters-five-forces',
+              'porters',
+              setPortersData,
+              'Porter\'s Five Forces',
+              setIsPortersRegenerating
+            )}
             isRegenerating={isPortersRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             portersData={portersData}
@@ -1618,23 +2341,262 @@ const BusinessSetupPage = () => {
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}
-            onRegenerate={handlePestelRegenerate}
+            onRegenerate={createIndividualRegenerationHandler(
+              'pestel',
+              'pestel-analysis',
+              'pestel',
+              setPestelData,
+              'PESTEL Analysis',
+              setIsPestelRegenerating
+            )}
             isRegenerating={isPestelRegenerating}
             canRegenerate={!isAnalysisRegenerating}
             pestelData={pestelData}
             selectedBusinessId={selectedBusinessId}
           />
         </div>
+      </div>
+    );
+
+    // Essential Phase Components
+    const essentialPhaseComponents = (
+      <div id="analysis-pdf-content" style={{ backgroundColor: 'white' }}>
+        {unlockedFeatures.fullSwot && (
+          <div ref={fullSwotRef}>
+            <FullSWOTPortfolio
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'fullSwot',
+                'full-swot-portfolio',
+                'swotPortfolio',
+                setFullSwotData,
+                'Full SWOT Portfolio',
+                setIsFullSwotRegenerating
+              )}
+              isRegenerating={isFullSwotRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              fullSwotData={fullSwotData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={customerSegmentationRef}>
+            <CustomerSegmentation
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onDataGenerated={setCustomerSegmentationData}
+              onRegenerate={createIndividualRegenerationHandler(
+                'customerSegmentation',
+                'customer-segment',
+                'customerSegmentation',
+                setCustomerSegmentationData,
+                'Customer segmentation',
+                setIsCustomerSegmentationRegenerating
+              )}
+              isRegenerating={isCustomerSegmentationRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              customerSegmentationData={customerSegmentationData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={competitiveAdvantageRef}>
+            <CompetitiveAdvantageMatrix
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'competitiveAdvantage',
+                'competitive-advantage',
+                'competitiveAdvantage',
+                setCompetitiveAdvantageData,
+                'Competitive Advantage Matrix',
+                setIsCompetitiveAdvantageRegenerating
+              )}
+              isRegenerating={isCompetitiveAdvantageRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              competitiveAdvantageData={competitiveAdvantageData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={channelEffectivenessRef}>
+            <ChannelEffectivenessMap
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'channelEffectiveness',
+                'channel-effectiveness',
+                'channelEffectiveness',
+                setChannelEffectivenessData,
+                'Channel Effectiveness Map',
+                setIsChannelEffectivenessRegenerating
+              )}
+              isRegenerating={isChannelEffectivenessRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              channelEffectivenessData={channelEffectivenessData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={expandedCapabilityRef}>
+            <ExpandedCapabilityHeatmap
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'expandedCapability',
+                'expanded-capability-heatmap',
+                'expandedCapabilityHeatmap',
+                setExpandedCapabilityData,
+                'Expanded Capability Heatmap',
+                setIsExpandedCapabilityRegenerating
+              )}
+              isRegenerating={isExpandedCapabilityRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              expandedCapabilityData={expandedCapabilityData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+        {unlockedFeatures.fullSwot && (
+          <div ref={strategicGoalsRef}>
+            <StrategicGoals
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'strategicGoals',
+                'strategic-goals',
+                'strategicGoals',
+                setStrategicGoalsData,
+                'Strategic Goals',
+                setIsStrategicGoalsRegenerating
+              )}
+              isRegenerating={isStrategicGoalsRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              strategicGoalsData={strategicGoalsData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={strategicRadarRef}>
+            <StrategicPositioningRadar
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'strategicRadar',
+                'strategic-positioning-radar',
+                'strategicRadar',
+                setStrategicRadarData,
+                'Strategic Positioning Radar',
+                setIsStrategicRadarRegenerating
+              )}
+              isRegenerating={isStrategicRadarRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              strategicRadarData={strategicRadarData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={cultureProfileRef}>
+            <OrganizationalCultureProfile
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'cultureProfile',
+                'culture-profile',
+                'cultureProfile',
+                setCultureProfileData,
+                'Organizational Culture Profile',
+                setIsCultureProfileRegenerating
+              )}
+              isRegenerating={isCultureProfileRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              cultureProfileData={cultureProfileData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={productivityRef}>
+            <ProductivityMetrics
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'productivityMetrics',
+                'productivity-metrics',
+                'productivityMetrics',
+                setProductivityData,
+                'Productivity Metrics',
+                setIsProductivityRegenerating
+              )}
+              isRegenerating={isProductivityRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              productivityData={productivityData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
+
+        {unlockedFeatures.fullSwot && (
+          <div ref={maturityScoreRef}>
+            <MaturityScoreLight
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createIndividualRegenerationHandler(
+                'maturityScore',
+                'maturity-score-light',
+                'maturityScore',
+                setMaturityData,
+                'Maturity Score',
+                setIsMaturityRegenerating
+              )}
+              isRegenerating={isMaturityRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              maturityData={maturityData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
 
       </div>
     );
-  };
 
+    return (
+      <div>
+        <PhaseTabsComponent />
+        {selectedPhase === 'initial' && initialPhaseComponents}
+        {selectedPhase === 'essential' && essentialPhaseComponents}
+      </div>
+    );
+  };
   // Calculate progress
   const totalQuestions = questions.length;
   const answeredQuestions = completedQuestions.size;
   const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
-  const unlockedFeatures = getUnlockedFeatures();
+  const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
   return (
     <div className="business-setup-container">
@@ -1648,7 +2610,7 @@ const BusinessSetupPage = () => {
 
       {isMobile && questionsLoaded && (
         <>
-          {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (  // Add "strategic" here
+          {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (
             <div className="progress-area">
               <div className="progress-track">
                 <div
@@ -1686,7 +2648,7 @@ const BusinessSetupPage = () => {
             {unlockedFeatures.analysis && (
               <button
                 className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
-                onClick={handleStrategicTabClick}  // Use the expansion handler for mobile too
+                onClick={handleStrategicTabClick}
               >
                 Strategic
               </button>
@@ -1694,7 +2656,6 @@ const BusinessSetupPage = () => {
           </div>
         </>
       )}
-
 
       <div
         className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""} ${isSliding ? "sliding" : ""}`}
@@ -1710,7 +2671,7 @@ const BusinessSetupPage = () => {
                 aria-label="Go Back"
                 style={{
                   position: "absolute",
-                  top: "0",
+                  top: "10px",
                   left: "0",
                   backgroundColor: "transparent",
                   border: "none",
@@ -1742,21 +2703,24 @@ const BusinessSetupPage = () => {
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
             onQuestionsLoaded={handleQuestionsLoaded}
-            onQuestionCompleted={handleQuestionCompleted}
-            onPhaseCompleted={handlePhaseCompleted}
+            onQuestionCompleted={handleQuestionCompleted} // This now calls PhaseManager properly
+            onPhaseCompleted={async (phase, completedSet) => {
+              // This is called from ChatComponent, let PhaseManager handle it
+              console.log('ChatComponent phase completed:', phase);
+              // Don't do anything here, let PhaseManager handle detection
+            }}
           />
         </div>
 
         {questionsLoaded && (
           <div
             className={`info-panel ${isMobile
-              ? activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic"  // Add "strategic" here
+              ? activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic"
                 ? "active"
                 : ""
               : ""
               } ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}
           >
-
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -1792,28 +2756,25 @@ const BusinessSetupPage = () => {
                         {t("backToOverview")}
                       </button>
 
-                      {/* Analysis Tab in expanded view */}
                       {unlockedFeatures.analysis && (
                         <button
                           className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
-                          onClick={() => setActiveTab("analysis")}  // Just switch tabs, don't collapse
+                          onClick={() => setActiveTab("analysis")}
                         >
                           {t("analysis")}
                         </button>
                       )}
 
-                      {/* Strategic Tab in expanded view */}
                       {unlockedFeatures.analysis && (
                         <button
                           className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`}
-                          onClick={() => setActiveTab("strategic")}  // Just switch tabs, don't collapse
+                          onClick={() => setActiveTab("strategic")}
                         >
                           Strategic
                         </button>
                       )}
                     </div>
 
-                    {/* Show appropriate controls based on active tab */}
                     {activeTab === "analysis" && unlockedFeatures.analysis && (
                       <AnalysisControls />
                     )}
@@ -1821,7 +2782,14 @@ const BusinessSetupPage = () => {
                     {activeTab === "strategic" && unlockedFeatures.analysis && (
                       <div className="strategic-controls">
                         <button
-                          onClick={handleStrategicRegenerate}
+                          onClick={createIndividualRegenerationHandler(
+                            'strategic',
+                            'strategic-goals',
+                            'strategic',
+                            setStrategicData,
+                            'Strategic analysis',
+                            setIsStrategicRegenerating
+                          )}
                           disabled={isStrategicRegenerating}
                           style={{
                             backgroundColor: isStrategicRegenerating ? "#f3f4f6" : "#8b5cf6",
@@ -1856,7 +2824,6 @@ const BusinessSetupPage = () => {
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
-                      {/* Show Analysis content when analysis tab is active */}
                       {activeTab === "analysis" && (
                         <div className="analysis-section">
                           <div className="analysis-content">
@@ -1865,7 +2832,6 @@ const BusinessSetupPage = () => {
                         </div>
                       )}
 
-                      {/* Show Strategic content when strategic tab is active */}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <div className="strategic-content">
@@ -1873,7 +2839,14 @@ const BusinessSetupPage = () => {
                               questions={questions}
                               userAnswers={userAnswers}
                               businessName={businessData.name}
-                              onRegenerate={handleStrategicRegenerate}
+                              onRegenerate={createIndividualRegenerationHandler(
+                                'strategic',
+                                'strategic-goals',
+                                'strategic',
+                                setStrategicData,
+                                'Strategic analysis',
+                                setIsStrategicRegenerating
+                              )}
                               isRegenerating={isStrategicRegenerating}
                               canRegenerate={!isAnalysisRegenerating}
                               strategicData={strategicData}
@@ -1901,7 +2874,7 @@ const BusinessSetupPage = () => {
                   {unlockedFeatures.analysis && (
                     <button
                       className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
-                      onClick={handleAnalysisTabClick}  // This already handles expansion
+                      onClick={handleAnalysisTabClick}
                     >
                       {t("analysis")}
                     </button>
@@ -1910,14 +2883,12 @@ const BusinessSetupPage = () => {
                   {unlockedFeatures.analysis && (
                     <button
                       className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`}
-                      onClick={handleStrategicTabClick}  // This will now handle expansion too
+                      onClick={handleStrategicTabClick}
                     >
                       Strategic
                     </button>
                   )}
                 </div>
-
-
 
                 {activeTab === "analysis" && unlockedFeatures.analysis && (
                   <AnalysisControls />
@@ -1943,8 +2914,19 @@ const BusinessSetupPage = () => {
                       businessData={businessData}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={handleAnswerUpdate}
-                      onAnalysisRegenerate={regenerateAllAnalysis} // This now accepts (questionId, updatedAnswer)
+                      onAnalysisRegenerate={regenerateAllAnalysis}
                       isAnalysisRegenerating={isAnalysisRegenerating}
+                      isEssentialPhaseGenerating={
+                        isFullSwotRegenerating ||
+                        isCompetitiveAdvantageRegenerating ||
+                        isChannelEffectivenessRegenerating ||
+                        isExpandedCapabilityRegenerating ||
+                        isStrategicGoalsRegenerating ||
+                        isStrategicRadarRegenerating ||
+                        isCultureProfileRegenerating ||        // ADD this
+                        isProductivityRegenerating ||           // ADD this
+                        isMaturityRegenerating                  // ADD this
+                      }
                     />
                   </div>
                 )}
@@ -1963,14 +2945,20 @@ const BusinessSetupPage = () => {
                   </div>
                 )}
 
-                {/* Strategic tab content - only show when initial phase is completed */}
                 {activeTab === "strategic" && unlockedFeatures.analysis && (
                   <div className="strategic-section">
                     {isMobile && (
                       <div style={{ padding: "1rem", background: "#ffffffff" }}>
                         <div className="analysis-controls-wrapper" style={{ display: "flex", justifyContent: "center" }}>
                           <button
-                            onClick={handleStrategicRegenerate}
+                            onClick={createIndividualRegenerationHandler(
+                              'strategic',
+                              'strategic-goals',
+                              'strategic',
+                              setStrategicData,
+                              'Strategic analysis',
+                              setIsStrategicRegenerating
+                            )}
                             disabled={isStrategicRegenerating}
                             style={{
                               backgroundColor: isStrategicRegenerating ? "#f3f4f6" : "#8b5cf6",
@@ -2008,7 +2996,14 @@ const BusinessSetupPage = () => {
                         questions={questions}
                         userAnswers={userAnswers}
                         businessName={businessData.name}
-                        onRegenerate={handleStrategicRegenerate}
+                        onRegenerate={createIndividualRegenerationHandler(
+                          'strategic',
+                          'strategic-goals',
+                          'strategic',
+                          setStrategicData,
+                          'Strategic analysis',
+                          setIsStrategicRegenerating
+                        )}
                         isRegenerating={isStrategicRegenerating}
                         canRegenerate={!isAnalysisRegenerating}
                         strategicData={strategicData}
