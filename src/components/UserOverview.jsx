@@ -218,7 +218,7 @@ const UserOverview = ({ onToast }) => {
 
         <select
           value={selectedCompany}
-          
+          className='select-company-dropdown'
           onChange={(e) => {
             console.log('Company filter changed to:', e.target.value); // Debug log
             setSelectedCompany(e.target.value);

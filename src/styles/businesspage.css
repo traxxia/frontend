@@ -193,6 +193,11 @@ html, body {
 [data-theme="dark"] .brief-item.edited:hover {
   background-color: rgba(59, 58, 58, 0.338);
 }
+[data-theme="dark"] .brief-item:hover {
+  background-color: rgba(59, 58, 58, 0.338);
+
+  
+}
 [data-theme="dark"] .input-area {
   background-color: var(--color-bg-primary);
 }
@@ -218,10 +223,38 @@ html, body {
   color: var(--color-text-dark) !important;
 }
 [data-theme="dark"] .expanded-analysis-content {
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-secondary);
 }
 [data-theme="dark"] #analysis-pdf-content {
-  background-color: var(--color-bg-primary) !important;
+  background-color: var(--color-bg-secondary) !important;
+}
+[data-theme="dark"] .purchase-criteria,
+[data-theme="dark"] .loyalty-nps,
+[data-theme="dark"] .capability-heatmap,
+[data-theme="dark"] .channel-heatmap,
+[data-theme="dark"] .swot-analysis-container,
+[data-theme="dark"] .customer-segmentation {
+  background-color: var(--color-text-light);
+  
+}
+[data-theme="dark"] .item-text:hover {
+  background-color: var(--color-bg-secondary);
+  
+}
+[data-theme="dark"] .dropdown-button {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-dark) !important;
+  border: 1px solid var(--color-border-secondary);
+}
+[data-theme="dark"] .dropdown-popup {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-dark) !important;
+}
+[data-theme="dark"] .dropdown-popup-item {
+  color: var(--color-text-dark) !important;
+}
+[data-theme="dark"] .dropdown-popup-item:hover{
+  color: var(--color-text-light) !important;
 }
 /* =
 ========= DESKTOP TABS ========== */
@@ -377,7 +410,7 @@ html, body {
 }
 
 .message-bubble {
-  max-width: 70%;
+  max-width: 85%;
   padding: 5px 10px;
   border-radius: 10px;
   line-height: 1.5;
@@ -491,9 +524,9 @@ html, body {
 
 .info-panel-content {
   flex: 1;
-  padding: 15px;
+  padding: 10px;
   overflow: auto;
-  max-height: 400px;
+  max-height: calc(100vh - 120px);
   scroll-behavior: auto !important;
   position: relative;
   overscroll-behavior: contain;
@@ -545,13 +578,13 @@ html, body {
 .brief-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0px;
 }
 
 .brief-item {
   margin-bottom: 0px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0px;
   padding: 5px;
   transition: all 0.2s ease;
   min-height: 60px;
@@ -1126,23 +1159,15 @@ html, body {
   display: flex;
   flex-direction: column;
   background: white;
-  overflow: hidden;
+  overflow: auto;
   flex: 1;
 }
 
-.expanded-analysis-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-}
+
 
 .expanded-analysis-main {
   flex: 1;
-  padding: 20px 10px 10px 10px;
+  padding: 0px 10px 10px 10px;
   overflow-y: auto;
   min-height: 0;
   width: 100%;
@@ -1340,7 +1365,14 @@ html, body {
   background: #d1d5db;
   border-radius: 2px;
 }
-
+[data-theme="dark"] .progress-area,
+[data-theme="dark"] .mobile-tabs{
+ background-color: var(--color-bg-primary) ;
+}
+[data-theme="dark"] .mobile-tab{
+  color: var(--color-text-dark);
+  
+}
 /* ========== DARK MODE SUPPORT ========== */
 @media (prefers-color-scheme: dark) {
   .brief-item.edited {
@@ -1425,6 +1457,7 @@ html, body {
   .mobile-tab.active {
     color: #2563eb;
     border-bottom-color: #2563eb;
+    border-radius: 0%;
   }
 
   .mobile-progress {
@@ -2070,7 +2103,7 @@ html, body {
 }
 
 .analysis-section {
-  margin-top: 5px;
+  margin-top: 0px;
 }
 
 .analysis-table {
@@ -2231,5 +2264,161 @@ html, body {
   .analysis-controls-wrapper .dropdown-button {
     width: 100%;
     justify-content: center;
+  }
+}
+.phase-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e1e5e9;
+  padding: 0px;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+ 
+  /* FIXED POSITIONING */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+ 
+/* Make the analysis-pdf-content the scrollable container */
+#analysis-pdf-content {
+  background-color: white;
+  padding: 0;
+  /* ADD SCROLLING TO THIS CONTAINER */
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-top: 0px;
+}
+ 
+/* Remove overflow from parent containers */
+.expanded-analysis-main {
+  flex: 1;
+  padding: 0px 10px 0px 10px;
+  overflow-y: visible;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  scroll-behavior: auto !important;
+  position: relative;
+}
+.phase-tabs-nav {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+ 
+.phase-tab {
+  position: relative;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #000;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+}
+ 
+.phase-tab:hover {
+  color: #475569;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+ 
+.phase-tab.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+}
+ 
+.phase-tab.active::before {
+  content: '';
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #3b82f6;
+  z-index: 1;
+}
+ 
+.phase-tab.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #94a3b8;
+}
+ 
+.phase-tab.locked:hover {
+  background: transparent;
+  transform: none;
+}
+ 
+.phase-dropdown-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+ 
+.phase-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+ 
+.phase-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+ 
+.phase-badge.essential {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+ 
+@media (max-width: 768px) {
+  .phase-tabs-container {
+    padding: 12px 16px 0 16px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+ 
+  .phase-dropdown-section {
+    justify-content: center;
+  }
+ 
+  .phase-tab {
+    min-width: 100px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+ 
+  .phase-info {
+    display: none;
   }
 }

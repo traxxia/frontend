@@ -606,7 +606,7 @@
   .login-left-section {
     flex: 0 0 auto;
     padding: var(--spacing-2xl);
-    border-radius: var(--border-radius-card) var(--border-radius-card) 0 0;
+    /* border-radius: var(--border-radius-card) var(--border-radius-card) 0 0; */
     max-height: 240px;
   }
 

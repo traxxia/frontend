@@ -249,6 +249,9 @@ body {
 [data-theme="dark"] label  {
   color: var(--color-text-dark) !important;
 }
+[data-theme="dark"] .business-filter-select{
+  background-image: none;
+}
 [data-theme="dark"] h4 {
   color: var(--color-text-dark) !important;
 }
@@ -268,6 +271,9 @@ body {
 [data-theme="dark"] .form-field select {
   color: var(--color-text-dark);
   
+}
+[data-theme="dark"] .select-company-dropdown{
+  background-image: none;
 }
 [data-theme="dark"] .filters-section select {
  

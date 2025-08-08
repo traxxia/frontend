@@ -63,6 +63,7 @@
   background: var(--color-bg-primary) !important;
   padding: var(--spacing-4xl);
   min-height: calc(100vh - 60px); /* Use min-height */
+  overflow: visible !important;
 }
 
 .welcome-section h5 {
@@ -72,7 +73,9 @@
   line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-3xl);
 }
-
+.cancel-button{
+  color: var(--color-text-black);
+}
 .welcome-section p {
   font-size: var(--font-size-lg);
   line-height: var(--line-height-relaxed);
@@ -96,12 +99,12 @@
 /* Business List */
 .business-list.mobile {
   max-height: none;
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .business-list.desktop {
   max-height: none;
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .business-item {
@@ -194,6 +197,7 @@
     padding: 0;
     min-height: auto;
     display: block; /* Changed from flex for better scrolling */
+    margin-left: 20px;
   }
 
   .mobile-view-card .p-4:first-child {
@@ -213,6 +217,9 @@
     font-size: var(--font-size-2xl);
     margin-bottom: var(--spacing-lg);
   }
+  [data-theme='dark'] .mobile-view-card h5 {
+    color: var(--color-text-white);
+  }
   
   .mobile-view-card p {
     font-size: var(--font-size-base);
@@ -222,6 +229,9 @@
   .mobile-view-card h6 {
     font-size: var(--font-size-lg);
     margin-bottom: var(--spacing-lg);
+  }
+  [data-theme='dark'] .mobile-view-card h6 {
+    color: var(--color-text-white);
   }
   
   .business-item {
@@ -340,10 +350,10 @@
 
 /* Analysis Section Styles */
 .analysis-section {
-  max-width: max-content;
+  max-width: 100%;
   margin: 0 auto;
   font-family: var(--font-primary);
-  padding: 5px; /* Add padding for better spacing */
+  padding: 0px; /* Add padding for better spacing */
 }
 
 .analysis-section h5 {
@@ -891,7 +901,9 @@
   z-index: 1060; /* Higher than Bootstrap modals */
   animation: fadeIn 0.3s ease-out;
 }
-
+[data-theme='dark'] .success-popup{
+  background: var(--color-bg-secondary);
+}
 .success-popup {
   background: white;
   border-radius: 12px;
@@ -974,6 +986,10 @@
     font-size: 2.5rem;
   }
 }
-.dropdown-menu .show .dropdown-menu-end{
-    z-index: 10000;
+.dropdown-menu.show {
+  z-index: 2000 !important; /* Higher than Bootstrap cards but lower than modals */
+}
+[data-theme='dark'] .delete-popup-purpose {
+  background-color: var(--color-bg-secondary) !important;
+  
 }

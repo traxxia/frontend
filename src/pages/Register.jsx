@@ -289,11 +289,11 @@ const Register = () => {
             <p className="register-subtitle">{t('create_account_subtitle')}</p>
 
             <div className="form-group1">
-              <label>User Name *</label>
+              <label>{t('user_name')} *</label>
               <input
                 type="text"
                 name="name"
-                placeholder="Enter User name"
+                placeholder={t('enter_user_name')}
                 value={form.name}
                 onChange={handleChange}
                 className={errors.name ? 'error' : ''}
@@ -317,7 +317,7 @@ const Register = () => {
             </div>
 
             <div className="form-group1">
-              <label>Company *</label>
+              <label>{t('company')} *</label>
               {loadingCompanies ? (
                 <div className="loading-select">
                   <FaSpinner className="spinner" />
@@ -341,7 +341,7 @@ const Register = () => {
                   onChange={handleChange}
                   className={errors.company_id ? 'error' : ''}
                 >
-                  <option value="">Select a company</option>
+                  <option value="">{t('select_a_company')}</option>
                   {companies.map((company) => (
                     <option key={company._id} value={company._id}>
                       {company.company_name}
@@ -354,11 +354,11 @@ const Register = () => {
             </div>
 
             <div className="form-group1">
-              <label>Job Title (Optional)</label>
+              <label>{t('job_title')} ({t('optional')})</label>
               <input
                 type="text"
                 name="job_title"
-                placeholder="Enter job title"
+                placeholder={t('enter_job_title')}
                 value={form.job_title}
                 onChange={handleChange}
                 maxLength="100"
@@ -389,7 +389,7 @@ const Register = () => {
               </div>
               {errors.password && <div className="error-message">{errors.password}</div>}
               <small className="password-hint">
-                Password must be at least 8 characters-contain uppercase, lowercase, and numbers
+                {t('password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers')}
               </small>
             </div>
 

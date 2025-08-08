@@ -4095,6 +4095,15 @@
 [data-theme="dark"] .user-history-container {
   background-color: var(--color-bg-primary);
 }
+[data-theme="dark"] .btn-secondary:hover {
+ color: var(--color-text-primary);
+  
+}
+[data-theme="dark"]  .stats-row,
+[data-theme="dark"] .analysis-components {
+  background-color: var(--color-bg-primary);
+  
+}
 [data-theme="dark"] .user-history-title {
   color: var(--color-text-primary);
 }
@@ -4121,6 +4130,10 @@
 [data-theme="dark"] textarea{
   color: var(--color-text-primary) !important;
   background-color: var(--color-bg-secondary) !important;
+}
+[data-theme="dark"] textarea ::placeholder{
+  color: var(--color-text-light) !important;
+
 }
 [data-theme="dark"] .question-modal {
   color: var(--color-text-secondary) !important;

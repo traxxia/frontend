@@ -353,7 +353,11 @@ export const staticTranslations = {
     "account_created": "Account Created!",
     "registration_failed_msg": "Registration Failed",
     "redirecting_login": "Redirecting to login...",
+    "creating": "Creating...",
     
+    'business_purpose': 'Business Purpose',
+    'description': 'Description',
+
     "first_name_required": "First name is required",
     "last_name_required": "Last name is required",
     "email_required": "Email address is required",
@@ -364,12 +368,12 @@ export const staticTranslations = {
     "passwords_do_not_match": "Passwords do not match",
     "agree_terms_required": "You must agree to the terms and conditions",
     "password_requirements": "Password must be at least 8 characters long",
-    
+    "enter_user_name": "Enter User Name",
     "registration_successful": "Registration successful!",
     "registration_failed": "Registration failed. Please try again.",
     "email_already_exists": "An account with this email already exists",
     "user_account_notice": "All new accounts are created as regular users",
-
+    "enter_your_business_name": "Enter your business name",
     // Dashboard page
     'dashboard': 'Dashboard',
     'welcome_dashboard': 'Welcome!',
@@ -401,7 +405,7 @@ export const staticTranslations = {
     'no_business_data_found': 'No business data found.',
     'complete_all_questions': 'Complete All Questions',
     'complete_questions_to_unlock': 'Please answer all questions to unlock the analysis section',
-
+    'questions_completed' : 'questions completed',
     // Progress and status
     'progress': 'Progress',
     'completed': 'Completed',
@@ -528,6 +532,7 @@ export const staticTranslations = {
     'technological_factors': 'Technological',
     'legal_factors': 'Legal',
     'environmental_factors': 'Environmental',
+    'create_new_business': 'Create New Business',
 
     'select_analysis_framework': 'Select an Analysis Framework',
     'choose_framework_instruction': 'Choose from the tabs above to begin your analysis',
@@ -579,7 +584,14 @@ export const staticTranslations = {
     'questions_remaining': 'Questions remaining',
     'of': 'of',
     'back_to_welcome': 'Back to Welcome',
-
+    'user_name': 'User Name',
+    'company': 'Company',
+    'select_a_company': 'Select a company',
+    'job_title': 'Job Title',
+    'optional': 'Optional',
+    'enter_job_title': 'Enter job title',
+    'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'Password must be at least 8 characters long and contain uppercase, lowercase, and numbers',
+    'business_name': 'Business Name',
     // Insights Section
     'business_insights': 'Business Insights',
     'generate_insights': 'Generate Insights',
@@ -609,7 +621,7 @@ export const staticTranslations = {
     'recommendation_complementary_products': 'Consider developing complementary products',
     'growth_projections': 'Growth Projections',
     'growth_projection_details': 'Based on current trends, a 25-30% growth rate is achievable within the next 12 months with proper execution of recommended strategies.',
-
+    'All_generated_analysis_reports_and_insights': 'All generated analysis reports and insights',
     'admin_panel.title': 'Admin Panel - Users Management',
     'admin_panel.all_users': 'All Users',
     'admin_panel.filter_placeholder': 'Filter by name or email...',
@@ -619,7 +631,7 @@ export const staticTranslations = {
     'admin_panel.download_csv_tooltip': 'Download CSV',
     'admin_panel.refresh_button_aria': 'Refresh users list',
     'admin_panel.loading': 'Loading...',
-
+    'All_question_responses_and_conversations': 'All question responses and conversations',
     'admin_panel_users_management': 'Admin Panel - Users Management',
     'all_users': 'All Users',
     'filter_by_name_or_email': 'Filter by name or email...',
@@ -635,23 +647,30 @@ export const staticTranslations = {
     'failed_to_fetch_users': 'Failed to fetch users',
     'failed_to_download_csv': 'Failed to download CSV',
     'register_now': 'Register Now',
-
+    'remaining':'remaining',
+    'detailed_description_of_your_business': 'Detailed description of your business',
+    'how_it_works': 'How It works',
     'signed_in_as': 'Signed in as',
     'dashboard': 'Dashboard',
+    'This_action_cannot_be_undone!': 'This action cannot be undone!',
     'admin': 'Admin',
     'logout': 'Logout',
     'traxia_logo_alt': 'Traxia Logo',
     'manual_save': 'Manual Save',
     'regenerating': 'Regenerating...',
     'regenerate': 'Regenerate',
-
-
-
+    'delete_business': 'Delete Business',
+    'brief_description_of_what': 'Brief description of what your business does',
+    'how_this_application_works': 'How this application works',
+    'got_it': 'Got it!',
+    'are_you_sure_you_want_to_delete': 'Are you sure you want to delete',
+    'This_will_permanently_delete': 'This will permanently delete:',
     // Business page
     'unlockBusinessAnalysis': 'Unlock Business Analysis',
     "completePhaseMessage": "Complete all initial phase questions to unlock SWOT analysis and strategic insights!",
 "progress": "Progress",
-
+'All_progress_data_and_statistics': 'All progress data and statistics',
+ 'the_business_profile_itself': 'The business profile itself',
 "brief": "Brief",
 "analysis": "Analysis",
 "strategic": "S.T.R.A.T.E.G.I.C",
@@ -724,7 +743,8 @@ export const staticTranslations = {
     "account_created": "¡Cuenta Creada!",
     "registration_failed_msg": "Error en el Registro",
     "redirecting_login": "Redirigiendo al inicio de sesión...",
-    
+    'All_question_responses_and_conversations': 'Todas las respuestas y conversaciones de preguntas',
+    'All_generated_analysis_reports_and_insights': 'Todos los informes y análisis generados',
     "first_name_required": "El nombre es obligatorio",
     "last_name_required": "El apellido es obligatorio",
     "email_required": "El correo electrónico es obligatorio",
@@ -763,7 +783,13 @@ export const staticTranslations = {
     'failed_to_fetch_users': 'Error al obtener usuarios',
     'failed_to_download_csv': 'Error al descargar CSV',
     'register_now': 'Regístrate ahora',
-
+    'delete_business': 'Eliminar negocio',
+    'creating': 'Creando...',
+    'create_new_business': 'Crear nuevo negocio',
+    'business_name': 'Nombre del negocio',
+    'business_purpose': 'Propósito del negocio',
+    'description': 'Descripción',
+    'enter_your_business_name': 'Ingresa el nombre de tu negocio',
     'admin_panel.title': 'Panel de Administración - Gestión de Usuarios',
     'admin_panel.all_users': 'Todos los usuarios',
     'admin_panel.filter_placeholder': 'Filtrar por nombre o correo...',
@@ -773,7 +799,7 @@ export const staticTranslations = {
     'admin_panel.download_csv_tooltip': 'Descargar CSV',
     'admin_panel.refresh_button_aria': 'Actualizar lista de usuarios',
     'admin_panel.loading': 'Cargando...',
-
+    'brief_description_of_what': 'Descripción breve de lo que hace tu negocio',
     'welcome': '¡Bienvenido!',
     'welcome_message': 'Crea planes de negocio paso a paso con el marco S.T.R.A.T.E.G.I.C. Activa capacidades de IA para análisis, predicción y toma de decisiones.',
     'my_businesses': 'Mis negocios',
@@ -784,7 +810,14 @@ export const staticTranslations = {
     'questions_remaining': 'Preguntas restantes',
     'of': 'de',
     'back_to_welcome': 'Volver a Bienvenida',
-
+    'user_name': 'Nombre de usuario',
+    'company': 'Empresa',
+    'select_a_company': 'Seleccionar una empresa',
+    'job_title': 'Título del trabajo',
+    'optional': 'Opcional',
+    'This_action_cannot_be_undone!': '¡Esta acción no se puede deshacer!',
+    'enter_job_title': 'Ingresa el título del trabajo',
+     'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'La contraseña debe tener al menos 8 caracteres y contener mayúsculas, minúsculas y números',
     // Insights Section
     'business_insights': 'Perspectivas de negocio',
     'generate_insights': 'Generar perspectivas',
@@ -793,7 +826,9 @@ export const staticTranslations = {
     'generate_insights_btn': 'Generar perspectivas',
     'analysis_results': 'Resultados del análisis',
     'clear_results': 'Borrar resultados',
-
+    'remaining': 'restantes',
+    'detailed_description_of_your_business': 'Descripción detallada de tu negocio',
+    'how_it_works': 'Cómo funciona',
     // Hardcoded Insights Content
     'business_analysis_results': 'Resultados del análisis de negocio',
     'market_position': 'Posición en el mercado',
@@ -814,7 +849,8 @@ export const staticTranslations = {
     'recommendation_complementary_products': 'Considera desarrollar productos complementarios',
     'growth_projections': 'Proyecciones de crecimiento',
     'growth_projection_details': 'Basado en tendencias actuales, una tasa de crecimiento del 25-30% es alcanzable dentro de los próximos 12 meses con la ejecución adecuada de las estrategias recomendadas.',
-
+    'how_this_application_works': 'Cómo funciona esta aplicación',
+    'All_progress_data_and_statistics': 'Todos los datos y estadísticas de progreso',
     // Save related
     'save_in_progress': 'Guardando en progreso',
     'auto_save_enabled': 'Guardado automático activado',
@@ -831,7 +867,8 @@ export const staticTranslations = {
     'hide_password': 'Ocultar contraseña',
     'show_password': 'Mostrar contraseña',
     'login_failed': 'Error de inicio de sesión', 
-
+    "enter_user_name": "Ingresa el nombre de usuario",
+    'got_it': '¡Entendido!',
     // Dashboard page
     'dashboard': 'Panel de Control',
     'welcome_dashboard': '¡Bienvenido!',
@@ -851,7 +888,8 @@ export const staticTranslations = {
     'error_loading_business': 'Error al cargar datos del negocio.',
     'no_businesses_found': 'No se encontraron negocios.',
     'enter_your_answer': 'Ingresa Tu Respuesta',
-
+    'questions_completed': 'Preguntas completadas:',
+    'are_you_sure_you_want_to_delete': '¿Estás seguro de que deseas eliminar',
     // Business Detail page
     'questions': 'Preguntas',
     'analysis': 'ANÁLISIS',
@@ -863,7 +901,7 @@ export const staticTranslations = {
     'no_business_data_found': 'No se encontraron datos de negocio.',
     'complete_all_questions': 'Completa Todas las Preguntas',
     'complete_questions_to_unlock': 'Por favor responde todas las preguntas para desbloquear la sección de análisis',
-
+    'This_will_permanently_delete': 'Esto eliminará permanentemente:',
     // Progress Section
     'preview': 'Vista Previa',
     'response_summary': 'Resumen de Respuestas',
@@ -872,7 +910,7 @@ export const staticTranslations = {
     'questions_answered_label': 'preguntas respondidas',
     'complete_remaining_questions': 'Por favor completa las preguntas restantes para continuar. Mientras más preguntas respondas, más precisos y personalizados serán tus resultados.',
     'manual_save': 'Guardar Manual',
-
+    'the_business_profile_itself': 'El perfil del negocio en sí',
     // Preview Content
     'summary': 'Resumen',
     'total_questions': 'Total de Preguntas',
