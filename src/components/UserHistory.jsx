@@ -59,9 +59,9 @@ const useUserData = (onToast) => {
     try {
       setIsLoading(true);
       const token = getAuthToken();
-      
+
       let url = `${API_BASE_URL}/api/admin/users`;
-      if (companyId && userRole === 'super_admin') {
+      if (companyId) {
         url += `?company_id=${companyId}`;
       }
 
@@ -89,22 +89,20 @@ const useUserData = (onToast) => {
 
   const loadInitialData = async () => {
     try {
-      const token = getAuthToken();
       const userInfo = getUserInfo();
       setUserRole(userInfo.role || '');
 
-      if (userInfo.role === 'super_admin') {
-        const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (companiesResponse.ok) {
-          const companiesData = await companiesResponse.json();
-          setCompanies(companiesData.companies || []);
+      const token = getAuthToken();
+      const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
+
+      if (companiesResponse.ok) {
+        const companiesData = await companiesResponse.json();
+        setCompanies(companiesData.companies || []);
       }
 
       await loadUsers();
@@ -138,7 +136,7 @@ const useUserDetails = (onToast) => {
     try {
       setIsLoadingDetails(true);
       const token = getAuthToken();
-      
+
       let url = `${API_BASE_URL}/api/admin/user-data/${userId}`;
       if (businessId) url += `?business_id=${businessId}`;
 
@@ -186,29 +184,29 @@ const useSortedFilteredUsers = (users, searchTerm) => {
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
     return user.name.toLowerCase().includes(searchLower) ||
-           user.email.toLowerCase().includes(searchLower);
+      user.email.toLowerCase().includes(searchLower);
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {
     const { key, direction } = sortConfig;
-    
+
     if (key === 'name') {
-      return direction === 'asc' 
+      return direction === 'asc'
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
     }
-    
+
     if (key === 'created_at') {
       const comparison = new Date(b.created_at) - new Date(a.created_at);
       return direction === 'asc' ? -comparison : comparison;
     }
-    
+
     if (key === 'activity') {
       const aActivity = a.activity_summary?.total_answers || 0;
       const bActivity = b.activity_summary?.total_answers || 0;
       return direction === 'asc' ? aActivity - bActivity : bActivity - aActivity;
     }
-    
+
     return 0;
   });
 
@@ -236,7 +234,6 @@ const parseAnalysisData = (userDetails, user) => {
     questions: []
   };
 
-  // Extract questions and answers
   if (userDetails.conversation?.length > 0) {
     userDetails.conversation.forEach(phase => {
       phase.questions?.forEach(qa => {
@@ -253,7 +250,6 @@ const parseAnalysisData = (userDetails, user) => {
     });
   }
 
-  // Parse system results
   userDetails.system?.forEach(result => {
     try {
       const analysisResult = typeof result.analysis_result === 'string'
@@ -261,14 +257,14 @@ const parseAnalysisData = (userDetails, user) => {
         : result.analysis_result;
 
       const analysisName = result.name?.toLowerCase() || '';
-      
+
       if (analysisName.includes('swot')) analysisData.swot = analysisResult;
       else if (analysisName.includes('customer')) analysisData.customerSegmentation = analysisResult;
       else if (analysisName.includes('purchase')) analysisData.purchaseCriteria = analysisResult;
       else if (analysisName.includes('channel')) analysisData.channelHeatmap = analysisResult;
       else if (analysisName.includes('loyalty')) analysisData.loyaltyNPS = analysisResult;
       else if (analysisName.includes('capability')) analysisData.capabilityHeatmap = analysisResult;
-      
+
     } catch (error) {
       console.error('Error parsing analysis result:', error);
     }
@@ -310,7 +306,6 @@ const exportUserData = async (user, userDetails, onToast) => {
       questionsAndAnswers: []
     };
 
-    // Extract Q&A data
     userDetails.conversation?.forEach((phase, phaseIndex) => {
       phase.questions?.forEach((qa, qaIndex) => {
         exportData.questionsAndAnswers.push({
@@ -324,18 +319,16 @@ const exportUserData = async (user, userDetails, onToast) => {
       });
     });
 
-    // Create summary
     exportData.summary = {
       totalQuestions: exportData.questionsAndAnswers.length,
       totalAnalyses: userDetails.system?.length || 0,
       phases: userDetails.conversation?.map(p => p.phase) || []
     };
 
-    // Download file
     const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
@@ -363,12 +356,10 @@ const UserHistory = ({ onToast }) => {
   const { userDetails, isLoadingDetails, loadUserHistory } = useUserDetails(onToast);
   const { sortedUsers, sortConfig, requestSort } = useSortedFilteredUsers(users, searchTerm);
 
-  // Initialize data
   useEffect(() => {
     if (!isInitialized) loadInitialData();
   }, [isInitialized, loadInitialData]);
 
-  // Handle company selection
   useEffect(() => {
     if (isInitialized) {
       loadUsers(selectedCompany);
@@ -387,7 +378,6 @@ const UserHistory = ({ onToast }) => {
     exportUserData(user, details, onToast);
   };
 
-  // Pagination
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
   const currentItems = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
@@ -408,25 +398,57 @@ const UserHistory = ({ onToast }) => {
         <h2 className="user-history-title">User History & Chat Records</h2>
       </div>
 
-      {/* Company Filter */}
-      {userRole === 'super_admin' && companies.length > 0 && (
-        <CompanyFilter
-          companies={companies}
-          selectedCompany={selectedCompany}
-          onCompanyChange={setSelectedCompany}
-        />
-      )}
+      <div className="search-container-row">
+        <div className="compact-search">
+          <Search size={18} className="compact-search-icon" />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            className="form-control"
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-      {/* Search */}
-      <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+        {/* Company Filter - now in the same row */}
+        {companies.length > 0 && (
+          <div className="company-filter-container">
+            <select
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              className="company-filter-select"
+            >
+              <option value="">All Companies</option>
+              {companies.map(company => (
+                <option key={company._id} value={company._id}>
+                  {company.company_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* Users Table */}
-      <UsersTable
-        users={currentItems}
-        sortConfig={sortConfig}
-        onSort={requestSort}
-        onUserSelect={handleUserSelect}
-      />
+      <div className="user-table-wrapper">
+        <table className="user-table">
+          <thead>
+            <tr>
+              <SortableHeader title="User" sortKey="name" sortConfig={sortConfig} onSort={requestSort} />
+              <th>Email</th>
+              <th>Role</th>
+              <th>Company</th>
+              <SortableHeader title="Joined" sortKey="created_at" sortConfig={sortConfig} onSort={requestSort} />
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.map(user => (
+              <UserRow key={user._id} user={user} onUserSelect={handleUserSelect} />
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -454,60 +476,6 @@ const UserHistory = ({ onToast }) => {
 };
 
 // Sub-components
-const CompanyFilter = ({ companies, selectedCompany, onCompanyChange }) => (
-  <div className="company-filter-container">
-    <select
-      value={selectedCompany}
-      onChange={(e) => onCompanyChange(e.target.value)}
-      className="company-filter-select"
-    >
-      <option value="">All Companies</option>
-      {companies.map(company => (
-        <option key={company._id} value={company._id}>
-          {company.company_name}
-        </option>
-      ))}
-    </select>
-  </div>
-);
-
-const SearchBar = ({ searchTerm, onSearchChange }) => (
-  <div className="search-container-row">
-    <div className="compact-search">
-      <Search size={18} className="compact-search-icon" />
-      <input
-        type="text"
-        placeholder="Search users..."
-        value={searchTerm}
-        className="form-control"
-        onChange={(e) => onSearchChange(e.target.value)}
-      />
-    </div>
-  </div>
-);
-
-const UsersTable = ({ users, sortConfig, onSort, onUserSelect }) => (
-  <div className="user-table-wrapper">
-    <table className="user-table">
-      <thead>
-        <tr>
-          <SortableHeader title="User" sortKey="name" sortConfig={sortConfig} onSort={onSort} />
-          <th>Email</th>
-          <th>Role</th>
-          <th>Company</th>
-          <SortableHeader title="Joined" sortKey="created_at" sortConfig={sortConfig} onSort={onSort} />
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map(user => (
-          <UserRow key={user._id} user={user} onUserSelect={onUserSelect} />
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
-
 const SortableHeader = ({ title, sortKey, sortConfig, onSort }) => (
   <th onClick={() => onSort(sortKey)}>
     <div className="header-content">
@@ -565,7 +533,6 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   const allUserDetails = userDetails[user._id] || {};
   const businesses = allUserDetails.businesses || [];
 
-  // Auto-select first business
   useEffect(() => {
     if (businesses.length > 0 && !selectedBusiness) {
       const firstBusinessId = businesses[0]._id;
@@ -582,10 +549,10 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
   const handleBusinessChange = async (businessId) => {
     if (!businessId) return;
-    
+
     setSelectedBusiness(businessId);
     setIsLoadingBusiness(true);
-    
+
     try {
       await loadUserHistory(user._id, businessId);
     } catch (error) {
@@ -606,11 +573,11 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   return (
     <div className="user-details-panel">
       <PanelHeader user={user} currentUserDetails={currentUserDetails} onClose={onClose} onExport={onExport} />
-      
+
       {selectedBusiness && (
         <>
           <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} businesses={businesses} />
-          
+
           <div className="tab-content">
             {isLoadingBusiness ? (
               <LoadingState message="Loading business data..." />
@@ -663,10 +630,10 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
         <h3 className="user-name-header">User Name: {user?.name}</h3>
       </div>
       <div className="header-right">
-        <PDFExportComponent 
+        <PDFExportComponent
           user={user}
           userDetails={currentUserDetails}
-          onToast={() => {}}
+          onToast={() => { }}
           buttonText="Export PDF"
           buttonSize="medium"
           className=""
@@ -713,15 +680,15 @@ const LoadingState = ({ message }) => (
   </div>
 );
 
-const TabContent = ({ 
-  activeTab, 
-  businesses, 
-  currentUserDetails, 
-  analysisData, 
+const TabContent = ({
+  activeTab,
+  businesses,
+  currentUserDetails,
+  analysisData,
   selectedBusiness,
   selectedBusinessId,
   onBusinessChange,
-  isLoadingBusiness 
+  isLoadingBusiness
 }) => {
   const getSelectedBusinessName = () => {
     if (!selectedBusiness) return 'Select a Business';
@@ -840,9 +807,6 @@ const BusinessFilter = ({ businesses, selectedBusinessId, onBusinessChange, isLo
       {businesses.map(business => (
         <option key={business._id} value={business._id}>
           {business.business_name}
-          {/* {business.question_statistics && (
-            ` (${business.question_statistics.progress_percentage}% complete)`
-          )} */}
         </option>
       ))}
     </select>
@@ -870,10 +834,6 @@ const StatsRow = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingB
         <div className="stat-number">{stats.completed}</div>
         <div className="stat-label">Completed Questions</div>
       </div>
-      {/* <div className="stat-card">
-        <div className="stat-number">{stats.phases}</div>
-        <div className="stat-label">Active Phases</div>
-      </div> */}
       <div className="stat-card">
         <div className="stat-number">{stats.progress}%</div>
         <div className="stat-label">Progress</div>
@@ -883,10 +843,10 @@ const StatsRow = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingB
 );
 
 // ConversationTab Component
-const ConversationTab = ({ 
-  conversation, 
-  totalQuestions = 0, 
-  completedQuestions = 0, 
+const ConversationTab = ({
+  conversation,
+  totalQuestions = 0,
+  completedQuestions = 0,
   selectedBusiness = 'Select a Business',
   businesses = [],
   selectedBusinessId = '',
@@ -894,7 +854,7 @@ const ConversationTab = ({
   isLoadingBusiness = false
 }) => {
   const totalCompletedQuestions = conversation.reduce((sum, phase) => sum + phase.questions.length, 0);
-  
+
   const stats = {
     completed: totalCompletedQuestions,
     phases: conversation.length,
@@ -962,21 +922,16 @@ const QuestionItem = ({ question }) => (
   <div className="question-item">
     <div className="question-header">
       <div className="question-text">Q : {question.question}</div>
-      {/* {question.last_updated && (
-        <div className="question-timestamp">
-          {formatDate(question.last_updated)}
-        </div>
-      )} */}
     </div>
-    <div className="answer-section"> 
+    <div className="answer-section">
       <div className="answer-text">A : {question.answer}</div>
     </div>
   </div>
 );
 
 // AnalysisTab Component
-const AnalysisTab = ({ 
-  analysisData, 
+const AnalysisTab = ({
+  analysisData,
   selectedBusiness = 'Select a Business',
   businesses = [],
   selectedBusinessId = '',
@@ -987,7 +942,7 @@ const AnalysisTab = ({
   conversationCount = 0
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
-  
+
   const stats = {
     completed: totalCompletedQuestions,
     phases: conversationCount,
@@ -1064,7 +1019,7 @@ const AnalysisComponents = ({ analysisData }) => {
     <div className="analysis-components">
       {analysisTypes.map(({ key, Component }) => {
         if (!analysisData[key]) return null;
-        
+
         const props = {
           businessName: analysisData.businessName,
           onRegenerate: null,
@@ -1072,14 +1027,13 @@ const AnalysisComponents = ({ analysisData }) => {
           canRegenerate: false
         };
 
-        // Add specific props for each component type
         if (key === 'swot') {
           props.analysisResult = analysisData[key];
         } else {
           props.questions = analysisData.questions;
           props.userAnswers = analysisData.userAnswers;
           props[`${key}Data`] = analysisData[key];
-          props.onDataGenerated = () => {};
+          props.onDataGenerated = () => { };
         }
 
         return (

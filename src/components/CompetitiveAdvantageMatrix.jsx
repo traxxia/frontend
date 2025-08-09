@@ -1,732 +1,604 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Loader, RefreshCw, TrendingUp, Shield, Target, Award } from 'lucide-react';
-import '../styles/EssentialPhase.css';  
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity } from 'lucide-react';
+
 
 const CompetitiveAdvantageMatrix = ({
-  questions = [],
-  userAnswers = {},
-  businessName = '',
-  onRegenerate,
-  isRegenerating = false,
-  canRegenerate = true,
-  competitiveAdvantageData = null,
-  selectedBusinessId
+    questions = [],
+    userAnswers = {},
+    businessName = '',
+    onRegenerate,
+    isRegenerating = false,
+    canRegenerate = true,
+    competitiveAdvantageData = null,
+    selectedBusinessId
 }) => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState(null);
-  const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+    const [data, setData] = useState(null);
+    const [hasGenerated, setHasGenerated] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+    // API Configuration
+    const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
 
-  // ADD THESE REFS TO TRACK COMPONENT STATE
-  const isMounted = useRef(false);
-  const hasGeneratedRef = useRef(false);
-  const hasInitialized = useRef(false);
+    // Generate Competitive Advantage Analysis from API
+    const generateCompetitiveAdvantageAnalysis = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
 
-  // Show toast message
-  const showToastMessage = (message, type = 'success') => {
-    setShowToast({ show: true, message, type });
-    setTimeout(() => setShowToast({ show: false, message: '', type: 'success' }), 4000);
-  };
+            const questionsArray = [];
+            const answersArray = [];
 
-  // Generate competitive advantage analysis
-  const generateCompetitiveAdvantage = async () => {
-    try {
-      setIsGenerating(true);
-      setError(null);
+            questions
+                .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
+                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                .forEach(question => {
+                    questionsArray.push(question.question_text);
+                    answersArray.push(userAnswers[question._id]);
+                });
 
-      const questionsArray = [];
-      const answersArray = [];
+            if (questionsArray.length === 0) {
+                throw new Error('No questions available for competitive advantage analysis');
+            }
 
-      // Filter and prepare questions with answers
-      questions
-        .filter(q => {
-          const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
-          return hasAnswer && userAnswers[q._id] !== '[Question Skipped]';
-        })
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          const cleanQuestion = String(question.question_text)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
+            const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    questions: questionsArray,
+                    answers: answersArray
+                })
+            });
 
-          const cleanAnswer = String(userAnswers[question._id])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Competitive Advantage API returned ${response.status}: ${errorText}`);
+            }
 
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        });
+            const result = await response.json();
+            
+            // Validate response structure
+            if (!result.competitiveAdvantage) {
+                throw new Error('Invalid API response structure: missing competitiveAdvantage');
+            }
 
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for competitive advantage analysis');
-      }
+            setData(result);
+            setHasGenerated(true);
+            return result;
 
-      console.log('Calling competitive advantage API with:', {
-        questionsCount: questionsArray.length,
-        answersCount: answersArray.length
-      });
-
-      const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Competitive Advantage API Error:', errorText);
-        throw new Error(`API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('Competitive Advantage API Response:', result);
-
-      // Handle different response structures
-      let competitiveData = null;
-      if (result.competitiveAdvantage) {
-        competitiveData = result;
-      } else if (result.competitive_advantage) {
-        competitiveData = { competitiveAdvantage: result.competitive_advantage };
-      } else {
-        competitiveData = { competitiveAdvantage: result };
-      }
-
-      return competitiveData;
-
-    } catch (error) {
-      console.error('Error generating competitive advantage analysis:', error);
-      setError(error.message);
-      showToastMessage('Failed to generate competitive advantage analysis', 'error');
-      throw error;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // FIXED: Initialize component - only run once
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    
-    isMounted.current = true;
-    hasInitialized.current = true;
-    
-    // If data already exists, don't generate
-    if (competitiveAdvantageData) { 
-      hasGeneratedRef.current = true;
-    }
-
-    return () => {
-      isMounted.current = false;
+        } catch (error) {
+            setError(error.message);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
     };
-  }, []); // Empty dependency array - only run once
 
-  // FIXED: Update data when prop changes - don't auto-generate
-  useEffect(() => {
-    if (competitiveAdvantageData && competitiveAdvantageData !== null) { 
-      hasGeneratedRef.current = true;
-      setError(null); // Clear any existing errors
-    }
-  }, [competitiveAdvantageData]);
+    // Initialize component
+    useEffect(() => {
+        if (competitiveAdvantageData) {
+            setData(competitiveAdvantageData);
+            setHasGenerated(true);
+        } else {
+            // Check if we have enough data to generate analysis
+            const answeredCount = Object.keys(userAnswers).length;
+            if (answeredCount >= 5 && questions.length > 0) {
+                generateCompetitiveAdvantageAnalysis();
+            }
+        }
+    }, [competitiveAdvantageData]);
 
-  // FIXED: Reset generation flag when data is cleared (for regeneration scenarios)
-  useEffect(() => {
-    if (!competitiveAdvantageData && !isGenerating && !isRegenerating) {
-      hasGeneratedRef.current = false;
-    }
-  }, [competitiveAdvantageData, isGenerating, isRegenerating]);
+    // Handle regeneration
+    const handleRegenerate = async () => {
+        if (onRegenerate) {
+            onRegenerate();
+        } else {
+            await generateCompetitiveAdvantageAnalysis();
+        }
+    };
 
-  // REMOVED: Auto-generation useEffect that was causing the issue
-  // The old useEffect that was auto-generating has been completely removed
+    // Get position color
+    const getPositionColor = (position) => {
+        const colors = {
+            'leader': '#10b981',
+            'challenger': '#f59e0b', 
+            'follower': '#6b7280',
+            'nicher': '#8b5cf6'
+        };
+        return colors[position] || '#6b7280';
+    };
 
-  // Handle regeneration
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      await onRegenerate();
-    } else {
-      await generateCompetitiveAdvantage();
-    }
-  };
+    // Get score color
+    const getScoreColor = (score) => {
+        if (score >= 8) return '#10b981';
+        if (score >= 6) return '#f59e0b';
+        return '#ef4444';
+    };
 
-  // ADDED: Manual generation trigger for empty state
-  const handleManualGenerate = async () => {
-    hasGeneratedRef.current = true;
-    await generateCompetitiveAdvantage();
-  };
+    // Render Scatter Plot
+    const renderScatterPlot = (differentiators) => {
+        if (!differentiators || differentiators.length === 0) return null;
 
-  // Render scatter plot visualization
-  const renderScatterPlot = (differentiators) => {
-    if (!differentiators || differentiators.length === 0) return null;
+        const maxValue = 10;
+        const plotSize = 400;
+        const padding = 50;
+        const plotArea = plotSize - (padding * 2);
 
-    const maxValue = 10;
-    const plotSize = 400;
-    const padding = 40;
-    const plotArea = plotSize - (padding * 2);
-
-    return (
-      <div className="scatter-plot-container" style={{ marginBottom: '2rem' }}>
-        <h4 style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          Competitive Advantage vs Customer Value Matrix
-        </h4>
-        
-        <div style={{ position: 'relative', margin: '0 auto', width: plotSize }}>
-          <svg width={plotSize} height={plotSize} style={{ border: '1px solid #e5e7eb' }}>
-            {/* Grid lines */}
-            {[0, 2, 4, 6, 8, 10].map(value => {
-              const pos = padding + (value / maxValue) * plotArea;
-              return (
-                <g key={value}>
-                  <line
-                    x1={padding}
-                    y1={pos}
-                    x2={plotSize - padding}
-                    y2={pos}
-                    stroke="#f3f4f6"
-                    strokeWidth={1}
-                  />
-                  <line
-                    x1={pos}
-                    y1={padding}
-                    x2={pos}
-                    y2={plotSize - padding}
-                    stroke="#f3f4f6"
-                    strokeWidth={1}
-                  />
-                </g>
-              );
-            })}
-
-            {/* Axes */}
-            <line
-              x1={padding}
-              y1={plotSize - padding}
-              x2={plotSize - padding}
-              y2={plotSize - padding}
-              stroke="#374151"
-              strokeWidth={2}
-            />
-            <line
-              x1={padding}
-              y1={padding}
-              x2={padding}
-              y2={plotSize - padding}
-              stroke="#374151"
-              strokeWidth={2}
-            />
-
-            {/* Quadrant labels */}
-            <text x={padding + plotArea * 0.25} y={padding + plotArea * 0.25} 
-                  textAnchor="middle" fontSize="12" fill="#6b7280">
-              High Value, Low Uniqueness
-            </text>
-            <text x={padding + plotArea * 0.75} y={padding + plotArea * 0.25} 
-                  textAnchor="middle" fontSize="12" fill="#059669">
-              Sweet Spot
-            </text>
-            <text x={padding + plotArea * 0.25} y={padding + plotArea * 0.75} 
-                  textAnchor="middle" fontSize="12" fill="#dc2626">
-              Low Value, Low Uniqueness
-            </text>
-            <text x={padding + plotArea * 0.75} y={padding + plotArea * 0.75} 
-                  textAnchor="middle" fontSize="12" fill="#d97706">
-              Niche Advantage
-            </text>
-
-            {/* Data points */}
-            {differentiators.map((diff, index) => {
-              const x = padding + (diff.uniqueness / maxValue) * plotArea;
-              const y = plotSize - padding - (diff.customerValue / maxValue) * plotArea;
-              
-              return (
-                <g key={index}>
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={6 + (diff.sustainability || 5) / 2}
-                    fill={diff.uniqueness >= 7 && diff.customerValue >= 7 ? '#059669' : 
-                          diff.uniqueness >= 7 ? '#d97706' : 
-                          diff.customerValue >= 7 ? '#6b7280' : '#dc2626'}
-                    fillOpacity={0.7}
-                    stroke="#fff"
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={x}
-                    y={y - 15}
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="#374151"
-                    fontWeight="500"
-                  >
-                    {diff.type}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Axis labels */}
-            <text
-              x={plotSize / 2}
-              y={plotSize - 10}
-              textAnchor="middle"
-              fontSize="14"
-              fill="#374151"
-              fontWeight="500"
-            >
-              Competitive Uniqueness →
-            </text>
-            <text
-              x={15}
-              y={plotSize / 2}
-              textAnchor="middle"
-              fontSize="14"
-              fill="#374151"
-              fontWeight="500"
-              transform={`rotate(-90, 15, ${plotSize / 2})`}
-            >
-              Customer Value →
-            </text>
-          </svg>
-        </div>
-      </div>
-    );
-  };
-
-  // Render differentiators list
-  const renderDifferentiatorsList = (differentiators) => {
-    if (!differentiators || differentiators.length === 0) return null;
-
-    return (
-      <div className="differentiators-list" style={{ marginBottom: '2rem' }}>
-        <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Award size={18} />
-          Key Differentiators
-        </h4>
-        
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          {differentiators.map((diff, index) => (
-            <div
-              key={index}
-              style={{
-                padding: '1rem',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                backgroundColor: '#f9fafb'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                <h5 style={{ 
-                  margin: 0, 
-                  color: '#374151',
-                  textTransform: 'capitalize',
-                  fontWeight: 600
-                }}>
-                  {diff.type} - {diff.description}
-                </h5>
+        return (
+            <div className="scatter-plot-container">
+                <h4>Competitive Advantage vs Customer Value Matrix</h4>
                 
-                <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.875rem' }}>
-                  <span style={{ 
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    backgroundColor: diff.uniqueness >= 7 ? '#dcfce7' : diff.uniqueness >= 5 ? '#fef3c7' : '#fee2e2',
-                    color: diff.uniqueness >= 7 ? '#166534' : diff.uniqueness >= 5 ? '#92400e' : '#991b1b'
-                  }}>
-                    Unique: {diff.uniqueness}/10
-                  </span>
-                  <span style={{ 
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    backgroundColor: diff.customerValue >= 7 ? '#dcfce7' : diff.customerValue >= 5 ? '#fef3c7' : '#fee2e2',
-                    color: diff.customerValue >= 7 ? '#166534' : diff.customerValue >= 5 ? '#92400e' : '#991b1b'
-                  }}>
-                    Value: {diff.customerValue}/10
-                  </span>
-                  <span style={{ 
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    backgroundColor: diff.sustainability >= 7 ? '#dcfce7' : diff.sustainability >= 5 ? '#fef3c7' : '#fee2e2',
-                    color: diff.sustainability >= 7 ? '#166534' : diff.sustainability >= 5 ? '#92400e' : '#991b1b'
-                  }}>
-                    Sustainable: {diff.sustainability}/10
-                  </span>
-                </div>
-              </div>
+                <div className="plot-wrapper">
+                    <svg width={plotSize} height={plotSize} className="scatter-plot">
+                        {/* Grid lines */}
+                        {[0, 2, 4, 6, 8, 10].map(value => {
+                            const pos = padding + (value / maxValue) * plotArea;
+                            return (
+                                <g key={value}>
+                                    <line
+                                        x1={padding}
+                                        y1={pos}
+                                        x2={plotSize - padding}
+                                        y2={pos}
+                                        className="grid-line"
+                                    />
+                                    <line
+                                        x1={pos}
+                                        y1={padding}
+                                        x2={pos}
+                                        y2={plotSize - padding}
+                                        className="grid-line"
+                                    />
+                                </g>
+                            );
+                        })}
 
-              {diff.proofPoints && diff.proofPoints.length > 0 && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  <strong style={{ fontSize: '0.875rem', color: '#6b7280' }}>Proof Points:</strong>
-                  <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0, fontSize: '0.875rem', color: '#6b7280' }}>
-                    {diff.proofPoints.map((point, idx) => (
-                      <li key={idx}>{point}</li>
+                        {/* Axes */}
+                        <line
+                            x1={padding}
+                            y1={plotSize - padding}
+                            x2={plotSize - padding}
+                            y2={plotSize - padding}
+                            className="axis-line"
+                        />
+                        <line
+                            x1={padding}
+                            y1={padding}
+                            x2={padding}
+                            y2={plotSize - padding}
+                            className="axis-line"
+                        />
+
+                        {/* Quadrant backgrounds */}
+                        <rect
+                            x={padding + plotArea * 0.5}
+                            y={padding}
+                            width={plotArea * 0.5}
+                            height={plotArea * 0.5}
+                            className="quadrant sweet-spot"
+                        />
+
+                        {/* Data points */}
+                        {differentiators.map((diff, index) => {
+                            const x = padding + (diff.uniqueness / maxValue) * plotArea;
+                            const y = plotSize - padding - (diff.customerValue / maxValue) * plotArea;
+                            
+                            return (
+                                <g key={index}>
+                                    <circle
+                                        cx={x}
+                                        cy={y}
+                                        r={8 + (diff.sustainability || 5) / 2}
+                                        className={`data-point ${
+                                            diff.uniqueness >= 7 && diff.customerValue >= 7 ? 'sweet-spot' : 
+                                            diff.uniqueness >= 7 ? 'niche' : 
+                                            diff.customerValue >= 7 ? 'high-value' : 'improve'
+                                        }`}
+                                    />
+                                    <text
+                                        x={x}
+                                        y={y - 15}
+                                        className="data-label"
+                                    >
+                                        {diff.type}
+                                    </text>
+                                </g>
+                            );
+                        })}
+
+                        {/* Axis labels */}
+                        <text
+                            x={plotSize / 2}
+                            y={plotSize - 10}
+                            className="axis-label"
+                        >
+                            Competitive Uniqueness →
+                        </text>
+                        <text
+                            x={15}
+                            y={plotSize / 2}
+                            className="axis-label vertical"
+                            transform={`rotate(-90, 15, ${plotSize / 2})`}
+                        >
+                            Customer Value →
+                        </text>
+                    </svg>
+
+                    {/* Legend */}
+                    <div className="plot-legend">
+                        <div className="legend-item">
+                            <div className="legend-dot sweet-spot"></div>
+                            <span>Sweet Spot (High Value + High Uniqueness)</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-dot niche"></div>
+                            <span>Niche Advantage</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-dot high-value"></div>
+                            <span>High Value</span>
+                        </div>
+                        <div className="legend-item">
+                            <div className="legend-dot improve"></div>
+                            <span>Needs Improvement</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render Spider Chart (Radar Chart)
+    const renderSpiderChart = (differentiators) => {
+        if (!differentiators || differentiators.length === 0) return null;
+
+        const size = 300;
+        const center = size / 2;
+        const radius = size / 2 - 40;
+        const numSides = differentiators.length;
+
+        // Calculate points for the spider web
+        const getPoint = (index, value, maxValue = 10) => {
+            const angle = (index * 2 * Math.PI / numSides) - Math.PI / 2;
+            const distance = (value / maxValue) * radius;
+            return {
+                x: center + distance * Math.cos(angle),
+                y: center + distance * Math.sin(angle)
+            };
+        };
+
+        return (
+            <div className="spider-chart-container">
+                <h4>Differentiators Radar Chart</h4>
+                
+                <div className="chart-wrapper">
+                    <svg width={size} height={size} className="spider-chart">
+                        {/* Background web */}
+                        {[2, 4, 6, 8, 10].map(value => (
+                            <polygon
+                                key={value}
+                                points={differentiators.map((_, index) => {
+                                    const point = getPoint(index, value);
+                                    return `${point.x},${point.y}`;
+                                }).join(' ')}
+                                className="web-line"
+                            />
+                        ))}
+
+                        {/* Radial lines */}
+                        {differentiators.map((_, index) => {
+                            const point = getPoint(index, 10);
+                            return (
+                                <line
+                                    key={index}
+                                    x1={center}
+                                    y1={center}
+                                    x2={point.x}
+                                    y2={point.y}
+                                    className="radial-line"
+                                />
+                            );
+                        })}
+
+                        {/* Company performance polygon */}
+                        <polygon
+                            points={differentiators.map((diff, index) => {
+                                const point = getPoint(index, diff.customerValue);
+                                return `${point.x},${point.y}`;
+                            }).join(' ')}
+                            className="performance-polygon"
+                        />
+
+                        {/* Data points */}
+                        {differentiators.map((diff, index) => {
+                            const point = getPoint(index, diff.customerValue);
+                            return (
+                                <circle
+                                    key={index}
+                                    cx={point.x}
+                                    cy={point.y}
+                                    r="4"
+                                    className="radar-point"
+                                />
+                            );
+                        })}
+
+                        {/* Labels */}
+                        {differentiators.map((diff, index) => {
+                            const labelPoint = getPoint(index, 11);
+                            return (
+                                <text
+                                    key={index}
+                                    x={labelPoint.x}
+                                    y={labelPoint.y}
+                                    className="radar-label"
+                                    textAnchor="middle"
+                                >
+                                    {diff.type}
+                                </text>
+                            );
+                        })}
+                    </svg>
+                </div>
+            </div>
+        );
+    };
+
+    // Render Competitive Position
+    const renderCompetitivePosition = (position) => {
+        if (!position) return null;
+
+        return (
+            <div className="competitive-position-grid">
+                <div className="position-card overall-score">
+                    <div className="metric-value" style={{ color: getScoreColor(position.overallScore) }}>
+                        {position.overallScore}/10
+                    </div>
+                    <div className="metric-label">Overall Score</div>
+                </div>
+
+                <div className="position-card market-position">
+                    <div className="metric-value" style={{ color: getPositionColor(position.marketPosition) }}>
+                        {position.marketPosition}
+                    </div>
+                    <div className="metric-label">Market Position</div>
+                </div>
+
+                <div className="position-card sustainable">
+                    <div className="metric-value">{position.sustainableAdvantages}</div>
+                    <div className="metric-label">Sustainable Advantages</div>
+                </div>
+
+                <div className="position-card vulnerable">
+                    <div className="metric-value">{position.vulnerableAdvantages}</div>
+                    <div className="metric-label">Vulnerable Advantages</div>
+                </div>
+            </div>
+        );
+    };
+
+    // Render Differentiators List
+    const renderDifferentiatorsList = (differentiators) => {
+        if (!differentiators || differentiators.length === 0) return null;
+
+        return (
+            <div className="differentiators-list">
+                <h4>
+                    <Award size={18} />
+                    Key Differentiators
+                </h4>
+                
+                <div className="differentiators-grid">
+                    {differentiators.map((diff, index) => (
+                        <div key={index} className="differentiator-card">
+                            <div className="differentiator-header">
+                                <h5>{diff.type} - {diff.description}</h5>
+                                <div className="score-badges">
+                                    <span className="score-badge" style={{ backgroundColor: getScoreColor(diff.uniqueness) }}>
+                                        Unique: {diff.uniqueness}/10
+                                    </span>
+                                    <span className="score-badge" style={{ backgroundColor: getScoreColor(diff.customerValue) }}>
+                                        Value: {diff.customerValue}/10
+                                    </span>
+                                    <span className="score-badge" style={{ backgroundColor: getScoreColor(diff.sustainability) }}>
+                                        Sustainable: {diff.sustainability}/10
+                                    </span>
+                                </div>
+                            </div>
+
+                            {diff.proofPoints && diff.proofPoints.length > 0 && (
+                                <div className="proof-points">
+                                    <strong>Proof Points:</strong>
+                                    <ul>
+                                        {diff.proofPoints.map((point, idx) => (
+                                            <li key={idx}>{point}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                     ))}
-                  </ul>
                 </div>
-              )}
             </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Render competitive position
-  const renderCompetitivePosition = (position) => {
-    if (!position) return null;
-
-    const getPositionColor = (pos) => {
-      switch(pos) {
-        case 'leader': return '#059669';
-        case 'challenger': return '#d97706';
-        case 'follower': return '#6b7280';
-        case 'nicher': return '#7c3aed';
-        default: return '#6b7280';
-      }
+        );
     };
 
-    return (
-      <div className="competitive-position" style={{ marginBottom: '2rem' }}>
-        <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Target size={18} />
-          Market Position
-        </h4>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div style={{
-            padding: '1rem',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: getPositionColor(position.marketPosition) }}>
-              {position.overallScore}/10
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              Overall Competitive Score
-            </div>
-          </div>
+    // Render Customer Choice Reasons
+    const renderCustomerChoiceReasons = (reasons) => {
+        if (!reasons || reasons.length === 0) return null;
 
-          <div style={{
-            padding: '1rem',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <div style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 'bold', 
-              color: getPositionColor(position.marketPosition),
-              textTransform: 'capitalize'
-            }}>
-              {position.marketPosition}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              Market Position
-            </div>
-          </div>
-
-          <div style={{
-            padding: '1rem',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#059669' }}>
-              {position.sustainableAdvantages}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              Sustainable Advantages
-            </div>
-          </div>
-
-          <div style={{
-            padding: '1rem',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#dc2626' }}>
-              {position.vulnerableAdvantages}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-              Vulnerable Advantages
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Render customer choice reasons
-  const renderCustomerChoiceReasons = (reasons) => {
-    if (!reasons || reasons.length === 0) return null;
-
-    return (
-      <div className="customer-choice-reasons" style={{ marginBottom: '2rem' }}>
-        <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <TrendingUp size={18} />
-          Why Customers Choose {businessName || 'Us'}
-        </h4>
-        
-        <div style={{ display: 'grid', gap: '0.75rem' }}>
-          {reasons
-            .sort((a, b) => (b.frequency || 0) - (a.frequency || 0))
-            .map((reason, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 1rem',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  backgroundColor: '#f9fafb'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                  <span style={{ fontWeight: 500, color: '#374151' }}>
-                    {reason.reason}
-                  </span>
-                  {reason.linkedDifferentiator && (
-                    <span style={{
-                      fontSize: '0.75rem',
-                      padding: '0.125rem 0.5rem',
-                      borderRadius: '12px',
-                      backgroundColor: '#e0e7ff',
-                      color: '#3730a3'
-                    }}>
-                      Linked to {reason.linkedDifferentiator}
-                    </span>
-                  )}
-                </div>
+        return (
+            <div className="customer-choice-reasons">
+                <h4>
+                    <TrendingUp size={18} />
+                    Why Customers Choose {businessName || 'Us'}
+                </h4>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{
-                    width: '100px',
-                    height: '8px',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div
-                      style={{
-                        width: `${reason.frequency || 0}%`,
-                        height: '100%',
-                        backgroundColor: '#3b82f6',
-                        borderRadius: '4px'
-                      }}
-                    />
-                  </div>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', minWidth: '35px' }}>
-                    {reason.frequency || 0}%
-                  </span>
+                <div className="reasons-list">
+                    {reasons
+                        .sort((a, b) => (b.frequency || 0) - (a.frequency || 0))
+                        .map((reason, index) => (
+                            <div key={index} className="reason-item">
+                                <div className="reason-content">
+                                    <span className="reason-text">{reason.reason}</span>
+                                    {reason.linkedDifferentiator && (
+                                        <span className="linked-badge">
+                                            Linked to {reason.linkedDifferentiator}
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                <div className="frequency-display">
+                                    <div className="frequency-bar">
+                                        <div 
+                                            className="frequency-fill"
+                                            style={{ width: `${reason.frequency || 0}%` }}
+                                        />
+                                    </div>
+                                    <span className="frequency-text">{reason.frequency || 0}%</span>
+                                </div>
+                            </div>
+                        ))}
                 </div>
-              </div>
-            ))}
-        </div>
-      </div>
-    );
-  };
+            </div>
+        );
+    };
 
-  // Loading state
-  if (isGenerating || isRegenerating) {
+    // Loading state
+    if (isLoading || isRegenerating) {
+        return (
+            <div className="competitive-advantage-container">
+                <div className="competitive-advantage-loading">
+                    <Loader className="spinner" />
+                    <h3>Analyzing Competitive Advantages...</h3>
+                    <p>Evaluating your market position and competitive differentiators...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="competitive-advantage-container">
+                <div className="competitive-advantage-error">
+                    <Shield />
+                    <h3>Analysis Error</h3>
+                    <p>{error}</p>
+                    <button onClick={handleRegenerate} className="retry-btn">
+                        Retry Analysis
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Empty state
+    if (!hasGenerated || !data?.competitiveAdvantage) {
+        const answeredCount = Object.keys(userAnswers).length;
+        return (
+            <div className="competitive-advantage-container">
+                <div className="competitive-advantage-empty">
+                    <Shield size={48} />
+                    <h3>Competitive Advantage Matrix</h3>
+                    <p>
+                        {answeredCount < 5
+                            ? `Answer ${5 - answeredCount} more questions to generate competitive advantage analysis.`
+                            : "Complete essential phase questions to unlock competitive advantage analysis."
+                        }
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    const advantage = data.competitiveAdvantage;
+
     return (
-      <div className="competitive-advantage-loading" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '4rem 2rem',
-        backgroundColor: '#f9fafb',
-        border: '1px solid #e5e7eb',
-        borderRadius: '8px',
-        margin: '2rem 0'
-      }}>
-        <Loader size={32} className="spinner" />
-        <h3 style={{ margin: '1rem 0 0.5rem', color: '#374151' }}>
-          Analyzing Your Competitive Advantages
-        </h3>
-        <p style={{ color: '#6b7280', textAlign: 'center', maxWidth: '500px' }}>
-          We're evaluating your differentiators, market position, and competitive strengths...
-        </p>
-      </div>
-    );
-  }
+        <div className="competitive-advantage-container">
+            {/* Header */}
+            <div className="competitive-advantage-header">
+                <div className="header-content">
+                    <Shield className="header-icon" />
+                    <div>
+                        <h1>Competitive Advantage Matrix</h1>
+                        <p>Analysis of your competitive differentiators and market position for {businessName}</p>
+                    </div>
+                </div>
+                {canRegenerate && onRegenerate && (
+                    <button
+                        onClick={handleRegenerate}
+                        disabled={isRegenerating}
+                        className="regenerate-btn"
+                    >
+                        <RefreshCw size={16} />
+                        Regenerate
+                    </button>
+                )}
+            </div>
 
-  // Error state
-  if (error && !competitiveAdvantageData) {
-    return (
-      <div className="competitive-advantage-error" style={{
-        padding: '2rem',
-        backgroundColor: '#fef2f2',
-        border: '1px solid #fecaca',
-        borderRadius: '8px',
-        margin: '2rem 0'
-      }}>
-        <h3 style={{ color: '#dc2626', marginBottom: '1rem' }}>
-          Unable to Generate Competitive Advantage Analysis
-        </h3>
-        <p style={{ color: '#7f1d1d', marginBottom: '1rem' }}>
-          {error}
-        </p>
-        <button
-          onClick={handleRegenerate}
-          disabled={!canRegenerate}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#dc2626',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: canRegenerate ? 'pointer' : 'not-allowed',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          <RefreshCw size={16} />
-          Retry Analysis
-        </button>
-      </div>
-    );
-  }
+            {/* Navigation Tabs */}
+            <div className="competitive-advantage-tabs">
+                {[
+                    { id: 'overview', label: 'Overview', icon: Target },
+                    { id: 'matrix', label: 'Scatter Plot', icon: BarChart3 },
+                    { id: 'radar', label: 'Spider Chart', icon: Activity },
+                    { id: 'details', label: 'Details', icon: Award },
+                ].map(tab => {
+                    const IconComponent = tab.icon;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+                        >
+                            <IconComponent size={16} />
+                            {tab.label}
+                        </button>
+                    );
+                })}
+            </div>
 
-  // UPDATED: No data state - only show manual generate button when appropriate
-  if (!competitiveAdvantageData || !competitiveAdvantageData.competitiveAdvantage) {
-    const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim() && userAnswers[q._id] !== '[Question Skipped]');
-    
-    return (
-      <div className="competitive-advantage-empty" style={{
-        padding: '2rem',
-        backgroundColor: '#f9fafb',
-        border: '1px solid #e5e7eb',
-        borderRadius: '8px',
-        textAlign: 'center',
-        margin: '2rem 0'
-      }}>
-        <Shield size={48} style={{ color: '#6b7280', margin: '0 auto 1rem' }} />
-        <h3 style={{ color: '#374151', marginBottom: '1rem' }}>
-          Competitive Advantage Analysis
-        </h3>
-        <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
-          {hasAnswers 
-            ? 'This analysis will be generated automatically when you complete the essential phase.'
-            : 'Complete more questions to unlock your competitive advantage analysis.'
-          }
-        </p>
-        {/* REMOVED: Manual generate button to prevent unwanted API calls */}
-        {/* Users should only get this analysis through the phase completion flow */}
-      </div>
-    );
-  }
+            {/* Content */}
+            <div className="competitive-advantage-content">
+                {activeTab === 'overview' && (
+                    <div className="overview-content">
+                        <div className="overview-section">
+                            <h3>Market Position</h3>
+                            {advantage.competitivePosition && renderCompetitivePosition(advantage.competitivePosition)}
+                        </div>
 
-  const { competitiveAdvantage } = competitiveAdvantageData;
+                        <div className="overview-section">
+                            <h3>Customer Choice Drivers</h3>
+                            {advantage.customerChoiceReasons && renderCustomerChoiceReasons(advantage.customerChoiceReasons)}
+                        </div>
+                    </div>
+                )}
 
-  return (
-    <div className="competitive-advantage-analysis" style={{ margin: '2rem 0' }}>
-      {showToast.show && (
-        <div className={`simple-toast ${showToast.type}`} style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          padding: '0.75rem 1rem',
-          borderRadius: '6px',
-          backgroundColor: showToast.type === 'success' ? '#dcfce7' : '#fee2e2',
-          color: showToast.type === 'success' ? '#166534' : '#991b1b',
-          zIndex: 1000
-        }}>
-          {showToast.message}
+                {activeTab === 'matrix' && (
+                    <div className="matrix-content">
+                        {advantage.differentiators && renderScatterPlot(advantage.differentiators)}
+                    </div>
+                )}
+
+                {activeTab === 'radar' && (
+                    <div className="radar-content">
+                        {advantage.differentiators && renderSpiderChart(advantage.differentiators)}
+                    </div>
+                )}
+
+                {activeTab === 'details' && (
+                    <div className="details-content">
+                        {advantage.differentiators && renderDifferentiatorsList(advantage.differentiators)}
+                    </div>
+                )}
+            </div>
         </div>
-      )}
-
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '2rem',
-        paddingBottom: '1rem',
-        borderBottom: '1px solid #e5e7eb'
-      }}>
-        <div>
-          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Shield size={24} />
-            Competitive Advantage Matrix
-          </h3>
-          <p style={{ margin: '0.5rem 0 0', color: '#6b7280' }}>
-            Analysis of your competitive differentiators and market position
-          </p>
-        </div>
-
-        {canRegenerate && (
-          <button
-            onClick={handleRegenerate}
-            disabled={isGenerating || isRegenerating}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: isGenerating || isRegenerating ? '#f3f4f6' : '#8b5cf6',
-              color: isGenerating || isRegenerating ? '#6b7280' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isGenerating || isRegenerating ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            {isGenerating || isRegenerating ? (
-              <>
-                <Loader size={16} className="spinner" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <RefreshCw size={16} />
-                Regenerate
-              </>
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="competitive-advantage-content">
-        {/* Scatter Plot */}
-        {competitiveAdvantage.differentiators && (
-          renderScatterPlot(competitiveAdvantage.differentiators)
-        )}
-
-        {/* Competitive Position */}
-        {competitiveAdvantage.competitivePosition && (
-          renderCompetitivePosition(competitiveAdvantage.competitivePosition)
-        )}
-
-        {/* Differentiators List */}
-        {competitiveAdvantage.differentiators && (
-          renderDifferentiatorsList(competitiveAdvantage.differentiators)
-        )}
-
-        {/* Customer Choice Reasons */}
-        {competitiveAdvantage.customerChoiceReasons && (
-          renderCustomerChoiceReasons(competitiveAdvantage.customerChoiceReasons)
-        )}
-      </div> 
-    </div>
-  );
+    );
 };
 
 export default CompetitiveAdvantageMatrix;
