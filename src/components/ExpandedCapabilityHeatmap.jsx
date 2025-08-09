@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react';
+import RegenerateButton from './RegenerateButton';
 
 const ExpandedCapabilityHeatmap = ({
     questions = [],
@@ -253,16 +254,13 @@ const ExpandedCapabilityHeatmap = ({
                     <h2 className="cs-title">Capability Maturity Heatmap</h2>
                 </div>
 
-                {canRegenerate && onRegenerate && (
-                    <button
-                        onClick={onRegenerate}
-                        className="regenerate-button"
-                        disabled={isRegenerating}
-                    >
-                        <RefreshCw size={16} />
-                        {isRegenerating ? 'Regenerating...' : 'Regenerate'}
-                    </button>
-                )}
+                 <RegenerateButton
+                          onRegenerate={onRegenerate}
+                          isRegenerating={isRegenerating}
+                          canRegenerate={canRegenerate}
+                          sectionName="Competitive Advantage"
+                          size="medium"
+                        />
             </div>
 
             {/* Legend */}

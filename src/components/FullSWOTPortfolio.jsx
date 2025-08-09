@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap } from 'lucide-react';
 import '../styles/EssentialPhase.css'; 
+import RegenerateButton from './RegenerateButton';
 
 
 const FullSWOTPortfolio = ({
@@ -326,20 +327,17 @@ const FullSWOTPortfolio = ({
                 <div className="header-content">
                     <Target className="header-icon" />
                     <div>
-                        <h1>Full SWOT Portfolio (Enhanced)</h1>
+                        <h1 style={{ color: 'black' }}>Full SWOT Portfolio (Enhanced)</h1>
                         <p>Comprehensive SWOT analysis with competitive positioning for {businessName}</p>
                     </div>
                 </div>
-                {canRegenerate && onRegenerate && (
-                    <button
-                        onClick={handleRegenerate}
-                        disabled={isRegenerating}
-                        className="regenerate-btn"
-                    >
-                        <RefreshCw size={16} />
-                        Regenerate
-                    </button>
-                )}
+                <RegenerateButton
+                          onRegenerate={handleRegenerate}
+                          isRegenerating={isRegenerating}
+                          canRegenerate={canRegenerate}
+                          sectionName="Full SWOT"
+                          size="medium"
+                        />
             </div>
 
             {/* SWOT Matrix */}

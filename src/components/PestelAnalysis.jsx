@@ -216,9 +216,9 @@ const PestelAnalysis = ({
   const analysis = pestelAnalysisData;
 
   return (
-    <div className="pestel-container">
+    <div className="pestel-analysis">
       {/* Header */}
-      <div className="pestel-header">
+      <div className="pestel-analysis-header">
         <div className="header-content">
           <Globe className="header-icon" />
           <div>
@@ -471,7 +471,7 @@ const PestelAnalysis = ({
 
             {/* Summary Stats */}
             <div className="monitoring-summary">
-              <h3><CheckCircle size={20} />Monitoring Summary</h3>
+              <h3><CheckCircle size={20} style={{ marginRight: '8px' }} />Monitoring Summary</h3>
               <div className="summary-stats">
                 <div className="stat-item">
                   <div className="stat-number">{(analysis.monitoring_dashboard?.key_indicators || []).length}</div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader, RefreshCw, BarChart3 } from 'lucide-react';
+import RegenerateButton from './RegenerateButton';
  
 const ChannelEffectivenessMap = ({
   questions = [],
@@ -478,38 +479,16 @@ const ChannelEffectivenessMap = ({
             Channel Effectiveness Map
           </h2>
         </div>
-        {canRegenerate && (
-          <button 
-            onClick={handleRegenerate} 
-            disabled={isGenerating || isRegenerating}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              background: '#ffffff',
-              color: '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {isGenerating || isRegenerating ? (
-              <>
-                <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <RefreshCw size={16} />
-                Regenerate
-              </>
-            )}
-          </button>
-        )}
+        
+            <RegenerateButton
+                          onRegenerate={handleRegenerate}
+                          isRegenerating={isRegenerating}
+                          canRegenerate={canRegenerate}
+                          sectionName="Competitive Advantage"
+                          size="medium"
+                        />
+         
+       
       </div>
 
       <div style={{ padding: '24px' }}>

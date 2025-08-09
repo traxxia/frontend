@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity } from 'lucide-react';
-
+import RegenerateButton from './RegenerateButton';
 
 const CompetitiveAdvantageMatrix = ({
     questions = [],
@@ -525,20 +525,17 @@ const CompetitiveAdvantageMatrix = ({
                 <div className="header-content">
                     <Shield className="header-icon" />
                     <div>
-                        <h1>Competitive Advantage Matrix</h1>
+                        <h1 style={{ color: 'black' }}>Competitive Advantage Matrix</h1>
                         <p>Analysis of your competitive differentiators and market position for {businessName}</p>
                     </div>
                 </div>
-                {canRegenerate && onRegenerate && (
-                    <button
-                        onClick={handleRegenerate}
-                        disabled={isRegenerating}
-                        className="regenerate-btn"
-                    >
-                        <RefreshCw size={16} />
-                        Regenerate
-                    </button>
-                )}
+                <RegenerateButton
+                          onRegenerate={handleRegenerate}
+                          isRegenerating={isRegenerating}
+                          canRegenerate={canRegenerate}
+                          sectionName="Competitive Advantage"
+                          size="medium"
+                        />
             </div>
 
             {/* Navigation Tabs */}
