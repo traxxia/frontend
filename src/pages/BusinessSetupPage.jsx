@@ -1680,7 +1680,7 @@ const BusinessSetupPage = () => {
         throw new Error('No questions available for Porter\'s Five Forces analysis');
       }
 
-      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+      const response = await fetch(`${ML_API_BASE_URL}/porter-analysis`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -2012,7 +2012,7 @@ const BusinessSetupPage = () => {
         throw new Error('No questions available for Porter\'s Five Forces analysis');
       }
 
-      const response = await fetch(`${ML_API_BASE_URL}/customer-segment`, {
+      const response = await fetch(`${ML_API_BASE_URL}/porter-analysis`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
