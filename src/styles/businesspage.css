@@ -264,6 +264,9 @@ html, body {
   background: white;
   padding: 5px;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  position: fixed;
+    z-index: 10;
+    width: 100%;
 }
 
 .desktop-tab {
@@ -561,6 +564,7 @@ html, body {
 .brief-section {
   position: relative;
   scroll-behavior: auto !important;
+  margin-top: 50px;
 }
 
 .brief-content {
@@ -1086,6 +1090,7 @@ html, body {
 .strategic-section {
   display: flex;
   flex-direction: column;
+  margin-top: 55px;
 }
 
 .strategic-title {
@@ -2276,6 +2281,7 @@ html, body {
   background: #fff;
   border-radius: 12px 12px 0 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-top: 60px;
  
   /* FIXED POSITIONING */
   position: sticky;

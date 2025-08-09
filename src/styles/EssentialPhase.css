@@ -2535,7 +2535,7 @@
 .stat-number {
   font-size: 2rem;
   font-weight: 800;
-  color: white;
+  color:#374151;
   margin-bottom: 0.5rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -2543,7 +2543,7 @@
 .stat-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+   color:#374151;
 }
 
 /* Capability Gaps */
@@ -4974,7 +4974,7 @@
 
 .gauge-content {
   position: absolute;
-  top: 50%;
+  top: 70%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;

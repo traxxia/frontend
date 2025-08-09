@@ -107,6 +107,7 @@ const LoyaltyNPS = ({
     }
 
     return (
+      <div className="gauge-wrapper">
       <div className="gauge-container">
         <svg className="gauge-svg" viewBox="0 0 200 120">
           {/* Background arc */}
@@ -163,6 +164,7 @@ const LoyaltyNPS = ({
           <span className="gauge-scale-min">{scale?.min || 0}</span>
           <span className="gauge-scale-max">{scale?.max || 100}</span>
         </div>
+      </div>
       </div>
     );
   };
