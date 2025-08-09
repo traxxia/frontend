@@ -339,10 +339,7 @@
     background-position: 20px 0;
   }
 }
-
-.spinner {
-  animation: spin 1s linear infinite;
-}
+ 
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -1082,7 +1079,7 @@
 
 .loading-state .spinner {
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 0px;
 }
 
 @keyframes spin {
@@ -3146,7 +3143,7 @@
 
 .spinner {
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: 0px;
 }
 
 @keyframes spin {
@@ -3284,11 +3281,7 @@
   padding: 48px 24px;
   color: #6b7280;
 }
-
-.spinner {
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
+ 
 
 @keyframes spin {
   from {

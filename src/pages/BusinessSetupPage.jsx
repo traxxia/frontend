@@ -25,7 +25,7 @@ import StrategicGoals from "../components/StrategicGoals";
 import StrategicPositioningRadar from "../components/StrategicPositioningRadar";
 import OrganizationalCultureProfile from "../components/OrganizationalCultureProfile";
 import ProductivityMetrics from "../components/ProductivityMetrics";
-import MaturityScoreLight from "../components/MaturityScoreLight"; 
+import MaturityScoreLight from "../components/MaturityScoreLight";
 
 
 const BusinessSetupPage = () => {
@@ -824,261 +824,261 @@ const BusinessSetupPage = () => {
   };
 
   const generateFullSwotPortfolioForCompletion = async (completedSet = null) => {
-  if (isRegeneratingRef.current) {
-    console.log('Already regenerating, skipping essential phase generation');
-    return;
-  }
-
-  try {
-    isRegeneratingRef.current = true;
-    setIsFullSwotRegenerating(true);
-    setIsCompetitiveAdvantageRegenerating(true);
-    setIsChannelEffectivenessRegenerating(true);
-    setIsExpandedCapabilityRegenerating(true);
-    setIsStrategicGoalsRegenerating(true);
-    setIsStrategicRadarRegenerating(true);
-    setIsCultureProfileRegenerating(true);
-    setIsProductivityRegenerating(true);
-    setIsMaturityRegenerating(true);
-    setIsCustomerSegmentationRegenerating(true);
-
-    showToastMessage("Essential phase completed! Generating all essential analyses...", "info");
-
-    // Clear existing data
-    setFullSwotData(null);
-    setCompetitiveAdvantageData(null);
-    setChannelEffectivenessData(null);
-    setExpandedCapabilityData(null);
-    setStrategicGoalsData(null);
-    setStrategicRadarData(null);
-    setCultureProfileData(null);
-    setProductivityData(null);
-    setMaturityData(null);
-    setCustomerSegmentationData(null);
-
-    const freshAnswers = await getFreshConversationData();
-
-    // Generate ALL essential phase analyses
-    const analysisPromises = [
-      generateFullSwotPortfolio(freshAnswers),
-      generateCompetitiveAdvantage(freshAnswers),
-      generateChannelEffectiveness(freshAnswers),
-      generateExpandedCapability(freshAnswers),
-      generateStrategicGoals(freshAnswers),
-      generateStrategicRadar(freshAnswers),
-      generateCultureProfile(freshAnswers),
-      generateProductivityMetrics(freshAnswers),
-      generateMaturityScore(freshAnswers),
-      generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers)
-    ];
-
-    const results = await Promise.allSettled(analysisPromises);
-    const failures = results.filter(result => result.status === 'rejected');
-
-    if (failures.length > 0) {
-      showToastMessage(
-        `${analysisPromises.length - failures.length}/${analysisPromises.length} essential analyses completed successfully.`,
-        failures.length < analysisPromises.length ? "warning" : "error"
-      );
-    } else {
-      showToastMessage("All essential phase analyses generated successfully!", "success");
+    if (isRegeneratingRef.current) {
+      console.log('Already regenerating, skipping essential phase generation');
+      return;
     }
 
-  } catch (error) {
-    console.error('Error generating essential phase analysis:', error);
-    showToastMessage("Failed to generate essential phase analysis. Please try again.", "error");
-  } finally {
-    isRegeneratingRef.current = false;
-    setIsFullSwotRegenerating(false);
-    setIsCompetitiveAdvantageRegenerating(false);
-    setIsChannelEffectivenessRegenerating(false);
-    setIsExpandedCapabilityRegenerating(false);
-    setIsStrategicGoalsRegenerating(false);
-    setIsStrategicRadarRegenerating(false);
-    setIsCultureProfileRegenerating(false);
-    setIsProductivityRegenerating(false);
-    setIsMaturityRegenerating(false);
-    setIsCustomerSegmentationRegenerating(false);
-  }
-};
-const handleFullSwotRegenerate = async () => {
-  if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+    try {
+      isRegeneratingRef.current = true;
+      setIsFullSwotRegenerating(true);
+      setIsCompetitiveAdvantageRegenerating(true);
+      setIsChannelEffectivenessRegenerating(true);
+      setIsExpandedCapabilityRegenerating(true);
+      setIsStrategicGoalsRegenerating(true);
+      setIsStrategicRadarRegenerating(true);
+      setIsCultureProfileRegenerating(true);
+      setIsProductivityRegenerating(true);
+      setIsMaturityRegenerating(true);
+      setIsCustomerSegmentationRegenerating(true);
 
-  try {
-    setIsFullSwotRegenerating(true);
-    showToastMessage("Regenerating Full SWOT Portfolio...", "info");
-    setFullSwotData(null);
-    await new Promise(resolve => setTimeout(resolve, 200));
+      showToastMessage("Essential phase completed! Generating all essential analyses...", "info");
 
-    await generateFullSwotPortfolio();
-    showToastMessage("Full SWOT Portfolio regenerated successfully!", "success");
-  } catch (error) {
-    console.error('Error regenerating Full SWOT Portfolio:', error);
-    showToastMessage("Failed to regenerate Full SWOT Portfolio.", "error");
-  } finally {
-    setIsFullSwotRegenerating(false);
-  }
-};
+      // Clear existing data
+      setFullSwotData(null);
+      setCompetitiveAdvantageData(null);
+      setChannelEffectivenessData(null);
+      setExpandedCapabilityData(null);
+      setStrategicGoalsData(null);
+      setStrategicRadarData(null);
+      setCultureProfileData(null);
+      setProductivityData(null);
+      setMaturityData(null);
+      setCustomerSegmentationData(null);
 
-const handleCompetitiveAdvantageRegenerate = async () => {
-  if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+      const freshAnswers = await getFreshConversationData();
 
-  try {
-    setIsCompetitiveAdvantageRegenerating(true);
-    showToastMessage("Regenerating Competitive Advantage Matrix...", "info");
-    setCompetitiveAdvantageData(null);
-    await new Promise(resolve => setTimeout(resolve, 200));
+      // Generate ALL essential phase analyses
+      const analysisPromises = [
+        generateFullSwotPortfolio(freshAnswers),
+        generateCompetitiveAdvantage(freshAnswers),
+        generateChannelEffectiveness(freshAnswers),
+        generateExpandedCapability(freshAnswers),
+        generateStrategicGoals(freshAnswers),
+        generateStrategicRadar(freshAnswers),
+        generateCultureProfile(freshAnswers),
+        generateProductivityMetrics(freshAnswers),
+        generateMaturityScore(freshAnswers),
+        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers)
+      ];
 
-    await generateCompetitiveAdvantage(userAnswers);
-    showToastMessage("Competitive Advantage Matrix regenerated successfully!", "success");
-  } catch (error) {
-    console.error('Error regenerating Competitive Advantage Matrix:', error);
-    showToastMessage("Failed to regenerate Competitive Advantage Matrix.", "error");
-  } finally {
-    setIsCompetitiveAdvantageRegenerating(false);
-  }
-};
+      const results = await Promise.allSettled(analysisPromises);
+      const failures = results.filter(result => result.status === 'rejected');
+
+      if (failures.length > 0) {
+        showToastMessage(
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} essential analyses completed successfully.`,
+          failures.length < analysisPromises.length ? "warning" : "error"
+        );
+      } else {
+        showToastMessage("All essential phase analyses generated successfully!", "success");
+      }
+
+    } catch (error) {
+      console.error('Error generating essential phase analysis:', error);
+      showToastMessage("Failed to generate essential phase analysis. Please try again.", "error");
+    } finally {
+      isRegeneratingRef.current = false;
+      setIsFullSwotRegenerating(false);
+      setIsCompetitiveAdvantageRegenerating(false);
+      setIsChannelEffectivenessRegenerating(false);
+      setIsExpandedCapabilityRegenerating(false);
+      setIsStrategicGoalsRegenerating(false);
+      setIsStrategicRadarRegenerating(false);
+      setIsCultureProfileRegenerating(false);
+      setIsProductivityRegenerating(false);
+      setIsMaturityRegenerating(false);
+      setIsCustomerSegmentationRegenerating(false);
+    }
+  };
+  const handleFullSwotRegenerate = async () => {
+    if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+
+    try {
+      setIsFullSwotRegenerating(true);
+      showToastMessage("Regenerating Full SWOT Portfolio...", "info");
+      setFullSwotData(null);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      await generateFullSwotPortfolio();
+      showToastMessage("Full SWOT Portfolio regenerated successfully!", "success");
+    } catch (error) {
+      console.error('Error regenerating Full SWOT Portfolio:', error);
+      showToastMessage("Failed to regenerate Full SWOT Portfolio.", "error");
+    } finally {
+      setIsFullSwotRegenerating(false);
+    }
+  };
+
+  const handleCompetitiveAdvantageRegenerate = async () => {
+    if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+
+    try {
+      setIsCompetitiveAdvantageRegenerating(true);
+      showToastMessage("Regenerating Competitive Advantage Matrix...", "info");
+      setCompetitiveAdvantageData(null);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      await generateCompetitiveAdvantage(userAnswers);
+      showToastMessage("Competitive Advantage Matrix regenerated successfully!", "success");
+    } catch (error) {
+      console.error('Error regenerating Competitive Advantage Matrix:', error);
+      showToastMessage("Failed to regenerate Competitive Advantage Matrix.", "error");
+    } finally {
+      setIsCompetitiveAdvantageRegenerating(false);
+    }
+  };
   // ADD this new function to your BusinessSetupPage:
   const generateCompetitiveAdvantage = async (freshAnswers) => {
-  try {
-    const questionsArray = [];
-    const answersArray = [];
+    try {
+      const questionsArray = [];
+      const answersArray = [];
 
-    questions
-      .filter(q => freshAnswers[q._id])
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach(question => {
-        questionsArray.push(question.question_text);
-        answersArray.push(freshAnswers[question._id]);
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for competitive advantage analysis');
+      }
+
+      console.log('Calling Competitive Advantage API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
       });
 
-    if (questionsArray.length === 0) {
-      throw new Error('No questions available for competitive advantage analysis');
+      const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Competitive Advantage API Error Response:', errorText);
+        throw new Error(`Competitive Advantage API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Competitive Advantage API Response:', result);
+
+      // The API returns { competitiveAdvantage: {...} } so we use it directly
+      setCompetitiveAdvantageData(result);
+      await saveAnalysisToBackend(result, 'competitiveAdvantage');
+
+      console.log('Competitive Advantage Matrix generated successfully:', result);
+      return result;
+
+    } catch (error) {
+      console.error('Error generating Competitive Advantage Matrix:', error);
+      throw error;
     }
-
-    console.log('Calling Competitive Advantage API with:', {
-      questionsCount: questionsArray.length,
-      answersCount: answersArray.length
-    });
-
-    const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Competitive Advantage API Error Response:', errorText);
-      throw new Error(`Competitive Advantage API returned ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('Competitive Advantage API Response:', result);
-
-    // The API returns { competitiveAdvantage: {...} } so we use it directly
-    setCompetitiveAdvantageData(result);
-    await saveAnalysisToBackend(result, 'competitiveAdvantage');
-
-    console.log('Competitive Advantage Matrix generated successfully:', result);
-    return result;
-
-  } catch (error) {
-    console.error('Error generating Competitive Advantage Matrix:', error);
-    throw error;
-  }
-};
+  };
 
 
   // Load existing analysis data
- const loadExistingAnalysisData = (phaseAnalysisArray) => {
-  try {
-    const latestAnalysisByType = {};
-    phaseAnalysisArray
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .forEach(analysis => {
-        const type = analysis.analysis_type;
-        if (!latestAnalysisByType[type]) {
-          latestAnalysisByType[type] = analysis;
+  const loadExistingAnalysisData = (phaseAnalysisArray) => {
+    try {
+      const latestAnalysisByType = {};
+      phaseAnalysisArray
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .forEach(analysis => {
+          const type = analysis.analysis_type;
+          if (!latestAnalysisByType[type]) {
+            latestAnalysisByType[type] = analysis;
+          }
+        });
+
+      let hasAnyAnalysis = false;
+
+      Object.values(latestAnalysisByType).forEach(analysis => {
+        const { analysis_type, analysis_data } = analysis;
+        hasAnyAnalysis = true;
+
+        switch (analysis_type) {
+          case 'swot':
+            setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data));
+            break;
+          case 'fullSwot':
+            setFullSwotData(analysis_data);
+            break;
+          case 'competitiveAdvantage':
+            setCompetitiveAdvantageData(analysis_data);
+            break;
+          case 'expandedCapability':
+            setExpandedCapabilityData(analysis_data);
+            break;
+          case 'strategicGoals':
+            setStrategicGoalsData(analysis_data);
+            break;
+          case 'strategicRadar':
+            setStrategicRadarData(analysis_data);
+            break;
+          case 'customerSegmentation':
+            setCustomerSegmentationData(analysis_data);
+            break;
+          case 'cultureProfile':
+            setCultureProfileData(analysis_data);
+            break;
+          case 'productivityMetrics':
+            setProductivityData(analysis_data);
+            break;
+          case 'maturityScore':
+            setMaturityData(analysis_data);
+            break;
+          case 'purchaseCriteria':
+            setPurchaseCriteriaData(analysis_data);
+            break;
+          case 'channelHeatmap':
+            setChannelHeatmapData(analysis_data);
+            break;
+          case 'loyaltyNPS':
+            setLoyaltyNPSData(analysis_data);
+            break;
+          case 'capabilityHeatmap':
+            setCapabilityHeatmapData(analysis_data);
+            break;
+          case 'porters':
+            setPortersData(analysis_data);
+            break;
+          case 'pestel':
+            setPestelData(analysis_data);
+            break;
+          case 'strategic':
+            setStrategicData(analysis_data);
+            break;
+          case 'channelEffectiveness':
+            setChannelEffectivenessData(analysis_data);
+            break;
         }
       });
 
-    let hasAnyAnalysis = false;
-
-    Object.values(latestAnalysisByType).forEach(analysis => {
-      const { analysis_type, analysis_data } = analysis;
-      hasAnyAnalysis = true;
-
-      switch (analysis_type) {
-        case 'swot':
-          setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data));
-          break;
-        case 'fullSwot':
-          setFullSwotData(analysis_data);
-          break;
-        case 'competitiveAdvantage':
-          setCompetitiveAdvantageData(analysis_data);
-          break;
-        case 'expandedCapability':
-          setExpandedCapabilityData(analysis_data);
-          break;
-        case 'strategicGoals':
-          setStrategicGoalsData(analysis_data);
-          break;
-        case 'strategicRadar':
-          setStrategicRadarData(analysis_data);
-          break;
-        case 'customerSegmentation':
-          setCustomerSegmentationData(analysis_data);
-          break;
-        case 'cultureProfile':
-          setCultureProfileData(analysis_data);
-          break;
-        case 'productivityMetrics':
-          setProductivityData(analysis_data);
-          break;
-        case 'maturityScore':
-          setMaturityData(analysis_data);
-          break;
-        case 'purchaseCriteria':
-          setPurchaseCriteriaData(analysis_data);
-          break;
-        case 'channelHeatmap':
-          setChannelHeatmapData(analysis_data);
-          break;
-        case 'loyaltyNPS':
-          setLoyaltyNPSData(analysis_data);
-          break;
-        case 'capabilityHeatmap':
-          setCapabilityHeatmapData(analysis_data);
-          break;
-        case 'porters':
-          setPortersData(analysis_data);
-          break;
-        case 'pestel':
-          setPestelData(analysis_data);
-          break;
-        case 'strategic':
-          setStrategicData(analysis_data);
-          break;
-        case 'channelEffectiveness':
-          setChannelEffectivenessData(analysis_data);
-          break;
-      }
-    });
-
-    setHasAnalysisData(hasAnyAnalysis);
-    console.log(`Loaded ${Object.keys(latestAnalysisByType).length} analysis components`);
-  } catch (error) {
-    console.error('Error loading existing analysis data:', error);
-  }
-};
+      setHasAnalysisData(hasAnyAnalysis);
+      console.log(`Loaded ${Object.keys(latestAnalysisByType).length} analysis components`);
+    } catch (error) {
+      console.error('Error loading existing analysis data:', error);
+    }
+  };
   // Initialize PhaseManager
   const phaseManager = PhaseManager({
     questions,
@@ -1753,61 +1753,61 @@ const handleCompetitiveAdvantageRegenerate = async () => {
     }
   };
   const generateFullSwotPortfolio = async (freshAnswers = null) => {
-  try {
-    const questionsArray = [];
-    const answersArray = [];
-    const dataSource = freshAnswers || userAnswers;
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+      const dataSource = freshAnswers || userAnswers;
 
-    questions
-      .filter(q => dataSource[q._id] && dataSource[q._id].trim() !== '')
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach(question => {
-        questionsArray.push(question.question_text);
-        answersArray.push(dataSource[question._id]);
+      questions
+        .filter(q => dataSource[q._id] && dataSource[q._id].trim() !== '')
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(dataSource[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for Full SWOT Portfolio analysis');
+      }
+
+      console.log('Calling Full SWOT Portfolio API with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
       });
 
-    if (questionsArray.length === 0) {
-      throw new Error('No questions available for Full SWOT Portfolio analysis');
+      const response = await fetch(`${ML_API_BASE_URL}/full-swot-portfolio`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Full SWOT API Error Response:', errorText);
+        throw new Error(`Full SWOT Portfolio API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Full SWOT API Response:', result);
+
+      // The API returns { swotPortfolio: {...} } so we use it directly
+      setFullSwotData(result);
+      await saveAnalysisToBackend(result, 'fullSwot');
+
+      console.log('Full SWOT Portfolio generated successfully:', result);
+      return result;
+
+    } catch (error) {
+      console.error('Error generating Full SWOT Portfolio analysis:', error);
+      throw error;
     }
-
-    console.log('Calling Full SWOT Portfolio API with:', {
-      questionsCount: questionsArray.length,
-      answersCount: answersArray.length
-    });
-
-    const response = await fetch(`${ML_API_BASE_URL}/full-swot-portfolio`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Full SWOT API Error Response:', errorText);
-      throw new Error(`Full SWOT Portfolio API returned ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('Full SWOT API Response:', result);
-
-    // The API returns { swotPortfolio: {...} } so we use it directly
-    setFullSwotData(result);
-    await saveAnalysisToBackend(result, 'fullSwot');
-
-    console.log('Full SWOT Portfolio generated successfully:', result);
-    return result;
-
-  } catch (error) {
-    console.error('Error generating Full SWOT Portfolio analysis:', error);
-    throw error;
-  }
-};
+  };
 
   const getFreshConversationData = async () => {
     try {
@@ -2408,19 +2408,19 @@ const handleCompetitiveAdvantageRegenerate = async () => {
     const essentialPhaseComponents = (
       <div id="analysis-pdf-content" style={{ backgroundColor: 'white' }}>
         {unlockedFeatures.fullSwot && (
-  <div ref={fullSwotRef}>
-    <FullSWOTPortfolio
-      questions={questions}
-      userAnswers={userAnswers}
-      businessName={businessData.name}
-      onRegenerate={handleFullSwotRegenerate}
-      isRegenerating={isFullSwotRegenerating}
-      canRegenerate={!isAnalysisRegenerating}
-      fullSwotData={fullSwotData}
-      selectedBusinessId={selectedBusinessId}
-    />
-  </div>
-)}
+          <div ref={fullSwotRef}>
+            <FullSWOTPortfolio
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={handleFullSwotRegenerate}
+              isRegenerating={isFullSwotRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              fullSwotData={fullSwotData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
 
         {unlockedFeatures.fullSwot && (
           <div ref={customerSegmentationRef}>
@@ -2446,19 +2446,19 @@ const handleCompetitiveAdvantageRegenerate = async () => {
         )}
 
         {unlockedFeatures.fullSwot && (
-  <div ref={competitiveAdvantageRef}>
-    <CompetitiveAdvantageMatrix
-      questions={questions}
-      userAnswers={userAnswers}
-      businessName={businessData.name}
-      onRegenerate={handleCompetitiveAdvantageRegenerate}
-      isRegenerating={isCompetitiveAdvantageRegenerating}
-      canRegenerate={!isAnalysisRegenerating}
-      competitiveAdvantageData={competitiveAdvantageData}
-      selectedBusinessId={selectedBusinessId}
-    />
-  </div>
-)}
+          <div ref={competitiveAdvantageRef}>
+            <CompetitiveAdvantageMatrix
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={handleCompetitiveAdvantageRegenerate}
+              isRegenerating={isCompetitiveAdvantageRegenerating}
+              canRegenerate={!isAnalysisRegenerating}
+              competitiveAdvantageData={competitiveAdvantageData}
+              selectedBusinessId={selectedBusinessId}
+            />
+          </div>
+        )}
 
 
         {unlockedFeatures.fullSwot && (
@@ -2803,49 +2803,7 @@ const handleCompetitiveAdvantageRegenerate = async () => {
 
                     {activeTab === "analysis" && unlockedFeatures.analysis && (
                       <AnalysisControls />
-                    )}
-
-                    {activeTab === "strategic" && unlockedFeatures.analysis && (
-                      <div className="strategic-controls">
-                        <button
-                          onClick={createIndividualRegenerationHandler(
-                            'strategic',
-                            'strategic-goals',
-                            'strategic',
-                            setStrategicData,
-                            'Strategic analysis',
-                            setIsStrategicRegenerating
-                          )}
-                          disabled={isStrategicRegenerating}
-                          style={{
-                            backgroundColor: isStrategicRegenerating ? "#f3f4f6" : "#8b5cf6",
-                            color: isStrategicRegenerating ? "#6b7280" : "#fff",
-                            border: "none",
-                            borderRadius: "13px",
-                            padding: "10px 18px",
-                            fontSize: "14px",
-                            fontWeight: 500,
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: isStrategicRegenerating ? "not-allowed" : "pointer",
-                            gap: "8px",
-                            transition: "all 0.2s ease"
-                          }}
-                        >
-                          {isStrategicRegenerating ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw size={16} />
-                              Regenerate Strategic
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
+                    )} 
                   </div>
 
                   <div className="expanded-analysis-content">
@@ -2860,8 +2818,7 @@ const handleCompetitiveAdvantageRegenerate = async () => {
 
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
-                          <div className="strategic-content">
-                            <StrategicAnalysis
+                          <StrategicAnalysis
                               questions={questions}
                               userAnswers={userAnswers}
                               businessName={businessData.name}
@@ -2877,8 +2834,8 @@ const handleCompetitiveAdvantageRegenerate = async () => {
                               canRegenerate={!isAnalysisRegenerating}
                               strategicData={strategicData}
                               selectedBusinessId={selectedBusinessId}
+                              phaseManager={phaseManager} // ADD THIS LINE
                             />
-                          </div>
                         </div>
                       )}
                     </div>
@@ -2971,54 +2928,9 @@ const handleCompetitiveAdvantageRegenerate = async () => {
                   </div>
                 )}
 
-                {activeTab === "strategic" && unlockedFeatures.analysis && (
-                  <div className="strategic-section">
-                    {isMobile && (
-                      <div style={{ padding: "1rem", background: "#ffffffff" }}>
-                        <div className="analysis-controls-wrapper" style={{ display: "flex", justifyContent: "center" }}>
-                          <button
-                            onClick={createIndividualRegenerationHandler(
-                              'strategic',
-                              'strategic-goals',
-                              'strategic',
-                              setStrategicData,
-                              'Strategic analysis',
-                              setIsStrategicRegenerating
-                            )}
-                            disabled={isStrategicRegenerating}
-                            style={{
-                              backgroundColor: isStrategicRegenerating ? "#f3f4f6" : "#8b5cf6",
-                              color: isStrategicRegenerating ? "#6b7280" : "#fff",
-                              border: "none",
-                              borderRadius: "13px",
-                              padding: "10px 18px",
-                              fontSize: "14px",
-                              fontWeight: 500,
-                              display: "flex",
-                              alignItems: "center",
-                              cursor: isStrategicRegenerating ? "not-allowed" : "pointer",
-                              gap: "8px",
-                              transition: "all 0.2s ease"
-                            }}
-                          >
-                            {isStrategicRegenerating ? (
-                              <>
-                                <Loader size={16} className="animate-spin" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw size={16} />
-                                Regenerate Strategic
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="strategic-content">
-                      <StrategicAnalysis
+                {activeTab === "strategic" && (
+                  <div className="strategic-section"> 
+                    <StrategicAnalysis
                         questions={questions}
                         userAnswers={userAnswers}
                         businessName={businessData.name}
@@ -3034,8 +2946,8 @@ const handleCompetitiveAdvantageRegenerate = async () => {
                         canRegenerate={!isAnalysisRegenerating}
                         strategicData={strategicData}
                         selectedBusinessId={selectedBusinessId}
+                        phaseManager={phaseManager} // ADD THIS LINE
                       />
-                    </div>
                   </div>
                 )}
               </div>

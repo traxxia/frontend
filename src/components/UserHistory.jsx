@@ -20,6 +20,17 @@ import PurchaseCriteria from '../components/PurchaseCriteria';
 import ChannelHeatmap from '../components/ChannelHeatmap';
 import LoyaltyNPS from '../components/LoyaltyNPS';
 import CapabilityHeatmap from '../components/CapabilityHeatmap';
+import PortersFiveForces from '../components/PortersFiveForces';
+import PestelAnalysis from '../components/PestelAnalysis';
+import FullSWOTPortfolio from '../components/FullSWOTPortfolio';
+import CompetitiveAdvantageMatrix from '../components/CompetitiveAdvantageMatrix';
+import ChannelEffectivenessMap from '../components/ChannelEffectivenessMap';
+import ExpandedCapabilityHeatmap from '../components/ExpandedCapabilityHeatmap';
+import StrategicGoals from '../components/StrategicGoals';
+import StrategicPositioningRadar from '../components/StrategicPositioningRadar';
+import OrganizationalCultureProfile from '../components/OrganizationalCultureProfile';
+import ProductivityMetrics from '../components/ProductivityMetrics';
+import MaturityScoreLight from '../components/MaturityScoreLight';
 import PDFExportComponent from '../components/PDFExportComponent';
 import '../styles/UserHistory.css';
 
@@ -218,17 +229,32 @@ const useSortedFilteredUsers = (users, searchTerm) => {
   return { sortedUsers, sortConfig, requestSort };
 };
 
-// Analysis data parser
+// Analysis data parser with phase support
 const parseAnalysisData = (userDetails, user) => {
   if (!userDetails) return null;
 
   const analysisData = {
+    // Initial Phase Components
     swot: null,
-    customerSegmentation: null,
     purchaseCriteria: null,
     channelHeatmap: null,
     loyaltyNPS: null,
     capabilityHeatmap: null,
+    porters: null,
+    pestel: null,
+    
+    // Essential Phase Components
+    fullSwot: null,
+    customerSegmentation: null,
+    competitiveAdvantage: null,
+    channelEffectiveness: null,
+    expandedCapability: null,
+    strategicGoals: null,
+    strategicRadar: null,
+    cultureProfile: null,
+    productivityMetrics: null,
+    maturityScore: null,
+    
     businessName: user?.name || 'Business',
     userAnswers: {},
     questions: []
@@ -256,21 +282,122 @@ const parseAnalysisData = (userDetails, user) => {
         ? JSON.parse(result.analysis_result)
         : result.analysis_result;
 
-      const analysisName = result.name?.toLowerCase() || '';
+      const analysisType = result.analysis_type?.toLowerCase() || result.name?.toLowerCase() || '';
 
-      if (analysisName.includes('swot')) analysisData.swot = analysisResult;
-      else if (analysisName.includes('customer')) analysisData.customerSegmentation = analysisResult;
-      else if (analysisName.includes('purchase')) analysisData.purchaseCriteria = analysisResult;
-      else if (analysisName.includes('channel')) analysisData.channelHeatmap = analysisResult;
-      else if (analysisName.includes('loyalty')) analysisData.loyaltyNPS = analysisResult;
-      else if (analysisName.includes('capability')) analysisData.capabilityHeatmap = analysisResult;
-
+      // Map analysis types to data properties
+      switch (analysisType) {
+        case 'swot':
+          analysisData.swot = analysisResult;
+          break;
+        case 'purchasecriteria':
+        case 'purchase_criteria':
+          analysisData.purchaseCriteria = analysisResult;
+          break;
+        case 'channelheatmap':
+        case 'channel_heatmap':
+          analysisData.channelHeatmap = analysisResult;
+          break;
+        case 'loyaltynps':
+        case 'loyalty_nps':
+        case 'loyalty_metrics':
+          analysisData.loyaltyNPS = analysisResult;
+          break;
+        case 'capabilityheatmap':
+        case 'capability_heatmap':
+          analysisData.capabilityHeatmap = analysisResult;
+          break;
+        case 'porters':
+        case 'porter_analysis':
+          analysisData.porters = analysisResult;
+          break;
+        case 'pestel':
+        case 'pestel_analysis':
+          analysisData.pestel = analysisResult;
+          break;
+        case 'fullswot':
+        case 'full_swot':
+          analysisData.fullSwot = analysisResult;
+          break;
+        case 'customersegmentation':
+        case 'customer_segmentation':
+          analysisData.customerSegmentation = analysisResult;
+          break;
+        case 'competitiveadvantage':
+        case 'competitive_advantage':
+          analysisData.competitiveAdvantage = analysisResult;
+          break;
+        case 'channeleffectiveness':
+        case 'channel_effectiveness':
+          analysisData.channelEffectiveness = analysisResult;
+          break;
+        case 'expandedcapability':
+        case 'expanded_capability':
+          analysisData.expandedCapability = analysisResult;
+          break;
+        case 'strategicgoals':
+        case 'strategic_goals':
+          analysisData.strategicGoals = analysisResult;
+          break;
+        case 'strategicradar':
+        case 'strategic_radar':
+          analysisData.strategicRadar = analysisResult;
+          break;
+        case 'cultureprofile':
+        case 'culture_profile':
+          analysisData.cultureProfile = analysisResult;
+          break;
+        case 'productivitymetrics':
+        case 'productivity_metrics':
+          analysisData.productivityMetrics = analysisResult;
+          break;
+        case 'maturityscore':
+        case 'maturity_score':
+          analysisData.maturityScore = analysisResult;
+          break;
+      }
     } catch (error) {
       console.error('Error parsing analysis result:', error);
     }
   });
 
   return analysisData;
+};
+
+// Check which phases are available
+const getAvailablePhases = (analysisData) => {
+  if (!analysisData) return [];
+
+  const phases = [];
+
+  // Check if any initial phase analysis exists
+  const hasInitialAnalysis = analysisData.swot || analysisData.purchaseCriteria || 
+    analysisData.channelHeatmap || analysisData.loyaltyNPS || 
+    analysisData.capabilityHeatmap || analysisData.porters || analysisData.pestel;
+
+  if (hasInitialAnalysis) {
+    phases.push({
+      key: 'initial',
+      name: 'Initial Phase',
+      unlocked: true
+    });
+  }
+
+  // Check if any essential phase analysis exists
+  const hasEssentialAnalysis = analysisData.fullSwot || analysisData.customerSegmentation ||
+    analysisData.competitiveAdvantage || analysisData.channelEffectiveness ||
+    analysisData.expandedCapability || analysisData.strategicGoals ||
+    analysisData.strategicRadar || analysisData.cultureProfile ||
+    analysisData.productivityMetrics || analysisData.maturityScore;
+
+  if (hasEssentialAnalysis) {
+    phases.push({
+      key: 'essential',
+      name: 'Essential Phase',
+      unlocked: true
+    });
+  }
+
+  return phases;
 };
 
 // Export utility
@@ -410,7 +537,6 @@ const UserHistory = ({ onToast }) => {
           />
         </div>
 
-        {/* Company Filter - now in the same row */}
         {companies.length > 0 && (
           <div className="company-filter-container">
             <select
@@ -524,11 +650,12 @@ const UserDetailsModal = ({ user, userDetails, isLoading, onClose, onExport, onT
   </div>
 );
 
-// Enhanced UserDetailsPanel
+// Enhanced UserDetailsPanel with Phase Support
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState('initial');
 
   const allUserDetails = userDetails[user._id] || {};
   const businesses = allUserDetails.businesses || [];
@@ -565,6 +692,14 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
   const currentUserDetails = getCurrentUserDetails();
   const analysisData = parseAnalysisData(currentUserDetails, user);
+  const availablePhases = getAvailablePhases(analysisData);
+
+  // Set default phase when analysis data is loaded
+  useEffect(() => {
+    if (availablePhases.length > 0 && !availablePhases.find(p => p.key === selectedPhase)) {
+      setSelectedPhase(availablePhases[0].key);
+    }
+  }, [availablePhases, selectedPhase]);
 
   if (businesses.length === 0 && !isLoading) {
     return <EmptyBusinessState user={user} onClose={onClose} />;
@@ -576,7 +711,14 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
       {selectedBusiness && (
         <>
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} businesses={businesses} />
+          <TabNavigation 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            businesses={businesses}
+            availablePhases={availablePhases}
+            selectedPhase={selectedPhase}
+            onPhaseChange={setSelectedPhase}
+          />
 
           <div className="tab-content">
             {isLoadingBusiness ? (
@@ -591,6 +733,8 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
                 selectedBusinessId={selectedBusiness}
                 onBusinessChange={handleBusinessChange}
                 isLoadingBusiness={isLoadingBusiness}
+                selectedPhase={selectedPhase}
+                availablePhases={availablePhases}
               />
             )}
           </div>
@@ -646,7 +790,7 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
   </div>
 );
 
-const TabNavigation = ({ activeTab, onTabChange, businesses }) => (
+const TabNavigation = ({ activeTab, onTabChange, businesses, availablePhases, selectedPhase, onPhaseChange }) => (
   <div className="admin-nav">
     <button
       onClick={() => onTabChange('businesses')}
@@ -670,6 +814,21 @@ const TabNavigation = ({ activeTab, onTabChange, businesses }) => (
       <Target size={16} />
       <span>Analysis</span>
     </button>
+    
+    {/* Phase Navigation for Analysis Tab */}
+    {activeTab === 'analysis' && availablePhases.length > 0 && (
+      <div className="phase-navigation">
+        {availablePhases.map(phase => (
+          <button
+            key={phase.key}
+            onClick={() => onPhaseChange(phase.key)}
+            className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''}`}
+          >
+            {phase.name}
+          </button>
+        ))}
+      </div>
+    )}
   </div>
 );
 
@@ -688,7 +847,9 @@ const TabContent = ({
   selectedBusiness,
   selectedBusinessId,
   onBusinessChange,
-  isLoadingBusiness
+  isLoadingBusiness,
+  selectedPhase,
+  availablePhases
 }) => {
   const getSelectedBusinessName = () => {
     if (!selectedBusiness) return 'Select a Business';
@@ -724,6 +885,8 @@ const TabContent = ({
           totalQuestions={currentUserDetails?.stats?.total_questions || 0}
           completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
           conversationCount={currentUserDetails?.conversation?.length || 0}
+          selectedPhase={selectedPhase}
+          availablePhases={availablePhases}
         />
       );
     default:
@@ -929,7 +1092,7 @@ const QuestionItem = ({ question }) => (
   </div>
 );
 
-// AnalysisTab Component
+// Enhanced AnalysisTab Component with Phase Support
 const AnalysisTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -939,7 +1102,9 @@ const AnalysisTab = ({
   isLoadingBusiness = false,
   totalQuestions = 0,
   completedQuestions = 0,
-  conversationCount = 0
+  conversationCount = 0,
+  selectedPhase = 'initial',
+  availablePhases = []
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -968,11 +1133,20 @@ const AnalysisTab = ({
     );
   }
 
-  const hasAnyAnalysis = analysisData.swot || analysisData.customerSegmentation ||
-    analysisData.purchaseCriteria || analysisData.channelHeatmap ||
-    analysisData.loyaltyNPS || analysisData.capabilityHeatmap;
+  // Check if any analysis exists for the selected phase
+  const hasInitialAnalysis = analysisData.swot || analysisData.purchaseCriteria || 
+    analysisData.channelHeatmap || analysisData.loyaltyNPS || 
+    analysisData.capabilityHeatmap || analysisData.porters || analysisData.pestel;
 
-  if (!hasAnyAnalysis) {
+  const hasEssentialAnalysis = analysisData.fullSwot || analysisData.customerSegmentation ||
+    analysisData.competitiveAdvantage || analysisData.channelEffectiveness ||
+    analysisData.expandedCapability || analysisData.strategicGoals ||
+    analysisData.strategicRadar || analysisData.cultureProfile ||
+    analysisData.productivityMetrics || analysisData.maturityScore;
+
+  const hasCurrentPhaseAnalysis = selectedPhase === 'initial' ? hasInitialAnalysis : hasEssentialAnalysis;
+
+  if (!hasCurrentPhaseAnalysis) {
     return (
       <div className="analysis-tab">
         <StatsRow
@@ -984,8 +1158,8 @@ const AnalysisTab = ({
         />
         <div className="empty-state">
           <Target size={48} />
-          <p className="empty-title">No analysis available</p>
-          <p className="empty-subtitle">No analysis generated for {selectedBusiness} yet</p>
+          <p className="empty-title">No {selectedPhase} phase analysis available</p>
+          <p className="empty-subtitle">No {selectedPhase} phase analysis generated for {selectedBusiness} yet</p>
         </div>
       </div>
     );
@@ -1000,40 +1174,59 @@ const AnalysisTab = ({
         isLoadingBusiness={isLoadingBusiness}
         stats={stats}
       />
-      <AnalysisComponents analysisData={analysisData} />
+      <AnalysisComponents analysisData={analysisData} selectedPhase={selectedPhase} />
     </div>
   );
 };
 
-const AnalysisComponents = ({ analysisData }) => {
-  const analysisTypes = [
-    { key: 'swot', Component: SwotAnalysis },
-    { key: 'customerSegmentation', Component: CustomerSegmentation },
-    { key: 'purchaseCriteria', Component: PurchaseCriteria },
-    { key: 'channelHeatmap', Component: ChannelHeatmap },
-    { key: 'loyaltyNPS', Component: LoyaltyNPS },
-    { key: 'capabilityHeatmap', Component: CapabilityHeatmap }
+// Enhanced AnalysisComponents with Phase-based rendering
+const AnalysisComponents = ({ analysisData, selectedPhase }) => {
+  const initialPhaseTypes = [
+    { key: 'swot', Component: SwotAnalysis, propName: 'analysisResult' },
+    { key: 'purchaseCriteria', Component: PurchaseCriteria, propName: 'purchaseCriteriaData' },
+    { key: 'channelHeatmap', Component: ChannelHeatmap, propName: 'channelHeatmapData' },
+    { key: 'loyaltyNPS', Component: LoyaltyNPS, propName: 'loyaltyNPSData' },
+    { key: 'capabilityHeatmap', Component: CapabilityHeatmap, propName: 'capabilityHeatmapData' },
+    { key: 'porters', Component: PortersFiveForces, propName: 'portersData' },
+    { key: 'pestel', Component: PestelAnalysis, propName: 'pestelData' }
   ];
+
+  const essentialPhaseTypes = [
+    { key: 'fullSwot', Component: FullSWOTPortfolio, propName: 'fullSwotData' },
+    { key: 'customerSegmentation', Component: CustomerSegmentation, propName: 'customerSegmentationData' },
+    { key: 'competitiveAdvantage', Component: CompetitiveAdvantageMatrix, propName: 'competitiveAdvantageData' },
+    { key: 'channelEffectiveness', Component: ChannelEffectivenessMap, propName: 'channelEffectivenessData' },
+    { key: 'expandedCapability', Component: ExpandedCapabilityHeatmap, propName: 'expandedCapabilityData' },
+    { key: 'strategicGoals', Component: StrategicGoals, propName: 'strategicGoalsData' },
+    { key: 'strategicRadar', Component: StrategicPositioningRadar, propName: 'strategicRadarData' },
+    { key: 'cultureProfile', Component: OrganizationalCultureProfile, propName: 'cultureProfileData' },
+    { key: 'productivityMetrics', Component: ProductivityMetrics, propName: 'productivityData' },
+    { key: 'maturityScore', Component: MaturityScoreLight, propName: 'maturityData' }
+  ];
+
+  const analysisTypes = selectedPhase === 'initial' ? initialPhaseTypes : essentialPhaseTypes;
 
   return (
     <div className="analysis-components">
-      {analysisTypes.map(({ key, Component }) => {
+      {analysisTypes.map(({ key, Component, propName }) => {
         if (!analysisData[key]) return null;
 
         const props = {
           businessName: analysisData.businessName,
           onRegenerate: null,
           isRegenerating: false,
-          canRegenerate: false
+          canRegenerate: false,
+          questions: analysisData.questions,
+          userAnswers: analysisData.userAnswers,
+          onDataGenerated: () => {},
+          selectedBusinessId: null
         };
 
+        // Set the specific data prop for each component
         if (key === 'swot') {
           props.analysisResult = analysisData[key];
         } else {
-          props.questions = analysisData.questions;
-          props.userAnswers = analysisData.userAnswers;
-          props[`${key}Data`] = analysisData[key];
-          props.onDataGenerated = () => { };
+          props[propName] = analysisData[key];
         }
 
         return (

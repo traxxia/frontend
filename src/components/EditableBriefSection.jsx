@@ -243,7 +243,7 @@ const EditableBriefSection = ({
   const isEssentialPhaseComplete = completedEssentialQuestions.length === essentialQuestions.length && essentialQuestions.length > 0;
 
   return (
-    <div className="brief-section">
+    <div className="editable-brief-section"  style={{ marginTop: '10px' }} >
       {showToast.show && (
         <div className={`simple-toast ${showToast.type}`}>
           {showToast.message}

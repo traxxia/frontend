@@ -564,7 +564,7 @@ html, body {
 .brief-section {
   position: relative;
   scroll-behavior: auto !important;
-  margin-top: 50px;
+  margin-top: 70px;
 }
 
 .brief-content {
@@ -1100,7 +1100,7 @@ html, body {
   margin-bottom: 20px;
 }
 
-.strategic-content {
+.strategic-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1190,7 +1190,7 @@ html, body {
 }
 
 .expanded-analysis-main .analysis-content,
-.expanded-analysis-main .strategic-content {
+.expanded-analysis-main .strategic-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2151,7 +2151,8 @@ html, body {
   width: 100%;
 }
 .analysis-section,
-.analysis-content {
+.analysis-content,
+.strategic-section {
   display: block !important;
   height: auto !important;
   opacity: 1 !important;
@@ -2428,3 +2429,5 @@ html, body {
     display: none;
   }
 }
+
+
