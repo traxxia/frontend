@@ -6595,7 +6595,7 @@
 .sub-dimension {
   padding: 12px;
   background: rgba(248, 250, 252, 0.8);
-  border-radius: 8px;
+  border-radius: 0px;
   border-left: 3px solid var(--dimension-color, #3b82f6);
 }
 

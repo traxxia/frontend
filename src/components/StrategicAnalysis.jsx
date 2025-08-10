@@ -35,6 +35,8 @@ const StrategicAnalysis = ({
   canRegenerate = true,
   strategicData = null,
   phaseManager,
+  saveAnalysisToBackend, // ADD THIS PROP
+  selectedBusinessId
 }) => {
   const [localStrategicData, setLocalStrategicData] = useState(strategicData);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,67 +67,90 @@ const StrategicAnalysis = ({
     return phases;
   };
 
-  const generateStrategicAnalysis = async () => {
-    try {
-      setIsLoading(true);
-      
-      const questionsArray = [];
-      const answersArray = [];
+  const generateStrategicAnalysis = async (phaseType = 'initial') => {
+  try {
+    setIsLoading(true);
+    
+    const questionsArray = [];
+    const answersArray = [];
 
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No questions available for strategic analysis');
-      }
-
-      const requestPayload = {
-        questions: questionsArray,
-        answers: answersArray
-      };
-
-      const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestPayload)
+    questions
+      .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .forEach(question => {
+        questionsArray.push(question.question_text);
+        answersArray.push(userAnswers[question._id]);
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Strategic Analysis API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      setLocalStrategicData(result);
-      return result;
-
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsLoading(false);
+    if (questionsArray.length === 0) {
+      throw new Error('No questions available for strategic analysis');
     }
-  };
+
+    const requestPayload = {
+      questions: questionsArray,
+      answers: answersArray
+    };
+
+    const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestPayload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Strategic Analysis API returned ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    
+    // Save to backend with appropriate phase (only if function is provided)
+    if (saveAnalysisToBackend && typeof saveAnalysisToBackend === 'function') {
+      const analysisType = 'strategic';
+      const customPhase = phaseType === 'essential' ? 'essential' : null;
+      
+      try {
+        await saveAnalysisToBackend(result, analysisType, customPhase);
+        console.log(`Strategic analysis saved to ${phaseType} phase`);
+      } catch (saveError) {
+        console.error('Error saving strategic analysis:', saveError);
+        // Don't throw - continue with setting local data even if save fails
+      }
+    }
+    
+    setLocalStrategicData(result);
+    return result;
+
+  } catch (error) {
+    console.error('Error generating strategic analysis:', error);
+    throw error;
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleRegenerate = async () => {
-    try {
-      if (onRegenerate) {
-        onRegenerate();
-      } else {
-        setLocalStrategicData(null);
-        await generateStrategicAnalysis();
-      }
-    } catch (error) {
-      console.error('Error regenerating strategic analysis:', error);
+  try {
+    if (onRegenerate) {
+      // Call the parent's regenerate function (this will be handleStrategicAnalysisRegenerate)
+      await onRegenerate();
+    } else {
+      // Fallback: generate locally
+      setLocalStrategicData(null);
+      
+      // Determine phase based on unlocked features
+      const unlockedFeatures = phaseManager?.getUnlockedFeatures() || {};
+      const phaseType = unlockedFeatures.fullSwot ? 'essential' : 'initial';
+      
+      await generateStrategicAnalysis(phaseType);
     }
-  };
+  } catch (error) {
+    console.error('Error regenerating strategic analysis:', error);
+  }
+};
 
   useEffect(() => {
     if (strategicData) {

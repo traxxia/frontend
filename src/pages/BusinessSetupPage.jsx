@@ -156,12 +156,14 @@ const BusinessSetupPage = () => {
       });
     }
 
-    // Show essential phase (locked or unlocked)
-    phases.push({
-      key: 'essential',
-      name: 'Essential Phase',
-      unlocked: unlockedFeatures.fullSwot
-    });
+    // Only show essential phase if it's actually unlocked
+    if (unlockedFeatures.fullSwot) {
+      phases.push({
+        key: 'essential',
+        name: 'Essential Phase',
+        unlocked: true
+      });
+    }
 
     return phases;
   };
@@ -809,7 +811,7 @@ const BusinessSetupPage = () => {
 
       // Fix: Handle the actual API response structure
       let maturityContent = null;
-      if (result.maturityScoring) { 
+      if (result.maturityScoring) {
         maturityContent = { maturityScore: result.maturityScoring };
       } else if (result.maturity_scoring) {
         maturityContent = { maturityScore: result.maturity_scoring };
@@ -848,6 +850,7 @@ const BusinessSetupPage = () => {
       setIsProductivityRegenerating(true);
       setIsMaturityRegenerating(true);
       setIsCustomerSegmentationRegenerating(true);
+      setIsStrategicRegenerating(true); // ADD THIS - for strategic analysis
 
       showToastMessage("Essential phase completed! Generating all essential analyses...", "info");
 
@@ -862,10 +865,11 @@ const BusinessSetupPage = () => {
       setProductivityData(null);
       setMaturityData(null);
       setCustomerSegmentationData(null);
+      // Don't clear strategic data, we want to update it
 
       const freshAnswers = await getFreshConversationData();
 
-      // Generate ALL essential phase analyses
+      // Generate ALL essential phase analyses INCLUDING Strategic Analysis
       const analysisPromises = [
         generateFullSwotPortfolio(freshAnswers),
         generateCompetitiveAdvantage(freshAnswers),
@@ -876,7 +880,8 @@ const BusinessSetupPage = () => {
         generateCultureProfile(freshAnswers),
         generateProductivityMetrics(freshAnswers),
         generateMaturityScore(freshAnswers),
-        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers)
+        generateSingleAnalysisWithData('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, freshAnswers),
+        generateStrategicAnalysisForEssential(freshAnswers) // ADD THIS - Strategic Analysis for essential phase
       ];
 
       const results = await Promise.allSettled(analysisPromises);
@@ -906,8 +911,10 @@ const BusinessSetupPage = () => {
       setIsProductivityRegenerating(false);
       setIsMaturityRegenerating(false);
       setIsCustomerSegmentationRegenerating(false);
+      setIsStrategicRegenerating(false); // ADD THIS
     }
   };
+
   const handleFullSwotRegenerate = async () => {
     if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
 
@@ -1001,30 +1008,93 @@ const BusinessSetupPage = () => {
       throw error;
     }
   };
+  const handleStrategicAnalysisRegenerate = async () => {
+    if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
 
+    try {
+      setIsStrategicRegenerating(true);
+
+      // Determine if we should use essential phase logic
+      const unlockedFeatures = phaseManager.getUnlockedFeatures();
+      const useEssentialPhase = unlockedFeatures.fullSwot;
+
+      if (useEssentialPhase) {
+        showToastMessage("Regenerating Strategic Analysis (Essential Phase)...", "info");
+        await generateStrategicAnalysisForEssential(userAnswers);
+      } else {
+        showToastMessage("Regenerating Strategic Analysis...", "info");
+        setStrategicData(null);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await generateStrategicAnalysisWithAnswers(userAnswers);
+      }
+
+      showToastMessage("Strategic Analysis regenerated successfully!", "success");
+    } catch (error) {
+      console.error('Error regenerating Strategic Analysis:', error);
+      showToastMessage("Failed to regenerate Strategic Analysis.", "error");
+    } finally {
+      setIsStrategicRegenerating(false);
+    }
+  };
+  const handleStrategicAnalysisRegenerateForEssential = async () => {
+    if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+
+    try {
+      setIsStrategicRegenerating(true);
+      showToastMessage("Regenerating Strategic Analysis for Essential Phase...", "info");
+
+      // Don't clear strategic data, we want to update it
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Call the essential phase strategic analysis directly
+      await generateStrategicAnalysisForEssential(userAnswers);
+
+      showToastMessage("Strategic Analysis for Essential Phase regenerated successfully!", "success");
+    } catch (error) {
+      console.error('Error regenerating Strategic Analysis for Essential Phase:', error);
+      showToastMessage("Failed to regenerate Strategic Analysis for Essential Phase.", "error");
+    } finally {
+      setIsStrategicRegenerating(false);
+    }
+  };
 
   // Load existing analysis data
   const loadExistingAnalysisData = (phaseAnalysisArray) => {
     try {
       const latestAnalysisByType = {};
+
+      // Group by analysis type and phase, keeping the latest for each combination
       phaseAnalysisArray
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .forEach(analysis => {
-          const type = analysis.analysis_type;
-          if (!latestAnalysisByType[type]) {
-            latestAnalysisByType[type] = analysis;
+          const key = `${analysis.analysis_type}_${analysis.phase}`;
+          if (!latestAnalysisByType[key]) {
+            latestAnalysisByType[key] = analysis;
           }
         });
 
       let hasAnyAnalysis = false;
 
       Object.values(latestAnalysisByType).forEach(analysis => {
-        const { analysis_type, analysis_data } = analysis;
+        const { analysis_type, analysis_data, phase } = analysis;
         hasAnyAnalysis = true;
 
         switch (analysis_type) {
           case 'swot':
             setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data));
+            break;
+          case 'strategic':
+            // For strategic analysis, prioritize essential phase version if available
+            const essentialStrategic = latestAnalysisByType['strategic_essential'];
+            const initialStrategic = latestAnalysisByType['strategic_initial'];
+
+            if (essentialStrategic) {
+              setStrategicData(essentialStrategic.analysis_data);
+            } else if (initialStrategic) {
+              setStrategicData(initialStrategic.analysis_data);
+            } else {
+              setStrategicData(analysis_data);
+            }
             break;
           case 'fullSwot':
             setFullSwotData(analysis_data);
@@ -1070,9 +1140,6 @@ const BusinessSetupPage = () => {
             break;
           case 'pestel':
             setPestelData(analysis_data);
-            break;
-          case 'strategic':
-            setStrategicData(analysis_data);
             break;
           case 'channelEffectiveness':
             setChannelEffectivenessData(analysis_data);
@@ -1169,9 +1236,41 @@ const BusinessSetupPage = () => {
   };
 
   // Save analysis to backend
-  const saveAnalysisToBackend = async (analysisData, analysisType) => {
+  const saveAnalysisToBackend = async (analysisData, analysisType, customPhase = null) => {
     try {
       const token = getAuthToken();
+
+      // Define which analysis types belong to which phases
+      const analysisPhaseMap = {
+        // Initial Phase analyses
+        'swot': 'initial',
+        'purchaseCriteria': 'initial',
+        'channelHeatmap': 'initial',
+        'loyaltyNPS': 'initial',
+        'capabilityHeatmap': 'initial',
+        'porters': 'initial',
+        'pestel': 'initial',
+        'strategic': 'initial', // Default for strategic analysis
+
+        // Essential Phase analyses  
+        'fullSwot': 'essential',
+        'customerSegmentation': 'essential',
+        'competitiveAdvantage': 'essential',
+        'channelEffectiveness': 'essential',
+        'expandedCapability': 'essential',
+        'strategicGoals': 'essential',
+        'strategicRadar': 'essential',
+        'cultureProfile': 'essential',
+        'productivityMetrics': 'essential',
+        'maturityScore': 'essential',
+        'strategicEssential': 'essential' // Strategic analysis when called in essential phase
+      };
+
+      // Determine the correct phase
+      const phase = customPhase || analysisPhaseMap[analysisType] || 'initial';
+
+      console.log(`Saving ${analysisType} analysis to ${phase} phase`);
+
       const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
         method: 'POST',
         headers: {
@@ -1179,105 +1278,173 @@ const BusinessSetupPage = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          phase: 'initial',
+          phase: phase, // Now dynamic instead of hardcoded 'initial'
           analysis_type: analysisType,
           analysis_name: `${analysisType.toUpperCase()} Analysis`,
           analysis_data: analysisData,
           business_id: selectedBusinessId,
-          metadata: { generated_at: new Date().toISOString() }
+          metadata: {
+            generated_at: new Date().toISOString(),
+            phase: phase,
+            generation_context: customPhase ? 'essential_phase_completion' : 'regular_generation'
+          }
         })
       });
-      return response.ok;
+
+      if (!response.ok) {
+        console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
+        return false;
+      }
+
+      console.log(`Successfully saved ${analysisType} analysis to ${phase} phase`);
+      return true;
     } catch (error) {
       console.error(`Error saving ${analysisType} analysis:`, error);
       return false;
     }
   };
 
-  // Generate individual analysis
-  const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
-  try {
-    const questionsArray = [];
-    const answersArray = [];
 
-    questions
-      .filter(q => {
-        const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
-        return hasAnswer;
-      })
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach(question => {
-        const cleanQuestion = String(question.question_text)
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
+  const generateStrategicAnalysisForEssential = async (freshAnswers) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
 
-        const cleanAnswer = String(userAnswers[question._id])
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2026]/g, '...')
-          .replace(/[^\x00-\x7F]/g, '')
-          .trim();
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
 
-        questionsArray.push(cleanQuestion);
-        answersArray.push(cleanAnswer);
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for essential phase strategic analysis');
+      }
+
+      console.log('Calling Strategic Analysis API for Essential Phase with:', {
+        questionsCount: questionsArray.length,
+        answersCount: answersArray.length
       });
 
-    if (questionsArray.length === 0) {
-      throw new Error(`No questions available for ${analysisType} analysis`);
-    }
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
 
-    const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json; charset=utf-8'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`${analysisType} API returned ${response.status}`);
-    }
-
-    const result = await response.json();
-    let dataToSave = null;
-
-    // Special handling for different API response structures
-    if (analysisType === 'maturityScore') {
-      if (result.maturityScoring) {
-        dataToSave = { maturityScore: result.maturityScoring };
-      } else if (result.maturity_scoring) {
-        dataToSave = { maturityScore: result.maturity_scoring };
-      } else if (result.maturityScore) {
-        dataToSave = result;
-      } else {
-        dataToSave = { maturityScore: result };
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Strategic API returned ${response.status}: ${errorText}`);
       }
-    } else if (analysisType === 'capabilityHeatmap') {
-      dataToSave = result.capabilities ? result : result[dataKey];
-    } else if (result && result[dataKey]) {
-      dataToSave = result[dataKey];
-    } else {
-      throw new Error(`Invalid response structure from ${analysisType} API`);
-    }
 
-    if (dataToSave) {
-      setter(dataToSave);
-      await saveAnalysisToBackend(dataToSave, analysisType);
+      const result = await response.json();
+      const strategicContent = result.strategic_analysis || result.strategic || result;
+
+      // Update strategic data with new essential phase analysis
+      setStrategicData(strategicContent);
+
+      // Save as essential phase using custom phase parameter
+      await saveAnalysisToBackend(strategicContent, 'strategic', 'essential');
+
+      console.log('Strategic Analysis for Essential Phase generated successfully:', strategicContent);
+      return strategicContent;
+
+    } catch (error) {
+      console.error('Error generating Strategic Analysis for Essential Phase:', error);
+      throw error;
     }
-  } catch (error) {
-    console.error(`Error generating ${analysisType} analysis:`, error);
-    throw error;
-  }
-};
+  };
+  // Generate individual analysis
+  const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
+    try {
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => {
+          const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
+          return hasAnswer;
+        })
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          const cleanQuestion = String(question.question_text)
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          const cleanAnswer = String(userAnswers[question._id])
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2013\u2014]/g, '-')
+            .replace(/[\u2026]/g, '...')
+            .replace(/[^\x00-\x7F]/g, '')
+            .trim();
+
+          questionsArray.push(cleanQuestion);
+          answersArray.push(cleanAnswer);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error(`No questions available for ${analysisType} analysis`);
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`${analysisType} API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      let dataToSave = null;
+
+      // Special handling for different API response structures
+      if (analysisType === 'maturityScore') {
+        if (result.maturityScoring) {
+          dataToSave = { maturityScore: result.maturityScoring };
+        } else if (result.maturity_scoring) {
+          dataToSave = { maturityScore: result.maturity_scoring };
+        } else if (result.maturityScore) {
+          dataToSave = result;
+        } else {
+          dataToSave = { maturityScore: result };
+        }
+      } else if (analysisType === 'capabilityHeatmap') {
+        dataToSave = result.capabilities ? result : result[dataKey];
+      } else if (result && result[dataKey]) {
+        dataToSave = result[dataKey];
+      } else {
+        throw new Error(`Invalid response structure from ${analysisType} API`);
+      }
+
+      if (dataToSave) {
+        setter(dataToSave);
+        await saveAnalysisToBackend(dataToSave, analysisType);
+      }
+    } catch (error) {
+      console.error(`Error generating ${analysisType} analysis:`, error);
+      throw error;
+    }
+  };
 
   // Main function to regenerate all analysis
   const regenerateAllAnalysis = async (updatedQuestionId = null, updatedAnswer = null, forceRegenerate = false) => {
@@ -1409,14 +1576,13 @@ const BusinessSetupPage = () => {
     // Check phases AFTER updating state
     setTimeout(async () => {
       const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
-
-      // FIX: Simple dynamic essential phase logic - ALL essential questions must be completed
       const essentialQuestions = questions.filter(q => q.phase === 'essential');
 
       const completedInitial = initialQuestions.filter(q => newCompletedSet.has(q._id));
       const completedEssential = essentialQuestions.filter(q => newCompletedSet.has(q._id));
 
       console.log('Phase Check After Completion:', {
+        questionPhase: questions.find(q => q._id === questionId)?.phase, // ADD: Log which phase the completed question belongs to
         initialTotal: initialQuestions.length,
         initialCompleted: completedInitial.length,
         essentialTotal: essentialQuestions.length,
@@ -1424,23 +1590,29 @@ const BusinessSetupPage = () => {
         completedQuestions: Array.from(newCompletedSet)
       });
 
-      // Check Initial Phase (unchanged)
-      if (initialQuestions.length > 0 && completedInitial.length === initialQuestions.length) {
-        console.log('✅ Initial Phase Complete - should generate analysis');
-        if (!hasAnalysisData) {
-          await regenerateAllAnalysisForCompletion();
-        }
+      // Get the phase of the completed question
+      const completedQuestion = questions.find(q => q._id === questionId);
+      const completedQuestionPhase = completedQuestion?.phase;
+
+      // FIX: Only check initial phase completion if we just completed an initial phase question
+      // AND we haven't generated initial analysis yet
+      if (completedQuestionPhase === 'initial' &&
+        initialQuestions.length > 0 &&
+        completedInitial.length === initialQuestions.length &&
+        !hasAnalysisData) {
+        console.log('✅ Initial Phase Complete - generating initial analysis');
+        await regenerateAllAnalysisForCompletion();
       }
 
-      // FIX: Essential Phase - require completing ALL essential questions (regardless of severity)
-      if (essentialQuestions.length > 0 && completedEssential.length === essentialQuestions.length) {
-        console.log('✅ Essential Phase Complete - should generate Full SWOT and Competitive Advantage');
+      // FIX: Only check essential phase completion if we just completed an essential phase question
+      // AND we haven't generated essential analysis yet
+      if (completedQuestionPhase === 'essential' &&
+        essentialQuestions.length > 0 &&
+        completedEssential.length === essentialQuestions.length &&
+        (!fullSwotData || !competitiveAdvantageData)) {
+        console.log('✅ Essential Phase Complete - generating essential analysis');
         console.log(`Completed ALL ${completedEssential.length}/${essentialQuestions.length} essential questions`);
-
-        // Generate both Full SWOT and Competitive Advantage when essential phase completes
-        if (!fullSwotData || !competitiveAdvantageData) {
-          await generateFullSwotPortfolioForCompletion();
-        }
+        await generateFullSwotPortfolioForCompletion();
       }
     }, 100);
 
@@ -1948,7 +2120,7 @@ const BusinessSetupPage = () => {
       }
 
       const result = await response.json();
-      let dataToSave = null; 
+      let dataToSave = null;
       // Special handling for different API response structures
       if (analysisType === 'maturityScore') {
         if (result.maturityScoring) {
@@ -1995,7 +2167,7 @@ const BusinessSetupPage = () => {
         throw new Error('No questions available for strategic analysis');
       }
 
-      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -2850,20 +3022,15 @@ const BusinessSetupPage = () => {
                             questions={questions}
                             userAnswers={userAnswers}
                             businessName={businessData.name}
-                            onRegenerate={createIndividualRegenerationHandler(
-                              'strategic',
-                              'strategic-goals',
-                              'strategic',
-                              setStrategicData,
-                              'Strategic analysis',
-                              setIsStrategicRegenerating
-                            )}
+                            onRegenerate={handleStrategicAnalysisRegenerate}
                             isRegenerating={isStrategicRegenerating}
                             canRegenerate={!isAnalysisRegenerating}
                             strategicData={strategicData}
                             selectedBusinessId={selectedBusinessId}
-                            phaseManager={phaseManager} // ADD THIS LINE
+                            phaseManager={phaseManager}
+                            saveAnalysisToBackend={saveAnalysisToBackend}
                           />
+
                         </div>
                       )}
                     </div>
@@ -2962,20 +3129,15 @@ const BusinessSetupPage = () => {
                       questions={questions}
                       userAnswers={userAnswers}
                       businessName={businessData.name}
-                      onRegenerate={createIndividualRegenerationHandler(
-                        'strategic',
-                        'strategic-goals',
-                        'strategic',
-                        setStrategicData,
-                        'Strategic analysis',
-                        setIsStrategicRegenerating
-                      )}
+                      onRegenerate={handleStrategicAnalysisRegenerate}
                       isRegenerating={isStrategicRegenerating}
                       canRegenerate={!isAnalysisRegenerating}
                       strategicData={strategicData}
                       selectedBusinessId={selectedBusinessId}
-                      phaseManager={phaseManager} // ADD THIS LINE
+                      phaseManager={phaseManager}
+                      saveAnalysisToBackend={saveAnalysisToBackend}
                     />
+
                   </div>
                 )}
               </div>

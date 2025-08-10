@@ -171,7 +171,7 @@ const PortersFiveForces = ({
             {getForceIcon(force.force)}
           </div>
           <div className="force-title">
-            <h4>{force.force}</h4>
+            <h5>{force.force}</h5>
             <div className="force-badges">
               <span className={`intensity-badge ${getIntensityColor(force.intensity)}`}>
                 {force.intensity}
@@ -235,7 +235,7 @@ const PortersFiveForces = ({
         <div className="pff-header">
           <div className="pff-title-section">
             <Shield className="pff-icon" size={24} />
-            <h2 className="pff-title">Porter's Five Forces Analysis</h2>
+            <h5 className="pff-title">Porter's Five Forces Analysis</h5>
           </div>
         </div>
         <div className="loading-state">
@@ -257,12 +257,12 @@ const PortersFiveForces = ({
         <div className="pff-header">
           <div className="pff-title-section">
             <Shield className="pff-icon" size={24} />
-            <h2 className="pff-title">Porter's Five Forces Analysis</h2>
+            <h5 className="pff-title">Porter's Five Forces Analysis</h5>
           </div>
         </div>
         <div className="error-state">
           <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
+          <h5>Analysis Error</h5>
           <p>{error}</p>
           <button onClick={() => {
             setError(null);
@@ -286,7 +286,7 @@ const PortersFiveForces = ({
         <div className="pff-header">
           <div className="pff-title-section">
             <Shield className="pff-icon" size={24} />
-            <h2 className="pff-title">Porter's Five Forces Analysis</h2>
+            <h5 className="pff-title">Porter's Five Forces Analysis</h5>
           </div>
           <RegenerateButton
             onRegenerate={handleRegenerate}
@@ -299,7 +299,7 @@ const PortersFiveForces = ({
         </div>
         <div className="empty-state">
           <Shield size={48} className="empty-icon" />
-          <h3>Porter's Five Forces Analysis</h3>
+          <h5>Porter's Five Forces Analysis</h5>
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate Porter's Five Forces analysis.`
@@ -317,7 +317,7 @@ const PortersFiveForces = ({
       <div className="pff-header">
         <div className="pff-title-section">
           <Shield className="pff-icon" size={24} />
-          <h2 className="pff-title">Porter's Five Forces Analysis</h2>
+          <h5 className="pff-title">Porter's Five Forces Analysis</h5>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}
@@ -333,7 +333,7 @@ const PortersFiveForces = ({
         {/* Executive Summary */}
         {parsedData.executive_summary && (
           <div className="executive-summary">
-            <h3>Executive Summary</h3>
+            <h5>Executive Summary</h5>
             <div className="summary-grid">
               <div className="summary-item">
                 <span className="summary-label">Industry Attractiveness:</span>
@@ -355,7 +355,7 @@ const PortersFiveForces = ({
             
             {parsedData.executive_summary.key_competitive_forces && (
               <div className="key-forces">
-                <h4>Key Competitive Forces:</h4>
+                <h5>Key Competitive Forces:</h5>
                 <div className="forces-tags">
                   {parsedData.executive_summary.key_competitive_forces.map((force, index) => (
                     <span key={index} className="force-tag">{force}</span>
@@ -366,7 +366,7 @@ const PortersFiveForces = ({
 
             {parsedData.executive_summary.strategic_implications && (
               <div className="strategic-implications">
-                <h4 style={{color: 'black'}}>Strategic Implications:</h4>
+                <h5 style={{color: 'black'}}>Strategic Implications:</h5>
                 <ul>
                   {parsedData.executive_summary.strategic_implications.map((implication, index) => (
                     <li key={index}>{implication}</li>
@@ -380,7 +380,7 @@ const PortersFiveForces = ({
         {/* Forces Analysis */}
         {parsedData.five_forces_analysis && (
           <div className="forces-section">
-            <h3>Five Forces Analysis</h3>
+            <h5>Five Forces Analysis</h5>
             <div className="forces-grid">
               {transformForcesData(parsedData).map((force, index) => renderForceCard(force, index))}
             </div>
@@ -390,11 +390,11 @@ const PortersFiveForces = ({
         {/* Competitive Landscape */}
         {parsedData.competitive_landscape && (
           <div className="competitive-landscape">
-            <h3>Competitive Landscape</h3>
+            <h5>Competitive Landscape</h5>
             
             {parsedData.competitive_landscape.direct_competitors && (
               <div className="competitors-section">
-                <h4>Direct Competitors</h4>
+                <h5>Direct Competitors</h5>
                 <div className="competitors-grid">
                   {parsedData.competitive_landscape.direct_competitors.map((competitor, index) => (
                     <div key={index} className="competitor-card">
@@ -435,11 +435,11 @@ const PortersFiveForces = ({
         {/* Strategic Recommendations */}
         {parsedData.strategic_recommendations && (
           <div className="strategic-recommendations">
-            <h3 style={{color: 'black'}}>Strategic Recommendations</h3>
+            <h5 style={{color: 'black'}}>Strategic Recommendations</h5>
 
             {parsedData.strategic_recommendations.immediate_actions && (
               <div className="recommendations-section" style={{marginBottom: '20px'}}>
-                <h4 style={{color: 'black'}}>Immediate Actions (Next 3-6 months)</h4>
+                <h5 style={{color: 'black'}}>Immediate Actions (Next 3-6 months)</h5>
                 {parsedData.strategic_recommendations.immediate_actions.map((action, index) => (
                   <div key={index} className="recommendation-card immediate">
                     <h5>{action.action}</h5>
@@ -462,7 +462,7 @@ const PortersFiveForces = ({
 
             {parsedData.strategic_recommendations.short_term_initiatives && (
               <div className="recommendations-section" style={{marginBottom: '20px'}}>
-                <h4 style={{color: 'black'}}>Short-term Initiatives</h4>
+                <h5 style={{color: 'black'}}>Short-term Initiatives</h5>
                 {parsedData.strategic_recommendations.short_term_initiatives.map((initiative, index) => (
                   <div key={index} className="recommendation-card short-term">
                     <h5>{initiative.initiative}</h5>
@@ -484,7 +484,7 @@ const PortersFiveForces = ({
 
             {parsedData.strategic_recommendations.long_term_strategic_shifts && (
               <div className="recommendations-section" style={{marginBottom: '20px'}}>
-                <h4 style={{color: 'black'}}>Long-term Strategic Shifts</h4>
+                <h5 style={{color: 'black'}}>Long-term Strategic Shifts</h5>
                 {parsedData.strategic_recommendations.long_term_strategic_shifts.map((shift, index) => (
                   <div key={index} className="recommendation-card long-term">
                     <h5>{shift.shift}</h5>
@@ -509,11 +509,11 @@ const PortersFiveForces = ({
         {/* Monitoring Dashboard */}
         {parsedData.monitoring_dashboard && (
           <div className="monitoring-dashboard">
-            <h3 style={{color: 'black'}}>Monitoring Dashboard</h3>
+            <h5 style={{color: 'black'}}>Monitoring Dashboard</h5>
 
             {parsedData.monitoring_dashboard.key_indicators && (
               <div className="indicators-section">
-                <h4 style={{color: 'black'}}>Key Performance Indicators</h4>
+                <h5 style={{color: 'black'}}>Key Performance Indicators</h5>
                 {parsedData.monitoring_dashboard.key_indicators.map((indicator, index) => (
                   <div key={index} className="indicator-card">
                     <h5>{indicator.indicator}</h5>
@@ -535,7 +535,7 @@ const PortersFiveForces = ({
 
             {parsedData.monitoring_dashboard.early_warning_signals && (
               <div className="warnings-section">
-                <h4>Early Warning Signals</h4>
+                <h5>Early Warning Signals</h5>
                 {parsedData.monitoring_dashboard.early_warning_signals.map((signal, index) => (
                   <div key={index} className="warning-card">
                     <h5>{signal.signal}</h5>

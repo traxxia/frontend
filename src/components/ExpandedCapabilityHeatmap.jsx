@@ -52,14 +52,42 @@ const ExpandedCapabilityHeatmap = ({
     };
 
     useEffect(() => {
-        if (expandedCapabilityData) {
-            setData(expandedCapabilityData);
+    if (expandedCapabilityData) {
+        console.log('ExpandedCapabilityHeatmap received data:', expandedCapabilityData);
+        
+        // Handle different API response structures
+        let processedData = null;
+        
+        if (expandedCapabilityData.expandedCapabilityHeatmap) {
+            // When data comes from generateExpandedCapability function
+            processedData = expandedCapabilityData.expandedCapabilityHeatmap;
+        } else if (expandedCapabilityData.expanded_capability_heatmap) {
+            // Alternative API response structure
+            processedData = expandedCapabilityData.expanded_capability_heatmap;
+        } else if (expandedCapabilityData.capabilities && Array.isArray(expandedCapabilityData.capabilities)) {
+            // Direct capability data structure
+            processedData = expandedCapabilityData;
+        } else {
+            // Fallback - use the data as-is
+            processedData = expandedCapabilityData;
+        }
+        
+        console.log('Processed data for ExpandedCapabilityHeatmap:', processedData);
+        
+        // Validate that the processed data has the expected structure
+        if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities)) {
+            setData(processedData);
             setHasGenerated(true);
         } else {
+            console.error('Invalid data structure for ExpandedCapabilityHeatmap:', processedData);
             setData(null);
             setHasGenerated(false);
         }
-    }, [expandedCapabilityData]);
+    } else {
+        setData(null);
+        setHasGenerated(false);
+    }
+}, [expandedCapabilityData]);
 
     const getHeatmapData = () => {
         if (!data?.capabilities || !Array.isArray(data.capabilities)) {

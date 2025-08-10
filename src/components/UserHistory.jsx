@@ -231,7 +231,7 @@ const useSortedFilteredUsers = (users, searchTerm) => {
   return { sortedUsers, sortConfig, requestSort };
 };
 
-// Analysis data parser with phase and strategic analysis support
+// FIXED: Complete analysis data parser with ALL analysis types
 const parseAnalysisData = (userDetails, user) => {
   if (!userDetails) return null;
 
@@ -244,7 +244,7 @@ const parseAnalysisData = (userDetails, user) => {
     capabilityHeatmap: null,
     porters: null,
     pestel: null,
-    strategic: null, // Add strategic analysis
+    strategic: null,
     
     // Essential Phase Components
     fullSwot: null,
@@ -279,6 +279,7 @@ const parseAnalysisData = (userDetails, user) => {
     });
   }
 
+  // FIXED: Process ALL analysis types from system data
   userDetails.system?.forEach(result => {
     try {
       const analysisResult = typeof result.analysis_result === 'string'
@@ -287,8 +288,9 @@ const parseAnalysisData = (userDetails, user) => {
 
       const analysisType = result.analysis_type?.toLowerCase() || result.name?.toLowerCase() || '';
 
-      // Map analysis types to data properties
+      // Map ALL analysis types to data properties
       switch (analysisType) {
+        // Initial Phase Analysis Types
         case 'swot':
           analysisData.swot = analysisResult;
           break;
@@ -311,6 +313,7 @@ const parseAnalysisData = (userDetails, user) => {
           break;
         case 'porters':
         case 'porter_analysis':
+        case 'porters_five_forces':
           analysisData.porters = analysisResult;
           break;
         case 'pestel':
@@ -321,8 +324,11 @@ const parseAnalysisData = (userDetails, user) => {
         case 'strategic_analysis':
           analysisData.strategic = analysisResult;
           break;
+        
+        // Essential Phase Analysis Types
         case 'fullswot':
         case 'full_swot':
+        case 'full_swot_portfolio':
           analysisData.fullSwot = analysisResult;
           break;
         case 'customersegmentation':
@@ -331,14 +337,17 @@ const parseAnalysisData = (userDetails, user) => {
           break;
         case 'competitiveadvantage':
         case 'competitive_advantage':
+        case 'competitive_advantage_matrix':
           analysisData.competitiveAdvantage = analysisResult;
           break;
         case 'channeleffectiveness':
         case 'channel_effectiveness':
+        case 'channel_effectiveness_map':
           analysisData.channelEffectiveness = analysisResult;
           break;
         case 'expandedcapability':
         case 'expanded_capability':
+        case 'expanded_capability_heatmap':
           analysisData.expandedCapability = analysisResult;
           break;
         case 'strategicgoals':
@@ -347,10 +356,12 @@ const parseAnalysisData = (userDetails, user) => {
           break;
         case 'strategicradar':
         case 'strategic_radar':
+        case 'strategic_positioning_radar':
           analysisData.strategicRadar = analysisResult;
           break;
         case 'cultureprofile':
         case 'culture_profile':
+        case 'organizational_culture_profile':
           analysisData.cultureProfile = analysisResult;
           break;
         case 'productivitymetrics':
@@ -359,18 +370,24 @@ const parseAnalysisData = (userDetails, user) => {
           break;
         case 'maturityscore':
         case 'maturity_score':
+        case 'maturity_scoring':
           analysisData.maturityScore = analysisResult;
+          break;
+        
+        default:
+          console.log(`Unknown analysis type: ${analysisType}`, analysisResult);
           break;
       }
     } catch (error) {
-      console.error('Error parsing analysis result:', error);
+      console.error('Error parsing analysis result:', error, result);
     }
   });
 
+  console.log('Parsed Analysis Data:', analysisData);
   return analysisData;
 };
 
-// Check which phases are available
+// FIXED: Check which phases are available
 const getAvailablePhases = (analysisData) => {
   if (!analysisData) return [];
 
@@ -379,7 +396,8 @@ const getAvailablePhases = (analysisData) => {
   // Check if any initial phase analysis exists
   const hasInitialAnalysis = analysisData.swot || analysisData.purchaseCriteria || 
     analysisData.channelHeatmap || analysisData.loyaltyNPS || 
-    analysisData.capabilityHeatmap || analysisData.porters || analysisData.pestel;
+    analysisData.capabilityHeatmap || analysisData.porters || 
+    analysisData.pestel || analysisData.strategic;
 
   if (hasInitialAnalysis) {
     phases.push({
@@ -669,7 +687,7 @@ const UserDetailsModal = ({ user, userDetails, isLoading, onClose, onExport, onT
   </div>
 );
 
-// Enhanced UserDetailsPanel with Strategic Analysis Tab - FIXED VERSION
+// Enhanced UserDetailsPanel with Strategic Analysis Tab
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
@@ -722,7 +740,6 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
     }
   }, [availablePhases, selectedPhase]);
 
-  // FIXED: Add proper phase change handlers
   const handlePhaseChange = (phaseKey) => {
     console.log('Phase change in analysis tab:', phaseKey);
     setSelectedPhase(phaseKey);
@@ -771,8 +788,8 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
                 availablePhases={availablePhases}
                 selectedStrategicPhase={selectedStrategicPhase}
                 phaseManager={phaseManager}
-                onPhaseChange={handlePhaseChange} // FIXED: Pass the handler
-                onStrategicPhaseChange={handleStrategicPhaseChange} // FIXED: Pass the handler
+                onPhaseChange={handlePhaseChange}
+                onStrategicPhaseChange={handleStrategicPhaseChange}
               />
             )}
           </div>
@@ -828,12 +845,11 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
   </div>
 );
 
-// FIXED: TabNavigation component
 const TabNavigation = ({ 
   activeTab, 
   onTabChange, 
   businesses, 
-  availablePhases, 
+  availablePhases,
   selectedPhase, 
   onPhaseChange,
   selectedStrategicPhase,
@@ -888,7 +904,6 @@ const LoadingState = ({ message }) => (
   </div>
 );
 
-// FIXED: Updated TabContent component
 const TabContent = ({
   activeTab,
   businesses,
@@ -902,8 +917,8 @@ const TabContent = ({
   availablePhases,
   selectedStrategicPhase,
   phaseManager,
-  onPhaseChange, // FIXED: Added this prop
-  onStrategicPhaseChange // FIXED: Added this prop
+  onPhaseChange,
+  onStrategicPhaseChange
 }) => {
   const getSelectedBusinessName = () => {
     if (!selectedBusiness) return 'Select a Business';
@@ -941,7 +956,7 @@ const TabContent = ({
           conversationCount={currentUserDetails?.conversation?.length || 0}
           selectedPhase={selectedPhase}
           availablePhases={availablePhases}
-          onPhaseChange={onPhaseChange} // FIXED: Pass the handler
+          onPhaseChange={onPhaseChange}
         />
       );
     case 'strategic':
@@ -959,7 +974,7 @@ const TabContent = ({
           selectedPhase={selectedStrategicPhase}
           availablePhases={availablePhases}
           phaseManager={phaseManager}
-          onPhaseChange={onStrategicPhaseChange} // FIXED: Pass the handler
+          onPhaseChange={onStrategicPhaseChange}
         />
       );
     default:
@@ -1165,7 +1180,7 @@ const QuestionItem = ({ question }) => (
   </div>
 );
 
-// Enhanced AnalysisTab Component with Phase Support - FIXED VERSION
+// Enhanced AnalysisTab Component with Phase Support
 const AnalysisTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -1178,7 +1193,7 @@ const AnalysisTab = ({
   conversationCount = 0,
   selectedPhase = 'initial',
   availablePhases = [],
-  onPhaseChange = () => {} // Add default empty function
+  onPhaseChange = () => {}
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -1188,7 +1203,6 @@ const AnalysisTab = ({
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
   };
 
-  // Safe phase change handler
   const handlePhaseChange = (phaseKey) => {
     if (typeof onPhaseChange === 'function') {
       onPhaseChange(phaseKey);
@@ -1217,7 +1231,8 @@ const AnalysisTab = ({
   // Check if any analysis exists for the selected phase
   const hasInitialAnalysis = analysisData.swot || analysisData.purchaseCriteria || 
     analysisData.channelHeatmap || analysisData.loyaltyNPS || 
-    analysisData.capabilityHeatmap || analysisData.porters || analysisData.pestel;
+    analysisData.capabilityHeatmap || analysisData.porters || 
+    analysisData.pestel || analysisData.strategic;
 
   const hasEssentialAnalysis = analysisData.fullSwot || analysisData.customerSegmentation ||
     analysisData.competitiveAdvantage || analysisData.channelEffectiveness ||
@@ -1281,7 +1296,7 @@ const StrategicTab = ({
   selectedPhase = 'initial',
   availablePhases = [],
   phaseManager,
-  onPhaseChange = () => {} // Add default empty function
+  onPhaseChange = () => {}
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -1355,7 +1370,7 @@ const StrategicTab = ({
   );
 };
 
-// Enhanced AnalysisComponents with Phase-based rendering - FIXED VERSION
+// FIXED: Enhanced AnalysisComponents with ALL analysis types
 const AnalysisComponents = ({ analysisData, selectedPhase }) => {
   const initialPhaseTypes = [
     { key: 'swot', Component: SwotAnalysis, propName: 'analysisResult' },
@@ -1364,7 +1379,8 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
     { key: 'loyaltyNPS', Component: LoyaltyNPS, propName: 'loyaltyNPSData' },
     { key: 'capabilityHeatmap', Component: CapabilityHeatmap, propName: 'capabilityHeatmapData' },
     { key: 'porters', Component: PortersFiveForces, propName: 'portersData' },
-    { key: 'pestel', Component: PestelAnalysis, propName: 'pestelData' }
+    { key: 'pestel', Component: PestelAnalysis, propName: 'pestelData' },
+    { key: 'strategic', Component: StrategicAnalysis, propName: 'strategicData' }
   ];
 
   const essentialPhaseTypes = [
@@ -1415,6 +1431,10 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
         // Set the specific data prop for each component
         if (key === 'swot') {
           props.analysisResult = analysisData[key];
+        } else if (key === 'strategic') {
+          props.strategicData = analysisData[key];
+          // Add phaseManager for strategic analysis
+          props.phaseManager = createSimplePhaseManager(analysisData);
         } else {
           props[propName] = analysisData[key];
         }
@@ -1425,8 +1445,6 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
           </div>
         );
       })}
-      
-       
     </div>
   );
 };
