@@ -16,6 +16,16 @@ const ExpandedCapabilityHeatmap = ({
     const [hasGenerated, setHasGenerated] = useState(false);
     const [hoveredCell, setHoveredCell] = useState(null);
 
+    // Handle regeneration
+    const handleRegenerate = async () => {
+        if (onRegenerate) {
+            onRegenerate();
+        } else {
+            setData(null);
+            setHasGenerated(false);
+        }
+    };
+
     // Vibrant color scheme for maturity levels
     const maturityLevels = [1, 2, 3, 4, 5];
     const maturityLabels = ['Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
@@ -176,6 +186,14 @@ const ExpandedCapabilityHeatmap = ({
                     <Grid3x3 size={24} />
                     <h2 className="cs-title">Expanded Capability Heatmap</h2>
                 </div>
+                <RegenerateButton
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    sectionName="Expanded Capability"
+                    size="medium"
+                    buttonText="Generate"
+                />
             </div>
             <div className="placeholder-content">
                 <div className="placeholder-icon">🎯</div>
@@ -208,16 +226,13 @@ const ExpandedCapabilityHeatmap = ({
                     <Grid3x3 size={24} />
                     <h2 className="cs-title">Expanded Capability Heatmap</h2>
                 </div>
-                {canRegenerate && onRegenerate && (
-                    <button
-                        onClick={onRegenerate}
-                        className="regenerate-button"
-                        disabled={isRegenerating}
-                    >
-                        <RefreshCw size={16} />
-                        Generate
-                    </button>
-                )}
+                <RegenerateButton
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    sectionName="Expanded Capability"
+                    size="medium"
+                />
             </div>
             <div className="error-state">
                 <p className="error-text">
@@ -254,13 +269,13 @@ const ExpandedCapabilityHeatmap = ({
                     <h2 className="cs-title">Capability Maturity Heatmap</h2>
                 </div>
 
-                 <RegenerateButton
-                          onRegenerate={onRegenerate}
-                          isRegenerating={isRegenerating}
-                          canRegenerate={canRegenerate}
-                          sectionName="Competitive Advantage"
-                          size="medium"
-                        />
+                <RegenerateButton
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    sectionName="Expanded Capability"
+                    size="medium"
+                />
             </div>
 
             {/* Legend */}

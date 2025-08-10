@@ -11,7 +11,8 @@ import {
   User,
   X,
   FileText,
-  Target
+  Target,
+  TrendingUp
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import SwotAnalysis from '../components/SwotAnalysis';
@@ -31,6 +32,7 @@ import StrategicPositioningRadar from '../components/StrategicPositioningRadar';
 import OrganizationalCultureProfile from '../components/OrganizationalCultureProfile';
 import ProductivityMetrics from '../components/ProductivityMetrics';
 import MaturityScoreLight from '../components/MaturityScoreLight';
+import StrategicAnalysis from '../components/StrategicAnalysis';
 import PDFExportComponent from '../components/PDFExportComponent';
 import '../styles/UserHistory.css';
 
@@ -229,7 +231,7 @@ const useSortedFilteredUsers = (users, searchTerm) => {
   return { sortedUsers, sortConfig, requestSort };
 };
 
-// Analysis data parser with phase support
+// Analysis data parser with phase and strategic analysis support
 const parseAnalysisData = (userDetails, user) => {
   if (!userDetails) return null;
 
@@ -242,6 +244,7 @@ const parseAnalysisData = (userDetails, user) => {
     capabilityHeatmap: null,
     porters: null,
     pestel: null,
+    strategic: null, // Add strategic analysis
     
     // Essential Phase Components
     fullSwot: null,
@@ -313,6 +316,10 @@ const parseAnalysisData = (userDetails, user) => {
         case 'pestel':
         case 'pestel_analysis':
           analysisData.pestel = analysisResult;
+          break;
+        case 'strategic':
+        case 'strategic_analysis':
+          analysisData.strategic = analysisResult;
           break;
         case 'fullswot':
         case 'full_swot':
@@ -398,6 +405,18 @@ const getAvailablePhases = (analysisData) => {
   }
 
   return phases;
+};
+
+// Create a simple phase manager for strategic analysis
+const createSimplePhaseManager = (analysisData) => {
+  const availablePhases = getAvailablePhases(analysisData);
+  
+  return {
+    getUnlockedFeatures: () => ({
+      analysis: availablePhases.some(p => p.key === 'initial'),
+      fullSwot: availablePhases.some(p => p.key === 'essential')
+    })
+  };
 };
 
 // Export utility
@@ -650,12 +669,13 @@ const UserDetailsModal = ({ user, userDetails, isLoading, onClose, onExport, onT
   </div>
 );
 
-// Enhanced UserDetailsPanel with Phase Support
+// Enhanced UserDetailsPanel with Strategic Analysis Tab - FIXED VERSION
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
   const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState('initial');
+  const [selectedStrategicPhase, setSelectedStrategicPhase] = useState('initial');
 
   const allUserDetails = userDetails[user._id] || {};
   const businesses = allUserDetails.businesses || [];
@@ -693,6 +713,7 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   const currentUserDetails = getCurrentUserDetails();
   const analysisData = parseAnalysisData(currentUserDetails, user);
   const availablePhases = getAvailablePhases(analysisData);
+  const phaseManager = createSimplePhaseManager(analysisData);
 
   // Set default phase when analysis data is loaded
   useEffect(() => {
@@ -700,6 +721,17 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
       setSelectedPhase(availablePhases[0].key);
     }
   }, [availablePhases, selectedPhase]);
+
+  // FIXED: Add proper phase change handlers
+  const handlePhaseChange = (phaseKey) => {
+    console.log('Phase change in analysis tab:', phaseKey);
+    setSelectedPhase(phaseKey);
+  };
+
+  const handleStrategicPhaseChange = (phaseKey) => {
+    console.log('Phase change in strategic tab:', phaseKey);
+    setSelectedStrategicPhase(phaseKey);
+  };
 
   if (businesses.length === 0 && !isLoading) {
     return <EmptyBusinessState user={user} onClose={onClose} />;
@@ -717,7 +749,9 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
             businesses={businesses}
             availablePhases={availablePhases}
             selectedPhase={selectedPhase}
-            onPhaseChange={setSelectedPhase}
+            onPhaseChange={handlePhaseChange}
+            selectedStrategicPhase={selectedStrategicPhase}
+            onStrategicPhaseChange={handleStrategicPhaseChange}
           />
 
           <div className="tab-content">
@@ -735,6 +769,10 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
                 isLoadingBusiness={isLoadingBusiness}
                 selectedPhase={selectedPhase}
                 availablePhases={availablePhases}
+                selectedStrategicPhase={selectedStrategicPhase}
+                phaseManager={phaseManager}
+                onPhaseChange={handlePhaseChange} // FIXED: Pass the handler
+                onStrategicPhaseChange={handleStrategicPhaseChange} // FIXED: Pass the handler
               />
             )}
           </div>
@@ -790,47 +828,58 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
   </div>
 );
 
-const TabNavigation = ({ activeTab, onTabChange, businesses, availablePhases, selectedPhase, onPhaseChange }) => (
-  <div className="admin-nav">
-    <button
-      onClick={() => onTabChange('businesses')}
-      className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
-    >
-      <Building2 size={16} />
-      <span>Businesses</span>
-      <span className="tab-badge">{businesses.length}</span>
-    </button>
-    <button
-      onClick={() => onTabChange('conversation')}
-      className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
-    >
-      <FileText size={16} />
-      <span>Conversation</span>
-    </button>
-    <button
-      onClick={() => onTabChange('analysis')}
-      className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
-    >
-      <Target size={16} />
-      <span>Analysis</span>
-    </button>
-    
-    {/* Phase Navigation for Analysis Tab */}
-    {activeTab === 'analysis' && availablePhases.length > 0 && (
-      <div className="phase-navigation">
-        {availablePhases.map(phase => (
-          <button
-            key={phase.key}
-            onClick={() => onPhaseChange(phase.key)}
-            className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''}`}
-          >
-            {phase.name}
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-);
+// FIXED: TabNavigation component
+const TabNavigation = ({ 
+  activeTab, 
+  onTabChange, 
+  businesses, 
+  availablePhases, 
+  selectedPhase, 
+  onPhaseChange,
+  selectedStrategicPhase,
+  onStrategicPhaseChange
+}) => {
+  console.log('TabNavigation Debug:', {
+    activeTab,
+    availablePhases,
+    selectedPhase,
+    selectedStrategicPhase
+  });
+
+  return (
+    <div className="admin-nav">
+      <button
+        onClick={() => onTabChange('businesses')}
+        className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
+      >
+        <Building2 size={16} />
+        <span>Businesses</span>
+        <span className="tab-badge">{businesses.length}</span>
+      </button>
+      <button
+        onClick={() => onTabChange('conversation')}
+        className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
+      >
+        <FileText size={16} />
+        <span>Conversation</span>
+      </button>
+      <button
+        onClick={() => onTabChange('analysis')}
+        className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+      >
+        <Target size={16} />
+        <span>Analysis</span>
+      </button>
+      <button
+        onClick={() => onTabChange('strategic')}
+        className={`nav-tab ${activeTab === 'strategic' ? 'active' : ''}`}
+      >
+        <TrendingUp size={16} />
+        <span>Strategic</span>
+      </button>
+    </div>
+  );
+};
 
 const LoadingState = ({ message }) => (
   <div className="loading-details">
@@ -839,6 +888,7 @@ const LoadingState = ({ message }) => (
   </div>
 );
 
+// FIXED: Updated TabContent component
 const TabContent = ({
   activeTab,
   businesses,
@@ -849,7 +899,11 @@ const TabContent = ({
   onBusinessChange,
   isLoadingBusiness,
   selectedPhase,
-  availablePhases
+  availablePhases,
+  selectedStrategicPhase,
+  phaseManager,
+  onPhaseChange, // FIXED: Added this prop
+  onStrategicPhaseChange // FIXED: Added this prop
 }) => {
   const getSelectedBusinessName = () => {
     if (!selectedBusiness) return 'Select a Business';
@@ -887,6 +941,25 @@ const TabContent = ({
           conversationCount={currentUserDetails?.conversation?.length || 0}
           selectedPhase={selectedPhase}
           availablePhases={availablePhases}
+          onPhaseChange={onPhaseChange} // FIXED: Pass the handler
+        />
+      );
+    case 'strategic':
+      return (
+        <StrategicTab
+          analysisData={analysisData}
+          selectedBusiness={getSelectedBusinessName()}
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          totalQuestions={currentUserDetails?.stats?.total_questions || 0}
+          completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
+          conversationCount={currentUserDetails?.conversation?.length || 0}
+          selectedPhase={selectedStrategicPhase}
+          availablePhases={availablePhases}
+          phaseManager={phaseManager}
+          onPhaseChange={onStrategicPhaseChange} // FIXED: Pass the handler
         />
       );
     default:
@@ -1092,7 +1165,7 @@ const QuestionItem = ({ question }) => (
   </div>
 );
 
-// Enhanced AnalysisTab Component with Phase Support
+// Enhanced AnalysisTab Component with Phase Support - FIXED VERSION
 const AnalysisTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -1104,7 +1177,8 @@ const AnalysisTab = ({
   completedQuestions = 0,
   conversationCount = 0,
   selectedPhase = 'initial',
-  availablePhases = []
+  availablePhases = [],
+  onPhaseChange = () => {} // Add default empty function
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -1112,6 +1186,13 @@ const AnalysisTab = ({
     completed: totalCompletedQuestions,
     phases: conversationCount,
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
+  };
+
+  // Safe phase change handler
+  const handlePhaseChange = (phaseKey) => {
+    if (typeof onPhaseChange === 'function') {
+      onPhaseChange(phaseKey);
+    }
   };
 
   if (!analysisData) {
@@ -1146,25 +1227,6 @@ const AnalysisTab = ({
 
   const hasCurrentPhaseAnalysis = selectedPhase === 'initial' ? hasInitialAnalysis : hasEssentialAnalysis;
 
-  if (!hasCurrentPhaseAnalysis) {
-    return (
-      <div className="analysis-tab">
-        <StatsRow
-          businesses={businesses}
-          selectedBusinessId={selectedBusinessId}
-          onBusinessChange={onBusinessChange}
-          isLoadingBusiness={isLoadingBusiness}
-          stats={stats}
-        />
-        <div className="empty-state">
-          <Target size={48} />
-          <p className="empty-title">No {selectedPhase} phase analysis available</p>
-          <p className="empty-subtitle">No {selectedPhase} phase analysis generated for {selectedBusiness} yet</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="analysis-tab">
       <StatsRow
@@ -1174,12 +1236,126 @@ const AnalysisTab = ({
         isLoadingBusiness={isLoadingBusiness}
         stats={stats}
       />
-      <AnalysisComponents analysisData={analysisData} selectedPhase={selectedPhase} />
+      
+      {/* Phase Navigation for Analysis Tab */}
+      {availablePhases.length > 0 && (
+        <div className="phase-tabs-container" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+          <div className="phase-tabs-nav">
+            {availablePhases.map(phase => (
+              <button
+                key={phase.key}
+                onClick={() => handlePhaseChange(phase.key)}
+                className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''}`}
+              >
+                {phase.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!hasCurrentPhaseAnalysis ? (
+        <div className="empty-state">
+          <Target size={48} />
+          <p className="empty-title">No {selectedPhase} phase analysis available</p>
+          <p className="empty-subtitle">No {selectedPhase} phase analysis generated for {selectedBusiness} yet</p>
+        </div>
+      ) : (
+        <AnalysisComponents analysisData={analysisData} selectedPhase={selectedPhase} />
+      )}
     </div>
   );
 };
 
-// Enhanced AnalysisComponents with Phase-based rendering
+// New StrategicTab Component
+const StrategicTab = ({
+  analysisData,
+  selectedBusiness = 'Select a Business',
+  businesses = [],
+  selectedBusinessId = '',
+  onBusinessChange,
+  isLoadingBusiness = false,
+  totalQuestions = 0,
+  completedQuestions = 0,
+  conversationCount = 0,
+  selectedPhase = 'initial',
+  availablePhases = [],
+  phaseManager,
+  onPhaseChange = () => {} // Add default empty function
+}) => {
+  const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
+
+  const stats = {
+    completed: totalCompletedQuestions,
+    phases: conversationCount,
+    progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
+  };
+
+  if (!analysisData) {
+    return (
+      <div className="strategic-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+        />
+        <div className="empty-state">
+          <TrendingUp size={48} />
+          <p className="empty-title">No strategic analysis available</p>
+          <p className="empty-subtitle">No strategic analysis found for {selectedBusiness}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analysisData.strategic) {
+    return (
+      <div className="strategic-tab">
+        <StatsRow
+          businesses={businesses}
+          selectedBusinessId={selectedBusinessId}
+          onBusinessChange={onBusinessChange}
+          isLoadingBusiness={isLoadingBusiness}
+          stats={stats}
+        />
+        <div className="empty-state">
+          <TrendingUp size={48} />
+          <p className="empty-title">No strategic analysis available</p>
+          <p className="empty-subtitle">No strategic analysis generated for {selectedBusiness} yet</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="strategic-tab">
+      <StatsRow
+        businesses={businesses}
+        selectedBusinessId={selectedBusinessId}
+        onBusinessChange={onBusinessChange}
+        isLoadingBusiness={isLoadingBusiness}
+        stats={stats}
+      />
+      
+      <div className="strategic-analysis-container">
+        <StrategicAnalysis
+          questions={analysisData.questions}
+          userAnswers={analysisData.userAnswers}
+          businessName={analysisData.businessName}
+          strategicData={analysisData.strategic}
+          onRegenerate={null}
+          isRegenerating={false}
+          canRegenerate={false}
+          phaseManager={phaseManager}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Enhanced AnalysisComponents with Phase-based rendering - FIXED VERSION
 const AnalysisComponents = ({ analysisData, selectedPhase }) => {
   const initialPhaseTypes = [
     { key: 'swot', Component: SwotAnalysis, propName: 'analysisResult' },
@@ -1206,10 +1382,24 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
 
   const analysisTypes = selectedPhase === 'initial' ? initialPhaseTypes : essentialPhaseTypes;
 
+  console.log('AnalysisComponents Debug:', {
+    selectedPhase,
+    analysisTypesCount: analysisTypes.length,
+    availableAnalysis: analysisTypes.map(type => ({
+      key: type.key,
+      hasData: !!analysisData[type.key]
+    }))
+  });
+
   return (
     <div className="analysis-components">
       {analysisTypes.map(({ key, Component, propName }) => {
-        if (!analysisData[key]) return null;
+        if (!analysisData[key]) {
+          console.log(`No data for ${key} in ${selectedPhase} phase`);
+          return null;
+        }
+
+        console.log(`Rendering ${key} component with data:`, analysisData[key]);
 
         const props = {
           businessName: analysisData.businessName,
@@ -1235,6 +1425,8 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
           </div>
         );
       })}
+      
+       
     </div>
   );
 };

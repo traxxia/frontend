@@ -544,7 +544,7 @@ const BusinessSetupPage = () => {
       });
 
       // Use the correct API endpoint
-      const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-goals`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -787,7 +787,7 @@ const BusinessSetupPage = () => {
         throw new Error('No questions available for maturity score analysis');
       }
 
-      const response = await fetch(`${ML_API_BASE_URL}/maturity-score-light`, {
+      const response = await fetch(`${ML_API_BASE_URL}/maturity-scoring`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -805,12 +805,18 @@ const BusinessSetupPage = () => {
       }
 
       const result = await response.json();
+      console.log('Maturity Score API Response:', result);
+
+      // Fix: Handle the actual API response structure
       let maturityContent = null;
-      if (result.maturityScore) {
+      if (result.maturityScoring) { 
+        maturityContent = { maturityScore: result.maturityScoring };
+      } else if (result.maturity_scoring) {
+        maturityContent = { maturityScore: result.maturity_scoring };
+      } else if (result.maturityScore) {
         maturityContent = result;
-      } else if (result.maturity_score) {
-        maturityContent = { maturityScore: result.maturity_score };
       } else {
+        // If the response structure is different, wrap it properly
         maturityContent = { maturityScore: result };
       }
 
@@ -822,6 +828,7 @@ const BusinessSetupPage = () => {
       throw error;
     }
   };
+
 
   const generateFullSwotPortfolioForCompletion = async (completedSet = null) => {
     if (isRegeneratingRef.current) {
@@ -1189,77 +1196,88 @@ const BusinessSetupPage = () => {
 
   // Generate individual analysis
   const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
-    try {
-      const questionsArray = [];
-      const answersArray = [];
+  try {
+    const questionsArray = [];
+    const answersArray = [];
 
-      questions
-        .filter(q => {
-          const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
-          return hasAnswer;
-        })
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          const cleanQuestion = String(question.question_text)
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
+    questions
+      .filter(q => {
+        const hasAnswer = userAnswers[q._id] && userAnswers[q._id].trim();
+        return hasAnswer;
+      })
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .forEach(question => {
+        const cleanQuestion = String(question.question_text)
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"')
+          .replace(/[\u2013\u2014]/g, '-')
+          .replace(/[\u2026]/g, '...')
+          .replace(/[^\x00-\x7F]/g, '')
+          .trim();
 
-          const cleanAnswer = String(userAnswers[question._id])
-            .replace(/[\u2018\u2019]/g, "'")
-            .replace(/[\u201C\u201D]/g, '"')
-            .replace(/[\u2013\u2014]/g, '-')
-            .replace(/[\u2026]/g, '...')
-            .replace(/[^\x00-\x7F]/g, '')
-            .trim();
+        const cleanAnswer = String(userAnswers[question._id])
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"')
+          .replace(/[\u2013\u2014]/g, '-')
+          .replace(/[\u2026]/g, '...')
+          .replace(/[^\x00-\x7F]/g, '')
+          .trim();
 
-          questionsArray.push(cleanQuestion);
-          answersArray.push(cleanAnswer);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error(`No questions available for ${analysisType} analysis`);
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json; charset=utf-8'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
+        questionsArray.push(cleanQuestion);
+        answersArray.push(cleanAnswer);
       });
 
-      if (!response.ok) {
-        throw new Error(`${analysisType} API returned ${response.status}`);
-      }
-
-      const result = await response.json();
-      let dataToSave = null;
-
-      if (analysisType === 'capabilityHeatmap') {
-        dataToSave = result.capabilities ? result : result[dataKey];
-      } else if (result && result[dataKey]) {
-        dataToSave = result[dataKey];
-      } else {
-        throw new Error(`Invalid response structure from ${analysisType} API`);
-      }
-
-      if (dataToSave) {
-        setter(dataToSave);
-        await saveAnalysisToBackend(dataToSave, analysisType);
-      }
-    } catch (error) {
-      console.error(`Error generating ${analysisType} analysis:`, error);
-      throw error;
+    if (questionsArray.length === 0) {
+      throw new Error(`No questions available for ${analysisType} analysis`);
     }
-  };
+
+    const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify({
+        questions: questionsArray,
+        answers: answersArray
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`${analysisType} API returned ${response.status}`);
+    }
+
+    const result = await response.json();
+    let dataToSave = null;
+
+    // Special handling for different API response structures
+    if (analysisType === 'maturityScore') {
+      if (result.maturityScoring) {
+        dataToSave = { maturityScore: result.maturityScoring };
+      } else if (result.maturity_scoring) {
+        dataToSave = { maturityScore: result.maturity_scoring };
+      } else if (result.maturityScore) {
+        dataToSave = result;
+      } else {
+        dataToSave = { maturityScore: result };
+      }
+    } else if (analysisType === 'capabilityHeatmap') {
+      dataToSave = result.capabilities ? result : result[dataKey];
+    } else if (result && result[dataKey]) {
+      dataToSave = result[dataKey];
+    } else {
+      throw new Error(`Invalid response structure from ${analysisType} API`);
+    }
+
+    if (dataToSave) {
+      setter(dataToSave);
+      await saveAnalysisToBackend(dataToSave, analysisType);
+    }
+  } catch (error) {
+    console.error(`Error generating ${analysisType} analysis:`, error);
+    throw error;
+  }
+};
 
   // Main function to regenerate all analysis
   const regenerateAllAnalysis = async (updatedQuestionId = null, updatedAnswer = null, forceRegenerate = false) => {
@@ -1930,9 +1948,19 @@ const BusinessSetupPage = () => {
       }
 
       const result = await response.json();
-      let dataToSave = null;
-
-      if (analysisType === 'capabilityHeatmap') {
+      let dataToSave = null; 
+      // Special handling for different API response structures
+      if (analysisType === 'maturityScore') {
+        if (result.maturityScoring) {
+          dataToSave = { maturityScore: result.maturityScoring };
+        } else if (result.maturity_scoring) {
+          dataToSave = { maturityScore: result.maturity_scoring };
+        } else if (result.maturityScore) {
+          dataToSave = result;
+        } else {
+          dataToSave = { maturityScore: result };
+        }
+      } else if (analysisType === 'capabilityHeatmap') {
         dataToSave = result.capabilities ? result : result[dataKey];
       } else if (result && result[dataKey]) {
         dataToSave = result[dataKey];
@@ -2593,7 +2621,7 @@ const BusinessSetupPage = () => {
               businessName={businessData.name}
               onRegenerate={createIndividualRegenerationHandler(
                 'maturityScore',
-                'maturity-score-light',
+                'maturity-scoring',
                 'maturityScore',
                 setMaturityData,
                 'Maturity Score',
@@ -2803,7 +2831,7 @@ const BusinessSetupPage = () => {
 
                     {activeTab === "analysis" && unlockedFeatures.analysis && (
                       <AnalysisControls />
-                    )} 
+                    )}
                   </div>
 
                   <div className="expanded-analysis-content">
@@ -2819,23 +2847,23 @@ const BusinessSetupPage = () => {
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
-                              questions={questions}
-                              userAnswers={userAnswers}
-                              businessName={businessData.name}
-                              onRegenerate={createIndividualRegenerationHandler(
-                                'strategic',
-                                'strategic-goals',
-                                'strategic',
-                                setStrategicData,
-                                'Strategic analysis',
-                                setIsStrategicRegenerating
-                              )}
-                              isRegenerating={isStrategicRegenerating}
-                              canRegenerate={!isAnalysisRegenerating}
-                              strategicData={strategicData}
-                              selectedBusinessId={selectedBusinessId}
-                              phaseManager={phaseManager} // ADD THIS LINE
-                            />
+                            questions={questions}
+                            userAnswers={userAnswers}
+                            businessName={businessData.name}
+                            onRegenerate={createIndividualRegenerationHandler(
+                              'strategic',
+                              'strategic-goals',
+                              'strategic',
+                              setStrategicData,
+                              'Strategic analysis',
+                              setIsStrategicRegenerating
+                            )}
+                            isRegenerating={isStrategicRegenerating}
+                            canRegenerate={!isAnalysisRegenerating}
+                            strategicData={strategicData}
+                            selectedBusinessId={selectedBusinessId}
+                            phaseManager={phaseManager} // ADD THIS LINE
+                          />
                         </div>
                       )}
                     </div>
@@ -2929,25 +2957,25 @@ const BusinessSetupPage = () => {
                 )}
 
                 {activeTab === "strategic" && (
-                  <div className="strategic-section"> 
+                  <div className="strategic-section">
                     <StrategicAnalysis
-                        questions={questions}
-                        userAnswers={userAnswers}
-                        businessName={businessData.name}
-                        onRegenerate={createIndividualRegenerationHandler(
-                          'strategic',
-                          'strategic-goals',
-                          'strategic',
-                          setStrategicData,
-                          'Strategic analysis',
-                          setIsStrategicRegenerating
-                        )}
-                        isRegenerating={isStrategicRegenerating}
-                        canRegenerate={!isAnalysisRegenerating}
-                        strategicData={strategicData}
-                        selectedBusinessId={selectedBusinessId}
-                        phaseManager={phaseManager} // ADD THIS LINE
-                      />
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createIndividualRegenerationHandler(
+                        'strategic',
+                        'strategic-goals',
+                        'strategic',
+                        setStrategicData,
+                        'Strategic analysis',
+                        setIsStrategicRegenerating
+                      )}
+                      isRegenerating={isStrategicRegenerating}
+                      canRegenerate={!isAnalysisRegenerating}
+                      strategicData={strategicData}
+                      selectedBusinessId={selectedBusinessId}
+                      phaseManager={phaseManager} // ADD THIS LINE
+                    />
                   </div>
                 )}
               </div>

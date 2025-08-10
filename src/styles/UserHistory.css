@@ -911,7 +911,7 @@
 .summary-section {
   background: #ebf8ff;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 0px;
   border-left: 4px solid #4299e1;
 }
 
@@ -2100,14 +2100,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.summary-section {
-  background: #ebf8ff;
-  padding: 16px;
-  border-radius: 12px;
-  border-left: 4px solid #4299e1;
-}
+} 
 
 .summary-text {
   font-size: 14px;
@@ -2118,8 +2111,8 @@
 
 .recommendations-section {
   background: #f0fff4;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 0px 10px;
+  border-radius: 0px;
   border-left: 4px solid #48bb78;
 }
 

@@ -45,7 +45,7 @@ const Dashboard = () => {
   const [businessToDelete, setBusinessToDelete] = useState(null);
   const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  
+
   // Success popup state
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -127,17 +127,17 @@ const Dashboard = () => {
         await fetchBusinesses();
         setShowDeleteModal(false);
         setBusinessToDelete(null);
-        
+
         setSuccessMessage('Business and all associated data deleted successfully!');
         setShowSuccessPopup(true);
-        
+
         setTimeout(() => {
           setShowSuccessPopup(false);
           setSuccessMessage('');
         }, 4000);
       } else {
         console.error('Delete business error:', data);
-        
+
         if (response.status === 401 || response.status === 403) {
           sessionStorage.clear();
           navigate('/login');
@@ -180,7 +180,7 @@ const Dashboard = () => {
       if (response.ok) {
         setSuccessMessage('Business created successfully!');
         setShowSuccessPopup(true);
-        
+
         setBusinessFormData({
           business_name: '',
           business_purpose: '',
@@ -189,7 +189,7 @@ const Dashboard = () => {
 
         await fetchBusinesses();
         setShowCreateModal(false);
-        
+
         setTimeout(() => {
           setShowSuccessPopup(false);
           setSuccessMessage('');
@@ -285,8 +285,8 @@ const Dashboard = () => {
             key={business._id || index}
             className="business-item d-flex align-items-center p-3 border-bottom position-relative"
           >
-            <div 
-              style={{ width: 60, height: 60, cursor: "pointer" }} 
+            <div
+              style={{ width: 60, height: 60, cursor: "pointer" }}
               className="progress-circle me-3"
               onClick={() => handleBusinessClick(business)}
             >
@@ -303,7 +303,7 @@ const Dashboard = () => {
               />
             </div>
 
-            <div 
+            <div
               className="flex-grow-1"
               onClick={() => handleBusinessClick(business)}
               style={{ cursor: "pointer" }}
@@ -324,18 +324,18 @@ const Dashboard = () => {
                 variant="link"
                 className="p-0 border-0 shadow-none"
                 style={{ color: '#6c757d' }}
-                data-bs-display="static" 
+                data-bs-display="static"
               >
                 {/* <MoreVertical size={16} /> */}
               </Dropdown.Toggle>
 
-              <Dropdown.Menu> 
+              <Dropdown.Menu>
                 {/* <Dropdown.Item onClick={() => handleBusinessClick(business)}>
                   <ArrowRight size={16} className="me-2" />
                   View Business
                 </Dropdown.Item>
                 <Dropdown.Divider /> */}
-                <Dropdown.Item 
+                <Dropdown.Item
                   onClick={() => handleShowDeleteModal(business)}
                   className="text-danger"
                 >
@@ -382,22 +382,22 @@ const Dashboard = () => {
                     <BusinessList businesses={businesses} viewType="mobile" />
                   </div>
                   <div className="px-4 pb-4 d-flex flex-wrap gap-2">
-                  <Button
-                    variant="primary"
-                    className="flex-grow-1 create-business-btn"
-                    onClick={handleShowCreateModal}
-                  >
-                    {t('create_business')}
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="flex-grow-1 create-business-btn"
-                    onClick={() => setShowHowModal(true)}
-                  >
-                    <Info size={18} className="me-2" />
-                    {t('how_it_works')}
-                  </Button>
-                </div>
+                    <Button
+                      variant="primary"
+                      className="flex-grow-1 create-business-btn"
+                      onClick={handleShowCreateModal}
+                    >
+                      {t('create_business')}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      className="flex-grow-1 create-business-btn"
+                      onClick={() => setShowHowModal(true)}
+                    >
+                      <Info size={18} className="me-2" />
+                      {t('how_it_works')}
+                    </Button>
+                  </div>
 
                 </Card.Body>
               </Card>
@@ -414,28 +414,28 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <p className="text-muted mb-4">{t('welcome_message')}</p>
-                       <div className="d-flex flex-wrap gap-2">
-                        <Button
-                          variant="primary"
-                          className="create-business-btn"
-                          onClick={handleShowCreateModal}
-                        >
-                          {t('create_business')}
-                        </Button>
+                        <div className="d-flex flex-wrap gap-2">
+                          <Button
+                            variant="primary"
+                            className="create-business-btn"
+                            onClick={handleShowCreateModal}
+                          >
+                            {t('create_business')}
+                          </Button>
 
-                        <Button
-                          variant="primary"
-                          className="create-business-btn"
-                          onClick={() => setShowHowModal(true)}
-                        >
-                          <Info size={18} className="me-2" />
-                          {t('how_it_works')}
-                        </Button>
-                      </div>
+                          <Button
+                            variant="primary"
+                            className="create-business-btn"
+                            onClick={() => setShowHowModal(true)}
+                          >
+                            <Info size={18} className="me-2" />
+                            {t('how_it_works')}
+                          </Button>
+                        </div>
 
 
                         {/* How It Works Modal */}
-                        
+
                       </div>
                     </Col>
 
@@ -454,128 +454,128 @@ const Dashboard = () => {
         </div>
       </Container>
       {showHowModal && (
-                          <div className="popup-overlay" onClick={handleCloseModal}>
-                            <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                className="close-button"
-                                onClick={handleCloseModal}
-                                aria-label="Close modal"
-                              >
-                                <X size={20} />
-                              </button>
+        <div className="popup-overlay" onClick={handleCloseModal}>
+          <div className="popup-content large" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="close-button"
+              onClick={handleCloseModal}
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
 
-                              <h2 className="mb-4">{t('how_this_application_works')}</h2>
+            <h2 className="mb-4">{t('how_this_application_works')}</h2>
 
-                              <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
-                                <div className="carousel-indicators">
-                                  <button
-                                    type="button"
-                                    data-bs-target="#howItWorksCarousel"
-                                    data-bs-slide-to="0"
-                                    className="active"
-                                    aria-label="Slide 1"
-                                  ></button>
-                                  <button
-                                    type="button"
-                                    data-bs-target="#howItWorksCarousel"
-                                    data-bs-slide-to="1"
-                                    aria-label="Slide 2"
-                                  ></button>
-                                  <button
-                                    type="button"
-                                    data-bs-target="#howItWorksCarousel"
-                                    data-bs-slide-to="2"
-                                    aria-label="Slide 3"
-                                  ></button>
-                                  <button
-                                    type="button"
-                                    data-bs-target="#howItWorksCarousel"
-                                    data-bs-slide-to="3"
-                                    aria-label="Slide 4"
-                                  ></button>
-                                </div>
+            <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+              <div className="carousel-indicators">
+                <button
+                  type="button"
+                  data-bs-target="#howItWorksCarousel"
+                  data-bs-slide-to="0"
+                  className="active"
+                  aria-label="Slide 1"
+                ></button>
+                <button
+                  type="button"
+                  data-bs-target="#howItWorksCarousel"
+                  data-bs-slide-to="1"
+                  aria-label="Slide 2"
+                ></button>
+                <button
+                  type="button"
+                  data-bs-target="#howItWorksCarousel"
+                  data-bs-slide-to="2"
+                  aria-label="Slide 3"
+                ></button>
+                <button
+                  type="button"
+                  data-bs-target="#howItWorksCarousel"
+                  data-bs-slide-to="3"
+                  aria-label="Slide 4"
+                ></button>
+              </div>
 
-                                <div className="carousel-inner">
-                                  <div className="carousel-item active">
-                                    <img
-                                      src="/slides/slide1.jpeg"
-                                      className="d-block w-100"
-                                      alt="Step 1: Create your business profile"
-                                    />
-                                    <div className="carousel-caption d-none d-md-block">
-                                      <h5>Step 1: Create Your Business</h5>
-                                      <p>Start by setting up your business profile with basic information.</p>
-                                    </div>
-                                  </div>
-                                  <div className="carousel-item">
-                                    <img
-                                      src="/slides/slide2.jpeg"
-                                      className="d-block w-100"
-                                      alt="Step 2: Answer assessment questions"
-                                    />
-                                    <div className="carousel-caption d-none d-md-block">
-                                      <h5>Step 2: Complete Assessment</h5>
-                                      <p>Answer questions about your business to get personalized insights.</p>
-                                    </div>
-                                  </div>
-                                  <div className="carousel-item">
-                                    <img
-                                      src="/slides/slide3.jpeg"
-                                      className="d-block w-100"
-                                      alt="Step 3: Get insights and recommendations"
-                                    />
-                                    <div className="carousel-caption d-none d-md-block">
-                                      <h5>Step 3: Get Insights</h5>
-                                      <p>Receive detailed analysis and actionable recommendations.</p>
-                                    </div>
-                                  </div>
-                                  <div className="carousel-item">
-                                    <img
-                                      src="/slides/slide4.PNG"
-                                      className="d-block w-100"
-                                      alt="Step 4: Track progress and optimize"
-                                    />
-                                    <div className="carousel-caption d-none d-md-block">
-                                      <h5>Step 4: Track & Optimize</h5>
-                                      <p>Monitor your progress and continuously improve your business performance.</p>
-                                    </div>
-                                  </div>
-                                </div>
+              <div className="carousel-inner">
+                <div className="carousel-item active">
+                  <img
+                    src="/slides/slide1.jpeg"
+                    className="d-block w-100"
+                    alt="Step 1: Create your business profile"
+                  />
+                  <div className="carousel-caption d-none d-md-block">
+                    <h5>Step 1: Create Your Business</h5>
+                    <p>Start by setting up your business profile with basic information.</p>
+                  </div>
+                </div>
+                <div className="carousel-item">
+                  <img
+                    src="/slides/slide2.jpeg"
+                    className="d-block w-100"
+                    alt="Step 2: Answer assessment questions"
+                  />
+                  <div className="carousel-caption d-none d-md-block">
+                    <h5>Step 2: Complete Assessment</h5>
+                    <p>Answer questions about your business to get personalized insights.</p>
+                  </div>
+                </div>
+                <div className="carousel-item">
+                  <img
+                    src="/slides/slide3.jpeg"
+                    className="d-block w-100"
+                    alt="Step 3: Get insights and recommendations"
+                  />
+                  <div className="carousel-caption d-none d-md-block">
+                    <h5>Step 3: Get Insights</h5>
+                    <p>Receive detailed analysis and actionable recommendations.</p>
+                  </div>
+                </div>
+                <div className="carousel-item">
+                  <img
+                    src="/slides/slide4.PNG"
+                    className="d-block w-100"
+                    alt="Step 4: Track progress and optimize"
+                  />
+                  <div className="carousel-caption d-none d-md-block">
+                    <h5>Step 4: Track & Optimize</h5>
+                    <p>Monitor your progress and continuously improve your business performance.</p>
+                  </div>
+                </div>
+              </div>
 
-                                <button
-                                  className="carousel-control-prev"
-                                  type="button"
-                                  data-bs-target="#howItWorksCarousel"
-                                  data-bs-slide="prev"
-                                  aria-label="Previous slide"
-                                >
-                                  <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                                  <span className="visually-hidden">Previous</span>
-                                </button>
-                                <button
-                                  className="carousel-control-next"
-                                  type="button"
-                                  data-bs-target="#howItWorksCarousel"
-                                  data-bs-slide="next"
-                                  aria-label="Next slide"
-                                >
-                                  <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                                  <span className="visually-hidden">Next</span>
-                                </button>
-                              </div>
+              <button
+                className="carousel-control-prev"
+                type="button"
+                data-bs-target="#howItWorksCarousel"
+                data-bs-slide="prev"
+                aria-label="Previous slide"
+              >
+                <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span className="visually-hidden">Previous</span>
+              </button>
+              <button
+                className="carousel-control-next"
+                type="button"
+                data-bs-target="#howItWorksCarousel"
+                data-bs-slide="next"
+                aria-label="Next slide"
+              >
+                <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                <span className="visually-hidden">Next</span>
+              </button>
+            </div>
 
-                              <div className="text-center mt-4">
-                                <Button
-                                  variant="primary"
-                                  onClick={handleCloseModal}
-                                  className="px-4"
-                                >
-                                  {t('got_it')}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+            <div className="text-center mt-4">
+              <Button
+                variant="primary"
+                onClick={handleCloseModal}
+                className="px-4"
+              >
+                {t('got_it')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Business Modal */}
       <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered>
@@ -696,7 +696,7 @@ const Dashboard = () => {
               {deleteError}
             </Alert>
           )}
-          
+
           {businessToDelete && (
             <div>
               <p className="mb-3">{t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?</p>
@@ -712,7 +712,7 @@ const Dashboard = () => {
                 <hr className="my-2" />
                 <p className="mb-0"><strong>{t('This_action_cannot_be_undone!')}</strong></p>
               </div>
-              
+
               <div className="bg-light p-3 rounded delete-popup-purpose">
                 <p className="mb-1"><strong>{t('business_purpose')}:</strong></p>
                 <p className="text-muted mb-0">{businessToDelete.business_purpose}</p>

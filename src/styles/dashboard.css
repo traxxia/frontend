@@ -116,6 +116,7 @@
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border-light);
+  overflow: visible !important;
 }
 
 .business-item:hover {
@@ -233,7 +234,22 @@
   [data-theme='dark'] .mobile-view-card h6 {
     color: var(--color-text-white);
   }
-  
+  .business-item .dropdown-menu {
+  z-index: 2050 !important;}
+  .business-item .dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  transition: var(--transition-normal);
+  font-family: var(--font-primary);
+}
+
+.business-item .dropdown-item:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
   .business-item {
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-md);

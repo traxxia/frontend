@@ -28,7 +28,10 @@ const StrategicGoals = ({
 
     useEffect(() => {
         if (strategicGoalsData) {
-            setData(strategicGoalsData);
+            // Handle nested structure - check if data is nested under 'strategicGoals' key
+            const actualData = strategicGoalsData.strategicGoals || strategicGoalsData;
+            
+            setData(actualData);
             setHasGenerated(true);
         }
     }, [strategicGoalsData]);
@@ -80,11 +83,34 @@ const StrategicGoals = ({
 
     const renderGanttChart = (objectives) => {
         // Generate default timeline data if missing
-        const objectivesWithTimeline = objectives.map((objective, index) => ({
-            ...objective,
-            startMonth: objective.startMonth || (index * 2 + 1), // Stagger start months
-            duration: objective.duration || 6 // Default 6-month duration
-        }));
+        const objectivesWithTimeline = objectives.map((objective, index) => {
+            // Create more realistic timeline based on priority
+            let startMonth, duration;
+            
+            switch(objective.priority) {
+                case 1: // High priority - start early, longer duration
+                    startMonth = 1;
+                    duration = 12;
+                    break;
+                case 2: // Medium priority - start mid-year, medium duration
+                    startMonth = 3;
+                    duration = 8;
+                    break;
+                case 3: // Lower priority - start later, shorter duration
+                    startMonth = 6;
+                    duration = 6;
+                    break;
+                default:
+                    startMonth = index * 2 + 1;
+                    duration = 6;
+            }
+            
+            return {
+                ...objective,
+                startMonth: objective.startMonth || startMonth,
+                duration: objective.duration || duration
+            };
+        });
 
         return (
             <div className="gantt-container">
@@ -161,101 +187,105 @@ const StrategicGoals = ({
         );
     };
 
-    const renderOverallProgress = (progress, themes) => (
-        <div className="overall-progress">
-            <div className="progress-header">
-                <Target size={20} />
-                <h4>Overall Strategic Progress</h4>
-            </div>
-
-            <div className="progress-stats">
-                <span className="progress-label">Annual Progress</span>
-                <span className={`progress-value ${getProgressColor(progress)}`}>
-                    {progress}%
-                </span>
-            </div>
-
-            <div className="progress-bar">
-                <div className={`progress-fill ${getProgressColor(progress)}`}
-                    style={{ width: `${progress}%` }} />
-            </div>
-
-            {themes && themes.length > 0 && (
-                <div className="strategic-themes">
-                    <h5>Strategic Themes</h5>
-                    <div className="themes-list">
-                        {themes.map((theme, index) => (
-                            <span key={index} className="theme-tag">
-                                {formatTheme(theme)}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-
-    const renderObjectiveCard = (objective, index) => (
-        <div key={index} className={`objective-card priority-${objective.priority}`}>
-            <div className="objective-header">
-                <div>
-                    <h4 className="objective-title">{objective.objective}</h4>
-                    <div className="objective-meta">
-                        <div className="alignment-badge">
-                            {getAlignmentIcon(objective.alignment)}
-                            <span>{formatAlignmentLabel(objective.alignment)} Strategy</span>
-                        </div>
-                    </div>
+    const renderOverallProgress = (progress, themes) => {
+        return (
+            <div className="overall-progress">
+                <div className="progress-header">
+                    <Target size={20} />
+                    <h4>Overall Strategic Progress {data.year && `(${data.year})`}</h4>
                 </div>
 
-                <div className={`priority-badge priority-${objective.priority}`}>
-                    Priority {objective.priority}
+                <div className="progress-stats">
+                    <span className="progress-label">Annual Progress</span>
+                    <span className={`progress-value ${getProgressColor(progress)}`}>
+                        {progress}%
+                    </span>
                 </div>
-            </div>
 
-            <div className="key-results">
-                <h5>Key Results</h5>
-                {objective.keyResults?.map((kr, krIndex) => (
-                    <div key={krIndex} className="key-result-item">
-                        <div className="kr-header">
-                            <span className="kr-metric">{kr.metric}</span>
-                            <div className="kr-target">
-                                <Calendar size={14} />
-                                <span>Target: {kr.target}</span>
-                            </div>
-                        </div>
+                <div className="progress-bar">
+                    <div className={`progress-fill ${getProgressColor(progress)}`}
+                        style={{ width: `${progress}%` }} />
+                </div>
 
-                        <div className="kr-progress">
-                            <div className="kr-progress-header">
-                                <span className="kr-current">Current: {kr.current}</span>
-                                <span className={`kr-percentage ${getProgressColor(kr.progress)}`}>
-                                    {kr.progress}%
+                {themes && themes.length > 0 && (
+                    <div className="strategic-themes">
+                        <h5>Strategic Themes</h5>
+                        <div className="themes-list">
+                            {themes.map((theme, index) => (
+                                <span key={index} className="theme-tag">
+                                    {formatTheme(theme)}
                                 </span>
-                            </div>
-                            <div className="kr-progress-bar" style={{
-                                width: '100%',
-                                height: '8px',
-                                backgroundColor: '#f0f0f0',
-                                borderRadius: '4px',
-                                overflow: 'hidden'
-                            }}>
-                                <div className={`kr-progress-fill ${getProgressColor(kr.progress)}`}
-                                    style={{
-                                        width: `${Math.min(kr.progress || 0, 100)}%`,
-                                        height: '100%',
-                                        backgroundColor: kr.progress >= 75 ? '#10b981' :
-                                            kr.progress >= 50 ? '#f59e0b' :
-                                                kr.progress >= 25 ? '#ef4444' : '#dc2626',
-                                        borderRadius: '4px',
-                                        transition: 'width 0.3s ease-in-out'
-                                    }} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderObjectiveCard = (objective, index) => {
+        return (
+            <div key={index} className={`objective-card priority-${objective.priority}`}>
+                <div className="objective-header">
+                    <div>
+                        <h4 className="objective-title">{objective.objective}</h4>
+                        <div className="objective-meta">
+                            <div className="alignment-badge">
+                                {getAlignmentIcon(objective.alignment)}
+                                <span>{formatAlignmentLabel(objective.alignment)} Strategy</span>
                             </div>
                         </div>
                     </div>
-                ))}
+
+                    <div className={`priority-badge priority-${objective.priority}`}>
+                        Priority {objective.priority}
+                    </div>
+                </div>
+
+                <div className="key-results">
+                    <h5>Key Results</h5>
+                    {objective.keyResults?.map((kr, krIndex) => (
+                        <div key={krIndex} className="key-result-item">
+                            <div className="kr-header">
+                                <span className="kr-metric">{kr.metric}</span>
+                                <div className="kr-target">
+                                    <Calendar size={14} />
+                                    <span>Target: {kr.target}</span>
+                                </div>
+                            </div>
+
+                            <div className="kr-progress">
+                                <div className="kr-progress-header">
+                                    <span className="kr-current">Current: {kr.current}</span>
+                                    <span className={`kr-percentage ${getProgressColor(kr.progress)}`}>
+                                        {kr.progress}%
+                                    </span>
+                                </div>
+                                <div className="kr-progress-bar" style={{
+                                    width: '100%',
+                                    height: '8px',
+                                    backgroundColor: '#f0f0f0',
+                                    borderRadius: '4px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <div className={`kr-progress-fill ${getProgressColor(kr.progress)}`}
+                                        style={{
+                                            width: `${Math.min(kr.progress || 0, 100)}%`,
+                                            height: '100%',
+                                            backgroundColor: kr.progress >= 75 ? '#10b981' :
+                                                kr.progress >= 50 ? '#f59e0b' :
+                                                    kr.progress >= 25 ? '#ef4444' : '#dc2626',
+                                            borderRadius: '4px',
+                                            transition: 'width 0.3s ease-in-out'
+                                        }} />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Loading state
     if (isRegenerating) {
@@ -353,19 +383,18 @@ const StrategicGoals = ({
 
             <div className="goals-content">
                 {/* Overall Progress Section */}
-                {data.overallProgress !== undefined && renderOverallProgress(data.overallProgress, data.themes)}
-
+                {data.overallProgress !== undefined && (
+                    renderOverallProgress(data.overallProgress, data.strategicThemes || data.themes)
+                )}
 
                 {/* Gantt Chart: Timeline of strategic initiatives */}
-                {data.objectives && renderGanttChart(data.objectives)}
-
-
-
+                {data.objectives && (
+                    renderGanttChart(data.objectives)
+                )}
 
                 {/* Progress bars: OKR completion status */}
                 {data.objectives && data.objectives.length > 0 && (
                     <div className="objectives-section">
-
                         <div className="gantt-header">
                             <BarChart3 size={20} />
                             <h5>OKR Completion Status</h5>

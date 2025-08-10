@@ -11,7 +11,7 @@ const RegenerateButton = ({
 }) => {
   const sizes = {
     small: {
-      padding: "6px 12px",
+      padding: "5px",
       fontSize: "12px",
       iconSize: 12
     },
