@@ -165,7 +165,7 @@ const PortersFiveForces = ({
 
   const renderForceCard = (force, index) => {
     return (
-      <div key={index} className={`force-card ${getIntensityColor(force.intensity)}`}>
+      <div key={index} className={`force-card ${getIntensityColor(force.intensity)}`} style={{marginBottom: '20px'}}>
         <div className="force-header">
           <div className="force-icon">
             {getForceIcon(force.force)}
@@ -366,7 +366,7 @@ const PortersFiveForces = ({
 
             {parsedData.executive_summary.strategic_implications && (
               <div className="strategic-implications">
-                <h4>Strategic Implications:</h4>
+                <h4 style={{color: 'black'}}>Strategic Implications:</h4>
                 <ul>
                   {parsedData.executive_summary.strategic_implications.map((implication, index) => (
                     <li key={index}>{implication}</li>
@@ -435,11 +435,11 @@ const PortersFiveForces = ({
         {/* Strategic Recommendations */}
         {parsedData.strategic_recommendations && (
           <div className="strategic-recommendations">
-            <h3>Strategic Recommendations</h3>
-            
+            <h3 style={{color: 'black'}}>Strategic Recommendations</h3>
+
             {parsedData.strategic_recommendations.immediate_actions && (
-              <div className="recommendations-section">
-                <h4>Immediate Actions (Next 3-6 months)</h4>
+              <div className="recommendations-section" style={{marginBottom: '20px'}}>
+                <h4 style={{color: 'black'}}>Immediate Actions (Next 3-6 months)</h4>
                 {parsedData.strategic_recommendations.immediate_actions.map((action, index) => (
                   <div key={index} className="recommendation-card immediate">
                     <h5>{action.action}</h5>
@@ -461,8 +461,8 @@ const PortersFiveForces = ({
             )}
 
             {parsedData.strategic_recommendations.short_term_initiatives && (
-              <div className="recommendations-section">
-                <h4>Short-term Initiatives</h4>
+              <div className="recommendations-section" style={{marginBottom: '20px'}}>
+                <h4 style={{color: 'black'}}>Short-term Initiatives</h4>
                 {parsedData.strategic_recommendations.short_term_initiatives.map((initiative, index) => (
                   <div key={index} className="recommendation-card short-term">
                     <h5>{initiative.initiative}</h5>
@@ -483,8 +483,8 @@ const PortersFiveForces = ({
             )}
 
             {parsedData.strategic_recommendations.long_term_strategic_shifts && (
-              <div className="recommendations-section">
-                <h4>Long-term Strategic Shifts</h4>
+              <div className="recommendations-section" style={{marginBottom: '20px'}}>
+                <h4 style={{color: 'black'}}>Long-term Strategic Shifts</h4>
                 {parsedData.strategic_recommendations.long_term_strategic_shifts.map((shift, index) => (
                   <div key={index} className="recommendation-card long-term">
                     <h5>{shift.shift}</h5>
@@ -509,11 +509,11 @@ const PortersFiveForces = ({
         {/* Monitoring Dashboard */}
         {parsedData.monitoring_dashboard && (
           <div className="monitoring-dashboard">
-            <h3>Monitoring Dashboard</h3>
-            
+            <h3 style={{color: 'black'}}>Monitoring Dashboard</h3>
+
             {parsedData.monitoring_dashboard.key_indicators && (
               <div className="indicators-section">
-                <h4>Key Performance Indicators</h4>
+                <h4 style={{color: 'black'}}>Key Performance Indicators</h4>
                 {parsedData.monitoring_dashboard.key_indicators.map((indicator, index) => (
                   <div key={index} className="indicator-card">
                     <h5>{indicator.indicator}</h5>

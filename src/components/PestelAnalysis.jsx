@@ -222,7 +222,7 @@ const PestelAnalysis = ({
         <div className="header-content">
           <Globe className="header-icon" />
           <div>
-            <h1>PESTEL Analysis</h1>
+            <h1 style={{color:'black'}}>PESTEL Analysis</h1>
             <p>Strategic Environmental Assessment for {businessName}</p>
           </div>
         </div>

@@ -223,9 +223,9 @@ const StrategicAnalysis = ({
     if (!summary) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <Target size={24} />
+          <Target size={24} style={{ color: 'blue' }} />
           <h2>Executive Summary</h2>
         </div>
         
@@ -284,9 +284,9 @@ const StrategicAnalysis = ({
     if (!pillars) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <BarChart3 size={24} />
+          <BarChart3 size={24} style={{ color: 'blue' }} />
           <h2>Strategic Pillars Analysis</h2>
         </div>
         
@@ -420,9 +420,9 @@ const StrategicAnalysis = ({
     if (!synthesis) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <Activity size={24} />
+          <Activity size={24} style={{ color: 'blue' }} />
           <h2>Cross-Pillar Synthesis</h2>
         </div>
         
@@ -487,9 +487,9 @@ const StrategicAnalysis = ({
     if (!frameworks) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <PlayCircle size={24} />
+          <PlayCircle size={24} style={{ color: 'blue' }} />
           <h2>Agile Frameworks Recommendations</h2>
         </div>
         
@@ -541,9 +541,9 @@ const StrategicAnalysis = ({
     if (!riskAssessment) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <Shield size={24} />
+          <Shield size={24} style={{ color: 'blue' }} />
           <h2>Risk Assessment</h2>
         </div>
         
@@ -632,9 +632,9 @@ const StrategicAnalysis = ({
     if (!benchmarks) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <Award size={24} />
+          <Award size={24} style={{ color: 'blue' }} />
           <h2>Success Benchmarks</h2>
         </div>
         
@@ -705,9 +705,9 @@ const StrategicAnalysis = ({
     if (!roadmap) return null;
 
     return (
-      <section className="analysis-section">
+      <section className="strategic-page-section">
         <div className="section-header">
-          <Calendar size={24} />
+          <Calendar size={24} style={{ color: 'blue' }} />
           <h2>Implementation Roadmap</h2>
         </div>
         
@@ -787,9 +787,9 @@ const StrategicAnalysis = ({
     if (!monitoring) return null;
 
     return (
-      <section className="analysis-section">
-        <div className="section-header">
-          <Monitor size={24} />
+      <section className="strategic-page-section">
+        <div className="section-header ">
+          <Monitor size={24} style={{ color: 'blue' }} />
           <h2>Monitoring & Feedback</h2>
         </div>
         
