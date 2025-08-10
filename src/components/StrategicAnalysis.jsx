@@ -24,6 +24,7 @@ import {
   MessageCircle,
   Building
 } from 'lucide-react';
+import RegenerateButton from './RegenerateButton'; 
 
 const StrategicAnalysis = ({
   questions = [],
@@ -194,25 +195,18 @@ const StrategicAnalysis = ({
             ))}
           </div>
           
-          {canRegenerate && (
-            <button 
-              onClick={handleRegenerate}
-              disabled={isRegenerating || isLoading}
-              className="regenerate-btn"
-            >
-              {isRegenerating || isLoading ? (
-                <>
-                  <Loader size={16} className="spin-animation" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <RefreshCw size={16} />
-                  Regenerate
-                </>
-              )}
-            </button>
-          )}
+         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+  <RegenerateButton
+    onRegenerate={handleRegenerate}
+    isRegenerating={isRegenerating}
+    canRegenerate={canRegenerate}
+    sectionName="Strategic Analysis"
+    size="medium"
+    buttonText="Generate"
+  />
+</div>
+
+
         </div>
       </div>
     );
@@ -224,7 +218,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <Target size={24} style={{ color: 'blue' }} />
           <h2>Executive Summary</h2>
         </div>
@@ -285,7 +284,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <BarChart3 size={24} style={{ color: 'blue' }} />
           <h2>Strategic Pillars Analysis</h2>
         </div>
@@ -421,7 +425,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <Activity size={24} style={{ color: 'blue' }} />
           <h2>Cross-Pillar Synthesis</h2>
         </div>
@@ -488,7 +497,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <PlayCircle size={24} style={{ color: 'blue' }} />
           <h2>Agile Frameworks Recommendations</h2>
         </div>
@@ -542,7 +556,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <Shield size={24} style={{ color: 'blue' }} />
           <h2>Risk Assessment</h2>
         </div>
@@ -633,7 +652,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <Award size={24} style={{ color: 'blue' }} />
           <h2>Success Benchmarks</h2>
         </div>
@@ -706,7 +730,12 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header">
+        <div className="section-header" style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}>
           <Calendar size={24} style={{ color: 'blue' }} />
           <h2>Implementation Roadmap</h2>
         </div>
@@ -788,10 +817,20 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header ">
-          <Monitor size={24} style={{ color: 'blue' }} />
-          <h2>Monitoring & Feedback</h2>
-        </div>
+     <div
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#fff'
+  }}
+>
+  <Monitor size={24} style={{ color: 'blue', flexShrink: 0 }} />
+  <h2 style={{ margin: 0, display: 'inline', whiteSpace: 'nowrap' }}>
+    Monitoring & Feedback
+  </h2>
+</div>
+
         
         <div className="table-container">
           {monitoring.dashboard_requirements && monitoring.dashboard_requirements.length > 0 && (
