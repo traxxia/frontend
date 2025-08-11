@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, Target, TrendingUp, Users } from 'lucide-react';
+import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 
 const StrategicPositioningRadar = ({
@@ -13,8 +13,17 @@ const StrategicPositioningRadar = ({
     selectedBusinessId
 }) => {
     const [data, setData] = useState(strategicRadarData);
-    const [activeView, setActiveView] = useState('radar'); // 'radar' or 'positioning'
+    const [activeTab, setActiveTab] = useState('overview');
     const [hasGenerated, setHasGenerated] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({});
+
+    // Toggle section expansion
+    const toggleSection = (sectionKey) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionKey]: !prev[sectionKey]
+        }));
+    };
 
     // Handle regeneration - same pattern as other components in business page
     const handleRegenerate = async () => {
@@ -58,10 +67,24 @@ const StrategicPositioningRadar = ({
     };
 
     const getScoreClass = (score) => {
-        if (score >= 8) return 'score-excellent';
-        if (score >= 6) return 'score-good';
-        if (score >= 4) return 'score-average';
-        return 'score-poor';
+        if (score >= 8) return 'high-intensity';
+        if (score >= 6) return 'medium-intensity';
+        if (score >= 4) return 'low-intensity';
+        return 'low-intensity';
+    };
+
+    const getPerformanceStatus = (current, target) => {
+        const gap = target - current;
+        if (gap <= 1) return 'On Track';
+        if (gap <= 2) return 'Moderate Gap';
+        return 'Significant Gap';
+    };
+
+    const getPerformanceStatusClass = (current, target) => {
+        const gap = target - current;
+        if (gap <= 1) return 'high-intensity';
+        if (gap <= 2) return 'medium-intensity';
+        return 'low-intensity';
     };
 
     // Radar Chart Component
@@ -416,79 +439,6 @@ const StrategicPositioningRadar = ({
         );
     };
 
-    // Dimension Cards Component
-    const DimensionCards = ({ dimensions }) => (
-        <div className="dimensions-grid">
-            {dimensions.map((dimension, index) => (
-                <div key={index} className="dimension-card">
-                    <div className="dimension-header">
-                        <h4>{dimension.name}</h4>
-                        <div className={`dimension-score ${getScoreClass(dimension.currentScore)}`}>
-                            {dimension.currentScore}/10
-                        </div>
-                    </div>
-                    
-                    <div className="dimension-bars">
-                        <div className="score-bar">
-                            <div className="score-bar-header">
-                                <span>Current</span>
-                                <span style={{ color: getScoreColor(dimension.currentScore) }}>
-                                    {dimension.currentScore}
-                                </span>
-                            </div>
-                            <div className="score-bar-track">
-                                <div 
-                                    className="score-bar-fill"
-                                    style={{
-                                        width: `${(dimension.currentScore / 10) * 100}%`,
-                                        backgroundColor: getScoreColor(dimension.currentScore)
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="score-bar">
-                            <div className="score-bar-header">
-                                <span>Target</span>
-                                <span style={{ color: getScoreColor(dimension.targetScore) }}>
-                                    {dimension.targetScore}
-                                </span>
-                            </div>
-                            <div className="score-bar-track">
-                                <div 
-                                    className="score-bar-fill"
-                                    style={{
-                                        width: `${(dimension.targetScore / 10) * 100}%`,
-                                        backgroundColor: getScoreColor(dimension.targetScore),
-                                        opacity: 0.6
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="score-bar">
-                            <div className="score-bar-header">
-                                <span>Industry</span>
-                                <span style={{ color: '#6b7280' }}>
-                                    {dimension.industryAverage}
-                                </span>
-                            </div>
-                            <div className="score-bar-track">
-                                <div 
-                                    className="score-bar-fill"
-                                    style={{
-                                        width: `${(dimension.industryAverage / 10) * 100}%`,
-                                        backgroundColor: '#9ca3af'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-
     // Loading state
     if (isRegenerating) {
         return (
@@ -602,7 +552,9 @@ const StrategicPositioningRadar = ({
             <div className="cs-header">
                 <div className="cs-title-section">
                     <Target size={24} />
-                    <h3 className='cs-title'>Strategic Positioning Radar</h3> 
+                    <div>
+                        <h2 className='cs-title'>Strategic Positioning Radar</h2>
+                    </div>
                 </div>
                 <RegenerateButton
                     onRegenerate={handleRegenerate}
@@ -613,95 +565,493 @@ const StrategicPositioningRadar = ({
                 />
             </div>
 
-            {/* View Toggle */}
-            <div className="view-toggle">
-                <button
-                    className={`toggle-btn ${activeView === 'radar' ? 'active' : ''}`}
-                    onClick={() => setActiveView('radar')}
-                >
-                    <Target size={16} />
-                    Radar View
-                </button>
-                <button
-                    className={`toggle-btn ${activeView === 'positioning' ? 'active' : ''}`}
-                    onClick={() => setActiveView('positioning')}
-                >
-                    <TrendingUp size={16} />
-                    Positioning Map
-                </button>
+            {/* Navigation Tabs */}
+            <div className="competitive-advantage-tabs">
+                {[
+                    { id: 'overview', label: 'Overview', icon: Target },
+                    { id: 'radar', label: 'Radar View', icon: Activity },
+                    { id: 'positioning', label: 'Positioning Map', icon: BarChart3 },
+                    { id: 'details', label: 'Details', icon: Award },
+                ].map(tab => {
+                    const IconComponent = tab.icon;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+                        >
+                            <IconComponent size={16} />
+                            {tab.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* Chart Container */}
-            <div className="chart-container">
-                {activeView === 'radar' ? (
-                    <RadarChart dimensions={dimensions} />
-                ) : (
-                    <PositioningMap dimensions={dimensions} />
+            {/* Content */}
+            <div className="competitive-advantage-content">
+                {activeTab === 'overview' && (
+                    <div className="overview-content">
+                        {/* Executive Summary Table */}
+                        {overallPosition && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('executive')}>
+                                    <h3>Executive Summary</h3>
+                                    {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+                                
+                                {expandedSections.executive !== false && (
+                                    <div className="table-container">
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Metric</th>
+                                                    <th>Value</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>Current Average Score</strong></td>
+                                                    <td>{overallPosition.currentAverage}/10</td>
+                                                    <td>
+                                                        <span className={`status-badge ${getScoreClass(overallPosition.currentAverage)}`}>
+                                                            {overallPosition.currentAverage >= 8 ? 'Excellent' : 
+                                                             overallPosition.currentAverage >= 6 ? 'Good' : 
+                                                             overallPosition.currentAverage >= 4 ? 'Average' : 'Poor'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Target Average Score</strong></td>
+                                                    <td>{overallPosition.targetAverage}/10</td>
+                                                    <td>
+                                                        <span className={`status-badge ${getScoreClass(overallPosition.targetAverage)}`}>
+                                                            {overallPosition.targetAverage >= 8 ? 'Excellent' : 
+                                                             overallPosition.targetAverage >= 6 ? 'Good' : 
+                                                             overallPosition.targetAverage >= 4 ? 'Average' : 'Poor'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Improvement Gap</strong></td>
+                                                    <td>{(overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1)} points</td>
+                                                    <td>
+                                                        <span className={`status-badge ${getPerformanceStatusClass(overallPosition.currentAverage, overallPosition.targetAverage)}`}>
+                                                            {getPerformanceStatus(overallPosition.currentAverage, overallPosition.targetAverage)}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        {overallPosition.strengthAreas && (
+                                            <div className="subsection">
+                                                <h4>Strength Areas</h4>
+                                                <div className="forces-tags">
+                                                    {overallPosition.strengthAreas.map((area, index) => (
+                                                        <span key={index} className="force-tag">{area}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {overallPosition.improvementAreas && (
+                                            <div className="subsection">
+                                                <h4>Improvement Areas</h4>
+                                                <div className="forces-tags">
+                                                    {overallPosition.improvementAreas.map((area, index) => (
+                                                        <span key={index} className="force-tag">{area}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Strategic Dimensions Analysis Table */}
+                        {dimensions && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('dimensions')}>
+                                    <h3>Strategic Dimensions Analysis</h3>
+                                    {expandedSections.dimensions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+                                
+                                {expandedSections.dimensions !== false && (
+                                    <div className="table-container">
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Dimension</th>
+                                                    <th>Current Score</th>
+                                                    <th>Target Score</th>
+                                                    <th>Industry Average</th>
+                                                    <th>Gap Analysis</th>
+                                                    <th>Performance Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {dimensions.map((dimension, index) => (
+                                                    <tr key={index}>
+                                                        <td>
+                                                            <div className="force-name">
+                                                                <Target size={16} />
+                                                                <span><strong>{dimension.name}</strong></span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
+                                                                {dimension.currentScore}/10
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
+                                                                {dimension.targetScore}/10
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>
+                                                                {dimension.industryAverage}/10
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div className="gap-analysis">
+                                                                <div><strong>vs Target:</strong> {(dimension.targetScore - dimension.currentScore).toFixed(1)}</div>
+                                                                <div><strong>vs Industry:</strong> {(dimension.currentScore - dimension.industryAverage).toFixed(1)}</div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span className={`status-badge ${getPerformanceStatusClass(dimension.currentScore, dimension.targetScore)}`}>
+                                                                {getPerformanceStatus(dimension.currentScore, dimension.targetScore)}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'radar' && (
+                    <div className="radar-content">
+                        <RadarChart dimensions={dimensions} />
+                    </div>
+                )}
+
+                {activeTab === 'positioning' && (
+                    <div className="positioning-content">
+                        <PositioningMap dimensions={dimensions} />
+                    </div>
+                )}
+
+                {activeTab === 'details' && (
+                    <div className="details-content">
+                        {/* Competitive Positioning Table */}
+                        {dimensions && dimensions.length >= 2 && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('positioning')}>
+                                    <h3>Competitive Positioning Analysis</h3>
+                                    {expandedSections.positioning ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+                                
+                                {expandedSections.positioning !== false && (
+                                    <div className="table-container">
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Dimension</th>
+                                                    <th>Competitive Position</th>
+                                                    <th>Industry Comparison</th>
+                                                    <th>Strategic Implication</th>
+                                                    <th>Priority Level</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {dimensions.map((dimension, index) => {
+                                                    const vsIndustry = dimension.currentScore - dimension.industryAverage;
+                                                    const vsTarget = dimension.targetScore - dimension.currentScore;
+                                                    
+                                                    const getCompetitivePosition = (current, industry) => {
+                                                        if (current > industry + 1) return 'Market Leader';
+                                                        if (current > industry) return 'Above Average';
+                                                        if (current > industry - 1) return 'At Par';
+                                                        return 'Below Average';
+                                                    };
+
+                                                    const getStrategicImplication = (current, target, industry) => {
+                                                        if (current >= target) return 'Maintain Excellence';
+                                                        if (vsIndustry > 0) return 'Optimize Performance';
+                                                        return 'Urgent Improvement';
+                                                    };
+
+                                                    const getPriorityLevel = (gap) => {
+                                                        if (gap >= 3) return 'Critical';
+                                                        if (gap >= 2) return 'High';
+                                                        if (gap >= 1) return 'Medium';
+                                                        return 'Low';
+                                                    };
+
+                                                    const getPriorityClass = (gap) => {
+                                                        if (gap >= 3) return 'low-intensity';
+                                                        if (gap >= 2) return 'medium-intensity';
+                                                        if (gap >= 1) return 'medium-intensity';
+                                                        return 'high-intensity';
+                                                    };
+
+                                                    return (
+                                                        <tr key={index}>
+                                                            <td>
+                                                                <div className="force-name">
+                                                                    <Target size={16} />
+                                                                    <span><strong>{dimension.name}</strong></span>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <span className={`status-badge ${vsIndustry > 0 ? 'high-intensity' : 'medium-intensity'}`}>
+                                                                    {getCompetitivePosition(dimension.currentScore, dimension.industryAverage)}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <div className="gap-analysis">
+                                                                    <div style={{ color: vsIndustry > 0 ? '#10b981' : '#ef4444' }}>
+                                                                        {vsIndustry > 0 ? '+' : ''}{vsIndustry.toFixed(1)} points
+                                                                    </div>
+                                                                    <div className="small-text">vs Industry Avg</div>
+                                                                </div>
+                                                            </td>
+                                                            <td>{getStrategicImplication(dimension.currentScore, dimension.targetScore, dimension.industryAverage)}</td>
+                                                            <td>
+                                                                <span className={`status-badge ${getPriorityClass(vsTarget)}`}>
+                                                                    {getPriorityLevel(vsTarget)}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Strategic Recommendations Table */}
+                        {dimensions && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('recommendations')}>
+                                    <h3>Strategic Recommendations</h3>
+                                    {expandedSections.recommendations ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+                                
+                                {expandedSections.recommendations !== false && (
+                                    <div className="table-container">
+                                        {/* Immediate Actions */}
+                                        <div className="subsection">
+                                            <h4>Immediate Actions (Next 3-6 months)</h4>
+                                            <table className="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Dimension</th>
+                                                        <th>Recommended Action</th>
+                                                        <th>Expected Impact</th>
+                                                        <th>Timeline</th>
+                                                        <th>Priority</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {dimensions
+                                                        .filter(d => (d.targetScore - d.currentScore) >= 2)
+                                                        .map((dimension, index) => (
+                                                            <tr key={index}>
+                                                                <td><strong>{dimension.name}</strong></td>
+                                                                <td>
+                                                                    {dimension.currentScore < dimension.industryAverage 
+                                                                        ? `Focus on closing industry gap in ${dimension.name.toLowerCase()}`
+                                                                        : `Enhance ${dimension.name.toLowerCase()} capabilities to reach target`}
+                                                                </td>
+                                                                <td>
+                                                                    +{((dimension.targetScore - dimension.currentScore) / 2).toFixed(1)} point improvement
+                                                                </td>
+                                                                <td><span className="timeline-badge">3-6 months</span></td>
+                                                                <td>
+                                                                    <span className={`status-badge ${(dimension.targetScore - dimension.currentScore) >= 3 ? 'low-intensity' : 'medium-intensity'}`}>
+                                                                        {(dimension.targetScore - dimension.currentScore) >= 3 ? 'Critical' : 'High'}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Long-term Strategic Initiatives */}
+                                        <div className="subsection">
+                                            <h4>Long-term Strategic Initiatives</h4>
+                                            <table className="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Initiative</th>
+                                                        <th>Strategic Impact</th>
+                                                        <th>Dimensions Affected</th>
+                                                        <th>Expected Outcome</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td><strong>Digital Transformation</strong></td>
+                                                        <td>Enhance operational efficiency and customer experience</td>
+                                                        <td>
+                                                            {dimensions.slice(0, 2).map(d => d.name).join(', ')}
+                                                        </td>
+                                                        <td>2-3 point improvement across key dimensions</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Market Positioning Enhancement</strong></td>
+                                                        <td>Strengthen competitive advantage</td>
+                                                        <td>
+                                                            {dimensions.slice(1, 3).map(d => d.name).join(', ')}
+                                                        </td>
+                                                        <td>Achieve above-industry performance</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Innovation Investment</strong></td>
+                                                        <td>Future-proof business capabilities</td>
+                                                        <td>All strategic dimensions</td>
+                                                        <td>Sustainable competitive advantage</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Monitoring Dashboard */}
+                        {dimensions && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('monitoring')}>
+                                    <h3>Monitoring Dashboard</h3>
+                                    {expandedSections.monitoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+                                
+                                {expandedSections.monitoring !== false && (
+                                    <div className="table-container">
+                                        {/* Key Performance Indicators */}
+                                        <div className="subsection">
+                                            <h4>Key Performance Indicators</h4>
+                                            <table className="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Dimension</th>
+                                                        <th>Key Indicator</th>
+                                                        <th>Current Value</th>
+                                                        <th>Target Value</th>
+                                                        <th>Measurement Frequency</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {dimensions.map((dimension, index) => (
+                                                        <tr key={index}>
+                                                            <td><strong>{dimension.name}</strong></td>
+                                                            <td>{dimension.name} Performance Index</td>
+                                                            <td>
+                                                                <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
+                                                                    {dimension.currentScore}/10
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
+                                                                    {dimension.targetScore}/10
+                                                                </span>
+                                                            </td>
+                                                            <td><span className="frequency-badge">Monthly</span></td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Progress Tracking */}
+                                        <div className="subsection">
+                                            <h4>Progress Tracking</h4>
+                                            <table className="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Metric</th>
+                                                        <th>Current Status</th>
+                                                        <th>Target Status</th>
+                                                        <th>Progress Indicator</th>
+                                                        <th>Next Review</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td><strong>Overall Strategic Score</strong></td>
+                                                        <td>{overallPosition?.currentAverage}/10</td>
+                                                        <td>{overallPosition?.targetAverage}/10</td>
+                                                        <td>
+                                                            <div className="progress-bar">
+                                                                <div 
+                                                                    className="progress-fill"
+                                                                    style={{ 
+                                                                        width: `${(overallPosition?.currentAverage / overallPosition?.targetAverage) * 100}%`,
+                                                                        backgroundColor: getScoreColor(overallPosition?.currentAverage)
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td><span className="timeline-badge">Quarterly</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Dimensions Above Target</strong></td>
+                                                        <td>{dimensions.filter(d => d.currentScore >= d.targetScore).length}</td>
+                                                        <td>{dimensions.length}</td>
+                                                        <td>
+                                                            <div className="progress-bar">
+                                                                <div 
+                                                                    className="progress-fill"
+                                                                    style={{ 
+                                                                        width: `${(dimensions.filter(d => d.currentScore >= d.targetScore).length / dimensions.length) * 100}%`,
+                                                                        backgroundColor: '#10b981'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td><span className="timeline-badge">Monthly</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Industry Leadership Areas</strong></td>
+                                                        <td>{dimensions.filter(d => d.currentScore > d.industryAverage).length}</td>
+                                                        <td>{dimensions.length}</td>
+                                                        <td>
+                                                            <div className="progress-bar">
+                                                                <div 
+                                                                    className="progress-fill"
+                                                                    style={{ 
+                                                                        width: `${(dimensions.filter(d => d.currentScore > d.industryAverage).length / dimensions.length) * 100}%`,
+                                                                        backgroundColor: '#3b82f6'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td><span className="timeline-badge">Quarterly</span></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
-
-            {/* Dimension Cards */}
-            <DimensionCards dimensions={dimensions} />
-
-            {/* Summary Section */}
-            {overallPosition && (
-                <div className="summary-section">
-                    <h4 className="summary-title">
-                        <Target size={20} />
-                        Strategic Position Summary
-                    </h4>
-                    
-                    <div className="summary-stats">
-                        <div className="summary-stat">
-                            <div className="summary-stat-label">Current Average</div>
-                            <div 
-                                className="summary-stat-value"
-                                style={{ color: getScoreColor(overallPosition.currentAverage) }}
-                            >
-                                {overallPosition.currentAverage}/10
-                            </div>
-                        </div>
-                        <div className="summary-stat">
-                            <div className="summary-stat-label">Target Average</div>
-                            <div 
-                                className="summary-stat-value"
-                                style={{ color: getScoreColor(overallPosition.targetAverage) }}
-                            >
-                                {overallPosition.targetAverage}/10
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="summary-areas">
-                        <div className="summary-area strengths">
-                            <h4>
-                                <Users size={16} />
-                                Strength Areas
-                            </h4>
-                            <div className="area-tags">
-                                {overallPosition.strengthAreas?.map((area, index) => (
-                                    <span key={index} className="area-tag strength-tag">
-                                        {area}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="summary-area improvements">
-                            <h4>
-                                <TrendingUp size={16} />
-                                Improvement Areas
-                            </h4>
-                            <div className="area-tags">
-                                {overallPosition.improvementAreas?.map((area, index) => (
-                                    <span key={index} className="area-tag improvement-tag">
-                                        {area}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )} 
         </div>
     );
 };

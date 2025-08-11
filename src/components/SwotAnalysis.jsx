@@ -22,16 +22,14 @@ const SwotAnalysis = ({
 
   useEffect(() => {
   // Only update if initialAnalysisResult is different from current state
-  if (initialAnalysisResult !== analysisResult) {
-    console.log('SwotAnalysis: Loading initial analysis result:', !!initialAnalysisResult);
+  if (initialAnalysisResult !== analysisResult) { 
     setAnalysisResult(initialAnalysisResult);
     setErrorMessage(''); // Clear any previous errors when new data is loaded
   }
 }, [initialAnalysisResult]);
 useEffect(() => {
   // On component mount, if we have initial data, make sure it's set
-  if (initialAnalysisResult && !analysisResult) {
-    console.log('SwotAnalysis: Setting initial analysis result on mount');
+  if (initialAnalysisResult && !analysisResult) { 
     setAnalysisResult(initialAnalysisResult);
   }
 }, []);
@@ -130,8 +128,7 @@ useEffect(() => {
         throw new Error(errorData.error || 'Failed to save SWOT analysis');
       }
 
-      const result = await response.json();
-      console.log('SWOT analysis saved successfully:', result);
+      const result = await response.json(); 
       return result;
     } catch (error) {
       console.error('Error saving SWOT analysis to backend:', error);
@@ -184,12 +181,7 @@ useEffect(() => {
         questions: questionsArray,
         answers: answersArray
       };
-
-      console.log('Generating SWOT analysis with payload:', {
-        questionCount: questionsArray.length,
-        businessName
-      });
-
+ 
       const response = await fetch(`${ML_API_BASE_URL}/find`, {
         method: 'POST',
         headers: {
@@ -237,8 +229,7 @@ useEffect(() => {
         
         // Save to backend using the new API
         await saveToBackend(dataToSave);
-        
-        console.log('SWOT analysis generated and saved successfully');
+         
       }
 
     } catch (error) {

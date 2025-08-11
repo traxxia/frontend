@@ -107,8 +107,7 @@ for (const canvas of canvases) {
     img.style.width = canvas.width + 'px';
     img.style.height = canvas.height + 'px';
     img.style.display = 'block';
-    canvas.parentNode.replaceChild(img, canvas);
-    console.log("✅ Canvas converted to image for PDF export");
+    canvas.parentNode.replaceChild(img, canvas); 
   } catch (err) {
     console.error("❌ Error converting canvas to image:", err);
   }

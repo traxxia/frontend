@@ -375,15 +375,14 @@ const parseAnalysisData = (userDetails, user) => {
           break;
         
         default:
-          console.log(`Unknown analysis type: ${analysisType}`, analysisResult);
+           
           break;
       }
     } catch (error) {
       console.error('Error parsing analysis result:', error, result);
     }
   });
-
-  console.log('Parsed Analysis Data:', analysisData);
+ 
   return analysisData;
 };
 
@@ -740,13 +739,11 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
     }
   }, [availablePhases, selectedPhase]);
 
-  const handlePhaseChange = (phaseKey) => {
-    console.log('Phase change in analysis tab:', phaseKey);
+  const handlePhaseChange = (phaseKey) => { 
     setSelectedPhase(phaseKey);
   };
 
-  const handleStrategicPhaseChange = (phaseKey) => {
-    console.log('Phase change in strategic tab:', phaseKey);
+  const handleStrategicPhaseChange = (phaseKey) => { 
     setSelectedStrategicPhase(phaseKey);
   };
 
@@ -854,13 +851,7 @@ const TabNavigation = ({
   onPhaseChange,
   selectedStrategicPhase,
   onStrategicPhaseChange
-}) => {
-  console.log('TabNavigation Debug:', {
-    activeTab,
-    availablePhases,
-    selectedPhase,
-    selectedStrategicPhase
-  });
+}) => { 
 
   return (
     <div className="admin-nav">
@@ -1397,25 +1388,14 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
   ];
 
   const analysisTypes = selectedPhase === 'initial' ? initialPhaseTypes : essentialPhaseTypes;
-
-  console.log('AnalysisComponents Debug:', {
-    selectedPhase,
-    analysisTypesCount: analysisTypes.length,
-    availableAnalysis: analysisTypes.map(type => ({
-      key: type.key,
-      hasData: !!analysisData[type.key]
-    }))
-  });
-
+ 
   return (
     <div className="analysis-components">
       {analysisTypes.map(({ key, Component, propName }) => {
         if (!analysisData[key]) {
-          console.log(`No data for ${key} in ${selectedPhase} phase`);
+           
           return null;
         }
-
-        console.log(`Rendering ${key} component with data:`, analysisData[key]);
 
         const props = {
           businessName: analysisData.businessName,

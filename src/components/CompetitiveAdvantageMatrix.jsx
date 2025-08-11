@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 
 const CompetitiveAdvantageMatrix = ({
@@ -17,36 +17,111 @@ const CompetitiveAdvantageMatrix = ({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+    const [expandedSections, setExpandedSections] = useState({});
 
     // API Configuration
     const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
+    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+    const getAuthToken = () => sessionStorage.getItem('token');
+
+    // Toggle section expansion
+    const toggleSection = (sectionKey) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionKey]: !prev[sectionKey]
+        }));
+    };
+
+    // Save to backend using the phase analysis API (same as SWOT)
+    const saveToBackend = async (analysisData) => {
+        try {
+            const token = getAuthToken();
+
+            const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    phase: 'essential', // Competitive Advantage is part of essential phase
+                    analysis_type: 'competitiveAdvantage',
+                    analysis_name: 'Competitive Advantage Analysis',
+                    analysis_data: analysisData,
+                    business_id: selectedBusinessId,
+                    metadata: {
+                        generated_at: new Date().toISOString(),
+                        business_name: businessName,
+                        phase: 'essential',
+                        generation_context: 'regular_generation'
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save Competitive Advantage analysis');
+            }
+
+            const result = await response.json(); 
+            return result;
+        } catch (error) {
+            console.error('Error saving Competitive Advantage analysis to backend:', error);
+            throw error;
+        }
+    };
 
     // Generate Competitive Advantage Analysis from API
     const generateCompetitiveAdvantageAnalysis = async () => {
+        if (isLoading) return;
+
         try {
             setIsLoading(true);
             setError(null);
+            setData(null); // Clear existing data like SWOT does
 
             const questionsArray = [];
             const answersArray = [];
 
-            questions
-                .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-                .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .forEach(question => {
-                    questionsArray.push(question.question_text);
-                    answersArray.push(userAnswers[question._id]);
-                });
+            // Filter and sort questions like SWOT does
+            const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            sortedQuestions.forEach(question => {
+                const questionId = question._id || question.question_id;
+                if (userAnswers[questionId] && userAnswers[questionId].trim()) {
+                    // Clean the text like SWOT does
+                    const cleanQuestion = String(question.question_text)
+                        .replace(/[\u2018\u2019]/g, "'")
+                        .replace(/[\u201C\u201D]/g, '"')
+                        .replace(/[\u2013\u2014]/g, '-')
+                        .replace(/[\u2026]/g, '...')
+                        .replace(/[^\x00-\x7F]/g, '')
+                        .trim();
+
+                    const cleanAnswer = String(userAnswers[questionId])
+                        .replace(/[\u2018\u2019]/g, "'")
+                        .replace(/[\u201C\u201D]/g, '"')
+                        .replace(/[\u2013\u2014]/g, '-')
+                        .replace(/[\u2026]/g, '...')
+                        .replace(/[^\x00-\x7F]/g, '')
+                        .trim();
+
+                    questionsArray.push(cleanQuestion);
+                    answersArray.push(cleanAnswer);
+                }
+            });
 
             if (questionsArray.length === 0) {
-                throw new Error('No questions available for competitive advantage analysis');
+                throw new Error('No answered questions available for competitive advantage analysis');
             }
+ 
 
+            // Call ML Backend
             const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
                 method: 'POST',
                 headers: {
                     'accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json; charset=utf-8'
                 },
                 body: JSON.stringify({
                     questions: questionsArray,
@@ -60,17 +135,23 @@ const CompetitiveAdvantageMatrix = ({
             }
 
             const result = await response.json();
-            
+
             // Validate response structure
             if (!result.competitiveAdvantage) {
                 throw new Error('Invalid API response structure: missing competitiveAdvantage');
             }
 
+            // Set local state
             setData(result);
             setHasGenerated(true);
+
+            // Save to backend using phase analysis API (like SWOT)
+            await saveToBackend(result);
+             
             return result;
 
         } catch (error) {
+            console.error('Error generating Competitive Advantage analysis:', error);
             setError(error.message);
             throw error;
         } finally {
@@ -92,11 +173,13 @@ const CompetitiveAdvantageMatrix = ({
         }
     }, [competitiveAdvantageData]);
 
-    // Handle regeneration
+    // Handle regeneration - Updated to match SWOT pattern
     const handleRegenerate = async () => {
         if (onRegenerate) {
-            onRegenerate();
+            // If parent component provides regeneration handler, use it
+            await onRegenerate();
         } else {
+            // Otherwise, handle regeneration internally
             await generateCompetitiveAdvantageAnalysis();
         }
     };
@@ -105,7 +188,7 @@ const CompetitiveAdvantageMatrix = ({
     const getPositionColor = (position) => {
         const colors = {
             'leader': '#10b981',
-            'challenger': '#f59e0b', 
+            'challenger': '#f59e0b',
             'follower': '#6b7280',
             'nicher': '#8b5cf6'
         };
@@ -117,6 +200,13 @@ const CompetitiveAdvantageMatrix = ({
         if (score >= 8) return '#10b981';
         if (score >= 6) return '#f59e0b';
         return '#ef4444';
+    };
+
+    // Get intensity color class
+    const getIntensityColor = (score) => {
+        if (score >= 8) return 'high-intensity';
+        if (score >= 6) return 'medium-intensity';
+        return 'low-intensity';
     };
 
     // Render Scatter Plot
@@ -131,7 +221,7 @@ const CompetitiveAdvantageMatrix = ({
         return (
             <div className="scatter-plot-container">
                 <h4>Competitive Advantage vs Customer Value Matrix</h4>
-                
+
                 <div className="plot-wrapper">
                     <svg width={plotSize} height={plotSize} className="scatter-plot">
                         {/* Grid lines */}
@@ -186,18 +276,17 @@ const CompetitiveAdvantageMatrix = ({
                         {differentiators.map((diff, index) => {
                             const x = padding + (diff.uniqueness / maxValue) * plotArea;
                             const y = plotSize - padding - (diff.customerValue / maxValue) * plotArea;
-                            
+
                             return (
                                 <g key={index}>
                                     <circle
                                         cx={x}
                                         cy={y}
                                         r={8 + (diff.sustainability || 5) / 2}
-                                        className={`data-point ${
-                                            diff.uniqueness >= 7 && diff.customerValue >= 7 ? 'sweet-spot' : 
-                                            diff.uniqueness >= 7 ? 'niche' : 
-                                            diff.customerValue >= 7 ? 'high-value' : 'improve'
-                                        }`}
+                                        className={`data-point ${diff.uniqueness >= 7 && diff.customerValue >= 7 ? 'sweet-spot' :
+                                                diff.uniqueness >= 7 ? 'niche' :
+                                                    diff.customerValue >= 7 ? 'high-value' : 'improve'
+                                            }`}
                                     />
                                     <text
                                         x={x}
@@ -274,7 +363,7 @@ const CompetitiveAdvantageMatrix = ({
         return (
             <div className="spider-chart-container">
                 <h4>Differentiators Radar Chart</h4>
-                
+
                 <div className="chart-wrapper">
                     <svg width={size} height={size} className="spider-chart">
                         {/* Background web */}
@@ -348,132 +437,12 @@ const CompetitiveAdvantageMatrix = ({
         );
     };
 
-    // Render Competitive Position
-    const renderCompetitivePosition = (position) => {
-        if (!position) return null;
-
-        return (
-            <div className="competitive-position-grid">
-                <div className="position-card overall-score">
-                    <div className="metric-value" style={{ color: getScoreColor(position.overallScore) }}>
-                        {position.overallScore}/10
-                    </div>
-                    <div className="metric-label">Overall Score</div>
-                </div>
-
-                <div className="position-card market-position">
-                    <div className="metric-value" style={{ color: getPositionColor(position.marketPosition) }}>
-                        {position.marketPosition}
-                    </div>
-                    <div className="metric-label">Market Position</div>
-                </div>
-
-                <div className="position-card sustainable">
-                    <div className="metric-value">{position.sustainableAdvantages}</div>
-                    <div className="metric-label">Sustainable Advantages</div>
-                </div>
-
-                <div className="position-card vulnerable">
-                    <div className="metric-value">{position.vulnerableAdvantages}</div>
-                    <div className="metric-label">Vulnerable Advantages</div>
-                </div>
-            </div>
-        );
-    };
-
-    // Render Differentiators List
-    const renderDifferentiatorsList = (differentiators) => {
-        if (!differentiators || differentiators.length === 0) return null;
-
-        return (
-            <div className="differentiators-list">
-                <h4>
-                    <Award size={18} />
-                    Key Differentiators
-                </h4>
-                
-                <div className="differentiators-grid">
-                    {differentiators.map((diff, index) => (
-                        <div key={index} className="differentiator-card">
-                            <div className="differentiator-header">
-                                <h5>{diff.type} - {diff.description}</h5>
-                                <div className="score-badges">
-                                    <span className="score-badge" style={{ backgroundColor: getScoreColor(diff.uniqueness) }}>
-                                        Unique: {diff.uniqueness}/10
-                                    </span>
-                                    <span className="score-badge" style={{ backgroundColor: getScoreColor(diff.customerValue) }}>
-                                        Value: {diff.customerValue}/10
-                                    </span>
-                                    <span className="score-badge" style={{ backgroundColor: getScoreColor(diff.sustainability) }}>
-                                        Sustainable: {diff.sustainability}/10
-                                    </span>
-                                </div>
-                            </div>
-
-                            {diff.proofPoints && diff.proofPoints.length > 0 && (
-                                <div className="proof-points">
-                                    <strong>Proof Points:</strong>
-                                    <ul>
-                                        {diff.proofPoints.map((point, idx) => (
-                                            <li key={idx}>{point}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
-    // Render Customer Choice Reasons
-    const renderCustomerChoiceReasons = (reasons) => {
-        if (!reasons || reasons.length === 0) return null;
-
-        return (
-            <div className="customer-choice-reasons">
-                <h4>
-                    <TrendingUp size={18} />
-                    Why Customers Choose {businessName || 'Us'}
-                </h4>
-                
-                <div className="reasons-list">
-                    {reasons
-                        .sort((a, b) => (b.frequency || 0) - (a.frequency || 0))
-                        .map((reason, index) => (
-                            <div key={index} className="reason-item">
-                                <div className="reason-content">
-                                    <span className="reason-text">{reason.reason}</span>
-                                    {reason.linkedDifferentiator && (
-                                        <span className="linked-badge">
-                                            Linked to {reason.linkedDifferentiator}
-                                        </span>
-                                    )}
-                                </div>
-                                
-                                <div className="frequency-display">
-                                    <div className="frequency-bar">
-                                        <div 
-                                            className="frequency-fill"
-                                            style={{ width: `${reason.frequency || 0}%` }}
-                                        />
-                                    </div>
-                                    <span className="frequency-text">{reason.frequency || 0}%</span>
-                                </div>
-                            </div>
-                        ))}
-                </div>
-            </div>
-        );
-    };
-
     // Loading state
     if (isLoading || isRegenerating) {
         return (
             <div className="competitive-advantage-container">
-                <div className="competitive-advantage-loading">
-                    <Loader className="spinner" />
+                <div className="loading-state">
+                    <Loader className="loading-spinner" />
                     <h3>Analyzing Competitive Advantages...</h3>
                     <p>Evaluating your market position and competitive differentiators...</p>
                 </div>
@@ -485,11 +454,11 @@ const CompetitiveAdvantageMatrix = ({
     if (error) {
         return (
             <div className="competitive-advantage-container">
-                <div className="competitive-advantage-error">
-                    <Shield />
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
                     <p>{error}</p>
-                    <button onClick={handleRegenerate} className="retry-btn">
+                    <button onClick={handleRegenerate} className="retry-button">
                         Retry Analysis
                     </button>
                 </div>
@@ -502,8 +471,8 @@ const CompetitiveAdvantageMatrix = ({
         const answeredCount = Object.keys(userAnswers).length;
         return (
             <div className="competitive-advantage-container">
-                <div className="competitive-advantage-empty">
-                    <Shield size={48} />
+                <div className="empty-state">
+                    <Shield size={48} className="empty-icon" />
                     <h3>Competitive Advantage Matrix</h3>
                     <p>
                         {answeredCount < 5
@@ -521,21 +490,20 @@ const CompetitiveAdvantageMatrix = ({
     return (
         <div className="competitive-advantage-container">
             {/* Header */}
-            <div className="competitive-advantage-header">
-                <div className="header-content">
-                    <Shield className="header-icon" />
+            <div className="cs-header">
+                <div className="cs-title-section">
+                    <Shield className="main-icon" size={24} />
                     <div>
-                        <h1 style={{ color: 'black' }}>Competitive Advantage Matrix</h1>
-                        <p>Analysis of your competitive differentiators and market position for {businessName}</p>
+                        <h2 className="cs-title">Competitive Advantage Matrix</h2>
                     </div>
                 </div>
                 <RegenerateButton
-                          onRegenerate={handleRegenerate}
-                          isRegenerating={isRegenerating}
-                          canRegenerate={canRegenerate}
-                          sectionName="Competitive Advantage"
-                          size="medium"
-                        />
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    sectionName="Competitive Advantage"
+                    size="medium"
+                />
             </div>
 
             {/* Navigation Tabs */}
@@ -564,15 +532,112 @@ const CompetitiveAdvantageMatrix = ({
             <div className="competitive-advantage-content">
                 {activeTab === 'overview' && (
                     <div className="overview-content">
-                        <div className="overview-section">
-                            <h3>Market Position</h3>
-                            {advantage.competitivePosition && renderCompetitivePosition(advantage.competitivePosition)}
-                        </div>
+                        {/* Market Position Section */}
+                        {advantage.competitivePosition && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('position')}>
+                                    <h3>Market Position</h3>
+                                    {expandedSections.position ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
 
-                        <div className="overview-section">
-                            <h3>Customer Choice Drivers</h3>
-                            {advantage.customerChoiceReasons && renderCustomerChoiceReasons(advantage.customerChoiceReasons)}
-                        </div>
+                                {expandedSections.position !== false && (
+                                    <div className="table-container">
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Metric</th>
+                                                    <th>Value</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>Overall Score</strong></td>
+                                                    <td>{advantage.competitivePosition.overallScore}/10</td>
+                                                    <td>
+                                                        <span className={`status-badge ${getIntensityColor(advantage.competitivePosition.overallScore)}`}>
+                                                            {advantage.competitivePosition.overallScore >= 8 ? 'Strong' :
+                                                                advantage.competitivePosition.overallScore >= 6 ? 'Moderate' : 'Weak'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Market Position</strong></td>
+                                                    <td>{advantage.competitivePosition.marketPosition}</td>
+                                                    <td>
+                                                        <span className={`status-badge ${advantage.competitivePosition.marketPosition?.toLowerCase()}`}>
+                                                            {advantage.competitivePosition.marketPosition}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Sustainable Advantages</strong></td>
+                                                    <td>{advantage.competitivePosition.sustainableAdvantages}</td>
+                                                    <td>-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Vulnerable Advantages</strong></td>
+                                                    <td>{advantage.competitivePosition.vulnerableAdvantages}</td>
+                                                    <td>-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Customer Choice Drivers Section */}
+                        {advantage.customerChoiceReasons && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('choice')}>
+                                    <h3>Customer Choice Drivers</h3>
+                                    {expandedSections.choice ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+
+                                {expandedSections.choice !== false && (
+                                    <div className="table-container">
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reason</th>
+                                                    <th>Frequency</th>
+                                                    <th>Linked Differentiator</th>
+                                                    <th>Impact</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {advantage.customerChoiceReasons
+                                                    .sort((a, b) => (b.frequency || 0) - (a.frequency || 0))
+                                                    .map((reason, index) => (
+                                                        <tr key={index}>
+                                                            <td><strong>{reason.reason}</strong></td>
+                                                            <td>
+                                                                <span className="frequency-badge">{reason.frequency || 0}%</span>
+                                                            </td>
+                                                            <td>
+                                                                {reason.linkedDifferentiator && (
+                                                                    <span className="linked-badge">
+                                                                        {reason.linkedDifferentiator}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td>
+                                                                <span className={`status-badge ${(reason.frequency || 0) >= 70 ? 'high-intensity' :
+                                                                        (reason.frequency || 0) >= 40 ? 'medium-intensity' : 'low-intensity'
+                                                                    }`}>
+                                                                    {(reason.frequency || 0) >= 70 ? 'High' :
+                                                                        (reason.frequency || 0) >= 40 ? 'Medium' : 'Low'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -590,7 +655,64 @@ const CompetitiveAdvantageMatrix = ({
 
                 {activeTab === 'details' && (
                     <div className="details-content">
-                        {advantage.differentiators && renderDifferentiatorsList(advantage.differentiators)}
+                        {/* Differentiators Section */}
+                        {advantage.differentiators && (
+                            <div className="section-container">
+                                <div className="section-header" onClick={() => toggleSection('differentiators')}>
+                                    <h3>Key Differentiators</h3>
+                                    {expandedSections.differentiators ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                                </div>
+
+                                {expandedSections.differentiators !== false && (
+                                    <div className="table-container">
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Differentiator</th>
+                                                    <th>Description</th>
+                                                    <th>Uniqueness</th>
+                                                    <th>Customer Value</th>
+                                                    <th>Sustainability</th>
+                                                    <th>Proof Points</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {advantage.differentiators.map((diff, index) => (
+                                                    <tr key={index}>
+                                                        <td><strong>{diff.type}</strong></td>
+                                                        <td>{diff.description}</td>
+                                                        <td>
+                                                            <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>
+                                                                {diff.uniqueness}/10
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>
+                                                                {diff.customerValue}/10
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>
+                                                                {diff.sustainability}/10
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            {diff.proofPoints && diff.proofPoints.length > 0 && (
+                                                                <ul className="list-items">
+                                                                    {diff.proofPoints.map((point, idx) => (
+                                                                        <li key={idx}>{point}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

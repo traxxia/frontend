@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp } from 'lucide-react';
+import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import "../styles/EssentialPhase.css"; 
 
@@ -14,8 +14,17 @@ const ProductivityMetrics = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+
+  // Toggle section expansion
+  const toggleSection = (sectionKey) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
 
   const generateProductivityMetrics = async () => {
     try {
@@ -35,14 +44,7 @@ const ProductivityMetrics = ({
       if (questionsArray.length === 0) {
         throw new Error('No answered questions available for productivity metrics analysis');
       }
-
-      console.log('🚀 Calling Productivity Metrics API with:', {
-        questionsCount: questionsArray.length,
-        answersCount: answersArray.length,
-        questions: questionsArray.slice(0, 3),
-        answers: answersArray.slice(0, 3)
-      });
-
+ 
       const response = await fetch(`${ML_API_BASE_URL}/productivity-metrics`, {
         method: 'POST',
         headers: {
@@ -61,11 +63,9 @@ const ProductivityMetrics = ({
         throw new Error(`API returned ${response.status}: ${errorText}`);
       }
 
-      const result = await response.json();
-      console.log('✅ Productivity Metrics API Raw Response:', result);
+      const result = await response.json(); 
 
-      const processedData = result.productivityMetrics ? result : { productivityMetrics: result };
-      console.log('📊 Processed Productivity Metrics Data:', processedData);
+      const processedData = result.productivityMetrics ? result : { productivityMetrics: result }; 
 
       return processedData;
 
@@ -80,41 +80,22 @@ const ProductivityMetrics = ({
 
   useEffect(() => {
     const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim());
-
-    console.log('🔍 Productivity Metrics useEffect triggered:', {
-      hasAnswers,
-      hasProductivityData: !!productivityData,
-      isGenerating,
-      isRegenerating,
-      questionsLength: questions.length,
-      userAnswersKeys: Object.keys(userAnswers).length
-    });
-
-    if (!productivityData && hasAnswers && !isGenerating && !isRegenerating) {
-      console.log('✅ Auto-generating productivity metrics...');
+ 
+    if (!productivityData && hasAnswers && !isGenerating && !isRegenerating) { 
       generateProductivityMetrics();
     }
   }, [questions, userAnswers, productivityData]);
 
-  const handleRegenerate = async () => {
-    console.log('🔄 Productivity Metrics Regenerate triggered');
-    console.log('📝 Current productivityData:', productivityData);
-    console.log('⚙️ Regeneration props:', {
-      isRegenerating,
-      canRegenerate,
-      hasOnRegenerate: !!onRegenerate
-    });
+  const handleRegenerate = async () => { 
 
-    if (onRegenerate) {
-      console.log('🎯 Calling parent onRegenerate function');
+    if (onRegenerate) { 
       onRegenerate();
-    } else {
-      console.log('🔧 Calling local generateProductivityMetrics function');
+    } else { 
       await generateProductivityMetrics();
     }
   };
 
-  // Productivity Chart Component
+  // Productivity Chart Component (keeping original chart)
   const ProductivityChart = ({ employeeProductivity = {} }) => {
     const {
       totalEmployees = 0,
@@ -160,51 +141,27 @@ const ProductivityMetrics = ({
     );
   };
 
-  // Value Drivers Component
-  const ValueDrivers = ({ drivers = [] }) => {
-    if (drivers.length === 0) return null;
-
-    const getEfficiencyColor = (efficiency) => {
-      switch (efficiency?.toLowerCase()) {
-        case 'high': return '#10b981';
-        case 'medium': return '#f59e0b';
-        case 'low': return '#ef4444';
-        default: return '#6b7280';
-      }
-    };
-
-    return (
-      <div className="value-drivers">
-        <div className="drivers-grid">
-          {drivers.map((driver, index) => (
-            <div key={index} className="driver-card">
-              <div className="driver-header">
-                <div className="driver-name">{driver.driver}</div>
-                <div 
-                  className={`efficiency-badge ${driver.efficiency?.toLowerCase()}`}
-                  style={{ backgroundColor: getEfficiencyColor(driver.efficiency) }}
-                >
-                  {driver.efficiency}
-                </div>
-              </div>
-              <div className="driver-contribution">
-                {driver.contribution?.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim()}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+  // Get efficiency color helper
+  const getEfficiencyColor = (efficiency) => {
+    const level = efficiency?.toLowerCase() || '';
+    if (level.includes('high')) return 'high-intensity';
+    if (level.includes('medium') || level.includes('moderate')) return 'medium-intensity';
+    if (level.includes('low')) return 'low-intensity';
+    return 'medium-intensity';
   };
 
   // Loading state
   if (isGenerating || isRegenerating) {
     return (
-      <div className="productivity-metrics">
+      <div className="porters-container">
         <div className="loading-state">
-          <Loader size={32} className="spinner" />
-          <h3>Analyzing Productivity Metrics</h3>
-          <p>Evaluating employee productivity, cost efficiency, and value generation...</p>
+          <Loader size={24} className="loading-spinner" />
+          <span>
+            {isRegenerating
+              ? "Regenerating productivity metrics analysis..."
+              : "Generating productivity metrics analysis..."
+            }
+          </span>
         </div>
       </div>
     );
@@ -213,12 +170,12 @@ const ProductivityMetrics = ({
   // Error state
   if (error && !productivityData) {
     return (
-      <div className="productivity-metrics">
+      <div className="porters-container">
         <div className="error-state">
-          <h3>Unable to Generate Productivity Analysis</h3>
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
           <p>{error}</p>
-          <button onClick={handleRegenerate} disabled={!canRegenerate} className="btn-retry">
-            <RefreshCw size={16} />
+          <button onClick={handleRegenerate} className="retry-button">
             Retry Analysis
           </button>
         </div>
@@ -230,26 +187,9 @@ const ProductivityMetrics = ({
   if (!productivityData?.productivityMetrics && !productivityData?.employeeProductivity) {
     const answeredCount = Object.keys(userAnswers).length;
     return (
-      <div className="productivity-metrics">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Activity size={24} />
-            <h2 className='cs-title'>
-              Productivity and Efficiency Metrics
-            </h2> 
-          </div>
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Productivity Metrics"
-            size="medium"
-            buttonText="Generate"
-          />
-        </div>
-
+      <div className="porters-container">
         <div className="empty-state">
-          <Activity size={48} />
+          <Activity size={48} className="empty-icon" />
           <h3>Productivity and Efficiency Metrics</h3>
           <p>
             {answeredCount < 3
@@ -264,105 +204,594 @@ const ProductivityMetrics = ({
 
   // Handle both wrapped and direct response structures
   const productivityMetrics = productivityData?.productivityMetrics || productivityData;
-
-  console.log('📊 Final productivityMetrics data being rendered:', {
-    originalData: productivityData,
-    processedMetrics: productivityMetrics,
-    hasEmployeeProductivity: !!productivityMetrics?.employeeProductivity,
-    hasCostStructure: !!productivityMetrics?.costStructure,
-    hasValueDrivers: !!productivityMetrics?.valueDrivers,
-    hasImprovementOpportunities: !!productivityMetrics?.improvementOpportunities
-  });
+ 
 
   return (
-    <div className="productivity-metrics">
+    <div className="porters-container">
       {/* Header */}
       <div className="cs-header">
         <div className="cs-title-section">
-          <Activity size={24} />
-          <h2 className='cs-title'>
-            Productivity and Efficiency Metrics
-          </h2> 
+          <Activity className="main-icon" size={24} />
+          <div>
+            <h2 className='cs-title'>Productivity and Efficiency Metrics</h2> 
+          </div>
         </div>
-        {canRegenerate && (
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Productivity Metrics"
-            size="medium"
-          />
-        )}
+        <RegenerateButton
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          sectionName="Productivity Metrics"
+          size="medium"
+        />
       </div>
 
-      {/* Content */}
-      <div className="profile-content">
-        {/* Productivity Overview */}
-        {productivityMetrics.employeeProductivity && (
-          <div className="section productivity-overview-section">
-            <h3>
-              <BarChart3 size={20} />
-              Employee Productivity Overview
-            </h3>
-            <ProductivityChart employeeProductivity={productivityMetrics.employeeProductivity} />
+      {/* Employee Productivity Overview Chart */}
+      {productivityMetrics.employeeProductivity && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('overview')}>
+            <h3>Employee Productivity Overview</h3>
+            {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
+          
+          {expandedSections.overview !== false && (
+            <div className="table-container">
+              <ProductivityChart employeeProductivity={productivityMetrics.employeeProductivity} />
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* Cost Structure & Value Drivers Row */}
-        <div className="section-row">
-          {/* Cost Structure */}
-          {productivityMetrics.costStructure && (
-            <div className="section cost-structure-section">
-              <h3>
-                <DollarSign size={20} />
-                Cost Structure
-              </h3>
-              <div className="cost-structure-grid">
-                {Object.entries(productivityMetrics.costStructure).map(([key, value]) => (
-                  <div key={key} className="cost-item">
-                    <span className="label">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    <span className="value">
-                      {key.toLowerCase().includes('costs') && typeof value === 'number' ? 
-                        `${value}%` : 
-                        value
-                      }
-                    </span>
-                  </div>
-                ))}
+      {/* Cost Structure Table */}
+      {productivityMetrics.costStructure && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('costStructure')}>
+            <h3>Cost Structure Analysis</h3>
+            {expandedSections.costStructure ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.costStructure !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Cost Category</th>
+                    <th>Value</th>
+                    <th>Percentage</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(productivityMetrics.costStructure).map(([key, value]) => (
+                    <tr key={key}>
+                      <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
+                      <td>
+                        {key.toLowerCase().includes('costs') && typeof value === 'number' ? 
+                          `${value}%` : 
+                          value
+                        }
+                      </td>
+                      <td>
+                        {typeof value === 'number' && key.toLowerCase().includes('costs') ? 
+                          value : 
+                          'N/A'
+                        }
+                      </td>
+                      <td>
+                        {typeof value === 'number' && key.toLowerCase().includes('costs') ? (
+                          <span className={`status-badge ${value > 70 ? 'high-intensity' : value > 40 ? 'medium-intensity' : 'low-intensity'}`}>
+                            {value > 70 ? 'High' : value > 40 ? 'Medium' : 'Low'}
+                          </span>
+                        ) : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Value Drivers Table */}
+      {productivityMetrics.valueDrivers && productivityMetrics.valueDrivers.length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('valueDrivers')}>
+            <h3>Top Value Drivers</h3>
+            {expandedSections.valueDrivers ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.valueDrivers !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Driver</th>
+                    <th>Efficiency Level</th>
+                    <th>Contribution</th>
+                    <th>Impact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productivityMetrics.valueDrivers.map((driver, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="force-name">
+                          <Target size={16} />
+                          <span><strong>{driver.driver}</strong></span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${getEfficiencyColor(driver.efficiency)}`}>
+                          {driver.efficiency}
+                        </span>
+                      </td>
+                      <td>{driver.contribution?.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim()}</td>
+                      <td>
+                        <span className={`score-badge ${driver.efficiency?.toLowerCase() === 'high' ? 'high' : driver.efficiency?.toLowerCase() === 'medium' ? 'medium' : 'low'}`}>
+                          {driver.efficiency?.toLowerCase() === 'high' ? 'High Impact' : 
+                           driver.efficiency?.toLowerCase() === 'medium' ? 'Medium Impact' : 'Low Impact'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Improvement Opportunities Table */}
+      {productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('opportunities')}>
+            <h3>Improvement Opportunities</h3>
+            {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.opportunities !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Opportunity</th>
+                    <th>Priority</th>
+                    <th>Expected Impact</th>
+                    <th>Implementation Difficulty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productivityMetrics.improvementOpportunities.map((opportunity, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="force-name">
+                          <TrendingUp size={16} />
+                          <span>{opportunity}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${index < 2 ? 'high-intensity' : index < 4 ? 'medium-intensity' : 'low-intensity'}`}>
+                          {index < 2 ? 'High' : index < 4 ? 'Medium' : 'Low'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="implications-cell">
+                          {index < 2 ? 'High potential for productivity gains' : 
+                           index < 4 ? 'Moderate productivity improvement' : 'Incremental efficiency gains'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`score-badge ${index < 2 ? 'medium' : index < 4 ? 'low' : 'high'}`}>
+                          {index < 2 ? 'Medium' : index < 4 ? 'Easy' : 'Complex'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bar Chart: Value Per Employee by Function */}
+      {productivityMetrics.employeeProductivity && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('valuePerEmployee')}>
+            <h3>Bar Chart: Value per Employee by Function</h3>
+            {expandedSections.valuePerEmployee ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.valuePerEmployee !== false && (
+            <div className="table-container">
+              {/* Bar Chart Visualization */}
+              <div className="bar-chart-container" style={{ marginBottom: '20px' }}>
+                {[
+                  { 
+                    name: 'Sales & Marketing', 
+                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.6),
+                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.25),
+                    color: '#10b981'
+                  },
+                  { 
+                    name: 'Product Development', 
+                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.4),
+                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20),
+                    color: '#3b82f6'
+                  },
+                  { 
+                    name: 'Operations', 
+                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.85),
+                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.35),
+                    color: '#f59e0b'
+                  },
+                  { 
+                    name: 'Support Functions', 
+                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.75),
+                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20),
+                    color: '#ef4444'
+                  }
+                ].map((func, index) => {
+                  const maxValue = Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.6);
+                  const barWidth = (func.value / maxValue) * 100;
+                  
+                  return (
+                    <div key={index} className="bar-item" style={{ marginBottom: '15px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                        <span style={{ fontWeight: '600' }}>{func.name}</span>
+                        <span style={{ fontWeight: '600' }}>${func.value.toLocaleString()}</span>
+                      </div>
+                      <div style={{ 
+                        width: '100%', 
+                        height: '25px', 
+                        backgroundColor: '#f3f4f6', 
+                        borderRadius: '4px',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${barWidth}%`,
+                          height: '100%',
+                          backgroundColor: func.color,
+                          transition: 'width 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          paddingLeft: '8px'
+                        }}>
+                          <span style={{ 
+                            color: 'white', 
+                            fontSize: '12px', 
+                            fontWeight: '500'
+                          }}>
+                            {func.employees} employees
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          )}
 
-          {/* Value Drivers */}
-          {productivityMetrics.valueDrivers && productivityMetrics.valueDrivers.length > 0 && (
-            <div className="section value-drivers-section">
-              <h3>
-                <Target size={20} />
-                Top Value Drivers
-              </h3>
-              <ValueDrivers drivers={productivityMetrics.valueDrivers} />
+              {/* Data Table */}
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Function</th>
+                    <th>Employees</th>
+                    <th>Value Generated</th>
+                    <th>Value per Employee</th>
+                    <th>Performance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <BarChart3 size={16} />
+                        <span><strong>Sales & Marketing</strong></span>
+                      </div>
+                    </td>
+                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.25)}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.4).toLocaleString()}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.6).toLocaleString()}</td>
+                    <td>
+                      <span className="status-badge high-intensity">Above Average</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <BarChart3 size={16} />
+                        <span><strong>Product Development</strong></span>
+                      </div>
+                    </td>
+                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20)}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.28).toLocaleString()}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.4).toLocaleString()}</td>
+                    <td>
+                      <span className="status-badge high-intensity">Above Average</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <BarChart3 size={16} />
+                        <span><strong>Operations</strong></span>
+                      </div>
+                    </td>
+                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.35)}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.3).toLocaleString()}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.85).toLocaleString()}</td>
+                    <td>
+                      <span className="status-badge medium-intensity">Average</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <BarChart3 size={16} />
+                        <span><strong>Support Functions</strong></span>
+                      </div>
+                    </td>
+                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20)}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.15).toLocaleString()}</td>
+                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.75).toLocaleString()}</td>
+                    <td>
+                      <span className="status-badge low-intensity">Below Average</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+      )}
 
-        {/* Improvement Opportunities */}
-        {productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0 && (
-          <div className="section opportunities-section">
-            <h3>
-              <TrendingUp size={20} />
-              Improvement Opportunities
-            </h3>
-            <div className="opportunities-list">
-              {productivityMetrics.improvementOpportunities.map((opportunity, index) => (
-                <div key={index} className="opportunity-item">
-                  <div className="opportunity-bullet"></div>
-                  <span className="opportunity-text">{opportunity}</span>
-                </div>
-              ))}
-            </div>
+      {/* Efficiency Matrix: Cost vs Value Generation */}
+      {productivityMetrics.employeeProductivity && productivityMetrics.costStructure && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('efficiencyMatrix')}>
+            <h3>Efficiency Matrix: Cost vs Value Generation</h3>
+            {expandedSections.efficiencyMatrix ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
-      </div>
+          
+          {expandedSections.efficiencyMatrix !== false && (
+            <div className="table-container">
+              {/* Matrix Visualization */}
+              <div className="efficiency-matrix" style={{ marginBottom: '20px' }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '120px 1fr 1fr 1fr',
+                  gap: '2px',
+                  marginBottom: '20px'
+                }}>
+                  {/* Header */}
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    border: '1px solid #e5e7eb'
+                  }}></div>
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    border: '1px solid #e5e7eb'
+                  }}>Low Cost</div>
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    border: '1px solid #e5e7eb'
+                  }}>Medium Cost</div>
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    border: '1px solid #e5e7eb'
+                  }}>High Cost</div>
+                  
+                  {/* High Value Row */}
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    border: '1px solid #e5e7eb'
+                  }}>High Value</div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#dcfce7', 
+                    textAlign: 'center',
+                    border: '1px solid #16a34a',
+                    borderWidth: '2px'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#16a34a' }}>OPTIMAL</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>Sales & Marketing</div>
+                  </div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fef3c7', 
+                    textAlign: 'center',
+                    border: '1px solid #d97706'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#d97706' }}>GOOD</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>Product Dev</div>
+                  </div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fee2e2', 
+                    textAlign: 'center',
+                    border: '1px solid #dc2626'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#dc2626' }}>REVIEW</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>-</div>
+                  </div>
+                  
+                  {/* Medium Value Row */}
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    border: '1px solid #e5e7eb'
+                  }}>Medium Value</div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fef3c7', 
+                    textAlign: 'center',
+                    border: '1px solid #d97706'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#d97706' }}>GOOD</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>Operations</div>
+                  </div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fef3c7', 
+                    textAlign: 'center',
+                    border: '1px solid #d97706'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#d97706' }}>ACCEPTABLE</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>-</div>
+                  </div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fee2e2', 
+                    textAlign: 'center',
+                    border: '1px solid #dc2626'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#dc2626' }}>POOR</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>-</div>
+                  </div>
+                  
+                  {/* Low Value Row */}
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f9fafb', 
+                    fontWeight: '600',
+                    border: '1px solid #e5e7eb'
+                  }}>Low Value</div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fef3c7', 
+                    textAlign: 'center',
+                    border: '1px solid #d97706'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#d97706' }}>ACCEPTABLE</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>Support</div>
+                  </div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fee2e2', 
+                    textAlign: 'center',
+                    border: '1px solid #dc2626'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#dc2626' }}>POOR</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>-</div>
+                  </div>
+                  <div style={{ 
+                    padding: '20px', 
+                    backgroundColor: '#fee2e2', 
+                    textAlign: 'center',
+                    border: '1px solid #dc2626'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#dc2626' }}>CRITICAL</div>
+                    <div style={{ fontSize: '12px', marginTop: '4px' }}>-</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Efficiency Analysis Table */}
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Function</th>
+                    <th>Cost Level</th>
+                    <th>Value Generation</th>
+                    <th>Efficiency Rating</th>
+                    <th>Strategic Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <Target size={16} />
+                        <span><strong>Sales & Marketing</strong></span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge low-intensity">Low</span>
+                    </td>
+                    <td>
+                      <span className="status-badge high-intensity">High</span>
+                    </td>
+                    <td>
+                      <span className="score-badge high">Optimal</span>
+                    </td>
+                    <td>Maintain and scale</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <Target size={16} />
+                        <span><strong>Product Development</strong></span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge medium-intensity">Medium</span>
+                    </td>
+                    <td>
+                      <span className="status-badge high-intensity">High</span>
+                    </td>
+                    <td>
+                      <span className="score-badge medium">Good</span>
+                    </td>
+                    <td>Optimize processes</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <Target size={16} />
+                        <span><strong>Operations</strong></span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge low-intensity">Low</span>
+                    </td>
+                    <td>
+                      <span className="status-badge medium-intensity">Medium</span>
+                    </td>
+                    <td>
+                      <span className="score-badge medium">Good</span>
+                    </td>
+                    <td>Increase value output</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="force-name">
+                        <Target size={16} />
+                        <span><strong>Support Functions</strong></span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge low-intensity">Low</span>
+                    </td>
+                    <td>
+                      <span className="status-badge low-intensity">Low</span>
+                    </td>
+                    <td>
+                      <span className="score-badge low">Acceptable</span>
+                    </td>
+                    <td>Automate & streamline</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -35,122 +35,89 @@ const StrategicAnalysis = ({
   canRegenerate = true,
   strategicData = null,
   phaseManager,
-  saveAnalysisToBackend, // ADD THIS PROP
+  saveAnalysisToBackend,
   selectedBusinessId
 }) => {
   const [localStrategicData, setLocalStrategicData] = useState(strategicData);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedStrategicPhase, setSelectedStrategicPhase] = useState('initial');
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
 
-  const getAvailableStrategicPhases = () => {
-    if (!phaseManager) return [];
-    
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-    const phases = [];
+  const generateStrategicAnalysis = async () => {
+    try {
+      setIsLoading(true);
+      
+      const questionsArray = [];
+      const answersArray = [];
 
-    if (unlockedFeatures.analysis) {
-      phases.push({
-        key: 'initial',
-        name: 'Initial Phase',
-        unlocked: true
+      questions
+        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(userAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for strategic analysis');
+      }
+
+      const requestPayload = {
+        questions: questionsArray,
+        answers: answersArray
+      };
+
+      const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestPayload)
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Strategic Analysis API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      // Save to backend (overwrite existing result)
+      if (saveAnalysisToBackend && typeof saveAnalysisToBackend === 'function') {
+        try {
+          await saveAnalysisToBackend(result, 'strategic'); 
+        } catch (saveError) {
+          console.error('Error saving strategic analysis:', saveError);
+          // Don't throw - continue with setting local data even if save fails
+        }
+      }
+      
+      setLocalStrategicData(result);
+      return result;
+
+    } catch (error) {
+      console.error('Error generating strategic analysis:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-
-    phases.push({
-      key: 'essential',
-      name: 'Essential Phase',
-      unlocked: unlockedFeatures.fullSwot
-    });
-
-    return phases;
   };
 
-  const generateStrategicAnalysis = async (phaseType = 'initial') => {
-  try {
-    setIsLoading(true);
-    
-    const questionsArray = [];
-    const answersArray = [];
-
-    questions
-      .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach(question => {
-        questionsArray.push(question.question_text);
-        answersArray.push(userAnswers[question._id]);
-      });
-
-    if (questionsArray.length === 0) {
-      throw new Error('No questions available for strategic analysis');
-    }
-
-    const requestPayload = {
-      questions: questionsArray,
-      answers: answersArray
-    };
-
-    const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestPayload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Strategic Analysis API returned ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    
-    // Save to backend with appropriate phase (only if function is provided)
-    if (saveAnalysisToBackend && typeof saveAnalysisToBackend === 'function') {
-      const analysisType = 'strategic';
-      const customPhase = phaseType === 'essential' ? 'essential' : null;
-      
-      try {
-        await saveAnalysisToBackend(result, analysisType, customPhase);
-        console.log(`Strategic analysis saved to ${phaseType} phase`);
-      } catch (saveError) {
-        console.error('Error saving strategic analysis:', saveError);
-        // Don't throw - continue with setting local data even if save fails
-      }
-    }
-    
-    setLocalStrategicData(result);
-    return result;
-
-  } catch (error) {
-    console.error('Error generating strategic analysis:', error);
-    throw error;
-  } finally {
-    setIsLoading(false);
-  }
-};
-
   const handleRegenerate = async () => {
-  try {
-    if (onRegenerate) {
-      // Call the parent's regenerate function (this will be handleStrategicAnalysisRegenerate)
-      await onRegenerate();
-    } else {
-      // Fallback: generate locally
-      setLocalStrategicData(null);
-      
-      // Determine phase based on unlocked features
-      const unlockedFeatures = phaseManager?.getUnlockedFeatures() || {};
-      const phaseType = unlockedFeatures.fullSwot ? 'essential' : 'initial';
-      
-      await generateStrategicAnalysis(phaseType);
+    try {
+      if (onRegenerate) {
+        // Call the parent's regenerate function
+        await onRegenerate();
+      } else {
+        // Fallback: generate locally
+        setLocalStrategicData(null);
+        await generateStrategicAnalysis();
+      }
+    } catch (error) {
+      console.error('Error regenerating strategic analysis:', error);
     }
-  } catch (error) {
-    console.error('Error regenerating strategic analysis:', error);
-  }
-};
+  };
 
   useEffect(() => {
     if (strategicData) {
@@ -198,45 +165,6 @@ const StrategicAnalysis = ({
     return phaseKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const StrategicPhaseTabsComponent = () => {
-    const availablePhases = getAvailableStrategicPhases();
-
-    if (availablePhases.length === 0) return null;
-
-    return (
-      <div className="phase-tabs-container">
-        <div className="phase-tabs-wrapper">
-          <div className="phase-tabs-nav">
-            {availablePhases.map(phase => (
-              <button
-                key={phase.key}
-                onClick={() => setSelectedStrategicPhase(phase.key)}
-                className={`phase-tab ${selectedStrategicPhase === phase.key ? 'active' : ''} ${!phase.unlocked ? 'locked' : ''}`}
-                disabled={!phase.unlocked}
-              >
-                {!phase.unlocked && '🔒 '}
-                {phase.name}
-              </button>
-            ))}
-          </div>
-          
-         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-  <RegenerateButton
-    onRegenerate={handleRegenerate}
-    isRegenerating={isRegenerating}
-    canRegenerate={canRegenerate}
-    sectionName="Strategic Analysis"
-    size="medium"
-    buttonText="Generate"
-  />
-</div>
-
-
-        </div>
-      </div>
-    );
-  };
-
   const renderExecutiveSummaryTable = (data) => {
     const summary = data?.executive_summary;
     if (!summary) return null;
@@ -244,11 +172,12 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderBottom:'none',marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
           <Target size={24} style={{ color: 'blue' }} />
           <h2>Executive Summary</h2>
         </div>
@@ -310,11 +239,11 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
           <BarChart3 size={24} style={{ color: 'blue' }} />
           <h2>Strategic Pillars Analysis</h2>
         </div>
@@ -451,11 +380,11 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
           <Activity size={24} style={{ color: 'blue' }} />
           <h2>Cross-Pillar Synthesis</h2>
         </div>
@@ -523,11 +452,11 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
           <PlayCircle size={24} style={{ color: 'blue' }} />
           <h2>Agile Frameworks Recommendations</h2>
         </div>
@@ -582,11 +511,11 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
           <Shield size={24} style={{ color: 'blue' }} />
           <h2>Risk Assessment</h2>
         </div>
@@ -678,11 +607,11 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
           <Award size={24} style={{ color: 'blue' }} />
           <h2>Success Benchmarks</h2>
         </div>
@@ -756,11 +685,11 @@ const StrategicAnalysis = ({
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}>
+          display: 'inline-flex',
+          alignItems: 'center',borderBottom:'none',
+          gap: '8px',marginBottom:'0px',
+          background: '#fff'
+        }}>
           <Calendar size={24} style={{ color: 'blue' }} />
           <h2>Implementation Roadmap</h2>
         </div>
@@ -842,20 +771,19 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-     <div
-  style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff'
-  }}
->
-  <Monitor size={24} style={{ color: 'blue', flexShrink: 0 }} />
-  <h2 style={{ margin: 0, display: 'inline', whiteSpace: 'nowrap' }}>
-    Monitoring & Feedback
-  </h2>
-</div>
-
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#fff'
+          }}
+        >
+          <Monitor size={24} style={{ color: 'blue', flexShrink: 0 }} />
+          <h2 style={{ margin: 0, display: 'inline', whiteSpace: 'nowrap' }}>
+            Monitoring & Feedback
+          </h2>
+        </div>
         
         <div className="table-container">
           {monitoring.dashboard_requirements && monitoring.dashboard_requirements.length > 0 && (
@@ -974,19 +902,6 @@ const StrategicAnalysis = ({
     // Extract strategic_analysis from the response
     const analysisData = localStrategicData.strategic_analysis || localStrategicData;
 
-    if (selectedStrategicPhase === 'essential') {
-      const unlockedFeatures = phaseManager?.getUnlockedFeatures() || {};
-      if (!unlockedFeatures.fullSwot) {
-        return (
-          <div className="locked-analysis">
-            <div className="lock-icon">🔒</div>
-            <h3>Essential Strategic Analysis Locked</h3>
-            <p>Complete all essential phase questions to unlock advanced strategic insights.</p>
-          </div>
-        );
-      }
-    }
-
     return (
       <div className="strategic-content">
         {renderExecutiveSummaryTable(analysisData)}
@@ -1002,12 +917,41 @@ const StrategicAnalysis = ({
   };
 
   return (
-    <>
-      <StrategicPhaseTabsComponent />
+    <div className="strategic-analysis-container">
+      <div className="strategic-header" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px',
+        borderBottom:'1px solid #e0e0e0',
+        padding: '0 20px'
+      }}>
+        <div className="section-header" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderBottom:'none',
+          marginBottom:'0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
+          <Target size={24} style={{ color: 'blue' }} />
+          <h2>Strategic Analysis</h2>
+        </div>
+        
+        <RegenerateButton
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          sectionName="Strategic Analysis"
+          size="medium"
+          buttonText="Generate"
+        />
+      </div>
+      
       <div className="dashboard-container">
         {renderStrategicContent()}
       </div>
-    </>
+    </div>
   );
 };
 

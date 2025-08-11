@@ -1,495 +1,392 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Loader, AlertTriangle, Target, Activity, Clock, CheckCircle, BarChart3 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronRight, BarChart3, Target, AlertTriangle, Activity, Clock, RefreshCw, Loader } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
-import '../styles/Analytics.css'; 
-import { useTranslation } from "../hooks/useTranslation";
 
-const PestelAnalysis = ({
-  questions = [],
-  userAnswers = {},
+const PestelAnalysis = ({ 
+  pestelData, 
   businessName = "Your Business",
-  onDataGenerated,
   onRegenerate,
   isRegenerating = false,
-  canRegenerate = true,
-  pestelData = null
+  canRegenerate = true 
 }) => {
-  const [pestelAnalysisData, setPestelAnalysisData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('summary');
-  
-  const isMounted = useRef(false);
-  const hasInitialized = useRef(false);
-  const { t } = useTranslation();
+  const [expandedSections, setExpandedSections] = useState({
+    executive: true,
+    factors: true,
+    actions: true,
+    monitoring: true
+  });
 
-  // API Configuration
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
-
-  // Generate PESTEL Analysis from API
-  const generatePestelAnalysis = async () => {
-    try {
-      const questionsArray = [];
-      const answersArray = [];
-
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No questions available for PESTEL analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/pestel-analysis`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`PESTEL API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      
-      // Validate response structure
-      let processedData = null;
-      
-      if (Array.isArray(result)) {
-        throw new Error('Invalid API response: received array instead of PESTEL analysis object');
-      }
-      
-      // Check for different possible response structures
-      if (result.executive_summary && result.factor_summary) {
-        // Direct structure without pestel_analysis wrapper
-        processedData = result;
-      } else if (result.pestel_analysis) {
-        processedData = result.pestel_analysis;
-      } else {
-        throw new Error('Invalid API response structure: missing required PESTEL analysis data');
-      }
-
-      setPestelAnalysisData(processedData);
-      if (onDataGenerated) {
-        onDataGenerated(processedData);
-      }
-
-      return processedData;
-
-    } catch (error) {
-      setError(error.message);
-      throw error;
-    }
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
-  // Handle regeneration
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      onRegenerate();
-    } else {
-      setIsLoading(true);
-      setError(null);
-      try {
-        await generatePestelAnalysis();
-      } catch (error) {
-        // Error is already set in generatePestelAnalysis
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  // Initialize component
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    
-    isMounted.current = true;
-    hasInitialized.current = true;
-    
-    // If pestelData is provided, validate and use it
-    if (pestelData) {
-      if (Array.isArray(pestelData)) {
-        // Don't use array data, treat as if no data provided
-      } else if (pestelData.executive_summary || pestelData.pestel_analysis) {
-        // Handle wrapped vs direct structure
-        const dataToUse = pestelData.pestel_analysis || pestelData;
-        setPestelAnalysisData(dataToUse);
-        return;
-      }
-    }
-
-    // Check if we have enough data to generate analysis
-    const answeredCount = Object.keys(userAnswers).length;
-    if (answeredCount >= 3 && questions.length > 0) {
-      setIsLoading(true);
-      generatePestelAnalysis()
-        .catch(() => {
-          // Error handling is done in generatePestelAnalysis
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [pestelData]);
-
-  if (isLoading || isRegenerating) {
+  // Handle loading state
+  if (isRegenerating) {
     return (
-      <div className="pestel-container">
-        <div className="pestel-loading">
-          <Loader className="pestel-spinner" />
-          <h3>Generating PESTEL Analysis...</h3>
-          <p>Analyzing external factors and generating strategic recommendations...</p>
+      <div className="porters-container">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner" />
+          <span>Regenerating PESTEL Analysis...</span>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (!pestelData || Array.isArray(pestelData)) {
     return (
-      <div className="pestel-container">
-        <div className="pestel-error">
-          <AlertTriangle />
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} className="retry-btn">
-            Retry Analysis
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!pestelAnalysisData || Array.isArray(pestelAnalysisData)) {
-    const answeredCount = Object.keys(userAnswers).length;
-    return (
-      <div className="pestel-container">
-        <div className="pestel-empty">
-          <Globe />
+      <div className="porters-container">
+        <div className="empty-state">
+          <BarChart3 size={48} className="empty-icon" />
           <h3>PESTEL Analysis</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate PESTEL analysis.`
-              : "PESTEL analysis will be generated automatically after completing the initial phase."
-            }
-          </p>
-          {Array.isArray(pestelAnalysisData) && (
-            <p style={{ color: 'red', fontSize: '0.8rem' }}>
-              Invalid data format detected. Please regenerate the analysis.
-            </p>
-          )}
+          <p>No PESTEL analysis data available</p>
         </div>
       </div>
     );
   }
 
-  // Validate analysis structure
-  if (!pestelAnalysisData.executive_summary || !pestelAnalysisData.factor_summary) {
-    return (
-      <div className="pestel-container">
-        <div className="pestel-error">
-          <AlertTriangle />
-          <h3>Invalid Data Structure</h3>
-          <p>PESTEL analysis data is missing required components. Please regenerate.</p>
-          <button onClick={handleRegenerate} className="retry-btn">
-            Regenerate Analysis
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const analysis = pestelAnalysisData;
+  // Handle nested structure - check if data is wrapped in pestel_analysis
+  const analysis = pestelData.pestel_analysis || pestelData;
 
   return (
-    <div className="pestel-analysis">
-      {/* Header */}
-      <div className="pestel-analysis-header">
-        <div className="header-content">
-          <Globe className="header-icon" />
+    <div className="porters-container">
+      <div className="cs-header">
+        <div className="cs-title-section">
+          <BarChart3 className="main-icon" size={24} />
           <div>
-            <h1 style={{color:'black'}}>PESTEL Analysis</h1>
-            <p>Strategic Environmental Assessment for {businessName}</p>
+            <h2 className='cs-title'>PESTEL Analysis</h2> 
           </div>
         </div>
-        <div className="header-actions">
-          <div className="agility-score">
-            <div className={`score-value priority-${analysis.executive_summary?.agility_priority_score >= 7 ? 'high' : 
-              analysis.executive_summary?.agility_priority_score >= 5 ? 'medium' : 'low'}`}>
-              {analysis.executive_summary?.agility_priority_score || 'N/A'}/10
-            </div>
-            <span>Agility Priority</span>
+        <RegenerateButton
+          onRegenerate={onRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          sectionName="PESTEL Analysis"
+          size="medium"
+        />
+      </div>
+
+      {/* Executive Summary Section */}
+      {analysis.executive_summary && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('executive')}>
+            <h3>Executive Summary</h3>
+            {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="PESTEL Analysis"
-            size="medium"
-          />
+          
+          {expandedSections.executive && (
+            <div className="table-container">
+              {analysis.executive_summary?.agility_priority_score && (
+                <div className="subsection">
+                  <h4>Agility Priority Score: {analysis.executive_summary.agility_priority_score}/10</h4>
+                </div>
+              )}
+              
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analysis.executive_summary.key_opportunities && (
+                    <tr>
+                      <td><strong>Key Opportunities</strong></td>
+                      <td>
+                        <ul className="list-items">
+                          {analysis.executive_summary.key_opportunities.map((item, index) => (
+                            <li key={index}>{item}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+                  
+                  {analysis.executive_summary.critical_risks && (
+                    <tr>
+                      <td><strong>Critical Risks</strong></td>
+                      <td>
+                        <ul className="list-items">
+                          {analysis.executive_summary.critical_risks.map((item, index) => (
+                            <li key={index}>{item}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+                  
+                  {analysis.executive_summary.dominant_factors && (
+                    <tr>
+                      <td><strong>Dominant Factors</strong></td>
+                      <td>
+                        <div className="forces-tags">
+                          {analysis.executive_summary.dominant_factors.map((factor, index) => (
+                            <span key={index} className="force-tag">{factor}</span>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  
+                  {analysis.executive_summary.strategic_recommendations && (
+                    <tr>
+                      <td><strong>Strategic Recommendations</strong></td>
+                      <td>
+                        <ul className="implications-list">
+                          {analysis.executive_summary.strategic_recommendations.map((rec, index) => (
+                            <li key={index}>{rec}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* Navigation Tabs */}
-      <div className="pestel-tabs">
-        {[
-          { id: 'summary', label: 'Executive Summary', icon: Target },
-          { id: 'factors', label: 'PESTEL Factors', icon: BarChart3 },
-          { id: 'monitoring', label: 'Monitoring', icon: Activity }, 
-          { id: 'actions', label: 'Strategic Actions', icon: Clock },
-        ].map(tab => {
-          const IconComponent = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            >
-              <IconComponent size={16} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content */}
-      <div className="pestel-content">
-        {activeTab === 'summary' && (
-          <div className="summary-content">
-            {/* Key Opportunities */}
-            <div className="summary-card opportunities">
-              <h3><Target size={20} />Key Opportunities</h3>
-              <ul>
-                {(analysis.executive_summary?.key_opportunities || []).map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Critical Risks */}
-            <div className="summary-card risks">
-              <h3><AlertTriangle size={20} />Critical Risks</h3>
-              <ul>
-                {(analysis.executive_summary?.critical_risks || []).map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Dominant Factors */}
-            <div className="summary-card factors">
-              <h3>Dominant Environmental Factors</h3>
-              <div className="factor-list">
-                {(analysis.executive_summary?.dominant_factors || []).map((factor, index) => (
-                  <div key={index} className="factor-item">{factor}</div>
-                ))}
-              </div>
-            </div>
-
-            {/* Strategic Recommendations */}
-            <div className="summary-card recommendations">
-              <h3>Strategic Recommendations</h3>
-              <div className="recommendation-list">
-                {(analysis.executive_summary?.strategic_recommendations || []).map((rec, index) => (
-                  <div key={index} className="recommendation-item">
-                    <span className="rec-number">{index + 1}</span>
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* PESTEL Factors Section */}
+      {analysis.factor_summary && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('factors')}>
+            <h3>PESTEL Factors Analysis</h3>
+            {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
+          
+          {expandedSections.factors && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Strategic Priority</th>
+                    <th>Total Mentions</th>
+                    <th>High Impact Count</th>
+                    <th>Key Themes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(analysis.factor_summary).map(([factor, data]) => (
+                    <tr key={factor}>
+                      <td>
+                        <div className="force-name">
+                          <BarChart3 size={16} />
+                          <span>{factor.toUpperCase()}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${data?.strategic_priority?.toLowerCase() || 'medium-intensity'}`}>
+                          {data?.strategic_priority || 'N/A'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="score-badge">{data?.total_mentions || 0}</span>
+                      </td>
+                      <td>
+                        <span className="score-badge">{data?.high_impact_count || 0}</span>
+                      </td>
+                      <td>
+                        <div className="forces-tags">
+                          {(data?.key_themes || []).map((theme, index) => (
+                            <span key={index} className="force-tag">{theme}</span>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
-        {activeTab === 'factors' && (
-          <div className="factors-content">
-            {Object.entries(analysis.factor_summary || {}).map(([factor, data]) => (
-              <div key={factor} className={`factor-card priority-${data.strategic_priority?.toLowerCase()}`}>
-                <div className="factor-header">
-                  <h3>{factor.toUpperCase()}</h3>
-                  <span className={`priority-badge priority-${data.strategic_priority?.toLowerCase()}`}>
-                    {data.strategic_priority}
-                  </span>
-                </div>
-                
-                <div className="factor-stats">
-                  <div className="stat">
-                    <span className="stat-value">{data.total_mentions}</span>
-                    <span className="stat-label">Total Mentions</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-value">{data.high_impact_count}</span>
-                    <span className="stat-label">High Impact</span>
-                  </div>
-                </div>
-
-                <div className="factor-themes">
-                  <h4>Key Themes</h4>
-                  <div className="theme-tags">
-                    {(data.key_themes || []).map((theme, index) => (
-                      <span key={index} className="theme-tag">{theme}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Strategic Actions Section */}
+      {analysis.strategic_recommendations && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('actions')}>
+            <h3>Strategic Actions</h3>
+            {expandedSections.actions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
+          
+          {expandedSections.actions && (
+            <div className="table-container">
+              {/* Immediate Actions */}
+              {analysis.strategic_recommendations.immediate_actions && (
+                <div className="subsection">
+                  <h4>Immediate Actions</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Action</th>
+                        <th>Timeline</th>
+                        <th>Rationale</th>
+                        <th>Resources Required</th>
+                        <th>Success Metrics</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.strategic_recommendations.immediate_actions.map((action, index) => (
+                        <tr key={index}>
+                          <td><strong>{action.action}</strong></td>
+                          <td><span className="timeline-badge">{action.timeline}</span></td>
+                          <td className="implications-cell">{action.rationale}</td>
+                          <td>{action.resources_required}</td>
+                          <td>
+                            <div className="forces-tags">
+                              {(action.success_metrics || []).map((metric, i) => (
+                                <span key={i} className="force-tag">{metric}</span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-        {activeTab === 'actions' && (
-          <div className="actions-content">
-            {/* Immediate Actions */}
-            <div className="action-section immediate">
-              <h3><Clock size={20} />Immediate Actions</h3>
-              {(analysis.strategic_recommendations?.immediate_actions || []).length === 0 ? (
-                <p>No immediate actions available.</p>
-              ) : (
-                (analysis.strategic_recommendations?.immediate_actions || []).map((action, index) => (
-                  <div key={index} className="action-card">
-                    <div className="action-header">
-                      <h4>{action.action}</h4>
-                      <span className="timeline">{action.timeline}</span>
-                    </div>
-                    <p><strong>Rationale:</strong> {action.rationale}</p>
-                    <p><strong>Resources:</strong> {action.resources_required}</p>
-                    <div className="metrics">
-                      <strong>Success Metrics:</strong>
-                      <div className="metric-tags">
-                        {(action.success_metrics || []).map((metric, i) => (
-                          <span key={i} className="metric-tag">{metric}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))
+              {/* Short-term Initiatives */}
+              {analysis.strategic_recommendations.short_term_initiatives && (
+                <div className="subsection">
+                  <h4>Short-term Initiatives</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Initiative</th>
+                        <th>Strategic Pillar</th>
+                        <th>Expected Outcome</th>
+                        <th>Risk Mitigation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.strategic_recommendations.short_term_initiatives.map((initiative, index) => (
+                        <tr key={index}>
+                          <td><strong>{initiative.initiative}</strong></td>
+                          <td>{initiative.strategic_pillar}</td>
+                          <td className="implications-cell">{initiative.expected_outcome}</td>
+                          <td className="implications-cell">{initiative.risk_mitigation}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Long-term Strategic Shifts */}
+              {analysis.strategic_recommendations.long_term_strategic_shifts && (
+                <div className="subsection">
+                  <h4>Long-term Strategic Shifts</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Strategic Shift</th>
+                        <th>Transformation Required</th>
+                        <th>Competitive Advantage</th>
+                        <th>Sustainability</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.strategic_recommendations.long_term_strategic_shifts.map((shift, index) => (
+                        <tr key={index}>
+                          <td><strong>{shift.shift}</strong></td>
+                          <td className="implications-cell">{shift.transformation_required}</td>
+                          <td className="implications-cell">{shift.competitive_advantage}</td>
+                          <td className="implications-cell">{shift.sustainability}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
+          )}
+        </div>
+      )}
 
-            {/* Short-term Initiatives */}
-            <div className="action-section short-term">
-              <h3>Short-term Initiatives</h3>
-              {(analysis.strategic_recommendations?.short_term_initiatives || []).length === 0 ? (
-                <p>No short-term initiatives available.</p>
-              ) : (
-                (analysis.strategic_recommendations?.short_term_initiatives || []).map((initiative, index) => (
-                  <div key={index} className="action-card">
-                    <h4>{initiative.initiative}</h4>
-                    <div className="initiative-details">
-                      <p><strong>Strategic Pillar:</strong> {initiative.strategic_pillar}</p>
-                      <p><strong>Expected Outcome:</strong> {initiative.expected_outcome}</p>
-                      <p><strong>Risk Mitigation:</strong> {initiative.risk_mitigation}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Long-term Strategic Shifts */}
-            <div className="action-section long-term">
-              <h3>Long-term Strategic Shifts</h3>
-              {(analysis.strategic_recommendations?.long_term_strategic_shifts || []).length === 0 ? (
-                <p>No long-term strategic shifts available.</p>
-              ) : (
-                (analysis.strategic_recommendations?.long_term_strategic_shifts || []).map((shift, index) => (
-                  <div key={index} className="action-card">
-                    <h4>{shift.shift}</h4>
-                    <div className="shift-details">
-                      <p><strong>Transformation Required:</strong> {shift.transformation_required}</p>
-                      <p><strong>Competitive Advantage:</strong> {shift.competitive_advantage}</p>
-                      <p><strong>Sustainability:</strong> {shift.sustainability}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+      {/* Monitoring Dashboard Section */}
+      {analysis.monitoring_dashboard && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('monitoring')}>
+            <h3>Monitoring Dashboard</h3>
+            {expandedSections.monitoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
+          
+          {expandedSections.monitoring && (
+            <div className="table-container">
+              {/* Key Indicators */}
+              {analysis.monitoring_dashboard.key_indicators && (
+                <div className="subsection">
+                  <h4>Key Performance Indicators</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Indicator</th>
+                        <th>PESTEL Factor</th>
+                        <th>Measurement Frequency</th>
+                        <th>Threshold Values</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.monitoring_dashboard.key_indicators.map((indicator, index) => (
+                        <tr key={index}>
+                          <td><strong>{indicator.indicator}</strong></td>
+                          <td>{indicator.pestel_factor}</td>
+                          <td><span className="frequency-badge">{indicator.measurement_frequency}</span></td>
+                          <td>
+                            {indicator.threshold_values && (
+                              <div className="thresholds">
+                                {Object.entries(indicator.threshold_values).map(([level, value]) => (
+                                  <div key={level} className={`threshold ${level}`}>
+                                    {level === 'green' && '✓'} 
+                                    {level === 'yellow' && '⚠'} 
+                                    {level === 'red' && '✗'} 
+                                    {value}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-        {activeTab === 'monitoring' && (
-          <div className="monitoring-content">
-            {/* Key Indicators */}
-            <div className="monitoring-section">
-              <h3><Activity size={20} />Key Performance Indicators</h3>
-              {(analysis.monitoring_dashboard?.key_indicators || []).length === 0 ? (
-                <p>No key performance indicators available.</p>
-              ) : (
-                (analysis.monitoring_dashboard?.key_indicators || []).map((indicator, index) => (
-                  <div key={index} className="indicator-card">
-                    <div className="indicator-header">
-                      <h4>{indicator.indicator}</h4>
-                      <div className="indicator-badges">
-                        <span className="badge factor">{indicator.pestel_factor}</span>
-                        <span className="badge frequency">{indicator.measurement_frequency}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="thresholds">
-                      <h5>Performance Thresholds:</h5>
-                      <div className="threshold-grid">
-                        {Object.entries(indicator.threshold_values || {}).map(([level, value]) => (
-                          <div key={level} className={`threshold-item ${level}`}>
-                            <span className="threshold-label">{level}</span>
-                            <span className="threshold-value">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))
+              {/* Early Warning Signals */}
+              {analysis.monitoring_dashboard.early_warning_signals && (
+                <div className="subsection">
+                  <h4>Early Warning Signals</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Signal</th>
+                        <th>Trigger Response</th>
+                        <th>Monitoring Source</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.monitoring_dashboard.early_warning_signals.map((signal, index) => (
+                        <tr key={index}>
+                          <td><strong>{signal.signal}</strong></td>
+                          <td className="implications-cell">{signal.trigger_response}</td>
+                          <td>{signal.monitoring_source}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
-
-            {/* Early Warning Signals */}
-            <div className="monitoring-section">
-              <h3><AlertTriangle size={20} />Early Warning Signals</h3>
-              {(analysis.monitoring_dashboard?.early_warning_signals || []).length === 0 ? (
-                <p>No early warning signals available.</p>
-              ) : (
-                (analysis.monitoring_dashboard?.early_warning_signals || []).map((signal, index) => (
-                  <div key={index} className="warning-card">
-                    <h4>{signal.signal}</h4>
-                    <p><strong>Trigger Response:</strong> {signal.trigger_response}</p>
-                    <p><strong>Monitoring Source:</strong> {signal.monitoring_source}</p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Summary Stats */}
-            <div className="monitoring-summary">
-              <h3><CheckCircle size={20} style={{ marginRight: '8px' }} />Monitoring Summary</h3>
-              <div className="summary-stats">
-                <div className="stat-item">
-                  <div className="stat-number">{(analysis.monitoring_dashboard?.key_indicators || []).length}</div>
-                  <div className="stat-label">KPIs to Track</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-number">{(analysis.monitoring_dashboard?.early_warning_signals || []).length}</div>
-                  <div className="stat-label">Warning Signals</div>
-                </div>
-                <div className="stat-item">
-                  <div className="stat-number">6</div>
-                  <div className="stat-label">PESTEL Factors</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )} 
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

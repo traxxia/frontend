@@ -386,8 +386,7 @@ const ChatComponent = ({
           }
 
           // Notify parent about completed question
-          if (onQuestionCompleted) {
-            console.log('ChatComponent: Calling onQuestionCompleted for:', questionId);
+          if (onQuestionCompleted) { 
             await onQuestionCompleted(questionId);
           }
 
@@ -436,8 +435,7 @@ const ChatComponent = ({
       if (response.ok) {
         // Notify parent about skipped question
         onNewAnswer?.(questionId, '[Question Skipped]');
-        if (onQuestionCompleted) {
-          console.log('ChatComponent: Calling onQuestionCompleted for skipped question:', questionId);
+        if (onQuestionCompleted) { 
           await onQuestionCompleted(questionId);
         }
 
@@ -617,14 +615,7 @@ const ChatComponent = ({
     }
 
     const questionId = nextQuestion._id;
-    const questionText = nextQuestion.question_text;
-
-    console.log('ChatComponent: Handling main answer for question:', {
-      questionId,
-      questionText,
-      phase: nextQuestion.phase,
-      severity: nextQuestion.severity
-    });
+    const questionText = nextQuestion.question_text; 
 
     addMessageLocally('user', answer, {
       questionId,
@@ -659,16 +650,8 @@ const ChatComponent = ({
         });
 
         setFollowupAttempts(0);
-      } else {
-        // Answer is valid, save and complete
-        console.log('ChatComponent: Answer is valid, saving as complete');
+      } else { 
         const saveResult = await saveAnswer(questionId, answer, true);
-
-        console.log('ChatComponent: Save result:', {
-          wasCompleted: saveResult.wasCompleted,
-          questionId,
-          completedQuestions: saveResult.updatedCompleted ? Array.from(saveResult.updatedCompleted) : 'none'
-        });
 
         await moveToNextQuestion(saveResult.updatedCompleted);
       }

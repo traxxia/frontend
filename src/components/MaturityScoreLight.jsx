@@ -10,7 +10,9 @@ import {
   Cog, 
   Star, 
   Zap, 
-  Loader 
+  Loader,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton'; 
 
@@ -19,15 +21,46 @@ const MaturityScore = ({
   businessName = '',
   isRegenerating = false,
   canRegenerate = true,
-  onRegenerate 
+  onRegenerate,
+  questions,
+  userAnswers,
+  selectedBusinessId
 }) => {
   const [transformedData, setTransformedData] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
+
+  // Toggle section expansion
+  const toggleSection = (sectionKey) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
 
   // Transform raw API response to component-friendly format
   useEffect(() => {
     if (!maturityData) return;
     
-    const scoreData = maturityData.maturityScore || maturityData;
+    // Fixed: Handle the nested API response structure properly
+    let scoreData;
+    
+    // Handle various nested structures
+    if (maturityData.maturityScore && maturityData.maturityScore.maturityScoring) {
+      // Structure: { maturityScore: { maturityScoring: { ... } } }
+      scoreData = maturityData.maturityScore.maturityScoring;
+    } else if (maturityData.maturityScoring) {
+      // Structure: { maturityScoring: { ... } }
+      scoreData = maturityData.maturityScoring;
+    } else if (maturityData.maturityScore) {
+      // Structure: { maturityScore: { ... } }
+      scoreData = maturityData.maturityScore;
+    } else if (maturityData.dimensions && maturityData.overallMaturity) {
+      // Direct structure with dimensions at root
+      scoreData = maturityData;
+    } else {
+      // Fallback
+      scoreData = maturityData;
+    }
     
     const transformed = {
       overallScore: scoreData.overallMaturity,
@@ -83,7 +116,7 @@ const MaturityScore = ({
         requirements: progression.requirements || []
       };
     }
-
+  
     setTransformedData(transformed);
   }, [maturityData]);
 
@@ -106,43 +139,45 @@ const MaturityScore = ({
     return levelMap[level] || '#6b7280';
   };
 
+  const getScoreClass = (score) => {
+    if (score >= 4.0) return 'high-intensity';
+    if (score >= 3.5) return 'medium-intensity';
+    if (score >= 3.0) return 'low-intensity';
+    return 'critical-intensity';
+  };
+
   const getDimensionIcon = (dimensionName) => {
     const name = dimensionName.toLowerCase();
-    if (name.includes('process')) return <Cog size={20} />;
-    if (name.includes('technology')) return <Zap size={20} />;
-    if (name.includes('customer')) return <Users size={20} />;
-    if (name.includes('organizational')) return <Star size={20} />;
-    return <BarChart3 size={20} />;
+    if (name.includes('process')) return <Cog size={16} />;
+    if (name.includes('technology')) return <Zap size={16} />;
+    if (name.includes('customer')) return <Users size={16} />;
+    if (name.includes('organizational')) return <Star size={16} />;
+    return <BarChart3 size={16} />;
   };
 
   // Component sections
   const renderHeader = () => (
-    <div className="dashboard-header">
-      <div className="header-content">
-        <div className="header-title">
-          <div className="header-icon">
-            <Award size={24} />
-          </div>
-          <div className="header-text">
-            <h2>Business Maturity Score</h2>
-            {businessName && <p>{businessName}</p>}
-          </div>
+    <div className="cs-header">
+      <div className="cs-title-section">
+        <Award className="main-icon" size={24} />
+        <div>
+          <h2 className="cs-title">Business Maturity Score</h2> 
         </div>
-        {canRegenerate && onRegenerate && (
-          <RegenerateButton
-            onRegenerate={onRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Business Maturity Score"
-            size="medium"
-          />
-        )}
       </div>
+      {canRegenerate && onRegenerate && (
+        <RegenerateButton
+          onRegenerate={onRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          sectionName="Business Maturity Score"
+          size="medium"
+        />
+      )}
     </div>
   );
 
   const renderLoadingState = () => (
-    <div className="maturity-dashboard">
+    <div className="maturity-container">
       <div className="loading-state">
         <Loader size={48} className="loading-icon spinning" />
         <h3>Calculating Business Maturity</h3>
@@ -152,7 +187,7 @@ const MaturityScore = ({
   );
 
   const renderEmptyState = () => (
-    <div className="maturity-dashboard">
+    <div className="maturity-container">
       {renderHeader()}
       <div className="empty-state">
         <Award size={48} className="empty-icon" />
@@ -200,298 +235,373 @@ const MaturityScore = ({
     </div>
   );
 
-  const renderDimensionCard = (dimension, index) => (
-    <div 
-      key={index} 
-      className="dimension-card"
-      style={{
-        '--dimension-color': getScoreColor(dimension.score),
-        '--dimension-color-dark': getScoreColor(dimension.score),
-        '--dimension-color-light': getScoreColor(dimension.score),
-        '--dimension-color-rgb': getScoreColor(dimension.score) === '#10b981' ? '16, 185, 129' : 
-                                 getScoreColor(dimension.score) === '#3b82f6' ? '59, 130, 246' :
-                                 getScoreColor(dimension.score) === '#f59e0b' ? '245, 158, 11' : '239, 68, 68'
-      }}
-    >
-      <div className="dimension-header">
-        <div className="dimension-title">
-          <div className="dimension-icon">
-            {getDimensionIcon(dimension.name)}
+  // Maturity Overview Table
+  const renderMaturityOverview = () => {
+    if (!transformedData.industryBenchmark) return null;
+
+    return (
+      <div className="section-container">
+        <div className="section-header" onClick={() => toggleSection('overview')}>
+          <h3>Maturity Overview</h3>
+          {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+        </div>
+        
+        {expandedSections.overview !== false && (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Value</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Overall Maturity Score</strong></td>
+                  <td>{transformedData.overallScore}/5.0</td>
+                  <td>
+                    <span className={`status-badge ${getScoreClass(transformedData.overallScore)}`}>
+                      {transformedData.level}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Industry Percentile</strong></td>
+                  <td>{transformedData.industryBenchmark.percentile}th percentile</td>
+                  <td>
+                    <span className="status-badge medium-intensity">
+                      {transformedData.industryBenchmark.comparison}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Industry Average</strong></td>
+                  <td>{transformedData.industryBenchmark.average}/5.0</td>
+                  <td>-</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <h4 className="dimension-name">{dimension.name}</h4>
-        </div>
-        <div className="dimension-score-display">
-          <div className="dimension-score">{dimension.score}</div>
-          <div className="dimension-level">{dimension.level}</div>
-        </div>
+        )}
       </div>
-      
-      <div className="progress-container">
-        <div className="progress-bar">
-          <div 
-            className="progress-fill"
-            style={{ 
-              width: `${(dimension.score / 5) * 100}%`,
-              '--dimension-color': getScoreColor(dimension.score)
-            }}
-          />
-        </div>
-      </div>
-      
-      {dimension.benchmark && (
-        <div className="benchmark-info">
-          <span>Industry benchmark: {dimension.benchmark}</span>
-          <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>
-            ({dimension.gap > 0 ? '+' : ''}{dimension.gap})
-          </span>
-        </div>
-      )}
+    );
+  };
 
-      {dimension.subDimensions?.length > 0 && (
-        <div className="sub-dimensions">
-          {dimension.subDimensions.map((subDim, subIndex) => (
-            <div key={subIndex} className="sub-dimension">
-              <div className="sub-dimension-header">
-                <span className="sub-dimension-name">{subDim.name}</span>
-                <span 
-                  className="sub-dimension-score"
-                  style={{ color: getScoreColor(subDim.score) }}
-                >
-                  {subDim.score}
-                </span>
-              </div>
-              <div className="sub-dimension-description">{subDim.description}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
+  // Business Areas Table
   const renderBusinessAreas = () => {
     if (!transformedData.dimensions?.length) return null;
 
-    const { dimensions } = transformedData;
-
     return (
-      <div className="content-section">
-        <div className="section-header">
-          <div className="section-icon">
-            <BarChart3 size={20} />
-          </div>
+      <div className="section-container">
+        <div className="section-header" onClick={() => toggleSection('areas')}>
           <h3>Maturity by Business Area</h3>
+          {expandedSections.areas ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
         
-        <div className="dimensions-grid">
-          {dimensions.map(renderDimensionCard)}
-        </div>
+        {expandedSections.areas !== false && (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Business Area</th>
+                  <th>Score</th>
+                  <th>Level</th>
+                  <th>Industry Benchmark</th>
+                  <th>Gap Analysis</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transformedData.dimensions.map((dimension, index) => (
+                  <tr key={index}>
+                    <td>
+                      <div className="force-name">
+                        {getDimensionIcon(dimension.name)}
+                        <span>{dimension.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="score-badge">{dimension.score}/5.0</span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${getScoreClass(dimension.score)}`}>
+                        {dimension.level}
+                      </span>
+                    </td>
+                    <td>{dimension.benchmark || 'N/A'}</td>
+                    <td>
+                      {dimension.gap && (
+                        <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>
+                          {dimension.gap > 0 ? '+' : ''}{dimension.gap}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-        <div className="stacked-chart-container">
-          <h4 className="stacked-chart-title">Overall Maturity Distribution</h4>
-          <div className="stacked-bar">
-            {dimensions.map((dimension, index) => {
-              const totalScore = dimensions.reduce((sum, d) => sum + d.score, 0);
-              const percentage = (dimension.score / totalScore) * 100;
-              
-              return (
-                <div
-                  key={index}
-                  className="stacked-segment"
-                  style={{
-                    width: `${percentage}%`,
-                    backgroundColor: getScoreColor(dimension.score),
-                  }}
-                >
-                  <div className="segment-tooltip">
-                    {dimension.name}: {dimension.score}/5.0 ({percentage.toFixed(1)}%)
-                  </div>
-                  {percentage > 15 ? dimension.name.split(' ')[0] : ''}
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="chart-legend">
-            {dimensions.map((dimension, index) => (
-              <div key={index} className="legend-item">
-                <div 
-                  className="legend-color"
-                  style={{ backgroundColor: getScoreColor(dimension.score) }}
-                />
-                <span className="legend-text">
-                  {dimension.name}: {dimension.score}
-                </span>
+            {/* Sub-dimensions details */}
+            {transformedData.dimensions.some(d => d.subDimensions?.length) && (
+              <div className="subsection">
+                <h4>Sub-Dimension Details</h4>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Area</th>
+                      <th>Sub-Dimension</th>
+                      <th>Score</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transformedData.dimensions.map((dimension) =>
+                      dimension.subDimensions?.map((subDim, subIndex) => (
+                        <tr key={`${dimension.name}-${subIndex}`}>
+                          <td>{dimension.name}</td>
+                          <td><strong>{subDim.name}</strong></td>
+                          <td>
+                            <span 
+                              className={`score-badge ${getScoreClass(subDim.score)}`}
+                            >
+                              {subDim.score}/5.0
+                            </span>
+                          </td>
+                          <td>{subDim.description}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            )}
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
-  const renderInsightCard = (title, items, cardClass, iconComponent) => {
-    if (!items?.length) return null;
-
-    return (
-      <div className={`insights-card ${cardClass}`}>
-        <div className="insights-header">
-          <div className="section-icon">
-            {iconComponent}
-          </div>
-          <h3>{title}</h3>
-        </div>
-        <ul className="insights-list">
-          {items.map((item, index) => (
-            <li key={index} className={`insight-item ${cardClass.replace('-card', '-item')}`}>
-              {iconComponent}
-              <span className="insight-text">{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
-
+  // Insights Table
   const renderInsights = () => {
     const { strengths, developmentAreas } = transformedData;
     
     if (!strengths?.length && !developmentAreas?.length) return null;
 
     return (
-      <div className="insights-grid">
-        {renderInsightCard(
-          'Key Strengths', 
-          strengths, 
-          'strengths-card', 
-          <CheckCircle size={16} className="insight-icon" />
-        )}
-        {renderInsightCard(
-          'Development Areas', 
-          developmentAreas, 
-          'development-card', 
-          <AlertCircle size={16} className="insight-icon" />
+      <div className="section-container">
+        <div className="section-header" onClick={() => toggleSection('insights')}>
+          <h3>Key Insights</h3>
+          {expandedSections.insights ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+        </div>
+        
+        {expandedSections.insights !== false && (
+          <div className="table-container">
+            {/* Strengths */}
+            {strengths?.length > 0 && (
+              <div className="subsection">
+                <h4>Key Strengths</h4>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Strength</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {strengths.map((strength, index) => (
+                      <tr key={index}>
+                        <td>
+                          <CheckCircle size={16} className="insight-icon" style={{ color: '#10b981' }} />
+                          <span>Strength</span>
+                        </td>
+                        <td>{strength}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Development Areas */}
+            {developmentAreas?.length > 0 && (
+              <div className="subsection">
+                <h4>Development Areas</h4>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Development Area</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {developmentAreas.map((area, index) => (
+                      <tr key={index}>
+                        <td>
+                          <AlertCircle size={16} className="insight-icon" style={{ color: '#f59e0b' }} />
+                          <span>Opportunity</span>
+                        </td>
+                        <td>{area}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
       </div>
     );
   };
 
+  // Cross-Scoring Analysis Table
   const renderCrossScoring = () => {
     const { crossScoring } = transformedData;
     if (!crossScoring) return null;
 
     return (
-      <div className="cross-scoring-card">
-        <div className="section-header">
-          <div className="section-icon">
-            <Target size={20} />
-          </div>
+      <div className="section-container">
+        <div className="section-header" onClick={() => toggleSection('crossScoring')}>
           <h3>Cross-Dimension Analysis</h3>
+          {expandedSections.crossScoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
         
-        {crossScoring.correlations?.length > 0 && (
-          <div className="content-section">
-            <h4 className="correlation-header">Correlations</h4>
-            {crossScoring.correlations.map((corr, index) => (
-              <div key={index} className="correlation-item">
-                <span className="correlation-header">{corr.dimension1}</span> ↔{' '}
-                <span className="correlation-header">{corr.dimension2}</span>
-                <span className={`correlation-value ${corr.correlation > 0.7 ? 'correlation-strong' : 'correlation-moderate'}`}>
-                  {(corr.correlation * 100).toFixed(0)}% correlation
-                </span>
-                <span className="correlation-impact"> ({corr.impact})</span>
+        {expandedSections.crossScoring !== false && (
+          <div className="table-container">
+            {/* Correlations */}
+            {crossScoring.correlations?.length > 0 && (
+              <div className="subsection">
+                <h4>Correlations</h4>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Dimension 1</th>
+                      <th>Dimension 2</th>
+                      <th>Correlation</th>
+                      <th>Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {crossScoring.correlations.map((corr, index) => (
+                      <tr key={index}>
+                        <td><strong>{corr.dimension1}</strong></td>
+                        <td><strong>{corr.dimension2}</strong></td>
+                        <td>
+                          <span className={`status-badge ${corr.correlation > 0.7 ? 'high-intensity' : 'medium-intensity'}`}>
+                            {(corr.correlation * 100).toFixed(0)}%
+                          </span>
+                        </td>
+                        <td>{corr.impact}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {crossScoring.synergies?.length > 0 && (
-          <div className="content-section">
-            <h4 className="synergy-header">Synergies</h4>
-            {crossScoring.synergies.map((synergy, index) => (
-              <div key={index} className="synergy-item">
-                <div className="synergy-header">{synergy.combination}</div>
-                <div>
-                  <span>Synergy Score: </span>
-                  <span className="synergy-score">{synergy.synergyScore}/10</span>
-                </div>
-                <div className="sub-dimension-description">{synergy.description}</div>
+            {/* Synergies */}
+            {crossScoring.synergies?.length > 0 && (
+              <div className="subsection">
+                <h4>Synergies</h4>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Combination</th>
+                      <th>Synergy Score</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {crossScoring.synergies.map((synergy, index) => (
+                      <tr key={index}>
+                        <td><strong>{synergy.combination}</strong></td>
+                        <td>
+                          <span className="score-badge">{synergy.synergyScore}/10</span>
+                        </td>
+                        <td>{synergy.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
     );
   };
 
+  // Progression Path Table
   const renderNextLevel = () => {
     const { nextLevel } = transformedData;
     if (!nextLevel) return null;
 
     return (
-      <div className="next-level-card">
-        <div className="section-header">
-          <div className="section-icon">
-            <TrendingUp size={20} />
-          </div>
+      <div className="section-container">
+        <div className="section-header" onClick={() => toggleSection('progression')}>
           <h3>Path to {nextLevel.target}</h3>
+          {expandedSections.progression ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
         
-        <div className="next-level-grid">
-          <div className="timeline-info">
-            <div className="info-item">
-              <Target size={16} />
-              <span className="info-label">Timeline:</span>
-              <span className="info-value">{nextLevel.estimatedTimeframe}</span>
-            </div>
-            
-            {nextLevel.investment && (
-              <div className="info-item">
-                <Award size={16} />
-                <span className="info-label">Investment:</span>
-                <span className="info-value">{nextLevel.investment}</span>
+        {expandedSections.progression !== false && (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Value</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Target Level</strong></td>
+                  <td>{nextLevel.target}</td>
+                  <td>Next maturity milestone</td>
+                </tr>
+                <tr>
+                  <td><strong>Estimated Timeline</strong></td>
+                  <td>
+                    <span className="timeline-badge">{nextLevel.estimatedTimeframe}</span>
+                  </td>
+                  <td>Expected time to achieve target</td>
+                </tr>
+                {nextLevel.investment && (
+                  <tr>
+                    <td><strong>Investment Required</strong></td>
+                    <td>{nextLevel.investment}</td>
+                    <td>Resource commitment needed</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Requirements */}
+            {nextLevel.requirements?.length > 0 && (
+              <div className="subsection">
+                <h4>Key Requirements</h4>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Requirement</th>
+                      <th>Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {nextLevel.requirements.map((requirement, index) => (
+                      <tr key={index}>
+                        <td>
+                          <Target size={12} className="requirement-icon" />
+                          {requirement}
+                        </td>
+                        <td>High</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-
-          {nextLevel.requirements?.length > 0 && (
-            <div className="requirements-section">
-              <h4 className="requirements-title">Key Requirements</h4>
-              <ul className="requirements-list">
-                {nextLevel.requirements.map((requirement, index) => (
-                  <li key={index} className="requirement-item">
-                    <Target size={12} className="requirement-icon" />
-                    {requirement}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderIndustryBenchmark = () => {
-    const { industryBenchmark } = transformedData;
-    if (!industryBenchmark) return null;
-
-    return (
-      <div className="benchmark-card">
-        <h4 className="benchmark-title">Industry Position</h4>
-        <div className="benchmark-stats">
-          <div className="benchmark-stat">
-            <div className="stat-value percentile-value">{industryBenchmark.percentile}th</div>
-            <div className="stat-label">Percentile</div>
-          </div>
-          <div className="benchmark-stat">
-            <div className="stat-value average-value">{industryBenchmark.average}</div>
-            <div className="stat-label">Industry Average</div>
-          </div>
-          <div className="benchmark-stat">
-            <div className="stat-value comparison-value">{industryBenchmark.comparison}</div>
-            <div className="stat-label">Performance</div>
-          </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -506,16 +616,16 @@ const MaturityScore = ({
   }
 
   return (
-    <div className="maturity-dashboard fade-in-up">
+    <div className="maturity-container fade-in-up">
       {renderHeader()}
       
       <div className="dashboard-content">
         {renderGaugeChart()}
+        {renderMaturityOverview()}
         {renderBusinessAreas()}
         {renderInsights()}
         {renderCrossScoring()}
         {renderNextLevel()}
-        {renderIndustryBenchmark()}
       </div>
     </div>
   );

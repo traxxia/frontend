@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, Target, TrendingUp, Calendar, CheckCircle, BarChart3 } from 'lucide-react';
+import { RefreshCw, Loader, Target, TrendingUp, Calendar, CheckCircle, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import '../styles/EssentialPhase.css';
 
@@ -15,6 +15,15 @@ const StrategicGoals = ({
 }) => {
     const [data, setData] = useState(strategicGoalsData);
     const [hasGenerated, setHasGenerated] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({});
+
+    // Toggle section expansion
+    const toggleSection = (sectionKey) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionKey]: !prev[sectionKey]
+        }));
+    };
 
     // Handle regeneration
     const handleRegenerate = async () => {
@@ -37,9 +46,9 @@ const StrategicGoals = ({
     }, [strategicGoalsData]);
 
     const getProgressColor = (progress) => {
-        if (progress >= 75) return 'progress-high';
-        if (progress >= 50) return 'progress-medium';
-        if (progress >= 25) return 'progress-low';
+        if (progress >= 75) return 'high-intensity';
+        if (progress >= 50) return 'medium-intensity';
+        if (progress >= 25) return 'low-intensity';
         return 'progress-critical';
     };
 
@@ -113,108 +122,76 @@ const StrategicGoals = ({
         });
 
         return (
-            <div className="gantt-container">
-                <div className="gantt-header">
-                    <BarChart3 size={20} />
-                    <h5>Strategic Gnatt Chart</h5>
+            <div className="section-container">
+                <div className="section-header" onClick={() => toggleSection('gantt')}>
+                    <h3>Strategic Timeline</h3>
+                    {expandedSections.gantt ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
 
-                <div className="gantt-chart">
-                    {/* Timeline Header */}
-                    <div className="timeline-header">
-                        <div className="timeline-label">Initiative</div>
-                        {months.map((month, index) => (
-                            <div key={index} className="month-label">{month}</div>
-                        ))}
-                    </div>
+                {expandedSections.gantt !== false && (
+                    <div className="table-container">
+                        <div className="gantt-chart">
+                            {/* Timeline Header */}
+                            <div className="timeline-header">
+                                <div className="timeline-label">Initiative</div>
+                                {months.map((month, index) => (
+                                    <div key={index} className="month-label">{month}</div>
+                                ))}
+                            </div>
 
-                    {/* Initiative Rows */}
-                    {objectivesWithTimeline.map((objective, index) => (
-                        <div key={index} className="initiative-row">
-                            <div className="initiative-name">{objective.objective}</div>
-                            {months.map((_, monthIndex) => {
-                                const isActive = monthIndex >= (objective.startMonth - 1) &&
-                                    monthIndex < (objective.startMonth - 1 + objective.duration);
-                                const isFirstMonth = monthIndex === objective.startMonth - 1;
-                                const isMidPoint = monthIndex === Math.floor(objective.startMonth - 1 + objective.duration / 2);
+                            {/* Initiative Rows */}
+                            {objectivesWithTimeline.map((objective, index) => (
+                                <div key={index} className="initiative-row">
+                                    <div className="initiative-name">{objective.objective}</div>
+                                    {months.map((_, monthIndex) => {
+                                        const isActive = monthIndex >= (objective.startMonth - 1) &&
+                                            monthIndex < (objective.startMonth - 1 + objective.duration);
+                                        const isFirstMonth = monthIndex === objective.startMonth - 1;
+                                        const isMidPoint = monthIndex === Math.floor(objective.startMonth - 1 + objective.duration / 2);
 
-                                // Calculate average progress from key results
-                                const avgProgress = objective.keyResults?.length > 0
-                                    ? Math.round(objective.keyResults.reduce((sum, kr) => sum + (kr.progress || 0), 0) / objective.keyResults.length)
-                                    : 0;
+                                        // Calculate average progress from key results
+                                        const avgProgress = objective.keyResults?.length > 0
+                                            ? Math.round(objective.keyResults.reduce((sum, kr) => sum + (kr.progress || 0), 0) / objective.keyResults.length)
+                                            : 0;
 
-                                return (
-                                    <div key={monthIndex} className="timeline-cell">
-                                        {isActive && (
-                                            <div className={`timeline-bar priority-${objective.priority}`}
-                                                style={{
-                                                    position: 'relative',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '11px',
-                                                    fontWeight: 'bold',
-                                                    color: 'white',
-                                                    textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                                                }}>
-                                                {/* Show progress percentage in the middle of the timeline bar */}
-                                                {isMidPoint && objective.duration > 2 && (
-                                                    <span style={{
-                                                        background: 'rgba(0,0,0,0.3)',
-                                                        padding: '1px 4px',
-                                                        borderRadius: '2px',
-                                                        fontSize: '10px'
-                                                    }}>
-                                                        {avgProgress}%
-                                                    </span>
+                                        return (
+                                            <div key={monthIndex} className="timeline-cell">
+                                                {isActive && (
+                                                    <div className={`timeline-bar priority-${objective.priority}`}
+                                                        style={{
+                                                            position: 'relative',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '11px',
+                                                            fontWeight: 'bold',
+                                                            color: 'white',
+                                                            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                                                        }}>
+                                                        {/* Show progress percentage in the middle of the timeline bar */}
+                                                        {isMidPoint && objective.duration > 2 && (
+                                                            <span style={{
+                                                                background: 'rgba(0,0,0,0.3)',
+                                                                padding: '1px 4px',
+                                                                borderRadius: '2px',
+                                                                fontSize: '10px'
+                                                            }}>
+                                                                {avgProgress}%
+                                                            </span>
+                                                        )}
+                                                        {/* Show priority for short durations or first month */}
+                                                        {((isFirstMonth && objective.duration <= 2) ||
+                                                            (isFirstMonth && !isMidPoint)) && (
+                                                                <span style={{ fontSize: '10px' }}>
+                                                                    P{objective.priority}
+                                                                </span>
+                                                            )}
+                                                    </div>
                                                 )}
-                                                {/* Show priority for short durations or first month */}
-                                                {((isFirstMonth && objective.duration <= 2) ||
-                                                    (isFirstMonth && !isMidPoint)) && (
-                                                        <span style={{ fontSize: '10px' }}>
-                                                            P{objective.priority}
-                                                        </span>
-                                                    )}
                                             </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
-    const renderOverallProgress = (progress, themes) => {
-        return (
-            <div className="overall-progress">
-                <div className="progress-header">
-                    <Target size={20} />
-                    <h4>Overall Strategic Progress {data.year && `(${data.year})`}</h4>
-                </div>
-
-                <div className="progress-stats">
-                    <span className="progress-label">Annual Progress</span>
-                    <span className={`progress-value ${getProgressColor(progress)}`}>
-                        {progress}%
-                    </span>
-                </div>
-
-                <div className="progress-bar">
-                    <div className={`progress-fill ${getProgressColor(progress)}`}
-                        style={{ width: `${progress}%` }} />
-                </div>
-
-                {themes && themes.length > 0 && (
-                    <div className="strategic-themes">
-                        <h5>Strategic Themes</h5>
-                        <div className="themes-list">
-                            {themes.map((theme, index) => (
-                                <span key={index} className="theme-tag">
-                                    {formatTheme(theme)}
-                                </span>
+                                        );
+                                    })}
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -223,66 +200,217 @@ const StrategicGoals = ({
         );
     };
 
-    const renderObjectiveCard = (objective, index) => {
+    const renderOverallProgress = (progress, themes) => {
         return (
-            <div key={index} className={`objective-card priority-${objective.priority}`}>
-                <div className="objective-header">
-                    <div>
-                        <h4 className="objective-title">{objective.objective}</h4>
-                        <div className="objective-meta">
-                            <div className="alignment-badge">
-                                {getAlignmentIcon(objective.alignment)}
-                                <span>{formatAlignmentLabel(objective.alignment)} Strategy</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className={`priority-badge priority-${objective.priority}`}>
-                        Priority {objective.priority}
-                    </div>
+            <div className="section-container">
+                <div className="section-header" onClick={() => toggleSection('overview')}>
+                    <h3>Strategic Overview {data.year && `(${data.year})`}</h3>
+                    {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
 
-                <div className="key-results">
-                    <h5>Key Results</h5>
-                    {objective.keyResults?.map((kr, krIndex) => (
-                        <div key={krIndex} className="key-result-item">
-                            <div className="kr-header">
-                                <span className="kr-metric">{kr.metric}</span>
-                                <div className="kr-target">
-                                    <Calendar size={14} />
-                                    <span>Target: {kr.target}</span>
-                                </div>
-                            </div>
+                {expandedSections.overview !== false && (
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Value</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Annual Progress</strong></td>
+                                    <td>{progress}%</td>
+                                    <td>
+                                        <span className={`status-badge ${getProgressColor(progress)}`}>
+                                            {progress >= 75 ? 'Excellent' : 
+                                             progress >= 50 ? 'Good' : 
+                                             progress >= 25 ? 'Fair' : 'Needs Attention'}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Objectives</strong></td>
+                                    <td>{data.objectives?.length || 0}</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>High Priority Objectives</strong></td>
+                                    <td>{data.objectives?.filter(obj => obj.priority === 1).length || 0}</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Strategic Themes</strong></td>
+                                    <td>{themes?.length || 0}</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                            <div className="kr-progress">
-                                <div className="kr-progress-header">
-                                    <span className="kr-current">Current: {kr.current}</span>
-                                    <span className={`kr-percentage ${getProgressColor(kr.progress)}`}>
-                                        {kr.progress}%
-                                    </span>
-                                </div>
-                                <div className="kr-progress-bar" style={{
-                                    width: '100%',
-                                    height: '8px',
-                                    backgroundColor: '#f0f0f0',
-                                    borderRadius: '4px',
-                                    overflow: 'hidden'
-                                }}>
-                                    <div className={`kr-progress-fill ${getProgressColor(kr.progress)}`}
-                                        style={{
-                                            width: `${Math.min(kr.progress || 0, 100)}%`,
-                                            height: '100%',
-                                            backgroundColor: kr.progress >= 75 ? '#10b981' :
-                                                kr.progress >= 50 ? '#f59e0b' :
-                                                    kr.progress >= 25 ? '#ef4444' : '#dc2626',
-                                            borderRadius: '4px',
-                                            transition: 'width 0.3s ease-in-out'
-                                        }} />
+                        {themes && themes.length > 0 && (
+                            <div className="subsection">
+                                <h4>Strategic Themes</h4>
+                                <div className="forces-tags">
+                                    {themes.map((theme, index) => (
+                                        <span key={index} className="force-tag">
+                                            {formatTheme(theme)}
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderObjectivesTable = (objectives) => {
+        return (
+            <div className="section-container">
+                <div className="section-header" onClick={() => toggleSection('objectives')}>
+                    <h3>Strategic Objectives & OKRs</h3>
+                    {expandedSections.objectives ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
+                
+                {expandedSections.objectives !== false && (
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Objective</th>
+                                    <th>Priority</th>
+                                    <th>Alignment</th>
+                                    <th>Progress</th>
+                                    <th>Key Results</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {objectives.map((objective, index) => {
+                                    const avgProgress = objective.keyResults?.length > 0
+                                        ? Math.round(objective.keyResults.reduce((sum, kr) => sum + (kr.progress || 0), 0) / objective.keyResults.length)
+                                        : 0;
+
+                                    return (
+                                        <tr key={index}>
+                                            <td>
+                                                <strong>{objective.objective}</strong>
+                                            </td>
+                                            <td>
+                                                <span className={`status-badge priority-${objective.priority}`}>
+                                                    Priority {objective.priority}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div className="force-name">
+                                                    {getAlignmentIcon(objective.alignment)}
+                                                    <span>{formatAlignmentLabel(objective.alignment)}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`status-badge ${getProgressColor(avgProgress)}`}>
+                                                    {avgProgress}%
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div className="factors-cell">
+                                                    {objective.keyResults?.map((kr, krIndex) => (
+                                                        <div key={krIndex} className="factor-item">
+                                                            <span className={`factor-impact ${getProgressColor(kr.progress)}`}>
+                                                                {kr.progress}%
+                                                            </span>
+                                                            <span className="factor-desc">
+                                                                <strong>{kr.metric}:</strong> {kr.current} / {kr.target}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderKeyResultsDetailTable = (objectives) => {
+        const allKeyResults = objectives.flatMap((objective, objIndex) => 
+            (objective.keyResults || []).map((kr, krIndex) => ({
+                ...kr,
+                objectiveTitle: objective.objective,
+                objectiveIndex: objIndex,
+                keyResultIndex: krIndex
+            }))
+        );
+
+        if (allKeyResults.length === 0) return null;
+
+        return (
+            <div className="section-container">
+                <div className="section-header" onClick={() => toggleSection('keyresults')}>
+                    <h3>Key Results Details</h3>
+                    {expandedSections.keyresults ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                </div>
+                
+                {expandedSections.keyresults !== false && (
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Objective</th>
+                                    <th>Key Result</th>
+                                    <th>Current</th>
+                                    <th>Target</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {allKeyResults.map((kr, index) => (
+                                    <tr key={index}>
+                                        <td><strong>{kr.objectiveTitle}</strong></td>
+                                        <td>{kr.metric}</td>
+                                        <td>{kr.current}</td>
+                                        <td>{kr.target}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <div style={{
+                                                    width: '60px',
+                                                    height: '8px',
+                                                    backgroundColor: '#f0f0f0',
+                                                    borderRadius: '4px',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    <div style={{
+                                                        width: `${Math.min(kr.progress || 0, 100)}%`,
+                                                        height: '100%',
+                                                        backgroundColor: kr.progress >= 75 ? '#10b981' :
+                                                            kr.progress >= 50 ? '#f59e0b' :
+                                                                kr.progress >= 25 ? '#ef4444' : '#dc2626',
+                                                        transition: 'width 0.3s ease-in-out'
+                                                    }} />
+                                                </div>
+                                                <span>{kr.progress}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`status-badge ${getProgressColor(kr.progress)}`}>
+                                                {kr.progress >= 75 ? 'On Track' : 
+                                                 kr.progress >= 50 ? 'Progressing' : 
+                                                 kr.progress >= 25 ? 'Behind' : 'Critical'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         );
     };
@@ -387,22 +515,19 @@ const StrategicGoals = ({
                     renderOverallProgress(data.overallProgress, data.strategicThemes || data.themes)
                 )}
 
+                {/* Objectives Table */}
+                {data.objectives && data.objectives.length > 0 && (
+                    renderObjectivesTable(data.objectives)
+                )}
+
+                {/* Key Results Detail Table */}
+                {data.objectives && data.objectives.length > 0 && (
+                    renderKeyResultsDetailTable(data.objectives)
+                )}
+
                 {/* Gantt Chart: Timeline of strategic initiatives */}
                 {data.objectives && (
                     renderGanttChart(data.objectives)
-                )}
-
-                {/* Progress bars: OKR completion status */}
-                {data.objectives && data.objectives.length > 0 && (
-                    <div className="objectives-section">
-                        <div className="gantt-header">
-                            <BarChart3 size={20} />
-                            <h5>OKR Completion Status</h5>
-                        </div>
-                        {data.objectives.map((objective, index) =>
-                            renderObjectiveCard(objective, index)
-                        )}
-                    </div>
                 )}
             </div>
         </div>

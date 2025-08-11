@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3 } from 'lucide-react';
+import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
 import "../styles/EssentialPhase.css";
 
@@ -14,8 +14,17 @@ const OrganizationalCultureProfile = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+
+  // Toggle section expansion
+  const toggleSection = (sectionKey) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
 
   const generateCultureProfile = async () => {
     try {
@@ -36,13 +45,6 @@ const OrganizationalCultureProfile = ({
         throw new Error('No answered questions available for culture profile analysis');
       }
 
-      console.log('🚀 Calling Culture Profile API with:', {
-        questionsCount: questionsArray.length,
-        answersCount: answersArray.length,
-        questions: questionsArray.slice(0, 3), // Show first 3 questions for debugging
-        answers: answersArray.slice(0, 3) // Show first 3 answers for debugging
-      });
-
       const response = await fetch(`${ML_API_BASE_URL}/culture-profile`, {
         method: 'POST',
         headers: {
@@ -61,12 +63,10 @@ const OrganizationalCultureProfile = ({
         throw new Error(`API returned ${response.status}: ${errorText}`);
       }
 
-      const result = await response.json();
-      console.log('✅ Culture Profile API Raw Response:', result);
+      const result = await response.json(); 
 
       // Handle the direct API response structure
-      const processedData = result.cultureProfile ? result : { cultureProfile: result };
-      console.log('📊 Processed Culture Profile Data:', processedData);
+      const processedData = result.cultureProfile ? result : { cultureProfile: result }; 
 
       return processedData;
 
@@ -80,38 +80,16 @@ const OrganizationalCultureProfile = ({
   };
 
   useEffect(() => {
-    const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim());
-
-    console.log('🔍 Culture Profile useEffect triggered:', {
-      hasAnswers,
-      hasCultureProfileData: !!cultureProfileData,
-      isGenerating,
-      isRegenerating,
-      questionsLength: questions.length,
-      userAnswersKeys: Object.keys(userAnswers).length
-    });
-
-    if (!cultureProfileData && hasAnswers && !isGenerating && !isRegenerating) {
-      console.log('✅ Auto-generating culture profile...');
+    const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim()); 
+    if (!cultureProfileData && hasAnswers && !isGenerating && !isRegenerating) { 
       generateCultureProfile();
     }
   }, [questions, userAnswers, cultureProfileData]);
 
   // Handle regeneration - same pattern as other components in business page
-  const handleRegenerate = async () => {
-    console.log('🔄 Culture Profile Regenerate triggered');
-    console.log('📝 Current cultureProfileData:', cultureProfileData);
-    console.log('⚙️ Regeneration props:', {
-      isRegenerating,
-      canRegenerate,
-      hasOnRegenerate: !!onRegenerate
-    });
-
-    if (onRegenerate) {
-      console.log('🎯 Calling parent onRegenerate function');
-      onRegenerate();
-    } else {
-      console.log('🔧 Calling local generateCultureProfile function');
+  const handleRegenerate = async () => { 
+    if (onRegenerate) { 
+      onRegenerate(); 
       await generateCultureProfile();
     }
   };
@@ -216,6 +194,15 @@ const OrganizationalCultureProfile = ({
     );
   };
 
+  // Get intensity color for styling
+  const getIntensityColor = (value) => {
+    const level = value?.toLowerCase() || '';
+    if (level.includes('high') || level.includes('strong')) return 'high-intensity';
+    if (level.includes('medium') || level.includes('moderate')) return 'medium-intensity';
+    if (level.includes('low') || level.includes('weak')) return 'low-intensity';
+    return 'medium-intensity';
+  };
+
   // Loading state
   if (isGenerating || isRegenerating) {
     return (
@@ -252,8 +239,8 @@ const OrganizationalCultureProfile = ({
       <div className="culture-profile">
         <div className="cs-header">
           <div className="cs-title-section">
-
-            <Users size={24} /><h2 className='cs-title'>
+            <Users size={24} />
+            <h2 className='cs-title'>
               Organizational Culture Profile
             </h2> 
           </div>
@@ -283,27 +270,19 @@ const OrganizationalCultureProfile = ({
 
   // Handle both wrapped and direct response structures
   const cultureProfile = cultureProfileData?.cultureProfile || cultureProfileData;
-
-  console.log('🎨 Final cultureProfile data being rendered:', {
-    originalData: cultureProfileData,
-    processedProfile: cultureProfile,
-    hasValues: !!cultureProfile?.values,
-    hasBehaviors: !!cultureProfile?.behaviors,
-    hasCultureType: !!cultureProfile?.cultureType,
-    hasWorkStyle: !!cultureProfile?.workStyle,
-    hasEmployeeMetrics: !!cultureProfile?.employeeMetrics,
-    hasCultureFit: !!cultureProfile?.cultureFit
-  });
+ 
 
   return (
-    <div className="culture-profile">
+    <div className="porters-container">
       {/* Header */}
       <div className="cs-header">
         <div className="cs-title-section">
-
-          <Users size={24} /><h2 className='cs-title'>
-            Organizational Culture Profile
-          </h2> 
+          <Users size={24} />
+          <div>
+            <h2 className='cs-title'>
+              Organizational Culture Profile
+            </h2>
+          </div>
         </div>
         {canRegenerate && (
           <RegenerateButton
@@ -316,92 +295,244 @@ const OrganizationalCultureProfile = ({
         )}
       </div>
 
-      {/* Content */}
-      <div className="profile-content">
-        {/* Word Cloud Section */}
-        {(cultureProfile.values?.length > 0 || cultureProfile.behaviors?.length > 0) && (
-          <div className="section word-cloud-section">
+      {/* Word Cloud Section */}
+      {(cultureProfile.values?.length > 0 || cultureProfile.behaviors?.length > 0) && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('wordcloud')}>
             <h3>
               <BarChart3 size={20} />
               Key Cultural Values & Behaviors
             </h3>
-            <WordCloud
-              values={cultureProfile.values || []}
-              behaviors={cultureProfile.behaviors || []}
-            />
+            {expandedSections.wordcloud ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
+          
+          {expandedSections.wordcloud !== false && (
+            <div className="table-container">
+              <WordCloud
+                values={cultureProfile.values || []}
+                behaviors={cultureProfile.behaviors || []}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* Culture Map Section */}
-        {cultureProfile.cultureType && (
-          <div className="section culture-map-section">
+      {/* Culture Map Section */}
+      {cultureProfile.cultureType && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('culturemap')}>
             <h3>
               <Target size={20} />
               Culture Map: Current Position & Fit Assessment
             </h3>
-            <CultureMap
-              cultureType={cultureProfile.cultureType}
-              cultureFit={cultureProfile.cultureFit || {}}
-            />
+            {expandedSections.culturemap ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
-
-        {/* Work Style & Metrics Row */}
-        <div className="section-row">
-          {/* Work Style */}
-          {cultureProfile.workStyle && Object.keys(cultureProfile.workStyle).length > 0 && (
-            <div className="section work-style-section">
-              <h3>
-                <TrendingUp size={20} />
-                Work Style
-              </h3>
-              <div className="work-style-grid">
-                {Object.entries(cultureProfile.workStyle).map(([key, value]) => (
-                  <div key={key} className="work-style-item">
-                    <span className="label">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    <span className="value">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Employee Metrics */}
-          {cultureProfile.employeeMetrics && (
-            <div className="section metrics-section">
-              <h3>
-                <Target size={20} />
-                Employee Metrics
-              </h3>
-              <div className="metrics-grid">
-                {Object.entries(cultureProfile.employeeMetrics)
-                  .filter(([key, value]) => value !== null && value !== undefined)
-                  .map(([key, value]) => (
-                    <div key={key} className="metric-item">
-                      <span className="label">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                      <span className="value">
-                        {key.toLowerCase().includes('percentage') || key.toLowerCase().includes('cost') ?
-                          `${value}%` :
-                          typeof value === 'string' ? value : value
-                        }
-                      </span>
-                    </div>
-                  ))}
-              </div>
+          
+          {expandedSections.culturemap !== false && (
+            <div className="table-container">
+              <CultureMap
+                cultureType={cultureProfile.cultureType}
+                cultureFit={cultureProfile.cultureFit || {}}
+              />
             </div>
           )}
         </div>
+      )}
 
-        {/* Culture Summary */}
-        {cultureProfile.cultureType && (
-          <div className="section summary-section">
-            <div className="culture-type">
-              <h4>Current Culture Type</h4>
-              <span className="type-badge">{cultureProfile.cultureType}</span>
-            </div>
+      {/* Culture Overview Table */}
+      {cultureProfile.cultureType && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('overview')}>
+            <h3>Culture Overview</h3>
+            {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
-      </div>
+          
+          {expandedSections.overview !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Attribute</th>
+                    <th>Current State</th>
+                    <th>Assessment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Culture Type</strong></td>
+                    <td>{cultureProfile.cultureType}</td>
+                    <td>
+                      <span className="type-badge">{cultureProfile.cultureType}</span>
+                    </td>
+                  </tr>
+                  {cultureProfile.values && cultureProfile.values.length > 0 && (
+                    <tr>
+                      <td><strong>Core Values</strong></td>
+                      <td>{cultureProfile.values.slice(0, 3).join(', ')}</td>
+                      <td>
+                        <span className="status-badge high-intensity">
+                          {cultureProfile.values.length} Values Identified
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+                  {cultureProfile.behaviors && cultureProfile.behaviors.length > 0 && (
+                    <tr>
+                      <td><strong>Key Behaviors</strong></td>
+                      <td>{cultureProfile.behaviors.slice(0, 3).join(', ')}</td>
+                      <td>
+                        <span className="status-badge medium-intensity">
+                          {cultureProfile.behaviors.length} Behaviors Defined
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Work Style Analysis Table */}
+      {cultureProfile.workStyle && Object.keys(cultureProfile.workStyle).length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('workstyle')}>
+            <h3>
+              <TrendingUp size={20} />
+              Work Style Analysis
+            </h3>
+            {expandedSections.workstyle ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.workstyle !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Work Style Attribute</th>
+                    <th>Current Approach</th>
+                    <th>Impact Level</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(cultureProfile.workStyle).map(([key, value]) => (
+                    <tr key={key}>
+                      <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
+                      <td>{value}</td>
+                      <td>
+                        <span className={`status-badge ${getIntensityColor(value)}`}>
+                          {value.toLowerCase().includes('high') || value.toLowerCase().includes('strong') ? 'High' :
+                           value.toLowerCase().includes('medium') || value.toLowerCase().includes('moderate') ? 'Medium' : 'Standard'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Employee Metrics Table */}
+      {cultureProfile.employeeMetrics && Object.keys(cultureProfile.employeeMetrics).length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('metrics')}>
+            <h3>
+              <Target size={20} />
+              Employee Metrics & Performance
+            </h3>
+            {expandedSections.metrics ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.metrics !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    <th>Performance Level</th>
+                    <th>Industry Benchmark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(cultureProfile.employeeMetrics)
+                    .filter(([key, value]) => value !== null && value !== undefined)
+                    .map(([key, value]) => {
+                      const isPercentage = key.toLowerCase().includes('percentage') || key.toLowerCase().includes('rate');
+                      const displayValue = isPercentage ? `${value}%` : value;
+                      const performanceLevel = typeof value === 'number' ? 
+                        (value > 75 ? 'High' : value > 50 ? 'Medium' : 'Low') : 'Standard';
+                      
+                      return (
+                        <tr key={key}>
+                          <td><strong>{key.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
+                          <td>{displayValue}</td>
+                          <td>
+                            <span className={`status-badge ${getIntensityColor(performanceLevel)}`}>
+                              {performanceLevel}
+                            </span>
+                          </td>
+                          <td>
+                            {isPercentage && typeof value === 'number' ? 
+                              (value > 70 ? 'Above Average' : value > 40 ? 'Average' : 'Below Average') : 
+                              'Industry Standard'
+                            }
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Culture Fit Assessment Table */}
+      {cultureProfile.cultureFit && Object.keys(cultureProfile.cultureFit).length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('fit')}>
+            <h3>Culture Fit Assessment</h3>
+            {expandedSections.fit ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.fit !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Assessment Area</th>
+                    <th>Fit Level</th>
+                    <th>Status</th>
+                    <th>Recommendation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(cultureProfile.cultureFit).map(([area, fit]) => (
+                    <tr key={area}>
+                      <td><strong>{area.replace(/([A-Z])/g, ' $1').trim()}</strong></td>
+                      <td>{fit}</td>
+                      <td>
+                        <span className={`status-badge ${getIntensityColor(fit)}`}>
+                          {fit}
+                        </span>
+                      </td>
+                      <td>
+                        {fit === 'high' ? 'Maintain current approach' :
+                         fit === 'medium' ? 'Consider improvements' :
+                         'Requires attention'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -52,8 +52,7 @@ const ExpandedCapabilityHeatmap = ({
     };
 
     useEffect(() => {
-    if (expandedCapabilityData) {
-        console.log('ExpandedCapabilityHeatmap received data:', expandedCapabilityData);
+    if (expandedCapabilityData) { 
         
         // Handle different API response structures
         let processedData = null;
@@ -70,9 +69,7 @@ const ExpandedCapabilityHeatmap = ({
         } else {
             // Fallback - use the data as-is
             processedData = expandedCapabilityData;
-        }
-        
-        console.log('Processed data for ExpandedCapabilityHeatmap:', processedData);
+        } 
         
         // Validate that the processed data has the expected structure
         if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities)) {

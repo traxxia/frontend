@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap } from 'lucide-react';
+import { RefreshCw, Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap, ChevronDown, ChevronRight } from 'lucide-react';
 import '../styles/EssentialPhase.css'; 
 import RegenerateButton from './RegenerateButton';
-
 
 const FullSWOTPortfolio = ({
     questions = [],
@@ -18,36 +17,110 @@ const FullSWOTPortfolio = ({
     const [hasGenerated, setHasGenerated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [expandedSections, setExpandedSections] = useState({});
 
     // API Configuration
     const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
+    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+    const getAuthToken = () => sessionStorage.getItem('token');
+
+    // Toggle section expansion
+    const toggleSection = (sectionKey) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [sectionKey]: !prev[sectionKey]
+        }));
+    };
+
+    // Save to backend using the phase analysis API (same as SWOT)
+    const saveToBackend = async (analysisData) => {
+        try {
+            const token = getAuthToken();
+
+            const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    phase: 'essential', // Full SWOT is part of essential phase
+                    analysis_type: 'fullSwot',
+                    analysis_name: 'Full SWOT Portfolio Analysis',
+                    analysis_data: analysisData,
+                    business_id: selectedBusinessId,
+                    metadata: {
+                        generated_at: new Date().toISOString(),
+                        business_name: businessName,
+                        phase: 'essential',
+                        generation_context: 'regular_generation'
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save Full SWOT Portfolio analysis');
+            }
+
+            const result = await response.json(); 
+            return result;
+        } catch (error) {
+            console.error('Error saving Full SWOT Portfolio analysis to backend:', error);
+            throw error;
+        }
+    };
 
     // Generate Full SWOT Portfolio from API
     const generateFullSwotAnalysis = async () => {
+        if (isLoading) return;
+
         try {
             setIsLoading(true);
             setError(null);
+            setData(null); // Clear existing data like SWOT does
 
             const questionsArray = [];
             const answersArray = [];
 
-            questions
-                .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-                .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .forEach(question => {
-                    questionsArray.push(question.question_text);
-                    answersArray.push(userAnswers[question._id]);
-                });
+            // Filter and sort questions like SWOT does
+            const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            sortedQuestions.forEach(question => {
+                const questionId = question._id || question.question_id;
+                if (userAnswers[questionId] && userAnswers[questionId].trim()) {
+                    // Clean the text like SWOT does
+                    const cleanQuestion = String(question.question_text)
+                        .replace(/[\u2018\u2019]/g, "'")
+                        .replace(/[\u201C\u201D]/g, '"')
+                        .replace(/[\u2013\u2014]/g, '-')
+                        .replace(/[\u2026]/g, '...')
+                        .replace(/[^\x00-\x7F]/g, '')
+                        .trim();
+
+                    const cleanAnswer = String(userAnswers[questionId])
+                        .replace(/[\u2018\u2019]/g, "'")
+                        .replace(/[\u201C\u201D]/g, '"')
+                        .replace(/[\u2013\u2014]/g, '-')
+                        .replace(/[\u2026]/g, '...')
+                        .replace(/[^\x00-\x7F]/g, '')
+                        .trim();
+
+                    questionsArray.push(cleanQuestion);
+                    answersArray.push(cleanAnswer);
+                }
+            });
 
             if (questionsArray.length === 0) {
-                throw new Error('No questions available for Full SWOT Portfolio analysis');
+                throw new Error('No answered questions available for Full SWOT Portfolio analysis');
             }
-
+ 
+            // Call ML Backend
             const response = await fetch(`${ML_API_BASE_URL}/full-swot-portfolio`, {
                 method: 'POST',
                 headers: {
                     'accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json; charset=utf-8'
                 },
                 body: JSON.stringify({
                     questions: questionsArray,
@@ -67,11 +140,17 @@ const FullSWOTPortfolio = ({
                 throw new Error('Invalid API response structure: missing swotPortfolio');
             }
 
+            // Set local state
             setData(result);
             setHasGenerated(true);
+
+            // Save to backend using phase analysis API (like SWOT)
+            await saveToBackend(result);
+             
             return result;
 
         } catch (error) {
+            console.error('Error generating Full SWOT Portfolio analysis:', error);
             setError(error.message);
             throw error;
         } finally {
@@ -93,11 +172,13 @@ const FullSWOTPortfolio = ({
         }
     }, [fullSwotData]);
 
-    // Handle regeneration
-    const handleRegenerate = async () => {
+    // Handle regeneration - Updated to match SWOT pattern
+    const handleRegenerate = async () => { 
         if (onRegenerate) {
-            onRegenerate();
-        } else {
+            // If parent component provides regeneration handler, use it
+            await onRegenerate(); 
+        } else { 
+            // Otherwise, handle regeneration internally
             await generateFullSwotAnalysis();
         }
     };
@@ -121,163 +202,33 @@ const FullSWOTPortfolio = ({
 
     // Get score color
     const getScoreColor = (score) => {
-        if (score >= 8) return '#10b981';
-        if (score >= 6) return '#f59e0b';
-        return '#ef4444';
+        if (score >= 8) return 'high-intensity';
+        if (score >= 6) return 'medium-intensity';
+        return 'low-intensity';
     };
 
     // Get priority color
     const getPriorityColor = (priority) => {
         const colors = {
-            'high': '#ef4444',
-            'medium': '#f59e0b',
-            'low': '#10b981'
+            'high': 'high-intensity',
+            'medium': 'medium-intensity',
+            'low': 'low-intensity'
         };
-        return colors[priority] || '#6b7280';
+        return colors[priority] || 'medium-intensity';
     };
-
-    // Render SWOT Item
-    const renderSWOTItem = (item, type) => (
-        <div key={`${type}-${item.item}`} className="swot-item">
-            <div className="item-header">
-                <h4 className="item-title">{item.item}</h4>
-                <div className="item-badges">
-                    {item.score && (
-                        <span 
-                            className="score-badge"
-                            style={{ backgroundColor: getScoreColor(item.score) }}
-                        >
-                            {item.score}/10
-                        </span>
-                    )}
-                    <span 
-                        className="category-badge"
-                        style={{ backgroundColor: getCategoryColor(item.category) }}
-                    >
-                        {item.category?.replace('_', ' ')}
-                    </span>
-                </div>
-            </div>
-
-            <div className="item-details">
-                <span className="source-tag">Source: Question {item.source}</span>
-                
-                {/* Strengths specific badges */}
-                {item.competitiveAdvantage && (
-                    <span className="advantage-badge">
-                        <Award size={12} />
-                        Competitive Advantage
-                    </span>
-                )}
-                {item.customerValidated && (
-                    <span className="validated-badge">
-                        <Star size={12} />
-                        Customer Validated
-                    </span>
-                )}
-
-                {/* Weaknesses specific badges */}
-                {item.improvementPriority && (
-                    <span 
-                        className="priority-badge"
-                        style={{ backgroundColor: getPriorityColor(item.improvementPriority) }}
-                    >
-                        {item.improvementPriority} Priority
-                    </span>
-                )}
-
-                {/* Opportunities specific badges */}
-                {item.marketTrend && (
-                    <span className="trend-badge">
-                        <TrendingUp size={12} />
-                        Market Trend
-                    </span>
-                )}
-                {item.timeframe && (
-                    <span className="timeframe-badge">
-                        <Clock size={12} />
-                        {item.timeframe}
-                    </span>
-                )}
-
-                {/* Threats specific badges */}
-                {item.likelihood && item.impact && (
-                    <span className="likelihood-badge">
-                        <AlertTriangle size={12} />
-                        {item.likelihood} likelihood, {item.impact} impact
-                    </span>
-                )}
-            </div>
-        </div>
-    );
-
-    // Render Strategic Options
-    const renderStrategicOptions = (strategies) => (
-        <div className="strategic-options">
-            <h3 className="strategic-title">
-                <Zap size={20} />
-                Strategic Options Matrix
-            </h3>
-            <div className="strategy-grid">
-                <div className="strategy-quadrant so">
-                    <h4>
-                        <TrendingUp size={16} />
-                        Strengths + Opportunities
-                    </h4>
-                    <div className="strategy-list">
-                        {strategies.SO_strategies?.map((strategy, index) => (
-                            <div key={index} className="strategy-item">{strategy}</div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="strategy-quadrant wo">
-                    <h4>
-                        <Target size={16} />
-                        Weaknesses + Opportunities
-                    </h4>
-                    <div className="strategy-list">
-                        {strategies.WO_strategies?.map((strategy, index) => (
-                            <div key={index} className="strategy-item">{strategy}</div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="strategy-quadrant st">
-                    <h4>
-                        <TrendingDown size={16} />
-                        Strengths + Threats
-                    </h4>
-                    <div className="strategy-list">
-                        {strategies.ST_strategies?.map((strategy, index) => (
-                            <div key={index} className="strategy-item">{strategy}</div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="strategy-quadrant wt">
-                    <h4>
-                        <AlertTriangle size={16} />
-                        Weaknesses + Threats
-                    </h4>
-                    <div className="strategy-list">
-                        {strategies.WT_strategies?.map((strategy, index) => (
-                            <div key={index} className="strategy-item">{strategy}</div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 
     // Loading state
     if (isLoading || isRegenerating) {
         return (
-            <div className="full-swot-container">
-                <div className="full-swot-loading">
-                    <Loader className="spinner" />
-                    <h3>Generating Full SWOT Portfolio...</h3>
-                    <p>Creating comprehensive SWOT analysis with strategic insights...</p>
+            <div className="porters-container">
+                <div className="loading-state">
+                    <Loader size={24} className="loading-spinner" />
+                    <span>
+                        {isRegenerating
+                            ? "Regenerating Full SWOT Portfolio..."
+                            : "Generating Full SWOT Portfolio..."
+                        }
+                    </span>
                 </div>
             </div>
         );
@@ -286,12 +237,12 @@ const FullSWOTPortfolio = ({
     // Error state
     if (error) {
         return (
-            <div className="full-swot-container">
-                <div className="full-swot-error">
-                    <AlertTriangle />
+            <div className="porters-container">
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
                     <p>{error}</p>
-                    <button onClick={handleRegenerate} className="retry-btn">
+                    <button onClick={handleRegenerate} className="retry-button">
                         Retry Analysis
                     </button>
                 </div>
@@ -303,9 +254,9 @@ const FullSWOTPortfolio = ({
     if (!hasGenerated || !data?.swotPortfolio) {
         const answeredCount = Object.keys(userAnswers).length;
         return (
-            <div className="full-swot-container">
-                <div className="full-swot-empty">
-                    <Target size={48} />
+            <div className="porters-container">
+                <div className="empty-state">
+                    <Target size={48} className="empty-icon" />
                     <h3>Full SWOT Portfolio (Enhanced)</h3>
                     <p>
                         {answeredCount < 5
@@ -321,70 +272,400 @@ const FullSWOTPortfolio = ({
     const portfolio = data.swotPortfolio;
 
     return (
-        <div className="full-swot-container">
+        <div className="porters-container">
             {/* Header */}
-            <div className="full-swot-header">
-                <div className="header-content">
-                    <Target className="header-icon" />
-                    <div>
-                        <h1 style={{ color: 'black' }}>Full SWOT Portfolio (Enhanced)</h1>
-                        <p>Comprehensive SWOT analysis with competitive positioning for {businessName}</p>
-                    </div>
+            <div className="cs-header">
+                <div className="cs-title-section">
+                    <Target className="main-icon" size={24} />
+                    <h2 className='cs-title'>Full SWOT Portfolio (Enhanced)</h2>
                 </div>
                 <RegenerateButton
-                          onRegenerate={handleRegenerate}
-                          isRegenerating={isRegenerating}
-                          canRegenerate={canRegenerate}
-                          sectionName="Full SWOT"
-                          size="medium"
-                        />
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    sectionName="Full SWOT"
+                    size="medium"
+                />
             </div>
 
-            {/* SWOT Matrix */}
-            <div className="swot-matrix">
-                <div className="swot-quadrant strengths">
-                    <h3 className="quadrant-title">
-                        <TrendingUp size={20} />
-                        Strengths ({portfolio.strengths?.length || 0})
-                    </h3>
-                    <div className="swot-items">
-                        {portfolio.strengths?.map(item => renderSWOTItem(item, 'strength'))}
+            {/* Strengths Table */}
+            {portfolio.strengths && portfolio.strengths.length > 0 && (
+                <div className="section-container">
+                    <div className="section-header" onClick={() => toggleSection('strengths')}>
+                        <h3>
+                            <TrendingUp size={20} />
+                            Strengths ({portfolio.strengths.length})
+                        </h3>
+                        {expandedSections.strengths ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
+                    
+                    {expandedSections.strengths !== false && (
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Strength</th>
+                                        <th>Score</th>
+                                        <th>Category</th>
+                                        <th>Source</th>
+                                        <th>Competitive Advantage</th>
+                                        <th>Customer Validated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.strengths.map((item, index) => (
+                                        <tr key={index}>
+                                            <td><strong>{item.item}</strong></td>
+                                            <td>
+                                                {item.score && (
+                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                        {item.score}/10
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className="force-tag">
+                                                    {item.category?.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td>Question {item.source}</td>
+                                            <td>
+                                                {item.competitiveAdvantage ? (
+                                                    <span className="status-badge high-intensity">
+                                                        <Award size={12} />
+                                                        Yes
+                                                    </span>
+                                                ) : (
+                                                    <span className="status-badge low-intensity">No</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {item.customerValidated ? (
+                                                    <span className="status-badge high-intensity">
+                                                        <Star size={12} />
+                                                        Yes
+                                                    </span>
+                                                ) : (
+                                                    <span className="status-badge low-intensity">No</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
+            )}
 
-                <div className="swot-quadrant weaknesses">
-                    <h3 className="quadrant-title">
-                        <TrendingDown size={20} />
-                        Weaknesses ({portfolio.weaknesses?.length || 0})
-                    </h3>
-                    <div className="swot-items">
-                        {portfolio.weaknesses?.map(item => renderSWOTItem(item, 'weakness'))}
+            {/* Weaknesses Table */}
+            {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
+                <div className="section-container">
+                    <div className="section-header" onClick={() => toggleSection('weaknesses')}>
+                        <h3>
+                            <TrendingDown size={20} />
+                            Weaknesses ({portfolio.weaknesses.length})
+                        </h3>
+                        {expandedSections.weaknesses ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
+                    
+                    {expandedSections.weaknesses !== false && (
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Weakness</th>
+                                        <th>Score</th>
+                                        <th>Category</th>
+                                        <th>Source</th>
+                                        <th>Improvement Priority</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.weaknesses.map((item, index) => (
+                                        <tr key={index}>
+                                            <td><strong>{item.item}</strong></td>
+                                            <td>
+                                                {item.score && (
+                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                        {item.score}/10
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className="force-tag">
+                                                    {item.category?.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td>Question {item.source}</td>
+                                            <td>
+                                                {item.improvementPriority && (
+                                                    <span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>
+                                                        {item.improvementPriority}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
+            )}
 
-                <div className="swot-quadrant opportunities">
-                    <h3 className="quadrant-title">
-                        <Target size={20} />
-                        Opportunities ({portfolio.opportunities?.length || 0})
-                    </h3>
-                    <div className="swot-items">
-                        {portfolio.opportunities?.map(item => renderSWOTItem(item, 'opportunity'))}
+            {/* Opportunities Table */}
+            {portfolio.opportunities && portfolio.opportunities.length > 0 && (
+                <div className="section-container">
+                    <div className="section-header" onClick={() => toggleSection('opportunities')}>
+                        <h3>
+                            <Target size={20} />
+                            Opportunities ({portfolio.opportunities.length})
+                        </h3>
+                        {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
+                    
+                    {expandedSections.opportunities !== false && (
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Opportunity</th>
+                                        <th>Score</th>
+                                        <th>Category</th>
+                                        <th>Source</th>
+                                        <th>Market Trend</th>
+                                        <th>Timeframe</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.opportunities.map((item, index) => (
+                                        <tr key={index}>
+                                            <td><strong>{item.item}</strong></td>
+                                            <td>
+                                                {item.score && (
+                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                        {item.score}/10
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className="force-tag">
+                                                    {item.category?.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td>Question {item.source}</td>
+                                            <td>
+                                                {item.marketTrend ? (
+                                                    <span className="status-badge high-intensity">
+                                                        <TrendingUp size={12} />
+                                                        Yes
+                                                    </span>
+                                                ) : (
+                                                    <span className="status-badge low-intensity">No</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {item.timeframe && (
+                                                    <span className="timeline-badge">
+                                                        <Clock size={12} />
+                                                        {item.timeframe}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
+            )}
 
-                <div className="swot-quadrant threats">
-                    <h3 className="quadrant-title">
-                        <AlertTriangle size={20} />
-                        Threats ({portfolio.threats?.length || 0})
-                    </h3>
-                    <div className="swot-items">
-                        {portfolio.threats?.map(item => renderSWOTItem(item, 'threat'))}
+            {/* Threats Table */}
+            {portfolio.threats && portfolio.threats.length > 0 && (
+                <div className="section-container">
+                    <div className="section-header" onClick={() => toggleSection('threats')}>
+                        <h3>
+                            <AlertTriangle size={20} />
+                            Threats ({portfolio.threats.length})
+                        </h3>
+                        {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
+                    
+                    {expandedSections.threats !== false && (
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Threat</th>
+                                        <th>Score</th>
+                                        <th>Category</th>
+                                        <th>Source</th>
+                                        <th>Likelihood</th>
+                                        <th>Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {portfolio.threats.map((item, index) => (
+                                        <tr key={index}>
+                                            <td><strong>{item.item}</strong></td>
+                                            <td>
+                                                {item.score && (
+                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                        {item.score}/10
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span className="force-tag">
+                                                    {item.category?.replace('_', ' ')}
+                                                </span>
+                                            </td>
+                                            <td>Question {item.source}</td>
+                                            <td>
+                                                {item.likelihood && (
+                                                    <span className={`status-badge ${getPriorityColor(item.likelihood.toLowerCase())}`}>
+                                                        {item.likelihood}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {item.impact && (
+                                                    <span className={`status-badge ${getPriorityColor(item.impact.toLowerCase())}`}>
+                                                        {item.impact}
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
-            </div>
+            )}
 
-            {/* Strategic Options */}
-            {portfolio.strategicOptions && renderStrategicOptions(portfolio.strategicOptions)}
+            {/* Strategic Options Matrix Table */}
+            {portfolio.strategicOptions && (
+                <div className="section-container">
+                    <div className="section-header" onClick={() => toggleSection('strategic')}>
+                        <h3>
+                            <Zap size={20} />
+                            Strategic Options Matrix
+                        </h3>
+                        {expandedSections.strategic ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                    </div>
+                    
+                    {expandedSections.strategic !== false && (
+                        <div className="table-container">
+                            {/* SO Strategies */}
+                            {portfolio.strategicOptions.SO_strategies && portfolio.strategicOptions.SO_strategies.length > 0 && (
+                                <div className="subsection">
+                                    <h4>
+                                        <TrendingUp size={16} />
+                                        Strengths + Opportunities (SO) Strategies
+                                    </h4>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Strategy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {portfolio.strategicOptions.SO_strategies.map((strategy, index) => (
+                                                <tr key={index}>
+                                                    <td><span className="status-badge high-intensity">SO{index + 1}</span></td>
+                                                    <td>{strategy}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* WO Strategies */}
+                            {portfolio.strategicOptions.WO_strategies && portfolio.strategicOptions.WO_strategies.length > 0 && (
+                                <div className="subsection">
+                                    <h4>
+                                        <Target size={16} />
+                                        Weaknesses + Opportunities (WO) Strategies
+                                    </h4>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Strategy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {portfolio.strategicOptions.WO_strategies.map((strategy, index) => (
+                                                <tr key={index}>
+                                                    <td><span className="status-badge medium-intensity">WO{index + 1}</span></td>
+                                                    <td>{strategy}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* ST Strategies */}
+                            {portfolio.strategicOptions.ST_strategies && portfolio.strategicOptions.ST_strategies.length > 0 && (
+                                <div className="subsection">
+                                    <h4>
+                                        <TrendingDown size={16} />
+                                        Strengths + Threats (ST) Strategies
+                                    </h4>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Strategy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {portfolio.strategicOptions.ST_strategies.map((strategy, index) => (
+                                                <tr key={index}>
+                                                    <td><span className="status-badge medium-intensity">ST{index + 1}</span></td>
+                                                    <td>{strategy}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* WT Strategies */}
+                            {portfolio.strategicOptions.WT_strategies && portfolio.strategicOptions.WT_strategies.length > 0 && (
+                                <div className="subsection">
+                                    <h4>
+                                        <AlertTriangle size={16} />
+                                        Weaknesses + Threats (WT) Strategies
+                                    </h4>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Strategy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {portfolio.strategicOptions.WT_strategies.map((strategy, index) => (
+                                                <tr key={index}>
+                                                    <td><span className="status-badge low-intensity">WT{index + 1}</span></td>
+                                                    <td>{strategy}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

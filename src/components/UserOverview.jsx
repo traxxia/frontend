@@ -17,9 +17,76 @@ const UserOverview = ({ onToast }) => {
     company_id: '',
     job_title: ''
   });
+  const [formErrors, setFormErrors] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
+
+  // Validation function for individual fields
+  const validateField = (fieldName, value) => {
+    switch (fieldName) {
+      case 'name':
+        if (!value || !value.trim()) {
+          return 'Name is required';
+        }
+        return '';
+      case 'email':
+        if (!value || !value.trim()) {
+          return 'Email is required';
+        }
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value.trim())) {
+          return 'Please enter a valid email address';
+        }
+        return '';
+      case 'password':
+        if (!value || !value.trim()) {
+          return 'Password is required';
+        }
+        if (value.trim().length < 8) {
+          return 'Password must be at least 8 characters';
+        }
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const validateUserForm = (user) => {
+    const errors = [];
+    
+    // Validate name - check for empty or whitespace only
+    if (!user.name || !user.name.trim()) {
+      errors.push('Name is required');
+    }
+    
+    // Validate email - check for empty or whitespace only
+    if (!user.email || !user.email.trim()) {
+      errors.push('Email is required');
+    }
+    
+    // Validate password - check for empty or whitespace only
+    if (!user.password || !user.password.trim()) {
+      errors.push('Password is required');
+    }
+    
+    return errors;
+  };
+
+  // Check if form is valid
+  const isFormValid = () => {
+    return newUser.name?.trim() && 
+           newUser.email?.trim() && 
+           newUser.password?.trim() &&
+           !formErrors.name &&
+           !formErrors.email &&
+           !formErrors.password;
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -118,16 +185,18 @@ const UserOverview = ({ onToast }) => {
       setIsCreating(true);
       const token = getAuthToken();
 
-      const payload = {
-        name: newUser.name,
-        email: newUser.email,
-        password: newUser.password
-      };
-
-      if (!payload.name || !payload.email || !payload.password) {
-        onToast('Please fill in all required fields', 'warning');
+      // Validate the form before making the API call
+      const validationErrors = validateUserForm(newUser);
+      if (validationErrors.length > 0) {
+        onToast(validationErrors[0], 'warning'); // Show the first error
         return;
       }
+
+      const payload = {
+        name: newUser.name.trim(), // Trim whitespace
+        email: newUser.email.trim(), // Trim whitespace
+        password: newUser.password.trim() // Trim whitespace
+      };
 
       // Add company_id if provided (for super admin)
       if (newUser.company_id) {
@@ -155,6 +224,12 @@ const UserOverview = ({ onToast }) => {
           company_id: '',
           job_title: ''
         });
+        // Clear form errors when closing modal
+        setFormErrors({
+          name: '',
+          email: '',
+          password: ''
+        });
         await loadUsers();
       } else {
         onToast(data.error || data.message || 'User creation failed', 'error');
@@ -174,7 +249,31 @@ const UserOverview = ({ onToast }) => {
 
   const handleChange = (field, value) => {
     setNewUser(prev => ({ ...prev, [field]: value }));
+    
+    // Real-time validation - validate field as user types
+    if (['name', 'email', 'password'].includes(field)) {
+      const error = validateField(field, value);
+      setFormErrors(prev => ({ ...prev, [field]: error }));
+    }
   };
+
+  // Helper function to render form fields with validation
+  const renderFormField = (label, field, type = 'text', placeholder = '', required = false) => (
+    <div className="form-field">
+      <label>{label} {required && '*'}</label>
+      <input
+        type={type}
+        className={`form-control ${formErrors[field] ? 'error' : ''}`}
+        value={newUser[field] || ''}
+        onChange={(e) => handleChange(field, e.target.value)}
+        placeholder={placeholder}
+        minLength={type === 'password' ? '8' : undefined}
+      />
+      {formErrors[field] && (
+        <div className="error-message">{formErrors[field]}</div>
+      )}
+    </div>
+  );
 
   const filteredUsers = users.filter(user => {
     return (
@@ -193,197 +292,193 @@ const UserOverview = ({ onToast }) => {
   }
 
   return (
-    <div className="user-overview">
-      <div className="section-header">
-        <h2>All Users Overview</h2>
-        <div className="header-stats">
-          <button className="primary-btn" onClick={() => setShowAddUser(true)}>
-            <Plus size={16} /> Add User
-          </button>
+    <>
+      <style>{`
+        .form-control.error {
+          border-color: #dc3545;
+          box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .error-message {
+          color: #dc3545;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
+          display: block;
+        }
+        
+        .form-field {
+          margin-bottom: 1rem;
+        }
+      `}</style>
+      
+      <div className="user-overview">
+        <div className="section-header">
+          <h2>All Users Overview</h2>
+          <div className="header-stats">
+            <button className="primary-btn" onClick={() => setShowAddUser(true)}>
+              <Plus size={16} /> Add User
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="search-box">
-          <Search size={16} />
-          <input
-            type="text"
-            className='form-control'
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Filters */}
+        <div className="filters-section">
+          <div className="search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              className='form-control'
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            value={selectedCompany}
+            className='select-company-dropdown'
+            onChange={(e) => {
+              console.log('Company filter changed to:', e.target.value); // Debug log
+              setSelectedCompany(e.target.value);
+            }}
+          >
+            <option value="">All Companies</option>
+            {companies.map((company) => (
+              <option key={company._id} value={company._id}>
+                {company.company_name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <select
-          value={selectedCompany}
-          className='select-company-dropdown'
-          onChange={(e) => {
-            console.log('Company filter changed to:', e.target.value); // Debug log
-            setSelectedCompany(e.target.value);
-          }}
-        >
-          <option value="">All Companies</option>
-          {companies.map((company) => (
-            <option key={company._id} value={company._id}>
-              {company.company_name}
-            </option>
-          ))}
-        </select>
-      </div>
-      {/* Users Table */}
-      {filteredUsers.length > 0 ? (
-        <div className="table-container">
-          <table className="company-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Company</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.company_name || 'N/A'}</td>
-                  <td>
-                    <span className="role-badge">
-                      {user.role === 'user' ? 'User' : 
-                       user.role === 'company_admin' ? 'Company Admin' :
-                       user.role === 'super_admin' ? 'Super Admin' : user.role}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${user.status}`}>{user.status}</span>
-                  </td>
-                  <td>
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                  </td>
+        {/* Users Table */}
+        {filteredUsers.length > 0 ? (
+          <div className="table-container">
+            <table className="company-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Company</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Created</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="empty-state">
-          <Users size={48} />
-          <h3>No Users Found</h3>
-          <p>Try adjusting your search or filter criteria</p>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {filteredUsers.map(user => (
+                  <tr key={user.id}>
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    <td>{user.company_name || 'N/A'}</td>
+                    <td>
+                      <span className="role-badge">
+                        {user.role === 'user' ? 'User' : 
+                         user.role === 'company_admin' ? 'Company Admin' :
+                         user.role === 'super_admin' ? 'Super Admin' : user.role}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${user.status}`}>{user.status}</span>
+                    </td>
+                    <td>
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <Users size={48} />
+            <h3>No Users Found</h3>
+            <p>Try adjusting your search or filter criteria</p>
+          </div>
+        )}
 
-      {/* Add User Modal */}
-      {showAddUser && (
-        <div className="modal-overlay">
-          <div className="modal-content centered">
-            <div className="modal-header">
-              <h3>Create New User</h3>
-            </div>
-
-            <div className="company-form">
-              <div className="form-section">
-                <div className="form-grid">
-                  <div className="form-field">
-                    <label>Name *</label>
-                    <input
-                      type="text"
-                      className='form-control'
-                      value={newUser.name}
-                      onChange={(e) => handleChange('name', e.target.value)}
-                      required
-                      placeholder="John Doe"
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label>Email *</label>
-                    <input
-                      type="email"
-                      className='form-control'
-                      value={newUser.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                      required
-                      placeholder="john.doe@company.com"
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label>Password *</label>
-                    <input
-                      type="password"
-                      className='form-control'
-                      value={newUser.password}
-                      onChange={(e) => handleChange('password', e.target.value)}
-                      required
-                      placeholder="Minimum 8 characters"
-                      minLength="8"
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label>Company *</label>
-                    <select
-                      value={newUser.company_id}
-                      onChange={(e) => handleChange('company_id', e.target.value)}
-                    >
-                      <option value="">Select Company (Optional)</option>
-                      {companies.map(company => (
-                        <option key={company._id} value={company._id}>
-                          {company.company_name}
-                        </option>
-                      ))}
-                    </select> 
-                  </div>
-
-                  <div className="form-field">
-                    <label>Job Title</label>
-                    <input
-                      type="text"
-                      className='form-control'
-                      placeholder="Software Engineer (optional)"
-                      value={newUser.job_title || ''}
-                      onChange={(e) => handleChange('job_title', e.target.value)}
-                    />
-                  </div>
-                </div>
+        {/* Add User Modal */}
+        {showAddUser && (
+          <div className="modal-overlay">
+            <div className="modal-content centered">
+              <div className="modal-header">
+                <h3>Create New User</h3>
               </div>
 
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={() => setShowAddUser(false)}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={handleSubmit}
-                  disabled={isCreating || !newUser.name || !newUser.email || !newUser.password}
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader size={14} className="spinner" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create User'
-                  )}
-                </button>
+              <div className="company-form">
+                <div className="form-section">
+                  <div className="form-grid">
+                    {renderFormField('Name', 'name', 'text', 'John Doe', true)}
+                    {renderFormField('Email', 'email', 'email', 'john.doe@company.com', true)}
+                    {renderFormField('Password', 'password', 'password', 'Minimum 8 characters', true)}
+
+                    <div className="form-field">
+                      <label>Company</label>
+                      <select
+                        value={newUser.company_id}
+                        onChange={(e) => handleChange('company_id', e.target.value)}
+                      >
+                        <option value="">Select Company (Optional)</option>
+                        {companies.map(company => (
+                          <option key={company._id} value={company._id}>
+                            {company.company_name}
+                          </option>
+                        ))}
+                      </select> 
+                    </div>
+
+                    <div className="form-field">
+                      <label>Job Title</label>
+                      <input
+                        type="text"
+                        className='form-control'
+                        placeholder="Software Engineer (optional)"
+                        value={newUser.job_title || ''}
+                        onChange={(e) => handleChange('job_title', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => {
+                      setShowAddUser(false);
+                      // Clear form errors when closing modal
+                      setFormErrors({
+                        name: '',
+                        email: '',
+                        password: ''
+                      });
+                    }}
+                    disabled={isCreating}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="primary-btn"
+                    onClick={handleSubmit}
+                    disabled={isCreating || !isFormValid()}
+                  >
+                    {isCreating ? (
+                      <>
+                        <Loader size={14} className="spinner" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create User'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 

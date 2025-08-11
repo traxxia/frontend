@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
-import { useTranslation } from "../hooks/useTranslation";
+import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
+import RegenerateButton from './RegenerateButton';
 
 const PortersFiveForces = ({
   questions = [],
@@ -16,10 +15,24 @@ const PortersFiveForces = ({
   const [portersAnalysisData, setPortersAnalysisData] = useState(portersData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({
+    executive: true,
+    forces: true,
+    competitors: true,
+    recommendations: true,
+    monitoring: true
+  });
   
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
-  const { t } = useTranslation();
+
+  // Toggle section expansion
+  const toggleSection = (sectionKey) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -61,7 +74,6 @@ const PortersFiveForces = ({
   const parsePortersData = (data) => {
     if (!data) return null;
 
-    // Handle the actual API response structure
     if (data.portersAnalysis) {
       return data.portersAnalysis;
     }
@@ -70,174 +82,30 @@ const PortersFiveForces = ({
       return data.porter_analysis;
     }
 
-    // If it's the raw data structure, return as is
     return data;
-  };
-
-  // Transform the five forces data for rendering
-  const transformForcesData = (portersAnalysis) => {
-    if (!portersAnalysis || !portersAnalysis.five_forces_analysis) return [];
-
-    const forcesMap = portersAnalysis.five_forces_analysis;
-    const forces = [];
-
-    // Transform each force into a standardized format
-    if (forcesMap.threat_of_new_entrants) {
-      forces.push({
-        force: "Threat of New Entrants",
-        intensity: forcesMap.threat_of_new_entrants.intensity,
-        score: forcesMap.threat_of_new_entrants.score,
-        description: forcesMap.threat_of_new_entrants.strategic_implications,
-        factors: forcesMap.threat_of_new_entrants.key_factors?.map(f => f.description) || [],
-        impact: `Score: ${forcesMap.threat_of_new_entrants.score}/10`,
-        keyFactors: forcesMap.threat_of_new_entrants.key_factors || []
-      });
-    }
-
-    if (forcesMap.bargaining_power_of_suppliers) {
-      forces.push({
-        force: "Bargaining Power of Suppliers",
-        intensity: forcesMap.bargaining_power_of_suppliers.intensity,
-        score: forcesMap.bargaining_power_of_suppliers.score,
-        description: forcesMap.bargaining_power_of_suppliers.strategic_implications,
-        factors: forcesMap.bargaining_power_of_suppliers.key_factors?.map(f => f.description) || [],
-        impact: `Score: ${forcesMap.bargaining_power_of_suppliers.score}/10`,
-        keyFactors: forcesMap.bargaining_power_of_suppliers.key_factors || []
-      });
-    }
-
-    if (forcesMap.bargaining_power_of_buyers) {
-      forces.push({
-        force: "Bargaining Power of Buyers",
-        intensity: forcesMap.bargaining_power_of_buyers.intensity,
-        score: forcesMap.bargaining_power_of_buyers.score,
-        description: forcesMap.bargaining_power_of_buyers.strategic_implications,
-        factors: forcesMap.bargaining_power_of_buyers.key_factors?.map(f => f.description) || [],
-        impact: `Score: ${forcesMap.bargaining_power_of_buyers.score}/10`,
-        keyFactors: forcesMap.bargaining_power_of_buyers.key_factors || []
-      });
-    }
-
-    if (forcesMap.threat_of_substitute_products) {
-      forces.push({
-        force: "Threat of Substitute Products",
-        intensity: forcesMap.threat_of_substitute_products.intensity,
-        score: forcesMap.threat_of_substitute_products.score,
-        description: forcesMap.threat_of_substitute_products.strategic_implications,
-        factors: forcesMap.threat_of_substitute_products.key_factors?.map(f => f.description) || [],
-        impact: `Score: ${forcesMap.threat_of_substitute_products.score}/10`,
-        keyFactors: forcesMap.threat_of_substitute_products.key_factors || []
-      });
-    }
-
-    if (forcesMap.competitive_rivalry) {
-      forces.push({
-        force: "Competitive Rivalry",
-        intensity: forcesMap.competitive_rivalry.intensity,
-        score: forcesMap.competitive_rivalry.score,
-        description: forcesMap.competitive_rivalry.strategic_implications,
-        factors: forcesMap.competitive_rivalry.key_factors?.map(f => f.description) || [],
-        impact: `Score: ${forcesMap.competitive_rivalry.score}/10`,
-        keyFactors: forcesMap.competitive_rivalry.key_factors || []
-      });
-    }
-
-    return forces;
-  };
-
-  const getForceIcon = (forceName) => {
-    const name = forceName?.toLowerCase() || '';
-    if (name.includes('supplier')) return <Building size={20} />;
-    if (name.includes('buyer') || name.includes('customer')) return <Users size={20} />;
-    if (name.includes('rivalry') || name.includes('competition')) return <TrendingUp size={20} />;
-    if (name.includes('substitute')) return <ArrowRight size={20} />;
-    if (name.includes('threat') || name.includes('new entrant')) return <AlertTriangle size={20} />;
-    return <Shield size={20} />;
   };
 
   const getIntensityColor = (intensity) => {
     const level = intensity?.toLowerCase() || '';
-    if (level.includes('high') || level.includes('strong')) return 'intensity-high';
-    if (level.includes('medium') || level.includes('moderate')) return 'intensity-medium';
-    if (level.includes('low') || level.includes('weak')) return 'intensity-low';
-    return 'intensity-medium';
+    if (level.includes('high') || level.includes('strong')) return 'high-intensity';
+    if (level.includes('medium') || level.includes('moderate')) return 'medium-intensity';
+    if (level.includes('low') || level.includes('weak')) return 'low-intensity';
+    return 'medium-intensity';
   };
 
-  const renderForceCard = (force, index) => {
-    return (
-      <div key={index} className={`force-card ${getIntensityColor(force.intensity)}`} style={{marginBottom: '20px'}}>
-        <div className="force-header">
-          <div className="force-icon">
-            {getForceIcon(force.force)}
-          </div>
-          <div className="force-title">
-            <h5>{force.force}</h5>
-            <div className="force-badges">
-              <span className={`intensity-badge ${getIntensityColor(force.intensity)}`}>
-                {force.intensity}
-              </span>
-              {force.score && (
-                <span className="score-badge">
-                  {force.score}/10
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="force-content">
-          <p className="force-description">{force.description}</p>
-          
-          {force.keyFactors && force.keyFactors.length > 0 && (
-            <div className="force-factors">
-              <h5>Key Factors:</h5>
-              <div className="factors-list">
-                {force.keyFactors.map((factor, factorIndex) => (
-                  <div key={factorIndex} className="factor-item">
-                    <div className="factor-header">
-                      <span className="factor-name">{factor.factor}</span>
-                      <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>
-                        {factor.impact} Impact
-                      </span>
-                    </div>
-                    <p className="factor-description">{factor.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {force.factors && force.factors.length > 0 && !force.keyFactors && (
-            <div className="force-factors">
-              <h5>Key Factors:</h5>
-              <ul>
-                {force.factors.map((factor, factorIndex) => (
-                  <li key={factorIndex}>{factor}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {force.impact && (
-            <div className="force-impact">
-              <h5>Strategic Impact:</h5>
-              <p>{force.impact}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  const getForceIcon = (forceName) => {
+    const name = forceName?.toLowerCase() || '';
+    if (name.includes('supplier')) return <Building size={16} />;
+    if (name.includes('buyer') || name.includes('customer')) return <Users size={16} />;
+    if (name.includes('rivalry') || name.includes('competition')) return <TrendingUp size={16} />;
+    if (name.includes('substitute')) return <ArrowRight size={16} />;
+    if (name.includes('threat') || name.includes('new entrant')) return <AlertTriangle size={16} />;
+    return <Shield size={16} />;
   };
 
   if (isLoading || isRegenerating) {
     return (
-      <div className="porters-five-forces">
-        <div className="pff-header">
-          <div className="pff-title-section">
-            <Shield className="pff-icon" size={24} />
-            <h5 className="pff-title">Porter's Five Forces Analysis</h5>
-          </div>
-        </div>
+      <div className="porters-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
@@ -253,23 +121,12 @@ const PortersFiveForces = ({
 
   if (error) {
     return (
-      <div className="porters-five-forces">
-        <div className="pff-header">
-          <div className="pff-title-section">
-            <Shield className="pff-icon" size={24} />
-            <h5 className="pff-title">Porter's Five Forces Analysis</h5>
-          </div>
-        </div>
+      <div className="porters-container">
         <div className="error-state">
           <div className="error-icon">⚠️</div>
-          <h5>Analysis Error</h5>
+          <h3>Analysis Error</h3>
           <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
+          <button onClick={handleRegenerate} className="retry-button">
             Retry Analysis
           </button>
         </div>
@@ -282,24 +139,10 @@ const PortersFiveForces = ({
   if (!parsedData) {
     const answeredCount = Object.keys(userAnswers).length;
     return (
-      <div className="porters-five-forces">
-        <div className="pff-header">
-          <div className="pff-title-section">
-            <Shield className="pff-icon" size={24} />
-            <h5 className="pff-title">Porter's Five Forces Analysis</h5>
-          </div>
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Porter's Five Forces"
-            size="medium"
-            buttonText="Generate"
-          />
-        </div>
+      <div className="porters-container">
         <div className="empty-state">
           <Shield size={48} className="empty-icon" />
-          <h5>Porter's Five Forces Analysis</h5>
+          <h3>Porter's Five Forces Analysis</h3>
           <p>
             {answeredCount < 3
               ? `Answer ${3 - answeredCount} more questions to generate Porter's Five Forces analysis.`
@@ -312,244 +155,489 @@ const PortersFiveForces = ({
   }
 
   return (
-    <div className="porters-five-forces">
-      {/* Header */}
-      <div className="pff-header">
-        <div className="pff-title-section">
-          <Shield className="pff-icon" size={24} />
-          <h5 className="pff-title">Porter's Five Forces Analysis</h5>
+    <div className="porters-container">
+      <div className="cs-header">
+        <div className="cs-title-section">
+          <Shield className="main-icon" size={24} />
+          <div>
+            <h2 className='cs-title'>Porter's Five Forces Analysis</h2> 
+          </div>
         </div>
         <RegenerateButton
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
-          sectionName="Porter's Five Forces"
+          sectionName="Porter's Analysis"
           size="medium"
         />
       </div>
 
-      {/* Analysis Content */}
-      <div className="porters-content">
-        {/* Executive Summary */}
-        {parsedData.executive_summary && (
-          <div className="executive-summary">
-            <h5>Executive Summary</h5>
-            <div className="summary-grid">
-              <div className="summary-item">
-                <span className="summary-label">Industry Attractiveness:</span>
-                <span className={`summary-value ${getIntensityColor(parsedData.executive_summary.industry_attractiveness)}`}>
-                  {parsedData.executive_summary.industry_attractiveness}
-                </span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Competitive Intensity:</span>
-                <span className={`summary-value ${getIntensityColor(parsedData.executive_summary.overall_competitive_intensity)}`}>
-                  {parsedData.executive_summary.overall_competitive_intensity}
-                </span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Competitive Position:</span>
-                <span className="summary-value">{parsedData.executive_summary.competitive_position}</span>
-              </div>
-            </div>
-            
-            {parsedData.executive_summary.key_competitive_forces && (
-              <div className="key-forces">
-                <h5>Key Competitive Forces:</h5>
-                <div className="forces-tags">
-                  {parsedData.executive_summary.key_competitive_forces.map((force, index) => (
-                    <span key={index} className="force-tag">{force}</span>
-                  ))}
+      {/* Executive Summary Table */}
+      {parsedData.executive_summary && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('executive')}>
+            <h3>Executive Summary</h3>
+            {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.executive !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsedData.executive_summary.industry_attractiveness && (
+                    <tr>
+                      <td><strong>Industry Attractiveness</strong></td>
+                      <td>{parsedData.executive_summary.industry_attractiveness}</td>
+                      <td>
+                        <span className={`status-badge ${getIntensityColor(parsedData.executive_summary.industry_attractiveness)}`}>
+                          {parsedData.executive_summary.industry_attractiveness}
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+                  {parsedData.executive_summary.overall_competitive_intensity && (
+                    <tr>
+                      <td><strong>Competitive Intensity</strong></td>
+                      <td>{parsedData.executive_summary.overall_competitive_intensity}</td>
+                      <td>
+                        <span className={`status-badge ${getIntensityColor(parsedData.executive_summary.overall_competitive_intensity)}`}>
+                          {parsedData.executive_summary.overall_competitive_intensity}
+                        </span>
+                      </td>
+                    </tr>
+                  )}
+                  {parsedData.executive_summary.competitive_position && (
+                    <tr>
+                      <td><strong>Competitive Position</strong></td>
+                      <td>{parsedData.executive_summary.competitive_position}</td>
+                      <td>-</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {parsedData.executive_summary.key_competitive_forces && (
+                <div className="subsection">
+                  <h4>Key Competitive Forces</h4>
+                  <div className="forces-tags">
+                    {parsedData.executive_summary.key_competitive_forces.map((force, index) => (
+                      <span key={index} className="force-tag">{force}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {parsedData.executive_summary.strategic_implications && (
-              <div className="strategic-implications">
-                <h5 style={{color: 'black'}}>Strategic Implications:</h5>
-                <ul>
-                  {parsedData.executive_summary.strategic_implications.map((implication, index) => (
-                    <li key={index}>{implication}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Forces Analysis */}
-        {parsedData.five_forces_analysis && (
-          <div className="forces-section">
-            <h5>Five Forces Analysis</h5>
-            <div className="forces-grid">
-              {transformForcesData(parsedData).map((force, index) => renderForceCard(force, index))}
-            </div>
-          </div>
-        )}
-
-        {/* Competitive Landscape */}
-        {parsedData.competitive_landscape && (
-          <div className="competitive-landscape">
-            <h5>Competitive Landscape</h5>
-            
-            {parsedData.competitive_landscape.direct_competitors && (
-              <div className="competitors-section">
-                <h5>Direct Competitors</h5>
-                <div className="competitors-grid">
-                  {parsedData.competitive_landscape.direct_competitors.map((competitor, index) => (
-                    <div key={index} className="competitor-card">
-                      <h5>{competitor.name}</h5>
-                      {competitor.market_share && (
-                        <div className="market-share">Market Share: {competitor.market_share}</div>
-                      )}
-                      <div className="competitor-details">
-                        {competitor.strengths && (
-                          <div className="strengths">
-                            <h6>Strengths:</h6>
-                            <ul>
-                              {competitor.strengths.map((strength, idx) => (
-                                <li key={idx}>{strength}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {competitor.weaknesses && (
-                          <div className="weaknesses">
-                            <h6>Weaknesses:</h6>
-                            <ul>
-                              {competitor.weaknesses.map((weakness, idx) => (
-                                <li key={idx}>{weakness}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+              {parsedData.executive_summary.strategic_implications && (
+                <div className="subsection">
+                  <h4>Strategic Implications</h4>
+                  <ul className="implications-list">
+                    {parsedData.executive_summary.strategic_implications.map((implication, index) => (
+                      <li key={index}>{implication}</li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Five Forces Analysis Table */}
+      {parsedData.five_forces_analysis && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('forces')}>
+            <h3>Five Forces Analysis</h3>
+            {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
-
-        {/* Strategic Recommendations */}
-        {parsedData.strategic_recommendations && (
-          <div className="strategic-recommendations">
-            <h5 style={{color: 'black'}}>Strategic Recommendations</h5>
-
-            {parsedData.strategic_recommendations.immediate_actions && (
-              <div className="recommendations-section" style={{marginBottom: '20px'}}>
-                <h5 style={{color: 'black'}}>Immediate Actions (Next 3-6 months)</h5>
-                {parsedData.strategic_recommendations.immediate_actions.map((action, index) => (
-                  <div key={index} className="recommendation-card immediate">
-                    <h5>{action.action}</h5>
-                    <p className="rationale">{action.rationale}</p>
-                    <div className="recommendation-details">
-                      <div className="timeline">Timeline: {action.timeline}</div>
-                      {action.expected_impact && (
-                        <div className="impact">Expected Impact: {action.expected_impact}</div>
-                      )}
-                      {action.resources_required && (
-                        <div className="resources">
-                          Resources: {action.resources_required.join(', ')}
+          
+          {expandedSections.forces !== false && (
+            <div className="table-container">
+              <table className="data-table forces-table">
+                <thead>
+                  <tr>
+                    <th>Force</th>
+                    <th>Intensity</th>
+                    <th>Score</th>
+                    <th>Strategic Implications</th>
+                    <th>Key Factors</th>
+                    <th>Additional Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(parsedData.five_forces_analysis).map(([forceKey, forceData]) => (
+                    <tr key={forceKey}>
+                      <td>
+                        <div className="force-name">
+                          {getForceIcon(forceKey)}
+                          <span>{forceKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {parsedData.strategic_recommendations.short_term_initiatives && (
-              <div className="recommendations-section" style={{marginBottom: '20px'}}>
-                <h5 style={{color: 'black'}}>Short-term Initiatives</h5>
-                {parsedData.strategic_recommendations.short_term_initiatives.map((initiative, index) => (
-                  <div key={index} className="recommendation-card short-term">
-                    <h5>{initiative.initiative}</h5>
-                    <div className="recommendation-details">
-                      {initiative.strategic_pillar && (
-                        <div className="pillar">Strategic Pillar: {initiative.strategic_pillar}</div>
-                      )}
-                      {initiative.expected_outcome && (
-                        <div className="outcome">Expected Outcome: {initiative.expected_outcome}</div>
-                      )}
-                      {initiative.risk_mitigation && (
-                        <div className="risk">Risk Mitigation: {initiative.risk_mitigation}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {parsedData.strategic_recommendations.long_term_strategic_shifts && (
-              <div className="recommendations-section" style={{marginBottom: '20px'}}>
-                <h5 style={{color: 'black'}}>Long-term Strategic Shifts</h5>
-                {parsedData.strategic_recommendations.long_term_strategic_shifts.map((shift, index) => (
-                  <div key={index} className="recommendation-card long-term">
-                    <h5>{shift.shift}</h5>
-                    <div className="recommendation-details">
-                      {shift.transformation_required && (
-                        <div className="transformation">Transformation: {shift.transformation_required}</div>
-                      )}
-                      {shift.competitive_advantage && (
-                        <div className="advantage">Competitive Advantage: {shift.competitive_advantage}</div>
-                      )}
-                      {shift.sustainability && (
-                        <div className="sustainability">Sustainability: {shift.sustainability}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Monitoring Dashboard */}
-        {parsedData.monitoring_dashboard && (
-          <div className="monitoring-dashboard">
-            <h5 style={{color: 'black'}}>Monitoring Dashboard</h5>
-
-            {parsedData.monitoring_dashboard.key_indicators && (
-              <div className="indicators-section">
-                <h5 style={{color: 'black'}}>Key Performance Indicators</h5>
-                {parsedData.monitoring_dashboard.key_indicators.map((indicator, index) => (
-                  <div key={index} className="indicator-card">
-                    <h5>{indicator.indicator}</h5>
-                    <div className="indicator-details">
-                      <div className="force-relation">Related Force: {indicator.force}</div>
-                      <div className="frequency">Measurement: {indicator.measurement_frequency}</div>
-                      {indicator.threshold_values && (
-                        <div className="thresholds">
-                          <div className="threshold green">✓ {indicator.threshold_values.green}</div>
-                          <div className="threshold yellow">⚠ {indicator.threshold_values.yellow}</div>
-                          <div className="threshold red">✗ {indicator.threshold_values.red}</div>
+                      </td>
+                      <td>
+                        {forceData.intensity && (
+                          <span className={`status-badge ${getIntensityColor(forceData.intensity)}`}>
+                            {forceData.intensity}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {forceData.score && <span className="score-badge">{forceData.score}/10</span>}
+                      </td>
+                      <td className="implications-cell">
+                        {forceData.strategic_implications}
+                      </td>
+                      <td>
+                        <div className="factors-cell">
+                          {forceData.key_factors?.map((factor, index) => (
+                            <div key={index} className="factor-item">
+                              <strong>{factor.factor}</strong>
+                              {factor.impact && (
+                                <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>
+                                  Impact: {factor.impact}
+                                </span>
+                              )}
+                              <span className="factor-desc">{factor.description}</span>
+                            </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                      </td>
+                      <td>
+                        <div className="additional-details">
+                          {forceData.entry_barriers && (
+                            <div>
+                              <strong>Entry Barriers:</strong>
+                              <ul>
+                                {forceData.entry_barriers.map((barrier, idx) => (
+                                  <li key={idx}>{barrier}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {forceData.supplier_concentration && (
+                            <div><strong>Supplier Concentration:</strong> {forceData.supplier_concentration}</div>
+                          )}
+                          {forceData.switching_costs && (
+                            <div><strong>Switching Costs:</strong> {forceData.switching_costs}</div>
+                          )}
+                          {forceData.buyer_concentration && (
+                            <div><strong>Buyer Concentration:</strong> {forceData.buyer_concentration}</div>
+                          )}
+                          {forceData.product_differentiation && (
+                            <div><strong>Product Differentiation:</strong> {forceData.product_differentiation}</div>
+                          )}
+                          {forceData.substitute_availability && (
+                            <div><strong>Substitute Availability:</strong> {forceData.substitute_availability}</div>
+                          )}
+                          {forceData.competitor_concentration && (
+                            <div><strong>Competitor Concentration:</strong> {forceData.competitor_concentration}</div>
+                          )}
+                          {forceData.industry_growth && (
+                            <div><strong>Industry Growth:</strong> {forceData.industry_growth}</div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
-            {parsedData.monitoring_dashboard.early_warning_signals && (
-              <div className="warnings-section">
-                <h5>Early Warning Signals</h5>
-                {parsedData.monitoring_dashboard.early_warning_signals.map((signal, index) => (
-                  <div key={index} className="warning-card">
-                    <h5>{signal.signal}</h5>
-                    <div className="warning-details">
-                      <div className="trigger">Trigger Response: {signal.trigger_response}</div>
-                      <div className="source">Monitoring Source: {signal.monitoring_source}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Competitive Landscape Table */}
+      {parsedData.competitive_landscape && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('competitors')}>
+            <h3>Competitive Landscape</h3>
+            {expandedSections.competitors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )} 
-      </div>
+          
+          {expandedSections.competitors !== false && (
+            <div className="table-container">
+              {/* Direct Competitors */}
+              {parsedData.competitive_landscape.direct_competitors && (
+                <div className="subsection">
+                  <h4>Direct Competitors</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Competitor</th>
+                        <th>Market Share</th>
+                        <th>Strengths</th>
+                        <th>Weaknesses</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.competitive_landscape.direct_competitors.map((competitor, index) => (
+                        <tr key={index}>
+                          <td><strong>{competitor.name}</strong></td>
+                          <td>{competitor.market_share || 'N/A'}</td>
+                          <td>
+                            {competitor.strengths && (
+                              <ul className="list-items">
+                                {competitor.strengths.map((strength, idx) => (
+                                  <li key={idx}>{strength}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                          <td>
+                            {competitor.weaknesses && (
+                              <ul className="list-items">
+                                {competitor.weaknesses.map((weakness, idx) => (
+                                  <li key={idx}>{weakness}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Indirect Competitors */}
+              {parsedData.competitive_landscape.indirect_competitors && (
+                <div className="subsection">
+                  <h4>Indirect Competitors</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Competitor</th>
+                        <th>Threat Level</th>
+                        <th>Competitive Advantage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.competitive_landscape.indirect_competitors.map((competitor, index) => (
+                        <tr key={index}>
+                          <td><strong>{competitor.name}</strong></td>
+                          <td>
+                            <span className={`status-badge ${getIntensityColor(competitor.threat_level)}`}>
+                              {competitor.threat_level}
+                            </span>
+                          </td>
+                          <td>{competitor.competitive_advantage}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Potential Entrants */}
+              {parsedData.competitive_landscape.potential_entrants && (
+                <div className="subsection">
+                  <h4>Potential Entrants</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Likelihood</th>
+                        <th>Barriers</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.competitive_landscape.potential_entrants.map((entrant, index) => (
+                        <tr key={index}>
+                          <td><strong>{entrant.category}</strong></td>
+                          <td>
+                            <span className={`status-badge ${getIntensityColor(entrant.likelihood)}`}>
+                              {entrant.likelihood}
+                            </span>
+                          </td>
+                          <td>{entrant.barriers}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Strategic Recommendations Table */}
+      {parsedData.strategic_recommendations && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('recommendations')}>
+            <h3>Strategic Recommendations</h3>
+            {expandedSections.recommendations ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.recommendations !== false && (
+            <div className="table-container">
+              {/* Immediate Actions */}
+              {parsedData.strategic_recommendations.immediate_actions && (
+                <div className="subsection">
+                  <h4>Immediate Actions (Next 3-6 months)</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Action</th>
+                        <th>Rationale</th>
+                        <th>Timeline</th>
+                        <th>Expected Impact</th>
+                        <th>Resources Required</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.strategic_recommendations.immediate_actions.map((action, index) => (
+                        <tr key={index}>
+                          <td><strong>{action.action}</strong></td>
+                          <td>{action.rationale}</td>
+                          <td><span className="timeline-badge">{action.timeline}</span></td>
+                          <td>{action.expected_impact || 'N/A'}</td>
+                          <td>
+                            {action.resources_required ? action.resources_required.join(', ') : 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Short-term Initiatives */}
+              {parsedData.strategic_recommendations.short_term_initiatives && (
+                <div className="subsection">
+                  <h4>Short-term Initiatives</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Initiative</th>
+                        <th>Strategic Pillar</th>
+                        <th>Expected Outcome</th>
+                        <th>Risk Mitigation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.strategic_recommendations.short_term_initiatives.map((initiative, index) => (
+                        <tr key={index}>
+                          <td><strong>{initiative.initiative}</strong></td>
+                          <td>{initiative.strategic_pillar || 'N/A'}</td>
+                          <td>{initiative.expected_outcome || 'N/A'}</td>
+                          <td>{initiative.risk_mitigation || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Long-term Strategic Shifts */}
+              {parsedData.strategic_recommendations.long_term_strategic_shifts && (
+                <div className="subsection">
+                  <h4>Long-term Strategic Shifts</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Strategic Shift</th>
+                        <th>Transformation Required</th>
+                        <th>Competitive Advantage</th>
+                        <th>Sustainability</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.strategic_recommendations.long_term_strategic_shifts.map((shift, index) => (
+                        <tr key={index}>
+                          <td><strong>{shift.shift}</strong></td>
+                          <td>{shift.transformation_required || 'N/A'}</td>
+                          <td>{shift.competitive_advantage || 'N/A'}</td>
+                          <td>{shift.sustainability || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Monitoring Dashboard Table */}
+      {parsedData.monitoring_dashboard && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('monitoring')}>
+            <h3>Monitoring Dashboard</h3>
+            {expandedSections.monitoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.monitoring !== false && (
+            <div className="table-container">
+              {/* Key Performance Indicators */}
+              {parsedData.monitoring_dashboard.key_indicators && (
+                <div className="subsection">
+                  <h4>Key Performance Indicators</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Indicator</th>
+                        <th>Related Force</th>
+                        <th>Measurement Frequency</th>
+                        <th>Threshold Values</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.monitoring_dashboard.key_indicators.map((indicator, index) => (
+                        <tr key={index}>
+                          <td><strong>{indicator.indicator}</strong></td>
+                          <td>{indicator.force}</td>
+                          <td><span className="frequency-badge">{indicator.measurement_frequency}</span></td>
+                          <td>
+                            {indicator.threshold_values && (
+                              <div className="thresholds">
+                                <div className="threshold green">✓ {indicator.threshold_values.green}</div>
+                                <div className="threshold yellow">⚠ {indicator.threshold_values.yellow}</div>
+                                <div className="threshold red">✗ {indicator.threshold_values.red}</div>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Early Warning Signals */}
+              {parsedData.monitoring_dashboard.early_warning_signals && (
+                <div className="subsection">
+                  <h4>Early Warning Signals</h4>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Signal</th>
+                        <th>Trigger Response</th>
+                        <th>Monitoring Source</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parsedData.monitoring_dashboard.early_warning_signals.map((signal, index) => (
+                        <tr key={index}>
+                          <td><strong>{signal.signal}</strong></td>
+                          <td>{signal.trigger_response}</td>
+                          <td>{signal.monitoring_source}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
