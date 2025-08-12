@@ -28,66 +28,62 @@ const UserOverview = ({ onToast }) => {
 
   // Validation function for individual fields
   const validateField = (fieldName, value) => {
-    switch (fieldName) {
-      case 'name':
-        if (!value || !value.trim()) {
-          return 'Name is required';
-        }
-        return '';
-      case 'email':
-        if (!value || !value.trim()) {
-          return 'Email is required';
-        }
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value.trim())) {
-          return 'Please enter a valid email address';
-        }
-        return '';
-      case 'password':
-        if (!value || !value.trim()) {
-          return 'Password is required';
-        }
-        if (value.trim().length < 8) {
-          return 'Password must be at least 8 characters';
-        }
-        return '';
-      default:
-        return '';
-    }
-  };
+  switch (fieldName) {
+    case 'name':
+      if (!value || !value.trim()) {
+        return 'Name is required';
+      }
+      // Only allow letters and spaces
+      if (!/^[A-Za-z\s]+$/.test(value)) {
+        return 'Name can only contain letters and spaces';
+      }
+      // No consecutive spaces allowed
+      if (/\s{2,}/.test(value)) {
+        return 'Name cannot contain consecutive spaces';
+      }
+      if (value.trim().length < 2) {
+        return 'Name must be at least 2 characters long';
+      }
+      return '';
 
-  const validateUserForm = (user) => {
-    const errors = [];
-    
-    // Validate name - check for empty or whitespace only
-    if (!user.name || !user.name.trim()) {
-      errors.push('Name is required');
-    }
-    
-    // Validate email - check for empty or whitespace only
-    if (!user.email || !user.email.trim()) {
-      errors.push('Email is required');
-    }
-    
-    // Validate password - check for empty or whitespace only
-    if (!user.password || !user.password.trim()) {
-      errors.push('Password is required');
-    }
-    
+    case 'email':
+      if (!value || !value.trim()) {
+        return 'Email is required';
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value.trim())) {
+        return 'Please enter a valid email address';
+      }
+      return '';
+
+    case 'password':
+      if (!value || !value.trim()) {
+        return 'Password is required';
+      }
+      if (value.trim().length < 8) {
+        return 'Password must be at least 8 characters long';
+      }
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+        return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+      }
+      return '';
+
+    default:
+      return '';
+  }
+};
+
+
+   const validateUserForm = (user) => {
+    const errors = {};
+    errors.name = validateField('name', user.name);
+    errors.email = validateField('email', user.email);
+    errors.password = validateField('password', user.password);
     return errors;
   };
 
   // Check if form is valid
-  const isFormValid = () => {
-    return newUser.name?.trim() && 
-           newUser.email?.trim() && 
-           newUser.password?.trim() &&
-           !formErrors.name &&
-           !formErrors.email &&
-           !formErrors.password;
-  };
-
+ 
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -180,82 +176,74 @@ const UserOverview = ({ onToast }) => {
     }
   };
 
-  const addUser = async () => {
-    try {
-      setIsCreating(true);
-      const token = getAuthToken();
-
-      // Validate the form before making the API call
-      const validationErrors = validateUserForm(newUser);
-      if (validationErrors.length > 0) {
-        onToast(validationErrors[0], 'warning'); // Show the first error
-        return;
-      }
-
-      const payload = {
-        name: newUser.name.trim(), // Trim whitespace
-        email: newUser.email.trim(), // Trim whitespace
-        password: newUser.password.trim() // Trim whitespace
-      };
-
-      // Add company_id if provided (for super admin)
-      if (newUser.company_id) {
-        payload.company_id = newUser.company_id;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        onToast('User created successfully', 'success');
-        setShowAddUser(false);
-        setNewUser({
-          name: '',
-          email: '',
-          password: '',
-          company_id: '',
-          job_title: ''
-        });
-        // Clear form errors when closing modal
-        setFormErrors({
-          name: '',
-          email: '',
-          password: ''
-        });
-        await loadUsers();
-      } else {
-        onToast(data.error || data.message || 'User creation failed', 'error');
-      }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      onToast('Error creating user', 'error');
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    addUser();
-  };
+  
 
   const handleChange = (field, value) => {
     setNewUser(prev => ({ ...prev, [field]: value }));
     
     // Real-time validation - validate field as user types
-    if (['name', 'email', 'password'].includes(field)) {
-      const error = validateField(field, value);
-      setFormErrors(prev => ({ ...prev, [field]: error }));
-    }
+   
   };
+  const addUser = async () => {
+  // Validate the form before making the API call
+  const validationErrors = validateUserForm(newUser);
+
+  // Update error state to show messages
+  setFormErrors(validationErrors);
+
+  // Check if there are any errors
+  const hasErrors = Object.values(validationErrors).some(error => error);
+  if (hasErrors) {
+    onToast('Please fix the highlighted errors', 'warning');
+    return;
+  }
+
+  try {
+    setIsCreating(true);
+    const token = getAuthToken();
+
+    const payload = {
+      name: newUser.name.trim(),
+      email: newUser.email.trim(),
+      password: newUser.password.trim()
+    };
+
+    if (newUser.company_id) {
+      payload.company_id = newUser.company_id;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      onToast('User created successfully', 'success');
+      setShowAddUser(false);
+      setNewUser({ name: '', email: '', password: '', company_id: '', job_title: '' });
+      setFormErrors({ name: '', email: '', password: '' });
+      await loadUsers();
+    } else {
+      onToast(data.error || data.message || 'User creation failed', 'error');
+    }
+  } catch (error) {
+    console.error('Error creating user:', error);
+    onToast('Error creating user', 'error');
+  } finally {
+    setIsCreating(false);
+  }
+};
+
+const handleSubmit = (e) => {
+  e.preventDefault();
+  addUser();
+};
 
   // Helper function to render form fields with validation
   const renderFormField = (label, field, type = 'text', placeholder = '', required = false) => (
@@ -413,12 +401,12 @@ const UserOverview = ({ onToast }) => {
                     {renderFormField('Password', 'password', 'password', 'Minimum 8 characters', true)}
 
                     <div className="form-field">
-                      <label>Company</label>
+                      <label>Company *</label>
                       <select
                         value={newUser.company_id}
                         onChange={(e) => handleChange('company_id', e.target.value)}
                       >
-                        <option value="">Select Company (Optional)</option>
+                        <option value="">Select Company</option>
                         {companies.map(company => (
                           <option key={company._id} value={company._id}>
                             {company.company_name}
@@ -461,7 +449,7 @@ const UserOverview = ({ onToast }) => {
                     type="button"
                     className="primary-btn"
                     onClick={handleSubmit}
-                    disabled={isCreating || !isFormValid()}
+                    disabled={isCreating}
                   >
                     {isCreating ? (
                       <>
