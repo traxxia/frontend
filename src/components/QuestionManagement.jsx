@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical } from 'lucide-react';
+import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle } from 'lucide-react';
+import '../styles/question-management.css';
 
 const QuestionManagement = ({ onToast }) => {
   const [questions, setQuestions] = useState([]);
@@ -162,52 +163,45 @@ const QuestionManagement = ({ onToast }) => {
   };
 
   const handleReorderQuestions = async (reorderedQuestions, phase) => {
-  try {
-    setIsReordering(true);
-    const token = getAuthToken();
+    try {
+      setIsReordering(true);
+      const token = getAuthToken();
 
-    // Create the payload with phase information and relative ordering within the phase
-    const questionOrders = reorderedQuestions.map((question, index) => ({
-      question_id: question._id,
-      order: index + 1 // This will be the relative order within the phase
-    }));
+      const questionOrders = reorderedQuestions.map((question, index) => ({
+        question_id: question._id,
+        order: index + 1
+      }));
 
-    const response = await fetch(`${API_BASE_URL}/api/admin/questions/reorder`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionOrders,
-        phase: phase // Pass the phase information
-      })
-    });
+      const response = await fetch(`${API_BASE_URL}/api/admin/questions/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionOrders,
+          phase: phase
+        })
+      });
 
-    if (response.ok) {
-      const result = await response.json();
-      onToast('Questions reordered successfully', 'success');
-      
-      // Reload all questions to get the updated global ordering
+      if (response.ok) {
+        const result = await response.json();
+        onToast('Questions reordered successfully', 'success');
+        loadQuestions();
+      } else {
+        const error = await response.json();
+        console.error('Reorder error:', error);
+        onToast(error.error || 'Failed to reorder questions', 'error');
+        loadQuestions();
+      }
+    } catch (error) {
+      console.error('Error reordering questions:', error);
+      onToast('Error reordering questions', 'error');
       loadQuestions();
-    } else {
-      const error = await response.json();
-      console.error('Reorder error:', error);
-      onToast(error.error || 'Failed to reorder questions', 'error');
-      
-      // Reload questions to revert to the correct order
-      loadQuestions();
+    } finally {
+      setIsReordering(false);
     }
-  } catch (error) {
-    console.error('Error reordering questions:', error);
-    onToast('Error reordering questions', 'error');
-    
-    // Reload questions to revert to the correct order
-    loadQuestions();
-  } finally {
-    setIsReordering(false);
-  }
-};
+  };
 
   const handleDragStart = (e, question, phase) => {
     setDraggedItem({ question, phase });
@@ -220,36 +214,33 @@ const QuestionManagement = ({ onToast }) => {
   };
 
   const handleDrop = (e, targetQuestion, targetPhase) => {
-  e.preventDefault();
-  
-  if (!draggedItem || draggedItem.phase !== targetPhase) {
+    e.preventDefault();
+    
+    if (!draggedItem || draggedItem.phase !== targetPhase) {
+      setDraggedItem(null);
+      return;
+    }
+
+    const phaseQuestions = [...(questionsByPhase[targetPhase] || [])];
+    const draggedIndex = phaseQuestions.findIndex(q => q._id === draggedItem.question._id);
+    const targetIndex = phaseQuestions.findIndex(q => q._id === targetQuestion._id);
+
+    if (draggedIndex === targetIndex) {
+      setDraggedItem(null);
+      return;
+    }
+
+    const [draggedQuestion] = phaseQuestions.splice(draggedIndex, 1);
+    phaseQuestions.splice(targetIndex, 0, draggedQuestion);
+
+    setQuestionsByPhase(prev => ({
+      ...prev,
+      [targetPhase]: phaseQuestions
+    }));
+
+    handleReorderQuestions(phaseQuestions, targetPhase);
     setDraggedItem(null);
-    return;
-  }
-
-  const phaseQuestions = [...(questionsByPhase[targetPhase] || [])];
-  const draggedIndex = phaseQuestions.findIndex(q => q._id === draggedItem.question._id);
-  const targetIndex = phaseQuestions.findIndex(q => q._id === targetQuestion._id);
-
-  if (draggedIndex === targetIndex) {
-    setDraggedItem(null);
-    return;
-  }
-
-  // Reorder the array
-  const [draggedQuestion] = phaseQuestions.splice(draggedIndex, 1);
-  phaseQuestions.splice(targetIndex, 0, draggedQuestion);
-
-  // Update local state immediately for better UX
-  setQuestionsByPhase(prev => ({
-    ...prev,
-    [targetPhase]: phaseQuestions
-  }));
-
-  // Send reorder request to backend with phase information
-  handleReorderQuestions(phaseQuestions, targetPhase);
-  setDraggedItem(null);
-};
+  };
 
   const togglePhaseCollapse = (phase) => {
     setCollapsedPhases(prev => ({
@@ -260,29 +251,19 @@ const QuestionManagement = ({ onToast }) => {
 
   if (isLoading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
+      <div className="question-management__loading">
         <div>Loading questions...</div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+    <div className="question-management">
+      <div className="question-management__header">
         <h2>Question Management</h2>
         <button 
           onClick={() => setShowCreateForm(true)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
+          className="question-management__add-btn"
         >
           <Plus size={16} />
           Add Question
@@ -298,24 +279,8 @@ const QuestionManagement = ({ onToast }) => {
       )}
 
       {isReordering && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '4px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-          }}>
+        <div className="question-management__reordering-overlay">
+          <div className="question-management__reordering-modal">
             Reordering questions...
           </div>
         </div>
@@ -326,42 +291,35 @@ const QuestionManagement = ({ onToast }) => {
         const isCollapsed = collapsedPhases[phase];
 
         return (
-          <div key={phase} style={{ marginBottom: '30px' }}>
-            <div className='question-tab'
+          <div key={phase} className="phase-section">
+            <div
               onClick={() => togglePhaseCollapse(phase)}
-              style={{
-                backgroundColor: '#f8f9fa',
-                padding: '12px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '10px',
-                border: '1px solid #dee2e6'
-              }}
+              className="phase-section__header"
             >
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
               <strong>{phase.charAt(0).toUpperCase() + phase.slice(1)} Phase</strong>
-              <span style={{ marginLeft: 'auto', color: '#6c757d' }}>
+              <span className="phase-section__count">
                 {phaseQuestions.length} questions
               </span>
             </div>
 
             {!isCollapsed && (
-              <table  className='question-table' style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dee2e6' }}>
+              <table className="questions-table">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th className='question-th' style={{ width: '60px', padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                  <tr className="questions-table__header">
+                    <th className="questions-table__header-cell questions-table__header-cell--number">
                       #
                     </th>
-                    <th className='question-th' style={{ padding: '12px', textAlign: 'left', border: '1px solid #dee2e6' }}>
+                    <th className="questions-table__header-cell">
                       Question Text
                     </th>
-                    <th className='question-th' style={{ width: '100px', padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                    <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--used-for">
+                      Used For
+                    </th>
+                    <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--severity">
                       Severity
                     </th>
-                    <th className='question-th' style={{ width: '140px', padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
+                    <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--actions">
                       Actions
                     </th>
                   </tr>
@@ -369,13 +327,8 @@ const QuestionManagement = ({ onToast }) => {
                 <tbody>
                   {phaseQuestions.length === 0 ? (
                     <tr>
-                      <td className='question-td' colSpan="4" style={{
-                        padding: '40px',
-                        textAlign: 'center',
-                        color: '#6c757d',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        <HelpCircle size={24} style={{ marginBottom: '8px' }} />
+                      <td colSpan="5" className="questions-table__empty-row">
+                        <HelpCircle size={24} className="questions-table__empty-icon" />
                         <div>No questions in {phase} phase</div>
                       </td>
                     </tr>
@@ -407,8 +360,8 @@ const QuestionManagement = ({ onToast }) => {
       })}
 
       {questions.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#6c757d' }}>
-          <HelpCircle size={48} style={{ marginBottom: '16px' }} />
+        <div className="question-management__empty-state">
+          <HelpCircle size={48} />
           <h3>No Questions Yet</h3>
           <p>Create your first question to get started</p>
         </div>
@@ -435,16 +388,22 @@ const QuestionRow = ({
   const [editForm, setEditForm] = useState({
     question_text: question.question_text,
     phase: question.phase,
-    severity: question.severity,
-    order: question.order
+    order: question.order,
+    used_for: question.used_for || '',
+    objective: question.objective || '',
+    required_info: question.required_info || ''
   });
+
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleSave = () => {
     onUpdate(question._id, {
       question_text: editForm.question_text,
       phase: editForm.phase,
-      severity: editForm.severity,
-      order: editForm.order
+      order: editForm.order,
+      used_for: editForm.used_for,
+      objective: editForm.objective,
+      required_info: editForm.required_info
     });
   };
 
@@ -457,177 +416,194 @@ const QuestionRow = ({
 
   if (isEditing) {
     return (
-      <tr style={{ backgroundColor: '#fff3cd' }}>
-        <td style={{ padding: '12px 8px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-            <GripVertical size={14} style={{ color: '#6c757d' }} />
-            <span style={{ fontWeight: 'bold', color: '#007bff' }}>
-              {index + 1}
+      <>
+        <tr className="question-row question-row--editing">
+          <td className="question-row__cell question-row__cell--number">
+            <div className="question-row__number question-row__number--editing">
+              <GripVertical size={14} style={{ color: '#6c757d' }} />
+              <span>
+                {index + 1}
+              </span>
+            </div>
+          </td>
+          
+          <td className="question-row__cell">
+            <textarea
+              name="question_text"
+              value={editForm.question_text}
+              onChange={handleChange}
+              className="question-row__textarea"
+            />
+          </td>
+
+          <td className="question-row__cell">
+            <input
+              type="text"
+              name="used_for"
+              value={editForm.used_for}
+              onChange={handleChange}
+              placeholder="SWOT, Customer..."
+              className="question-row__input"
+            />
+          </td>
+          
+          <td className="question-row__cell question-row__cell--center">
+            <span className={`question-row__severity-badge question-row__severity-badge--${question.severity}`}>
+              {question.severity}
             </span>
-          </div>
-        </td>
+            <div className="question-row__severity-auto">
+              Auto-assigned
+            </div>
+          </td>
+           
+          <td className="question-row__cell question-row__cell--center">
+            <div className="question-row__actions">
+              <button
+                onClick={handleSave}
+                disabled={isUpdating}
+                className="question-row__action-btn question-row__action-btn--save"
+              >
+                <Save size={12} />
+              </button>
+              <button
+                onClick={onCancelEdit}
+                disabled={isUpdating}
+                className="question-row__action-btn question-row__action-btn--cancel"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </td>
+        </tr>
         
-        <td style={{ padding: '12px', border: '1px solid #dee2e6' }}>
-          <textarea
-            name="question_text"
-            
-            value={editForm.question_text}
-            onChange={handleChange}
-            style={{
-              width: '100%',
-              minHeight: '60px',
-              padding: '8px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              resize: 'vertical'
-            }}
-          />
-        </td>
-        
-        <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-          <select
-            name="severity"
-            value={editForm.severity}
-            onChange={handleChange}
-            style={{
-              padding: '4px 8px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '12px'
-            }}
-          >
-            <option value="mandatory">Mandatory</option>
-            <option value="optional">Optional</option>
-          </select>
-        </td>
-         
-        <td style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-            <button
-              onClick={handleSave}
-              disabled={isUpdating}
-              style={{
-                padding: '4px 8px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              <Save size={12} />
-            </button>
-            <button
-              onClick={onCancelEdit}
-              disabled={isUpdating}
-              style={{
-                padding: '4px 8px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              <X size={12} />
-            </button>
-          </div>
-        </td>
-      </tr>
+        {/* Additional fields row when editing */}
+        <tr className="question-row--editing">
+          <td colSpan="5" className="question-row__edit-fields">
+            <div className="question-row__edit-grid">
+              <div className="question-row__edit-field">
+                <label>
+                  Objective
+                </label>
+                <textarea
+                  name="objective"
+                  value={editForm.objective}
+                  onChange={handleChange}
+                  placeholder="What this question aims to understand..."
+                />
+              </div>
+              <div className="question-row__edit-field">
+                <label>
+                  Required Information
+                </label>
+                <textarea
+                  name="required_info"
+                  value={editForm.required_info}
+                  onChange={handleChange}
+                  placeholder="What information is needed for analysis..."
+                />
+              </div>
+            </div>
+          </td>
+        </tr>
+      </>
     );
   }
 
   return (
-    <tr 
-      draggable
-      onDragStart={(e) => onDragStart(e, question, phase)}
-      onDragOver={onDragOver}
-      onDrop={(e) => onDrop(e, question, phase)}
-      style={{ 
-        backgroundColor: 'white',
-        cursor: 'move'
-      }}
-    >
-      <td className='question-td' style={{ 
-        padding: '12px 8px', 
-        textAlign: 'center', 
-        border: '1px solid #dee2e6',
-        position: 'relative'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-          <GripVertical size={14} style={{ color: '#6c757d' }} />
-          <span >
-            {index + 1}
-          </span>
-        </div>
-      </td>
-       
-      <td className='question-td' style={{ padding: '12px', border: '1px solid #dee2e6' }}>
-        {question.question_text}
-      </td>
-
-      <td className='question-td' style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-        <span style={{
-          padding: '2px 8px',
-          borderRadius: '12px',
-          fontSize: '12px',
-          fontWeight: 'bold',
-          backgroundColor: question.severity === 'mandatory' ? '#dc3545' : '#28a745',
-          color: 'white'
-        }}>
-          {question.severity}
-        </span>
-      </td>
-       
-      <td className='question-td' style={{ padding: '12px', textAlign: 'center', border: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-          <button
-            onClick={onEdit}
-            disabled={isDeleting}
-            style={{
-              padding: '4px 12px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              opacity: isDeleting ? 0.6 : 1
-            }}
-          >
-            <Edit size={12} />
-          </button>
-          <button
-            onClick={() => onDelete(question._id)}
-            disabled={isDeleting}
-            style={{
-              padding: '4px 12px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              opacity: isDeleting ? 0.6 : 1
-            }}
-          >
-            {isDeleting ? (
-              <span style={{ fontSize: '10px' }}>...</span>
-            ) : (
-              <Trash2 size={12} />
+    <>
+      <tr 
+        draggable
+        onDragStart={(e) => onDragStart(e, question, phase)}
+        onDragOver={onDragOver}
+        onDrop={(e) => onDrop(e, question, phase)}
+        className="question-row"
+      >
+        <td className="question-row__cell question-row__cell--number">
+          <div className="question-row__number">
+            <GripVertical size={14} style={{ color: '#6c757d' }} />
+            <span>
+              {index + 1}
+            </span>
+          </div>
+        </td>
+         
+        <td className="question-row__cell">
+          <div className="question-row__question-text">
+            {question.question_text}
+            {(question.objective || question.required_info) && (
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                className="question-row__details-btn"
+              >
+                <AlertCircle size={10} style={{ marginRight: '2px' }} />
+                Details
+              </button>
             )}
-          </button>
-        </div>
-      </td>
-    </tr>
+          </div>
+        </td>
+
+        <td className="question-row__cell question-row__cell--center">
+          {question.used_for ? (
+            <span className="question-row__used-for-badge">
+              {question.used_for}
+            </span>
+          ) : (
+            <span className="question-row__used-for-empty">Not set</span>
+          )}
+        </td>
+
+        <td className="question-row__cell question-row__cell--center">
+          <span className={`question-row__severity-badge question-row__severity-badge--${question.severity}`}>
+            {question.severity}
+          </span>
+        </td>
+         
+        <td className="question-row__cell question-row__cell--center">
+          <div className="question-row__actions">
+            <button
+              onClick={onEdit}
+              disabled={isDeleting}
+              className={`question-row__action-btn question-row__action-btn--edit ${isDeleting ? 'question-row__action-btn--disabled' : ''}`}
+            >
+              <Edit size={12} />
+            </button>
+            <button
+              onClick={() => onDelete(question._id)}
+              disabled={isDeleting}
+              className={`question-row__action-btn question-row__action-btn--delete ${isDeleting ? 'question-row__action-btn--disabled' : ''}`}
+            >
+              {isDeleting ? (
+                <span style={{ fontSize: '10px' }}>...</span>
+              ) : (
+                <Trash2 size={12} />
+              )}
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Details row */}
+      {showDetails && (question.objective || question.required_info) && (
+        <tr>
+          <td colSpan="5" className="question-row__details">
+            <div className="question-row__details-grid">
+              {question.objective && (
+                <div>
+                  <strong className="question-row__details-label">Objective:</strong>
+                  <div className="question-row__details-content">{question.objective}</div>
+                </div>
+              )}
+              {question.required_info && (
+                <div>
+                  <strong className="question-row__details-label">Required Information:</strong>
+                  <div className="question-row__details-content">{question.required_info}</div>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
@@ -635,61 +611,61 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     question_text: '',
     phase: 'initial',
-    severity: 'mandatory',
-    order: 1
+    order: 1,
+    used_for: '',
+    objective: '',
+    required_info: ''
   });
 
-  const getDefaultSeverity = (phase) => {
+  const getSeverityForPhase = (phase) => {
     return phase === 'initial' ? 'mandatory' : 'optional';
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Validate required fields
+    if (!formData.question_text.trim()) {
+      alert('Question text is required');
+      return;
+    }
+    
+    if (!formData.used_for.trim()) {
+      alert('Used For field is required');
+      return;
+    }
+    
+    if (!formData.objective.trim()) {
+      alert('Objective field is required');
+      return;
+    }
+    
+    // Add the auto-determined severity to the form data
+    const submitData = {
+      ...formData,
+      severity: getSeverityForPhase(formData.phase)
+    };
+    onSubmit(submitData);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        [name]: value
-      };
-      
-      if (name === 'phase') {
-        newFormData.severity = getDefaultSeverity(value);
-      }
-      
-      return newFormData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
+  const currentSeverity = getSeverityForPhase(formData.phase);
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div className='question-modal' style={{
-        backgroundColor: 'white',
-        padding: '24px',
-        borderRadius: '8px',
-        width: '500px',
-        maxWidth: '90vw'
-      }}>
-        <h3 style={{ marginTop: 0, marginBottom: '20px' }}>Create New Question</h3>
+    <div className="create-form-overlay">
+      <div className="create-form">
+        <h3>Create New Question</h3>
         
-        <div>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+        <form onSubmit={handleSubmit}>
+          <div className="create-form__field">
+            <label>
               Question Text *
             </label>
             <textarea
@@ -698,67 +674,79 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               onChange={handleChange}
               required
               rows="4"
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                resize: 'vertical'
-              }}
               placeholder="Enter your question here..."
             />
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-              Phase *
-            </label>
-            <select
-              name="phase"
-              value={formData.phase}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px'
-              }}
-            >
-              <option value="initial">Initial</option>
-              <option value="essential">Essential</option>
-              <option value="good">Good</option>
-              <option value="excellent">Excellent</option>
-            </select>
+          <div className="create-form__grid">
+            <div className="create-form__field">
+              <label>
+                Phase *
+              </label>
+              <select
+                name="phase"
+                value={formData.phase}
+                onChange={handleChange}
+                required
+              >
+                <option value="initial">Initial</option>
+                <option value="essential">Essential</option>
+                <option value="good">Good</option>
+                <option value="excellent">Excellent</option>
+              </select>
+            </div>
+
+            <div className="create-form__field">
+              <label>
+                Used For *
+              </label>
+              <input
+                type="text"
+                name="used_for"
+                value={formData.used_for}
+                onChange={handleChange}
+                required
+                placeholder="SWOT, Customer Segmentation..."
+              />
+            </div>
           </div>
 
-          <div className='question-modal-tab'  style={{ 
-            marginBottom: '20px', 
-            padding: '12px', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '4px',
-            border: '1px solid #e9ecef'
-          }}>
-            <div style={{ 
-              fontSize: '14px', 
-              color: '#6c757d', 
-              marginBottom: '4px',
-              fontWeight: 'bold'
-            }}>
+          <div className="create-form__field">
+            <label>
+              Objective *
+            </label>
+            <textarea
+              name="objective"
+              value={formData.objective}
+              onChange={handleChange}
+              required
+              rows="3"
+              placeholder="What this question aims to understand or analyze..."
+            />
+          </div>
+
+          <div className="create-form__field">
+            <label>
+              Required Information
+            </label>
+            <textarea
+              name="required_info"
+              value={formData.required_info}
+              onChange={handleChange}
+              rows="3"
+              placeholder="What specific information is needed for analysis..."
+            />
+          </div>
+
+          <div className="create-form__severity-info">
+            <div className="create-form__severity-label">
               Severity (Auto-assigned)
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                backgroundColor: formData.severity === 'mandatory' ? '#dc3545' : '#28a745',
-                color: 'white'
-              }}>
-                {formData.severity}
+            <div className="create-form__severity-display">
+              <span className={`create-form__severity-badge create-form__severity-badge--${currentSeverity}`}>
+                {currentSeverity}
               </span>
-              <span style={{ fontSize: '14px', color: '#6c757d' }}>
+              <span className="create-form__severity-text">
                 {formData.phase === 'initial' 
                   ? 'Initial phase questions are always mandatory'
                   : 'Non-initial phase questions are optional by default'
@@ -767,39 +755,24 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <div className="create-form__actions">
             <button 
               type="button" 
               onClick={onCancel}
               disabled={isLoading}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className="create-form__btn create-form__btn--cancel"
             >
               Cancel
             </button>
             <button 
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={isLoading}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className="create-form__btn create-form__btn--submit"
             >
               {isLoading ? 'Creating...' : 'Create Question'}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

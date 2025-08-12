@@ -103,6 +103,7 @@ const BusinessSetupPage = () => {
   const [isProductivityRegenerating, setIsProductivityRegenerating] = useState(false);
   const [maturityData, setMaturityData] = useState(null);
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
+  const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
 
   // Refs
   const cultureProfileRef = useRef(null);
@@ -162,6 +163,36 @@ const BusinessSetupPage = () => {
     }
 
     return phases;
+  };
+
+  const handleRedirectToBrief = (missingQuestionsData) => {
+    // Store the missing questions data
+    setHighlightedMissingQuestions(missingQuestionsData);
+
+    // Switch to brief tab
+    if (isMobile) {
+      setActiveTab("brief");
+    } else {
+      if (isAnalysisExpanded) {
+        setIsSliding(true);
+        setIsAnalysisExpanded(false);
+        setActiveTab("brief");
+        setTimeout(() => setIsSliding(false), 1000);
+      } else {
+        setActiveTab("brief");
+      }
+    }
+
+    // Show toast message
+    showToastMessage(
+      `Please answer ${missingQuestionsData.missing_count} more question${missingQuestionsData.missing_count > 1 ? 's' : ''} to generate this analysis.`,
+      "warning"
+    );
+
+    // Auto-clear highlighting after 10 seconds
+    setTimeout(() => {
+      setHighlightedMissingQuestions(null);
+    }, 30000);
   };
 
   // Phase Tabs Component
@@ -389,7 +420,7 @@ const BusinessSetupPage = () => {
       // Always overwrite existing strategic data
       setStrategicData(strategicContent);
       await saveAnalysisToBackend(strategicContent, 'strategic');
- 
+
     } catch (error) {
       console.error('Error generating strategic analysis:', error);
       throw error;
@@ -461,7 +492,7 @@ const BusinessSetupPage = () => {
   };
 
   const generateFullSwotPortfolioForCompletion = async (completedSet = null) => {
-    if (isRegeneratingRef.current) { 
+    if (isRegeneratingRef.current) {
       return;
     }
 
@@ -621,7 +652,7 @@ const BusinessSetupPage = () => {
         }
       });
 
-      setHasAnalysisData(hasAnyAnalysis); 
+      setHasAnalysisData(hasAnyAnalysis);
     } catch (error) {
       console.error('Error loading existing analysis data:', error);
     }
@@ -740,7 +771,7 @@ const BusinessSetupPage = () => {
       };
 
       // Determine the correct phase
-      const phase = analysisPhaseMap[analysisType] || 'initial'; 
+      const phase = analysisPhaseMap[analysisType] || 'initial';
 
       const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
         method: 'POST',
@@ -765,7 +796,7 @@ const BusinessSetupPage = () => {
       if (!response.ok) {
         console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
         return false;
-      } 
+      }
       return true;
     } catch (error) {
       console.error(`Error saving ${analysisType} analysis:`, error);
@@ -1084,67 +1115,67 @@ const BusinessSetupPage = () => {
   };
 
   const generateMaturityScore = async (freshAnswers) => {
-  try {
-    const questionsArray = [];
-    const answersArray = [];
+    try {
+      const questionsArray = [];
+      const answersArray = [];
 
-    questions
-      .filter(q => freshAnswers[q._id])
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach(question => {
-        questionsArray.push(question.question_text);
-        answersArray.push(freshAnswers[question._id]);
+      questions
+        .filter(q => freshAnswers[q._id])
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(freshAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('No questions available for maturity score analysis');
+      }
+
+      const response = await fetch(`${ML_API_BASE_URL}/maturity-scoring`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
       });
 
-    if (questionsArray.length === 0) {
-      throw new Error('No questions available for maturity score analysis');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Maturity Score API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      // Fix: The API returns the maturity data directly, so we need to wrap it properly
+      let maturityContent = null;
+
+      // Check if the result already has the expected structure
+      if (result.maturityScore || result.maturity_score) {
+        maturityContent = result;
+      } else if (result.dimensions && result.overallMaturity) {
+        // API returns data directly in root - wrap it in maturityScore property
+        maturityContent = {
+          maturityScore: result
+        };
+      } else {
+        // Fallback - assume the whole result is the maturity data
+        maturityContent = {
+          maturityScore: result
+        };
+      }
+
+      setMaturityData(maturityContent);
+      await saveAnalysisToBackend(maturityContent, 'maturityScore');
+      return maturityContent;
+    } catch (error) {
+      console.error('Error generating Maturity Score:', error);
+      throw error;
     }
-
-    const response = await fetch(`${ML_API_BASE_URL}/maturity-scoring`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Maturity Score API returned ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    
-    // Fix: The API returns the maturity data directly, so we need to wrap it properly
-    let maturityContent = null;
-    
-    // Check if the result already has the expected structure
-    if (result.maturityScore || result.maturity_score) {
-      maturityContent = result;
-    } else if (result.dimensions && result.overallMaturity) {
-      // API returns data directly in root - wrap it in maturityScore property
-      maturityContent = { 
-        maturityScore: result 
-      };
-    } else {
-      // Fallback - assume the whole result is the maturity data
-      maturityContent = { 
-        maturityScore: result 
-      };
-    } 
-    
-    setMaturityData(maturityContent);
-    await saveAnalysisToBackend(maturityContent, 'maturityScore');
-    return maturityContent;
-  } catch (error) {
-    console.error('Error generating Maturity Score:', error);
-    throw error;
-  }
-};
+  };
   const generateCompetitiveAdvantage = async (freshAnswers) => {
     try {
       const questionsArray = [];
@@ -1310,7 +1341,7 @@ const BusinessSetupPage = () => {
     }
   };
 
-  const handleQuestionCompleted = async (questionId) => { 
+  const handleQuestionCompleted = async (questionId) => {
     // Update completed questions first
     const newCompletedSet = new Set([...completedQuestions, questionId]);
     setCompletedQuestions(newCompletedSet);
@@ -1322,7 +1353,7 @@ const BusinessSetupPage = () => {
 
       const completedInitial = initialQuestions.filter(q => newCompletedSet.has(q._id));
       const completedEssential = essentialQuestions.filter(q => newCompletedSet.has(q._id));
- 
+
 
       // Get the phase of the completed question
       const completedQuestion = questions.find(q => q._id === questionId);
@@ -1332,7 +1363,7 @@ const BusinessSetupPage = () => {
       if (completedQuestionPhase === 'initial' &&
         initialQuestions.length > 0 &&
         completedInitial.length === initialQuestions.length &&
-        !hasAnalysisData) { 
+        !hasAnalysisData) {
         await regenerateAllAnalysisForCompletion();
       }
 
@@ -1340,7 +1371,7 @@ const BusinessSetupPage = () => {
       if (completedQuestionPhase === 'essential' &&
         essentialQuestions.length > 0 &&
         completedEssential.length === essentialQuestions.length &&
-        (!fullSwotData || !competitiveAdvantageData)) { 
+        (!fullSwotData || !competitiveAdvantageData)) {
         await generateFullSwotPortfolioForCompletion();
       }
     }, 100);
@@ -1945,57 +1976,57 @@ const BusinessSetupPage = () => {
     }
   };
 
- // Update the createIndividualRegenerationHandler function
-const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, setter, displayName, setIsRegenerating) => {
-  return async () => {
-    if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+  // Update the createIndividualRegenerationHandler function
+  const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, setter, displayName, setIsRegenerating) => {
+    return async () => {
+      if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
 
-    try {
-      setIsRegenerating(true);
-      showToastMessage(`Regenerating ${displayName}...`, "info");
-      setter(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      try {
+        setIsRegenerating(true);
+        showToastMessage(`Regenerating ${displayName}...`, "info");
+        setter(null);
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Handle special cases that have custom generation functions
-      if (analysisType === 'porters') {
-        await generatePortersAnalysisWithAnswers(userAnswers);
-      } else if (analysisType === 'pestel') {
-        await generatePestelAnalysisWithAnswers(userAnswers);
-      } else if (analysisType === 'strategic') {
-        await generateStrategicAnalysisWithAnswers(userAnswers);
-      } else if (analysisType === 'fullSwot') {
-        await generateFullSwotPortfolio();
-      } else if (analysisType === 'competitiveAdvantage') {
-        await generateCompetitiveAdvantage(userAnswers);
-      } else if (analysisType === 'channelEffectiveness') {
-        await generateChannelEffectiveness(userAnswers);
-      } else if (analysisType === 'expandedCapability') {
-        await generateExpandedCapability(userAnswers);
-      } else if (analysisType === 'strategicGoals') {
-        await generateStrategicGoals(userAnswers);
-      } else if (analysisType === 'strategicRadar') {
-        await generateStrategicRadar(userAnswers);
-      } else if (analysisType === 'cultureProfile') {
-        await generateCultureProfile(userAnswers);
-      } else if (analysisType === 'productivityMetrics') {
-        await generateProductivityMetrics(userAnswers);
-      } else if (analysisType === 'maturityScore') {
-        // Use the custom maturity score function
-        await generateMaturityScore(userAnswers);
-      } else {
-        // Use the generic function for standard analyses
-        await generateSingleAnalysis(analysisType, endpoint, dataKey, setter);
+        // Handle special cases that have custom generation functions
+        if (analysisType === 'porters') {
+          await generatePortersAnalysisWithAnswers(userAnswers);
+        } else if (analysisType === 'pestel') {
+          await generatePestelAnalysisWithAnswers(userAnswers);
+        } else if (analysisType === 'strategic') {
+          await generateStrategicAnalysisWithAnswers(userAnswers);
+        } else if (analysisType === 'fullSwot') {
+          await generateFullSwotPortfolio();
+        } else if (analysisType === 'competitiveAdvantage') {
+          await generateCompetitiveAdvantage(userAnswers);
+        } else if (analysisType === 'channelEffectiveness') {
+          await generateChannelEffectiveness(userAnswers);
+        } else if (analysisType === 'expandedCapability') {
+          await generateExpandedCapability(userAnswers);
+        } else if (analysisType === 'strategicGoals') {
+          await generateStrategicGoals(userAnswers);
+        } else if (analysisType === 'strategicRadar') {
+          await generateStrategicRadar(userAnswers);
+        } else if (analysisType === 'cultureProfile') {
+          await generateCultureProfile(userAnswers);
+        } else if (analysisType === 'productivityMetrics') {
+          await generateProductivityMetrics(userAnswers);
+        } else if (analysisType === 'maturityScore') {
+          // Use the custom maturity score function
+          await generateMaturityScore(userAnswers);
+        } else {
+          // Use the generic function for standard analyses
+          await generateSingleAnalysis(analysisType, endpoint, dataKey, setter);
+        }
+
+        showToastMessage(`${displayName} regenerated successfully!`, "success");
+      } catch (error) {
+        console.error(`Error regenerating ${analysisType}:`, error);
+        showToastMessage(`Failed to regenerate ${displayName}.`, "error");
+      } finally {
+        setIsRegenerating(false);
       }
-
-      showToastMessage(`${displayName} regenerated successfully!`, "success");
-    } catch (error) {
-      console.error(`Error regenerating ${analysisType}:`, error);
-      showToastMessage(`Failed to regenerate ${displayName}.`, "error");
-    } finally {
-      setIsRegenerating(false);
-    }
+    };
   };
-};
 
   const generateSingleAnalysis = async (analysisType, endpoint, dataKey, setter) => {
     try {
@@ -2362,6 +2393,7 @@ const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, se
               canRegenerate={!isAnalysisRegenerating}
               customerSegmentationData={customerSegmentationData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2828,6 +2860,8 @@ const createIndividualRegenerationHandler = (analysisType, endpoint, dataKey, se
                         isProductivityRegenerating ||
                         isMaturityRegenerating
                       }
+                      highlightedMissingQuestions={highlightedMissingQuestions} // Add this prop
+                      onClearHighlight={() => setHighlightedMissingQuestions(null)}
                     />
                   </div>
                 )}

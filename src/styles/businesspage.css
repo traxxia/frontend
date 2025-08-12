@@ -631,6 +631,7 @@ html, body {
   min-height: 20px;
   padding: 4px 0;
   font-size: 13px;
+  font-weight: 400;
   border-radius: 4px;
   transition: background-color 0.2s ease;
   scroll-margin: 0 !important;

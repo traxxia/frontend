@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, TrendingUp, Star, Calendar, Filter, Loader, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -12,22 +13,154 @@ const CustomerSegmentation = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  customerSegmentationData = null
+  customerSegmentationData = null,
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [segmentationData, setSegmentationData] = useState(customerSegmentationData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
   
-  // Add refs to track component mount
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
 
-  // Colors for the pie chart segments
-  const SEGMENT_COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
 
-  // Toggle section expansion
+  const SEGMENT_COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'customerSegmentation',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the customerSegmentation question(s)
+          const customerSegmentationQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data => 
+            data.questions.filter(q => q.used_for && q.used_for.includes('customerSegmentation'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: customerSegmentationQuestions.length,
+            missing_questions: customerSegmentationQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'customerSegmentation',
+            message: `Please provide more detailed answers for customer segmentation analysis. The current answers are insufficient to generate meaningful segments.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'customerSegmentation',
+          message: 'Please review and improve your answers for customer segmentation analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'customerSegmentation',
+        message: 'Please review and improve your answers for customer segmentation analysis.'
+      });
+    }
+  };
+
+  // Check if the segmentation data is empty/incomplete
+  const isSegmentationDataIncomplete = (data) => {
+    if (!data) return true;
+    
+    // Check if segments array is empty or null
+    if (!data.segments || data.segments.length === 0) return true;
+    
+    // Check if any critical fields are null/undefined
+    const criticalFields = ['totalCustomers', 'segmentationCriteria'];
+    const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
+    
+    return hasNullFields;
+  };
+
+  // Check if analysis failed (all required questions answered but data is incomplete)
+  const isAnalysisFailed = async () => {
+    try {
+      const token = getAuthToken();
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'customerSegmentation',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // If no missing questions but data is incomplete, it's an analysis failure
+        return result.missing_count === 0 && isSegmentationDataIncomplete(segmentationData);
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking analysis status:', error);
+      return false;
+    }
+  };
+
   const toggleSection = (sectionKey) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -35,7 +168,6 @@ const CustomerSegmentation = ({
     }));
   };
 
-  // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
       onRegenerate();
@@ -45,7 +177,6 @@ const CustomerSegmentation = ({
     }
   };
 
-  // Update segmentation data when prop changes
   useEffect(() => {
     if (customerSegmentationData && customerSegmentationData !== segmentationData) { 
       setSegmentationData(customerSegmentationData);
@@ -55,7 +186,6 @@ const CustomerSegmentation = ({
     }
   }, [customerSegmentationData]);
 
-  // Initialize component - only run once
   useEffect(() => {
     if (hasInitialized.current) return;
     
@@ -71,7 +201,6 @@ const CustomerSegmentation = ({
     };
   }, []);
 
-  // Create CSS pie chart data
   const createPieChartData = () => {
     if (!segmentationData?.segments) return { segments: [], total: 0 };
 
@@ -80,9 +209,8 @@ const CustomerSegmentation = ({
       const startAngle = runningTotal;
       runningTotal += segment.percentage;
 
-      // Calculate label position (middle of the segment)
       const midAngle = ((startAngle + runningTotal) / 2 / 100) * 360;
-      const labelRadius = 55; // Distance from center for label positioning
+      const labelRadius = 55;
       
       const labelX = 100 + labelRadius * Math.cos((midAngle - 90) * Math.PI / 180);
       const labelY = 100 + labelRadius * Math.sin((midAngle - 90) * Math.PI / 180);
@@ -112,21 +240,16 @@ const CustomerSegmentation = ({
     }));
   };
 
-  // Helper function to determine text color based on background
   const getContrastColor = (hexColor) => {
-    // Convert hex to RGB
     const r = parseInt(hexColor.slice(1, 3), 16);
     const g = parseInt(hexColor.slice(3, 5), 16);
     const b = parseInt(hexColor.slice(5, 7), 16);
     
-    // Calculate luminance
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     
-    // Return white for dark colors, black for light colors
     return luminance > 0.5 ? '#000000' : '#ffffff';
   };
 
-  // Helper function to split text into multiple lines
   const splitTextIntoLines = (text, maxCharsPerLine = 10) => {
     const words = text.split(' ');
     const lines = [];
@@ -140,7 +263,6 @@ const CustomerSegmentation = ({
           lines.push(currentLine);
           currentLine = word;
         } else {
-          // If single word is too long, split it
           lines.push(word.substring(0, maxCharsPerLine));
           currentLine = word.substring(maxCharsPerLine);
         }
@@ -190,20 +312,59 @@ const CustomerSegmentation = ({
     );
   }
 
-  if (!segmentationData) {
-    const answeredCount = Object.keys(userAnswers).length;
+  // Check if data is incomplete and show missing questions checker
+  if (!segmentationData || isSegmentationDataIncomplete(segmentationData)) {
     return (
       <div className="customer-segmentation">
+        <div className="cs-header">
+          <div className="cs-title-section">
+            <Users className="cs-icon" size={24} />
+            <h2 className="cs-title">{t("Customer Segmentation")}</h2>
+          </div>
+        </div>
+
         <div className="empty-state">
           <Users size={48} className="empty-icon" />
           <h3>Customer Segmentation Analysis</h3>
           <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate customer segmentation insights.`
-              : "Customer segmentation analysis will be generated automatically after completing the initial phase."
-            }
+            You answered the required questions, but the responses need more detail to generate meaningful customer segments.
           </p>
+          <button 
+            onClick={checkMissingQuestionsAndRedirect}
+            className="redirect-button"
+            style={{
+              backgroundColor: '#f59e0b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginTop: '16px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#d97706';
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#f59e0b';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            Improve Your Answers
+          </button>
         </div>
+        
+        <MissingQuestionsChecker
+          analysisType="customerSegmentation"
+          analysisData={segmentationData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
@@ -314,7 +475,7 @@ const CustomerSegmentation = ({
                     ].join(" ");
 
                     const textColor = getContrastColor(segment.color);
-                    const shouldShowLabel = segment.percentage >= 5; // Only show labels for segments >= 5%
+                    const shouldShowLabel = segment.percentage >= 5;
 
                     return (
                       <g key={index}>
@@ -326,7 +487,6 @@ const CustomerSegmentation = ({
                           className="pie-segment"
                         />
                         
-                        {/* In-chart labels */}
                         {shouldShowLabel && (
                           <g>
                             {(() => {
@@ -337,7 +497,6 @@ const CustomerSegmentation = ({
                               
                               return (
                                 <>
-                                  {/* Multi-line segment name */}
                                   {nameLines.map((line, lineIndex) => (
                                     <text
                                       key={lineIndex}
@@ -353,7 +512,6 @@ const CustomerSegmentation = ({
                                     </text>
                                   ))}
                                   
-                                  {/* Percentage */}
                                   <text
                                     x={segment.labelX}
                                     y={startY + (totalLines * lineHeight) + 6}
@@ -374,13 +532,11 @@ const CustomerSegmentation = ({
                     );
                   })}
 
-                  {/* Center circle */}
                   <circle cx="100" cy="100" r="30" fill="white" stroke="#e5e7eb" strokeWidth="2" />
                   <text x="100" y="95" textAnchor="middle" className="pie-center-text">Customer</text>
                   <text x="100" y="110" textAnchor="middle" className="pie-center-text">Segments</text>
                 </svg>
               </div>
- 
             </div>
           </div>
         )}
