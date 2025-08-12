@@ -269,7 +269,7 @@ const ChannelHeatmap = ({
 
   if (isLoading || isRegenerating) {
     return (
-      <div className="channel-heatmap">
+      <div className="channel-heatmap  channel-heatmap-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
@@ -285,7 +285,7 @@ const ChannelHeatmap = ({
 
   if (error) {
     return (
-      <div className="channel-heatmap">
+      <div className="channel-heatmap  channel-heatmap-container">
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
@@ -306,7 +306,7 @@ const ChannelHeatmap = ({
   // Check if data is incomplete and show missing questions checker
   if (!heatmapData || isHeatmapDataIncomplete(heatmapData)) {
     return (
-      <div className="channel-heatmap">
+      <div className="channel-heatmap  channel-heatmap-container">
         <div className="ch-header">
           <div className="ch-title-section">
             <Grid3x3 className="ch-icon" size={24} />
@@ -342,7 +342,7 @@ const ChannelHeatmap = ({
   const topPerformers = getTopPerformers();
 
   return (
-    <div className="channel-heatmap" data-analysis-type="channel-heatmap"
+    <div className="channel-heatmap channel-heatmap-container" data-analysis-type="channel-heatmap"
       data-analysis-name="Channel Heatmap"
       data-analysis-order="3">
       {/* Header with regenerate button */}

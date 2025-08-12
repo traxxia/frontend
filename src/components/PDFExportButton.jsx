@@ -3,9 +3,9 @@ import { Download, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 
 const PDFExportButton = ({ 
-  analysisResult, 
   businessName, 
   onToastMessage,
+  currentPhase, // 'initial' or 'essential'
   disabled = false,
   className = "",
   style = {}
@@ -13,15 +13,40 @@ const PDFExportButton = ({
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const { t } = useTranslation();
 
-  const handleDownloadAnalysis = async () => {
-    if (!analysisResult) {
-      onToastMessage("No analysis available to export", "warning");
+  // Define which components belong to each phase
+  const phaseComponents = {
+    initial: [
+      { selector: '.swot-analysis-container, [class*="swot"]', name: 'SWOT Analysis' },
+      { selector: '.purchase-criteria-container, [class*="purchase"]', name: 'Purchase Criteria Matrix' },
+      { selector: '.channel-heatmap-container, [class*="channel-heatmap"]', name: 'Channel Heatmap' },
+      { selector: '.loyalty-nps-container, [class*="loyalty"]', name: 'Loyalty & NPS Analysis' },
+      { selector: '.capability-heatmap, [class*="capability-heatmap"]', name: 'Capability Heatmap' },
+      { selector: '.porters-container, [class*="porter"]', name: 'Porter\'s Five Forces' },
+      { selector: '.pestel-container, [class*="pestel"]', name: 'PESTEL Analysis' }
+    ],
+    essential: [
+      { selector: '.full-swot-container, [class*="full-swot"]', name: 'Full SWOT Portfolio' },
+      { selector: '.customer-segmentation-container, [class*="customer-segment"]', name: 'Customer Segmentation' },
+      { selector: '.competitive-advantage-container, [class*="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+      { selector: '.channel-effectiveness-container, [class*="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
+      { selector: '.expanded-capability-container, [class*="expanded-capability"]', name: 'Expanded Capability Heatmap' },
+      { selector: '.strategic-goals-container, [class*="strategic-goals"]', name: 'Strategic Goals' },
+      { selector: '.strategic-radar-container, [class*="strategic-radar"]', name: 'Strategic Positioning Radar' },
+      { selector: '.culture-profile-container, [class*="culture-profile"]', name: 'Organizational Culture Profile' },
+      { selector: '.productivity-container, [class*="productivity"]', name: 'Productivity and Efficiency Metrics' },
+      { selector: '.maturity-container', name: 'Business Maturity Score' }
+    ]
+  };
+
+  const handleDownloadPhaseAnalysis = async () => {
+    if (!currentPhase || !phaseComponents[currentPhase]) {
+      onToastMessage("No analysis available for this phase", "warning");
       return;
     }
 
     try {
       setIsExportingPDF(true);
-      onToastMessage("Capturing each analysis component...", "info");
+      onToastMessage(`Generating ${currentPhase} phase PDF...`, "info");
 
       const jsPDF = (await import('jspdf')).default;
       const html2canvas = (await import('html2canvas')).default;
@@ -31,16 +56,16 @@ const PDFExportButton = ({
       const pageHeight = pdf.internal.pageSize.getHeight();
       let isFirstPage = true;
 
-      // Store current state
-      const originalPhase = document.querySelector('.phase-tab.active')?.textContent || '';
-
       // Helper function to capture a single component
       const captureComponent = async (componentSelector, componentName) => {
         const component = document.querySelector(componentSelector);
-        if (!component) return false;
+        if (!component) {
+          console.warn(`Component not found: ${componentName}`);
+          return false;
+        }
 
         try {
-          // Hide buttons in this component
+          // Hide all buttons in this component during capture
           const buttons = component.querySelectorAll('button');
           const originalDisplay = [];
           buttons.forEach((btn, index) => {
@@ -54,7 +79,9 @@ const PDFExportButton = ({
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
+            height: component.scrollHeight,
+            width: component.scrollWidth
           });
 
           // Restore buttons
@@ -62,7 +89,7 @@ const PDFExportButton = ({
             btn.style.display = originalDisplay[index];
           });
 
-          // Add to PDF
+          // Add new page if not the first component
           if (!isFirstPage) {
             pdf.addPage();
           }
@@ -70,15 +97,15 @@ const PDFExportButton = ({
           // Add component title
           pdf.setFontSize(16);
           pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(0, 123, 255);
+          pdf.setTextColor(59, 130, 246); // Blue color
           pdf.text(componentName, 20, 25);
 
-          // Add component image
-          const imgData = canvas.toDataURL('image/png');
+          // Calculate image dimensions to fit page
+          const imgData = canvas.toDataURL('image/png', 0.8);
           const imgWidth = pageWidth - 40; // 20mm margin on each side
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
           
-          // Check if image fits on page, if not scale it down
+          // Check if image fits on page, scale down if needed
           const maxHeight = pageHeight - 60; // Leave space for title and margins
           const finalHeight = imgHeight > maxHeight ? maxHeight : imgHeight;
           const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
@@ -89,114 +116,54 @@ const PDFExportButton = ({
           return true;
 
         } catch (error) {
-          console.warn(`Failed to capture ${componentName}:`, error);
+          console.error(`Failed to capture ${componentName}:`, error);
           return false;
         }
       };
 
-      // Function to switch phase and wait
-      const switchToPhase = async (phaseName) => {
-        const phaseButtons = document.querySelectorAll('.phase-tab');
-        const targetButton = Array.from(phaseButtons).find(btn => 
-          btn.textContent.toLowerCase().includes(phaseName.toLowerCase())
-        );
-        
-        if (targetButton && !targetButton.classList.contains('active')) {
-          targetButton.click();
-          await new Promise(resolve => setTimeout(resolve, 800)); // Wait for content to load
-        }
-      };
-
-      // Add PDF header on first page
-      pdf.setFontSize(20);
+      // Add PDF cover page
+      pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 123, 255);
-      pdf.text('Complete Business Analysis Report', pageWidth / 2, 20, { align: 'center' });
+      pdf.setTextColor(59, 130, 246);
+      const phaseTitle = currentPhase === 'initial' ? 'Initial Phase Analysis' : 'Essential Phase Analysis';
+      pdf.text(phaseTitle, pageWidth / 2, 30, { align: 'center' });
       
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(businessName, pageWidth / 2, 30, { align: 'center' });
+      pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
       
-      pdf.setFontSize(10);
+      pdf.setFontSize(12);
       pdf.setTextColor(128, 128, 128);
-      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 38, { align: 'center' });
+      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
 
       isFirstPage = false;
 
-      // CAPTURE INITIAL PHASE COMPONENTS
-      await switchToPhase('initial');
+      // Capture all components for the current phase
+      const components = phaseComponents[currentPhase];
+      let capturedCount = 0;
+
+      for (const component of components) {
+        const success = await captureComponent(component.selector, component.name);
+        if (success) {
+          capturedCount++;
+        }
+        // Small delay between captures to ensure rendering
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      if (capturedCount === 0) {
+        onToastMessage(`No analysis components found for ${currentPhase} phase`, "warning");
+        return;
+      }
+
+      // Generate filename
+      const phaseLabel = currentPhase.charAt(0).toUpperCase() + currentPhase.slice(1);
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_Phase_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      pdf.addPage();
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 123, 255);
-      pdf.text('Initial Phase Analysis', 20, 25);
-
-      // List of components to capture for Initial Phase
-      const initialComponents = [
-        { selector: '.swot-analysis-container, [class*="swot"]', name: 'SWOT Analysis' },
-        { selector: '.purchase-criteria-container, [class*="purchase"]', name: 'Purchase Criteria Matrix' },
-        { selector: '.channel-heatmap-container, [class*="channel-heatmap"]', name: 'Channel Heatmap' },
-        { selector: '.loyalty-nps-container, [class*="loyalty"]', name: 'Loyalty & NPS Analysis' },
-        { selector: '.capability-heatmap-container, [class*="capability-heatmap"]', name: 'Capability Heatmap' },
-        { selector: '.porters-container, [class*="porter"]', name: 'Porter\'s Five Forces' },
-        { selector: '.pestel-container, [class*="pestel"]', name: 'PESTEL Analysis' }
-      ];
-
-      for (const component of initialComponents) {
-        await captureComponent(component.selector, component.name);
-        await new Promise(resolve => setTimeout(resolve, 300)); // Small delay between captures
-      }
-
-      // CAPTURE ESSENTIAL PHASE COMPONENTS
-      const phaseButtons = document.querySelectorAll('.phase-tab');
-      const hasEssentialPhase = Array.from(phaseButtons).some(btn => 
-        btn.textContent.toLowerCase().includes('essential')
-      );
-
-      if (hasEssentialPhase) {
-        await switchToPhase('essential');
-        
-        pdf.addPage();
-        pdf.setFontSize(18);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(0, 123, 255);
-        pdf.text('Essential Phase Analysis', 20, 25);
-
-        const essentialComponents = [
-          { selector: '.full-swot-container, [class*="full-swot"]', name: 'Full SWOT Portfolio' },
-          { selector: '.customer-segmentation-container, [class*="customer-segment"]', name: 'Customer Segmentation' },
-          { selector: '.competitive-advantage-container, [class*="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-          { selector: '.channel-effectiveness-container, [class*="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
-          { selector: '.expanded-capability-container, [class*="expanded-capability"]', name: 'Expanded Capability Heatmap' },
-          { selector: '.strategic-goals-container, [class*="strategic-goals"]', name: 'Strategic Goals' },
-          { selector: '.strategic-radar-container, [class*="strategic-radar"]', name: 'Strategic Positioning Radar' },
-          { selector: '.culture-profile-container, [class*="culture-profile"]', name: 'Organizational Culture Profile' },
-          { selector: '.productivity-container, [class*="productivity"]', name: 'Productivity Metrics' },
-          { selector: '.maturity-container, [class*="maturity"]', name: 'Maturity Score' }
-        ];
-
-        for (const component of essentialComponents) {
-          await captureComponent(component.selector, component.name);
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-      }
-
-      // Restore original phase
-      if (originalPhase) {
-        const restoreButton = Array.from(phaseButtons).find(btn => 
-          btn.textContent.trim() === originalPhase
-        );
-        if (restoreButton) {
-          restoreButton.click();
-        }
-      }
-
-      // Save PDF
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Complete_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
+      // Save the PDF
       pdf.save(filename);
 
-      onToastMessage("Complete analysis PDF generated successfully!", "success");
+      onToastMessage(`${phaseLabel} phase PDF generated successfully! (${capturedCount} components captured)`, "success");
 
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -206,38 +173,140 @@ const PDFExportButton = ({
     }
   };
 
+  const phaseLabel = currentPhase === 'initial' ? 'Initial' : 'Essential';
+
   return (
-    <button
-      onClick={handleDownloadAnalysis}
-      disabled={disabled || isExportingPDF || !analysisResult}
-      className={className}
-      style={{
-        backgroundColor: "#1a73e8",
-        color: "#fff",
-        border: "none",
-        borderRadius: "13px",
-        padding: "10px 18px",
-        fontSize: "14px",
-        fontWeight: 500,
-        display: "flex",
-        alignItems: "center",
-        cursor: disabled || isExportingPDF || !analysisResult ? "not-allowed" : "pointer",
-        opacity: disabled || isExportingPDF || !analysisResult ? 0.6 : 1,
-        ...style
-      }}
-    >
-      {isExportingPDF ? (
-        <>
-          <Loader size={16} className="spinner" style={{ marginRight: 8 }} />
-          Capturing Components...
-        </>
-      ) : (
-        <>
-          {t("Download Analysis") || "Download Analysis"}
-          <Download size={16} style={{ marginLeft: 8 }} />
-        </>
+    <>
+      {/* Loading Overlay */}
+      {isExportingPDF && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              textAlign: 'center',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+              minWidth: '300px',
+              animation: 'fadeIn 0.3s ease-out'
+            }}
+          >
+            <div
+              style={{
+                marginBottom: '20px'
+              }}
+            >
+              <Loader 
+                size={48} 
+                style={{
+                  color: '#1a73e8',
+                  animation: 'spin 1s linear infinite'
+                }} 
+              />
+            </div>
+            <h3
+              style={{
+                margin: '0 0 8px 0',
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#1f2937'
+              }}
+            >
+              Generating PDF
+            </h3>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '14px',
+                color: '#6b7280'
+              }}
+            >
+              Creating {phaseLabel} phase analysis for {businessName}...
+            </p>
+          </div>
+        </div>
       )}
-    </button>
+
+      <button
+        onClick={handleDownloadPhaseAnalysis}
+        disabled={disabled || isExportingPDF}
+        className={className}
+        style={{
+          backgroundColor: isExportingPDF ? "#f3f4f6" : "#1a73e8",
+          color: isExportingPDF ? "#6b7280" : "#fff",
+          border: "none",
+          borderRadius: "10px",
+          padding: "10px 18px",
+          fontSize: "14px",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
+          gap: "8px",
+          transition: "all 0.2s ease",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          ...style
+        }}
+        onMouseEnter={(e) => {
+          if (!isExportingPDF && !disabled) {
+            e.target.style.transform = "translateY(-1px)";
+            e.target.style.boxShadow = "0 4px 12px rgba(26, 115, 232, 0.3)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
+        }}
+      >
+        {isExportingPDF ? (
+          <>
+            <Loader size={16} className="animate-spin" />
+            Generating PDF...
+          </>
+        ) : (
+          <>
+            <Download size={16} />
+            Download
+          </>
+        )}
+      </button>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

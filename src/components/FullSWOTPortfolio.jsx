@@ -413,7 +413,7 @@ const FullSWOTPortfolio = ({
     const portfolio = data.swotPortfolio;
 
     return (
-        <div className="porters-container" 
+        <div className="porters-container full-swot-container" 
      data-analysis-type="fullSwot"
      data-analysis-name="Full SWOT Portfolio"
      data-analysis-order="8">

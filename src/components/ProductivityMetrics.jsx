@@ -280,7 +280,7 @@ const ProductivityMetrics = ({
   // Loading state
   if (isGenerating || isRegenerating) {
     return (
-      <div className="porters-container">
+      <div className="porters-container productivity-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
           <span>
@@ -297,7 +297,7 @@ const ProductivityMetrics = ({
   // Error state
   if (error && !productivityData) {
     return (
-      <div className="porters-container">
+      <div className="porters-container productivity-container">
         <div className="cs-header">
           <div className="cs-title-section">
             <Activity size={24} />
@@ -331,7 +331,7 @@ const ProductivityMetrics = ({
   // Check if data is incomplete and show missing questions checker
   if (!productivityData || isProductivityDataIncomplete(productivityData)) {
     return (
-      <div className="porters-container">
+      <div className="porters-container productivity-container">
         <div className="cs-header">
           <div className="cs-title-section">
             <Activity className="cs-icon" size={24} />
@@ -368,7 +368,7 @@ const ProductivityMetrics = ({
   const productivityMetrics = productivityData?.productivityMetrics || productivityData;
 
   return (
-    <div className="porters-container">
+    <div className="porters-container productivity-container">
       {/* Header */}
       <div className="cs-header">
         <div className="cs-title-section">
