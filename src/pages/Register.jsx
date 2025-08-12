@@ -96,11 +96,14 @@ const Register = () => {
     const newErrors = {};
     
     // Name validation
-    if (!form.name.trim()) {
-      newErrors.name = t('first_name_required') || 'Name is required';
-    } else if (form.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters long';
-    }
+   if (!form.name.trim()) {
+  newErrors.name = t('first_name_required') || 'Name is required';
+} else if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(form.name.trim())) {
+  newErrors.name = 'Name can only contain letters and single spaces (no double spaces)';
+}else if (form.name.trim().length < 2) {
+  newErrors.name = 'Name must be at least 2 characters long';
+}
+
     
     // Email validation
     if (!form.email.trim()) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Building2, Loader, Eye, Upload, X, Image, Edit } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils'; // Import the utility function
 import '../styles/CompanyManagement.css';
+import { useTranslation } from '../hooks/useTranslation';
 
 // ------------------ CreateCompanyForm ------------------
 const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
@@ -13,26 +14,74 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     admin_email: '',
     admin_password: ''
   });
+  const { t } = useTranslation();
+  const validateForm = () => {
+  const errors = {};
+  
+
+  // Regex for letters + single spaces
+  const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+
+  // Company name validation
+  if (!formData.company_name.trim()) {
+    errors.company_name = 'Company name is required';
+  } else if (!nameRegex.test(formData.company_name.trim())) {
+    errors.company_name = 'Company name can only contain letters and single spaces';
+  } else if (formData.company_name.trim().length < 2) {
+    errors.company_name = 'Company name must be at least 2 characters long';
+  }
+
+  if (!formData.industry) {
+    errors.industry = 'Industry is required';
+  }
+
+  // Admin name validation
+  if (!formData.admin_name.trim()) {
+    errors.admin_name = 'Admin name is required';
+  } else if (!nameRegex.test(formData.admin_name.trim())) {
+    errors.admin_name = 'Admin name can only contain letters and single spaces';
+  } else if (formData.admin_name.trim().length < 2) {
+    errors.admin_name = 'Admin name must be at least 2 characters long';
+  }
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!formData.admin_email.trim()) {
+    errors.admin_email = 'Admin email is required';
+  } else if (!emailRegex.test(formData.admin_email.trim())) {
+    errors.admin_email = 'Invalid email format';
+  }
+
+  // Password validation
+   if (!formData.admin_password) {
+    errors.admin_password = t('password_required') || 'Password is required';
+} else if (formData.admin_password.length < 8) {
+    errors.admin_password = t('password_min_length_8') || 'Password must be at least 8 characters long';
+} else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.admin_password)) {
+    errors.admin_password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+}
+
+  return errors;
+};
+
 
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
-
+  const [errors, setErrors] = useState({});
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Create FormData to handle both form fields and file
-    const submitData = new FormData();
-    
-    // Append all form fields
-    Object.keys(formData).forEach(key => {
-      submitData.append(key, formData[key]);
-    });
-    
-    // Append logo file if selected
-    if (logoFile) {
-      submitData.append('logo', logoFile);
+
+    const foundErrors = validateForm();
+    if (Object.keys(foundErrors).length > 0) {
+      setErrors(foundErrors);
+      return;
     }
-    
+    setErrors({});
+
+    const submitData = new FormData();
+    Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
+    if (logoFile) submitData.append('logo', logoFile);
+
     onSubmit(submitData);
   };
 
@@ -94,11 +143,12 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   required
                   placeholder="TechCorp Solutions"
                 />
+                {errors.company_name && <div className="error-message">{errors.company_name}</div>}
               </div>
 
               <div className="form-field">
-                <label>Industry</label>
-                <select name="industry" value={formData.industry} onChange={handleChange}>
+                <label>Industry *</label>
+                <select name="industry" value={formData.industry} onChange={handleChange} required>
                   <option value="">Select Industry</option>
                   <option value="Technology">Technology</option>
                   <option value="Healthcare">Healthcare</option>
@@ -107,6 +157,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   <option value="Education">Education</option>
                   <option value="Other">Other</option>
                 </select>
+                {errors.industry && <div className="error-message">{errors.industry}</div>}
               </div>
 
               <div className="form-field">
@@ -160,6 +211,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   required
                   placeholder="John Smith"
                 />
+                {errors.admin_name && <div className="error-message">{errors.admin_name}</div>}
               </div>
 
               <div className="form-field">
@@ -173,6 +225,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   required
                   placeholder="admin@techcorp.com"
                 />
+                {errors.admin_email && <div className="error-message">{errors.admin_email}</div>}
               </div>
 
               <div className="form-field full-width">
@@ -187,6 +240,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   placeholder="Minimum 8 characters"
                   minLength="8"
                 />
+                {errors.admin_password && <div className="error-message">{errors.admin_password}</div>}
               </div>
             </div>
           </div>
@@ -377,7 +431,7 @@ const CompanyManagement = ({ onToast }) => {
       setIsLoading(false);
     }
   };
-
+ 
   const handleCreateCompany = async (formData) => {
     try {
       setIsCreating(true);
