@@ -4,7 +4,7 @@ import RegenerateButton from './RegenerateButton';
 import MissingQuestionsChecker from './MissingQuestionsChecker';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
-
+import AnalysisEmptyState from './AnalysisEmptyState'; 
 const CustomerSegmentation = ({
   questions = [],
   userAnswers = {},
@@ -320,42 +320,21 @@ const CustomerSegmentation = ({
           <div className="cs-title-section">
             <Users className="cs-icon" size={24} />
             <h2 className="cs-title">{t("Customer Segmentation")}</h2>
-          </div>
+          </div> 
         </div>
 
-        <div className="empty-state">
-          <Users size={48} className="empty-icon" />
-          <h3>Customer Segmentation Analysis</h3>
-          <p>
-            You answered the required questions, but the responses need more detail to generate meaningful customer segments.
-          </p>
-          <button 
-            onClick={checkMissingQuestionsAndRedirect}
-            className="redirect-button"
-            style={{
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginTop: '16px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#d97706';
-              e.target.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#f59e0b';
-              e.target.style.transform = 'translateY(0)';
-            }}
-          >
-            Improve Your Answers
-          </button>
-        </div>
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="customerSegmentation"
+          analysisDisplayName="Customer Segmentation Analysis"
+          icon={Users}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
         
         <MissingQuestionsChecker
           analysisType="customerSegmentation"
@@ -373,7 +352,9 @@ const CustomerSegmentation = ({
   const purchaseCriteriaData = preparePurchaseCriteriaData();
 
   return (
-    <div className="customer-segmentation">
+    <div className="customer-segmentation" data-analysis-type="customerSegmentation"
+  data-analysis-name="Customer Segmentation"
+  data-analysis-order="9">
       {/* Header with regenerate button */}
       <div className="cs-header">
         <div className="cs-title-section">

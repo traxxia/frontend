@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader, RefreshCw, BarChart3 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
  
 const ChannelEffectivenessMap = ({
   questions = [],
@@ -10,7 +12,8 @@ const ChannelEffectivenessMap = ({
   isRegenerating = false,
   canRegenerate = true,
   channelEffectivenessData = null,
-  selectedBusinessId
+  selectedBusinessId,
+  onRedirectToBrief // Add this prop
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
@@ -20,6 +23,112 @@ const ChannelEffectivenessMap = ({
   const hasGeneratedRef = useRef(false);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'channelEffectiveness',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the channelEffectiveness question(s)
+          const channelEffectivenessQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data => 
+            data.questions.filter(q => q.used_for && q.used_for.includes('channelEffectiveness'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: channelEffectivenessQuestions.length,
+            missing_questions: channelEffectivenessQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'channelEffectiveness',
+            message: `Please provide more detailed answers for channel effectiveness analysis. The current answers are insufficient to generate meaningful channel insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'channelEffectiveness',
+          message: 'Please review and improve your answers for channel effectiveness analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'channelEffectiveness',
+        message: 'Please review and improve your answers for channel effectiveness analysis.'
+      });
+    }
+  };
+
+  // Check if the channel effectiveness data is empty/incomplete
+  const isChannelEffectivenessDataIncomplete = (data) => {
+    if (!data) return true;
+    
+    // Check if channels array is empty or null
+    if (!data.channelEffectiveness?.channels || data.channelEffectiveness.channels.length === 0) return true;
+    
+    // Check if any critical fields are null/undefined in the main data structure
+    const mainData = data.channelEffectiveness;
+    if (!mainData) return true;
+    
+    // Check if channels have essential data
+    const hasValidChannels = mainData.channels.some(channel => 
+      channel.name && 
+      (channel.effectiveness || channel.efficiency)
+    );
+    
+    return !hasValidChannels;
+  };
 
   // Convert API data to bubble chart format
   const processBubbleData = (channels) => {
@@ -382,38 +491,19 @@ const ChannelEffectivenessMap = ({
     }
   };
 
-  // Mock data for demonstration
-  const mockData = [
-    { name: 'Email', effectiveness: 85, efficiency: 75, revenue: 25, trend: 'increasing', color: '#ff6b6b' },
-    { name: 'Social Media', effectiveness: 60, efficiency: 90, revenue: 20, trend: 'stable', color: '#4ecdc4' },
-    { name: 'SEO', effectiveness: 90, efficiency: 80, revenue: 30, trend: 'increasing', color: '#45b7d1' },
-    { name: 'PPC', effectiveness: 70, efficiency: 45, revenue: 15, trend: 'decreasing', color: '#96ceb4' },
-    { name: 'Content Marketing', effectiveness: 80, efficiency: 65, revenue: 18, trend: 'stable', color: '#feca57' }
-  ];
-
   // Loading State
   if (isGenerating || isRegenerating) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '60px 20px',
-        textAlign: 'center',
-        background: '#ffffff',
-        borderRadius: '16px',
-        margin: '20px 0',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        border: '1px solid rgba(0, 0, 0, 0.05)'
-      }}>
-        <Loader size={32} style={{ animation: 'spin 1s linear infinite', color: '#4f46e5', marginBottom: '16px' }} />
-        <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '20px', fontWeight: '700' }}>
-          Analyzing Channel Effectiveness
-        </h3>
-        <p style={{ margin: '0', color: '#6b7280', fontSize: '15px', fontWeight: '500' }}>
-          Evaluating channel performance and efficiency metrics...
-        </p>
+      <div className="channel-effectiveness-analysis">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner" />
+          <span>
+            {isRegenerating
+              ? "Regenerating channel effectiveness analysis..."
+              : "Generating channel effectiveness analysis..."
+            }
+          </span>
+        </div>
       </div>
     );
   }
@@ -421,74 +511,82 @@ const ChannelEffectivenessMap = ({
   // Error State
   if (error && !channelEffectivenessData) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '60px 20px',
-        textAlign: 'center',
-        background: '#ffffff',
-        borderRadius: '16px',
-        margin: '20px 0',
-        boxShadow: '0 4px 20px rgba(255, 107, 107, 0.1)',
-        border: '2px solid #ff6b6b'
-      }}>
-        <h3 style={{ margin: '0 0 12px 0', color: '#dc2626', fontSize: '20px', fontWeight: '700' }}>
-          Unable to Generate Analysis
-        </h3>
-        <p style={{ margin: '0 0 24px 0', color: '#6b7280', fontSize: '15px', fontWeight: '500' }}>
-          {error}
-        </p>
-        <button 
-          onClick={handleRegenerate} 
-          disabled={!canRegenerate}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            background: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <RefreshCw size={16} />
-          Retry
-        </button>
+      <div className="channel-effectiveness-analysis">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
+          <p>{error}</p>
+          <button onClick={() => {
+            setError(null);
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
       </div>
     );
   }
 
-  // Use mock data if no real data is available
+  // Check if data is incomplete and show missing questions checker
+  if (!channelEffectivenessData || isChannelEffectivenessDataIncomplete(channelEffectivenessData)) {
+    return (
+      <div className="channel-effectiveness-analysis">
+        <div className="cs-header">
+          <div className="cs-title-section">
+            <BarChart3 className="cs-icon" size={24} />
+            <h2 className="cs-title">Channel Effectiveness Map</h2>
+          </div> 
+        </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="channelEffectiveness"
+          analysisDisplayName="Channel Effectiveness Analysis"
+          icon={BarChart3}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+        
+        <MissingQuestionsChecker
+          analysisType="channelEffectiveness"
+          analysisData={channelEffectivenessData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
+      </div>
+    );
+  }
+
+  // Use real data if available, otherwise show mock data
   const displayData = channelEffectivenessData?.channelEffectiveness 
     ? processBubbleData(channelEffectivenessData.channelEffectiveness.channels)
-    : mockData;
+    : [];
 
   return (
-    <div  className='channel-effectiveness-analysis'>
+    <div className='channel-effectiveness-analysis'>
       <div className='cs-header'>
         <div className='cs-title-section'>
           <BarChart3 size={24} />
-          <h2  className='cs-title'>
+          <h2 className='cs-title'>
             Channel Effectiveness Map
           </h2>
         </div>
         
-            <RegenerateButton
-                          onRegenerate={handleRegenerate}
-                          isRegenerating={isRegenerating}
-                          canRegenerate={canRegenerate}
-                          sectionName="Competitive Advantage"
-                          size="medium"
-                        />
-         
-       
+        <RegenerateButton
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          sectionName="Channel Effectiveness Map"
+          size="medium"
+        />
       </div>
 
       <div style={{ padding: '24px' }}>

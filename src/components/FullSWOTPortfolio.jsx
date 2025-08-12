@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap, ChevronDown, ChevronRight } from 'lucide-react';
-import '../styles/EssentialPhase.css'; 
+import '../styles/EssentialPhase.css';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const FullSWOTPortfolio = ({
     questions = [],
@@ -11,7 +13,8 @@ const FullSWOTPortfolio = ({
     isRegenerating = false,
     canRegenerate = true,
     fullSwotData = null,
-    selectedBusinessId
+    selectedBusinessId,
+    onRedirectToBrief
 }) => {
     const [data, setData] = useState(null);
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -19,10 +22,121 @@ const FullSWOTPortfolio = ({
     const [error, setError] = useState(null);
     const [expandedSections, setExpandedSections] = useState({});
 
+    const isMounted = useRef(false);
+    const hasInitialized = useRef(false);
+
     // API Configuration
     const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
     const getAuthToken = () => sessionStorage.getItem('token');
+
+    const handleRedirectToBrief = (missingQuestionsData = null) => {
+        if (onRedirectToBrief) {
+            onRedirectToBrief(missingQuestionsData);
+        }
+    };
+
+    // Function to check missing questions and redirect
+    const checkMissingQuestionsAndRedirect = async () => {
+        try {
+            const token = getAuthToken();
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/questions/missing-for-analysis`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        analysis_type: 'fullSwot',
+                        business_id: selectedBusinessId
+                    })
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+
+                // If there are missing questions, redirect with highlighting
+                if (result.missing_count > 0) {
+                    handleRedirectToBrief(result);
+                } else {
+                    // No missing questions but data is incomplete - user needs to improve their answers
+                    // For Full SWOT, we need questions from multiple categories
+                    const fullSwotQuestions = await fetch(
+                        `${API_BASE_URL}/api/questions`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    ).then(res => res.json()).then(data =>
+                        data.questions.filter(q =>
+                            (q.used_for && (q.used_for.includes('swot') || q.used_for.includes('strategic'))) ||
+                            q.phase === 'essential'
+                        )
+                    );
+
+                    handleRedirectToBrief({
+                        missing_count: fullSwotQuestions.length,
+                        missing_questions: fullSwotQuestions.map(q => ({
+                            _id: q._id,
+                            order: q.order,
+                            question_text: q.question_text,
+                            objective: q.objective,
+                            required_info: q.required_info,
+                            used_for: q.used_for
+                        })),
+                        analysis_type: 'fullSwot',
+                        message: `Please provide more detailed answers for Full SWOT Portfolio analysis. The current answers are insufficient to generate enhanced insights.`,
+                        is_complete: false,
+                        keepHighlightLonger: true // Flag to keep highlighting longer
+                    });
+                }
+            } else {
+                // If API call fails, redirect to review answers
+                handleRedirectToBrief({
+                    missing_count: 0,
+                    missing_questions: [],
+                    analysis_type: 'fullSwot',
+                    message: 'Please review and improve your answers for Full SWOT Portfolio analysis.'
+                });
+            }
+        } catch (error) {
+            console.error('Error checking missing questions:', error);
+            // If error occurs, redirect to review answers
+            handleRedirectToBrief({
+                missing_count: 0,
+                missing_questions: [],
+                analysis_type: 'fullSwot',
+                message: 'Please review and improve your answers for Full SWOT Portfolio analysis.'
+            });
+        }
+    };
+
+    // Check if the full SWOT data is empty/incomplete
+    const isFullSwotDataIncomplete = (data) => {
+        if (!data) return true;
+
+        // Check if swotPortfolio is empty or null
+        if (!data.swotPortfolio) return true;
+
+        const portfolio = data.swotPortfolio;
+
+        // Check if all main sections are empty
+        const hasStrengths = portfolio.strengths && portfolio.strengths.length > 0;
+        const hasWeaknesses = portfolio.weaknesses && portfolio.weaknesses.length > 0;
+        const hasOpportunities = portfolio.opportunities && portfolio.opportunities.length > 0;
+        const hasThreats = portfolio.threats && portfolio.threats.length > 0;
+
+        // At least 2 sections should have data for meaningful analysis
+        const sectionsWithData = [hasStrengths, hasWeaknesses, hasOpportunities, hasThreats].filter(Boolean).length;
+
+        return sectionsWithData < 2;
+    };
 
     // Toggle section expansion
     const toggleSection = (sectionKey) => {
@@ -63,7 +177,7 @@ const FullSWOTPortfolio = ({
                 throw new Error(errorData.error || 'Failed to save Full SWOT Portfolio analysis');
             }
 
-            const result = await response.json(); 
+            const result = await response.json();
             return result;
         } catch (error) {
             console.error('Error saving Full SWOT Portfolio analysis to backend:', error);
@@ -114,7 +228,7 @@ const FullSWOTPortfolio = ({
             if (questionsArray.length === 0) {
                 throw new Error('No answered questions available for Full SWOT Portfolio analysis');
             }
- 
+
             // Call ML Backend
             const response = await fetch(`${ML_API_BASE_URL}/full-swot-portfolio`, {
                 method: 'POST',
@@ -134,7 +248,7 @@ const FullSWOTPortfolio = ({
             }
 
             const result = await response.json();
-            
+
             // Validate response structure
             if (!result.swotPortfolio) {
                 throw new Error('Invalid API response structure: missing swotPortfolio');
@@ -146,7 +260,7 @@ const FullSWOTPortfolio = ({
 
             // Save to backend using phase analysis API (like SWOT)
             await saveToBackend(result);
-             
+
             return result;
 
         } catch (error) {
@@ -160,6 +274,11 @@ const FullSWOTPortfolio = ({
 
     // Initialize component
     useEffect(() => {
+        if (hasInitialized.current) return;
+
+        isMounted.current = true;
+        hasInitialized.current = true;
+
         if (fullSwotData) {
             setData(fullSwotData);
             setHasGenerated(true);
@@ -170,14 +289,18 @@ const FullSWOTPortfolio = ({
                 generateFullSwotAnalysis();
             }
         }
+
+        return () => {
+            isMounted.current = false;
+        };
     }, [fullSwotData]);
 
     // Handle regeneration - Updated to match SWOT pattern
-    const handleRegenerate = async () => { 
+    const handleRegenerate = async () => {
         if (onRegenerate) {
             // If parent component provides regeneration handler, use it
-            await onRegenerate(); 
-        } else { 
+            await onRegenerate();
+        } else {
             // Otherwise, handle regeneration internally
             await generateFullSwotAnalysis();
         }
@@ -250,21 +373,39 @@ const FullSWOTPortfolio = ({
         );
     }
 
-    // Empty state
-    if (!hasGenerated || !data?.swotPortfolio) {
-        const answeredCount = Object.keys(userAnswers).length;
+    // Check if data is incomplete and show missing questions checker
+    if (!hasGenerated || !data?.swotPortfolio || isFullSwotDataIncomplete(data)) {
         return (
             <div className="porters-container">
-                <div className="empty-state">
-                    <Target size={48} className="empty-icon" />
-                    <h3>Full SWOT Portfolio (Enhanced)</h3>
-                    <p>
-                        {answeredCount < 5
-                            ? `Answer ${5 - answeredCount} more questions to generate enhanced SWOT analysis.`
-                            : "Complete essential phase questions to unlock enhanced SWOT analysis with competitive positioning and strategic options."
-                        }
-                    </p>
+                <div className="cs-header">
+                    <div className="cs-title-section">
+                        <Target className="main-icon" size={24} />
+                        <h2 className='cs-title'>Full SWOT Portfolio (Enhanced)</h2>
+                    </div>
                 </div>
+
+                {/* Replace the entire empty-state div with the common component */}
+                <AnalysisEmptyState
+                    analysisType="fullSwot"
+                    analysisDisplayName="Full SWOT Portfolio (Enhanced)"
+                    icon={Target}
+                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={5}
+                    customMessage="Complete essential phase questions to unlock enhanced SWOT analysis with competitive positioning and strategic options."
+                />
+
+                <MissingQuestionsChecker
+                    analysisType="fullSwot"
+                    analysisData={data}
+                    selectedBusinessId={selectedBusinessId}
+                    onRedirectToBrief={handleRedirectToBrief}
+                    API_BASE_URL={API_BASE_URL}
+                    getAuthToken={getAuthToken}
+                />
             </div>
         );
     }
@@ -272,7 +413,10 @@ const FullSWOTPortfolio = ({
     const portfolio = data.swotPortfolio;
 
     return (
-        <div className="porters-container">
+        <div className="porters-container" 
+     data-analysis-type="fullSwot"
+     data-analysis-name="Full SWOT Portfolio"
+     data-analysis-order="8">
             {/* Header */}
             <div className="cs-header">
                 <div className="cs-title-section">
@@ -298,7 +442,7 @@ const FullSWOTPortfolio = ({
                         </h3>
                         {expandedSections.strengths ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    
+
                     {expandedSections.strengths !== false && (
                         <div className="table-container">
                             <table className="data-table">
@@ -368,7 +512,7 @@ const FullSWOTPortfolio = ({
                         </h3>
                         {expandedSections.weaknesses ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    
+
                     {expandedSections.weaknesses !== false && (
                         <div className="table-container">
                             <table className="data-table">
@@ -424,7 +568,7 @@ const FullSWOTPortfolio = ({
                         </h3>
                         {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    
+
                     {expandedSections.opportunities !== false && (
                         <div className="table-container">
                             <table className="data-table">
@@ -492,7 +636,7 @@ const FullSWOTPortfolio = ({
                         </h3>
                         {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    
+
                     {expandedSections.threats !== false && (
                         <div className="table-container">
                             <table className="data-table">
@@ -556,7 +700,7 @@ const FullSWOTPortfolio = ({
                         </h3>
                         {expandedSections.strategic ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
-                    
+
                     {expandedSections.strategic !== false && (
                         <div className="table-container">
                             {/* SO Strategies */}

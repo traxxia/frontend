@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 import "../styles/EssentialPhase.css";
 
 const OrganizationalCultureProfile = ({
@@ -10,13 +12,152 @@ const OrganizationalCultureProfile = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  cultureProfileData = null
+  cultureProfileData = null,
+  selectedBusinessId,
+  onRedirectToBrief // Add this prop
 }) => {
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'cultureProfile',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the cultureProfile question(s)
+          const cultureProfileQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data => 
+            data.questions.filter(q => q.used_for && q.used_for.includes('cultureProfile'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: cultureProfileQuestions.length,
+            missing_questions: cultureProfileQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'cultureProfile',
+            message: `Please provide more detailed answers for organizational culture profile analysis. The current answers are insufficient to generate meaningful culture insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'cultureProfile',
+          message: 'Please review and improve your answers for organizational culture profile analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'cultureProfile',
+        message: 'Please review and improve your answers for organizational culture profile analysis.'
+      });
+    }
+  };
+
+  // Check if the culture profile data is empty/incomplete
+  const isCultureProfileDataIncomplete = (data) => {
+    if (!data) return true;
+    
+    // Handle both wrapped and direct response structures
+    const cultureProfile = data?.cultureProfile || data;
+    
+    // Check if essential culture profile data exists
+    if (!cultureProfile) return true;
+    
+    // Check if cultureType is empty or null
+    if (!cultureProfile.cultureType || cultureProfile.cultureType.trim() === '') return true;
+    
+    // Check if values array is empty
+    if (!cultureProfile.values || cultureProfile.values.length === 0) return true;
+    
+    // Check if behaviors array is empty
+    if (!cultureProfile.behaviors || cultureProfile.behaviors.length === 0) return true;
+    
+    // Check if workStyle has meaningful data (not just empty strings)
+    if (cultureProfile.workStyle) {
+      const workStyleValues = Object.values(cultureProfile.workStyle);
+      const hasValidWorkStyle = workStyleValues.some(value => 
+        value && typeof value === 'string' && value.trim() !== ''
+      );
+      if (!hasValidWorkStyle) return true;
+    }
+    
+    // Check if cultureFit has meaningful data (not just empty strings)
+    if (cultureProfile.cultureFit) {
+      const cultureFitValues = Object.values(cultureProfile.cultureFit);
+      const hasValidCultureFit = cultureFitValues.some(value => 
+        value && typeof value === 'string' && value.trim() !== ''
+      );
+      if (!hasValidCultureFit) return true;
+    }
+    
+    // Check if employeeMetrics has meaningful data (not just zeros or empty strings)
+    if (cultureProfile.employeeMetrics) {
+      const metrics = cultureProfile.employeeMetrics;
+      const hasValidMetrics = (
+        (metrics.totalEmployees && metrics.totalEmployees > 0) ||
+        (metrics.costPercentage && metrics.costPercentage > 0) ||
+        (metrics.valuePerEmployee && metrics.valuePerEmployee > 0) ||
+        (metrics.productivity && metrics.productivity.trim() !== '')
+      );
+      if (!hasValidMetrics) return true;
+    }
+    
+    // If we get here, the data appears to be incomplete/empty
+    return true;
+  };
 
   // Toggle section expansion
   const toggleSection = (sectionKey) => {
@@ -26,71 +167,10 @@ const OrganizationalCultureProfile = ({
     }));
   };
 
-  const generateCultureProfile = async () => {
-    try {
-      setIsGenerating(true);
-      setError(null);
-
-      const questionsArray = [];
-      const answersArray = [];
-
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim() && userAnswers[q._id] !== '[Question Skipped]')
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for culture profile analysis');
-      }
-
-      const response = await fetch(`${ML_API_BASE_URL}/culture-profile`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Culture Profile API Error Response:', errorText);
-        throw new Error(`API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json(); 
-
-      // Handle the direct API response structure
-      const processedData = result.cultureProfile ? result : { cultureProfile: result }; 
-
-      return processedData;
-
-    } catch (error) {
-      console.error('💥 Error generating culture profile:', error);
-      setError(error.message);
-      throw error;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  useEffect(() => {
-    const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim()); 
-    if (!cultureProfileData && hasAnswers && !isGenerating && !isRegenerating) { 
-      generateCultureProfile();
-    }
-  }, [questions, userAnswers, cultureProfileData]);
-
-  // Handle regeneration - same pattern as other components in business page
+  // Handle regeneration - same pattern as CustomerSegmentation
   const handleRegenerate = async () => { 
     if (onRegenerate) { 
       onRegenerate(); 
-      await generateCultureProfile();
     }
   };
 
@@ -204,45 +284,25 @@ const OrganizationalCultureProfile = ({
   };
 
   // Loading state
-  if (isGenerating || isRegenerating) {
+  if (isRegenerating) {
     return (
       <div className="culture-profile">
         <div className="loading-state">
-          <Loader size={32} className="spinner" />
-          <h3>Analyzing Organizational Culture</h3>
-          <p>Evaluating culture values, work style, and organizational fit...</p>
+          <Loader size={24} className="loading-spinner" />
+          <span>Regenerating organizational culture profile analysis...</span>
         </div>
       </div>
     );
   }
 
   // Error state
-  if (error && !cultureProfileData) {
-    return (
-      <div className="culture-profile">
-        <div className="error-state">
-          <h3>Unable to Generate Culture Profile</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} disabled={!canRegenerate} className="btn-retry">
-            <RefreshCw size={16} />
-            Retry Analysis
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // No data state
-  if (!cultureProfileData?.cultureProfile && !cultureProfileData?.values) {
-    const answeredCount = Object.keys(userAnswers).length;
+  if (error) {
     return (
       <div className="culture-profile">
         <div className="cs-header">
           <div className="cs-title-section">
             <Users size={24} />
-            <h2 className='cs-title'>
-              Organizational Culture Profile
-            </h2> 
+            <h2 className='cs-title'>Organizational Culture Profile</h2>
           </div>
           <RegenerateButton
             onRegenerate={handleRegenerate}
@@ -250,27 +310,62 @@ const OrganizationalCultureProfile = ({
             canRegenerate={canRegenerate}
             sectionName="Organizational Culture Profile"
             size="medium"
-            buttonText="Generate"
           />
         </div>
-
-        <div className="empty-state">
-          <Users size={48} />
-          <h3>Organizational Culture Profile</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate your organizational culture analysis.`
-              : "Organizational culture analysis will be generated automatically after completing the essential phase."
-            }
-          </p>
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
+          <p>{error}</p>
+          <button onClick={() => {
+            setError(null);
+            handleRegenerate();
+          }} className="retry-button">
+            Retry Analysis
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  // Check if data is incomplete and show missing questions checker
+  if (!cultureProfileData || isCultureProfileDataIncomplete(cultureProfileData)) {
+    return (
+      <div className="culture-profile">
+        <div className="cs-header">
+          <div className="cs-title-section">
+            <Users className="cs-icon" size={24} />
+            <h2 className='cs-title'>Organizational Culture Profile</h2>
+          </div>
+          {/* Hide regenerate button when showing empty analysis */}
+        </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="cultureProfile"
+          analysisDisplayName="Organizational Culture Profile Analysis"
+          icon={Users}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+        
+        <MissingQuestionsChecker
+          analysisType="cultureProfile"
+          analysisData={cultureProfileData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
 
   // Handle both wrapped and direct response structures
   const cultureProfile = cultureProfileData?.cultureProfile || cultureProfileData;
- 
 
   return (
     <div className="porters-container">

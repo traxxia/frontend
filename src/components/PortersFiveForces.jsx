@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const PortersFiveForces = ({
   questions = [],
@@ -10,7 +12,9 @@ const PortersFiveForces = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  portersData = null
+  portersData = null,
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [portersAnalysisData, setPortersAnalysisData] = useState(portersData);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,9 +26,110 @@ const PortersFiveForces = ({
     recommendations: true,
     monitoring: true
   });
-  
+
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'porters',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the porters question(s)
+          const portersQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('porters'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: portersQuestions.length,
+            missing_questions: portersQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'porters',
+            message: `Please provide more detailed answers for Porter's Five Forces analysis. The current answers are insufficient to generate meaningful insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'porters',
+          message: 'Please review and improve your answers for Porter\'s Five Forces analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'porters',
+        message: 'Please review and improve your answers for Porter\'s Five Forces analysis.'
+      });
+    }
+  };
+
+  // Check if the porters data is empty/incomplete
+  const isPortersDataIncomplete = (data) => {
+    if (!data) return true;
+
+    // Check if five_forces_analysis is empty or null
+    if (!data.five_forces_analysis || Object.keys(data.five_forces_analysis).length === 0) return true;
+
+    // Check if any critical fields are null/undefined
+    const criticalFields = ['executive_summary', 'competitive_landscape'];
+    const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
+
+    return hasNullFields;
+  };
 
   // Toggle section expansion
   const toggleSection = (sectionKey) => {
@@ -46,7 +151,7 @@ const PortersFiveForces = ({
 
   // Update data when prop changes
   useEffect(() => {
-    if (portersData && portersData !== portersAnalysisData) { 
+    if (portersData && portersData !== portersAnalysisData) {
       setPortersAnalysisData(portersData);
       if (onDataGenerated) {
         onDataGenerated(portersData);
@@ -57,11 +162,11 @@ const PortersFiveForces = ({
   // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
-    
+
     isMounted.current = true;
     hasInitialized.current = true;
-    
-    if (portersData) { 
+
+    if (portersData) {
       setPortersAnalysisData(portersData);
     }
 
@@ -77,7 +182,7 @@ const PortersFiveForces = ({
     if (data.portersAnalysis) {
       return data.portersAnalysis;
     }
-    
+
     if (data.porter_analysis) {
       return data.porter_analysis;
     }
@@ -136,31 +241,53 @@ const PortersFiveForces = ({
 
   const parsedData = parsePortersData(portersAnalysisData);
 
-  if (!parsedData) {
-    const answeredCount = Object.keys(userAnswers).length;
+  // Check if data is incomplete and show missing questions checker
+  if (!parsedData || isPortersDataIncomplete(parsedData)) {
     return (
       <div className="porters-container">
-        <div className="empty-state">
-          <Shield size={48} className="empty-icon" />
-          <h3>Porter's Five Forces Analysis</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate Porter's Five Forces analysis.`
-              : "Porter's Five Forces analysis will be generated automatically after completing the initial phase."
-            }
-          </p>
+        <div className="cs-header">
+          <div className="cs-title-section">
+            <Shield className="main-icon" size={24} />
+            <div>
+              <h2 className='cs-title'>Porter's Five Forces Analysis</h2>
+            </div>
+          </div>
         </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="porters"
+          analysisDisplayName="Porter's Five Forces Analysis"
+          icon={Shield}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="porters"
+          analysisData={parsedData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
 
   return (
-    <div className="porters-container">
+    <div className="porters-container" data-analysis-type="porters"
+      data-analysis-name="Porter's Five Forces"
+      data-analysis-order="6">
       <div className="cs-header">
         <div className="cs-title-section">
           <Shield className="main-icon" size={24} />
           <div>
-            <h2 className='cs-title'>Porter's Five Forces Analysis</h2> 
+            <h2 className='cs-title'>Porter's Five Forces Analysis</h2>
           </div>
         </div>
         <RegenerateButton
@@ -179,7 +306,7 @@ const PortersFiveForces = ({
             <h3>Executive Summary</h3>
             {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.executive !== false && (
             <div className="table-container">
               <table className="data-table">
@@ -256,7 +383,7 @@ const PortersFiveForces = ({
             <h3>Five Forces Analysis</h3>
             {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.forces !== false && (
             <div className="table-container">
               <table className="data-table forces-table">
@@ -358,7 +485,7 @@ const PortersFiveForces = ({
             <h3>Competitive Landscape</h3>
             {expandedSections.competitors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.competitors !== false && (
             <div className="table-container">
               {/* Direct Competitors */}
@@ -473,7 +600,7 @@ const PortersFiveForces = ({
             <h3>Strategic Recommendations</h3>
             {expandedSections.recommendations ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.recommendations !== false && (
             <div className="table-container">
               {/* Immediate Actions */}
@@ -572,7 +699,7 @@ const PortersFiveForces = ({
             <h3>Monitoring Dashboard</h3>
             {expandedSections.monitoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.monitoring !== false && (
             <div className="table-container">
               {/* Key Performance Indicators */}

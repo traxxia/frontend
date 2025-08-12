@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const StrategicPositioningRadar = ({
     questions = [],
@@ -10,12 +12,133 @@ const StrategicPositioningRadar = ({
     isRegenerating = false,
     canRegenerate = true,
     strategicRadarData = null,
-    selectedBusinessId
+    selectedBusinessId,
+    onRedirectToBrief // Add this prop
 }) => {
     const [data, setData] = useState(strategicRadarData);
     const [activeTab, setActiveTab] = useState('overview');
     const [hasGenerated, setHasGenerated] = useState(false);
     const [expandedSections, setExpandedSections] = useState({});
+
+    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+    const getAuthToken = () => sessionStorage.getItem('token');
+
+    const handleRedirectToBrief = (missingQuestionsData = null) => {
+        if (onRedirectToBrief) {
+            onRedirectToBrief(missingQuestionsData);
+        }
+    };
+
+    // Function to check missing questions and redirect
+    const checkMissingQuestionsAndRedirect = async () => {
+        try {
+            const token = getAuthToken();
+            
+            const response = await fetch(
+                `${API_BASE_URL}/api/questions/missing-for-analysis`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        analysis_type: 'strategicRadar',
+                        business_id: selectedBusinessId
+                    })
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                
+                // If there are missing questions, redirect with highlighting
+                if (result.missing_count > 0) {
+                    handleRedirectToBrief(result);
+                } else {
+                    // No missing questions but data is incomplete - user needs to improve their answers
+                    // Create a custom result to highlight the strategicRadar question(s)
+                    const strategicRadarQuestions = await fetch(
+                        `${API_BASE_URL}/api/questions`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    ).then(res => res.json()).then(data => 
+                        data.questions.filter(q => q.used_for && q.used_for.includes('strategicRadar'))
+                    );
+
+                    handleRedirectToBrief({
+                        missing_count: strategicRadarQuestions.length,
+                        missing_questions: strategicRadarQuestions.map(q => ({
+                            _id: q._id,
+                            order: q.order,
+                            question_text: q.question_text,
+                            objective: q.objective,
+                            required_info: q.required_info,
+                            used_for: q.used_for
+                        })),
+                        analysis_type: 'strategicRadar',
+                        message: `Please provide more detailed answers for strategic positioning radar analysis. The current answers are insufficient to generate meaningful strategic positioning insights.`,
+                        is_complete: false,
+                        keepHighlightLonger: true // Flag to keep highlighting longer
+                    });
+                }
+            } else {
+                // If API call fails, redirect to review answers
+                handleRedirectToBrief({
+                    missing_count: 0,
+                    missing_questions: [],
+                    analysis_type: 'strategicRadar',
+                    message: 'Please review and improve your answers for strategic positioning radar analysis.'
+                });
+            }
+        } catch (error) {
+            console.error('Error checking missing questions:', error);
+            // If error occurs, redirect to review answers
+            handleRedirectToBrief({
+                missing_count: 0,
+                missing_questions: [],
+                analysis_type: 'strategicRadar',
+                message: 'Please review and improve your answers for strategic positioning radar analysis.'
+            });
+        }
+    };
+
+    // Check if the strategic radar data is empty/incomplete
+    const isStrategicRadarDataIncomplete = (data) => {
+        if (!data) return true;
+        
+        // Handle both wrapped and direct API response formats
+        let normalizedData;
+        if (data.strategicRadar) {
+            normalizedData = data;
+        } else if (data.dimensions) {
+            normalizedData = { strategicRadar: data };
+        } else {
+            return true;
+        }
+        
+        // Check if strategicRadar and dimensions exist
+        if (!normalizedData.strategicRadar || !normalizedData.strategicRadar.dimensions) {
+            return true;
+        }
+        
+        // Check if dimensions array is empty or null
+        if (!Array.isArray(normalizedData.strategicRadar.dimensions) || normalizedData.strategicRadar.dimensions.length === 0) {
+            return true;
+        }
+        
+        // Check if dimensions have essential data
+        const hasValidDimensions = normalizedData.strategicRadar.dimensions.some(dimension => 
+            dimension.name && 
+            (dimension.currentScore !== undefined || dimension.targetScore !== undefined)
+        );
+        
+        return !hasValidDimensions;
+    };
 
     // Toggle section expansion
     const toggleSection = (sectionKey) => {
@@ -443,23 +566,21 @@ const StrategicPositioningRadar = ({
     if (isRegenerating) {
         return (
             <div className="strategic-radar-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Target size={24} />
-                        <h3 className='cs-title'>Strategic Positioning Radar</h3>
-                    </div>
-                </div>
                 <div className="loading-state">
-                    <Loader size={32} className="spinner" />
-                    <p>Generating strategic positioning radar...</p>
+                    <Loader size={24} className="loading-spinner" />
+                    <span>
+                        {isRegenerating
+                            ? "Regenerating strategic positioning radar analysis..."
+                            : "Generating strategic positioning radar analysis..."
+                        }
+                    </span>
                 </div>
             </div>
         );
     }
 
-    // No data state
-    if (!hasGenerated && !data) {
-        const answeredCount = Object.keys(userAnswers).length;
+    // Error state
+    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
             <div className="strategic-radar-container">
                 <div className="cs-header">
@@ -473,46 +594,56 @@ const StrategicPositioningRadar = ({
                         canRegenerate={canRegenerate}
                         sectionName="Strategic Positioning Radar"
                         size="medium"
-                        buttonText="Generate"
                     />
                 </div>
-
-                <div className="empty-state">
-                    <Target size={48} className="empty-icon" />
-                    <h3>Strategic Positioning Analysis</h3>
-                    <p>
-                        {answeredCount < 3
-                            ? `Answer ${3 - answeredCount} more questions to generate strategic positioning insights.`
-                            : "Strategic positioning analysis will be generated automatically after completing the essential phase."
-                        }
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    // No data available but has attempted generation
-    if (!data) {
-        return (
-            <div className="strategic-radar-container">
-                <div className="cd-header">
-                    <div className="cd-title-section">
-                        <Target size={24} />
-                        <h3 className='cs-title'>Strategic Positioning Radar</h3>
-                    </div>
-                    <RegenerateButton
-                        onRegenerate={handleRegenerate}
-                        isRegenerating={isRegenerating}
-                        canRegenerate={canRegenerate}
-                        sectionName="Strategic Positioning Radar"
-                        size="medium"
-                    />
-                </div>
-                <div className="empty-state">
-                    <div className="empty-icon">⚠️</div>
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
                     <p>Unable to generate strategic positioning analysis. Please try regenerating or check your inputs.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
                 </div>
+            </div>
+        );
+    }
+
+    // Check if data is incomplete and show missing questions checker
+    if (!strategicRadarData || isStrategicRadarDataIncomplete(strategicRadarData)) {
+        return (
+            <div className="strategic-radar-container">
+                <div className="cs-header">
+                    <div className="cs-title-section">
+                        <Target className="cs-icon" size={24} />
+                        <h3 className='cs-title'>Strategic Positioning Radar</h3>
+                    </div> 
+                </div>
+
+                {/* Replace the entire empty-state div with the common component */}
+                <AnalysisEmptyState
+                    analysisType="strategicRadar"
+                    analysisDisplayName="Strategic Positioning Radar Analysis"
+                    icon={Target}
+                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                />
+                
+                <MissingQuestionsChecker
+                    analysisType="strategicRadar"
+                    analysisData={strategicRadarData}
+                    selectedBusinessId={selectedBusinessId}
+                    onRedirectToBrief={handleRedirectToBrief}
+                    API_BASE_URL={API_BASE_URL}
+                    getAuthToken={getAuthToken}
+                />
             </div>
         );
     }
@@ -534,10 +665,17 @@ const StrategicPositioningRadar = ({
                         size="medium"
                     />
                 </div>
-                <div className="empty-state">
-                    <div className="empty-icon">⚠️</div>
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
                     <h3>Invalid Data Structure</h3>
                     <p>The strategic positioning data received is not in the expected format. Please regenerate the analysis.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
                 </div>
             </div>
         );

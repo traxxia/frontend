@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
 import { useTranslation } from "../hooks/useTranslation";
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const CapabilityHeatmap = ({
   questions = [],
@@ -11,7 +13,9 @@ const CapabilityHeatmap = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  capabilityHeatmapData = null
+  capabilityHeatmapData = null,
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [capabilityData, setCapabilityData] = useState(capabilityHeatmapData);
   const [error, setError] = useState(null);
@@ -21,6 +25,150 @@ const CapabilityHeatmap = ({
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'capabilityHeatmap',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the capabilityHeatmap question(s)
+          const capabilityHeatmapQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('capabilityHeatmap'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: capabilityHeatmapQuestions.length,
+            missing_questions: capabilityHeatmapQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'capabilityHeatmap',
+            message: `Please provide more detailed answers for capability heatmap analysis. The current answers are insufficient to generate meaningful capability insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'capabilityHeatmap',
+          message: 'Please review and improve your answers for capability heatmap analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'capabilityHeatmap',
+        message: 'Please review and improve your answers for capability heatmap analysis.'
+      });
+    }
+  };
+
+  // Check if the capability data is empty/incomplete
+  const isCapabilityDataIncomplete = (data) => {
+    if (!data) return true;
+
+    // Check if capabilities array is empty or null
+    if (!data.capabilities || data.capabilities.length === 0) return true;
+
+    // Check if maturity scale exists
+    if (!data.maturityScale || !data.maturityScale.levels) return true;
+
+    // Check if overallMaturity is missing
+    if (data.overallMaturity === null || data.overallMaturity === undefined) return true;
+
+    // Validate that capabilities have required fields
+    const hasIncompleteCapabilities = data.capabilities.some(capability =>
+      !capability.name ||
+      !capability.category ||
+      !capability.type ||
+      capability.currentLevel === null ||
+      capability.currentLevel === undefined
+    );
+
+    return hasIncompleteCapabilities;
+  };
+
+  // Check if analysis failed (all required questions answered but data is incomplete)
+  const isAnalysisFailed = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'capabilityHeatmap',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // If no missing questions but data is incomplete, it's an analysis failure
+        return result.missing_count === 0 && isCapabilityDataIncomplete(capabilityData);
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking analysis status:', error);
+      return false;
+    }
+  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -41,11 +189,13 @@ const CapabilityHeatmap = ({
       }
     }
   }, [capabilityHeatmapData]);
- useEffect(() => {
-  if (capabilityData && onDataGenerated) {
-    onDataGenerated(capabilityData);
-  }
-}, [capabilityData]);
+
+  useEffect(() => {
+    if (capabilityData && onDataGenerated) {
+      onDataGenerated(capabilityData);
+    }
+  }, [capabilityData]);
+
   // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -117,26 +267,46 @@ const CapabilityHeatmap = ({
     );
   }
 
-  if (!capabilityData || !capabilityData.capabilities || capabilityData.capabilities.length === 0) {
-    const answeredCount = Object.keys(userAnswers).length;
+  // Check if data is incomplete and show missing questions checker
+  if (!capabilityData || isCapabilityDataIncomplete(capabilityData)) {
     return (
       <div className="capability-heatmap">
-        <div className="empty-state">
-          <Zap size={48} className="empty-icon" />
-          <h3>Capability Heatmap Analysis</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate capability insights.`
-              : "Capability heatmap analysis will be generated automatically after completing the initial phase."
-            }
-          </p>
+        <div className="ch-header">
+          <div className="ch-title-section">
+            <Zap className="ch-icon" size={24} />
+            <h2 className="ch-title">{t("Capability Heatmap")}</h2>
+          </div>
         </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="capabilityHeatmap"
+          analysisDisplayName="Capability Heatmap Analysis"
+          icon={Zap}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="capabilityHeatmap"
+          analysisData={capabilityData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
 
   return (
-    <div className="capability-heatmap">
+    <div className="capability-heatmap" data-analysis-type="capability-heatmap"
+      data-analysis-name="Capability Heatmap"
+      data-analysis-order="5">
       <div className="ch-header">
         <div className="ch-title-section">
           <Zap className="ch-icon" size={24} />

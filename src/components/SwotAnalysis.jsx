@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
 import '../styles/dashboard.css';
 import '../styles/analysis-components.css';
 import { Target, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const SwotAnalysis = ({
   analysisResult: initialAnalysisResult,
@@ -13,29 +15,122 @@ const SwotAnalysis = ({
   userAnswers,
   onDataGenerated,
   saveAnalysisToBackend,
-  selectedBusinessId, // Add this prop
+  selectedBusinessId,
+  onRedirectToBrief // Add this prop
 }) => {
   const { t } = useTranslation();
   const [analysisResult, setAnalysisResult] = useState(initialAnalysisResult);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-  // Only update if initialAnalysisResult is different from current state
-  if (initialAnalysisResult !== analysisResult) { 
-    setAnalysisResult(initialAnalysisResult);
-    setErrorMessage(''); // Clear any previous errors when new data is loaded
-  }
-}, [initialAnalysisResult]);
-useEffect(() => {
-  // On component mount, if we have initial data, make sure it's set
-  if (initialAnalysisResult && !analysisResult) { 
-    setAnalysisResult(initialAnalysisResult);
-  }
-}, []);
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'swot',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the SWOT question(s)
+          const swotQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('swot'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: swotQuestions.length,
+            missing_questions: swotQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'swot',
+            message: `Please provide more detailed answers for SWOT analysis. The current answers are insufficient to generate meaningful analysis.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'swot',
+          message: 'Please review and improve your answers for SWOT analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'swot',
+        message: 'Please review and improve your answers for SWOT analysis.'
+      });
+    }
+  };
+
+  // Check if the SWOT data is empty/incomplete - only for truly empty responses
+  const isSwotDataIncomplete = (data) => {
+    // Only return true if data is null, undefined, or empty string
+    return !data || data === '' || (typeof data === 'string' && data.trim() === '');
+  };
+
+  useEffect(() => {
+    // Only update if initialAnalysisResult is different from current state
+    if (initialAnalysisResult !== analysisResult) {
+      setAnalysisResult(initialAnalysisResult);
+      setErrorMessage(''); // Clear any previous errors when new data is loaded
+    }
+  }, [initialAnalysisResult]);
+
+  useEffect(() => {
+    // On component mount, if we have initial data, make sure it's set
+    if (initialAnalysisResult && !analysisResult) {
+      setAnalysisResult(initialAnalysisResult);
+    }
+  }, []);
 
   const parseAnalysisResult = (result) => {
     if (!result) {
@@ -128,7 +223,7 @@ useEffect(() => {
         throw new Error(errorData.error || 'Failed to save SWOT analysis');
       }
 
-      const result = await response.json(); 
+      const result = await response.json();
       return result;
     } catch (error) {
       console.error('Error saving SWOT analysis to backend:', error);
@@ -181,7 +276,7 @@ useEffect(() => {
         questions: questionsArray,
         answers: answersArray
       };
- 
+
       const response = await fetch(`${ML_API_BASE_URL}/find`, {
         method: 'POST',
         headers: {
@@ -203,11 +298,11 @@ useEffect(() => {
           .replace(/\\n/g, '\n')
           .replace(/\\\"/g, '"')
           .trim();
-        
+
         const parsed = JSON.parse(cleanedText);
-        
+
         if (parsed && typeof parsed === 'object' &&
-            (parsed.strengths || parsed.weaknesses || parsed.opportunities || parsed.threats)) {
+          (parsed.strengths || parsed.weaknesses || parsed.opportunities || parsed.threats)) {
           dataToSave = cleanedText;
         } else {
           console.warn('SWOT response structure is invalid:', parsed);
@@ -217,19 +312,18 @@ useEffect(() => {
         console.warn('SWOT response was not valid JSON, using raw text:', e.message);
         dataToSave = rawText;
       }
-      
+
       if (dataToSave) {
         // Update local state
         setAnalysisResult(dataToSave);
-        
+
         // Notify parent component
         if (onDataGenerated) {
           onDataGenerated(dataToSave);
         }
-        
+
         // Save to backend using the new API
         await saveToBackend(dataToSave);
-         
       }
 
     } catch (error) {
@@ -280,8 +374,45 @@ useEffect(() => {
     ));
   };
 
+  // Check if data is incomplete and show missing questions checker - only for truly empty data
+  if (!isRegenerating && isSwotDataIncomplete(analysisResult)) {
+    return (
+      <div className="swot-analysis-container">
+        <div className="ln-header">
+          <div className="ln-title-section">
+            <Target className="ln-icon" size={24} />
+            <h2 className="ln-title">{t("SWOT Analysis")}</h2>
+          </div>
+        </div>
+        <AnalysisEmptyState
+          analysisType="swot"
+          analysisDisplayName="SWOT Analysis"
+          icon={Target}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={generateSwotAnalysis}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="swot"
+          analysisData={analysisResult}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="swot-analysis-container">
+    <div className="swot-analysis-container swot-analysis"
+      data-analysis-type="swot"
+      data-analysis-name="SWOT Analysis"
+      data-analysis-order="1" >
       <div className="ln-header">
         <div className="ln-title-section">
           <Target className="ln-icon" size={24} />
@@ -429,16 +560,6 @@ useEffect(() => {
               {typeof analysisResult === 'string' ? analysisResult : JSON.stringify(analysisResult, null, 2)}
             </pre>
           </details>
-        </div>
-      ) : !isRegenerating ? (
-        <div className="empty-state" style={{ textAlign: 'center', padding: '3rem 2rem', color: '#6b7280' }}>
-          <Target size={48} style={{ color: '#d1d5db', marginBottom: '1rem' }} />
-          <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: '#374151' }}>
-            SWOT Analysis
-          </h3>
-          <p style={{ margin: 0, fontSize: '14px' }}>
-            Complete the initial questions to generate your SWOT analysis.
-          </p>
         </div>
       ) : null}
     </div>

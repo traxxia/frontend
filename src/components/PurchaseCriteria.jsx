@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const PurchaseCriteria = ({
   questions = [],
@@ -12,7 +14,9 @@ const PurchaseCriteria = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  purchaseCriteriaData = null
+  purchaseCriteriaData = null,
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [criteriaData, setCriteriaData] = useState(purchaseCriteriaData);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,12 +27,113 @@ const PurchaseCriteria = ({
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
 
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
   // Colors for different performance levels
   const PERFORMANCE_COLORS = {
     excellent: '#10B981', // Green
     good: '#06B6D4',      // Blue
     average: '#F59E0B',   // Orange
     poor: '#EF4444'       // Red
+  };
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'purchaseCriteria',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the purchase criteria question(s)
+          const purchaseCriteriaQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('purchaseCriteria'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: purchaseCriteriaQuestions.length,
+            missing_questions: purchaseCriteriaQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'purchaseCriteria',
+            message: `Please provide more detailed answers for purchase criteria analysis. The current answers are insufficient to generate meaningful criteria.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'purchaseCriteria',
+          message: 'Please review and improve your answers for purchase criteria analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'purchaseCriteria',
+        message: 'Please review and improve your answers for purchase criteria analysis.'
+      });
+    }
+  };
+
+  // Check if the criteria data is empty/incomplete
+  const isCriteriaDataIncomplete = (data) => {
+    if (!data) return true;
+
+    // Check if criteria array is empty or null
+    if (!data.criteria || data.criteria.length === 0) return true;
+
+    // Check if any critical fields are null/undefined
+    const criticalFields = ['scale', 'overallAlignment'];
+    const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
+
+    return hasNullFields;
   };
 
   // Handle regeneration
@@ -224,20 +329,37 @@ const PurchaseCriteria = ({
     );
   }
 
-  if (!criteriaData) {
-    const answeredCount = Object.keys(userAnswers).length;
+  if (!criteriaData || isCriteriaDataIncomplete(criteriaData)) {
     return (
       <div className="purchase-criteria">
-        <div className="empty-state">
-          <Target size={48} className="empty-icon" />
-          <h3>Purchase Criteria Analysis</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate purchase criteria insights.`
-              : "Purchase criteria analysis will be generated automatically after completing the initial phase."
-            }
-          </p>
+        <div className="pc-header">
+          <div className="pc-title-section">
+            <Target className="pc-icon" size={24} />
+            <h2 className="pc-title">{t("Purchase Criteria Matrix")}</h2>
+          </div>
         </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="purchaseCriteria"
+          analysisDisplayName="Purchase Criteria Analysis"
+          icon={Target}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="purchaseCriteria"
+          analysisData={criteriaData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
@@ -245,8 +367,10 @@ const PurchaseCriteria = ({
   const radarData = createRadarChart();
 
   return (
-    <div className="purchase-criteria">
-      {/* Header with regenerate button - Updated to match CapabilityHeatmap style */}
+    <div className="purchase-criteria"
+      data-analysis-type="purchase-criteria"
+      data-analysis-name="Purchase Criteria Matrix"
+      data-analysis-order="2">
       <div className="pc-header">
         <div className="pc-title-section">
           <Target className="pc-icon" size={24} />

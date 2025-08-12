@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
 import { useTranslation } from "../hooks/useTranslation";
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const LoyaltyNPS = ({
   questions = [],
@@ -11,7 +13,9 @@ const LoyaltyNPS = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  loyaltyNPSData = null
+  loyaltyNPSData = null,
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [loyaltyData, setLoyaltyData] = useState(loyaltyNPSData);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +25,141 @@ const LoyaltyNPS = ({
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'loyaltyNPS',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the loyaltyNPS question(s)
+          const loyaltyNPSQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('loyaltyNPS'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: loyaltyNPSQuestions.length,
+            missing_questions: loyaltyNPSQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'loyaltyNPS',
+            message: `Please provide more detailed answers for loyalty & NPS analysis. The current answers are insufficient to generate meaningful loyalty insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'loyaltyNPS',
+          message: 'Please review and improve your answers for loyalty & NPS analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'loyaltyNPS',
+        message: 'Please review and improve your answers for loyalty & NPS analysis.'
+      });
+    }
+  };
+
+  // Check if the loyalty data is empty/incomplete
+  const isLoyaltyDataIncomplete = (data) => {
+    if (!data) return true;
+
+    // Check if essential fields are missing or null
+    if (data.overallScore === null || data.overallScore === undefined) return true;
+    if (!data.method) return true;
+    if (!data.scale) return true;
+
+    // Check if scale object has required properties
+    if (!data.scale.min && data.scale.min !== 0) return true;
+    if (!data.scale.max) return true;
+
+    return false;
+  };
+
+  // Check if analysis failed (all required questions answered but data is incomplete)
+  const isAnalysisFailed = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'loyaltyNPS',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // If no missing questions but data is incomplete, it's an analysis failure
+        return result.missing_count === 0 && isLoyaltyDataIncomplete(loyaltyData);
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking analysis status:', error);
+      return false;
+    }
+  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -108,63 +247,63 @@ const LoyaltyNPS = ({
 
     return (
       <div className="gauge-wrapper">
-      <div className="gauge-container">
-        <svg className="gauge-svg" viewBox="0 0 200 120">
-          {/* Background arc */}
-          <path
-            d="M 30 100 A 80 80 0 0 1 170 100"
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-          />
+        <div className="gauge-container">
+          <svg className="gauge-svg" viewBox="0 0 200 120">
+            {/* Background arc */}
+            <path
+              d="M 30 100 A 80 80 0 0 1 170 100"
+              fill="none"
+              stroke="#e5e7eb"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+            />
 
-          {/* Zone arcs for NPS */}
-          {zones.map((zone, index) => {
-            const zoneLength = strokeDasharray * (zone.end - zone.start);
-            const zoneOffset = strokeDasharray * (1 - zone.end);
-            return (
-              <path
-                key={index}
-                d="M 30 100 A 80 80 0 0 1 170 100"
-                fill="none"
-                stroke={zone.color}
-                strokeWidth={strokeWidth - 2}
-                strokeLinecap="round"
-                strokeDasharray={`${zoneLength} ${circumference}`}
-                strokeDashoffset={zoneOffset}
-                opacity={0.3}
-              />
-            );
-          })}
+            {/* Zone arcs for NPS */}
+            {zones.map((zone, index) => {
+              const zoneLength = strokeDasharray * (zone.end - zone.start);
+              const zoneOffset = strokeDasharray * (1 - zone.end);
+              return (
+                <path
+                  key={index}
+                  d="M 30 100 A 80 80 0 0 1 170 100"
+                  fill="none"
+                  stroke={zone.color}
+                  strokeWidth={strokeWidth - 2}
+                  strokeLinecap="round"
+                  strokeDasharray={`${zoneLength} ${circumference}`}
+                  strokeDashoffset={zoneOffset}
+                  opacity={0.3}
+                />
+              );
+            })}
 
-          {/* Score arc */}
-          <path
-            d="M 30 100 A 80 80 0 0 1 170 100"
-            fill="none"
-            stroke={classification.color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={strokeDashoffset}
-            className="gauge-progress"
-          />
+            {/* Score arc */}
+            <path
+              d="M 30 100 A 80 80 0 0 1 170 100"
+              fill="none"
+              stroke={classification.color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={strokeDasharray}
+              strokeDashoffset={strokeDashoffset}
+              className="gauge-progress"
+            />
 
-          {/* Center score */}
-          <text x="100" y="85" textAnchor="middle" className="gauge-score">
-            {overallScore}
-          </text>
-          <text x="100" y="100" textAnchor="middle" className="gauge-label">
-            {classification.label}
-          </text>
-        </svg>
+            {/* Center score */}
+            <text x="100" y="85" textAnchor="middle" className="gauge-score">
+              {overallScore}
+            </text>
+            <text x="100" y="100" textAnchor="middle" className="gauge-label">
+              {classification.label}
+            </text>
+          </svg>
 
-        {/* Scale labels */}
-        <div className="gauge-scale">
-          <span className="gauge-scale-min">{scale?.min || 0}</span>
-          <span className="gauge-scale-max">{scale?.max || 100}</span>
+          {/* Scale labels */}
+          <div className="gauge-scale">
+            <span className="gauge-scale-min">{scale?.min || 0}</span>
+            <span className="gauge-scale-max">{scale?.max || 100}</span>
+          </div>
         </div>
-      </div>
       </div>
     );
   };
@@ -263,20 +402,38 @@ const LoyaltyNPS = ({
     );
   }
 
-  if (!loyaltyData) {
-    const answeredCount = Object.keys(userAnswers).length;
+  // Check if data is incomplete and show missing questions checker
+  if (!loyaltyData || isLoyaltyDataIncomplete(loyaltyData)) {
     return (
       <div className="loyalty-nps">
-        <div className="empty-state">
-          <Heart size={48} className="empty-icon" />
-          <h3>Loyalty & NPS Analysis</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate loyalty & NPS insights.`
-              : "Loyalty & NPS analysis will be generated automatically after completing the initial phase."
-            }
-          </p>
+        <div className="ln-header">
+          <div className="ln-title-section">
+            <Heart className="ln-icon" size={24} />
+            <h2 className="ln-title">{t("Loyalty & NPS Score")}</h2>
+          </div>
         </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="loyaltyNPS"
+          analysisDisplayName="Loyalty & NPS Analysis"
+          icon={Heart}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="loyaltyNPS"
+          analysisData={loyaltyData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
@@ -285,7 +442,9 @@ const LoyaltyNPS = ({
   const trendIndicator = getTrendIndicator(loyaltyData.trend);
 
   return (
-    <div className="loyalty-nps">
+    <div className="loyalty-nps" data-analysis-type="loyalty-nps"
+      data-analysis-name="Loyalty & NPS Analysis"
+      data-analysis-order="4">
       {/* Header with regenerate button */}
       <div className="ln-header">
         <div className="ln-title-section">

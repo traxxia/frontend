@@ -2229,6 +2229,7 @@ const BusinessSetupPage = () => {
             userAnswers={userAnswers}
             saveAnalysisToBackend={saveAnalysisToBackend}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
           />
         </div>
 
@@ -2250,6 +2251,7 @@ const BusinessSetupPage = () => {
             canRegenerate={!isAnalysisRegenerating}
             purchaseCriteriaData={purchaseCriteriaData}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
           />
         </div>
 
@@ -2271,6 +2273,7 @@ const BusinessSetupPage = () => {
             canRegenerate={!isAnalysisRegenerating}
             channelHeatmapData={channelHeatmapData}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
           />
         </div>
 
@@ -2292,6 +2295,7 @@ const BusinessSetupPage = () => {
             canRegenerate={!isAnalysisRegenerating}
             loyaltyNPSData={loyaltyNPSData}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
           />
         </div>
 
@@ -2313,6 +2317,7 @@ const BusinessSetupPage = () => {
             canRegenerate={!isAnalysisRegenerating}
             capabilityHeatmapData={capabilityHeatmapData}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
           />
         </div>
 
@@ -2333,6 +2338,7 @@ const BusinessSetupPage = () => {
             canRegenerate={!isAnalysisRegenerating}
             portersData={portersData}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
           />
         </div>
 
@@ -2353,6 +2359,8 @@ const BusinessSetupPage = () => {
             canRegenerate={!isAnalysisRegenerating}
             pestelData={pestelData}
             selectedBusinessId={selectedBusinessId}
+            onRedirectToBrief={handleRedirectToBrief}
+
           />
         </div>
       </div>
@@ -2370,6 +2378,7 @@ const BusinessSetupPage = () => {
               canRegenerate={true}
               fullSwotData={fullSwotData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2407,6 +2416,7 @@ const BusinessSetupPage = () => {
               canRegenerate={true}
               competitiveAdvantageData={competitiveAdvantageData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2429,6 +2439,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               channelEffectivenessData={channelEffectivenessData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2451,6 +2462,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               expandedCapabilityData={expandedCapabilityData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2473,6 +2485,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               strategicGoalsData={strategicGoalsData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2495,6 +2508,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               strategicRadarData={strategicRadarData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2517,6 +2531,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               cultureProfileData={cultureProfileData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2539,6 +2554,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               productivityData={productivityData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}
@@ -2561,6 +2577,7 @@ const BusinessSetupPage = () => {
               canRegenerate={!isAnalysisRegenerating}
               maturityData={maturityData}
               selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
             />
           </div>
         )}

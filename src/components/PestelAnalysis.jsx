@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight, BarChart3, Target, AlertTriangle, Activity, Clock, RefreshCw, Loader } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
-const PestelAnalysis = ({ 
-  pestelData, 
+const PestelAnalysis = ({
+  pestelData,
   businessName = "Your Business",
   onRegenerate,
   isRegenerating = false,
-  canRegenerate = true 
+  canRegenerate = true,
+  questions = [],
+  userAnswers = {},
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     executive: true,
@@ -15,6 +21,132 @@ const PestelAnalysis = ({
     actions: true,
     monitoring: true
   });
+
+  const isMounted = useRef(false);
+  const hasInitialized = useRef(false);
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'pestel',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the pestel question(s)
+          const pestelQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('pestel'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: pestelQuestions.length,
+            missing_questions: pestelQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'pestel',
+            message: `Please provide more detailed answers for PESTEL analysis. The current answers are insufficient to generate meaningful insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'pestel',
+          message: 'Please review and improve your answers for PESTEL analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'pestel',
+        message: 'Please review and improve your answers for PESTEL analysis.'
+      });
+    }
+  };
+
+  // Check if the pestel data is empty/incomplete
+  const isPestelDataIncomplete = (data) => {
+    if (!data) return true;
+
+    // Handle nested structure
+    const analysis = data.pestel_analysis || data;
+
+    // Check if factor_summary is empty or null
+    if (!analysis.factor_summary || Object.keys(analysis.factor_summary).length === 0) return true;
+
+    // Check if any critical fields are null/undefined
+    const criticalFields = ['executive_summary', 'strategic_recommendations'];
+    const hasNullFields = criticalFields.some(field => analysis[field] === null || analysis[field] === undefined);
+
+    return hasNullFields;
+  };
+
+  // Handle regeneration
+  const handleRegenerate = async () => {
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
+
+  // Initialize component
+  useEffect(() => {
+    if (hasInitialized.current) return;
+
+    isMounted.current = true;
+    hasInitialized.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -35,14 +167,40 @@ const PestelAnalysis = ({
     );
   }
 
-  if (!pestelData || Array.isArray(pestelData)) {
+  // Check if data is incomplete and show missing questions checker
+  if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
     return (
       <div className="porters-container">
-        <div className="empty-state">
-          <BarChart3 size={48} className="empty-icon" />
-          <h3>PESTEL Analysis</h3>
-          <p>No PESTEL analysis data available</p>
+        <div className="cs-header">
+          <div className="cs-title-section">
+            <BarChart3 className="main-icon" size={24} />
+            <div>
+              <h2 className='cs-title'>PESTEL Analysis</h2>
+            </div>
+          </div>
         </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="pestel"
+          analysisDisplayName="PESTEL Analysis"
+          icon={BarChart3}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="pestel"
+          analysisData={pestelData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
@@ -51,12 +209,14 @@ const PestelAnalysis = ({
   const analysis = pestelData.pestel_analysis || pestelData;
 
   return (
-    <div className="porters-container">
+    <div className="porters-container" data-analysis-type="pestel"
+      data-analysis-name="PESTEL Analysis"
+      data-analysis-order="7">
       <div className="cs-header">
         <div className="cs-title-section">
           <BarChart3 className="main-icon" size={24} />
           <div>
-            <h2 className='cs-title'>PESTEL Analysis</h2> 
+            <h2 className='cs-title'>PESTEL Analysis</h2>
           </div>
         </div>
         <RegenerateButton
@@ -75,7 +235,7 @@ const PestelAnalysis = ({
             <h3>Executive Summary</h3>
             {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.executive && (
             <div className="table-container">
               {analysis.executive_summary?.agility_priority_score && (
@@ -83,7 +243,7 @@ const PestelAnalysis = ({
                   <h4>Agility Priority Score: {analysis.executive_summary.agility_priority_score}/10</h4>
                 </div>
               )}
-              
+
               <table className="data-table">
                 <thead>
                   <tr>
@@ -104,7 +264,7 @@ const PestelAnalysis = ({
                       </td>
                     </tr>
                   )}
-                  
+
                   {analysis.executive_summary.critical_risks && (
                     <tr>
                       <td><strong>Critical Risks</strong></td>
@@ -117,7 +277,7 @@ const PestelAnalysis = ({
                       </td>
                     </tr>
                   )}
-                  
+
                   {analysis.executive_summary.dominant_factors && (
                     <tr>
                       <td><strong>Dominant Factors</strong></td>
@@ -130,7 +290,7 @@ const PestelAnalysis = ({
                       </td>
                     </tr>
                   )}
-                  
+
                   {analysis.executive_summary.strategic_recommendations && (
                     <tr>
                       <td><strong>Strategic Recommendations</strong></td>
@@ -157,7 +317,7 @@ const PestelAnalysis = ({
             <h3>PESTEL Factors Analysis</h3>
             {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.factors && (
             <div className="table-container">
               <table className="data-table">
@@ -213,7 +373,7 @@ const PestelAnalysis = ({
             <h3>Strategic Actions</h3>
             {expandedSections.actions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.actions && (
             <div className="table-container">
               {/* Immediate Actions */}
@@ -316,7 +476,7 @@ const PestelAnalysis = ({
             <h3>Monitoring Dashboard</h3>
             {expandedSections.monitoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.monitoring && (
             <div className="table-container">
               {/* Key Indicators */}
@@ -343,9 +503,9 @@ const PestelAnalysis = ({
                               <div className="thresholds">
                                 {Object.entries(indicator.threshold_values).map(([level, value]) => (
                                   <div key={level} className={`threshold ${level}`}>
-                                    {level === 'green' && '✓'} 
-                                    {level === 'yellow' && '⚠'} 
-                                    {level === 'red' && '✗'} 
+                                    {level === 'green' && '✓'}
+                                    {level === 'yellow' && '⚠'}
+                                    {level === 'red' && '✗'}
                                     {value}
                                   </div>
                                 ))}

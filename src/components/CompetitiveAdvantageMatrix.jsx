@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const CompetitiveAdvantageMatrix = ({
     questions = [],
@@ -10,7 +12,8 @@ const CompetitiveAdvantageMatrix = ({
     isRegenerating = false,
     canRegenerate = true,
     competitiveAdvantageData = null,
-    selectedBusinessId
+    selectedBusinessId,
+    onRedirectToBrief
 }) => {
     const [data, setData] = useState(null);
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -19,10 +22,124 @@ const CompetitiveAdvantageMatrix = ({
     const [activeTab, setActiveTab] = useState('overview');
     const [expandedSections, setExpandedSections] = useState({});
 
+    const isMounted = useRef(false);
+    const hasInitialized = useRef(false);
+
     // API Configuration
     const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
     const getAuthToken = () => sessionStorage.getItem('token');
+
+    const handleRedirectToBrief = (missingQuestionsData = null) => {
+        if (onRedirectToBrief) {
+            onRedirectToBrief(missingQuestionsData);
+        }
+    };
+
+    // Function to check missing questions and redirect
+    const checkMissingQuestionsAndRedirect = async () => {
+        try {
+            const token = getAuthToken();
+            
+            const response = await fetch(
+                `${API_BASE_URL}/api/questions/missing-for-analysis`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        analysis_type: 'competitiveAdvantage',
+                        business_id: selectedBusinessId
+                    })
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                
+                // If there are missing questions, redirect with highlighting
+                if (result.missing_count > 0) {
+                    handleRedirectToBrief(result);
+                } else {
+                    // No missing questions but data is incomplete - user needs to improve their answers
+                    // For Competitive Advantage, we need questions about differentiation and competitive positioning
+                    const competitiveQuestions = await fetch(
+                        `${API_BASE_URL}/api/questions`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    ).then(res => res.json()).then(data => 
+                        data.questions.filter(q => 
+                            (q.used_for && q.used_for.includes('competitiveAdvantage')) ||
+                            (q.objective && (
+                                q.objective.toLowerCase().includes('competitive') ||
+                                q.objective.toLowerCase().includes('differentiator') ||
+                                q.objective.toLowerCase().includes('advantage')
+                            ))
+                        )
+                    );
+
+                    handleRedirectToBrief({
+                        missing_count: competitiveQuestions.length,
+                        missing_questions: competitiveQuestions.map(q => ({
+                            _id: q._id,
+                            order: q.order,
+                            question_text: q.question_text,
+                            objective: q.objective,
+                            required_info: q.required_info,
+                            used_for: q.used_for
+                        })),
+                        analysis_type: 'competitiveAdvantage',
+                        message: `Please provide more detailed answers for Competitive Advantage analysis. The current answers are insufficient to generate meaningful competitive insights.`,
+                        is_complete: false,
+                        keepHighlightLonger: true // Flag to keep highlighting longer
+                    });
+                }
+            } else {
+                // If API call fails, redirect to review answers
+                handleRedirectToBrief({
+                    missing_count: 0,
+                    missing_questions: [],
+                    analysis_type: 'competitiveAdvantage',
+                    message: 'Please review and improve your answers for Competitive Advantage analysis.'
+                });
+            }
+        } catch (error) {
+            console.error('Error checking missing questions:', error);
+            // If error occurs, redirect to review answers
+            handleRedirectToBrief({
+                missing_count: 0,
+                missing_questions: [],
+                analysis_type: 'competitiveAdvantage',
+                message: 'Please review and improve your answers for Competitive Advantage analysis.'
+            });
+        }
+    };
+
+    // Check if the competitive advantage data is empty/incomplete
+    const isCompetitiveAdvantageDataIncomplete = (data) => {
+        if (!data) return true;
+        
+        // Check if competitiveAdvantage is empty or null
+        if (!data.competitiveAdvantage) return true;
+        
+        const advantage = data.competitiveAdvantage;
+        
+        // Check if key sections are missing
+        const hasDifferentiators = advantage.differentiators && advantage.differentiators.length > 0;
+        const hasCompetitivePosition = advantage.competitivePosition && advantage.competitivePosition.overallScore;
+        const hasCustomerChoiceReasons = advantage.customerChoiceReasons && advantage.customerChoiceReasons.length > 0;
+        
+        // At least 2 out of 3 key sections should have data for meaningful analysis
+        const sectionsWithData = [hasDifferentiators, hasCompetitivePosition, hasCustomerChoiceReasons].filter(Boolean).length;
+        
+        return sectionsWithData < 2;
+    };
 
     // Toggle section expansion
     const toggleSection = (sectionKey) => {
@@ -161,6 +278,11 @@ const CompetitiveAdvantageMatrix = ({
 
     // Initialize component
     useEffect(() => {
+        if (hasInitialized.current) return;
+        
+        isMounted.current = true;
+        hasInitialized.current = true;
+
         if (competitiveAdvantageData) {
             setData(competitiveAdvantageData);
             setHasGenerated(true);
@@ -171,6 +293,10 @@ const CompetitiveAdvantageMatrix = ({
                 generateCompetitiveAdvantageAnalysis();
             }
         }
+
+        return () => {
+            isMounted.current = false;
+        };
     }, [competitiveAdvantageData]);
 
     // Handle regeneration - Updated to match SWOT pattern
@@ -466,21 +592,41 @@ const CompetitiveAdvantageMatrix = ({
         );
     }
 
-    // Empty state
-    if (!hasGenerated || !data?.competitiveAdvantage) {
-        const answeredCount = Object.keys(userAnswers).length;
+    // Check if data is incomplete and show missing questions checker
+    if (!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) {
         return (
             <div className="competitive-advantage-container">
-                <div className="empty-state">
-                    <Shield size={48} className="empty-icon" />
-                    <h3>Competitive Advantage Matrix</h3>
-                    <p>
-                        {answeredCount < 5
-                            ? `Answer ${5 - answeredCount} more questions to generate competitive advantage analysis.`
-                            : "Complete essential phase questions to unlock competitive advantage analysis."
-                        }
-                    </p>
+                <div className="cs-header">
+                    <div className="cs-title-section">
+                        <Shield className="main-icon" size={24} />
+                        <div>
+                            <h2 className="cs-title">Competitive Advantage Matrix</h2>
+                        </div>
+                    </div> 
                 </div>
+
+                {/* Replace the entire empty-state div with the common component */}
+                <AnalysisEmptyState
+                    analysisType="competitiveAdvantage"
+                    analysisDisplayName="Competitive Advantage Matrix"
+                    icon={Shield}
+                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={5}
+                    customMessage="Complete essential phase questions to unlock competitive advantage analysis."
+                />
+                
+                <MissingQuestionsChecker
+                    analysisType="competitiveAdvantage"
+                    analysisData={data}
+                    selectedBusinessId={selectedBusinessId}
+                    onRedirectToBrief={handleRedirectToBrief}
+                    API_BASE_URL={API_BASE_URL}
+                    getAuthToken={getAuthToken}
+                />
             </div>
         );
     }

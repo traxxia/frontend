@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, TrendingUp, Layers, Calendar, Loader, Zap, Grid3x3 } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const ChannelHeatmap = ({
   questions = [],
@@ -12,7 +14,9 @@ const ChannelHeatmap = ({
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  channelHeatmapData = null
+  channelHeatmapData = null,
+  selectedBusinessId,
+  onRedirectToBrief
 }) => {
   const [heatmapData, setHeatmapData] = useState(channelHeatmapData);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +27,141 @@ const ChannelHeatmap = ({
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'channelHeatmap',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the channelHeatmap question(s)
+          const channelHeatmapQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data =>
+            data.questions.filter(q => q.used_for && q.used_for.includes('channelHeatmap'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: channelHeatmapQuestions.length,
+            missing_questions: channelHeatmapQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'channelHeatmap',
+            message: `Please provide more detailed answers for channel heatmap analysis. The current answers are insufficient to generate meaningful channel performance data.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'channelHeatmap',
+          message: 'Please review and improve your answers for channel heatmap analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'channelHeatmap',
+        message: 'Please review and improve your answers for channel heatmap analysis.'
+      });
+    }
+  };
+
+  // Check if the heatmap data is empty/incomplete
+  const isHeatmapDataIncomplete = (data) => {
+    if (!data) return true;
+
+    // Check if essential arrays are empty or null
+    if (!data.products || data.products.length === 0) return true;
+    if (!data.channels || data.channels.length === 0) return true;
+    if (!data.matrix || data.matrix.length === 0) return true;
+
+    // Check if any critical fields are null/undefined
+    const criticalFields = ['legend'];
+    const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
+
+    return hasNullFields;
+  };
+
+  // Check if analysis failed (all required questions answered but data is incomplete)
+  const isAnalysisFailed = async () => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'channelHeatmap',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // If no missing questions but data is incomplete, it's an analysis failure
+        return result.missing_count === 0 && isHeatmapDataIncomplete(heatmapData);
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking analysis status:', error);
+      return false;
+    }
+  };
 
   // Handle regeneration
   const handleRegenerate = async () => {
@@ -59,11 +198,13 @@ const ChannelHeatmap = ({
       isMounted.current = false;
     };
   }, []);
-   useEffect(() => {
-  if (heatmapData && onDataGenerated) {
-    onDataGenerated(heatmapData);
-  }
-}, [heatmapData]);
+
+  useEffect(() => {
+    if (heatmapData && onDataGenerated) {
+      onDataGenerated(heatmapData);
+    }
+  }, [heatmapData]);
+
   // Get matrix value for a specific product-channel combination
   const getMatrixValue = (product, channel) => {
     if (!heatmapData?.matrix) return null;
@@ -162,20 +303,38 @@ const ChannelHeatmap = ({
     );
   }
 
-  if (!heatmapData) {
-    const answeredCount = Object.keys(userAnswers).length;
+  // Check if data is incomplete and show missing questions checker
+  if (!heatmapData || isHeatmapDataIncomplete(heatmapData)) {
     return (
       <div className="channel-heatmap">
-        <div className="empty-state">
-          <Grid3x3 size={48} className="empty-icon" />
-          <h3>Channel Heatmap Analysis</h3>
-          <p>
-            {answeredCount < 3
-              ? `Answer ${3 - answeredCount} more questions to generate channel performance insights.`
-              : "Channel heatmap analysis will be generated automatically after completing the initial phase."
-            }
-          </p>
+        <div className="ch-header">
+          <div className="ch-title-section">
+            <Grid3x3 className="ch-icon" size={24} />
+            <h2 className="ch-title">{t("Channel Heatmap")}</h2>
+          </div>
         </div>
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="channelHeatmap"
+          analysisDisplayName="Channel Heatmap Analysis"
+          icon={Grid3x3}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+
+        <MissingQuestionsChecker
+          analysisType="channelHeatmap"
+          analysisData={heatmapData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
       </div>
     );
   }
@@ -183,7 +342,9 @@ const ChannelHeatmap = ({
   const topPerformers = getTopPerformers();
 
   return (
-    <div className="channel-heatmap">
+    <div className="channel-heatmap" data-analysis-type="channel-heatmap"
+      data-analysis-name="Channel Heatmap"
+      data-analysis-order="3">
       {/* Header with regenerate button */}
       <div className="ch-header">
         <div className="ch-title-section">

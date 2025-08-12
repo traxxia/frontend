@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react';
 import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const ExpandedCapabilityHeatmap = ({
     questions = [],
@@ -10,11 +12,131 @@ const ExpandedCapabilityHeatmap = ({
     isRegenerating = false,
     canRegenerate = true,
     expandedCapabilityData = null,
-    selectedBusinessId
+    selectedBusinessId,
+    onRedirectToBrief // Add this prop
 }) => {
     const [data, setData] = useState(null);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [hoveredCell, setHoveredCell] = useState(null);
+
+    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+    const getAuthToken = () => sessionStorage.getItem('token');
+
+    const handleRedirectToBrief = (missingQuestionsData = null) => {
+        if (onRedirectToBrief) {
+            onRedirectToBrief(missingQuestionsData);
+        }
+    };
+
+    // Function to check missing questions and redirect
+    const checkMissingQuestionsAndRedirect = async () => {
+        try {
+            const token = getAuthToken();
+            
+            const response = await fetch(
+                `${API_BASE_URL}/api/questions/missing-for-analysis`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        analysis_type: 'expandedCapability',
+                        business_id: selectedBusinessId
+                    })
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                
+                // If there are missing questions, redirect with highlighting
+                if (result.missing_count > 0) {
+                    handleRedirectToBrief(result);
+                } else {
+                    // No missing questions but data is incomplete - user needs to improve their answers
+                    // Create a custom result to highlight the expandedCapability question(s)
+                    const expandedCapabilityQuestions = await fetch(
+                        `${API_BASE_URL}/api/questions`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }
+                    ).then(res => res.json()).then(data => 
+                        data.questions.filter(q => q.used_for && q.used_for.includes('expandedCapability'))
+                    );
+
+                    handleRedirectToBrief({
+                        missing_count: expandedCapabilityQuestions.length,
+                        missing_questions: expandedCapabilityQuestions.map(q => ({
+                            _id: q._id,
+                            order: q.order,
+                            question_text: q.question_text,
+                            objective: q.objective,
+                            required_info: q.required_info,
+                            used_for: q.used_for
+                        })),
+                        analysis_type: 'expandedCapability',
+                        message: `Please provide more detailed answers for expanded capability analysis. The current answers are insufficient to generate meaningful capability insights.`,
+                        is_complete: false,
+                        keepHighlightLonger: true // Flag to keep highlighting longer
+                    });
+                }
+            } else {
+                // If API call fails, redirect to review answers
+                handleRedirectToBrief({
+                    missing_count: 0,
+                    missing_questions: [],
+                    analysis_type: 'expandedCapability',
+                    message: 'Please review and improve your answers for expanded capability analysis.'
+                });
+            }
+        } catch (error) {
+            console.error('Error checking missing questions:', error);
+            // If error occurs, redirect to review answers
+            handleRedirectToBrief({
+                missing_count: 0,
+                missing_questions: [],
+                analysis_type: 'expandedCapability',
+                message: 'Please review and improve your answers for expanded capability analysis.'
+            });
+        }
+    };
+
+    // Check if the expanded capability data is empty/incomplete
+    const isExpandedCapabilityDataIncomplete = (data) => {
+        if (!data) return true;
+        
+        // Check if the data structure exists
+        let processedData = null;
+        
+        if (data.expandedCapabilityHeatmap) {
+            processedData = data.expandedCapabilityHeatmap;
+        } else if (data.expanded_capability_heatmap) {
+            processedData = data.expanded_capability_heatmap;
+        } else if (data.capabilities && Array.isArray(data.capabilities)) {
+            processedData = data;
+        } else {
+            processedData = data;
+        }
+        
+        // Check if capabilities array is empty or null
+        if (!processedData?.capabilities || !Array.isArray(processedData.capabilities) || processedData.capabilities.length === 0) {
+            return true;
+        }
+        
+        // Check if capabilities have essential data
+        const hasValidCapabilities = processedData.capabilities.some(capability => 
+            capability.name && 
+            capability.category &&
+            capability.maturityLevel
+        );
+        
+        return !hasValidCapabilities;
+    };
 
     // Handle regeneration
     const handleRegenerate = async () => {
@@ -52,39 +174,39 @@ const ExpandedCapabilityHeatmap = ({
     };
 
     useEffect(() => {
-    if (expandedCapabilityData) { 
-        
-        // Handle different API response structures
-        let processedData = null;
-        
-        if (expandedCapabilityData.expandedCapabilityHeatmap) {
-            // When data comes from generateExpandedCapability function
-            processedData = expandedCapabilityData.expandedCapabilityHeatmap;
-        } else if (expandedCapabilityData.expanded_capability_heatmap) {
-            // Alternative API response structure
-            processedData = expandedCapabilityData.expanded_capability_heatmap;
-        } else if (expandedCapabilityData.capabilities && Array.isArray(expandedCapabilityData.capabilities)) {
-            // Direct capability data structure
-            processedData = expandedCapabilityData;
+        if (expandedCapabilityData) { 
+            
+            // Handle different API response structures
+            let processedData = null;
+            
+            if (expandedCapabilityData.expandedCapabilityHeatmap) {
+                // When data comes from generateExpandedCapability function
+                processedData = expandedCapabilityData.expandedCapabilityHeatmap;
+            } else if (expandedCapabilityData.expanded_capability_heatmap) {
+                // Alternative API response structure
+                processedData = expandedCapabilityData.expanded_capability_heatmap;
+            } else if (expandedCapabilityData.capabilities && Array.isArray(expandedCapabilityData.capabilities)) {
+                // Direct capability data structure
+                processedData = expandedCapabilityData;
+            } else {
+                // Fallback - use the data as-is
+                processedData = expandedCapabilityData;
+            } 
+            
+            // Validate that the processed data has the expected structure
+            if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities)) {
+                setData(processedData);
+                setHasGenerated(true);
+            } else {
+                console.error('Invalid data structure for ExpandedCapabilityHeatmap:', processedData);
+                setData(null);
+                setHasGenerated(false);
+            }
         } else {
-            // Fallback - use the data as-is
-            processedData = expandedCapabilityData;
-        } 
-        
-        // Validate that the processed data has the expected structure
-        if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities)) {
-            setData(processedData);
-            setHasGenerated(true);
-        } else {
-            console.error('Invalid data structure for ExpandedCapabilityHeatmap:', processedData);
             setData(null);
             setHasGenerated(false);
         }
-    } else {
-        setData(null);
-        setHasGenerated(false);
-    }
-}, [expandedCapabilityData]);
+    }, [expandedCapabilityData]);
 
     const getHeatmapData = () => {
         if (!data?.capabilities || !Array.isArray(data.capabilities)) {
@@ -204,42 +326,16 @@ const ExpandedCapabilityHeatmap = ({
         </div>
     );
 
-    const renderPlaceholderState = () => (
-        <div className="expanded-capability-heatmap">
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Grid3x3 size={24} />
-                    <h2 className="cs-title">Expanded Capability Heatmap</h2>
-                </div>
-                <RegenerateButton
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    sectionName="Expanded Capability"
-                    size="medium"
-                    buttonText="Generate"
-                />
-            </div>
-            <div className="placeholder-content">
-                <div className="placeholder-icon">🎯</div>
-                <p className="placeholder-text">
-                    Expanded capability analysis will appear here once essential phase is completed.
-                </p>
-            </div>
-        </div>
-    );
-
     const renderLoadingState = () => (
         <div className="expanded-capability-heatmap">
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Grid3x3 size={24} />
-                    <h2 className="cs-title">Expanded Capability Heatmap</h2>
-                </div>
-            </div>
             <div className="loading-state">
-                <Loader size={32} className="loading-spinner" />
-                <p className="loading-text">Generating expanded capability heatmap...</p>
+                <Loader size={24} className="loading-spinner" />
+                <span>
+                    {isRegenerating
+                        ? "Regenerating expanded capability analysis..."
+                        : "Generating expanded capability analysis..."
+                    }
+                </span>
             </div>
         </div>
     );
@@ -260,20 +356,59 @@ const ExpandedCapabilityHeatmap = ({
                 />
             </div>
             <div className="error-state">
-                <p className="error-text">
-                    Unable to generate expanded capability heatmap. Please try regenerating.
-                </p>
+                <div className="error-icon">⚠️</div>
+                <h3>Analysis Error</h3>
+                <p>Unable to generate expanded capability heatmap. Please try regenerating.</p>
+                <button onClick={() => {
+                    if (onRegenerate) {
+                        onRegenerate();
+                    }
+                }} className="retry-button">
+                    Retry Analysis
+                </button>
             </div>
         </div>
     );
 
-    // Decision logic
+    // Loading State
     if (isRegenerating) {
         return renderLoadingState();
     }
 
-    if (!hasGenerated && !data) {
-        return renderPlaceholderState();
+    // Check if data is incomplete and show missing questions checker
+    if (!expandedCapabilityData || isExpandedCapabilityDataIncomplete(expandedCapabilityData)) {
+        return (
+            <div className="expanded-capability-heatmap">
+                <div className="cs-header">
+                    <div className="cs-title-section">
+                        <Grid3x3 className="cs-icon" size={24} />
+                        <h2 className="cs-title">Expanded Capability Heatmap</h2>
+                    </div> 
+                </div>
+
+                {/* Replace the entire empty-state div with the common component */}
+                <AnalysisEmptyState
+                    analysisType="expandedCapability"
+                    analysisDisplayName="Expanded Capability Analysis"
+                    icon={Grid3x3}
+                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                />
+                
+                <MissingQuestionsChecker
+                    analysisType="expandedCapability"
+                    analysisData={expandedCapabilityData}
+                    selectedBusinessId={selectedBusinessId}
+                    onRedirectToBrief={handleRedirectToBrief}
+                    API_BASE_URL={API_BASE_URL}
+                    getAuthToken={getAuthToken}
+                />
+            </div>
+        );
     }
 
     const heatmapData = getHeatmapData();
@@ -350,6 +485,9 @@ const ExpandedCapabilityHeatmap = ({
                     </React.Fragment>
                 ))}
             </div>
+
+            {/* Capability Gaps Section */}
+            {capabilityGaps.length > 0 && renderCapabilityGaps(capabilityGaps)}
         </div>
     );
 };

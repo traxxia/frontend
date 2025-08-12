@@ -113,7 +113,8 @@ const EditableBriefSection = ({
           value: answer,
           questionId: qId,
           phase: question.phase,
-          severity: question.severity
+          severity: question.severity,
+          order: question.order // Add order to the field
         });
       }
     });
@@ -249,10 +250,17 @@ const EditableBriefSection = ({
             color: isHighlighted ? '#92400e' : 'inherit',
             fontWeight: isHighlighted ? '600' : '500'
           }}>
+            {/* Add question number before the label */}
+            <span style={{
+              fontSize: '14px',
+              fontWeight: 'bold',  
+              padding: '2px 6px',
+              borderRadius: '4px', 
+            }}>
+              {field.order || 1}.
+            </span>
             {field.label}
-            {field.phase === 'initial' && field.severity === 'mandatory' && (
-              <span className="required-indicator" title="Required for analysis">*</span>
-            )}
+             
             {isHighlighted && (
               <span style={{ 
                 fontSize: '12px', 

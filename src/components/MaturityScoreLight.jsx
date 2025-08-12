@@ -14,7 +14,9 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import RegenerateButton from './RegenerateButton';
+import MissingQuestionsChecker from './MissingQuestionsChecker';
+import AnalysisEmptyState from './AnalysisEmptyState';
 
 const MaturityScore = ({ 
   maturityData = null,
@@ -22,12 +24,139 @@ const MaturityScore = ({
   isRegenerating = false,
   canRegenerate = true,
   onRegenerate,
-  questions,
-  userAnswers,
-  selectedBusinessId
+  questions = [],
+  userAnswers = {},
+  selectedBusinessId,
+  onRedirectToBrief // Add this prop
 }) => {
   const [transformedData, setTransformedData] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+
+  const handleRedirectToBrief = (missingQuestionsData = null) => {
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
+  };
+
+  // Function to check missing questions and redirect
+  const checkMissingQuestionsAndRedirect = async () => {
+    try {
+      const token = getAuthToken();
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/questions/missing-for-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysis_type: 'maturityScore',
+            business_id: selectedBusinessId
+          })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // If there are missing questions, redirect with highlighting
+        if (result.missing_count > 0) {
+          handleRedirectToBrief(result);
+        } else {
+          // No missing questions but data is incomplete - user needs to improve their answers
+          // Create a custom result to highlight the maturityScore question(s)
+          const maturityScoreQuestions = await fetch(
+            `${API_BASE_URL}/api/questions`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          ).then(res => res.json()).then(data => 
+            data.questions.filter(q => q.used_for && q.used_for.includes('maturityScore'))
+          );
+
+          handleRedirectToBrief({
+            missing_count: maturityScoreQuestions.length,
+            missing_questions: maturityScoreQuestions.map(q => ({
+              _id: q._id,
+              order: q.order,
+              question_text: q.question_text,
+              objective: q.objective,
+              required_info: q.required_info,
+              used_for: q.used_for
+            })),
+            analysis_type: 'maturityScore',
+            message: `Please provide more detailed answers for business maturity score analysis. The current answers are insufficient to generate meaningful maturity insights.`,
+            is_complete: false,
+            keepHighlightLonger: true // Flag to keep highlighting longer
+          });
+        }
+      } else {
+        // If API call fails, redirect to review answers
+        handleRedirectToBrief({
+          missing_count: 0,
+          missing_questions: [],
+          analysis_type: 'maturityScore',
+          message: 'Please review and improve your answers for business maturity score analysis.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+      // If error occurs, redirect to review answers
+      handleRedirectToBrief({
+        missing_count: 0,
+        missing_questions: [],
+        analysis_type: 'maturityScore',
+        message: 'Please review and improve your answers for business maturity score analysis.'
+      });
+    }
+  };
+
+  // Check if the maturity data is empty/incomplete
+  const isMaturityDataIncomplete = (data) => {
+    if (!data) return true;
+    
+    // Handle various nested structures
+    let scoreData;
+    if (data.maturityScore && data.maturityScore.maturityScoring) {
+      scoreData = data.maturityScore.maturityScoring;
+    } else if (data.maturityScoring) {
+      scoreData = data.maturityScoring;
+    } else if (data.maturityScore) {
+      scoreData = data.maturityScore;
+    } else if (data.dimensions && data.overallMaturity) {
+      scoreData = data;
+    } else {
+      scoreData = data;
+    }
+    
+    // Check if essential maturity data exists
+    if (!scoreData) return true;
+    
+    // Check if we have meaningful data
+    const hasOverallMaturity = scoreData.overallMaturity && scoreData.overallMaturity > 0;
+    const hasValidDimensions = scoreData.dimensions && 
+                               Array.isArray(scoreData.dimensions) && 
+                               scoreData.dimensions.length > 0 &&
+                               scoreData.dimensions.some(dim => dim.score && dim.score > 0);
+    
+    // Check if maturity level exists and is not empty/default
+    const hasMaturityLevel = scoreData.maturityLevel && 
+                             scoreData.maturityLevel !== '' && 
+                             scoreData.maturityLevel.toLowerCase() !== 'unknown';
+    
+    // Consider data complete only if we have meaningful maturity information
+    const hasEssentialData = hasOverallMaturity || hasValidDimensions || hasMaturityLevel;
+    
+    return !hasEssentialData;
+  };
 
   // Toggle section expansion
   const toggleSection = (sectionKey) => {
@@ -179,20 +308,31 @@ const MaturityScore = ({
   const renderLoadingState = () => (
     <div className="maturity-container">
       <div className="loading-state">
-        <Loader size={48} className="loading-icon spinning" />
-        <h3>Calculating Business Maturity</h3>
-        <p>Analyzing maturity across key business dimensions...</p>
+        <Loader size={24} className="loading-spinner" />
+        <span>
+          {isRegenerating
+            ? "Regenerating business maturity score analysis..."
+            : "Generating business maturity score analysis..."
+          }
+        </span>
       </div>
     </div>
   );
 
-  const renderEmptyState = () => (
+  const renderErrorState = () => (
     <div className="maturity-container">
       {renderHeader()}
-      <div className="empty-state">
-        <Award size={48} className="empty-icon" />
-        <h3>Business Maturity Analysis</h3>
-        <p>Complete the assessment to generate your comprehensive maturity analysis.</p>
+      <div className="error-state">
+        <div className="error-icon">⚠️</div>
+        <h3>Analysis Error</h3>
+        <p>Unable to generate business maturity score. Please try regenerating or check your inputs.</p>
+        <button onClick={() => {
+          if (onRegenerate) {
+            onRegenerate();
+          }
+        }} className="retry-button">
+          Retry Analysis
+        </button>
       </div>
     </div>
   );
@@ -611,8 +751,39 @@ const MaturityScore = ({
     return renderLoadingState();
   }
 
-  if (!maturityData || !transformedData) {
-    return renderEmptyState();
+  // Check if data is incomplete and show missing questions checker
+  if (!maturityData || isMaturityDataIncomplete(maturityData)) {
+    return (
+      <div className="maturity-container">
+        {renderHeader()}
+
+        {/* Replace the entire empty-state div with the common component */}
+        <AnalysisEmptyState
+          analysisType="maturityScore"
+          analysisDisplayName="Business Maturity Score Analysis"
+          icon={Award}
+          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onRegenerate={onRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        />
+        
+        <MissingQuestionsChecker
+          analysisType="maturityScore"
+          analysisData={maturityData}
+          selectedBusinessId={selectedBusinessId}
+          onRedirectToBrief={handleRedirectToBrief}
+          API_BASE_URL={API_BASE_URL}
+          getAuthToken={getAuthToken}
+        />
+      </div>
+    );
+  }
+
+  if (!transformedData) {
+    return renderErrorState();
   }
 
   return (
