@@ -2898,6 +2898,7 @@ const BusinessSetupPage = () => {
                             selectedBusinessId={selectedBusinessId}
                             phaseManager={phaseManager}
                             saveAnalysisToBackend={saveAnalysisToBackend}
+                            hideDownload={false}
                           />
                         </div>
                       )}
@@ -3040,6 +3041,7 @@ const BusinessSetupPage = () => {
                       selectedBusinessId={selectedBusinessId}
                       phaseManager={phaseManager}
                       saveAnalysisToBackend={saveAnalysisToBackend}
+                      hideDownload={false}
                     />
                   </div>
                 )}

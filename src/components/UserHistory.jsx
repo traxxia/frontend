@@ -1375,6 +1375,7 @@ const StrategicTab = ({
           isRegenerating={false}
           canRegenerate={false}
           phaseManager={phaseManager}
+          hideDownload={false}
         />
       </div>
     </div>

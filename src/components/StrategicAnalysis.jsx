@@ -37,7 +37,8 @@ const StrategicAnalysis = ({
   strategicData = null,
   phaseManager,
   saveAnalysisToBackend,
-  selectedBusinessId
+  selectedBusinessId,
+  hideDownload = false
 }) => {
   const [localStrategicData, setLocalStrategicData] = useState(strategicData);
   const [isLoading, setIsLoading] = useState(false);
@@ -940,7 +941,7 @@ const StrategicAnalysis = ({
         </div>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-           {!isRegenerating && canRegenerate && (
+           {!hideDownload && (
             <DownloadStrategicAnalysis
               strategicData={localStrategicData}
               businessName={businessName}

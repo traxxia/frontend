@@ -114,6 +114,7 @@ const AnalysisDataModal = ({
           <StrategicAnalysis
             {...mockProps}
             strategicData={analysisData}
+            hideDownload={true}
           />
         );
 
