@@ -325,6 +325,7 @@ body {
   border-radius: var(--radius);
   cursor: pointer;
   transition: 0.3s;
+  color:#000;
 }
 
 .pagination button:hover:not(:disabled) {

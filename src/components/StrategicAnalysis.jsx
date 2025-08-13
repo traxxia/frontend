@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  RefreshCw, 
-  Loader, 
-  Target, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Users, 
-  Shield, 
-  Zap, 
-  Eye, 
-  Settings, 
-  BarChart3, 
-  Activity, 
-  Star, 
+import {
+  RefreshCw,
+  Loader,
+  Target,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Users,
+  Shield,
+  Zap,
+  Eye,
+  Settings,
+  BarChart3,
+  Activity,
+  Star,
   ArrowRight,
   Calendar,
   DollarSign,
@@ -24,7 +24,8 @@ import {
   MessageCircle,
   Building
 } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import RegenerateButton from './RegenerateButton';
+import DownloadStrategicAnalysis from './DownloadStrategicAnalysis';
 
 const StrategicAnalysis = ({
   questions = [],
@@ -46,7 +47,7 @@ const StrategicAnalysis = ({
   const generateStrategicAnalysis = async () => {
     try {
       setIsLoading(true);
-      
+
       const questionsArray = [];
       const answersArray = [];
 
@@ -82,17 +83,17 @@ const StrategicAnalysis = ({
       }
 
       const result = await response.json();
-      
+
       // Save to backend (overwrite existing result)
       if (saveAnalysisToBackend && typeof saveAnalysisToBackend === 'function') {
         try {
-          await saveAnalysisToBackend(result, 'strategic'); 
+          await saveAnalysisToBackend(result, 'strategic');
         } catch (saveError) {
           console.error('Error saving strategic analysis:', saveError);
           // Don't throw - continue with setting local data even if save fails
         }
       }
-      
+
       setLocalStrategicData(result);
       return result;
 
@@ -174,14 +175,14 @@ const StrategicAnalysis = ({
         <div className="section-header" style={{
           display: 'inline-flex',
           alignItems: 'center',
-          borderBottom:'none',marginBottom:'0px',
+          borderBottom: 'none', marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
           <h2>Executive Summary</h2>
         </div>
-        
+
         <div className="table-container">
           <table className="data-table">
             <tbody>
@@ -240,14 +241,14 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <BarChart3 size={24} style={{ color: 'blue' }} />
           <h2>Strategic Pillars Analysis</h2>
         </div>
-        
+
         <div className="table-container">
           <table className="data-table">
             <thead>
@@ -264,7 +265,7 @@ const StrategicAnalysis = ({
             <tbody>
               {Object.entries(pillars).map(([pillarKey, pillar]) => {
                 const IconComponent = getPillarIcon(pillarKey);
-                
+
                 return (
                   <tr key={pillarKey}>
                     <td className="table-value">
@@ -274,7 +275,7 @@ const StrategicAnalysis = ({
                       </div>
                     </td>
                     <td className="table-value text-center">
-                      <span 
+                      <span
                         className="score-badge"
                         style={{ color: getScoreColor(pillar.current_state?.assessment_score || 0) }}
                       >
@@ -315,14 +316,14 @@ const StrategicAnalysis = ({
                             <div key={idx} className="recommendation-item">
                               <div className="rec-header">
                                 <span className="rec-text">{rec.action}</span>
-                                <span 
+                                <span
                                   className="priority-badge"
                                   style={{ backgroundColor: getPriorityColor(rec.priority) }}
                                 >
                                   {rec.priority}
                                 </span>
                               </div>
-                              
+
                               <div className="rec-details">
                                 {rec.timeline && (
                                   <div className="detail-item">
@@ -330,14 +331,14 @@ const StrategicAnalysis = ({
                                     {rec.timeline}
                                   </div>
                                 )}
-                                
+
                                 {rec.expected_impact && (
                                   <div className="detail-item">
                                     <TrendingUp size={10} />
                                     {rec.expected_impact}
                                   </div>
                                 )}
-                                
+
                                 {rec.resources_required && rec.resources_required.length > 0 && (
                                   <div className="detail-item">
                                     <Users size={10} />
@@ -381,14 +382,14 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <Activity size={24} style={{ color: 'blue' }} />
           <h2>Cross-Pillar Synthesis</h2>
         </div>
-        
+
         <div className="table-container">
           {synthesis.interconnections && synthesis.interconnections.length > 0 && (
             <>
@@ -415,7 +416,7 @@ const StrategicAnalysis = ({
               </table>
             </>
           )}
-          
+
           {synthesis.holistic_recommendations && synthesis.holistic_recommendations.length > 0 && (
             <>
               <h3 className="table-subtitle">Holistic Recommendations</h3>
@@ -453,14 +454,14 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <PlayCircle size={24} style={{ color: 'blue' }} />
           <h2>Agile Frameworks Recommendations</h2>
         </div>
-        
+
         <div className="table-container">
           <table className="data-table">
             <thead>
@@ -478,7 +479,7 @@ const StrategicAnalysis = ({
                     <strong>{frameworkKey.toUpperCase()}</strong>
                   </td>
                   <td className="table-value text-center">
-                    <span 
+                    <span
                       className="priority-badge"
                       style={{ backgroundColor: getPriorityColor(framework.implementation_priority) }}
                     >
@@ -512,14 +513,14 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <Shield size={24} style={{ color: 'blue' }} />
           <h2>Risk Assessment</h2>
         </div>
-        
+
         <div className="table-container">
           {riskAssessment.strategic_risks && riskAssessment.strategic_risks.length > 0 && (
             <>
@@ -563,7 +564,7 @@ const StrategicAnalysis = ({
               </table>
             </>
           )}
-          
+
           {riskAssessment.contingency_plans && riskAssessment.contingency_plans.length > 0 && (
             <>
               <h3 className="table-subtitle">Contingency Plans</h3>
@@ -608,14 +609,14 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center',borderBottom:'none',marginBottom:'0px',
+          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <Award size={24} style={{ color: 'blue' }} />
           <h2>Success Benchmarks</h2>
         </div>
-        
+
         <div className="table-container">
           {benchmarks.case_study_parallels && benchmarks.case_study_parallels.length > 0 && (
             <>
@@ -647,7 +648,7 @@ const StrategicAnalysis = ({
               </table>
             </>
           )}
-          
+
           {benchmarks.industry_benchmarks && benchmarks.industry_benchmarks.length > 0 && (
             <>
               <h3 className="table-subtitle">Industry Benchmarks</h3>
@@ -686,14 +687,14 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center',borderBottom:'none',
-          gap: '8px',marginBottom:'0px',
+          alignItems: 'center', borderBottom: 'none',
+          gap: '8px', marginBottom: '0px',
           background: '#fff'
         }}>
           <Calendar size={24} style={{ color: 'blue' }} />
           <h2>Implementation Roadmap</h2>
         </div>
-        
+
         <div className="table-container">
           <table className="data-table">
             <thead>
@@ -784,7 +785,7 @@ const StrategicAnalysis = ({
             Monitoring & Feedback
           </h2>
         </div>
-        
+
         <div className="table-container">
           {monitoring.dashboard_requirements && monitoring.dashboard_requirements.length > 0 && (
             <>
@@ -810,7 +811,7 @@ const StrategicAnalysis = ({
               </table>
             </>
           )}
-          
+
           {monitoring.review_cycles && (
             <>
               <h3 className="table-subtitle">Review Cycles</h3>
@@ -834,7 +835,7 @@ const StrategicAnalysis = ({
               </table>
             </>
           )}
-          
+
           {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
             <>
               <h3 className="table-subtitle">Feedback Loops</h3>
@@ -918,36 +919,46 @@ const StrategicAnalysis = ({
 
   return (
     <div className="strategic-analysis-container">
-      <div className="strategic-header" style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div className="strategic-header" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: '20px',
-        borderBottom:'1px solid #e0e0e0',
+        borderBottom: '1px solid #e0e0e0',
         padding: '0 20px'
       }}>
         <div className="section-header" style={{
           display: 'inline-flex',
           alignItems: 'center',
-          borderBottom:'none',
-          marginBottom:'0px',
+          borderBottom: 'none',
+          marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
           <h2>Strategic Analysis</h2>
         </div>
-        
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Strategic Analysis"
-          size="medium"
-          buttonText="Generate"
-        />
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <DownloadStrategicAnalysis
+            strategicData={localStrategicData}
+            businessName={businessName}
+            isDisabled={!localStrategicData || isLoading || isRegenerating}
+            size="medium"
+          />
+
+          <RegenerateButton
+            onRegenerate={handleRegenerate}
+            isRegenerating={isRegenerating}
+            canRegenerate={canRegenerate}
+            sectionName="Strategic Analysis"
+            size="medium"
+            buttonText="Generate"
+          />
+        </div>
+
       </div>
-      
+
       <div className="dashboard-container">
         {renderStrategicContent()}
       </div>
