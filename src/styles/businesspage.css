@@ -1434,7 +1434,9 @@ html, body {
   .desktop-tabs {
     display: none;
   }
-
+  .analysis-content{
+    overflow-x: hidden;
+  }
   .desktop-expanded-analysis {
     display: none !important;
   }
@@ -1663,7 +1665,7 @@ html, body {
 
   .swot-analysis,
   .analysis-content:not(.analysis-content-wrapper) {
-    display: none;
+    /* display: none; */
   }
 
   .analysis-header {
@@ -2262,6 +2264,7 @@ html, body {
 
   .analysis-controls-wrapper button {
     justify-content: center;
+    width: 70%;
   }
 
   .analysis-controls-wrapper .dropdown-wrapper {
@@ -2413,7 +2416,7 @@ html, body {
 @media (max-width: 768px) {
   .phase-tabs-container {
     padding: 12px 16px 0 16px;
-    flex-direction: column;
+    
     gap: 12px;
     align-items: stretch;
   }
@@ -2421,11 +2424,33 @@ html, body {
   .phase-dropdown-section {
     justify-content: center;
   }
- 
+  .dropdown-button{
+    background-color: #fff;
+  color: rgb(59, 130, 246);
+  border: 1px solid rgb(225, 229, 233);
+  border-radius: 10px;
+  padding: 8px 3px !important;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: rgba(59, 130, 246, 0.15) 0px 2px 8px;
+  min-width: 120px!important;
+  justify-content: space-between;
+  margin-right: 0px;
+  }
+  .dropdown-wrapper{
+    position: relative;
+    right: 20%;
+    width: 100%;
+  }
   .phase-tab {
     min-width: 100px;
     padding: 10px 16px;
     font-size: 13px;
+    right: 20px;
   }
  
   .phase-info {
@@ -2442,3 +2467,73 @@ html, body {
     transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
+
+
+/* Responsive changes */
+@media (max-width: 768px) {
+  .phase-tabs-container {
+  width: 100%;
+}
+
+.phase-tabs-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap; /* allows wrapping on small screens */
+}
+
+/* Phase tabs nav */
+.phase-tabs-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.phase-tab {
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.phase-tab.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.phase-tabs-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+
+  .phase-tabs-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .phase-tabs-nav {
+    width: 100%;
+    padding-bottom: 4px;
+  }
+
+  .phase-tabs-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .dropdown-button,
+  .pdf-export-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

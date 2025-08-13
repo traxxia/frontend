@@ -7,6 +7,8 @@ const PDFExportButton = ({
   onToastMessage,
   currentPhase, // 'initial' or 'essential'
   disabled = false,
+  isChannelHeatmapReady = true,
+  isCapabilityHeatmapReady = true,
   className = "",
   style = {}
 }) => {
@@ -43,6 +45,15 @@ const PDFExportButton = ({
       onToastMessage("No analysis available for this phase", "warning");
       return;
     }
+    if (currentPhase === 'initial') {
+  if (!isChannelHeatmapReady || !isCapabilityHeatmapReady) {
+    onToastMessage(
+      "Please wait for Channel Heatmap and Capability Heatmap to finish loading before exporting PDF",
+      "warning"
+    );
+    return;
+  }
+}
 
     try {
       setIsExportingPDF(true);
@@ -57,69 +68,79 @@ const PDFExportButton = ({
       let isFirstPage = true;
 
       // Helper function to capture a single component
-      const captureComponent = async (componentSelector, componentName) => {
-        const component = document.querySelector(componentSelector);
-        if (!component) {
-          console.warn(`Component not found: ${componentName}`);
-          return false;
-        }
+     const captureComponent = async (componentSelector, componentName) => {
+  const component = document.querySelector(componentSelector);
+  if (!component) {
+    console.warn(`Component not found: ${componentName}`);
+    return false;
+  }
 
-        try {
-          // Hide all buttons in this component during capture
-          const buttons = component.querySelectorAll('button');
-          const originalDisplay = [];
-          buttons.forEach((btn, index) => {
-            originalDisplay[index] = btn.style.display;
-            btn.style.display = 'none';
-          });
+  // Save and remove scroll restrictions for heatmap scroll areas
+  const scrollAreas = component.querySelectorAll('.ch-heatmap-scroll');
+  const originalStyles = [];
+  scrollAreas.forEach((area, i) => {
+    originalStyles[i] = {
+      overflowX: area.style.overflowX,
+      width: area.style.width,
+      maxWidth: area.style.maxWidth
+    };
+    area.style.overflowX = 'visible';
+    area.style.width = 'auto';
+    area.style.maxWidth = 'none';
+  });
 
-          // Capture the component
-          const canvas = await html2canvas(component, {
-            scale: 1.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            logging: false,
-            height: component.scrollHeight,
-            width: component.scrollWidth
-          });
+  // Hide all buttons
+  const buttons = component.querySelectorAll('button');
+  const originalDisplay = [];
+  buttons.forEach((btn, index) => {
+    originalDisplay[index] = btn.style.display;
+    btn.style.display = 'none';
+  });
 
-          // Restore buttons
-          buttons.forEach((btn, index) => {
-            btn.style.display = originalDisplay[index];
-          });
+  try {
+    const canvas = await html2canvas(component, {
+      scale: 1.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
 
-          // Add new page if not the first component
-          if (!isFirstPage) {
-            pdf.addPage();
-          }
+    if (!isFirstPage) pdf.addPage();
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(59, 130, 246);
+    pdf.text(componentName, 20, 25);
 
-          // Add component title
-          pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246); // Blue color
-          pdf.text(componentName, 20, 25);
+    const imgData = canvas.toDataURL('image/png', 0.8);
+    const imgWidth = pageWidth - 40;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const maxHeight = pageHeight - 60;
+    const finalHeight = imgHeight > maxHeight ? maxHeight : imgHeight;
+    const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
 
-          // Calculate image dimensions to fit page
-          const imgData = canvas.toDataURL('image/png', 0.8);
-          const imgWidth = pageWidth - 40; // 20mm margin on each side
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          
-          // Check if image fits on page, scale down if needed
-          const maxHeight = pageHeight - 60; // Leave space for title and margins
-          const finalHeight = imgHeight > maxHeight ? maxHeight : imgHeight;
-          const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
+    pdf.addImage(imgData, 'PNG', 20, 35, finalWidth, finalHeight);
+    isFirstPage = false;
 
-          pdf.addImage(imgData, 'PNG', 20, 35, finalWidth, finalHeight);
+    return true;
+  } catch (error) {
+    console.error(`Failed to capture ${componentName}:`, error);
+    return false;
+  } finally {
+    // Restore button visibility
+    buttons.forEach((btn, index) => {
+      btn.style.display = originalDisplay[index];
+    });
 
-          isFirstPage = false;
-          return true;
+    // Restore original scroll styles
+    scrollAreas.forEach((area, i) => {
+      area.style.overflowX = originalStyles[i].overflowX;
+      area.style.width = originalStyles[i].width;
+      area.style.maxWidth = originalStyles[i].maxWidth;
+    });
+  }
+};
 
-        } catch (error) {
-          console.error(`Failed to capture ${componentName}:`, error);
-          return false;
-        }
-      };
 
       // Add PDF cover page
       pdf.setFontSize(24);
@@ -148,7 +169,7 @@ const PDFExportButton = ({
           capturedCount++;
         }
         // Small delay between captures to ensure rendering
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
       if (capturedCount === 0) {
@@ -240,7 +261,7 @@ const PDFExportButton = ({
           </div>
         </div>
       )}
-
+      
       <button
         onClick={handleDownloadPhaseAnalysis}
         disabled={disabled || isExportingPDF}

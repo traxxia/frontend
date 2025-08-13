@@ -33,6 +33,7 @@ const BusinessSetupPage = () => {
   const business = location.state?.business;
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
+
   const { t } = useTranslation();
 
   // Constants
@@ -104,6 +105,8 @@ const BusinessSetupPage = () => {
   const [maturityData, setMaturityData] = useState(null);
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
+  const [isChannelHeatmapReady, setIsChannelHeatmapReady] = useState(false);
+const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
 
   // Refs
   const cultureProfileRef = useRef(null);
@@ -379,13 +382,15 @@ const BusinessSetupPage = () => {
               </div>
 
               {/* PDF Export Button */}
-              <PDFExportButton style={{
+              <PDFExportButton className="pdf-export-button" style={{
                 marginRight: "10px"
               }}
                 businessName={businessData.name}
                 onToastMessage={showToastMessage}
                 currentPhase={selectedPhase}
                 disabled={isAnalysisRegenerating}
+                isChannelHeatmapReady={isChannelHeatmapReady}
+                isCapabilityHeatmapReady={isCapabilityHeatmapReady}
               />
             </div>
           </div>
@@ -2269,7 +2274,12 @@ const BusinessSetupPage = () => {
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}
-            onDataGenerated={setChannelHeatmapData}
+             onDataGenerated={(data) => {
+    setChannelHeatmapData(data);
+    if (data && data.matrix && data.matrix.length > 0) {
+      setIsChannelHeatmapReady(true);
+    }
+  }}
             onRegenerate={createIndividualRegenerationHandler(
               'channelHeatmap',
               'channel-heatmap',
@@ -2313,7 +2323,12 @@ const BusinessSetupPage = () => {
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}
-            onDataGenerated={setCapabilityHeatmapData}
+             onDataGenerated={(data) => {
+    setCapabilityHeatmapData(data);
+    if (data && data.capabilities && data.capabilities.length > 0) {
+      setIsCapabilityHeatmapReady(true);
+    }
+  }}
             onRegenerate={createIndividualRegenerationHandler(
               'capabilityHeatmap',
               'capability-heatmap',
