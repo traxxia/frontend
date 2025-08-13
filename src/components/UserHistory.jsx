@@ -33,7 +33,7 @@ import OrganizationalCultureProfile from '../components/OrganizationalCulturePro
 import ProductivityMetrics from '../components/ProductivityMetrics';
 import MaturityScoreLight from '../components/MaturityScoreLight';
 import StrategicAnalysis from '../components/StrategicAnalysis';
-import PDFExportComponent from '../components/PDFExportComponent';
+import HistoryPDFDownload from './HistoryPDFDownload';
 import '../styles/UserHistory.css';
 
 // Constants
@@ -773,21 +773,22 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
               <LoadingState message="Loading business data..." />
             ) : (
               <TabContent
-                activeTab={activeTab}
-                businesses={businesses}
-                currentUserDetails={currentUserDetails}
-                analysisData={analysisData}
-                selectedBusiness={selectedBusiness}
-                selectedBusinessId={selectedBusiness}
-                onBusinessChange={handleBusinessChange}
-                isLoadingBusiness={isLoadingBusiness}
-                selectedPhase={selectedPhase}
-                availablePhases={availablePhases}
-                selectedStrategicPhase={selectedStrategicPhase}
-                phaseManager={phaseManager}
-                onPhaseChange={handlePhaseChange}
-                onStrategicPhaseChange={handleStrategicPhaseChange}
-              />
+  activeTab={activeTab}
+  businesses={businesses}
+  currentUserDetails={currentUserDetails}
+  analysisData={analysisData}
+  selectedBusiness={selectedBusiness}
+  selectedBusinessId={selectedBusiness}
+  onBusinessChange={handleBusinessChange}
+  isLoadingBusiness={isLoadingBusiness}
+  selectedPhase={selectedPhase}
+  availablePhases={availablePhases}
+  selectedStrategicPhase={selectedStrategicPhase}
+  phaseManager={phaseManager}
+  onPhaseChange={handlePhaseChange}
+  onStrategicPhaseChange={handleStrategicPhaseChange}
+  userDetails={currentUserDetails} // Add this line
+/>
             )}
           </div>
         </>
@@ -826,14 +827,14 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
         <h3 className="user-name-header">User Name: {user?.name}</h3>
       </div>
       <div className="header-right">
-        <PDFExportComponent
+        {/* <HistoryPDFDownload
           user={user}
           userDetails={currentUserDetails}
           onToast={() => { }}
           buttonText="Export PDF"
           buttonSize="medium"
           className=""
-        />
+        /> */}
         <button onClick={onClose} className="close-button">
           <X size={20} />
         </button>
@@ -909,7 +910,8 @@ const TabContent = ({
   selectedStrategicPhase,
   phaseManager,
   onPhaseChange,
-  onStrategicPhaseChange
+  onStrategicPhaseChange,
+  userDetails // Add this parameter
 }) => {
   const getSelectedBusinessName = () => {
     if (!selectedBusiness) return 'Select a Business';
@@ -948,6 +950,7 @@ const TabContent = ({
           selectedPhase={selectedPhase}
           availablePhases={availablePhases}
           onPhaseChange={onPhaseChange}
+          userDetails={userDetails} // Pass userDetails here
         />
       );
     case 'strategic':
@@ -1171,7 +1174,7 @@ const QuestionItem = ({ question }) => (
   </div>
 );
 
-// Enhanced AnalysisTab Component with Phase Support
+// Enhanced AnalysisTab Component with Phase Support and Export
 const AnalysisTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -1184,7 +1187,8 @@ const AnalysisTab = ({
   conversationCount = 0,
   selectedPhase = 'initial',
   availablePhases = [],
-  onPhaseChange = () => {}
+  onPhaseChange = () => {},
+  userDetails = {} // Add userDetails prop
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -1243,9 +1247,15 @@ const AnalysisTab = ({
         stats={stats}
       />
       
-      {/* Phase Navigation for Analysis Tab */}
+      {/* Phase Navigation for Analysis Tab with Export Button */}
       {availablePhases.length > 0 && (
-        <div className="phase-tabs-container" style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+        <div className="phase-tabs-container" style={{ 
+          marginTop: '1rem', 
+          marginBottom: '1rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
           <div className="phase-tabs-nav">
             {availablePhases.map(phase => (
               <button
@@ -1257,6 +1267,16 @@ const AnalysisTab = ({
               </button>
             ))}
           </div>
+          
+          {/* Export Button */}
+          {hasCurrentPhaseAnalysis && (
+            <HistoryPDFDownload
+              analysisData={analysisData}
+              currentPhase={selectedPhase}
+              businessName={selectedBusiness}
+              userDetails={userDetails}
+            />
+          )}
         </div>
       )}
 
@@ -1370,8 +1390,7 @@ const AnalysisComponents = ({ analysisData, selectedPhase }) => {
     { key: 'loyaltyNPS', Component: LoyaltyNPS, propName: 'loyaltyNPSData' },
     { key: 'capabilityHeatmap', Component: CapabilityHeatmap, propName: 'capabilityHeatmapData' },
     { key: 'porters', Component: PortersFiveForces, propName: 'portersData' },
-    { key: 'pestel', Component: PestelAnalysis, propName: 'pestelData' },
-    { key: 'strategic', Component: StrategicAnalysis, propName: 'strategicData' }
+    { key: 'pestel', Component: PestelAnalysis, propName: 'pestelData' } 
   ];
 
   const essentialPhaseTypes = [

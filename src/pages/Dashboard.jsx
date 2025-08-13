@@ -10,7 +10,6 @@ import {
   Modal,
   Form,
   Alert,
-  Dropdown,
 } from "react-bootstrap";
 import {
   ArrowRight, Info, X, MoreVertical, Trash2
@@ -52,6 +51,10 @@ const Dashboard = () => {
 
   // Tour modal state
   const [showHowModal, setShowHowModal] = useState(false);
+
+  // Custom menu state for alternatives
+  const [showCustomMenu, setShowCustomMenu] = useState({});
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -252,6 +255,8 @@ const Dashboard = () => {
     setBusinessToDelete(business);
     setShowDeleteModal(true);
     setDeleteError('');
+    // Close any open custom menus
+    setShowCustomMenu({});
   };
 
   const handleCloseDeleteModal = () => {
@@ -266,6 +271,170 @@ const Dashboard = () => {
     }
   };
 
+  // Custom menu functions
+  const toggleCustomMenu = (businessId) => {
+    setShowCustomMenu(prev => ({
+      ...prev,
+      [businessId]: !prev[businessId]
+    }));
+  };
+
+  // Close custom menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowCustomMenu({});
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Different delete button alternatives
+  const DeleteButtonAlternatives = ({ business, viewType }) => {
+    const stats = business.question_statistics || {};
+    const progress = stats.progress_percentage || 0;
+    const completedQuestions = stats.completed_questions || 0;
+    const totalQuestions = stats.total_questions || 0;
+    const remainingQuestions = stats.pending_questions || 0;
+
+    // Alternative 1: Simple Delete Button (Always Visible)
+    const SimpleDeleteButton = () => (
+      <button
+        className="btn btn-outline-danger btn-sm delete-btn-simple"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleShowDeleteModal(business);
+        }}
+        title="Delete Business"
+      >
+        <Trash2 size={16} />
+      </button>
+    );
+
+    // Alternative 2: Delete Button on Hover
+    const HoverDeleteButton = () => (
+      <>
+        {hoveredItem === business._id && (
+          <button
+            className="btn btn-outline-danger btn-sm delete-btn-hover"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShowDeleteModal(business);
+            }}
+            title="Delete Business"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </>
+    );
+
+    // Alternative 3: Custom Menu (No Bootstrap Dropdown)
+    const CustomMenuButton = () => (
+      <div className="custom-menu-container position-relative">
+        <button
+          className="btn btn-link p-1 menu-trigger"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleCustomMenu(business._id);
+          }}
+          style={{ color: '#6c757d' }}
+        >
+          <MoreVertical size={16} />
+        </button>
+        
+        {showCustomMenu[business._id] && (
+          <div className="custom-dropdown-menu">
+            <button
+              className="custom-menu-item"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShowDeleteModal(business);
+                setShowCustomMenu(prev => ({ ...prev, [business._id]: false }));
+              }}
+            >
+              <Trash2 size={16} />
+              {t('delete_business')}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+
+    // Alternative 4: Icon Button with Confirmation
+    const IconDeleteButton = () => (
+      <button
+        className="btn btn-link p-1 delete-icon-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (window.confirm(`Are you sure you want to delete "${business.business_name}"?`)) {
+            handleShowDeleteModal(business);
+          }
+        }}
+        style={{ color: '#dc3545' }}
+        title="Delete Business"
+      >
+        <Trash2 size={18} />
+      </button>
+    );
+
+    return (
+      <div
+        className="business-item d-flex align-items-center p-3 border-bottom position-relative"
+        onMouseEnter={() => setHoveredItem(business._id)}
+        onMouseLeave={() => setHoveredItem(null)}
+      >
+        <div
+          style={{ width: 60, height: 60, cursor: "pointer" }}
+          className="progress-circle me-3"
+          onClick={() => handleBusinessClick(business)}
+        >
+          <CircularProgressbar
+            value={progress}
+            text={`${Math.round(progress)}%`}
+            styles={buildStyles({
+              pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
+              textColor: "#000",
+              trailColor: "#e9ecef",
+              textSize: "28px",
+              pathTransitionDuration: 0.5,
+            })}
+          />
+        </div>
+
+        <div
+          className="flex-grow-1"
+          onClick={() => handleBusinessClick(business)}
+          style={{ cursor: "pointer" }}
+        >
+          <h6 className="mb-1">{business.business_name}</h6>
+          <small className="text-muted">
+            {completedQuestions}/{totalQuestions} {t('questions_completed')}
+            {remainingQuestions > 0 && (
+              <span className="text-warning ms-2">
+                • {remainingQuestions} {t('remaining')}
+              </span>
+            )}
+          </small>
+        </div>
+
+        {/* Choose one of these alternatives */}
+        
+        {/* Option 1: Simple Delete Button - Always visible */}
+        <SimpleDeleteButton />
+        
+        {/* Option 2: Delete Button on Hover - Uncomment to use */}
+        {/* <HoverDeleteButton /> */}
+        
+        {/* Option 3: Custom Menu - Uncomment to use */}
+        {/* <CustomMenuButton /> */}
+        
+        {/* Option 4: Icon Delete Button - Uncomment to use */}
+        {/* <IconDeleteButton /> */}
+      </div>
+    );
+  };
+
   const BusinessList = ({ businesses, viewType }) => (
     <div className={`business-list ${viewType}`}>
       {businesses.length === 0 && (
@@ -273,80 +442,13 @@ const Dashboard = () => {
           {t('no_businesses_found')}
         </div>
       )}
-      {businesses.length > 0 && businesses.map((business, index) => {
-        const stats = business.question_statistics || {};
-        const progress = stats.progress_percentage || 0;
-        const completedQuestions = stats.completed_questions || 0;
-        const totalQuestions = stats.total_questions || 0;
-        const remainingQuestions = stats.pending_questions || 0;
-
-        return (
-          <div
-            key={business._id || index}
-            className="business-item d-flex align-items-center p-3 border-bottom position-relative"
-          >
-            <div
-              style={{ width: 60, height: 60, cursor: "pointer" }}
-              className="progress-circle me-3"
-              onClick={() => handleBusinessClick(business)}
-            >
-              <CircularProgressbar
-                value={progress}
-                text={`${Math.round(progress)}%`}
-                styles={buildStyles({
-                  pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
-                  textColor: "#000",
-                  trailColor: "#e9ecef",
-                  textSize: "28px",
-                  pathTransitionDuration: 0.5,
-                })}
-              />
-            </div>
-
-            <div
-              className="flex-grow-1"
-              onClick={() => handleBusinessClick(business)}
-              style={{ cursor: "pointer" }}
-            >
-              <h6 className="mb-1">{business.business_name}</h6>
-              <small className="text-muted">
-                {completedQuestions}/{totalQuestions} {t('questions_completed')}
-                {remainingQuestions > 0 && (
-                  <span className="text-warning ms-2">
-                    • {remainingQuestions} {t('remaining')}
-                  </span>
-                )}
-              </small>
-            </div>
-
-            <Dropdown align="end" className="me-2">
-              <Dropdown.Toggle
-                variant="link"
-                className="p-0 border-0 shadow-none"
-                style={{ color: '#6c757d' }}
-                data-bs-display="static"
-              >
-                {/* <MoreVertical size={16} /> */}
-              </Dropdown.Toggle>
-
-              <Dropdown.Menu>
-                {/* <Dropdown.Item onClick={() => handleBusinessClick(business)}>
-                  <ArrowRight size={16} className="me-2" />
-                  View Business
-                </Dropdown.Item>
-                <Dropdown.Divider /> */}
-                <Dropdown.Item
-                  onClick={() => handleShowDeleteModal(business)}
-                  className="text-danger"
-                >
-                  <Trash2 size={16} className="me-2" />
-                  {t('delete_business')}
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
-        );
-      })}
+      {businesses.length > 0 && businesses.map((business, index) => (
+        <DeleteButtonAlternatives 
+          key={business._id || index} 
+          business={business} 
+          viewType={viewType} 
+        />
+      ))}
     </div>
   );
 
@@ -362,6 +464,96 @@ const Dashboard = () => {
   // Main render
   return (
     <div className="dashboard-layout">
+      <style jsx>{`
+        /* Custom Delete Button Styles */
+        .delete-btn-simple,
+        .delete-btn-hover {
+          transition: all 0.2s ease;
+        }
+
+        .delete-btn-hover {
+          animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .delete-icon-btn:hover {
+          transform: scale(1.1);
+          color: #dc3545 !important;
+        }
+
+        /* Custom Menu Styles */
+        .custom-menu-container {
+          z-index: 10;
+        }
+
+        .menu-trigger {
+          border: none !important;
+          background: none !important;
+          box-shadow: none !important;
+        }
+
+        .menu-trigger:focus {
+          box-shadow: none !important;
+        }
+
+        .custom-dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: white;
+          border: 1px solid #dee2e6;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          min-width: 150px;
+          z-index: 1000;
+          animation: slideDown 0.2s ease-out;
+        }
+
+        .custom-menu-item {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          padding: 10px 12px;
+          border: none;
+          background: none;
+          color: #dc3545;
+          font-size: 14px;
+          cursor: pointer;
+          gap: 8px;
+          transition: background-color 0.2s ease;
+        }
+
+        .custom-menu-item:hover {
+          background-color: #f8f9fa;
+        }
+
+        /* Dark theme support */
+        [data-theme="dark"] .custom-dropdown-menu {
+          background: var(--color-bg-secondary);
+          border-color: var(--color-border-light);
+        }
+
+        [data-theme="dark"] .custom-menu-item:hover {
+          background-color: var(--color-bg-primary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+          from { 
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+
       <MenuBar />
 
       <Container fluid className="p-0 main-content">
@@ -398,7 +590,6 @@ const Dashboard = () => {
                       {t('how_it_works')}
                     </Button>
                   </div>
-
                 </Card.Body>
               </Card>
 
@@ -432,10 +623,6 @@ const Dashboard = () => {
                             {t('how_it_works')}
                           </Button>
                         </div>
-
-
-                        {/* How It Works Modal */}
-
                       </div>
                     </Col>
 
@@ -453,6 +640,8 @@ const Dashboard = () => {
           </Row>
         </div>
       </Container>
+
+      {/* How It Works Modal */}
       {showHowModal && (
         <div className="popup-overlay" onClick={handleCloseModal}>
           <div className="popup-content large" onClick={(e) => e.stopPropagation()}>

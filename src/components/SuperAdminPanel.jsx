@@ -10,12 +10,14 @@ import {
   CheckCircle,
   AlertCircle,
   History,
-  Shield
+  Shield,
+  Activity
 } from 'lucide-react';
 import CompanyManagement from './CompanyManagement';
 import QuestionManagement from './QuestionManagement';
 import UserOverview from './UserOverview';
 import UserHistory from './UserHistory';
+import AuditTrail from './AuditTrail';
 import '../styles/superadmin.css';
 
 const SuperAdminPanel = () => {
@@ -47,6 +49,7 @@ const SuperAdminPanel = () => {
     { id: 'companies', label: 'Companies', icon: Building2 },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'history', label: 'User History', icon: History },
+    { id: 'audit', label: 'Audit Trail', icon: Activity },
     { id: 'questions', label: 'Questions', icon: HelpCircle, superAdminOnly: true }
   ];
 
@@ -64,6 +67,8 @@ const SuperAdminPanel = () => {
         return <UserOverview onToast={showToastMessage} />;
       case 'history':
         return <UserHistory onToast={showToastMessage} />;
+      case 'audit':
+        return <AuditTrail onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }

@@ -1,21 +1,16 @@
 import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
-import { useTranslation } from "../hooks/useTranslation";
 
-const PDFExportButton = ({ 
-  businessName, 
-  onToastMessage,
-  currentPhase, // 'initial' or 'essential'
-  disabled = false,
-  isChannelHeatmapReady = true,
-  isCapabilityHeatmapReady = true,
-  className = "",
-  style = {}
+const HistoryPDFDownload = ({ 
+  analysisData, 
+  currentPhase, 
+  businessName,
+  userDetails,
+  className = ""
 }) => {
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const { t } = useTranslation();
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Define which components belong to each phase
+  // Define which components belong to each phase (same as PDFExportButton)
   const phaseComponents = {
     initial: [
       { selector: '.swot-analysis-container, [class*="swot"]', name: 'SWOT Analysis' },
@@ -40,18 +35,13 @@ const PDFExportButton = ({
     ]
   };
 
-  const handleDownloadPhaseAnalysis = async () => {
+  const handleExport = async () => {
     if (!currentPhase || !phaseComponents[currentPhase]) {
       return;
     }
-    if (currentPhase === 'initial') {
-      if (!isChannelHeatmapReady || !isCapabilityHeatmapReady) {
-        return;
-      }
-    }
 
     try {
-      setIsExportingPDF(true);
+      setIsExporting(true);
 
       const jsPDF = (await import('jspdf')).default;
       const html2canvas = (await import('html2canvas')).default;
@@ -135,6 +125,75 @@ const PDFExportButton = ({
         }
       };
 
+      // Helper function to add conversation history
+      const addConversationHistory = async () => {
+        if (!userDetails?.conversation || userDetails.conversation.length === 0) {
+          return false;
+        }
+
+        if (!isFirstPage) pdf.addPage();
+        
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(59, 130, 246);
+        pdf.text('Conversation History', 20, 25);
+
+        let yPosition = 40;
+        pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'normal');
+
+        userDetails.conversation.forEach((phase, phaseIndex) => {
+          // Add phase header
+          if (yPosition > pageHeight - 30) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${phase.phase.charAt(0).toUpperCase() + phase.phase.slice(1)} Phase`, 20, yPosition);
+          yPosition += 8;
+          pdf.setFont('helvetica', 'normal');
+
+          phase.questions?.forEach((qa, qaIndex) => {
+            // Question
+            if (yPosition > pageHeight - 20) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            
+            const questionLines = pdf.splitTextToSize(`Q${qaIndex + 1}: ${qa.question}`, pageWidth - 40);
+            questionLines.forEach(line => {
+              if (yPosition > pageHeight - 10) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(line, 20, yPosition);
+              yPosition += 4;
+            });
+
+            // Answer
+            yPosition += 2;
+            const answerLines = pdf.splitTextToSize(`A: ${qa.answer}`, pageWidth - 40);
+            answerLines.forEach(line => {
+              if (yPosition > pageHeight - 10) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(line, 20, yPosition);
+              yPosition += 4;
+            });
+            
+            yPosition += 4; // Space between Q&A pairs
+          });
+          
+          yPosition += 6; // Space between phases
+        });
+
+        isFirstPage = false;
+        return true;
+      };
+
       // Add PDF cover page
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
@@ -152,6 +211,9 @@ const PDFExportButton = ({
 
       isFirstPage = false;
 
+      // Add conversation history first
+      await addConversationHistory();
+
       // Capture all components for the current phase
       const components = phaseComponents[currentPhase];
       let capturedCount = 0;
@@ -166,7 +228,8 @@ const PDFExportButton = ({
       }
 
       if (capturedCount === 0) {
-        return;
+        // If no components captured, at least we have conversation history
+        console.warn('No analysis components found to capture');
       }
 
       // Generate filename
@@ -179,16 +242,14 @@ const PDFExportButton = ({
     } catch (error) {
       console.error('PDF generation error:', error);
     } finally {
-      setIsExportingPDF(false);
+      setIsExporting(false);
     }
   };
-
-  const phaseLabel = currentPhase === 'initial' ? 'Initial' : 'Essential';
 
   return (
     <>
       {/* Loading Overlay */}
-      {isExportingPDF && (
+      {isExporting && (
         <div
           style={{
             position: 'fixed',
@@ -240,19 +301,19 @@ const PDFExportButton = ({
                 color: '#6b7280'
               }}
             >
-              Creating {phaseLabel} phase analysis for {businessName}...
+              Creating {currentPhase === 'initial' ? 'Initial' : 'Essential'} phase report for {businessName}...
             </p>
           </div>
         </div>
       )}
       
       <button
-        onClick={handleDownloadPhaseAnalysis}
-        disabled={disabled || isExportingPDF}
-        className={`${className} ${isExportingPDF ? 'animate-pulse' : ''}`}
+        onClick={handleExport}
+        disabled={isExporting || !analysisData}
+        className={`${className} ${isExporting ? 'animate-pulse' : ''}`}
         style={{
-          backgroundColor: isExportingPDF ? "#f3f4f6" : "#1a73e8",
-          color: isExportingPDF ? "#6b7280" : "#fff",
+          backgroundColor: isExporting ? "#f3f4f6" : "#1a73e8",
+          color: isExporting ? "#6b7280" : "#fff",
           border: "none",
           borderRadius: "10px",
           padding: "10px 18px",
@@ -260,14 +321,13 @@ const PDFExportButton = ({
           fontWeight: 600,
           display: "flex",
           alignItems: "center",
-          cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
+          cursor: isExporting || !analysisData ? "not-allowed" : "pointer",
           gap: "8px",
           transition: "all 0.2s ease",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          ...style
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
         }}
         onMouseEnter={(e) => {
-          if (!isExportingPDF && !disabled) {
+          if (!isExporting && analysisData) {
             e.target.style.transform = "translateY(-1px)";
             e.target.style.boxShadow = "0 4px 12px rgba(26, 115, 232, 0.3)";
           }
@@ -277,7 +337,7 @@ const PDFExportButton = ({
           e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
         }}
       >
-        {isExportingPDF ? (
+        {isExporting ? (
           <>
             <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
             Generating PDF...
@@ -285,7 +345,7 @@ const PDFExportButton = ({
         ) : (
           <>
             <Download size={16} />
-            Download
+            Export PDF
           </>
         )}
       </button>
@@ -293,4 +353,4 @@ const PDFExportButton = ({
   );
 };
 
-export default PDFExportButton;
+export default HistoryPDFDownload;

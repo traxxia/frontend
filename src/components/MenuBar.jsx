@@ -5,7 +5,7 @@ import { LogOut, Settings, Home, User, Archive, FileText, Shield } from 'lucide-
 import "../styles/menubar.css";
 import { useTranslation } from '../hooks/useTranslation';
 
-const MenuBar = ( ) => {
+const MenuBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -14,6 +14,7 @@ const MenuBar = ( ) => {
   const [userRole, setUserRole] = useState('');
   const [companyLogo, setCompanyLogo] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   const { t } = useTranslation();
 
@@ -29,14 +30,30 @@ const MenuBar = ( ) => {
     setUserRole(userRoleStored || '');
     setCompanyLogo(companyLogoStored || '');
     setCompanyName(companyNameStored || '');
-    
-    // Check if user is super admin
     setIsSuperAdmin(userRoleStored === 'super_admin');
   }, []);
+  const logout = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
 
+      if (token) {
+        await fetch(`${REACT_APP_BACKEND_URL}/api/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      sessionStorage.clear();
+      navigate('/login');
+    }
+  };
   const handleLogout = () => {
-    sessionStorage.clear();
-    navigate('/login');
+    logout();
   };
 
   const isCurrentPage = (path) => location.pathname === path;
@@ -44,7 +61,7 @@ const MenuBar = ( ) => {
   const handleAdminClick = () => navigate('/super-admin');
   const handleDashboardClick = () => navigate('/dashboard');
   const handleSuperAdminClick = () => navigate('/super-admin');
-  
+
   // Handler for audit trail navigation
   const handleAuditTrailClick = () => navigate('/audit-trail');
 
@@ -52,11 +69,11 @@ const MenuBar = ( ) => {
     <Navbar className="traxia-navbar p-0">
       <Container fluid className="px-3 py-2">
         <div className="d-flex align-items-center justify-content-between w-100">
-          
+
           {/* Left side - Company Logo */}
           <div className="navbar-left">
             {companyLogo && (
-              <div 
+              <div
                 className="company-logo"
                 onClick={() => navigate('/dashboard')}
                 style={{ cursor: 'pointer' }}
@@ -64,14 +81,13 @@ const MenuBar = ( ) => {
                 <img
                   src={companyLogo}
                   alt={companyName ? `${companyName} Logo` : t('company_logo_alt') || "Company Logo"}
-                  style={{ 
+                  style={{
                     height: '50px',
                     maxWidth: '100px',
                     marginLeft: '20px',
                     objectFit: 'contain'
                   }}
                   onError={(e) => {
-                    // Hide the company logo if it fails to load
                     e.target.style.display = 'none';
                   }}
                 />
@@ -102,7 +118,7 @@ const MenuBar = ( ) => {
                 id="dropdown-user"
                 className="user-menu p-0 border-0 shadow-none"
               >
-                <User size={20} className="navbar_icon"/>
+                <User size={20} className="navbar_icon" />
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
                 <Dropdown.Header className="text-muted small">
@@ -119,7 +135,7 @@ const MenuBar = ( ) => {
                   )}
                 </Dropdown.Header>
                 <Dropdown.Divider />
-                
+
                 {/* Dashboard Link */}
                 <Dropdown.Item
                   onClick={handleDashboardClick}
@@ -134,7 +150,7 @@ const MenuBar = ( ) => {
                   <Dropdown.Item
                     onClick={handleSuperAdminClick}
                     className={`dropdown-item-traxia ${isCurrentPage('/super-admin') ? 'active' : ''}`}
-                    style={{ 
+                    style={{
                       background: isCurrentPage('/super-admin') ? '#fef3c7' : 'transparent',
                       color: isCurrentPage('/super-admin') ? '#92400e' : '#495057'
                     }}
@@ -179,7 +195,7 @@ const MenuBar = ( ) => {
                 */}
 
                 <Dropdown.Divider />
-                
+
                 {/* Logout */}
                 <Dropdown.Item
                   onClick={handleLogout}

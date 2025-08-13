@@ -940,12 +940,14 @@ const StrategicAnalysis = ({
         </div>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <DownloadStrategicAnalysis
-            strategicData={localStrategicData}
-            businessName={businessName}
-            isDisabled={!localStrategicData || isLoading || isRegenerating}
-            size="medium"
-          />
+           {!isRegenerating && canRegenerate && (
+            <DownloadStrategicAnalysis
+              strategicData={localStrategicData}
+              businessName={businessName}
+              isDisabled={!localStrategicData || isLoading || isRegenerating}
+              size="medium"
+            />
+          )}
 
           <RegenerateButton
             onRegenerate={handleRegenerate}

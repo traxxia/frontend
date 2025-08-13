@@ -106,7 +106,7 @@ const BusinessSetupPage = () => {
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
   const [isChannelHeatmapReady, setIsChannelHeatmapReady] = useState(false);
-const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
+  const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
 
   // Refs
   const cultureProfileRef = useRef(null);
@@ -1255,10 +1255,36 @@ const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
       setIsAnalysisRegenerating(true);
 
       if (forceRegenerate || (updatedQuestionId && updatedAnswer)) {
-        showToastMessage("Regenerating all analysis components...", "info");
+        showToastMessage(`Regenerating all ${selectedPhase} phase analysis components...`, "info");
       }
 
-      clearAllAnalysisData();
+      // Clear analysis data based on current phase
+      if (selectedPhase === 'initial') {
+        // Clear initial phase data
+        setSwotAnalysisResult("");
+        setPurchaseCriteriaData(null);
+        setChannelHeatmapData(null);
+        setLoyaltyNPSData(null);
+        setCapabilityHeatmapData(null);
+        setStrategicData(null);
+        setPortersData(null);
+        setPestelData(null);
+      } else if (selectedPhase === 'essential') {
+        // Clear essential phase data
+        setFullSwotData(null);
+        setCustomerSegmentationData(null);
+        setCompetitiveAdvantageData(null);
+        setChannelEffectivenessData(null);
+        setExpandedCapabilityData(null);
+        setStrategicGoalsData(null);
+        setStrategicRadarData(null);
+        setCultureProfileData(null);
+        setProductivityData(null);
+        setMaturityData(null);
+        // Also regenerate strategic analysis for essential phase
+        setStrategicData(null);
+      }
+
       await new Promise(resolve => setTimeout(resolve, 200));
 
       let answersToUse = { ...userAnswers };
@@ -1266,21 +1292,35 @@ const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
         answersToUse[updatedQuestionId] = updatedAnswer;
       }
 
-      // Generate initial phase analysis
-      const analysisPromises = [
-        generateSWOTAnalysisWithAnswers(answersToUse),
-        generateSingleAnalysisWithAnswers('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, answersToUse),
-        generateSingleAnalysisWithAnswers('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, answersToUse),
-        generateSingleAnalysisWithAnswers('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, answersToUse),
-        generateSingleAnalysisWithAnswers('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, answersToUse),
-        generateStrategicAnalysisWithAnswers(answersToUse), // Simplified call
-        generatePortersAnalysisWithAnswers(answersToUse),
-        generatePestelAnalysisWithAnswers(answersToUse)
-      ];
+      let analysisPromises = [];
 
-      if (phaseManager.canGenerateFullSwot()) {
-        analysisPromises.push(generateFullSwotPortfolio(answersToUse));
-        analysisPromises.push(generateSingleAnalysisWithAnswers('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, answersToUse));
+      if (selectedPhase === 'initial') {
+        // Generate initial phase analysis
+        analysisPromises = [
+          generateSWOTAnalysisWithAnswers(answersToUse),
+          generateSingleAnalysisWithAnswers('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', setPurchaseCriteriaData, answersToUse),
+          generateSingleAnalysisWithAnswers('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', setLoyaltyNPSData, answersToUse),
+          generateSingleAnalysisWithAnswers('channelHeatmap', 'channel-heatmap', 'channelHeatmap', setChannelHeatmapData, answersToUse),
+          generateSingleAnalysisWithAnswers('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', setCapabilityHeatmapData, answersToUse),
+          generateStrategicAnalysisWithAnswers(answersToUse),
+          generatePortersAnalysisWithAnswers(answersToUse),
+          generatePestelAnalysisWithAnswers(answersToUse)
+        ];
+      } else if (selectedPhase === 'essential') {
+        // Generate essential phase analysis
+        analysisPromises = [
+          generateFullSwotPortfolio(answersToUse),
+          generateSingleAnalysisWithAnswers('customerSegmentation', 'customer-segment', 'customerSegmentation', setCustomerSegmentationData, answersToUse),
+          generateCompetitiveAdvantage(answersToUse),
+          generateChannelEffectiveness(answersToUse),
+          generateExpandedCapability(answersToUse),
+          generateStrategicGoals(answersToUse),
+          generateStrategicRadar(answersToUse),
+          generateCultureProfile(answersToUse),
+          generateProductivityMetrics(answersToUse),
+          generateMaturityScore(answersToUse),
+          generateStrategicAnalysisWithAnswers(answersToUse) // Include strategic analysis for essential phase too
+        ];
       }
 
       const results = await Promise.allSettled(analysisPromises);
@@ -1288,18 +1328,18 @@ const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
 
       if (failures.length > 0) {
         showToastMessage(
-          `${analysisPromises.length - failures.length}/${analysisPromises.length} analyses completed successfully.`,
+          `${analysisPromises.length - failures.length}/${analysisPromises.length} ${selectedPhase} phase analyses completed successfully.`,
           failures.length < analysisPromises.length ? "warning" : "error"
         );
       } else {
         if (forceRegenerate || (updatedQuestionId && updatedAnswer)) {
-          showToastMessage("All analysis components regenerated successfully!", "success");
+          showToastMessage(`All ${selectedPhase} phase analysis components regenerated successfully!`, "success");
         }
       }
 
     } catch (error) {
       console.error('Error regenerating all analysis:', error);
-      showToastMessage("Failed to regenerate analysis components. Please try again.", "error");
+      showToastMessage(`Failed to regenerate ${selectedPhase} phase analysis components. Please try again.`, "error");
     } finally {
       isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
@@ -2195,20 +2235,18 @@ const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
           {isAnalysisRegenerating ? (
             <>
               <Loader size={16} className="animate-spin" />
-              Regenerating...
+              Regenerating {selectedPhase}...
             </>
           ) : (
             <>
               <RefreshCw size={16} />
-              {t('RegenerateAll') || 'Regenerate All'}
+              Regenerate All {selectedPhase === 'initial' ? 'Initial' : 'Essential'}
             </>
           )}
         </button>
-
       </div>
     );
   };
-
   // Render Analysis Content
   const renderAnalysisContent = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
@@ -2274,12 +2312,12 @@ const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}
-             onDataGenerated={(data) => {
-    setChannelHeatmapData(data);
-    if (data && data.matrix && data.matrix.length > 0) {
-      setIsChannelHeatmapReady(true);
-    }
-  }}
+            onDataGenerated={(data) => {
+              setChannelHeatmapData(data);
+              if (data && data.matrix && data.matrix.length > 0) {
+                setIsChannelHeatmapReady(true);
+              }
+            }}
             onRegenerate={createIndividualRegenerationHandler(
               'channelHeatmap',
               'channel-heatmap',
@@ -2323,12 +2361,12 @@ const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessData.name}
-             onDataGenerated={(data) => {
-    setCapabilityHeatmapData(data);
-    if (data && data.capabilities && data.capabilities.length > 0) {
-      setIsCapabilityHeatmapReady(true);
-    }
-  }}
+            onDataGenerated={(data) => {
+              setCapabilityHeatmapData(data);
+              if (data && data.capabilities && data.capabilities.length > 0) {
+                setIsCapabilityHeatmapReady(true);
+              }
+            }}
             onRegenerate={createIndividualRegenerationHandler(
               'capabilityHeatmap',
               'capability-heatmap',

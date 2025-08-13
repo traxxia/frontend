@@ -35,7 +35,7 @@ const AnalysisEmptyState = ({
     }
     
     if (!hasEnoughAnswers) {
-      return `Answer ${minimumAnswersRequired - answeredCount} more questions to generate ${analysisDisplayName.toLowerCase()} insights.`;
+      return `Answer more questions to generate ${analysisDisplayName.toLowerCase()} insights.`;
     }
     
     return `You answered the required questions, but the responses need more detail to generate meaningful ${analysisDisplayName.toLowerCase()}.`;

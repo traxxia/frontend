@@ -178,9 +178,9 @@ margin:0px;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     opacity: 0.9;
 }
-.dropdown-item:hover {
+/* .dropdown-item:hover {
   background-color: rgba(84, 58, 183, 0.1);
-}
+} */
 
 /* Notification icon */
 .notification-icon {
