@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Loader, Plus } from 'lucide-react';
+import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
 
 const UserOverview = ({ onToast }) => {
   const [users, setUsers] = useState([]);
@@ -22,6 +22,9 @@ const UserOverview = ({ onToast }) => {
     email: '',
     password: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+const rowsPerPage = 10;
+
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -121,6 +124,16 @@ const UserOverview = ({ onToast }) => {
       onToast('Error loading data', 'error');
     }
   };
+  const filteredUsers = users.filter(user => {
+    return (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+   // Pagination logic
+const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
+const startIndex = (currentPage - 1) * rowsPerPage;
+const paginatedUsers = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
 
   const loadUsers = async () => {
     try {
@@ -263,12 +276,7 @@ const handleSubmit = (e) => {
     </div>
   );
 
-  const filteredUsers = users.filter(user => {
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  
 
   if (isLoading) {
     return (
@@ -278,6 +286,22 @@ const handleSubmit = (e) => {
       </div>
     );
   }
+  const getPageNumbers = () => {
+  let startPage = Math.max(currentPage - 1, 1);
+  let endPage = startPage + 2;
+
+  if (endPage > totalPages) {
+    endPage = totalPages;
+    startPage = Math.max(endPage - 2, 1);
+  }
+
+  let pages = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  return pages;
+};
+
 
   return (
     <>
@@ -338,52 +362,80 @@ const handleSubmit = (e) => {
             ))}
           </select>
         </div>
+{/* Users Table */}
+{filteredUsers.length > 0 ? (
+  <>
+    <div className="table-container">
+      <table className="company-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {paginatedUsers.map(user => (
+            <tr key={user.id}>
+              <td>{user.name}</td>
+              <td>{user.email}</td>
+              <td>{user.company_name || 'N/A'}</td>
+              <td>
+                <span className="role-badge">
+                  {user.role === 'user' ? 'User' :
+                    user.role === 'company_admin' ? 'Company Admin' :
+                      user.role === 'super_admin' ? 'Super Admin' : user.role}
+                </span>
+              </td>
+              <td>
+                <span className={`status-badge ${user.status}`}>{user.status}</span>
+              </td>
+              <td>
+                {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div className="pagination">
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+         <ChevronLeft size={16} />
+          Previous
+        </button>
 
-        {/* Users Table */}
-        {filteredUsers.length > 0 ? (
-          <div className="table-container">
-            <table className="company-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Company</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map(user => (
-                  <tr key={user.id}>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.company_name || 'N/A'}</td>
-                    <td>
-                      <span className="role-badge">
-                        {user.role === 'user' ? 'User' : 
-                         user.role === 'company_admin' ? 'Company Admin' :
-                         user.role === 'super_admin' ? 'Super Admin' : user.role}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${user.status}`}>{user.status}</span>
-                    </td>
-                    <td>
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty-state">
-            <Users size={48} />
-            <h3>No Users Found</h3>
-            <p>Try adjusting your search or filter criteria</p>
-          </div>
-        )}
+        {getPageNumbers().map(page => (
+          <button
+            key={page}
+            className={page === currentPage ? 'active' : ''}
+            onClick={() => setCurrentPage(page)}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Next
+          <ChevronRight size={16} />
+        </button>
+      </div>
+  </>
+) : (
+  <div className="empty-state">
+    <Users size={48} />
+    <h3>No Users Found</h3>
+    <p>Try adjusting your search or filter criteria</p>
+  </div>
+)}
 
         {/* Add User Modal */}
         {showAddUser && (

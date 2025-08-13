@@ -3288,7 +3288,7 @@
 .compact-search input {
   width: 280px;
   height: 45px; /* Force same height */
-  padding: 0 14px 0 40px;
+  padding: 0 14px 0 40px !important;
   border: 1px solid #d1d5db;
   border-radius: 25px;
   background: #f9fafb;

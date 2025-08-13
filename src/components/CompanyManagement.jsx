@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Building2, Loader, Eye, Upload, X, Image, Edit } from 'lucide-react';
+import { Plus, Building2, Loader, Eye, Upload, X, Image, Edit,Search,ChevronRight,ChevronLeft } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils'; // Import the utility function
 import '../styles/CompanyManagement.css';
 import { useTranslation } from '../hooks/useTranslation';
@@ -506,6 +506,8 @@ const CompanyManagement = ({ onToast }) => {
         <div className="header-actions">
           {/* Only show search for super admin or if there are multiple companies */}
           {(isSuperAdmin || companies.length > 1) && (
+            <div className="search-box">
+            <Search size={16} />
             <input
               type="text"
               placeholder="Search companies..."
@@ -515,6 +517,7 @@ const CompanyManagement = ({ onToast }) => {
                 setCurrentPage(1);
               }}
             />
+            </div>
           )}
           {/* Only super admin can create companies */}
           {isSuperAdmin && (
@@ -605,20 +608,36 @@ const CompanyManagement = ({ onToast }) => {
           {/* Only show pagination for super admin if there are multiple pages */}
           {totalPages > 1 && isSuperAdmin && (
             <div className="pagination">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => prev - 1)}
-              >
-                Prev
-              </button>
-              <span>Page {currentPage} of {totalPages}</span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => prev + 1)}
-              >
-                Next
-              </button>
-            </div>
+  <button
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage(prev => prev - 1)}
+  >
+    <ChevronLeft size={16} />
+    Previous
+  </button>
+
+  {[...Array(totalPages)].map((_, index) => {
+    const page = index + 1;
+    return (
+      <button
+        key={page}
+        className={page === currentPage ? "active-page" : ""}
+        onClick={() => setCurrentPage(page)}
+      >
+        {page}
+      </button>
+    );
+  })}
+
+  <button
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage(prev => prev + 1)}
+  >
+    Next
+    <ChevronRight size={16} />
+  </button>
+</div>
+
           )}
         </>
       ) : (

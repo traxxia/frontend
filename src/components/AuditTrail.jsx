@@ -23,7 +23,9 @@ import {
   FileText,
   Download,
   ExternalLink,
-  Info
+  Info,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import AnalysisDataModal from './AnalysisDataModal';
 import "../styles/audittrail.css";
@@ -38,7 +40,7 @@ const AuditTrail = ({ onToast }) => {
     end_date: '',
     search_term: '',
     page: 1,
-    limit: 50,
+    limit: 10,
     include_analysis_data: false
   });
   const [users, setUsers] = useState([]);
@@ -248,7 +250,7 @@ const AuditTrail = ({ onToast }) => {
       // Silent fail
     }
   };
-
+  
   const fetchEventTypes = async () => {
     try {
       const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
@@ -802,29 +804,58 @@ const AuditTrail = ({ onToast }) => {
                 </tbody>
               </table>
 
-              {/* Pagination */}
-              {pagination.total_pages > 1 && (
+              
+          {pagination.total_pages > 1 && (
                 <div className="pagination">
+                  {/* Previous button */}
                   <button
                     disabled={pagination.page <= 1}
                     onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
                   >
+                    <ChevronLeft size={16} />
                     Previous
                   </button>
-                  
-                  <span className="page-info">
-                    Page {pagination.page} of {pagination.total_pages} 
-                    ({pagination.total} total entries)
-                  </span>
-                  
+
+                  {/* Numbered pages with max 5 visible */}
+                  {(() => {
+                    const totalPages = pagination.total_pages;
+                    const currentPage = pagination.page;
+                    const maxVisible = 5;
+
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                    let endPage = startPage + maxVisible - 1;
+
+                    if (endPage > totalPages) {
+                      endPage = totalPages;
+                      startPage = Math.max(1, endPage - maxVisible + 1);
+                    }
+
+                    return [...Array(endPage - startPage + 1)].map((_, idx) => {
+                      const pageNum = startPage + idx;
+                      return (
+                        <button
+                          key={pageNum}
+                          className={currentPage === pageNum ? "active" : ""}
+                          onClick={() => setFilters(prev => ({ ...prev, page: pageNum }))}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    });
+                  })()}
+
+                  {/* Next button */}
                   <button
                     disabled={pagination.page >= pagination.total_pages}
                     onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
                   >
                     Next
+                    <ChevronRight size={16} />
                   </button>
                 </div>
               )}
+
+
             </>
           )}
         </div>

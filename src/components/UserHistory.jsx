@@ -1496,6 +1496,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         <div className="pagination-numbers">
           {getPageNumbers().map((number, index) => (
             <button
+              style={{ margin: '0 2px' }}
               key={index}
               onClick={() => typeof number === 'number' && onPageChange(number)}
               className={`pagination-number ${number === currentPage ? 'active' : ''} ${typeof number !== 'number' ? 'dots' : ''}`}
