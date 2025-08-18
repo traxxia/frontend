@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -42,6 +41,45 @@ const ExpandedCapabilityHeatmap = ({
         );
     };
 
+    // Check if a value contains "NOT ENOUGH DATA" (case-insensitive)
+    const hasNotEnoughDataValue = (value) => {
+        if (typeof value === 'string') {
+            return value.toUpperCase().includes('NOT ENOUGH DATA');
+        }
+        return false;
+    };
+
+    // Check if any data contains "NOT ENOUGH DATA"
+    const containsNotEnoughData = (data) => {
+        if (!data) return false;
+
+        // Check capabilities array
+        if (data.capabilities && Array.isArray(data.capabilities)) {
+            for (const capability of data.capabilities) {
+                if (hasNotEnoughDataValue(capability.name) ||
+                    hasNotEnoughDataValue(capability.category) ||
+                    hasNotEnoughDataValue(capability.performanceRating) ||
+                    hasNotEnoughDataValue(capability.maturityLevel)) {
+                    return true;
+                }
+            }
+        }
+
+        // Check capability gaps
+        if (data.capabilityGaps && Array.isArray(data.capabilityGaps)) {
+            for (const gap of data.capabilityGaps) {
+                if (hasNotEnoughDataValue(gap.capability) ||
+                    hasNotEnoughDataValue(gap.currentLevel) ||
+                    hasNotEnoughDataValue(gap.requiredLevel) ||
+                    hasNotEnoughDataValue(gap.businessImpact)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    };
+
     // Check if the expanded capability data is empty/incomplete
     const isExpandedCapabilityDataIncomplete = (data) => {
         if (!data) return true;
@@ -58,6 +96,9 @@ const ExpandedCapabilityHeatmap = ({
         } else {
             processedData = data;
         }
+        
+        // Check for "NOT ENOUGH DATA" values
+        if (containsNotEnoughData(processedData)) return true;
         
         // Check if capabilities array is empty or null
         if (!processedData?.capabilities || !Array.isArray(processedData.capabilities) || processedData.capabilities.length === 0) {
@@ -129,12 +170,12 @@ const ExpandedCapabilityHeatmap = ({
                 processedData = expandedCapabilityData;
             } 
             
-            // Validate that the processed data has the expected structure
-            if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities)) {
+            // Validate that the processed data has the expected structure and doesn't contain "NOT ENOUGH DATA"
+            if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities) && !containsNotEnoughData(processedData)) {
                 setData(processedData);
                 setHasGenerated(true);
             } else {
-                console.error('Invalid data structure for ExpandedCapabilityHeatmap:', processedData);
+                console.error('Invalid data structure or insufficient data for ExpandedCapabilityHeatmap:', processedData);
                 setData(null);
                 setHasGenerated(false);
             }
@@ -277,20 +318,7 @@ const ExpandedCapabilityHeatmap = ({
     );
 
     const renderErrorState = () => (
-        <div className="expanded-capability-heatmap">
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Grid3x3 size={24} />
-                    <h2 className="cs-title">Expanded Capability Heatmap</h2>
-                </div>
-                <RegenerateButton
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    sectionName="Expanded Capability"
-                    size="medium"
-                />
-            </div>
+        <div className="expanded-capability-heatmap"> 
             <div className="error-state">
                 <div className="error-icon">⚠️</div>
                 <h3>Analysis Error</h3>
@@ -311,18 +339,10 @@ const ExpandedCapabilityHeatmap = ({
         return renderLoadingState();
     }
 
-    // Check if data is incomplete and show missing questions checker
+    // Check if data is incomplete (including "NOT ENOUGH DATA" values) and show missing questions checker
     if (!expandedCapabilityData || isExpandedCapabilityDataIncomplete(expandedCapabilityData)) {
         return (
-            <div className="expanded-capability-heatmap">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Grid3x3 className="cs-icon" size={24} />
-                        <h2 className="cs-title">Expanded Capability Heatmap</h2>
-                    </div> 
-                </div>
-
-                {/* Replace the entire empty-state div with the common component */}
+            <div className="expanded-capability-heatmap"> 
                 <AnalysisEmptyState
                     analysisType="expandedCapability"
                     analysisDisplayName="Expanded Capability Analysis"
@@ -348,22 +368,7 @@ const ExpandedCapabilityHeatmap = ({
     const capabilityGaps = data?.capabilityGaps || [];
 
     return (
-        <div className="expanded-capability-heatmap">
-            {/* Header */}
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Grid3x3 size={24} />
-                    <h2 className="cs-title">Capability Maturity Heatmap</h2>
-                </div>
-
-                <RegenerateButton
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    sectionName="Expanded Capability"
-                    size="medium"
-                />
-            </div>
+        <div className="expanded-capability-heatmap"> 
 
             {/* Legend */}
             <div className="heatmap-legend">

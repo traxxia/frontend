@@ -13,8 +13,7 @@ import {
   Loader,
   ChevronDown,
   ChevronRight
-} from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+} from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -55,9 +54,40 @@ const MaturityScore = ({
     );
   };
 
+  // Check if a value contains "NOT ENOUGH DATA" (case-insensitive)
+  const hasNotEnoughDataValue = (value) => {
+    if (typeof value === 'string') {
+      return value.toUpperCase().includes('NOT ENOUGH DATA');
+    }
+    return false;
+  };
+
+  // Check if any data contains "NOT ENOUGH DATA"
+  const containsNotEnoughData = (data) => {
+    if (!data) return false;
+
+    // Helper function to recursively check an object for "NOT ENOUGH DATA"
+    const checkObjectRecursively = (obj) => {
+      if (!obj || typeof obj !== 'object') {
+        return hasNotEnoughDataValue(obj);
+      }
+
+      if (Array.isArray(obj)) {
+        return obj.some(item => checkObjectRecursively(item));
+      }
+
+      return Object.values(obj).some(value => checkObjectRecursively(value));
+    };
+
+    return checkObjectRecursively(data);
+  };
+
   // Check if the maturity data is empty/incomplete
   const isMaturityDataIncomplete = (data) => {
     if (!data) return true;
+    
+    // Check for "NOT ENOUGH DATA" values first
+    if (containsNotEnoughData(data)) return true;
     
     // Handle various nested structures
     let scoreData;
@@ -105,6 +135,13 @@ const MaturityScore = ({
   // Transform raw API response to component-friendly format
   useEffect(() => {
     if (!maturityData) return;
+    
+    // Check for "NOT ENOUGH DATA" before processing
+    if (containsNotEnoughData(maturityData)) {
+      console.error('Maturity data contains "NOT ENOUGH DATA" values:', maturityData);
+      setTransformedData(null);
+      return;
+    }
     
     // Fixed: Handle the nested API response structure properly
     let scoreData;
@@ -220,27 +257,6 @@ const MaturityScore = ({
     return <BarChart3 size={16} />;
   };
 
-  // Component sections
-  const renderHeader = () => (
-    <div className="cs-header">
-      <div className="cs-title-section">
-        <Award className="main-icon" size={24} />
-        <div>
-          <h2 className="cs-title">Business Maturity Score</h2> 
-        </div>
-      </div>
-      {canRegenerate && onRegenerate && (
-        <RegenerateButton
-          onRegenerate={onRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Business Maturity Score"
-          size="medium"
-        />
-      )}
-    </div>
-  );
-
   const renderLoadingState = () => (
     <div className="maturity-container">
       <div className="loading-state">
@@ -256,8 +272,7 @@ const MaturityScore = ({
   );
 
   const renderErrorState = () => (
-    <div className="maturity-container">
-      {renderHeader()}
+    <div className="maturity-container"> 
       <div className="error-state">
         <div className="error-icon">⚠️</div>
         <h3>Analysis Error</h3>
@@ -687,13 +702,10 @@ const MaturityScore = ({
     return renderLoadingState();
   }
 
-  // Check if data is incomplete and show missing questions checker
+  // Check if data is incomplete (including "NOT ENOUGH DATA" values) and show missing questions checker
   if (!maturityData || isMaturityDataIncomplete(maturityData)) {
     return (
-      <div className="maturity-container">
-        {renderHeader()}
-
-        {/* Replace the entire empty-state div with the common component */}
+      <div className="maturity-container"> 
         <AnalysisEmptyState
           analysisType="maturityScore"
           analysisDisplayName="Business Maturity Score Analysis"
@@ -714,8 +726,7 @@ const MaturityScore = ({
   }
 
   return (
-    <div className="maturity-container fade-in-up">
-      {renderHeader()}
+    <div className="maturity-container fade-in-up"> 
       
       <div className="dashboard-content">
         {renderGaugeChart()}

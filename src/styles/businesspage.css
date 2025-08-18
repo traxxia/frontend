@@ -267,6 +267,7 @@ html, body {
   /* position: fixed; */
     z-index: 10;
     width: 100%;
+    position: fixed;
 }
 
 .desktop-tab {
@@ -1090,8 +1091,7 @@ html, body {
 
 .strategic-section {
   display: flex;
-  flex-direction: column;
-  margin-top: 55px;
+  flex-direction: column; 
 }
 
 .strategic-title {
@@ -2316,6 +2316,7 @@ html, body {
   box-sizing: border-box;
   scroll-behavior: auto !important;
   position: relative;
+  margin-top: 50px;
 }
 .phase-tabs-nav {
   display: flex;

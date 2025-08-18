@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import RegenerateButton from './RegenerateButton'; 
+import React, { useState, useEffect } from 'react'; 
 import '../styles/dashboard.css';
 import '../styles/analysis-components.css';
 import { Target, Loader } from 'lucide-react';
@@ -10,17 +9,19 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 const SwotAnalysis = ({
   analysisResult: initialAnalysisResult,
   businessName,
+  onRegenerate, // Add this prop for regenerate functionality
+  isRegenerating = false, // Add this prop to handle external regeneration state
   canRegenerate = true,
   questions,
   userAnswers,
   onDataGenerated,
   saveAnalysisToBackend,
   selectedBusinessId,
-  onRedirectToBrief // Add this prop
+  onRedirectToBrief
 }) => {
   const { t } = useTranslation();
   const [analysisResult, setAnalysisResult] = useState(initialAnalysisResult);
-  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [internalRegenerating, setInternalRegenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -45,6 +46,24 @@ const SwotAnalysis = ({
         customMessage: analysisConfig.customMessage
       }
     );
+  };
+
+  // Handle regenerate - this is the key function
+  const handleRegenerate = async () => {
+    console.log('SWOT handleRegenerate called', { onRegenerate: !!onRegenerate });
+    
+    if (onRegenerate) {
+      try {
+        await onRegenerate();
+      } catch (error) {
+        console.error('Error in SWOT regeneration:', error);
+        setErrorMessage(error.message || 'Failed to regenerate analysis');
+      }
+    } else {
+      // Fallback to internal generation if no external handler
+      console.log('Using internal SWOT generation');
+      await generateSwotAnalysis();
+    }
   };
 
   // Check if the SWOT data is empty/incomplete - only for truly empty responses
@@ -168,10 +187,10 @@ const SwotAnalysis = ({
   };
 
   const generateSwotAnalysis = async () => {
-    if (isRegenerating) return;
+    if (internalRegenerating || isRegenerating) return;
 
     try {
-      setIsRegenerating(true);
+      setInternalRegenerating(true);
       setErrorMessage('');
       setAnalysisResult('');
 
@@ -266,7 +285,7 @@ const SwotAnalysis = ({
       console.error('Error generating SWOT analysis:', error);
       setErrorMessage(`Failed to generate analysis: ${error.message}`);
     } finally {
-      setIsRegenerating(false);
+      setInternalRegenerating(false);
     }
   };
 
@@ -310,23 +329,20 @@ const SwotAnalysis = ({
     ));
   };
 
+  // Determine if we're currently regenerating (either internally or externally)
+  const currentlyRegenerating = isRegenerating || internalRegenerating;
+
   // Check if data is incomplete and show missing questions checker - only for truly empty data
-  if (!isRegenerating && isSwotDataIncomplete(analysisResult)) {
+  if (!currentlyRegenerating && isSwotDataIncomplete(analysisResult)) {
     return (
-      <div className="swot-analysis-container">
-        <div className="ln-header">
-          <div className="ln-title-section">
-            <Target className="ln-icon" size={24} />
-            <h2 className="ln-title">{t("SWOT Analysis")}</h2>
-          </div>
-        </div>
+      <div className="swot-analysis-container"> 
         <AnalysisEmptyState
           analysisType="swot"
           analysisDisplayName="SWOT Analysis"
           icon={Target}
           onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={generateSwotAnalysis}
-          isRegenerating={isRegenerating}
+          onRegenerate={handleRegenerate}
+          isRegenerating={currentlyRegenerating}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
@@ -339,22 +355,9 @@ const SwotAnalysis = ({
     <div className="swot-analysis-container swot-analysis"
       data-analysis-type="swot"
       data-analysis-name="SWOT Analysis"
-      data-analysis-order="1" >
-      <div className="ln-header">
-        <div className="ln-title-section">
-          <Target className="ln-icon" size={24} />
-          <h2 className="ln-title">{t("SWOT Analysis")}</h2>
-        </div>
-        <RegenerateButton
-          onRegenerate={generateSwotAnalysis}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="SWOT Analysis"
-          size="medium"
-        />
-      </div>
+      data-analysis-order="1" > 
 
-      {isRegenerating && (
+      {currentlyRegenerating && (
         <div style={{ position: 'relative' }}>
           <div className="table-responsive">
             <table className="table table-bordered table-striped swot-table" style={{ tableLayout: 'fixed', width: '100%' }}>
@@ -423,7 +426,7 @@ const SwotAnalysis = ({
         </div>
       )}
 
-      {!isRegenerating && swotData && (swotData.strengths || swotData.weaknesses || swotData.opportunities || swotData.threats) ? (
+      {!currentlyRegenerating && swotData && (swotData.strengths || swotData.weaknesses || swotData.opportunities || swotData.threats) ? (
         <div className="table-responsive">
           <table className="table table-bordered table-striped swot-table">
             <thead className="table-light">
@@ -468,10 +471,13 @@ const SwotAnalysis = ({
             </tbody>
           </table>
         </div>
-      ) : !isRegenerating && errorMessage ? (
+      ) : !currentlyRegenerating && errorMessage ? (
         <div className="alert alert-danger" style={{ margin: '1rem', padding: '1rem', backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', borderRadius: '8px' }}>
           <h6>Error Parsing SWOT Data</h6>
           <p>{errorMessage}</p>
+          <button onClick={handleRegenerate} className="retry-button" style={{ marginTop: '0.5rem' }}>
+            Retry Analysis
+          </button>
           <details style={{ marginTop: '0.5rem' }}>
             <summary style={{ cursor: 'pointer' }}>Show raw data</summary>
             <pre style={{

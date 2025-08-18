@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, Target, TrendingUp, Calendar, CheckCircle, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import '../styles/EssentialPhase.css';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -482,20 +481,7 @@ const StrategicGoals = ({
     // Error state
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="strategic-goals-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Target size={24} />
-                        <h2 className="cs-title">OKRs & Strategic Goals</h2>
-                    </div>
-                    <RegenerateButton
-                        onRegenerate={handleRegenerate}
-                        isRegenerating={isRegenerating}
-                        canRegenerate={canRegenerate}
-                        sectionName="Strategic Goals"
-                        size="medium"
-                    />
-                </div>
+            <div className="strategic-goals-container">                
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
@@ -515,13 +501,7 @@ const StrategicGoals = ({
     // Check if data is incomplete and show missing questions checker
     if (!strategicGoalsData || isStrategicGoalsDataIncomplete(strategicGoalsData)) {
         return (
-            <div className="strategic-goals-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Target className="cs-icon" size={24} />
-                        <h2 className="cs-title">OKRs & Strategic Goals</h2>
-                    </div> 
-                </div>
+            <div className="strategic-goals-container"> 
 
                 {/* Replace the entire empty-state div with the common component */}
                 <AnalysisEmptyState
@@ -540,20 +520,7 @@ const StrategicGoals = ({
     }
 
     return (
-        <div className="strategic-goals-container">
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Target size={24} />
-                    <h2 className="cs-title">OKRs & Strategic Goals</h2>
-                </div>
-                <RegenerateButton
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    sectionName="Strategic Goals"
-                    size="medium"
-                />
-            </div>
+        <div className="strategic-goals-container"> 
 
             <div className="goals-content">
                 {/* Overall Progress Section */}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight, BarChart3, Target, AlertTriangle, Activity, Clock, RefreshCw, Loader } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -106,15 +105,7 @@ const PestelAnalysis = ({
   // Check if data is incomplete and show missing questions checker
   if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
     return (
-      <div className="porters-container">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <BarChart3 className="main-icon" size={24} />
-            <div>
-              <h2 className='cs-title'>PESTEL Analysis</h2>
-            </div>
-          </div>
-        </div>
+      <div className="porters-container"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -139,22 +130,7 @@ const PestelAnalysis = ({
     <div className="porters-container pestel-container" data-analysis-type="pestel"
       data-analysis-name="PESTEL Analysis"
       data-analysis-order="7">
-      <div className="cs-header">
-        <div className="cs-title-section">
-          <BarChart3 className="main-icon" size={24} />
-          <div>
-            <h2 className='cs-title'>PESTEL Analysis</h2>
-          </div>
-        </div>
-        <RegenerateButton
-          onRegenerate={onRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="PESTEL Analysis"
-          size="medium"
-        />
-      </div>
-
+       
       {/* Executive Summary Section */}
       {analysis.executive_summary && (
         <div className="section-container">

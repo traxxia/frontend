@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -518,20 +517,7 @@ const StrategicPositioningRadar = ({
     // Error state
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="strategic-radar-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Target size={24} />
-                        <h3 className='cs-title'>Strategic Positioning Radar</h3>
-                    </div>
-                    <RegenerateButton
-                        onRegenerate={handleRegenerate}
-                        isRegenerating={isRegenerating}
-                        canRegenerate={canRegenerate}
-                        sectionName="Strategic Positioning Radar"
-                        size="medium"
-                    />
-                </div>
+            <div className="strategic-radar-container"> 
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
@@ -551,13 +537,7 @@ const StrategicPositioningRadar = ({
     // Check if data is incomplete and show missing questions checker
     if (!strategicRadarData || isStrategicRadarDataIncomplete(strategicRadarData)) {
         return (
-            <div className="strategic-radar-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Target className="cs-icon" size={24} />
-                        <h3 className='cs-title'>Strategic Positioning Radar</h3>
-                    </div> 
-                </div>
+            <div className="strategic-radar-container"> 
 
                 {/* Replace the entire empty-state div with the common component */}
                 <AnalysisEmptyState
@@ -583,14 +563,7 @@ const StrategicPositioningRadar = ({
                     <div className="cs-title-section">
                         <Target size={24} />
                         <h3 className='cs-title'>Strategic Positioning Radar</h3>
-                    </div>
-                    <RegenerateButton
-                        onRegenerate={handleRegenerate}
-                        isRegenerating={isRegenerating}
-                        canRegenerate={canRegenerate}
-                        sectionName="Strategic Positioning Radar"
-                        size="medium"
-                    />
+                    </div> 
                 </div>
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
@@ -613,23 +586,7 @@ const StrategicPositioningRadar = ({
 
     return (
         <div className="strategic-radar-container">
-            {/* Header */}
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Target size={24} />
-                    <div>
-                        <h2 className='cs-title'>Strategic Positioning Radar</h2>
-                    </div>
-                </div>
-                <RegenerateButton
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    sectionName="Strategic Positioning Radar"
-                    size="medium"
-                />
-            </div>
-
+             
             {/* Navigation Tabs */}
             <div className="competitive-advantage-tabs">
                 {[

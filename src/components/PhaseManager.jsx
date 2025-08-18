@@ -1,3 +1,4 @@
+// Fixed PhaseManager.js - Prevents advanced phase from triggering essential phase
 import { useState, useEffect, useRef } from 'react';
 
 const PhaseManager = ({
@@ -10,11 +11,15 @@ const PhaseManager = ({
     onCompletedPhasesUpdate,
     onAnalysisGeneration,
     onFullSwotGeneration,
+    onGoodPhaseGeneration,
+    onAdvancedPhaseGeneration,
     onAnalysisDataLoad,
     API_BASE_URL,
-    getAuthToken
+    getAuthToken,
+    apiService,
+    stateSetters,
+    showToastMessage
 }) => {
-    // FIX: Ensure completedPhases is properly defined in state
     const [completedPhases, setCompletedPhases] = useState(new Set());
     const isRegeneratingRef = useRef(false);
 
@@ -22,7 +27,7 @@ const PhaseManager = ({
         INITIAL: "initial",
         ESSENTIAL: "essential",
         GOOD: "good",
-        EXCELLENT: "excellent",
+        ADVANCED: "advanced",
     };
 
     // Check if a phase is completed
@@ -42,23 +47,35 @@ const PhaseManager = ({
 
     // Get unlocked features based on phase completion
     const getUnlockedFeatures = () => {
-        if (!questions.length) return { brief: true, analysis: false, fullSwot: false };
+        if (!questions.length) return { 
+            brief: true, 
+            analysis: false, 
+            fullSwot: false, 
+            goodPhase: false,
+            advancedPhase: false
+        };
 
         const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
-        const essentialQuestions = questions.filter(q => q.phase === 'essential'); // All essential questions regardless of severity
+        const essentialQuestions = questions.filter(q => q.phase === 'essential');
+        const goodQuestions = questions.filter(q => q.phase === 'good');
+        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
 
         const completedInitial = initialQuestions.filter(q => completedQuestions.has(q._id));
         const completedEssential = essentialQuestions.filter(q => completedQuestions.has(q._id));
+        const completedGood = goodQuestions.filter(q => completedQuestions.has(q._id));
+        const completedAdvanced = advancedQuestions.filter(q => completedQuestions.has(q._id));
 
         const isInitialComplete = initialQuestions.length > 0 && completedInitial.length === initialQuestions.length;
-
-        // FIX: Essential phase complete ONLY when ALL essential questions are answered
         const isEssentialComplete = essentialQuestions.length > 0 && completedEssential.length === essentialQuestions.length;
+        const isGoodComplete = goodQuestions.length > 0 && completedGood.length === goodQuestions.length;
+        const isAdvancedComplete = advancedQuestions.length > 0 && completedAdvanced.length === advancedQuestions.length;
 
         return {
             brief: true,
             analysis: isInitialComplete,
-            fullSwot: isEssentialComplete
+            fullSwot: isEssentialComplete,
+            goodPhase: isGoodComplete,
+            advancedPhase: isAdvancedComplete
         };
     };
 
@@ -104,17 +121,19 @@ const PhaseManager = ({
             if (response.ok) {
                 const data = await response.json();
 
-                // Load completed questions and answers from conversations
                 if (data.conversations && data.conversations.length > 0) {
                     const { completedSet, answersMap } = loadCompletedQuestionsFromAPI(data.conversations);
-
                     onCompletedQuestionsUpdate(completedSet, answersMap);
 
                     const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
                     const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL && q.severity === "mandatory");
+                    const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
+                    const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
 
                     const completedInitialQuestions = initialQuestions.filter(q => completedSet.has(q._id));
                     const completedEssentialQuestions = essentialQuestions.filter(q => completedSet.has(q._id));
+                    const completedGoodQuestions = goodQuestions.filter(q => completedSet.has(q._id));
+                    const completedAdvancedQuestions = advancedQuestions.filter(q => completedSet.has(q._id));
 
                     const newCompletedPhases = new Set();
 
@@ -126,23 +145,26 @@ const PhaseManager = ({
                         newCompletedPhases.add('essential');
                     }
 
+                    if (goodQuestions.length > 0 && completedGoodQuestions.length === goodQuestions.length) {
+                        newCompletedPhases.add('good');
+                    }
+
+                    if (advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length) {
+                        newCompletedPhases.add('advanced');
+                    }
+
                     setCompletedPhases(newCompletedPhases);
                     onCompletedPhasesUpdate(newCompletedPhases);
                 }
 
-                // Load existing analysis data if available - NEW FORMAT
                 if (data.phase_analysis && typeof data.phase_analysis === 'object') {
-                    // Handle new phase-organized structure
                     const analysisArray = [];
-
-                    // Convert phase-organized data back to array format for compatibility
                     Object.values(data.phase_analysis).forEach(phaseData => {
                         if (phaseData.analyses && Array.isArray(phaseData.analyses)) {
                             analysisArray.push(...phaseData.analyses);
                         }
                     });
 
-                    // Call the callback to load analysis data in the main component
                     if (onAnalysisDataLoad && analysisArray.length > 0) {
                         onAnalysisDataLoad(analysisArray);
                     }
@@ -153,47 +175,114 @@ const PhaseManager = ({
         }
     };
 
-    // FIX: Handle question completion with proper completedPhases access
+    // Simplified phase completion using API service
+    const handleSimplifiedPhaseCompletion = async (phase, newCompletedSet) => {
+        if (isRegeneratingRef.current) return;
+
+        try {
+            isRegeneratingRef.current = true;
+
+            if (apiService && stateSetters && showToastMessage) {
+                await apiService.handlePhaseCompletion(
+                    phase,
+                    questions,
+                    userAnswers,
+                    selectedBusinessId,
+                    stateSetters,
+                    showToastMessage
+                );
+            } else {
+                // Fallback to original handlers if API service not available
+                if (phase === 'initial') {
+                    await onAnalysisGeneration(newCompletedSet);
+                } else if (phase === 'essential') {
+                    await onFullSwotGeneration(newCompletedSet);
+                } else if (phase === 'good') {
+                    if (onGoodPhaseGeneration) {
+                        await onGoodPhaseGeneration(newCompletedSet);
+                    }
+                } else if (phase === 'advanced') {
+                    if (onAdvancedPhaseGeneration) {
+                        await onAdvancedPhaseGeneration(newCompletedSet);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`Error in simplified phase completion for ${phase}:`, error);
+        } finally {
+            isRegeneratingRef.current = false;
+        }
+    };
+
+    // FIXED: Determine which phase the completed question belongs to
+    const getQuestionPhase = (questionId) => {
+        const question = questions.find(q => q._id === questionId);
+        return question ? question.phase : null;
+    };
+
+    // FIXED: Handle question completion - only trigger the specific phase that was just completed
     const handleQuestionCompleted = async (questionId) => {
         const newCompletedSet = new Set([...completedQuestions, questionId]);
-
-        const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-        const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL); // All essential questions regardless of severity
-
-        const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
-        const completedEssentialQuestions = essentialQuestions.filter(q => newCompletedSet.has(q._id));
-
-        const isInitialCompleted = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-
-        // FIX: Essential phase complete ONLY when ALL essential questions are answered
-        const isEssentialCompleted = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
-
-        // Only trigger phase completion if the phase wasn't already marked as completed
-        if (isInitialCompleted && !completedPhases.has('initial')) {
-            const newPhases = new Set([...completedPhases, 'initial']);
-            setCompletedPhases(newPhases);
-            onCompletedPhasesUpdate(newPhases);
-            await handlePhaseCompleted('initial', newCompletedSet);
+        
+        // Get the phase of the question that was just completed
+        const questionPhase = getQuestionPhase(questionId);
+        
+        if (!questionPhase) {
+            console.warn('Could not determine phase for question:', questionId);
+            return newCompletedSet;
         }
 
-        // Essential phase completion - must complete ALL essential questions
-        if (isEssentialCompleted && !completedPhases.has('essential')) {
-            const newPhases = new Set([...completedPhases, 'initial', 'essential']);
+        // Only check if the specific phase that the question belongs to is now complete
+        let phaseToTrigger = null;
+        
+        if (questionPhase === 'initial') {
+            const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
+            const completedInitialQuestions = initialQuestions.filter(q => newCompletedSet.has(q._id));
+            const isInitialCompleted = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+            
+            if (isInitialCompleted && !completedPhases.has('initial')) {
+                phaseToTrigger = 'initial';
+            }
+        } else if (questionPhase === 'essential') {
+            const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL);
+            const completedEssentialQuestions = essentialQuestions.filter(q => newCompletedSet.has(q._id));
+            const isEssentialCompleted = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+            
+            if (isEssentialCompleted && !completedPhases.has('essential')) {
+                phaseToTrigger = 'essential';
+            }
+        } else if (questionPhase === 'good') {
+            const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
+            const completedGoodQuestions = goodQuestions.filter(q => newCompletedSet.has(q._id));
+            const isGoodCompleted = goodQuestions.length > 0 && completedGoodQuestions.length === goodQuestions.length;
+            
+            if (isGoodCompleted && !completedPhases.has('good')) {
+                phaseToTrigger = 'good';
+            }
+        } else if (questionPhase === 'advanced') {
+            const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
+            const completedAdvancedQuestions = advancedQuestions.filter(q => newCompletedSet.has(q._id));
+            const isAdvancedCompleted = advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length;
+            
+            if (isAdvancedCompleted && !completedPhases.has('advanced')) {
+                phaseToTrigger = 'advanced';
+            }
+        }
+
+        // Only trigger the phase that was actually completed
+        if (phaseToTrigger) {
+            const newPhases = new Set([...completedPhases, phaseToTrigger]);
             setCompletedPhases(newPhases);
             onCompletedPhasesUpdate(newPhases);
-            await handlePhaseCompleted('essential', newCompletedSet);
+            await handleSimplifiedPhaseCompletion(phaseToTrigger, newCompletedSet);
         }
 
         return newCompletedSet;
     };
 
-    // Handle phase completion
+    // Handle phase completion (kept for backward compatibility)
     const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
-        if (phase === 'initial') {
-            await onAnalysisGeneration(updatedCompletedSet);
-        } else if (phase === 'essential') {
-            await onFullSwotGeneration(updatedCompletedSet);
-        }
+        await handleSimplifiedPhaseCompletion(phase, updatedCompletedSet);
     };
 
     // Check if current phase allows analysis regeneration
@@ -205,11 +294,65 @@ const PhaseManager = ({
 
     // Check if full SWOT can be generated
     const canGenerateFullSwot = () => {
-        const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL); // All essential questions regardless of severity
+        const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL);
         const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
-
-        // Must complete ALL essential questions
         return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+    };
+
+    // Check if Good phase analysis can be generated
+    const canGenerateGoodPhase = () => {
+        const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
+        const completedGoodQuestions = goodQuestions.filter(q => completedQuestions.has(q._id));
+        return goodQuestions.length > 0 && completedGoodQuestions.length === goodQuestions.length;
+    };
+
+    // Check if Advanced phase analysis can be generated
+    const canGenerateAdvancedPhase = () => {
+        const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
+        const completedAdvancedQuestions = advancedQuestions.filter(q => completedQuestions.has(q._id));
+        return advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length;
+    };
+
+    // Simplified regeneration handler for entire phase
+    const regeneratePhase = async (phase) => {
+        if (isRegeneratingRef.current) return;
+
+        try {
+            isRegeneratingRef.current = true;
+            
+            if (apiService && stateSetters && showToastMessage) {
+                await apiService.handlePhaseCompletion(
+                    phase,
+                    questions,
+                    userAnswers,
+                    selectedBusinessId,
+                    stateSetters,
+                    showToastMessage
+                );
+            }
+        } catch (error) {
+            console.error(`Error regenerating ${phase} phase:`, error);
+            if (showToastMessage) {
+                showToastMessage(`Failed to regenerate ${phase} phase.`, "error");
+            }
+        } finally {
+            isRegeneratingRef.current = false;
+        }
+    };
+
+    // Create simple regeneration handler for individual analysis
+    const createSimpleRegenerationHandler = (analysisType) => {
+        if (apiService && stateSetters && showToastMessage) {
+            return apiService.createSimpleRegenerationHandler(
+                analysisType,
+                questions,
+                userAnswers,
+                selectedBusinessId,
+                stateSetters,
+                showToastMessage
+            );
+        }
+        return null;
     };
 
     // Load existing analysis when component mounts and questions are loaded
@@ -230,7 +373,13 @@ const PhaseManager = ({
         handleQuestionCompleted,
         canRegenerateAnalysis,
         canGenerateFullSwot,
+        canGenerateGoodPhase,
+        canGenerateAdvancedPhase,
         loadExistingAnalysis,
+        
+        // Simplified functions
+        regeneratePhase,
+        createSimpleRegenerationHandler,
 
         // Refs
         isRegeneratingRef

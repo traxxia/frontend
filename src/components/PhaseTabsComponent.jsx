@@ -1,4 +1,4 @@
-// components/PhaseTabsComponent.jsx
+// Updated PhaseTabsComponent.jsx with Good phase support
 import React from 'react';
 import { ChevronDown } from "lucide-react";
 import PDFExportButton from "./PDFExportButton";
@@ -40,6 +40,15 @@ const PhaseTabsComponent = ({
       });
     }
 
+    // Only show good phase if it's actually unlocked
+    if (unlockedFeatures.goodPhase) {
+      phases.push({
+        key: 'good',
+        name: 'Good Phase',
+        unlocked: true
+      });
+    }
+
     return phases;
   };
 
@@ -65,6 +74,12 @@ const PhaseTabsComponent = ({
         "Organizational Culture Profile",
         "Productivity Metrics",
         "Maturity Score"
+      ],
+      good: [
+        "Cost Efficiency Insight",
+        "Financial Performance & Growth Trajectory",
+        "Financial Health Insight",
+        "Operational Efficiency Insight"
       ]
     };
 
@@ -91,7 +106,7 @@ const PhaseTabsComponent = ({
               <button
                 key={phase.key}
                 onClick={() => setSelectedPhase(phase.key)}
-                className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''}`}
+                className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''} ${phase.key}-phase`}
               >
                 {phase.name}
               </button>
@@ -159,15 +174,21 @@ const PhaseTabsComponent = ({
                   {/* Phase Header */}
                   <div style={{
                     padding: "12px 16px",
-                    backgroundColor: selectedPhase === 'essential' ? "#fef3c7" : "#dbeafe",
+                    backgroundColor:
+                      selectedPhase === 'good' ? "#f3e8ff" :
+                        selectedPhase === 'essential' ? "#fef3c7" : "#dbeafe",
                     borderBottom: "1px solid #e2e8f0",
                     fontSize: "12px",
                     fontWeight: 700,
-                    color: selectedPhase === 'essential' ? "#92400e" : "#1e40af",
+                    color:
+                      selectedPhase === 'good' ? "#7c3aed" :
+                        selectedPhase === 'essential' ? "#92400e" : "#1e40af",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px"
                   }}>
-                    {selectedPhase === 'initial' ? 'Initial Phase' : 'Essential Phase'} Sections
+                    {selectedPhase === 'initial' ? 'Initial Phase' :
+                      selectedPhase === 'essential' ? 'Essential Phase' :
+                        selectedPhase === 'good' ? 'Good Phase' : selectedPhase} Sections
                   </div>
 
                   {/* Options */}
@@ -188,8 +209,12 @@ const PhaseTabsComponent = ({
                         gap: "8px"
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = selectedPhase === 'essential' ? "#fef3c7" : "#dbeafe";
-                        e.currentTarget.style.color = selectedPhase === 'essential' ? "#92400e" : "#1e40af";
+                        e.currentTarget.style.backgroundColor =
+                          selectedPhase === 'good' ? "#f3e8ff" :
+                            selectedPhase === 'essential' ? "#fef3c7" : "#dbeafe";
+                        e.currentTarget.style.color =
+                          selectedPhase === 'good' ? "#7c3aed" :
+                            selectedPhase === 'essential' ? "#92400e" : "#1e40af";
                         e.currentTarget.style.paddingLeft = "20px";
                       }}
                       onMouseLeave={(e) => {
@@ -202,7 +227,9 @@ const PhaseTabsComponent = ({
                         width: "6px",
                         height: "6px",
                         borderRadius: "50%",
-                        backgroundColor: selectedPhase === 'essential' ? "#f59e0b" : "#3b82f6",
+                        backgroundColor:
+                          selectedPhase === 'good' ? "#7c3aed" :
+                            selectedPhase === 'essential' ? "#f59e0b" : "#3b82f6",
                         flexShrink: 0
                       }}></span>
                       {item}
@@ -225,9 +252,11 @@ const PhaseTabsComponent = ({
             </div>
 
             {/* PDF Export Button */}
-            <PDFExportButton className="pdf-export-button" style={{
-              marginRight: "10px"
-            }}
+            <PDFExportButton
+              className="pdf-export-button"
+              style={{
+                marginRight: "10px"
+              }}
               businessName={businessData.name}
               onToastMessage={showToastMessage}
               currentPhase={selectedPhase}

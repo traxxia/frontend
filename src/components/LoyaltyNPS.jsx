@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -341,13 +340,7 @@ const LoyaltyNPS = ({
   // Check if data is incomplete and show missing questions checker
   if (!loyaltyData || isLoyaltyDataIncomplete(loyaltyData)) {
     return (
-      <div className="loyalty-nps">
-        <div className="ln-header">
-          <div className="ln-title-section">
-            <Heart className="ln-icon" size={24} />
-            <h2 className="ln-title">{t("Loyalty & NPS Score")}</h2>
-          </div>
-        </div>
+      <div className="loyalty-nps"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -371,21 +364,7 @@ const LoyaltyNPS = ({
   return (
     <div className="loyalty-nps" data-analysis-type="loyalty-nps"
       data-analysis-name="Loyalty & NPS Analysis"
-      data-analysis-order="4">
-      {/* Header with regenerate button */}
-      <div className="ln-header">
-        <div className="ln-title-section">
-          <Heart className="ln-icon" size={24} />
-          <h2 className="ln-title">{t("Loyalty & NPS Score")}</h2>
-        </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Loyalty & NPS"
-          size="medium"
-        />
-      </div>
+      data-analysis-order="4"> 
 
       {/* Key Metrics */}
       <div className="ln-metrics">

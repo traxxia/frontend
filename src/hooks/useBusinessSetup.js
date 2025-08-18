@@ -1,4 +1,3 @@
-// hooks/useBusinessSetup.js
 import { useState, useRef } from 'react';
 
 export const useBusinessSetup = (business, selectedBusinessId) => {
@@ -39,7 +38,11 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [fullSwotData, setFullSwotData] = useState(null);
   const [competitiveAdvantageData, setCompetitiveAdvantageData] = useState(null);
 
+  // NEW: Good Phase Analysis State
+  const [costEfficiencyData, setCostEfficiencyData] = useState(null);
+
   // Individual component regenerating states
+  const [isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating] = useState(false);
   const [isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating] = useState(false);
   const [isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating] = useState(false);
   const [isChannelHeatmapRegenerating, setIsChannelHeatmapRegenerating] = useState(false);
@@ -64,10 +67,20 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [isProductivityRegenerating, setIsProductivityRegenerating] = useState(false);
   const [maturityData, setMaturityData] = useState(null);
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
+  const [financialPerformanceData, setFinancialPerformanceData] = useState(null);
+
+  const [isFinancialPerformanceRegenerating, setIsFinancialPerformanceRegenerating] = useState(false);
+
+  // NEW: Good Phase regenerating states
+  const [isCostEfficiencyRegenerating, setIsCostEfficiencyRegenerating] = useState(false);
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
   const [isChannelHeatmapReady, setIsChannelHeatmapReady] = useState(false);
   const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState('initial');
+  const [financialBalanceData, setFinancialBalanceData] = useState(null);
+  const [operationalEfficiencyData, setOperationalEfficiencyData] = useState(null);
+  const [isFinancialBalanceRegenerating, setIsFinancialBalanceRegenerating] = useState(false);
+  const [isOperationalEfficiencyRegenerating, setIsOperationalEfficiencyRegenerating] = useState(false);
 
   // Dropdown State
   const [showDropdown, setShowDropdown] = useState(false);
@@ -101,20 +114,25 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const expandedCapabilityRef = useRef(null);
   const channelEffectivenessRef = useRef(null);
 
+  // NEW: Good Phase refs
+  const costEfficiencyRef = useRef(null);
+  const financialBalanceRef = useRef(null);
+  const operationalEfficiencyRef = useRef(null);
+  const financialPerformanceRef = useRef(null);
   return {
     // UI State
     activeTab, setActiveTab,
     isMobile, setIsMobile,
     isAnalysisExpanded, setIsAnalysisExpanded,
     isSliding, setIsSliding,
-    
+
     // Data State
     questions, setQuestions,
     questionsLoaded, setQuestionsLoaded,
     userAnswers, setUserAnswers,
     completedQuestions, setCompletedQuestions,
     businessData, setBusinessData,
-    
+
     // Analysis State
     hasAnalysisData, setHasAnalysisData,
     isAnalysisRegenerating, setIsAnalysisRegenerating,
@@ -129,8 +147,12 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     pestelData, setPestelData,
     fullSwotData, setFullSwotData,
     competitiveAdvantageData, setCompetitiveAdvantageData,
-    
+
+    // NEW: Good Phase Analysis State
+    costEfficiencyData, setCostEfficiencyData,
+
     // Regenerating states
+    isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
     isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating,
     isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating,
     isChannelHeatmapRegenerating, setIsChannelHeatmapRegenerating,
@@ -155,18 +177,24 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     isProductivityRegenerating, setIsProductivityRegenerating,
     maturityData, setMaturityData,
     isMaturityRegenerating, setIsMaturityRegenerating,
+
+    // NEW: Good Phase regenerating states
+    isCostEfficiencyRegenerating, setIsCostEfficiencyRegenerating,
+    financialPerformanceData, setFinancialPerformanceData,
+    isFinancialPerformanceRegenerating, setIsFinancialPerformanceRegenerating,
+    financialPerformanceRef,
     highlightedMissingQuestions, setHighlightedMissingQuestions,
     isChannelHeatmapReady, setIsChannelHeatmapReady,
     isCapabilityHeatmapReady, setIsCapabilityHeatmapReady,
     selectedPhase, setSelectedPhase,
-    
+
     // Dropdown State
     showDropdown, setShowDropdown,
     selectedOption, setSelectedOption,
-    
+
     // Toast State
     showToast, setShowToast,
-    
+
     // Refs
     swotRef, customerSegmentationRef, purchaseCriteriaRef,
     channelHeatmapRef, loyaltyNpsRef, capabilityHeatmapRef,
@@ -174,6 +202,14 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     pestelRef, fullSwotRef, competitiveAdvantageRef,
     cultureProfileRef, productivityRef, maturityScoreRef,
     strategicGoalsRef, strategicRadarRef, expandedCapabilityRef,
-    channelEffectivenessRef
+    channelEffectivenessRef,
+
+    // NEW: Good Phase refs
+    costEfficiencyRef,
+    financialBalanceData, setFinancialBalanceData,
+    operationalEfficiencyData, setOperationalEfficiencyData,
+    isFinancialBalanceRegenerating, setIsFinancialBalanceRegenerating,
+    isOperationalEfficiencyRegenerating, setIsOperationalEfficiencyRegenerating,
+    financialBalanceRef, operationalEfficiencyRef
   };
 };

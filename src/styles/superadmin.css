@@ -1030,7 +1030,7 @@
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 10px;
   color: #6b7280;
 }
 
@@ -2697,13 +2697,7 @@
   font-size: 0.75rem;
   color: #9ca3af;
 }
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #6b7280;
-}
+ 
 
 .empty-state svg {
   margin-bottom: 1rem;

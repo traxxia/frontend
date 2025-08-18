@@ -349,7 +349,7 @@ const EditableBriefSection = ({
   const isEssentialPhaseComplete = completedEssentialQuestions.length === essentialQuestions.length && essentialQuestions.length > 0;
 
   return (
-    <div className="editable-brief-section" style={{ marginTop: '10px' }}>
+    <div className="editable-brief-section" style={{ marginTop: '50px' }}>
       {showToast.show && (
         <div className={`simple-toast ${showToast.type}`}>
           {showToast.message}
@@ -383,26 +383,6 @@ const EditableBriefSection = ({
               <span className="progress-text">
                 Progress: {answeredQuestions}/{totalQuestions} questions completed
               </span>
-
-              {/* Initial Phase Status */}
-              {isInitialPhaseComplete && (
-                <>
-                  <br />
-                  <span className="phase-complete-badge">
-                    ✅ Initial Phase Complete - Analysis Available
-                  </span>
-                </>
-              )}
-
-              {/* Essential Phase Status */}
-              {isEssentialPhaseComplete && (
-                <>
-                  <br />
-                  <span className="phase-complete-badge">
-                    ✅ Essential Phase Complete - Advanced Analysis Available
-                  </span>
-                </>
-              )} 
             </>
           )}
         </div>

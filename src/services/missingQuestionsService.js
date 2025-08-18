@@ -1,3 +1,5 @@
+import FinancialPerformance from "@/components/FinancialPerformance";
+
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 const getAuthToken = () => sessionStorage.getItem('token');
@@ -5,7 +7,7 @@ const getAuthToken = () => sessionStorage.getItem('token');
 export const checkMissingQuestions = async (analysisType, selectedBusinessId) => {
   try {
     const token = getAuthToken();
-    
+
     if (!token) {
       throw new Error('Authentication token not found');
     }
@@ -39,7 +41,7 @@ export const checkMissingQuestions = async (analysisType, selectedBusinessId) =>
 export const getQuestionsByAnalysisType = async (analysisType) => {
   try {
     const token = getAuthToken();
-    
+
     if (!token) {
       throw new Error('Authentication token not found');
     }
@@ -59,8 +61,8 @@ export const getQuestionsByAnalysisType = async (analysisType) => {
     }
 
     const data = await response.json();
-    
-    return data.questions.filter(q => 
+
+    return data.questions.filter(q =>
       q.used_for && q.used_for.includes(analysisType)
     );
   } catch (error) {
@@ -70,8 +72,8 @@ export const getQuestionsByAnalysisType = async (analysisType) => {
 };
 
 export const checkMissingQuestionsAndRedirect = async (
-  analysisType, 
-  selectedBusinessId, 
+  analysisType,
+  selectedBusinessId,
   handleRedirectToBrief,
   options = {}
 ) => {
@@ -82,7 +84,7 @@ export const checkMissingQuestionsAndRedirect = async (
 
   try {
     const result = await checkMissingQuestions(analysisType, selectedBusinessId);
-    
+
     if (result.missing_count > 0) {
       handleRedirectToBrief(result);
     } else {
@@ -108,9 +110,9 @@ export const checkMissingQuestionsAndRedirect = async (
     }
   } catch (error) {
     console.error('Error in checkMissingQuestionsAndRedirect:', error);
-    
+
     const fallbackMessage = customMessage || `Please review and improve your answers for ${displayName} analysis.`;
-    
+
     handleRedirectToBrief({
       missing_count: 0,
       missing_questions: [],
@@ -154,7 +156,7 @@ export const ANALYSIS_TYPES = {
     displayName: 'Strategic Analysis',
     customMessage: 'Please provide more detailed answers for strategic analysis. The current answers are insufficient to generate meaningful strategic insights.'
   },
-  
+
   // Essential Phase Analyses
   fullSwot: {
     displayName: 'Full SWOT Portfolio',
@@ -196,7 +198,7 @@ export const ANALYSIS_TYPES = {
     displayName: 'Maturity Score Analysis',
     customMessage: 'Please provide more detailed answers for maturity score analysis. The current answers are insufficient to generate meaningful maturity insights.'
   },
-  
+
   // Additional analyses that might be present
   loyaltyMetrics: {
     displayName: 'Loyalty Metrics Analysis',
@@ -205,6 +207,21 @@ export const ANALYSIS_TYPES = {
   expandedCapabilityHeatmap: {
     displayName: 'Expanded Capability Heatmap Analysis',
     customMessage: 'Please provide more detailed answers for expanded capability heatmap analysis. The current answers are insufficient to generate comprehensive capability insights.'
+  },
+  costEfficiency: {
+    displayName: 'Cost Efficiency Insight',
+    customMessage: 'Answer more financial and operational questions to unlock detailed cost efficiency analysis with unit economics and benchmarking'
+  },
+  FinancialPerformance: {
+    displayName: 'Financial Performance Insight',
+    customMessage: 'Answer more financial questions to unlock detailed performance sheet and ratio analysis with innovation investment tracking'
+  }, financialBalance: {
+    displayName: 'Financial Balance Insight',
+    customMessage: 'Answer more financial questions to unlock detailed balance sheet and ratio analysis with innovation investment tracking'
+  },
+  operationalEfficiency: {
+    displayName: 'Operational Efficiency Insight',
+    customMessage: 'Answer more operational questions to unlock detailed efficiency metrics and resource utilization analysis'
   }
 };
 

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import "../styles/EssentialPhase.css"; 
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -14,7 +13,8 @@ const ProductivityMetrics = ({
   canRegenerate = true,
   productivityData = null,
   selectedBusinessId,
-  onRedirectToBrief // Add this prop
+  onRedirectToBrief ,
+  isPhaseRegenerating = false 
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
@@ -23,6 +23,7 @@ const ProductivityMetrics = ({
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
+  const hasGeneratedRef = useRef(false);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -141,16 +142,22 @@ const ProductivityMetrics = ({
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim());
  
-    if (!productivityData && hasAnswers && !isGenerating && !isRegenerating) { 
+    if (!productivityData && 
+        hasAnswers && 
+        !isGenerating && 
+        !isRegenerating && 
+        !isPhaseRegenerating && 
+        !hasGeneratedRef.current) { 
+      hasGeneratedRef.current = true;
       generateProductivityMetrics();
     }
-  }, [questions, userAnswers, productivityData]);
+  }, [questions, userAnswers, productivityData, isRegenerating, isPhaseRegenerating]); 
 
   const handleRegenerate = async () => { 
-
+hasGeneratedRef.current = false;
     if (onRegenerate) { 
       onRegenerate();
     } else { 
@@ -233,20 +240,7 @@ const ProductivityMetrics = ({
   // Error state
   if (error && !productivityData) {
     return (
-      <div className="porters-container productivity-container">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Activity size={24} />
-            <h2 className='cs-title'>Productivity and Efficiency Metrics</h2>
-          </div>
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Productivity Metrics"
-            size="medium"
-          />
-        </div>
+      <div className="porters-container productivity-container"> 
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
@@ -267,13 +261,7 @@ const ProductivityMetrics = ({
   // Check if data is incomplete and show missing questions checker
   if (!productivityData || isProductivityDataIncomplete(productivityData)) {
     return (
-      <div className="porters-container productivity-container">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Activity className="cs-icon" size={24} />
-            <h2 className='cs-title'>Productivity and Efficiency Metrics</h2>
-          </div> 
-        </div>
+      <div className="porters-container productivity-container"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -295,23 +283,7 @@ const ProductivityMetrics = ({
   const productivityMetrics = productivityData?.productivityMetrics || productivityData;
 
   return (
-    <div className="porters-container productivity-container">
-      {/* Header */}
-      <div className="cs-header">
-        <div className="cs-title-section">
-          <Activity className="main-icon" size={24} />
-          <div>
-            <h2 className='cs-title'>Productivity and Efficiency Metrics</h2> 
-          </div>
-        </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Productivity Metrics"
-          size="medium"
-        />
-      </div>
+    <div className="porters-container productivity-container"> 
 
       {/* Employee Productivity Overview Chart */}
       {productivityMetrics.employeeProductivity && (

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import "../styles/EssentialPhase.css";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -234,20 +233,7 @@ const OrganizationalCultureProfile = ({
   // Error state
   if (error) {
     return (
-      <div className="culture-profile">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Users size={24} />
-            <h2 className='cs-title'>Organizational Culture Profile</h2>
-          </div>
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Organizational Culture Profile"
-            size="medium"
-          />
-        </div>
+      <div className="culture-profile"> 
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
@@ -266,14 +252,7 @@ const OrganizationalCultureProfile = ({
   // Check if data is incomplete and show missing questions checker
   if (!cultureProfileData || isCultureProfileDataIncomplete(cultureProfileData)) {
     return (
-      <div className="culture-profile">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Users className="cs-icon" size={24} />
-            <h2 className='cs-title'>Organizational Culture Profile</h2>
-          </div>
-          {/* Hide regenerate button when showing empty analysis */}
-        </div>
+      <div className="culture-profile"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -295,27 +274,7 @@ const OrganizationalCultureProfile = ({
   const cultureProfile = cultureProfileData?.cultureProfile || cultureProfileData;
 
   return (
-    <div className="porters-container">
-      {/* Header */}
-      <div className="cs-header">
-        <div className="cs-title-section">
-          <Users size={24} />
-          <div>
-            <h2 className='cs-title'>
-              Organizational Culture Profile
-            </h2>
-          </div>
-        </div>
-        {canRegenerate && (
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Organizational Culture Profile"
-            size="medium"
-          />
-        )}
-      </div>
+    <div className="porters-container"> 
 
       {/* Word Cloud Section */}
       {(cultureProfile.values?.length > 0 || cultureProfile.behaviors?.length > 0) && (

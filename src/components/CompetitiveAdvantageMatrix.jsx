@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -8,7 +7,7 @@ const CompetitiveAdvantageMatrix = ({
     questions = [],
     userAnswers = {},
     businessName = '',
-    onRegenerate,
+    onRegenerate, // Add this prop for regenerate functionality
     isRegenerating = false,
     canRegenerate = true,
     competitiveAdvantageData = null,
@@ -17,18 +16,11 @@ const CompetitiveAdvantageMatrix = ({
 }) => {
     const [data, setData] = useState(null);
     const [hasGenerated, setHasGenerated] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [expandedSections, setExpandedSections] = useState({});
+    const [error, setError] = useState(null);
 
-    const isMounted = useRef(false);
     const hasInitialized = useRef(false);
-
-    // API Configuration
-    const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
-    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const getAuthToken = () => sessionStorage.getItem('token');
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -44,10 +36,27 @@ const CompetitiveAdvantageMatrix = ({
             selectedBusinessId,
             handleRedirectToBrief,
             {
-            displayName: analysisConfig.displayName,
-            customMessage: analysisConfig.customMessage
+                displayName: analysisConfig.displayName,
+                customMessage: analysisConfig.customMessage
             }
         );
+    };
+
+    // Handle regenerate - this is the key function
+    const handleRegenerate = async () => {
+        console.log('CompetitiveAdvantage handleRegenerate called', { onRegenerate: !!onRegenerate });
+        
+        if (onRegenerate) {
+            try {
+                await onRegenerate();
+            } catch (error) {
+                console.error('Error in CompetitiveAdvantage regeneration:', error);
+                setError(error.message || 'Failed to regenerate analysis');
+            }
+        } else {
+            console.warn('No onRegenerate prop provided to CompetitiveAdvantageMatrix');
+            setError('Regeneration not available');
+        }
     };
 
     // Check if the competitive advantage data is empty/incomplete
@@ -78,166 +87,31 @@ const CompetitiveAdvantageMatrix = ({
         }));
     };
 
-    // Save to backend using the phase analysis API (same as SWOT)
-    const saveToBackend = async (analysisData) => {
-        try {
-            const token = getAuthToken();
-
-            const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    phase: 'essential', // Competitive Advantage is part of essential phase
-                    analysis_type: 'competitiveAdvantage',
-                    analysis_name: 'Competitive Advantage Analysis',
-                    analysis_data: analysisData,
-                    business_id: selectedBusinessId,
-                    metadata: {
-                        generated_at: new Date().toISOString(),
-                        business_name: businessName,
-                        phase: 'essential',
-                        generation_context: 'regular_generation'
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save Competitive Advantage analysis');
-            }
-
-            const result = await response.json(); 
-            return result;
-        } catch (error) {
-            console.error('Error saving Competitive Advantage analysis to backend:', error);
-            throw error;
-        }
-    };
-
-    // Generate Competitive Advantage Analysis from API
-    const generateCompetitiveAdvantageAnalysis = async () => {
-        if (isLoading) return;
-
-        try {
-            setIsLoading(true);
-            setError(null);
-            setData(null); // Clear existing data like SWOT does
-
-            const questionsArray = [];
-            const answersArray = [];
-
-            // Filter and sort questions like SWOT does
-            const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
-
-            sortedQuestions.forEach(question => {
-                const questionId = question._id || question.question_id;
-                if (userAnswers[questionId] && userAnswers[questionId].trim()) {
-                    // Clean the text like SWOT does
-                    const cleanQuestion = String(question.question_text)
-                        .replace(/[\u2018\u2019]/g, "'")
-                        .replace(/[\u201C\u201D]/g, '"')
-                        .replace(/[\u2013\u2014]/g, '-')
-                        .replace(/[\u2026]/g, '...')
-                        .replace(/[^\x00-\x7F]/g, '')
-                        .trim();
-
-                    const cleanAnswer = String(userAnswers[questionId])
-                        .replace(/[\u2018\u2019]/g, "'")
-                        .replace(/[\u201C\u201D]/g, '"')
-                        .replace(/[\u2013\u2014]/g, '-')
-                        .replace(/[\u2026]/g, '...')
-                        .replace(/[^\x00-\x7F]/g, '')
-                        .trim();
-
-                    questionsArray.push(cleanQuestion);
-                    answersArray.push(cleanAnswer);
-                }
-            });
-
-            if (questionsArray.length === 0) {
-                throw new Error('No answered questions available for competitive advantage analysis');
-            }
- 
-
-            // Call ML Backend
-            const response = await fetch(`${ML_API_BASE_URL}/competitive-advantage`, {
-                method: 'POST',
-                headers: {
-                    'accept': 'application/json',
-                    'Content-Type': 'application/json; charset=utf-8'
-                },
-                body: JSON.stringify({
-                    questions: questionsArray,
-                    answers: answersArray
-                })
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Competitive Advantage API returned ${response.status}: ${errorText}`);
-            }
-
-            const result = await response.json();
-
-            // Validate response structure
-            if (!result.competitiveAdvantage) {
-                throw new Error('Invalid API response structure: missing competitiveAdvantage');
-            }
-
-            // Set local state
-            setData(result);
-            setHasGenerated(true);
-
-            // Save to backend using phase analysis API (like SWOT)
-            await saveToBackend(result);
-             
-            return result;
-
-        } catch (error) {
-            console.error('Error generating Competitive Advantage analysis:', error);
-            setError(error.message);
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Initialize component
+    // Initialize component - only handle data display, no generation
     useEffect(() => {
         if (hasInitialized.current) return;
         
-        isMounted.current = true;
         hasInitialized.current = true;
 
         if (competitiveAdvantageData) {
             setData(competitiveAdvantageData);
             setHasGenerated(true);
-        } else {
-            // Check if we have enough data to generate analysis
-            const answeredCount = Object.keys(userAnswers).length;
-            if (answeredCount >= 5 && questions.length > 0) {
-                generateCompetitiveAdvantageAnalysis();
-            }
+            setError(null);
         }
-
-        return () => {
-            isMounted.current = false;
-        };
     }, [competitiveAdvantageData]);
 
-    // Handle regeneration - Updated to match SWOT pattern
-    const handleRegenerate = async () => {
-        if (onRegenerate) {
-            // If parent component provides regeneration handler, use it
-            await onRegenerate();
-        } else {
-            // Otherwise, handle regeneration internally
-            await generateCompetitiveAdvantageAnalysis();
+    // Update data when prop changes
+    useEffect(() => {
+        if (competitiveAdvantageData) {
+            setData(competitiveAdvantageData);
+            setHasGenerated(true);
+            setError(null);
+        } else if (competitiveAdvantageData === null) {
+            // Only reset if explicitly set to null (during regeneration)
+            setData(null);
+            setHasGenerated(false);
         }
-    };
+    }, [competitiveAdvantageData]);
 
     // Get position color
     const getPositionColor = (position) => {
@@ -493,12 +367,12 @@ const CompetitiveAdvantageMatrix = ({
     };
 
     // Loading state
-    if (isLoading || isRegenerating) {
+    if (isRegenerating) {
         return (
             <div className="competitive-advantage-container">
                 <div className="loading-state">
                     <Loader className="loading-spinner" />
-                    <h3>Analyzing Competitive Advantages...</h3>
+                    <h3>Regenerating Competitive Advantage Analysis...</h3>
                     <p>Evaluating your market position and competitive differentiators...</p>
                 </div>
             </div>
@@ -524,25 +398,15 @@ const CompetitiveAdvantageMatrix = ({
     // Check if data is incomplete and show missing questions checker
     if (!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) {
         return (
-            <div className="competitive-advantage-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Shield className="main-icon" size={24} />
-                        <div>
-                            <h2 className="cs-title">Competitive Advantage Matrix</h2>
-                        </div>
-                    </div> 
-                </div>
-
-                {/* Replace the entire empty-state div with the common component */}
+            <div className="competitive-advantage-container"> 
                 <AnalysisEmptyState
                     analysisType="competitiveAdvantage"
                     analysisDisplayName="Competitive Advantage Matrix"
                     icon={Shield}
                     onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={handleRegenerate}
+                    onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
                     isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
+                    canRegenerate={canRegenerate && !!onRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
                     customMessage="Complete essential phase questions to unlock competitive advantage analysis."
@@ -554,23 +418,10 @@ const CompetitiveAdvantageMatrix = ({
     const advantage = data.competitiveAdvantage;
 
     return (
-        <div className="competitive-advantage-container">
-            {/* Header */}
-            <div className="cs-header">
-                <div className="cs-title-section">
-                    <Shield className="main-icon" size={24} />
-                    <div>
-                        <h2 className="cs-title">Competitive Advantage Matrix</h2>
-                    </div>
-                </div>
-                <RegenerateButton
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
-                    sectionName="Competitive Advantage"
-                    size="medium"
-                />
-            </div>
+        <div className="competitive-advantage-container" 
+             data-analysis-type="competitiveAdvantage"
+             data-analysis-name="Competitive Advantage Matrix"
+             data-analysis-order="9"> 
 
             {/* Navigation Tabs */}
             <div className="competitive-advantage-tabs">

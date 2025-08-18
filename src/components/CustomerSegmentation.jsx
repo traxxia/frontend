@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, TrendingUp, Star, Calendar, Filter, Loader, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { Users, TrendingUp, Star, Calendar, Filter, Loader, ChevronDown, ChevronRight } from 'lucide-react'; 
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState'; 
@@ -252,13 +251,7 @@ const CustomerSegmentation = ({
   // Check if data is incomplete and show missing questions checker
   if (!segmentationData || isSegmentationDataIncomplete(segmentationData)) {
     return (
-      <div className="customer-segmentation">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Users className="cs-icon" size={24} />
-            <h2 className="cs-title">{t("Customer Segmentation")}</h2>
-          </div> 
-        </div>
+      <div className="customer-segmentation"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -282,21 +275,7 @@ const CustomerSegmentation = ({
   return (
     <div className="customer-segmentation" data-analysis-type="customerSegmentation"
   data-analysis-name="Customer Segmentation"
-  data-analysis-order="9">
-      {/* Header with regenerate button */}
-      <div className="cs-header">
-        <div className="cs-title-section">
-          <Users className="cs-icon" size={24} />
-          <h2 className="cs-title">{t("Customer Segmentation")}</h2>
-        </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Customer Segmentation"
-          size="medium"
-        />
-      </div>
+  data-analysis-order="9"> 
 
       {/* Executive Summary */}
       <div className="section-container">

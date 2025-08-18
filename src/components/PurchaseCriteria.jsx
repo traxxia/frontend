@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react'; 
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -12,7 +11,7 @@ const PurchaseCriteria = ({
   businessName = "Your Business",
   onDataGenerated,
   onRegenerate,
-  isRegenerating = false,
+  isRegenerating,
   canRegenerate = true,
   purchaseCriteriaData = null,
   selectedBusinessId,
@@ -75,12 +74,17 @@ const PurchaseCriteria = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      onRegenerate();
+        try {
+            await onRegenerate(); // Add await here
+        } catch (error) {
+            console.error('Error in PurchaseCriteria regeneration:', error);
+            setError(error.message || 'Failed to regenerate analysis');
+        }
     } else {
-      setCriteriaData(null);
-      setError(null);
+        setCriteriaData(null);
+        setError(null);
     }
-  };
+};
 
   // Update criteria data when prop changes
   useEffect(() => {
@@ -267,13 +271,7 @@ const PurchaseCriteria = ({
 
   if (!criteriaData || isCriteriaDataIncomplete(criteriaData)) {
     return (
-      <div className="purchase-criteria">
-        <div className="pc-header">
-          <div className="pc-title-section">
-            <Target className="pc-icon" size={24} />
-            <h2 className="pc-title">{t("Purchase Criteria Matrix")}</h2>
-          </div>
-        </div>
+      <div className="purchase-criteria"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -298,22 +296,7 @@ const PurchaseCriteria = ({
       data-analysis-type="purchase-criteria"
       data-analysis-name="Purchase Criteria Matrix"
       data-analysis-order="2">
-      <div className="pc-header">
-        <div className="pc-title-section">
-          <Target className="pc-icon" size={24} />
-          <h2 className="pc-title">{t("Purchase Criteria Matrix")}</h2>
-        </div>
-
-        {/* Updated Regenerate Button to use RegenerateButton component */}
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Purchase Criteria"
-          size="medium"
-        />
-      </div>
-
+       
       {/* Key Metrics */}
       <div className="pc-metrics">
         <div className="pc-metric-card pc-metric-blue">

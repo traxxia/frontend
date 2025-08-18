@@ -45,9 +45,7 @@
   background: white;
   border-radius: 16px;
   box-shadow:none;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid #b5b3b0;
+  padding: 20px; 
   transition: none;
   overflow-x: hidden;
 }
@@ -3388,8 +3386,7 @@
 
 /* PestelAnalysisSimple.css */
 
-.pestel-container {
-  padding: 1.5rem;
+.pestel-container { 
   background-color: #f8fafc;
   min-height: 100vh;
 }

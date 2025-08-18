@@ -23,25 +23,25 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
     const analysisPromises = [
       apiService.generateSWOTAnalysis(questions, answers, selectedBusinessId)
         .then(result => setSwotAnalysisResult(result)),
-      
+
       apiService.generateSingleAnalysis('purchaseCriteria', 'purchase-criteria', 'purchaseCriteria', questions, answers, selectedBusinessId)
         .then(result => setPurchaseCriteriaData(result)),
-      
+
       apiService.generateSingleAnalysis('loyaltyNPS', 'loyalty-metrics', 'loyaltyMetrics', questions, answers, selectedBusinessId)
         .then(result => setLoyaltyNPSData(result)),
-      
+
       apiService.generateSingleAnalysis('channelHeatmap', 'channel-heatmap', 'channelHeatmap', questions, answers, selectedBusinessId)
         .then(result => setChannelHeatmapData(result)),
-      
+
       apiService.generateSingleAnalysis('capabilityHeatmap', 'capability-heatmap', 'capabilityHeatmap', questions, answers, selectedBusinessId)
         .then(result => setCapabilityHeatmapData(result)),
-      
+
       apiService.generateStrategicAnalysis(questions, answers, selectedBusinessId)
         .then(result => setStrategicData(result)),
-      
+
       apiService.generatePortersAnalysis(questions, answers, selectedBusinessId)
         .then(result => setPortersData(result)),
-      
+
       apiService.generatePestelAnalysis(questions, answers, selectedBusinessId)
         .then(result => setPestelData(result))
     ];
@@ -68,37 +68,63 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
     const analysisPromises = [
       apiService.generateFullSwotPortfolio(questions, answers, selectedBusinessId)
         .then(result => setFullSwotData(result)),
-      
+
       apiService.generateSingleAnalysis('customerSegmentation', 'customer-segment', 'customerSegmentation', questions, answers, selectedBusinessId)
         .then(result => setCustomerSegmentationData(result)),
-      
+
       apiService.generateCompetitiveAdvantage(questions, answers, selectedBusinessId)
         .then(result => setCompetitiveAdvantageData(result)),
-      
+
       apiService.generateChannelEffectiveness(questions, answers, selectedBusinessId)
         .then(result => setChannelEffectivenessData(result)),
-      
+
       apiService.generateExpandedCapability(questions, answers, selectedBusinessId)
         .then(result => setExpandedCapabilityData(result)),
-      
+
       apiService.generateStrategicGoals(questions, answers, selectedBusinessId)
         .then(result => setStrategicGoalsData(result)),
-      
+
       apiService.generateStrategicRadar(questions, answers, selectedBusinessId)
         .then(result => setStrategicRadarData(result)),
-      
+
       apiService.generateCultureProfile(questions, answers, selectedBusinessId)
         .then(result => setCultureProfileData(result)),
-      
+
       apiService.generateProductivityMetrics(questions, answers, selectedBusinessId)
         .then(result => setProductivityData(result)),
-      
+
       apiService.generateMaturityScore(questions, answers, selectedBusinessId)
         .then(result => setMaturityData(result)),
-      
+
       // Overwrite strategic analysis for essential phase
       apiService.generateStrategicAnalysis(questions, answers, selectedBusinessId)
         .then(result => setStrategicData(result))
+    ];
+
+    return await Promise.allSettled(analysisPromises);
+  }, [apiService]);
+
+  // Generate all good phase analyses
+  const generateGoodPhaseAnalyses = useCallback(async (questions, answers, selectedBusinessId, setters) => {
+    const {
+      setCostEfficiencyData,
+      setFinancialPerformanceData,
+      setFinancialBalanceData,
+      setOperationalEfficiencyData
+    } = setters;
+
+    const analysisPromises = [
+      apiService.generateCostEfficiency(questions, answers, selectedBusinessId, null)
+        .then(result => setCostEfficiencyData(result)),
+
+      apiService.generateFinancialPerformance(questions, answers, selectedBusinessId, null)
+        .then(result => setFinancialPerformanceData(result)),
+      apiService.generateFinancialBalance(questions, answers, selectedBusinessId, null)
+        .then(result => setFinancialBalanceData(result)),
+
+      apiService.generateOperationalEfficiency(questions, answers, selectedBusinessId, null)
+        .then(result => setOperationalEfficiencyData(result))
+
     ];
 
     return await Promise.allSettled(analysisPromises);
@@ -115,7 +141,8 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
     questions,
     userAnswers,
     selectedBusinessId,
-    showToastMessage
+    showToastMessage,
+    file = null
   ) => {
     return async () => {
       try {
@@ -152,8 +179,16 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
           result = await apiService.generateProductivityMetrics(questions, userAnswers, selectedBusinessId);
         } else if (analysisType === 'maturityScore') {
           result = await apiService.generateMaturityScore(questions, userAnswers, selectedBusinessId);
-        } else {
-          // Use generic function for standard analyses
+        } else if (analysisType === 'costEfficiency') {
+          result = await apiService.generateCostEfficiency(questions, userAnswers, selectedBusinessId, file || null);
+        } else if (analysisType === 'financialPerformance') {
+          result = await apiService.generateFinancialPerformance(questions, userAnswers, selectedBusinessId, file || null);
+        } else if (analysisType === 'financialBalance') {
+          result = await apiService.generateFinancialBalance(questions, userAnswers, selectedBusinessId, file || null);
+        } else if (analysisType === 'operationalEfficiency') {
+          result = await apiService.generateOperationalEfficiency(questions, userAnswers, selectedBusinessId, file || null);
+        }
+        else {
           result = await apiService.generateSingleAnalysis(analysisType, endpoint, dataKey, questions, userAnswers, selectedBusinessId);
         }
 
@@ -172,6 +207,7 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
     apiService,
     generateInitialPhaseAnalyses,
     generateEssentialPhaseAnalyses,
+    generateGoodPhaseAnalyses, // NEW: Add Good phase generation
     createRegenerationHandler
   };
 };

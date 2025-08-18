@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -180,15 +179,7 @@ const PortersFiveForces = ({
   // Check if data is incomplete and show missing questions checker
   if (!parsedData || isPortersDataIncomplete(parsedData)) {
     return (
-      <div className="porters-container">
-        <div className="cs-header">
-          <div className="cs-title-section">
-            <Shield className="main-icon" size={24} />
-            <div>
-              <h2 className='cs-title'>Porter's Five Forces Analysis</h2>
-            </div>
-          </div>
-        </div>
+      <div className="porters-container"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -209,22 +200,7 @@ const PortersFiveForces = ({
   return (
     <div className="porters-container" data-analysis-type="porters"
       data-analysis-name="Porter's Five Forces"
-      data-analysis-order="6">
-      <div className="cs-header">
-        <div className="cs-title-section">
-          <Shield className="main-icon" size={24} />
-          <div>
-            <h2 className='cs-title'>Porter's Five Forces Analysis</h2>
-          </div>
-        </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Porter's Analysis"
-          size="medium"
-        />
-      </div>
+      data-analysis-order="6"> 
 
       {/* Executive Summary Table */}
       {parsedData.executive_summary && (

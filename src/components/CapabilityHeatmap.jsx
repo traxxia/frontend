@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react';
-import RegenerateButton from './RegenerateButton';
+import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+
 const CapabilityHeatmap = ({
   questions = [],
   userAnswers = {},
@@ -35,7 +35,7 @@ const CapabilityHeatmap = ({
   };
 
   // Function to check missing questions and redirect
-  const handleMissingQuestionsCheck  = async () => {
+  const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.capabilityHeatmap;
 
     await checkMissingQuestionsAndRedirect(
@@ -49,9 +49,53 @@ const CapabilityHeatmap = ({
     );
   };
 
+  // Check if a value contains "NOT ENOUGH DATA" (case-insensitive)
+  const hasNotEnoughDataValue = (value) => {
+    if (typeof value === 'string') {
+      return value.toUpperCase().includes('NOT ENOUGH DATA');
+    }
+    return false;
+  };
+
+  // Check if any data contains "NOT ENOUGH DATA"
+  const containsNotEnoughData = (data) => {
+    if (!data) return false;
+
+    // Check capabilities array
+    if (data.capabilities && Array.isArray(data.capabilities)) {
+      for (const capability of data.capabilities) {
+        if (hasNotEnoughDataValue(capability.name) ||
+            hasNotEnoughDataValue(capability.category) ||
+            hasNotEnoughDataValue(capability.type) ||
+            hasNotEnoughDataValue(capability.impact)) {
+          return true;
+        }
+      }
+    }
+
+    // Check maturity scale
+    if (data.maturityScale && data.maturityScale.levels) {
+      for (const level of data.maturityScale.levels) {
+        if (hasNotEnoughDataValue(level.label)) {
+          return true;
+        }
+      }
+    }
+
+    // Check overall maturity
+    if (hasNotEnoughDataValue(data.overallMaturity)) {
+      return true;
+    }
+
+    return false;
+  };
+
   // Check if the capability data is empty/incomplete
   const isCapabilityDataIncomplete = (data) => {
     if (!data) return true;
+
+    // Check for "NOT ENOUGH DATA" values
+    if (containsNotEnoughData(data)) return true;
 
     // Check if capabilities array is empty or null
     if (!data.capabilities || data.capabilities.length === 0) return true;
@@ -203,23 +247,15 @@ const CapabilityHeatmap = ({
     );
   }
 
-  // Check if data is incomplete and show missing questions checker
+  // Check if data is incomplete (including "NOT ENOUGH DATA" values) and show missing questions checker
   if (!capabilityData || isCapabilityDataIncomplete(capabilityData)) {
     return (
-      <div className="capability-heatmap">
-        <div className="ch-header">
-          <div className="ch-title-section">
-            <Zap className="ch-icon" size={24} />
-            <h2 className="ch-title">{t("Capability Heatmap")}</h2>
-          </div>
-        </div>
-
-        {/* Replace the entire empty-state div with the common component */}
+      <div className="capability-heatmap"> 
         <AnalysisEmptyState
           analysisType="capabilityHeatmap"
           analysisDisplayName="Capability Heatmap Analysis"
           icon={Zap}
-          onImproveAnswers={handleMissingQuestionsCheck }
+          onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
@@ -233,20 +269,7 @@ const CapabilityHeatmap = ({
   return (
     <div className="capability-heatmap" data-analysis-type="capability-heatmap"
       data-analysis-name="Capability Heatmap"
-      data-analysis-order="5">
-      <div className="ch-header">
-        <div className="ch-title-section">
-          <Zap className="ch-icon" size={24} />
-          <h2 className="ch-title">{t("Capability Heatmap")}</h2>
-        </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Capability Heatmap"
-          size="medium"
-        />
-      </div>
+      data-analysis-order="5"> 
 
       <div className="ch-metrics">
         <div className="ch-metric-card ch-metric-blue">

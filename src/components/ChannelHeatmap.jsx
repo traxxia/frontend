@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BarChart3, TrendingUp, Layers, Calendar, Loader, Zap, Grid3x3 } from 'lucide-react';
-import RegenerateButton from './RegenerateButton'; 
+import { BarChart3, TrendingUp, Layers, Calendar, Loader, Zap, Grid3x3 } from 'lucide-react'; 
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -243,13 +242,7 @@ const ChannelHeatmap = ({
   // Check if data is incomplete and show missing questions checker
   if (!heatmapData || isHeatmapDataIncomplete(heatmapData)) {
     return (
-      <div className="channel-heatmap  channel-heatmap-container">
-        <div className="ch-header">
-          <div className="ch-title-section">
-            <Grid3x3 className="ch-icon" size={24} />
-            <h2 className="ch-title">{t("Channel Heatmap")}</h2>
-          </div>
-        </div>
+      <div className="channel-heatmap  channel-heatmap-container"> 
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -272,21 +265,7 @@ const ChannelHeatmap = ({
   return (
     <div className="channel-heatmap channel-heatmap-container" data-analysis-type="channel-heatmap"
       data-analysis-name="Channel Heatmap"
-      data-analysis-order="3">
-      {/* Header with regenerate button */}
-      <div className="ch-header">
-        <div className="ch-title-section">
-          <Grid3x3 className="ch-icon" size={24} />
-          <h2 className="ch-title">{t("Channel Heatmap")}</h2>
-        </div>
-        <RegenerateButton
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          sectionName="Channel Heatmap"
-          size="medium"
-        />
-      </div>
+      data-analysis-order="3"> 
 
       {/* Key Metrics */}
       <div className="ch-metrics">

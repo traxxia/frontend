@@ -23,8 +23,7 @@ import {
   Monitor,
   MessageCircle,
   Building
-} from 'lucide-react';
-import RegenerateButton from './RegenerateButton';
+} from 'lucide-react'; 
 import DownloadStrategicAnalysis from './DownloadStrategicAnalysis';
 
 const StrategicAnalysis = ({
@@ -166,73 +165,7 @@ const StrategicAnalysis = ({
   const formatPhaseName = (phaseKey) => {
     return phaseKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
-
-  const renderExecutiveSummaryTable = (data) => {
-    const summary = data?.executive_summary;
-    if (!summary) return null;
-
-    return (
-      <section className="strategic-page-section">
-        <div className="section-header" style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          borderBottom: 'none', marginBottom: '0px',
-          gap: '8px',
-          background: '#fff'
-        }}>
-          <Target size={24} style={{ color: 'blue' }} />
-          <h2>Executive Summary</h2>
-        </div>
-
-        <div className="table-container">
-          <table className="data-table">
-            <tbody>
-              <tr>
-                <td className="table-label">Situation Overview</td>
-                <td className="table-value">{summary.situation_overview}</td>
-              </tr>
-              <tr>
-                <td className="table-label">Urgency Level</td>
-                <td className="table-value">
-                  <span className="badge" style={{ backgroundColor: getPriorityColor(summary.urgency_level) }}>
-                    {summary.urgency_level}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className="table-label">Strategic Maturity Assessment</td>
-                <td className="table-value">{summary.strategic_maturity_assessment}</td>
-              </tr>
-              {summary.key_strategic_themes && summary.key_strategic_themes.length > 0 && (
-                <tr>
-                  <td className="table-label">Key Strategic Themes</td>
-                  <td className="table-value">
-                    <div className="tags-container">
-                      {summary.key_strategic_themes.map((theme, index) => (
-                        <span key={index} className="tag">{theme}</span>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              )}
-              {summary.primary_vuca_factors && summary.primary_vuca_factors.length > 0 && (
-                <tr>
-                  <td className="table-label">Primary VUCA Factors</td>
-                  <td className="table-value">
-                    <div className="tags-container">
-                      {summary.primary_vuca_factors.map((factor, index) => (
-                        <span key={index} className="tag warning">{factor}</span>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    );
-  };
+ 
 
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
@@ -905,8 +838,7 @@ const StrategicAnalysis = ({
     const analysisData = localStrategicData.strategic_analysis || localStrategicData;
 
     return (
-      <div className="strategic-content">
-        {renderExecutiveSummaryTable(analysisData)}
+      <div className="strategic-content"> 
         {renderStrategicPillarsTable(analysisData)}
         {renderCrossPillarSynthesisTable(analysisData)}
         {renderAgileFrameworksTable(analysisData)}
@@ -948,16 +880,7 @@ const StrategicAnalysis = ({
               isDisabled={!localStrategicData || isLoading || isRegenerating}
               size="medium"
             />
-          )}
-
-          <RegenerateButton
-            onRegenerate={handleRegenerate}
-            isRegenerating={isRegenerating}
-            canRegenerate={canRegenerate}
-            sectionName="Strategic Analysis"
-            size="medium"
-            buttonText="Generate"
-          />
+          )} 
         </div>
 
       </div>
