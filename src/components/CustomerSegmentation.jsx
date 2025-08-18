@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, TrendingUp, Star, Calendar, Filter, Loader, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton';
-import MissingQuestionsChecker from './MissingQuestionsChecker';
+import RegenerateButton from './RegenerateButton'; 
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState'; 
+import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+
 const CustomerSegmentation = ({
   questions = [],
   userAnswers = {},
@@ -37,82 +38,18 @@ const CustomerSegmentation = ({
     }
   };
 
-  // Function to check missing questions and redirect
-  const checkMissingQuestionsAndRedirect = async () => {
-    try {
-      const token = getAuthToken();
-      
-      const response = await fetch(
-        `${API_BASE_URL}/api/questions/missing-for-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysis_type: 'customerSegmentation',
-            business_id: selectedBusinessId
-          })
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        
-        // If there are missing questions, redirect with highlighting
-        if (result.missing_count > 0) {
-          handleRedirectToBrief(result);
-        } else {
-          // No missing questions but data is incomplete - user needs to improve their answers
-          // Create a custom result to highlight the customerSegmentation question(s)
-          const customerSegmentationQuestions = await fetch(
-            `${API_BASE_URL}/api/questions`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          ).then(res => res.json()).then(data => 
-            data.questions.filter(q => q.used_for && q.used_for.includes('customerSegmentation'))
-          );
-
-          handleRedirectToBrief({
-            missing_count: customerSegmentationQuestions.length,
-            missing_questions: customerSegmentationQuestions.map(q => ({
-              _id: q._id,
-              order: q.order,
-              question_text: q.question_text,
-              objective: q.objective,
-              required_info: q.required_info,
-              used_for: q.used_for
-            })),
-            analysis_type: 'customerSegmentation',
-            message: `Please provide more detailed answers for customer segmentation analysis. The current answers are insufficient to generate meaningful segments.`,
-            is_complete: false,
-            keepHighlightLonger: true // Flag to keep highlighting longer
-          });
-        }
-      } else {
-        // If API call fails, redirect to review answers
-        handleRedirectToBrief({
-          missing_count: 0,
-          missing_questions: [],
-          analysis_type: 'customerSegmentation',
-          message: 'Please review and improve your answers for customer segmentation analysis.'
-        });
+  const handleMissingQuestionsCheck = async () => {
+    const analysisConfig = ANALYSIS_TYPES.customerSegmentation; 
+    
+    await checkMissingQuestionsAndRedirect(
+      'customerSegmentation', 
+      selectedBusinessId,
+      handleRedirectToBrief,
+      {
+        displayName: analysisConfig.displayName,
+        customMessage: analysisConfig.customMessage
       }
-    } catch (error) {
-      console.error('Error checking missing questions:', error);
-      // If error occurs, redirect to review answers
-      handleRedirectToBrief({
-        missing_count: 0,
-        missing_questions: [],
-        analysis_type: 'customerSegmentation',
-        message: 'Please review and improve your answers for customer segmentation analysis.'
-      });
-    }
+    );
   };
 
   // Check if the segmentation data is empty/incomplete
@@ -328,22 +265,13 @@ const CustomerSegmentation = ({
           analysisType="customerSegmentation"
           analysisDisplayName="Customer Segmentation Analysis"
           icon={Users}
-          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        />
-        
-        <MissingQuestionsChecker
-          analysisType="customerSegmentation"
-          analysisData={segmentationData}
-          selectedBusinessId={selectedBusinessId}
-          onRedirectToBrief={handleRedirectToBrief}
-          API_BASE_URL={API_BASE_URL}
-          getAuthToken={getAuthToken}
-        />
+        /> 
       </div>
     );
   }

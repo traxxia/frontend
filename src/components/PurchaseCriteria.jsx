@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
-import RegenerateButton from './RegenerateButton';
-import MissingQuestionsChecker from './MissingQuestionsChecker';
+import RegenerateButton from './RegenerateButton'; 
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const PurchaseCriteria = ({
   questions = [],
@@ -44,82 +44,18 @@ const PurchaseCriteria = ({
     }
   };
 
-  // Function to check missing questions and redirect
-  const checkMissingQuestionsAndRedirect = async () => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/questions/missing-for-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysis_type: 'purchaseCriteria',
-            business_id: selectedBusinessId
-          })
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-
-        // If there are missing questions, redirect with highlighting
-        if (result.missing_count > 0) {
-          handleRedirectToBrief(result);
-        } else {
-          // No missing questions but data is incomplete - user needs to improve their answers
-          // Create a custom result to highlight the purchase criteria question(s)
-          const purchaseCriteriaQuestions = await fetch(
-            `${API_BASE_URL}/api/questions`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          ).then(res => res.json()).then(data =>
-            data.questions.filter(q => q.used_for && q.used_for.includes('purchaseCriteria'))
-          );
-
-          handleRedirectToBrief({
-            missing_count: purchaseCriteriaQuestions.length,
-            missing_questions: purchaseCriteriaQuestions.map(q => ({
-              _id: q._id,
-              order: q.order,
-              question_text: q.question_text,
-              objective: q.objective,
-              required_info: q.required_info,
-              used_for: q.used_for
-            })),
-            analysis_type: 'purchaseCriteria',
-            message: `Please provide more detailed answers for purchase criteria analysis. The current answers are insufficient to generate meaningful criteria.`,
-            is_complete: false,
-            keepHighlightLonger: true // Flag to keep highlighting longer
-          });
-        }
-      } else {
-        // If API call fails, redirect to review answers
-        handleRedirectToBrief({
-          missing_count: 0,
-          missing_questions: [],
-          analysis_type: 'purchaseCriteria',
-          message: 'Please review and improve your answers for purchase criteria analysis.'
-        });
+  const handleMissingQuestionsCheck = async () => {
+    const analysisConfig = ANALYSIS_TYPES.purchaseCriteria; 
+    
+    await checkMissingQuestionsAndRedirect(
+      'purchaseCriteria', 
+      selectedBusinessId,
+      handleRedirectToBrief,
+      {
+        displayName: analysisConfig.displayName,
+        customMessage: analysisConfig.customMessage
       }
-    } catch (error) {
-      console.error('Error checking missing questions:', error);
-      // If error occurs, redirect to review answers
-      handleRedirectToBrief({
-        missing_count: 0,
-        missing_questions: [],
-        analysis_type: 'purchaseCriteria',
-        message: 'Please review and improve your answers for purchase criteria analysis.'
-      });
-    }
+    );
   };
 
   // Check if the criteria data is empty/incomplete
@@ -344,22 +280,13 @@ const PurchaseCriteria = ({
           analysisType="purchaseCriteria"
           analysisDisplayName="Purchase Criteria Analysis"
           icon={Target}
-          onImproveAnswers={checkMissingQuestionsAndRedirect}
+          onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        />
-
-        <MissingQuestionsChecker
-          analysisType="purchaseCriteria"
-          analysisData={criteriaData}
-          selectedBusinessId={selectedBusinessId}
-          onRedirectToBrief={handleRedirectToBrief}
-          API_BASE_URL={API_BASE_URL}
-          getAuthToken={getAuthToken}
-        />
+        /> 
       </div>
     );
   }

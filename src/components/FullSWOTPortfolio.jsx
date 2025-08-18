@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap, ChevronDown, ChevronRight } from 'lucide-react';
 import '../styles/EssentialPhase.css';
-import RegenerateButton from './RegenerateButton';
-import MissingQuestionsChecker from './MissingQuestionsChecker';
+import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
+import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const FullSWOTPortfolio = ({
     questions = [],
@@ -36,85 +36,18 @@ const FullSWOTPortfolio = ({
         }
     };
 
-    // Function to check missing questions and redirect
-    const checkMissingQuestionsAndRedirect = async () => {
-        try {
-            const token = getAuthToken();
-
-            const response = await fetch(
-                `${API_BASE_URL}/api/questions/missing-for-analysis`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        analysis_type: 'fullSwot',
-                        business_id: selectedBusinessId
-                    })
-                }
-            );
-
-            if (response.ok) {
-                const result = await response.json();
-
-                // If there are missing questions, redirect with highlighting
-                if (result.missing_count > 0) {
-                    handleRedirectToBrief(result);
-                } else {
-                    // No missing questions but data is incomplete - user needs to improve their answers
-                    // For Full SWOT, we need questions from multiple categories
-                    const fullSwotQuestions = await fetch(
-                        `${API_BASE_URL}/api/questions`,
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    ).then(res => res.json()).then(data =>
-                        data.questions.filter(q =>
-                            (q.used_for && (q.used_for.includes('swot') || q.used_for.includes('strategic'))) ||
-                            q.phase === 'essential'
-                        )
-                    );
-
-                    handleRedirectToBrief({
-                        missing_count: fullSwotQuestions.length,
-                        missing_questions: fullSwotQuestions.map(q => ({
-                            _id: q._id,
-                            order: q.order,
-                            question_text: q.question_text,
-                            objective: q.objective,
-                            required_info: q.required_info,
-                            used_for: q.used_for
-                        })),
-                        analysis_type: 'fullSwot',
-                        message: `Please provide more detailed answers for Full SWOT Portfolio analysis. The current answers are insufficient to generate enhanced insights.`,
-                        is_complete: false,
-                        keepHighlightLonger: true // Flag to keep highlighting longer
-                    });
-                }
-            } else {
-                // If API call fails, redirect to review answers
-                handleRedirectToBrief({
-                    missing_count: 0,
-                    missing_questions: [],
-                    analysis_type: 'fullSwot',
-                    message: 'Please review and improve your answers for Full SWOT Portfolio analysis.'
-                });
+    const handleMissingQuestionsCheck = async () => {
+        const analysisConfig = ANALYSIS_TYPES.fullSwot; 
+        
+        await checkMissingQuestionsAndRedirect(
+            'fullSwot', 
+            selectedBusinessId,
+            handleRedirectToBrief,
+            {
+            displayName: analysisConfig.displayName,
+            customMessage: analysisConfig.customMessage
             }
-        } catch (error) {
-            console.error('Error checking missing questions:', error);
-            // If error occurs, redirect to review answers
-            handleRedirectToBrief({
-                missing_count: 0,
-                missing_questions: [],
-                analysis_type: 'fullSwot',
-                message: 'Please review and improve your answers for Full SWOT Portfolio analysis.'
-            });
-        }
+        );
     };
 
     // Check if the full SWOT data is empty/incomplete
@@ -389,23 +322,14 @@ const FullSWOTPortfolio = ({
                     analysisType="fullSwot"
                     analysisDisplayName="Full SWOT Portfolio (Enhanced)"
                     icon={Target}
-                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onImproveAnswers={handleMissingQuestionsCheck}
                     onRegenerate={handleRegenerate}
                     isRegenerating={isRegenerating}
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
                     customMessage="Complete essential phase questions to unlock enhanced SWOT analysis with competitive positioning and strategic options."
-                />
-
-                <MissingQuestionsChecker
-                    analysisType="fullSwot"
-                    analysisData={data}
-                    selectedBusinessId={selectedBusinessId}
-                    onRedirectToBrief={handleRedirectToBrief}
-                    API_BASE_URL={API_BASE_URL}
-                    getAuthToken={getAuthToken}
-                />
+                /> 
             </div>
         );
     }

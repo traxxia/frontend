@@ -667,7 +667,7 @@ export const staticTranslations = {
     'This_will_permanently_delete': 'This will permanently delete:',
     // Business page
     'unlockBusinessAnalysis': 'Unlock Business Analysis',
-    "completePhaseMessage": "Complete all initial phase questions to unlock SWOT analysis and strategic insights!",
+    "completePhaseMessage": "Complete all initial phase questions to unlock business analysis and STRATEGIC insights!",
 "progress": "Progress",
 'All_progress_data_and_statistics': 'All progress data and statistics',
  'the_business_profile_itself': 'The business profile itself',

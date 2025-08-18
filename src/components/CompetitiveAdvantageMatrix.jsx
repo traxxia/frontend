@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton';
-import MissingQuestionsChecker from './MissingQuestionsChecker';
+import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
+import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const CompetitiveAdvantageMatrix = ({
     questions = [],
@@ -36,89 +36,18 @@ const CompetitiveAdvantageMatrix = ({
         }
     };
 
-    // Function to check missing questions and redirect
-    const checkMissingQuestionsAndRedirect = async () => {
-        try {
-            const token = getAuthToken();
-            
-            const response = await fetch(
-                `${API_BASE_URL}/api/questions/missing-for-analysis`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        analysis_type: 'competitiveAdvantage',
-                        business_id: selectedBusinessId
-                    })
-                }
-            );
-
-            if (response.ok) {
-                const result = await response.json();
-                
-                // If there are missing questions, redirect with highlighting
-                if (result.missing_count > 0) {
-                    handleRedirectToBrief(result);
-                } else {
-                    // No missing questions but data is incomplete - user needs to improve their answers
-                    // For Competitive Advantage, we need questions about differentiation and competitive positioning
-                    const competitiveQuestions = await fetch(
-                        `${API_BASE_URL}/api/questions`,
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    ).then(res => res.json()).then(data => 
-                        data.questions.filter(q => 
-                            (q.used_for && q.used_for.includes('competitiveAdvantage')) ||
-                            (q.objective && (
-                                q.objective.toLowerCase().includes('competitive') ||
-                                q.objective.toLowerCase().includes('differentiator') ||
-                                q.objective.toLowerCase().includes('advantage')
-                            ))
-                        )
-                    );
-
-                    handleRedirectToBrief({
-                        missing_count: competitiveQuestions.length,
-                        missing_questions: competitiveQuestions.map(q => ({
-                            _id: q._id,
-                            order: q.order,
-                            question_text: q.question_text,
-                            objective: q.objective,
-                            required_info: q.required_info,
-                            used_for: q.used_for
-                        })),
-                        analysis_type: 'competitiveAdvantage',
-                        message: `Please provide more detailed answers for Competitive Advantage analysis. The current answers are insufficient to generate meaningful competitive insights.`,
-                        is_complete: false,
-                        keepHighlightLonger: true // Flag to keep highlighting longer
-                    });
-                }
-            } else {
-                // If API call fails, redirect to review answers
-                handleRedirectToBrief({
-                    missing_count: 0,
-                    missing_questions: [],
-                    analysis_type: 'competitiveAdvantage',
-                    message: 'Please review and improve your answers for Competitive Advantage analysis.'
-                });
+    const handleMissingQuestionsCheck = async () => {
+        const analysisConfig = ANALYSIS_TYPES.competitiveAdvantage; 
+        
+        await checkMissingQuestionsAndRedirect(
+            'competitiveAdvantage', 
+            selectedBusinessId,
+            handleRedirectToBrief,
+            {
+            displayName: analysisConfig.displayName,
+            customMessage: analysisConfig.customMessage
             }
-        } catch (error) {
-            console.error('Error checking missing questions:', error);
-            // If error occurs, redirect to review answers
-            handleRedirectToBrief({
-                missing_count: 0,
-                missing_questions: [],
-                analysis_type: 'competitiveAdvantage',
-                message: 'Please review and improve your answers for Competitive Advantage analysis.'
-            });
-        }
+        );
     };
 
     // Check if the competitive advantage data is empty/incomplete
@@ -610,23 +539,14 @@ const CompetitiveAdvantageMatrix = ({
                     analysisType="competitiveAdvantage"
                     analysisDisplayName="Competitive Advantage Matrix"
                     icon={Shield}
-                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onImproveAnswers={handleMissingQuestionsCheck}
                     onRegenerate={handleRegenerate}
                     isRegenerating={isRegenerating}
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
                     customMessage="Complete essential phase questions to unlock competitive advantage analysis."
-                />
-                
-                <MissingQuestionsChecker
-                    analysisType="competitiveAdvantage"
-                    analysisData={data}
-                    selectedBusinessId={selectedBusinessId}
-                    onRedirectToBrief={handleRedirectToBrief}
-                    API_BASE_URL={API_BASE_URL}
-                    getAuthToken={getAuthToken}
-                />
+                /> 
             </div>
         );
     }

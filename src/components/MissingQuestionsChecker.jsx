@@ -1,4 +1,3 @@
-// MissingQuestionsChecker.js - Common component for all analyses
 import React, { useState } from 'react';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, Target, TrendingUp, Calendar, CheckCircle, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
-import RegenerateButton from './RegenerateButton';
-import MissingQuestionsChecker from './MissingQuestionsChecker';
+import RegenerateButton from './RegenerateButton'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import '../styles/EssentialPhase.css';
+import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const StrategicGoals = ({
     questions = [],
@@ -29,82 +29,18 @@ const StrategicGoals = ({
         }
     };
 
-    // Function to check missing questions and redirect
-    const checkMissingQuestionsAndRedirect = async () => {
-        try {
-            const token = getAuthToken();
-            
-            const response = await fetch(
-                `${API_BASE_URL}/api/questions/missing-for-analysis`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        analysis_type: 'strategicGoals',
-                        business_id: selectedBusinessId
-                    })
-                }
-            );
-
-            if (response.ok) {
-                const result = await response.json();
-                
-                // If there are missing questions, redirect with highlighting
-                if (result.missing_count > 0) {
-                    handleRedirectToBrief(result);
-                } else {
-                    // No missing questions but data is incomplete - user needs to improve their answers
-                    // Create a custom result to highlight the strategicGoals question(s)
-                    const strategicGoalsQuestions = await fetch(
-                        `${API_BASE_URL}/api/questions`,
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    ).then(res => res.json()).then(data => 
-                        data.questions.filter(q => q.used_for && q.used_for.includes('strategicGoals'))
-                    );
-
-                    handleRedirectToBrief({
-                        missing_count: strategicGoalsQuestions.length,
-                        missing_questions: strategicGoalsQuestions.map(q => ({
-                            _id: q._id,
-                            order: q.order,
-                            question_text: q.question_text,
-                            objective: q.objective,
-                            required_info: q.required_info,
-                            used_for: q.used_for
-                        })),
-                        analysis_type: 'strategicGoals',
-                        message: `Please provide more detailed answers for strategic goals analysis. The current answers are insufficient to generate meaningful strategic objectives and OKRs.`,
-                        is_complete: false,
-                        keepHighlightLonger: true // Flag to keep highlighting longer
-                    });
-                }
-            } else {
-                // If API call fails, redirect to review answers
-                handleRedirectToBrief({
-                    missing_count: 0,
-                    missing_questions: [],
-                    analysis_type: 'strategicGoals',
-                    message: 'Please review and improve your answers for strategic goals analysis.'
-                });
+    const handleMissingQuestionsCheck = async () => {
+        const analysisConfig = ANALYSIS_TYPES.strategicGoals; 
+        
+        await checkMissingQuestionsAndRedirect(
+            'strategicGoals', 
+            selectedBusinessId,
+            handleRedirectToBrief,
+            {
+            displayName: analysisConfig.displayName,
+            customMessage: analysisConfig.customMessage
             }
-        } catch (error) {
-            console.error('Error checking missing questions:', error);
-            // If error occurs, redirect to review answers
-            handleRedirectToBrief({
-                missing_count: 0,
-                missing_questions: [],
-                analysis_type: 'strategicGoals',
-                message: 'Please review and improve your answers for strategic goals analysis.'
-            });
-        }
+        );
     };
 
     // Check if the strategic goals data is empty/incomplete
@@ -592,22 +528,13 @@ const StrategicGoals = ({
                     analysisType="strategicGoals"
                     analysisDisplayName="Strategic Goals & OKR Analysis"
                     icon={Target}
-                    onImproveAnswers={checkMissingQuestionsAndRedirect}
+                    onImproveAnswers={handleMissingQuestionsCheck}
                     onRegenerate={handleRegenerate}
                     isRegenerating={isRegenerating}
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                />
-                
-                <MissingQuestionsChecker
-                    analysisType="strategicGoals"
-                    analysisData={strategicGoalsData}
-                    selectedBusinessId={selectedBusinessId}
-                    onRedirectToBrief={handleRedirectToBrief}
-                    API_BASE_URL={API_BASE_URL}
-                    getAuthToken={getAuthToken}
-                />
+                /> 
             </div>
         );
     }

@@ -36,68 +36,68 @@ const EditableBriefSection = ({
 
   const isQuestionHighlighted = (questionId) => {
     if (!highlightedMissingQuestions?.missing_questions) return false;
-    
+
     // Find the question by ID to get its order
     const question = questions.find(q => (q._id || q.question_id) === questionId);
     if (!question) return false;
-    
+
     return highlightedMissingQuestions.missing_questions.some(q => q.order === question.order);
   };
 
   const renderMissingQuestionsBanner = () => {
-  if (!highlightedMissingQuestions || highlightedMissingQuestions.missing_count === 0) {
-    return null;
-  }
+    if (!highlightedMissingQuestions || highlightedMissingQuestions.missing_count === 0) {
+      return null;
+    }
 
-  const isExtendedHighlight = highlightedMissingQuestions.keepHighlightLonger;
+    const isExtendedHighlight = highlightedMissingQuestions.keepHighlightLonger;
 
-  return (
-    <div style={{
-      background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-      border: '1px solid #f59e0b',
-      borderRadius: '8px',
-      padding: '12px',
-      margin: '16px 0',
-      fontSize: '13px',
-      color: '#92400e'
-    }}>
+    return (
       <div style={{
-        fontWeight: '600',
-        marginBottom: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
+        background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+        border: '1px solid #f59e0b',
+        borderRadius: '8px',
+        padding: '12px',
+        margin: '16px 0',
+        fontSize: '13px',
+        color: '#92400e'
       }}>
-        <AlertCircle size={16} />
-        {isExtendedHighlight ? 'Answers Need More Detail' : 'Analysis Requires Additional Information'}
-        {onClearHighlight && (
-          <button
-            onClick={onClearHighlight}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              marginLeft: 'auto',
-              padding: '2px',
-              color: '#92400e'
-            }}
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
-      <div>
-        {highlightedMissingQuestions.message || 
-         `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis, 
+        <div style={{
+          fontWeight: '600',
+          marginBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <AlertCircle size={16} />
+          {isExtendedHighlight ? 'Answers Need More Detail' : 'Analysis Requires Additional Information'}
+          {onClearHighlight && (
+            <button
+              onClick={onClearHighlight}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                marginLeft: 'auto',
+                padding: '2px',
+                color: '#92400e'
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <div>
+          {highlightedMissingQuestions.message ||
+            `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis, 
          please answer the highlighted questions below.`}
+        </div>
+        <div style={{ fontSize: '12px', color: '#78350f', marginTop: '4px' }}>
+          Questions highlighted: {highlightedMissingQuestions.missing_questions.map(q => q.order).join(', ')}
+        </div>
       </div>
-      <div style={{ fontSize: '12px', color: '#78350f', marginTop: '4px' }}>
-        Questions highlighted: {highlightedMissingQuestions.missing_questions.map(q => q.order).join(', ')} 
-      </div>
-    </div>
-  );
-};
-  
+    );
+  };
+
   const generateBriefFields = () => {
     const fields = [];
     const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -244,7 +244,7 @@ const EditableBriefSection = ({
             <AlertCircle size={16} style={{ color: '#f59e0b' }} />
           </div>
         )}
-        
+
         <div className="item-row">
           <span className="item-label" style={{
             color: isHighlighted ? '#92400e' : 'inherit',
@@ -253,18 +253,18 @@ const EditableBriefSection = ({
             {/* Add question number before the label */}
             <span style={{
               fontSize: '14px',
-              fontWeight: 'bold',  
+              fontWeight: 'bold',
               padding: '2px 6px',
-              borderRadius: '4px', 
+              borderRadius: '4px',
             }}>
               {field.order || 1}.
             </span>
             {field.label}
-             
+
             {isHighlighted && (
-              <span style={{ 
-                fontSize: '12px', 
-                color: '#dc2626', 
+              <span style={{
+                fontSize: '12px',
+                color: '#dc2626',
                 fontWeight: '500',
                 marginLeft: '8px'
               }}>
@@ -402,17 +402,7 @@ const EditableBriefSection = ({
                     ✅ Essential Phase Complete - Advanced Analysis Available
                   </span>
                 </>
-              )}
-
-              {/* Show essential phase progress */}
-              {essentialQuestions.length > 0 && !isEssentialPhaseComplete && (
-                <>
-                  <br />
-                  <span className="essential-progress-text" style={{ fontSize: '12px', color: '#6b7280' }}>
-                    Essential Phase: {completedEssentialQuestions.length}/{essentialQuestions.length} questions
-                  </span>
-                </>
-              )}
+              )} 
             </>
           )}
         </div>
@@ -438,7 +428,7 @@ const EditableBriefSection = ({
               }}
             />
           </div>
-        )} 
+        )}
       </div>
 
       <div className="brief-content">
