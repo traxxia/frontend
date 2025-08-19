@@ -35,7 +35,8 @@ const Dashboard = () => {
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
     business_purpose: '',
-    description: ''
+    description: '', city: '',
+    country: ''
   });
   const [businessError, setBusinessError] = useState('');
 
@@ -226,7 +227,9 @@ const Dashboard = () => {
     setBusinessFormData({
       business_name: '',
       business_purpose: '',
-      description: ''
+      description: '',
+      city: '',
+      country: ''
     });
     setBusinessError('');
   };
@@ -246,7 +249,15 @@ const Dashboard = () => {
       setBusinessError('Business name and purpose are required');
       return;
     }
+    if (businessFormData.city && businessFormData.city.length < 2) {
+      setBusinessError('City must be at least 2 characters long');
+      return;
+    }
 
+    if (businessFormData.country && businessFormData.country.length < 2) {
+      setBusinessError('Country must be at least 2 characters long');
+      return;
+    }
     createBusiness();
   };
 
@@ -342,7 +353,7 @@ const Dashboard = () => {
         >
           <MoreVertical size={16} />
         </button>
-        
+
         {showCustomMenu[business._id] && (
           <div className="custom-dropdown-menu">
             <button
@@ -419,16 +430,16 @@ const Dashboard = () => {
         </div>
 
         {/* Choose one of these alternatives */}
-        
+
         {/* Option 1: Simple Delete Button - Always visible */}
         <SimpleDeleteButton />
-        
+
         {/* Option 2: Delete Button on Hover - Uncomment to use */}
         {/* <HoverDeleteButton /> */}
-        
+
         {/* Option 3: Custom Menu - Uncomment to use */}
         {/* <CustomMenuButton /> */}
-        
+
         {/* Option 4: Icon Delete Button - Uncomment to use */}
         {/* <IconDeleteButton /> */}
       </div>
@@ -443,10 +454,10 @@ const Dashboard = () => {
         </div>
       )}
       {businesses.length > 0 && businesses.map((business, index) => (
-        <DeleteButtonAlternatives 
-          key={business._id || index} 
-          business={business} 
-          viewType={viewType} 
+        <DeleteButtonAlternatives
+          key={business._id || index}
+          business={business}
+          viewType={viewType}
         />
       ))}
     </div>
@@ -804,6 +815,36 @@ const Dashboard = () => {
                 disabled={isCreatingBusiness}
               />
             </Form.Group>
+
+            {/* NEW: City and Country Fields Row */}
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>City ({t('optional')})</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="city"
+                    value={businessFormData.city}
+                    onChange={handleFormChange}
+                    placeholder="Enter city"
+                    disabled={isCreatingBusiness}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Country ({t('optional')})</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="country"
+                    value={businessFormData.country}
+                    onChange={handleFormChange}
+                    placeholder="Enter country"
+                    disabled={isCreatingBusiness}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
             <Form.Group className="mb-3">
               <Form.Label>{t('description')} ({t('optional')})</Form.Label>

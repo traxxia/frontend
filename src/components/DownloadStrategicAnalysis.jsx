@@ -33,11 +33,7 @@ const DownloadStrategicAnalysis = ({
 
     // Define strategic analysis components to capture
     const strategicComponents = [
-        { 
-            searchTexts: ['Executive Summary', 'executive'],
-            name: 'Executive Summary',
-            fallbackSelector: '.strategic-content > .strategic-page-section:first-child'
-        },
+         
         { 
             searchTexts: ['Strategic Pillars', 'pillars', 'pillar'],
             name: 'Strategic Pillars Analysis',

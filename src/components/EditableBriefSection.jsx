@@ -202,12 +202,15 @@ const EditableBriefSection = ({
         setEditedFields(prev => new Set([...prev, field.key]));
         showToastMessage('Answer updated and saved!', 'success');
 
-        // Trigger analysis regeneration with the updated answer
+        // REMOVED: Automatic analysis regeneration
+        // The following code block has been removed to prevent auto-regeneration:
+        /*
         if (onAnalysisRegenerate) {
           setTimeout(() => {
             onAnalysisRegenerate(field.questionId, newValue.trim());
           }, 300);
         }
+        */
 
       } catch (error) {
         showToastMessage('Failed to update answer', 'error');

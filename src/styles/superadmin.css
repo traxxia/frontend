@@ -950,9 +950,9 @@
 }
 
 .stat-card {
-  background: #f9fafb;
+  background: transparent;
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: 0px;
   text-align: center;
   flex: 1;
 }
@@ -1729,7 +1729,7 @@
 
 /* Main Content */
 .admin-content {
-  max-width: 1400px;
+  max-width: -webkit-fill-available;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -2615,9 +2615,9 @@
 }
 
 .stat-card {
-  background: #f9fafb;
+  background: transparent;
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: 0px;
   text-align: center;
   flex: 1;
 }

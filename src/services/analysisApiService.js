@@ -346,62 +346,66 @@ export class AnalysisApiService {
 
   // NEW: Call individual analysis API with automatic saving
   async callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId) {
-    try {
-      const setterName = this.getStateSetterName(analysisType);
-      const setter = stateSetters[setterName];
+  try {
+    const setterName = this.getStateSetterName(analysisType);
+    console.log(`Looking for setter: ${setterName} for analysis: ${analysisType}`);
+    console.log('Available setters:', Object.keys(stateSetters));
+    
+    const setter = stateSetters[setterName];
 
-      if (!setter) {
-        throw new Error(`Missing setter for ${analysisType}`);
-      }
-
-      // Make API call
-      const response = await this.callAnalysisEndpoint(analysisType, payload);
-      
-      // Update state
-      setter(response.data);
-      
-      // Automatically save to backend
-      try {
-        await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
-      } catch (saveError) {
-        console.warn(`Failed to save ${analysisType} analysis:`, saveError);
-        // Don't throw here - the analysis was generated successfully
-      }
-      
-      return { analysisType, status: 'success' };
-    } catch (error) {
-      console.error(`Error calling ${analysisType} API:`, error);
-      throw error;
+    if (!setter) {
+      console.error(`Missing setter for ${analysisType}. Expected: ${setterName}`);
+      throw new Error(`Missing setter for ${analysisType}`);
     }
+
+    // Make API call
+    const response = await this.callAnalysisEndpoint(analysisType, payload);
+    
+    // Update state
+    setter(response.data);
+    
+    // Automatically save to backend
+    try {
+      await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
+    } catch (saveError) {
+      console.warn(`Failed to save ${analysisType} analysis:`, saveError);
+      // Don't throw here - the analysis was generated successfully
+    }
+    
+    return { analysisType, status: 'success' };
+  } catch (error) {
+    console.error(`Error calling ${analysisType} API:`, error);
+    throw error;
   }
+}
 
   // NEW: Get state setter name for analysis type
   getStateSetterName(analysisType) {
-    const setterMap = {
-      swot: 'setSwotAnalysisResult',
-      purchaseCriteria: 'setPurchaseCriteriaData',
-      channelHeatmap: 'setChannelHeatmapData',
-      loyaltyNPS: 'setLoyaltyNPSData',
-      capabilityHeatmap: 'setCapabilityHeatmapData',
-      porters: 'setPortersData',
-      pestel: 'setPestelData',
-      fullSwot: 'setFullSwotData',
-      customerSegmentation: 'setCustomerSegmentationData',
-      competitiveAdvantage: 'setCompetitiveAdvantageData',
-      channelEffectiveness: 'setChannelEffectivenessData',
-      expandedCapability: 'setExpandedCapabilityData',
-      strategicGoals: 'setStrategicGoalsData',
-      strategicRadar: 'setStrategicRadarData',
-      cultureProfile: 'setCultureProfileData',
-      productivityMetrics: 'setProductivityData',
-      maturityScore: 'setMaturityData',
-      costEfficiency: 'setCostEfficiencyData',
-      financialPerformance: 'setFinancialPerformanceData',
-      financialHealth: 'setFinancialBalanceData',
-      operationalEfficiency: 'setOperationalEfficiencyData'
-    };
-    return setterMap[analysisType];
-  }
+  const setterMap = {
+    swot: 'setSwotAnalysisResult',
+    purchaseCriteria: 'setPurchaseCriteriaData',
+    channelHeatmap: 'setChannelHeatmapData',
+    loyaltyNPS: 'setLoyaltyNPSData',
+    capabilityHeatmap: 'setCapabilityHeatmapData',
+    porters: 'setPortersData',
+    pestel: 'setPestelData',
+    fullSwot: 'setFullSwotData',
+    customerSegmentation: 'setCustomerSegmentationData',
+    competitiveAdvantage: 'setCompetitiveAdvantageData',
+    channelEffectiveness: 'setChannelEffectivenessData',
+    expandedCapability: 'setExpandedCapabilityData',
+    strategicGoals: 'setStrategicGoalsData',
+    strategicRadar: 'setStrategicRadarData',
+    cultureProfile: 'setCultureProfileData',
+    productivityMetrics: 'setProductivityData',
+    maturityScore: 'setMaturityData',
+    costEfficiency: 'setCostEfficiencyData',
+    financialPerformance: 'setFinancialPerformanceData',
+    financialHealth: 'setFinancialBalanceData',
+    operationalEfficiency: 'setOperationalEfficiencyData'
+  };
+  return setterMap[analysisType];
+}
 
   // NEW: Clear data for specific phase
   clearPhaseData(phase, stateSetters) {

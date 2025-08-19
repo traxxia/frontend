@@ -1,31 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader, RefreshCw, DollarSign, Zap, TrendingDown, TrendingUp, ChevronDown, ChevronUp, Target, Award, CheckCircle, AlertCircle, Lock } from "lucide-react";
+import { ArrowLeft, Loader, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 
 // Import components
 import ChatComponent from "../components/ChatComponent";
-import SwotAnalysis from "../components/SwotAnalysis";
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
-import CustomerSegmentation from "../components/CustomerSegmentation";
-import PurchaseCriteria from "../components/PurchaseCriteria";
-import ChannelHeatmap from "../components/ChannelHeatmap";
-import LoyaltyNPS from "../components/LoyaltyNPS";
-import CapabilityHeatmap from "../components/CapabilityHeatmap";
 import StrategicAnalysis from "../components/StrategicAnalysis";
-import PortersFiveForces from "../components/PortersFiveForces";
-import PestelAnalysis from "../components/PestelAnalysis";
-import FullSWOTPortfolio from "../components/FullSWOTPortfolio";
 import PhaseManager from "../components/PhaseManager";
-import CompetitiveAdvantageMatrix from "../components/CompetitiveAdvantageMatrix";
-import ChannelEffectivenessMap from "../components/ChannelEffectivenessMap";
-import ExpandedCapabilityHeatmap from "../components/ExpandedCapabilityHeatmap";
-import StrategicGoals from "../components/StrategicGoals";
-import StrategicPositioningRadar from "../components/StrategicPositioningRadar";
-import OrganizationalCultureProfile from "../components/OrganizationalCultureProfile";
-import ProductivityMetrics from "../components/ProductivityMetrics";
-import MaturityScoreLight from "../components/MaturityScoreLight";
+import AnalysisContentManager from "../components/AnalysisContentManager";
 
 // Import existing hooks
 import { useBusinessSetup } from '../hooks/useBusinessSetup';
@@ -36,10 +20,6 @@ import "../styles/businesspage.css";
 import "../styles/business.css";
 import RegenerateButton from "../components/RegenerateButton";
 import PDFExportButton from "../components/PDFExportButton";
-import CostEfficiencyInsight from "../components/CostEfficiencyInsight";
-import FinancialPerformance from "../components/FinancialPerformance";
-import FinancialBalanceInsight from "../components/FinancialBalanceInsight";
-import OperationalEfficiencyInsight from "../components/OperationalEfficiencyInsight";
 
 // Import simplified API service
 import { AnalysisApiService, PHASE_API_CONFIG } from '../services/analysisApiService';
@@ -62,6 +42,7 @@ const BusinessSetupPage = () => {
   // Use our custom hooks
   const state = useBusinessSetup(business, selectedBusinessId);
   const [currentPhase, setCurrentPhase] = useState('initial');
+
   // Extract state
   const {
     activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,
@@ -105,7 +86,6 @@ const BusinessSetupPage = () => {
     highlightedMissingQuestions, setHighlightedMissingQuestions,
     isChannelHeatmapReady, setIsChannelHeatmapReady,
     isCapabilityHeatmapReady, setIsCapabilityHeatmapReady,
-
     costEfficiencyData, setCostEfficiencyData,
     setFinancialPerformanceData, financialPerformanceData,
     setIsCostEfficiencyRegenerating, isCostEfficiencyRegenerating,
@@ -123,18 +103,16 @@ const BusinessSetupPage = () => {
     isOperationalEfficiencyRegenerating, setIsOperationalEfficiencyRegenerating,
     financialBalanceRef, operationalEfficiencyRef
   } = state;
+
   const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
   const hasLoadedAnalysis = useRef(false);
-
-  // Add state for expand/collapse functionality
-  const [expandedPhases, setExpandedPhases] = useState(new Set(['initial'])); // Initial phase expanded by default
-  const [expandedCards, setExpandedCards] = useState(new Set());
 
   // Create toast message helper
   const showToastMessage = createToastMessage(setShowToast);
 
   // NEW: Create state setters object for simplified API approach
   const stateSetters = {
+    // Initial phase setters
     setSwotAnalysisResult,
     setPurchaseCriteriaData,
     setChannelHeatmapData,
@@ -142,6 +120,8 @@ const BusinessSetupPage = () => {
     setCapabilityHeatmapData,
     setPortersData,
     setPestelData,
+
+    // Essential phase setters
     setFullSwotData,
     setCustomerSegmentationData,
     setCompetitiveAdvantageData,
@@ -152,35 +132,12 @@ const BusinessSetupPage = () => {
     setCultureProfileData,
     setProductivityData,
     setMaturityData,
+
+    // Good phase setters
     setCostEfficiencyData,
     setFinancialPerformanceData,
     setFinancialBalanceData,
     setOperationalEfficiencyData
-  };
-
-  // Toggle functions for expand/collapse
-  const togglePhase = (phaseId) => {
-    setExpandedPhases(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(phaseId)) {
-        newSet.delete(phaseId);
-      } else {
-        newSet.add(phaseId);
-      }
-      return newSet;
-    });
-  };
-
-  const toggleCard = (cardId) => {
-    setExpandedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(cardId)) {
-        newSet.delete(cardId);
-      } else {
-        newSet.add(cardId);
-      }
-      return newSet;
-    });
   };
 
   // Handle redirect to brief tab
@@ -230,7 +187,7 @@ const BusinessSetupPage = () => {
       );
     } catch (error) {
       console.error(`Error regenerating phase:`, error);
-      showToastMessage(`Failed to regenerate  phase.`, "error");
+      showToastMessage(`Failed to regenerate phase.`, "error");
     } finally {
       isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
@@ -303,7 +260,7 @@ const BusinessSetupPage = () => {
     onAnalysisGeneration: () => handleRegeneratePhase('initial'),
     onFullSwotGeneration: () => handleRegeneratePhase('essential'),
     onGoodPhaseGeneration: () => handleRegeneratePhase('good'),
-    onAdvancedPhaseGeneration: () => handleRegeneratePhase('advanced'), // NEW: Add advanced phase handler
+    onAdvancedPhaseGeneration: () => handleRegeneratePhase('advanced'),
     onAnalysisDataLoad: loadExistingAnalysisData,
     API_BASE_URL, getAuthToken,
     apiService,
@@ -448,7 +405,6 @@ const BusinessSetupPage = () => {
         "Loyalty/NPS": loyaltyNpsRef,
         "Porter's Five Forces": portersRef,
         "PESTEL Analysis": pestelRef,
-
         // Essential Phase Refs
         "Full SWOT Portfolio": fullSwotRef,
         "Customer Segmentation": customerSegmentationRef,
@@ -460,7 +416,6 @@ const BusinessSetupPage = () => {
         "Organizational Culture Profile": cultureProfileRef,
         "Productivity Metrics": productivityRef,
         "Maturity Score": maturityScoreRef,
-
         // Good Phase Refs
         "Cost Efficiency Insight": costEfficiencyRef,
         "Financial Performance & Growth Trajectory": financialPerformanceRef,
@@ -479,7 +434,6 @@ const BusinessSetupPage = () => {
   };
 
   // Complete createSimpleRegenerationHandler function for BusinessSetupPage.js
-
   const createSimpleRegenerationHandler = (analysisType) => {
     return async () => {
       // Map analysis types to their corresponding regenerating state setters
@@ -611,7 +565,6 @@ const BusinessSetupPage = () => {
                 { setFullSwotData },
                 showToastMessage
               );
-              // Extract fullSwot data if using phase completion
               if (result && result.fullSwot) {
                 result = result.fullSwot;
               }
@@ -626,7 +579,6 @@ const BusinessSetupPage = () => {
                 { setSwotAnalysisResult },
                 showToastMessage
               );
-              // Extract swot data if using phase completion
               if (result && result.swot) {
                 result = result.swot;
               }
@@ -641,7 +593,6 @@ const BusinessSetupPage = () => {
                 { setPurchaseCriteriaData },
                 showToastMessage
               );
-              // Extract purchase criteria data
               if (result && result.purchaseCriteria) {
                 result = result.purchaseCriteria;
               }
@@ -916,23 +867,15 @@ const BusinessSetupPage = () => {
 
         } catch (apiError) {
           console.error(`API error regenerating ${analysisType}:`, apiError);
-
-          // Re-throw to be caught by outer catch block
           throw apiError;
         }
 
       } catch (error) {
         console.error(`Error regenerating ${analysisType}:`, error);
-
-        // Show error message
         const errorMessage = error.message || `Failed to regenerate ${displayName}`;
         showToastMessage(errorMessage, "error");
 
-        // Optionally set some error state or retry mechanism
-        // You could add error states to your components if needed
-
       } finally {
-        // Always reset the regenerating state
         console.log(`Finishing regeneration for ${analysisType}`);
         setIsRegenerating(false);
         isRegeneratingRef.current = false;
@@ -940,835 +883,10 @@ const BusinessSetupPage = () => {
     };
   };
 
-  const ModernAnalysisCard = ({
-    id,
-    title,
-    description,
-    icon: IconComponent,
-    children,
-    onRegenerate,
-    isRegenerating = false,
-    hasData = false,
-    category = 'initial',
-    status = 'completed' // 'completed', 'loading', 'locked', 'error'
-  }) => {
-    const isExpanded = expandedCards.has(id);
-
-    const getStatusIcon = () => {
-      switch (status) {
-        case 'completed':
-          return <CheckCircle className="modern-status-icon completed" size={16} />;
-        case 'loading':
-          return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
-        case 'locked':
-          return <Lock className="modern-status-icon locked" size={16} />;
-        case 'error':
-          return <Loader className="modern-status-icon error modern-animate-spin" size={16} />;
-        default:
-          return null;
-      }
-    };
-
-    return (
-      <div className={`modern-analysis-card ${status}`}>
-        <div
-          className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
-          onClick={() => toggleCard(id)}
-        >
-          <div className="modern-card-header-left">
-            <div className="modern-card-icon">
-              <IconComponent size={20} />
-            </div>
-            <div className="modern-card-text">
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </div>
-          </div>
-
-          <div className="modern-card-header-right">
-
-            {getStatusIcon()}
-
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseUp={(e) => e.stopPropagation()}
-            >
-              <RegenerateButton
-                onRegenerate={onRegenerate}
-                isRegenerating={isRegenerating}
-                canRegenerate={status === 'completed' && hasData && onRegenerate}
-                sectionName={title}
-                size="small"
-              />
-            </div>
-
-            <button className="modern-expand-btn">
-              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-        </div>
-
-        <div className={`modern-card-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
-          <div className="modern-card-content-inner">
-            {children}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ModernPhaseSection = ({
-    phaseId,
-    title,
-    description,
-    icon: IconComponent,
-    children,
-    completedCount,
-    totalCount,
-    onRegenerateAll,
-    isRegeneratingAll = false,
-    category = 'initial'
-  }) => {
-    const isExpanded = expandedPhases.has(phaseId);
-    const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-
-    return (
-      <div className={`modern-phase-section ${category}-phase`}>
-        <div
-          className={`modern-phase-header ${isExpanded ? 'expanded' : 'collapsed'}`}
-          onClick={() => togglePhase(phaseId)}
-        >
-          <div className="modern-phase-title">
-            <div className="modern-phase-icon">
-              <IconComponent size={24} />
-            </div>
-            <div className="modern-phase-info">
-              <h6>{title}</h6>
-            </div>
-            <div className="modern-phase-controls">
-              {/* Add PDF Export Button */}
-              <div onClick={(e) => e.stopPropagation()}>
-                <PDFExportButton
-                  className="pdf-export-button"
-                  style={{
-                    marginRight: "10px"
-                  }}
-                  businessName={businessData.name}
-                  onToastMessage={showToastMessage}
-                  currentPhase={category} // Use category (initial/essential/good) as currentPhase
-                  disabled={isAnalysisRegenerating}
-                  isChannelHeatmapReady={isChannelHeatmapReady}
-                  isCapabilityHeatmapReady={isCapabilityHeatmapReady}
-                  // NEW: Add required props for dynamic phase detection
-                  unlockedFeatures={unlockedFeatures}
-                  fullSwotData={fullSwotData}
-                  customerSegmentationData={customerSegmentationData}
-                  competitiveAdvantageData={competitiveAdvantageData}
-                  channelEffectivenessData={channelEffectivenessData}
-                  expandedCapabilityData={expandedCapabilityData}
-                  strategicGoalsData={strategicGoalsData}
-                  strategicRadarData={strategicRadarData}
-                  cultureProfileData={cultureProfileData}
-                  productivityData={productivityData}
-                  maturityData={maturityData}
-                  costEfficiencyData={costEfficiencyData}
-                  financialPerformanceData={financialPerformanceData}
-                  financialBalanceData={financialBalanceData}
-                  operationalEfficiencyData={operationalEfficiencyData}
-                />
-              </div>
-
-              {/* Replace the old regenerate all button with RegenerateButton component */}
-              <div onClick={(e) => e.stopPropagation()}>
-                <RegenerateButton
-                  onRegenerate={onRegenerateAll}
-                  isRegenerating={isRegeneratingAll}
-                  canRegenerate={completedCount > 0}
-                  sectionName={`All ${title}`}
-                  size="medium"
-                />
-              </div>
-
-              <button className="modern-expand-toggle">
-                {isExpanded ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className={`modern-phase-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
-          <div className="modern-analysis-grid">
-            {children}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Analysis Controls Component
-  const AnalysisControls = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-    const currentPhase = getCurrentPhase(); // Get current phase
-
-    return (
-      <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <button
-          onClick={() => handleRegeneratePhase(getCurrentPhase())}  // Use currentPhase
-          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
-          style={{
-            backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
-            color: (isAnalysisRegenerating) ? "#6b7280" : "#fff",
-            border: "none", borderRadius: "10px", padding: "10px 18px",
-            fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center",
-            cursor: (isAnalysisRegenerating) ? "not-allowed" : "pointer",
-            gap: "8px", transition: "all 0.2s ease",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
-          }}
-        >
-          {isAnalysisRegenerating ? (
-            <>
-              <Loader size={16} className="animate-spin" />
-              Regenerating {currentPhase}...
-            </>
-          ) : (
-            <>
-              <RefreshCw size={16} />
-              Regenerate All
-            </>
-          )}
-        </button>
-      </div>
-    );
-  };
-
-  const renderModernAnalysisContent = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-
-    if (!unlockedFeatures.analysis) {
-      return (
-        <div className="modern-locked-state">
-          <Lock size={60} className="modern-locked-icon" />
-          <h3>Analysis Locked</h3>
-          <p>Complete all initial phase questions to unlock your comprehensive business analysis.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="modern-analysis-container">
-        <div className="modern-analysis-content">
-          <div className="modern-analysis-grid">
-            {/* SWOT Analysis Card - Only show if essential phase is not unlocked */}
-            {!unlockedFeatures.fullSwot && (
-              <ModernAnalysisCard
-                id="swot"
-                title="SWOT Analysis"
-                description="Comprehensive strengths, weaknesses, opportunities, and threats analysis"
-                icon={Target}
-                hasData={!!swotAnalysisResult}
-                onRegenerate={createSimpleRegenerationHandler('swot')}
-                isRegenerating={isSwotAnalysisRegenerating}
-                status={swotAnalysisResult ? 'completed' : 'error'}
-                category="initial"
-              >
-                <div ref={swotRef} data-component="swot-analysis">
-                  <SwotAnalysis
-                    analysisResult={swotAnalysisResult}
-                    businessName={businessData.name}
-                    questions={questions}
-                    userAnswers={userAnswers}
-                    saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-                    selectedBusinessId={selectedBusinessId}
-                    onRedirectToBrief={handleRedirectToBrief}
-                    onDataGenerated={setSwotAnalysisResult}
-                    onRegenerate={createSimpleRegenerationHandler('swot')}
-                    isRegenerating={isSwotAnalysisRegenerating}
-                    canRegenerate={!isAnalysisRegenerating}
-                  />
-                </div>
-              </ModernAnalysisCard>
-            )}
-            {/* Purchase Criteria Card */}
-            <ModernAnalysisCard
-              id="purchase-criteria"
-              title="Purchase Criteria"
-              description="Key factors influencing customer buying decisions"
-              icon={Target}
-              hasData={!!purchaseCriteriaData}
-              onRegenerate={createSimpleRegenerationHandler('purchaseCriteria')}
-              isRegenerating={isPurchaseCriteriaRegenerating}
-              status={purchaseCriteriaData ? 'completed' : 'error'}
-              category="initial"
-            >
-              <div ref={purchaseCriteriaRef} data-component="purchase-criteria" >
-                <PurchaseCriteria
-                  questions={questions}
-                  userAnswers={userAnswers}
-                  businessName={businessData.name}
-                  onDataGenerated={setPurchaseCriteriaData}
-                  onRegenerate={createSimpleRegenerationHandler('purchaseCriteria')}
-                  isRegenerating={isPurchaseCriteriaRegenerating}
-                  canRegenerate={!isAnalysisRegenerating}
-                  purchaseCriteriaData={purchaseCriteriaData}
-                  selectedBusinessId={selectedBusinessId}
-                  onRedirectToBrief={handleRedirectToBrief}
-                />
-              </div>
-            </ModernAnalysisCard>
-
-            {/* Channel Heatmap Card */}
-            <ModernAnalysisCard
-              id="channel-heatmap"
-              title="Channel Heatmap"
-              description="Visual representation of channel effectiveness and reach"
-              icon={Target}
-              hasData={!!channelHeatmapData}
-              onRegenerate={createSimpleRegenerationHandler('channelHeatmap')}
-              isRegenerating={isChannelHeatmapRegenerating}
-              status={channelHeatmapData ? 'completed' : 'error'}
-              category="initial"
-            >
-              <div ref={channelHeatmapRef} data-component="channel-heatmap">
-                <ChannelHeatmap
-                  questions={questions}
-                  userAnswers={userAnswers}
-                  businessName={businessData.name}
-                  onDataGenerated={(data) => {
-                    setChannelHeatmapData(data);
-                    if (data && data.matrix && data.matrix.length > 0) {
-                      setIsChannelHeatmapReady(true);
-                    }
-                  }}
-                  onRegenerate={createSimpleRegenerationHandler('channelHeatmap')}
-                  isRegenerating={isChannelHeatmapRegenerating}
-                  canRegenerate={!isAnalysisRegenerating}
-                  channelHeatmapData={channelHeatmapData}
-                  selectedBusinessId={selectedBusinessId}
-                  onRedirectToBrief={handleRedirectToBrief}
-                />
-              </div>
-            </ModernAnalysisCard>
-
-            {/* Loyalty NPS Card */}
-            <ModernAnalysisCard
-              id="loyalty-nps"
-              title="Loyalty & NPS"
-              description="Customer loyalty metrics and Net Promoter Score analysis"
-              icon={Target}
-              hasData={!!loyaltyNPSData}
-              onRegenerate={createSimpleRegenerationHandler('loyaltyNPS')}
-              isRegenerating={isLoyaltyNPSRegenerating}
-              status={loyaltyNPSData ? 'completed' : 'error'}
-              category="initial"
-            >
-              <div ref={loyaltyNpsRef} data-component="loyalty-nps">
-                <LoyaltyNPS
-                  questions={questions}
-                  userAnswers={userAnswers}
-                  businessName={businessData.name}
-                  onDataGenerated={setLoyaltyNPSData}
-                  onRegenerate={createSimpleRegenerationHandler('loyaltyNPS')}
-                  isRegenerating={isLoyaltyNPSRegenerating}
-                  canRegenerate={!isAnalysisRegenerating}
-                  loyaltyNPSData={loyaltyNPSData}
-                  selectedBusinessId={selectedBusinessId}
-                  onRedirectToBrief={handleRedirectToBrief}
-                />
-              </div>
-            </ModernAnalysisCard>
-
-            {/* Capability Heatmap Card - Only show if essential phase is not unlocked */}
-            {!unlockedFeatures.fullSwot && (
-              <ModernAnalysisCard
-                id="capability-heatmap"
-                title="Capability Heatmap"
-                description="Visual analysis of organizational capabilities and strengths"
-                icon={Target}
-                hasData={!!capabilityHeatmapData}
-                onRegenerate={createSimpleRegenerationHandler('capabilityHeatmap')}
-                isRegenerating={isCapabilityHeatmapRegenerating}
-                status={capabilityHeatmapData ? 'completed' : 'error'}
-                category="initial"
-              >
-                <div ref={capabilityHeatmapRef} data-component="capability-heatmap">
-                  <CapabilityHeatmap
-                    questions={questions}
-                    userAnswers={userAnswers}
-                    businessName={businessData.name}
-                    onDataGenerated={(data) => {
-                      setCapabilityHeatmapData(data);
-                      if (data && data.capabilities && data.capabilities.length > 0) {
-                        setIsCapabilityHeatmapReady(true);
-                      }
-                    }}
-                    onRegenerate={createSimpleRegenerationHandler('capabilityHeatmap')}
-                    isRegenerating={isCapabilityHeatmapRegenerating}
-                    canRegenerate={!isAnalysisRegenerating}
-                    capabilityHeatmapData={capabilityHeatmapData}
-                    selectedBusinessId={selectedBusinessId}
-                    onRedirectToBrief={handleRedirectToBrief}
-                  />
-                </div>
-              </ModernAnalysisCard>
-            )}
-
-            {/* Porter's Five Forces Card */}
-            <ModernAnalysisCard
-              id="porters"
-              title="Porter's Five Forces"
-              description="Competitive analysis using Porter's strategic framework"
-              icon={Target}
-              hasData={!!portersData}
-              onRegenerate={createSimpleRegenerationHandler('porters')}
-              isRegenerating={isPortersRegenerating}
-              status={portersData ? 'completed' : 'error'}
-              category="initial"
-            >
-              <div ref={portersRef} data-component="porters-analysis">
-                <PortersFiveForces
-                  questions={questions}
-                  userAnswers={userAnswers}
-                  businessName={businessData.name}
-                  onRegenerate={createSimpleRegenerationHandler('porters')}
-                  isRegenerating={isPortersRegenerating}
-                  canRegenerate={!isAnalysisRegenerating}
-                  portersData={portersData}
-                  selectedBusinessId={selectedBusinessId}
-                  onRedirectToBrief={handleRedirectToBrief}
-                />
-              </div>
-            </ModernAnalysisCard>
-
-            {/* PESTEL Analysis Card */}
-            <ModernAnalysisCard
-              id="pestel"
-              title="PESTEL Analysis"
-              description="External environment analysis covering political, economic, social, technological, environmental, and legal factors"
-              icon={Target}
-              hasData={!!pestelData}
-              onRegenerate={createSimpleRegenerationHandler('pestel')}
-              isRegenerating={isPestelRegenerating}
-              status={pestelData ? 'completed' : 'error'}
-              category="initial"
-            >
-              <div ref={pestelRef} data-component="pestel-analysis">
-                <PestelAnalysis
-                  questions={questions}
-                  userAnswers={userAnswers}
-                  businessName={businessData.name}
-                  onRegenerate={createSimpleRegenerationHandler('pestel')}
-                  isRegenerating={isPestelRegenerating}
-                  canRegenerate={!isAnalysisRegenerating}
-                  pestelData={pestelData}
-                  selectedBusinessId={selectedBusinessId}
-                  onRedirectToBrief={handleRedirectToBrief}
-                />
-              </div>
-            </ModernAnalysisCard>
-
-            {/* Essential Phase Components - Show only if unlocked */}
-            {unlockedFeatures.fullSwot && (
-              <>
-                {/* Full SWOT Portfolio Card */}
-                <ModernAnalysisCard
-                  id="full-swot"
-                  title="Full SWOT Portfolio"
-                  description="Comprehensive SWOT analysis with strategic recommendations"
-                  icon={Award}
-                  hasData={!!fullSwotData}
-                  onRegenerate={createSimpleRegenerationHandler('fullSwot')}
-                  isRegenerating={isFullSwotRegenerating}
-                  status={fullSwotData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={fullSwotRef} data-component="full-swot">
-                    <FullSWOTPortfolio
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      isRegenerating={isFullSwotRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      fullSwotData={fullSwotData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      onRegenerate={createSimpleRegenerationHandler('fullSwot')}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Customer Segmentation Card */}
-                <ModernAnalysisCard
-                  id="customer-segmentation"
-                  title="Customer Segmentation"
-                  description="Detailed analysis of customer segments and personas"
-                  icon={Award}
-                  hasData={!!customerSegmentationData}
-                  onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
-                  isRegenerating={isCustomerSegmentationRegenerating}
-                  status={customerSegmentationData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={customerSegmentationRef} data-component="customer-segmentation">
-                    <CustomerSegmentation
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onDataGenerated={setCustomerSegmentationData}
-                      onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
-                      isRegenerating={isCustomerSegmentationRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      customerSegmentationData={customerSegmentationData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Competitive Advantage Card */}
-                <ModernAnalysisCard
-                  id="competitive-advantage"
-                  title="Competitive Advantage Matrix"
-                  description="Analysis of competitive positioning and advantages"
-                  icon={Award}
-                  hasData={!!competitiveAdvantageData}
-                  onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
-                  isRegenerating={isCompetitiveAdvantageRegenerating}
-                  status={competitiveAdvantageData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={competitiveAdvantageRef} data-component="competitive-advantage">
-                    <CompetitiveAdvantageMatrix
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      isRegenerating={isCompetitiveAdvantageRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      competitiveAdvantageData={competitiveAdvantageData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Channel Effectiveness Card */}
-                <ModernAnalysisCard
-                  id="channel-effectiveness"
-                  title="Channel Effectiveness Map"
-                  description="Analysis of channel performance and effectiveness"
-                  icon={Award}
-                  hasData={!!channelEffectivenessData}
-                  onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
-                  isRegenerating={isChannelEffectivenessRegenerating}
-                  status={channelEffectivenessData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={channelEffectivenessRef} data-component="channel-effectiveness">
-                    <ChannelEffectivenessMap
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
-                      isRegenerating={isChannelEffectivenessRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      channelEffectivenessData={channelEffectivenessData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      isPhaseRegenerating={isAnalysisRegenerating}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Expanded Capability Heatmap Card */}
-                <ModernAnalysisCard
-                  id="expanded-capability"
-                  title="Expanded Capability Heatmap"
-                  description="Advanced organizational capability analysis"
-                  icon={Award}
-                  hasData={!!expandedCapabilityData}
-                  onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-                  isRegenerating={isExpandedCapabilityRegenerating}
-                  status={expandedCapabilityData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={expandedCapabilityRef} data-component="expanded-capability">
-                    <ExpandedCapabilityHeatmap
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-                      isRegenerating={isExpandedCapabilityRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      expandedCapabilityData={expandedCapabilityData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Strategic Goals Card */}
-                <ModernAnalysisCard
-                  id="strategic-goals"
-                  title="Strategic Goals"
-                  description="Strategic goal setting and planning framework"
-                  icon={Award}
-                  hasData={!!strategicGoalsData}
-                  onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
-                  isRegenerating={isStrategicGoalsRegenerating}
-                  status={strategicGoalsData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={strategicGoalsRef} data-component="strategic-goals">
-                    <StrategicGoals
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
-                      isRegenerating={isStrategicGoalsRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      strategicGoalsData={strategicGoalsData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Strategic Positioning Radar Card */}
-                <ModernAnalysisCard
-                  id="strategic-radar"
-                  title="Strategic Positioning Radar"
-                  description="Visual representation of strategic positioning across key dimensions"
-                  icon={Award}
-                  hasData={!!strategicRadarData}
-                  onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-                  isRegenerating={isStrategicRadarRegenerating}
-                  status={strategicRadarData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={strategicRadarRef} data-component="strategic-radar">
-                    <StrategicPositioningRadar
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-                      isRegenerating={isStrategicRadarRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      strategicRadarData={strategicRadarData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Organizational Culture Profile Card */}
-                <ModernAnalysisCard
-                  id="culture-profile"
-                  title="Organizational Culture Profile"
-                  description="Analysis of organizational culture and values"
-                  icon={Award}
-                  hasData={!!cultureProfileData}
-                  onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
-                  isRegenerating={isCultureProfileRegenerating}
-                  status={cultureProfileData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={cultureProfileRef} data-component="culture-profile">
-                    <OrganizationalCultureProfile
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
-                      isRegenerating={isCultureProfileRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      cultureProfileData={cultureProfileData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Productivity Metrics Card */}
-                <ModernAnalysisCard
-                  id="productivity"
-                  title="Productivity Metrics"
-                  description="Analysis of organizational productivity and efficiency metrics"
-                  icon={Award}
-                  hasData={!!productivityData}
-                  onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-                  isRegenerating={isProductivityRegenerating}
-                  status={productivityData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={productivityRef} data-component="productivity">
-                    <ProductivityMetrics
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-                      isRegenerating={isProductivityRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      productivityData={productivityData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      isPhaseRegenerating={isAnalysisRegenerating}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Maturity Score Card */}
-                <ModernAnalysisCard
-                  id="maturity"
-                  title="Maturity Score"
-                  description="Business maturity assessment and scoring"
-                  icon={Award}
-                  hasData={!!maturityData}
-                  onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-                  isRegenerating={isMaturityRegenerating}
-                  status={maturityData ? 'completed' : 'error'}
-                  category="essential"
-                >
-                  <div ref={maturityScoreRef} data-component="maturity">
-                    <MaturityScoreLight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-                      isRegenerating={isMaturityRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      maturityData={maturityData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-              </>
-            )}
-
-            {/* Good Phase Components - Show only if unlocked */}
-            {unlockedFeatures.goodPhase && (
-              <>
-                {/* Cost Efficiency Insight Card */}
-                <ModernAnalysisCard
-                  id="cost-efficiency"
-                  title="Cost Efficiency Insight"
-                  description="Unit economics and cost optimization analysis"
-                  icon={TrendingDown}
-                  hasData={!!costEfficiencyData}
-                  onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
-                  isRegenerating={isCostEfficiencyRegenerating}
-                  status={costEfficiencyData ? 'completed' : 'error'}
-                  category="good"
-                >
-                  <div ref={costEfficiencyRef} data-component="cost-efficiency">
-                    <CostEfficiencyInsight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
-                      isRegenerating={isCostEfficiencyRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      costEfficiencyData={costEfficiencyData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Financial Performance Card */}
-                <ModernAnalysisCard
-                  id="financial-performance"
-                  title="Financial Performance & Growth Trajectory"
-                  description="Multi-line chart with growth rate indicators and financial metrics analysis"
-                  icon={TrendingUp}
-                  hasData={!!financialPerformanceData}
-                  onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
-                  isRegenerating={isFinancialPerformanceRegenerating}
-                  status={financialPerformanceData ? 'completed' : 'error'}
-                  category="good"
-                >
-                  <div ref={financialPerformanceRef} data-component="financial-performance">
-                    <FinancialPerformance
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
-                      isRegenerating={isFinancialPerformanceRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      financialPerformanceData={financialPerformanceData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Financial Health Insight Card */}
-                <ModernAnalysisCard
-                  id="financial-health"
-                  title="Financial Health Insight"
-                  description="Balance sheet analysis with financial ratios and innovation investment tracking"
-                  icon={DollarSign}
-                  hasData={!!financialBalanceData}
-                  onRegenerate={createSimpleRegenerationHandler('financialHealth')}
-                  isRegenerating={isFinancialBalanceRegenerating}
-                  status={financialBalanceData ? 'completed' : 'error'}
-                  category="good"
-                >
-                  <div ref={financialBalanceRef} data-component="financial-health">
-                    <FinancialBalanceInsight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('financialHealth')}
-                      isRegenerating={isFinancialBalanceRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      financialBalanceData={financialBalanceData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Operational Efficiency Insight Card */}
-                <ModernAnalysisCard
-                  id="operational-efficiency"
-                  title="Operational Efficiency Insight"
-                  description="Resource utilization analysis with capability performance and efficiency trends"
-                  icon={Zap}
-                  hasData={!!operationalEfficiencyData}
-                  onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
-                  isRegenerating={isOperationalEfficiencyRegenerating}
-                  status={operationalEfficiencyData ? 'completed' : 'error'}
-                  category="good"
-                >
-                  <div ref={operationalEfficiencyRef} data-component="operational-efficiency">
-                    <OperationalEfficiencyInsight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
-                      isRegenerating={isOperationalEfficiencyRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
-                      operationalEfficiencyData={operationalEfficiencyData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-              </>
-            )}
-
-          </div>
-        </div>
-      </div>
-    );
-  };
   useEffect(() => {
     setSelectedDropdownValue("Go to Section");
   }, [selectedPhase]);
+
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
@@ -1866,7 +984,9 @@ const BusinessSetupPage = () => {
     } else {
       return 'initial';
     }
-  }; useEffect(() => {
+  };
+
+  useEffect(() => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
     if (unlockedFeatures.advancedPhase) {
@@ -1879,6 +999,42 @@ const BusinessSetupPage = () => {
       setCurrentPhase('initial');
     }
   }, [phaseManager, hasAnalysisData, fullSwotData, costEfficiencyData, financialPerformanceData]);
+
+  // Analysis Controls Component
+  const AnalysisControls = () => {
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
+    const currentPhase = getCurrentPhase();
+
+    return (
+      <div className="analysis-controls-wrapper" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <button
+          onClick={() => handleRegeneratePhase(getCurrentPhase())}
+          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+          style={{
+            backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
+            color: (isAnalysisRegenerating) ? "#6b7280" : "#fff",
+            border: "none", borderRadius: "10px", padding: "10px 18px",
+            fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center",
+            cursor: (isAnalysisRegenerating) ? "not-allowed" : "pointer",
+            gap: "8px", transition: "all 0.2s ease",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
+          }}
+        >
+          {isAnalysisRegenerating ? (
+            <>
+              <Loader size={16} className="animate-spin" />
+              Regenerating {currentPhase}...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={16} />
+              Regenerate All
+            </>
+          )}
+        </button>
+      </div>
+    );
+  };
 
   // Effects
   useEffect(() => {
@@ -2095,142 +1251,261 @@ const BusinessSetupPage = () => {
                       )}
                     </div>
 
-                    {/* ADD THIS: Right side controls */}
-
+                    {/* Right side controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {activeTab === "analysis" && (<><div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
-                        <button
-                          className="dropdown-button"
-                          onClick={() => setShowDropdown(prev => !prev)}
-                          style={{
-                            backgroundColor: "#fff",
-                            color: "#3b82f6",
-                            border: "1px solid #e1e5e9",
-                            borderRadius: "10px",
-                            padding: "10px 18px",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            boxShadow: "0 2px 8px rgba(59, 130, 246, 0.15)",
-                            minWidth: "180px",
-                            justifyContent: "space-between"
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.borderColor = "#3b82f6";
-                            e.target.style.transform = "translateY(-1px)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.borderColor = "#e2e8f0";
-                            e.target.style.transform = "translateY(0)";
-                          }}
-                        >
-                          <span>{selectedDropdownValue}</span>
-                          <ChevronDown
-                            size={16}
-                            style={{
-                              marginLeft: 8,
-                              transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
-                              transition: 'transform 0.2s ease'
-                            }}
-                          />
-                        </button>
+                      {activeTab === "analysis" && (
+                        <>
+                          <div ref={dropdownRef} className="dropdown-wrapper" style={{ position: "relative" }}>
+                            <button
+                              className="dropdown-button"
+                              onClick={() => setShowDropdown(prev => !prev)}
+                              style={{
+                                backgroundColor: "#fff",
+                                color: "#3b82f6",
+                                border: "1px solid #e1e5e9",
+                                borderRadius: "10px",
+                                padding: "10px 18px",
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                display: "flex",
+                                alignItems: "center",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.15)",
+                                minWidth: "180px",
+                                justifyContent: "space-between"
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.borderColor = "#3b82f6";
+                                e.target.style.transform = "translateY(-1px)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.borderColor = "#e2e8f0";
+                                e.target.style.transform = "translateY(0)";
+                              }}
+                            >
+                              <span>{selectedDropdownValue}</span>
+                              <ChevronDown
+                                size={16}
+                                style={{
+                                  marginLeft: 8,
+                                  transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease'
+                                }}
+                              />
+                            </button>
 
-                        {showDropdown && (() => {
-                          const options = getPhaseSpecificOptions(currentPhase);
-                          const phaseLabels = {
-                            initial: 'Initial Phase',
-                            essential: 'Essential Phase',
-                            good: 'Good Phase'
-                          };
+                            {showDropdown && (() => {
+                              const options = getPhaseSpecificOptions(currentPhase);
+                              const phaseLabels = {
+                                initial: 'Initial Phase',
+                                essential: 'Essential Phase',
+                                good: 'Good Phase'
+                              };
 
-                          return options.length > 0 && (
-                            <div style={{
-                              position: "absolute",
-                              top: "110%",
-                              right: 0,
-                              backgroundColor: "#fff",
-                              border: "2px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
-                              minWidth: "220px",
-                              zIndex: 1000,
-                              maxHeight: "300px",
-                              overflowY: "scroll",
-                              backdropFilter: "blur(20px)"
-                            }}>
-                              {/* Phase Header */}
-                              <div style={{
-                                padding: "12px 16px",
-                                backgroundColor: "#dbeafe",
-                                borderBottom: "1px solid #e2e8f0",
-                                fontSize: "12px",
-                                fontWeight: 700,
-                                color: "#1e40af",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px"
-                              }}>
-                                {phaseLabels[currentPhase]} Sections
-                              </div>
-
-                              {/* Options */}
-                              {options.map((item, index) => (
-                                <div
-                                  key={item}
-                                  onClick={() => {
-                                    handleOptionClick(item);
-                                    setSelectedDropdownValue(item);
-                                  }}
-                                  style={{
+                              return options.length > 0 && (
+                                <div style={{
+                                  position: "absolute",
+                                  top: "110%",
+                                  right: 0,
+                                  backgroundColor: "#fff",
+                                  border: "2px solid #e2e8f0",
+                                  borderRadius: "12px",
+                                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
+                                  minWidth: "220px",
+                                  zIndex: 1000,
+                                  maxHeight: "300px",
+                                  overflowY: "scroll",
+                                  backdropFilter: "blur(20px)"
+                                }}>
+                                  {/* Phase Header */}
+                                  <div style={{
                                     padding: "12px 16px",
-                                    cursor: "pointer",
-                                    fontSize: "14px",
-                                    color: "#374151",
-                                    fontWeight: 500,
-                                    borderBottom: index < options.length - 1 ? "1px solid #f1f5f9" : "none",
-                                    transition: "all 0.2s ease",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "8px"
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = "#dbeafe";
-                                    e.currentTarget.style.color = "#1e40af";
-                                    e.currentTarget.style.paddingLeft = "20px";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = "transparent";
-                                    e.currentTarget.style.color = "#374151";
-                                    e.currentTarget.style.paddingLeft = "16px";
-                                  }}
-                                >
-                                  <span style={{
-                                    width: "6px",
-                                    height: "6px",
-                                    borderRadius: "50%",
-                                    backgroundColor: "#3b82f6",
-                                    flexShrink: 0
-                                  }}></span>
-                                  {item}
+                                    backgroundColor: "#dbeafe",
+                                    borderBottom: "1px solid #e2e8f0",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                    color: "#1e40af",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px"
+                                  }}>
+                                    {phaseLabels[currentPhase]} Sections
+                                  </div>
+
+                                  {/* Options */}
+                                  {options.map((item, index) => (
+                                    <div
+                                      key={item}
+                                      onClick={() => {
+                                        handleOptionClick(item);
+                                        setSelectedDropdownValue(item);
+                                      }}
+                                      style={{
+                                        padding: "12px 16px",
+                                        cursor: "pointer",
+                                        fontSize: "14px",
+                                        color: "#374151",
+                                        fontWeight: 500,
+                                        borderBottom: index < options.length - 1 ? "1px solid #f1f5f9" : "none",
+                                        transition: "all 0.2s ease",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px"
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = "#dbeafe";
+                                        e.currentTarget.style.color = "#1e40af";
+                                        e.currentTarget.style.paddingLeft = "20px";
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = "transparent";
+                                        e.currentTarget.style.color = "#374151";
+                                        e.currentTarget.style.paddingLeft = "16px";
+                                      }}
+                                    >
+                                      <span style={{
+                                        width: "6px",
+                                        height: "6px",
+                                        borderRadius: "50%",
+                                        backgroundColor: "#3b82f6",
+                                        flexShrink: 0
+                                      }}></span>
+                                      {item}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
-                      </div> <PDFExportButton
-                          className="pdf-export-button"
-                          businessName={businessData.name}
-                          onToastMessage={showToastMessage}
-                          currentPhase={selectedPhase}
-                          disabled={isAnalysisRegenerating}
-                          isChannelHeatmapReady={isChannelHeatmapReady}
-                          isCapabilityHeatmapReady={isCapabilityHeatmapReady}
-                          // NEW: Add required props for dynamic phase detection
-                          unlockedFeatures={unlockedFeatures}
-                          fullSwotData={fullSwotData}
+                              );
+                            })()}
+                          </div>
+
+                          <PDFExportButton
+                            className="pdf-export-button"
+                            businessName={businessData.name}
+                            onToastMessage={showToastMessage}
+                            currentPhase={currentPhase}
+                            disabled={isAnalysisRegenerating}
+                            isChannelHeatmapReady={isChannelHeatmapReady}
+                            isCapabilityHeatmapReady={isCapabilityHeatmapReady}
+                            unlockedFeatures={unlockedFeatures}
+                            fullSwotData={fullSwotData}
+                            customerSegmentationData={customerSegmentationData}
+                            competitiveAdvantageData={competitiveAdvantageData}
+                            channelEffectivenessData={channelEffectivenessData}
+                            expandedCapabilityData={expandedCapabilityData}
+                            strategicGoalsData={strategicGoalsData}
+                            strategicRadarData={strategicRadarData}
+                            cultureProfileData={cultureProfileData}
+                            productivityData={productivityData}
+                            maturityData={maturityData}
+                            costEfficiencyData={costEfficiencyData}
+                            financialPerformanceData={financialPerformanceData}
+                            financialBalanceData={financialBalanceData}
+                            operationalEfficiencyData={operationalEfficiencyData}
+                          />
+
+                          {/* Regenerate All Button */}
+                          <button
+                            onClick={() => handleRegeneratePhase(getCurrentPhase())}
+                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+                            style={{
+                              backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
+                              color: (isAnalysisRegenerating) ? "#6b7280" : "#fff",
+                              border: "none",
+                              borderRadius: "10px",
+                              padding: "10px 18px",
+                              fontSize: "14px",
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              cursor: (isAnalysisRegenerating) ? "not-allowed" : "pointer",
+                              gap: "8px",
+                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
+                            }}
+                          >
+                            {isAnalysisRegenerating ? (
+                              <>
+                                <Loader size={16} className="animate-spin" />
+                                Regenerating...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw size={16} />
+                                {t('RegenerateAll') || 'Regenerate All'}
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
+                      {activeTab === "strategic" && (
+                        <>
+                          <PDFExportButton
+                            className="pdf-export-button"
+                            businessName={businessData.name}
+                            onToastMessage={showToastMessage}
+                            disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                            exportType="strategic"
+                            strategicData={strategicData}
+                          />
+
+                          <button
+                            onClick={handleStrategicAnalysisRegenerate}
+                            disabled={isStrategicRegenerating || isAnalysisRegenerating}
+                            style={{
+                              backgroundColor: (isStrategicRegenerating || isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
+                              color: (isStrategicRegenerating || isAnalysisRegenerating) ? "#6b7280" : "#fff",
+                              border: "none",
+                              borderRadius: "10px",
+                              padding: "10px 18px",
+                              fontSize: "14px",
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              cursor: (isStrategicRegenerating || isAnalysisRegenerating) ? "not-allowed" : "pointer",
+                              gap: "8px",
+                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
+                            }}
+                          >
+                            {isStrategicRegenerating ? (
+                              <>
+                                <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                                Regenerating...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw size={16} />
+                                Regenerate
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="expanded-analysis-content">
+                    <div className="expanded-analysis-main">
+                      {activeTab === "analysis" && (
+                        <AnalysisContentManager
+                          // Phase Manager
+                          phaseManager={phaseManager}
+
+                          // Business Data
+                          businessData={businessData}
+                          questions={questions}
+                          userAnswers={userAnswers}
+                          selectedBusinessId={selectedBusinessId}
+
+                          // Analysis Data States
+                          swotAnalysisResult={swotAnalysisResult}
                           customerSegmentationData={customerSegmentationData}
+                          purchaseCriteriaData={purchaseCriteriaData}
+                          channelHeatmapData={channelHeatmapData}
+                          loyaltyNPSData={loyaltyNPSData}
+                          capabilityHeatmapData={capabilityHeatmapData}
+                          strategicData={strategicData}
+                          portersData={portersData}
+                          pestelData={pestelData}
+                          fullSwotData={fullSwotData}
                           competitiveAdvantageData={competitiveAdvantageData}
                           channelEffectivenessData={channelEffectivenessData}
                           expandedCapabilityData={expandedCapabilityData}
@@ -2243,50 +1518,91 @@ const BusinessSetupPage = () => {
                           financialPerformanceData={financialPerformanceData}
                           financialBalanceData={financialBalanceData}
                           operationalEfficiencyData={operationalEfficiencyData}
+
+                          // Data Setters
+                          setSwotAnalysisResult={setSwotAnalysisResult}
+                          setCustomerSegmentationData={setCustomerSegmentationData}
+                          setPurchaseCriteriaData={setPurchaseCriteriaData}
+                          setChannelHeatmapData={setChannelHeatmapData}
+                          setLoyaltyNPSData={setLoyaltyNPSData}
+                          setCapabilityHeatmapData={setCapabilityHeatmapData}
+                          setPortersData={setPortersData}
+                          setPestelData={setPestelData}
+                          setFullSwotData={setFullSwotData}
+                          setCompetitiveAdvantageData={setCompetitiveAdvantageData}
+                          setChannelEffectivenessData={setChannelEffectivenessData}
+                          setExpandedCapabilityData={setExpandedCapabilityData}
+                          setStrategicGoalsData={setStrategicGoalsData}
+                          setStrategicRadarData={setStrategicRadarData}
+                          setCultureProfileData={setCultureProfileData}
+                          setProductivityData={setProductivityData}
+                          setMaturityData={setMaturityData}
+                          setCostEfficiencyData={setCostEfficiencyData}
+                          setFinancialPerformanceData={setFinancialPerformanceData}
+                          setFinancialBalanceData={setFinancialBalanceData}
+                          setOperationalEfficiencyData={setOperationalEfficiencyData}
+
+                          // Regenerating States
+                          isSwotAnalysisRegenerating={isSwotAnalysisRegenerating}
+                          isCustomerSegmentationRegenerating={isCustomerSegmentationRegenerating}
+                          isPurchaseCriteriaRegenerating={isPurchaseCriteriaRegenerating}
+                          isChannelHeatmapRegenerating={isChannelHeatmapRegenerating}
+                          isLoyaltyNPSRegenerating={isLoyaltyNPSRegenerating}
+                          isCapabilityHeatmapRegenerating={isCapabilityHeatmapRegenerating}
+                          isPortersRegenerating={isPortersRegenerating}
+                          isPestelRegenerating={isPestelRegenerating}
+                          isFullSwotRegenerating={isFullSwotRegenerating}
+                          isCompetitiveAdvantageRegenerating={isCompetitiveAdvantageRegenerating}
+                          isChannelEffectivenessRegenerating={isChannelEffectivenessRegenerating}
+                          isExpandedCapabilityRegenerating={isExpandedCapabilityRegenerating}
+                          isStrategicGoalsRegenerating={isStrategicGoalsRegenerating}
+                          isStrategicRadarRegenerating={isStrategicRadarRegenerating}
+                          isCultureProfileRegenerating={isCultureProfileRegenerating}
+                          isProductivityRegenerating={isProductivityRegenerating}
+                          isMaturityRegenerating={isMaturityRegenerating}
+                          isCostEfficiencyRegenerating={isCostEfficiencyRegenerating}
+                          isFinancialPerformanceRegenerating={isFinancialPerformanceRegenerating}
+                          isFinancialBalanceRegenerating={isFinancialBalanceRegenerating}
+                          isOperationalEfficiencyRegenerating={isOperationalEfficiencyRegenerating}
+
+                          // Other States
+                          isAnalysisRegenerating={isAnalysisRegenerating}
+                          isChannelHeatmapReady={isChannelHeatmapReady}
+                          setIsChannelHeatmapReady={setIsChannelHeatmapReady}
+                          isCapabilityHeatmapReady={isCapabilityHeatmapReady}
+                          setIsCapabilityHeatmapReady={setIsCapabilityHeatmapReady}
+
+                          // Refs
+                          swotRef={swotRef}
+                          customerSegmentationRef={customerSegmentationRef}
+                          purchaseCriteriaRef={purchaseCriteriaRef}
+                          channelHeatmapRef={channelHeatmapRef}
+                          loyaltyNpsRef={loyaltyNpsRef}
+                          capabilityHeatmapRef={capabilityHeatmapRef}
+                          portersRef={portersRef}
+                          pestelRef={pestelRef}
+                          fullSwotRef={fullSwotRef}
+                          competitiveAdvantageRef={competitiveAdvantageRef}
+                          channelEffectivenessRef={channelEffectivenessRef}
+                          expandedCapabilityRef={expandedCapabilityRef}
+                          strategicGoalsRef={strategicGoalsRef}
+                          strategicRadarRef={strategicRadarRef}
+                          cultureProfileRef={cultureProfileRef}
+                          productivityRef={productivityRef}
+                          maturityScoreRef={maturityScoreRef}
+                          costEfficiencyRef={costEfficiencyRef}
+                          financialPerformanceRef={financialPerformanceRef}
+                          financialBalanceRef={financialBalanceRef}
+                          operationalEfficiencyRef={operationalEfficiencyRef}
+
+                          // Handlers
+                          handleRedirectToBrief={handleRedirectToBrief}
+                          showToastMessage={showToastMessage}
+                          apiService={apiService}
+                          createSimpleRegenerationHandler={createSimpleRegenerationHandler}
                         />
-
-                        {/* Regenerate All Button */}
-                        <button
-                          onClick={() => handleRegeneratePhase(getCurrentPhase())} // Use getCurrentPhase() instead of selectedPhase
-                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
-                          style={{
-                            backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
-                            color: (isAnalysisRegenerating) ? "#6b7280" : "#fff",
-                            border: "none",
-                            borderRadius: "10px",
-                            padding: "10px 18px",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: (isAnalysisRegenerating) ? "not-allowed" : "pointer",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
-                          }}
-                        >
-                          {isAnalysisRegenerating ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              Regenerating...
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw size={16} />
-                              {t('RegenerateAll') || 'Regenerate All'}
-                            </>
-                          )}
-                        </button></>)}
-
-
-
-
-                    </div>
-                  </div>
-
-                  <div className="expanded-analysis-content">
-                    <div className="expanded-analysis-main">
-                      {activeTab === "analysis" && renderModernAnalysisContent()}
-
+                      )}
+                       
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -2342,7 +1658,7 @@ const BusinessSetupPage = () => {
                 {activeTab === "analysis" && unlockedFeatures.analysis && (
                   <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                     <button
-                      onClick={() => handleRegeneratePhase(getCurrentPhase())} // Use getCurrentPhase() instead of selectedPhase
+                      onClick={() => handleRegeneratePhase(getCurrentPhase())}
                       disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
                       style={{
                         backgroundColor: (isAnalysisRegenerating) ? "#f3f4f6" : "#10b981",
@@ -2422,7 +1738,122 @@ const BusinessSetupPage = () => {
                     )}
 
                     <div className="analysis-content">
-                      {renderModernAnalysisContent()}
+                      <AnalysisContentManager
+                        // Phase Manager
+                        phaseManager={phaseManager}
+
+                        // Business Data
+                        businessData={businessData}
+                        questions={questions}
+                        userAnswers={userAnswers}
+                        selectedBusinessId={selectedBusinessId}
+
+                        // Analysis Data States
+                        swotAnalysisResult={swotAnalysisResult}
+                        customerSegmentationData={customerSegmentationData}
+                        purchaseCriteriaData={purchaseCriteriaData}
+                        channelHeatmapData={channelHeatmapData}
+                        loyaltyNPSData={loyaltyNPSData}
+                        capabilityHeatmapData={capabilityHeatmapData}
+                        strategicData={strategicData}
+                        portersData={portersData}
+                        pestelData={pestelData}
+                        fullSwotData={fullSwotData}
+                        competitiveAdvantageData={competitiveAdvantageData}
+                        channelEffectivenessData={channelEffectivenessData}
+                        expandedCapabilityData={expandedCapabilityData}
+                        strategicGoalsData={strategicGoalsData}
+                        strategicRadarData={strategicRadarData}
+                        cultureProfileData={cultureProfileData}
+                        productivityData={productivityData}
+                        maturityData={maturityData}
+                        costEfficiencyData={costEfficiencyData}
+                        financialPerformanceData={financialPerformanceData}
+                        financialBalanceData={financialBalanceData}
+                        operationalEfficiencyData={operationalEfficiencyData}
+
+                        // Data Setters
+                        setSwotAnalysisResult={setSwotAnalysisResult}
+                        setCustomerSegmentationData={setCustomerSegmentationData}
+                        setPurchaseCriteriaData={setPurchaseCriteriaData}
+                        setChannelHeatmapData={setChannelHeatmapData}
+                        setLoyaltyNPSData={setLoyaltyNPSData}
+                        setCapabilityHeatmapData={setCapabilityHeatmapData}
+                        setPortersData={setPortersData}
+                        setPestelData={setPestelData}
+                        setFullSwotData={setFullSwotData}
+                        setCompetitiveAdvantageData={setCompetitiveAdvantageData}
+                        setChannelEffectivenessData={setChannelEffectivenessData}
+                        setExpandedCapabilityData={setExpandedCapabilityData}
+                        setStrategicGoalsData={setStrategicGoalsData}
+                        setStrategicRadarData={setStrategicRadarData}
+                        setCultureProfileData={setCultureProfileData}
+                        setProductivityData={setProductivityData}
+                        setMaturityData={setMaturityData}
+                        setCostEfficiencyData={setCostEfficiencyData}
+                        setFinancialPerformanceData={setFinancialPerformanceData}
+                        setFinancialBalanceData={setFinancialBalanceData}
+                        setOperationalEfficiencyData={setOperationalEfficiencyData}
+
+                        // Regenerating States
+                        isSwotAnalysisRegenerating={isSwotAnalysisRegenerating}
+                        isCustomerSegmentationRegenerating={isCustomerSegmentationRegenerating}
+                        isPurchaseCriteriaRegenerating={isPurchaseCriteriaRegenerating}
+                        isChannelHeatmapRegenerating={isChannelHeatmapRegenerating}
+                        isLoyaltyNPSRegenerating={isLoyaltyNPSRegenerating}
+                        isCapabilityHeatmapRegenerating={isCapabilityHeatmapRegenerating}
+                        isPortersRegenerating={isPortersRegenerating}
+                        isPestelRegenerating={isPestelRegenerating}
+                        isFullSwotRegenerating={isFullSwotRegenerating}
+                        isCompetitiveAdvantageRegenerating={isCompetitiveAdvantageRegenerating}
+                        isChannelEffectivenessRegenerating={isChannelEffectivenessRegenerating}
+                        isExpandedCapabilityRegenerating={isExpandedCapabilityRegenerating}
+                        isStrategicGoalsRegenerating={isStrategicGoalsRegenerating}
+                        isStrategicRadarRegenerating={isStrategicRadarRegenerating}
+                        isCultureProfileRegenerating={isCultureProfileRegenerating}
+                        isProductivityRegenerating={isProductivityRegenerating}
+                        isMaturityRegenerating={isMaturityRegenerating}
+                        isCostEfficiencyRegenerating={isCostEfficiencyRegenerating}
+                        isFinancialPerformanceRegenerating={isFinancialPerformanceRegenerating}
+                        isFinancialBalanceRegenerating={isFinancialBalanceRegenerating}
+                        isOperationalEfficiencyRegenerating={isOperationalEfficiencyRegenerating}
+
+                        // Other States
+                        isAnalysisRegenerating={isAnalysisRegenerating}
+                        isChannelHeatmapReady={isChannelHeatmapReady}
+                        setIsChannelHeatmapReady={setIsChannelHeatmapReady}
+                        isCapabilityHeatmapReady={isCapabilityHeatmapReady}
+                        setIsCapabilityHeatmapReady={setIsCapabilityHeatmapReady}
+
+                        // Refs
+                        swotRef={swotRef}
+                        customerSegmentationRef={customerSegmentationRef}
+                        purchaseCriteriaRef={purchaseCriteriaRef}
+                        channelHeatmapRef={channelHeatmapRef}
+                        loyaltyNpsRef={loyaltyNpsRef}
+                        capabilityHeatmapRef={capabilityHeatmapRef}
+                        portersRef={portersRef}
+                        pestelRef={pestelRef}
+                        fullSwotRef={fullSwotRef}
+                        competitiveAdvantageRef={competitiveAdvantageRef}
+                        channelEffectivenessRef={channelEffectivenessRef}
+                        expandedCapabilityRef={expandedCapabilityRef}
+                        strategicGoalsRef={strategicGoalsRef}
+                        strategicRadarRef={strategicRadarRef}
+                        cultureProfileRef={cultureProfileRef}
+                        productivityRef={productivityRef}
+                        maturityScoreRef={maturityScoreRef}
+                        costEfficiencyRef={costEfficiencyRef}
+                        financialPerformanceRef={financialPerformanceRef}
+                        financialBalanceRef={financialBalanceRef}
+                        operationalEfficiencyRef={operationalEfficiencyRef}
+
+                        // Handlers
+                        handleRedirectToBrief={handleRedirectToBrief}
+                        showToastMessage={showToastMessage}
+                        apiService={apiService}
+                        createSimpleRegenerationHandler={createSimpleRegenerationHandler}
+                      />
                     </div>
                   </div>
                 )}

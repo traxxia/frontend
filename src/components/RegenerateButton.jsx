@@ -7,7 +7,8 @@ const RegenerateButton = ({
   isRegenerating = false,
   canRegenerate = true,
   sectionName = "Analysis",
-  size = "medium" // "small", "medium", "large"
+  size = "medium", // "small", "medium", "large"
+  hideRegenerateButtons = false // Add this prop
 }) => {
   const sizes = {
     small: {
@@ -29,6 +30,11 @@ const RegenerateButton = ({
 
   const currentSize = sizes[size] || sizes.small;
   const { t } = useTranslation();
+
+  // Hide button when in user history (hideRegenerateButtons = true)
+  if (hideRegenerateButtons) {
+    return null;
+  }
 
   // Hide button when regenerating or can't regenerate
   if (isRegenerating || !canRegenerate) {

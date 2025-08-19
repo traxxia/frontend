@@ -29,30 +29,45 @@ export const useAnalysisGeneration = (
     return { questionsArray, answersArray };
   }, [questions]);
 
-  // Generic API call function
+  // Enhanced API call function with better error handling
   const makeAPICall = useCallback(async (endpoint, questionsArray, answersArray) => {
     if (questionsArray.length === 0) {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
 
-    const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
+    try {
+      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      // Check if the response contains an error detail
+      if (result && result.detail && typeof result.detail === 'string' && result.detail.includes('Error')) {
+        throw new Error(`API response failed to generate: ${result.detail}`);
+      }
+
+      return result;
+    } catch (error) {
+      // Handle network errors, parsing errors, and API errors uniformly
+      if (error.message.includes('API response failed to generate')) {
+        throw error; // Re-throw our custom error
+      }
+      throw new Error(`API response failed to generate: ${error.message}`);
     }
-
-    return await response.json();
   }, [ML_API_BASE_URL]);
 
   // Strategic Analysis
@@ -65,7 +80,7 @@ export const useAnalysisGeneration = (
       return strategicContent;
     } catch (error) {
       console.error('Error generating strategic analysis:', error);
-      throw error;
+      throw new Error(`Strategic analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -79,7 +94,7 @@ export const useAnalysisGeneration = (
       return analysisContent;
     } catch (error) {
       console.error('Error generating SWOT analysis:', error);
-      throw error;
+      throw new Error(`SWOT analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -93,7 +108,7 @@ export const useAnalysisGeneration = (
       return portersContent;
     } catch (error) {
       console.error('Error generating Porter\'s Five Forces analysis:', error);
-      throw error;
+      throw new Error(`Porter's analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -106,7 +121,7 @@ export const useAnalysisGeneration = (
       return result;
     } catch (error) {
       console.error('Error generating PESTEL analysis:', error);
-      throw error;
+      throw new Error(`PESTEL analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -122,7 +137,7 @@ export const useAnalysisGeneration = (
       return result;
     } catch (error) {
       console.error('Error generating Full SWOT Portfolio analysis:', error);
-      throw error;
+      throw new Error(`Full SWOT Portfolio failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -135,7 +150,7 @@ export const useAnalysisGeneration = (
       return result;
     } catch (error) {
       console.error('Error generating Competitive Advantage Matrix:', error);
-      throw error;
+      throw new Error(`Competitive Advantage analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -158,7 +173,7 @@ export const useAnalysisGeneration = (
       return channelContent;
     } catch (error) {
       console.error('Error generating Channel Effectiveness Map:', error);
-      throw error;
+      throw new Error(`Channel Effectiveness analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -181,7 +196,7 @@ export const useAnalysisGeneration = (
       return expandedCapabilityContent;
     } catch (error) {
       console.error('Error generating Expanded Capability Heatmap:', error);
-      throw error;
+      throw new Error(`Expanded Capability analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -194,7 +209,7 @@ export const useAnalysisGeneration = (
       return result;
     } catch (error) {
       console.error('Error generating Strategic Goals:', error);
-      throw error;
+      throw new Error(`Strategic Goals analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -217,7 +232,7 @@ export const useAnalysisGeneration = (
       return strategicRadarContent;
     } catch (error) {
       console.error('Error generating Strategic Positioning Radar:', error);
-      throw error;
+      throw new Error(`Strategic Radar analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -240,7 +255,7 @@ export const useAnalysisGeneration = (
       return cultureContent;
     } catch (error) {
       console.error('Error generating Culture Profile:', error);
-      throw error;
+      throw new Error(`Culture Profile analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -263,7 +278,7 @@ export const useAnalysisGeneration = (
       return productivityContent;
     } catch (error) {
       console.error('Error generating Productivity Metrics:', error);
-      throw error;
+      throw new Error(`Productivity Metrics analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -286,7 +301,7 @@ export const useAnalysisGeneration = (
       return maturityContent;
     } catch (error) {
       console.error('Error generating Maturity Score:', error);
-      throw error;
+      throw new Error(`Maturity Score analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
@@ -318,7 +333,7 @@ export const useAnalysisGeneration = (
       }
     } catch (error) {
       console.error(`Error generating ${analysisType} analysis:`, error);
-      throw error;
+      throw new Error(`${analysisType} analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 

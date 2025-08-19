@@ -15,25 +15,11 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
-import SwotAnalysis from '../components/SwotAnalysis';
-import CustomerSegmentation from '../components/CustomerSegmentation';
-import PurchaseCriteria from '../components/PurchaseCriteria';
-import ChannelHeatmap from '../components/ChannelHeatmap';
-import LoyaltyNPS from '../components/LoyaltyNPS';
-import CapabilityHeatmap from '../components/CapabilityHeatmap';
-import PortersFiveForces from '../components/PortersFiveForces';
-import PestelAnalysis from '../components/PestelAnalysis';
-import FullSWOTPortfolio from '../components/FullSWOTPortfolio';
-import CompetitiveAdvantageMatrix from '../components/CompetitiveAdvantageMatrix';
-import ChannelEffectivenessMap from '../components/ChannelEffectivenessMap';
-import ExpandedCapabilityHeatmap from '../components/ExpandedCapabilityHeatmap';
-import StrategicGoals from '../components/StrategicGoals';
-import StrategicPositioningRadar from '../components/StrategicPositioningRadar';
-import OrganizationalCultureProfile from '../components/OrganizationalCultureProfile';
-import ProductivityMetrics from '../components/ProductivityMetrics';
-import MaturityScoreLight from '../components/MaturityScoreLight';
 import StrategicAnalysis from '../components/StrategicAnalysis';
+import AnalysisContentManager from '../components/AnalysisContentManager';
 import HistoryPDFDownload from './HistoryPDFDownload';
+import DownloadStrategicPDF from './DownloadStrategicPDF';
+
 import '../styles/UserHistory.css';
 
 // Constants
@@ -231,7 +217,7 @@ const useSortedFilteredUsers = (users, searchTerm) => {
   return { sortedUsers, sortConfig, requestSort };
 };
 
-// FIXED: Complete analysis data parser with ALL analysis types
+// Complete analysis data parser with ALL analysis types
 const parseAnalysisData = (userDetails, user) => {
   if (!userDetails) return null;
 
@@ -245,7 +231,7 @@ const parseAnalysisData = (userDetails, user) => {
     porters: null,
     pestel: null,
     strategic: null,
-    
+
     // Essential Phase Components
     fullSwot: null,
     customerSegmentation: null,
@@ -257,7 +243,13 @@ const parseAnalysisData = (userDetails, user) => {
     cultureProfile: null,
     productivityMetrics: null,
     maturityScore: null,
-    
+
+    // Good Phase Components
+    costEfficiency: null,
+    financialPerformance: null,
+    financialBalance: null,
+    operationalEfficiency: null,
+
     businessName: user?.name || 'Business',
     userAnswers: {},
     questions: []
@@ -279,7 +271,7 @@ const parseAnalysisData = (userDetails, user) => {
     });
   }
 
-  // FIXED: Process ALL analysis types from system data
+  // Process ALL analysis types from system data
   userDetails.system?.forEach(result => {
     try {
       const analysisResult = typeof result.analysis_result === 'string'
@@ -324,7 +316,7 @@ const parseAnalysisData = (userDetails, user) => {
         case 'strategic_analysis':
           analysisData.strategic = analysisResult;
           break;
-        
+
         // Essential Phase Analysis Types
         case 'fullswot':
         case 'full_swot':
@@ -373,65 +365,65 @@ const parseAnalysisData = (userDetails, user) => {
         case 'maturity_scoring':
           analysisData.maturityScore = analysisResult;
           break;
-        
+
+        // Good Phase Analysis Types
+        case 'costefficiency':
+        case 'cost_efficiency':
+          analysisData.costEfficiency = analysisResult;
+          break;
+        case 'financialperformance':
+        case 'financial_performance':
+          analysisData.financialPerformance = analysisResult;
+          break;
+        case 'financialbalance':
+        case 'financial_balance':
+        case 'financial_health':
+          analysisData.financialBalance = analysisResult;
+          break;
+        case 'operationalefficiency':
+        case 'operational_efficiency':
+          analysisData.operationalEfficiency = analysisResult;
+          break;
+
         default:
-           
           break;
       }
     } catch (error) {
       console.error('Error parsing analysis result:', error, result);
     }
   });
- 
+
   return analysisData;
 };
 
-// FIXED: Check which phases are available
-const getAvailablePhases = (analysisData) => {
-  if (!analysisData) return [];
+// Check if analysis data exists
+const hasAnalysisData = (analysisData) => {
+  if (!analysisData) return false;
 
-  const phases = [];
-
-  // Check if any initial phase analysis exists
-  const hasInitialAnalysis = analysisData.swot || analysisData.purchaseCriteria || 
-    analysisData.channelHeatmap || analysisData.loyaltyNPS || 
-    analysisData.capabilityHeatmap || analysisData.porters || 
-    analysisData.pestel || analysisData.strategic;
-
-  if (hasInitialAnalysis) {
-    phases.push({
-      key: 'initial',
-      name: 'Initial Phase',
-      unlocked: true
-    });
-  }
-
-  // Check if any essential phase analysis exists
-  const hasEssentialAnalysis = analysisData.fullSwot || analysisData.customerSegmentation ||
+  // Check if any analysis exists
+  return !!(
+    analysisData.swot || analysisData.purchaseCriteria ||
+    analysisData.channelHeatmap || analysisData.loyaltyNPS ||
+    analysisData.capabilityHeatmap || analysisData.porters ||
+    analysisData.pestel || analysisData.strategic ||
+    analysisData.fullSwot || analysisData.customerSegmentation ||
     analysisData.competitiveAdvantage || analysisData.channelEffectiveness ||
     analysisData.expandedCapability || analysisData.strategicGoals ||
     analysisData.strategicRadar || analysisData.cultureProfile ||
-    analysisData.productivityMetrics || analysisData.maturityScore;
-
-  if (hasEssentialAnalysis) {
-    phases.push({
-      key: 'essential',
-      name: 'Essential Phase',
-      unlocked: true
-    });
-  }
-
-  return phases;
+    analysisData.productivityMetrics || analysisData.maturityScore ||
+    analysisData.costEfficiency || analysisData.financialPerformance ||
+    analysisData.financialBalance || analysisData.operationalEfficiency
+  );
 };
 
-// Create a simple phase manager for strategic analysis
+// Create a simple phase manager for analysis viewing (read-only)
 const createSimplePhaseManager = (analysisData) => {
-  const availablePhases = getAvailablePhases(analysisData);
-  
   return {
     getUnlockedFeatures: () => ({
-      analysis: availablePhases.some(p => p.key === 'initial'),
-      fullSwot: availablePhases.some(p => p.key === 'essential')
+      analysis: hasAnalysisData(analysisData),
+      fullSwot: true, // Always allow viewing if data exists
+      goodPhase: true, // Always allow viewing if data exists
+      advancedPhase: false // Not implemented yet
     })
   };
 };
@@ -691,8 +683,6 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   const [activeTab, setActiveTab] = useState('businesses');
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false);
-  const [selectedPhase, setSelectedPhase] = useState('initial');
-  const [selectedStrategicPhase, setSelectedStrategicPhase] = useState('initial');
 
   const allUserDetails = userDetails[user._id] || {};
   const businesses = allUserDetails.businesses || [];
@@ -729,23 +719,7 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
   const currentUserDetails = getCurrentUserDetails();
   const analysisData = parseAnalysisData(currentUserDetails, user);
-  const availablePhases = getAvailablePhases(analysisData);
   const phaseManager = createSimplePhaseManager(analysisData);
-
-  // Set default phase when analysis data is loaded
-  useEffect(() => {
-    if (availablePhases.length > 0 && !availablePhases.find(p => p.key === selectedPhase)) {
-      setSelectedPhase(availablePhases[0].key);
-    }
-  }, [availablePhases, selectedPhase]);
-
-  const handlePhaseChange = (phaseKey) => { 
-    setSelectedPhase(phaseKey);
-  };
-
-  const handleStrategicPhaseChange = (phaseKey) => { 
-    setSelectedStrategicPhase(phaseKey);
-  };
 
   if (businesses.length === 0 && !isLoading) {
     return <EmptyBusinessState user={user} onClose={onClose} />;
@@ -757,15 +731,10 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
       {selectedBusiness && (
         <>
-          <TabNavigation 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
+          <TabNavigation
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
             businesses={businesses}
-            availablePhases={availablePhases}
-            selectedPhase={selectedPhase}
-            onPhaseChange={handlePhaseChange}
-            selectedStrategicPhase={selectedStrategicPhase}
-            onStrategicPhaseChange={handleStrategicPhaseChange}
           />
 
           <div className="tab-content">
@@ -773,22 +742,18 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
               <LoadingState message="Loading business data..." />
             ) : (
               <TabContent
-  activeTab={activeTab}
-  businesses={businesses}
-  currentUserDetails={currentUserDetails}
-  analysisData={analysisData}
-  selectedBusiness={selectedBusiness}
-  selectedBusinessId={selectedBusiness}
-  onBusinessChange={handleBusinessChange}
-  isLoadingBusiness={isLoadingBusiness}
-  selectedPhase={selectedPhase}
-  availablePhases={availablePhases}
-  selectedStrategicPhase={selectedStrategicPhase}
-  phaseManager={phaseManager}
-  onPhaseChange={handlePhaseChange}
-  onStrategicPhaseChange={handleStrategicPhaseChange}
-  userDetails={currentUserDetails} // Add this line
-/>
+                activeTab={activeTab}
+                businesses={businesses}
+                currentUserDetails={currentUserDetails}
+                analysisData={analysisData}
+                selectedBusiness={selectedBusiness}
+                selectedBusinessId={selectedBusiness}
+                onBusinessChange={handleBusinessChange}
+                isLoadingBusiness={isLoadingBusiness}
+                userDetails={currentUserDetails}
+                phaseManager={phaseManager}
+                onToast={onToast}
+              />
             )}
           </div>
         </>
@@ -827,14 +792,6 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
         <h3 className="user-name-header">User Name: {user?.name}</h3>
       </div>
       <div className="header-right">
-        {/* <HistoryPDFDownload
-          user={user}
-          userDetails={currentUserDetails}
-          onToast={() => { }}
-          buttonText="Export PDF"
-          buttonSize="medium"
-          className=""
-        /> */}
         <button onClick={onClose} className="close-button">
           <X size={20} />
         </button>
@@ -843,16 +800,11 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
   </div>
 );
 
-const TabNavigation = ({ 
-  activeTab, 
-  onTabChange, 
-  businesses, 
-  availablePhases,
-  selectedPhase, 
-  onPhaseChange,
-  selectedStrategicPhase,
-  onStrategicPhaseChange
-}) => { 
+const TabNavigation = ({
+  activeTab,
+  onTabChange,
+  businesses
+}) => {
 
   return (
     <div className="admin-nav">
@@ -905,13 +857,9 @@ const TabContent = ({
   selectedBusinessId,
   onBusinessChange,
   isLoadingBusiness,
-  selectedPhase,
-  availablePhases,
-  selectedStrategicPhase,
+  userDetails,
   phaseManager,
-  onPhaseChange,
-  onStrategicPhaseChange,
-  userDetails // Add this parameter
+  onToast
 }) => {
   const getSelectedBusinessName = () => {
     if (!selectedBusiness) return 'Select a Business';
@@ -947,10 +895,8 @@ const TabContent = ({
           totalQuestions={currentUserDetails?.stats?.total_questions || 0}
           completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
           conversationCount={currentUserDetails?.conversation?.length || 0}
-          selectedPhase={selectedPhase}
-          availablePhases={availablePhases}
-          onPhaseChange={onPhaseChange}
-          userDetails={userDetails} // Pass userDetails here
+          userDetails={userDetails}
+          phaseManager={phaseManager}
         />
       );
     case 'strategic':
@@ -965,10 +911,8 @@ const TabContent = ({
           totalQuestions={currentUserDetails?.stats?.total_questions || 0}
           completedQuestions={currentUserDetails?.stats?.completed_questions || 0}
           conversationCount={currentUserDetails?.conversation?.length || 0}
-          selectedPhase={selectedStrategicPhase}
-          availablePhases={availablePhases}
           phaseManager={phaseManager}
-          onPhaseChange={onStrategicPhaseChange}
+          onToast={onToast}
         />
       );
     default:
@@ -1063,31 +1007,83 @@ const BusinessFilter = ({ businesses, selectedBusinessId, onBusinessChange, isLo
   </div>
 );
 
-// StatsRow Component (reusable)
-const StatsRow = ({ businesses, selectedBusinessId, onBusinessChange, isLoadingBusiness, stats }) => (
-  <div className="conversation-stats">
-    <div className="stats-row">
+// StatsRow Component (reusable) - Updated to support strategic PDF download
+const StatsRow = ({
+  businesses,
+  selectedBusinessId,
+  onBusinessChange,
+  isLoadingBusiness,
+  stats,
+  showPDFExport,
+  analysisData,
+  selectedBusiness,
+  isStrategicTab = false,
+  onToast
+}) => (
+  <div className="user-history-stats-container">
+    <div className="user-history-stats-row">
       {businesses.length > 0 && (
-        <BusinessFilter
-          businesses={businesses}
-          selectedBusinessId={selectedBusinessId}
-          onBusinessChange={onBusinessChange}
-          isLoadingBusiness={isLoadingBusiness}
-        />
+        <div className="business-filter-inline">
+          <label htmlFor="business-select" className="business-filter-label">
+            Business:
+          </label>
+          <select
+            id="business-select"
+            value={selectedBusinessId}
+            onChange={(e) => onBusinessChange(e.target.value)}
+            className="business-filter-select"
+            disabled={isLoadingBusiness}
+          >
+            {businesses.map(business => (
+              <option key={business._id} value={business._id}>
+                {business.business_name}
+              </option>
+            ))}
+          </select>
+          {isLoadingBusiness && (
+            <div className="business-loading">
+              <Loader size={16} className="loading-spinner" />
+            </div>
+          )}
+        </div>
       )}
-      <div className="stat-card">
-        <div className="stat-number">{stats.completed}</div>
-        <div className="stat-label">Completed Questions</div>
+
+      <div className="stats-group">
+        <div className="stat-card">
+          <div className="stat-number">{stats.completed}</div>
+          <div className="stat-label">Completed Questions</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">{stats.progress}%</div>
+          <div className="stat-label">Progress</div>
+        </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-number">{stats.progress}%</div>
-        <div className="stat-label">Progress</div>
-      </div>
+
+      {showPDFExport && analysisData && (
+        <div className="pdf-export-container">
+          {isStrategicTab ? (
+            <DownloadStrategicPDF
+              analysisData={analysisData}
+              businessName={selectedBusiness}
+              onToastMessage={onToast}
+              modalSelector=".user-details-modal"
+              size="medium"
+            />
+          ) : (
+            <HistoryPDFDownload
+              analysisData={analysisData}
+              currentPhase="all"
+              businessName={selectedBusiness}
+              userDetails={analysisData}
+            />
+          )}
+        </div>
+      )}
     </div>
   </div>
 );
 
-// ConversationTab Component
+// ConversationTab Component - Updated to show all questions sequentially
 const ConversationTab = ({
   conversation,
   totalQuestions = 0,
@@ -1098,7 +1094,17 @@ const ConversationTab = ({
   onBusinessChange,
   isLoadingBusiness = false
 }) => {
-  const totalCompletedQuestions = conversation.reduce((sum, phase) => sum + phase.questions.length, 0);
+  // Flatten all questions from all phases into a single array
+  const allQuestions = conversation.reduce((questions, phase) => {
+    const phaseQuestions = phase.questions?.map(qa => ({
+      ...qa,
+      phase: phase.phase,
+      severity: phase.severity
+    })) || [];
+    return [...questions, ...phaseQuestions];
+  }, []);
+
+  const totalCompletedQuestions = allQuestions.length;
 
   const stats = {
     completed: totalCompletedQuestions,
@@ -1106,7 +1112,7 @@ const ConversationTab = ({
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0
   };
 
-  if (conversation.length === 0) {
+  if (allQuestions.length === 0) {
     return (
       <div className="conversation-tab">
         <StatsRow
@@ -1135,46 +1141,25 @@ const ConversationTab = ({
         isLoadingBusiness={isLoadingBusiness}
         stats={stats}
       />
-      <div className="conversation-list">
-        {conversation.map((phase, index) => (
-          <ConversationPhase key={index} phase={phase} />
+      <div className="questions-list">
+        {allQuestions.map((question, index) => (
+          <QuestionItem key={index} question={question} questionNumber={index + 1} />
         ))}
       </div>
     </div>
   );
 };
 
-const ConversationPhase = ({ phase }) => (
-  <div className="conversation-phase">
-    <div className="phase-header">
-      <h4 className="phase-title">
-        {phase.phase.charAt(0).toUpperCase() + phase.phase.slice(1)} Phase
-      </h4>
-      <div className="phase-meta">
-        <span className="phase-severity">{phase.severity}</span>
-        <span className="question-count">{phase.questions.length} questions</span>
-      </div>
-    </div>
-    <div className="questions-list">
-      {phase.questions?.map((question, qIndex) => (
-        <QuestionItem key={qIndex} question={question} />
-      ))}
-    </div>
-  </div>
-);
-
-const QuestionItem = ({ question }) => (
+const QuestionItem = ({ question, questionNumber }) => (
   <div className="question-item">
-    <div className="question-header">
-      <div className="question-text">Q : {question.question}</div>
-    </div>
+    <div className="question-text">Q{questionNumber}: {question.question}</div>
     <div className="answer-section">
-      <div className="answer-text">A : {question.answer}</div>
+      <div className="answer-text">A: {question.answer}</div>
     </div>
   </div>
 );
 
-// Enhanced AnalysisTab Component with Phase Support and Export
+// Enhanced AnalysisTab Component - Show all analysis data together
 const AnalysisTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -1185,10 +1170,8 @@ const AnalysisTab = ({
   totalQuestions = 0,
   completedQuestions = 0,
   conversationCount = 0,
-  selectedPhase = 'initial',
-  availablePhases = [],
-  onPhaseChange = () => {},
-  userDetails = {} // Add userDetails prop
+  userDetails = {},
+  phaseManager
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -1198,13 +1181,10 @@ const AnalysisTab = ({
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
   };
 
-  const handlePhaseChange = (phaseKey) => {
-    if (typeof onPhaseChange === 'function') {
-      onPhaseChange(phaseKey);
-    }
-  };
+  // Create a fallback phase manager if none is provided
+  const safePhaseManager = phaseManager || createSimplePhaseManager(analysisData);
 
-  if (!analysisData) {
+  if (!analysisData || !hasAnalysisData(analysisData)) {
     return (
       <div className="analysis-tab">
         <StatsRow
@@ -1213,6 +1193,7 @@ const AnalysisTab = ({
           onBusinessChange={onBusinessChange}
           isLoadingBusiness={isLoadingBusiness}
           stats={stats}
+          showPDFExport={false}
         />
         <div className="empty-state">
           <Target size={48} />
@@ -1223,20 +1204,6 @@ const AnalysisTab = ({
     );
   }
 
-  // Check if any analysis exists for the selected phase
-  const hasInitialAnalysis = analysisData.swot || analysisData.purchaseCriteria || 
-    analysisData.channelHeatmap || analysisData.loyaltyNPS || 
-    analysisData.capabilityHeatmap || analysisData.porters || 
-    analysisData.pestel || analysisData.strategic;
-
-  const hasEssentialAnalysis = analysisData.fullSwot || analysisData.customerSegmentation ||
-    analysisData.competitiveAdvantage || analysisData.channelEffectiveness ||
-    analysisData.expandedCapability || analysisData.strategicGoals ||
-    analysisData.strategicRadar || analysisData.cultureProfile ||
-    analysisData.productivityMetrics || analysisData.maturityScore;
-
-  const hasCurrentPhaseAnalysis = selectedPhase === 'initial' ? hasInitialAnalysis : hasEssentialAnalysis;
-
   return (
     <div className="analysis-tab">
       <StatsRow
@@ -1245,55 +1212,137 @@ const AnalysisTab = ({
         onBusinessChange={onBusinessChange}
         isLoadingBusiness={isLoadingBusiness}
         stats={stats}
+        showPDFExport={true}
+        analysisData={analysisData}
+        selectedBusiness={selectedBusiness}
       />
-      
-      {/* Phase Navigation for Analysis Tab with Export Button */}
-      {availablePhases.length > 0 && (
-        <div className="phase-tabs-container" style={{ 
-          marginTop: '1rem', 
-          marginBottom: '1rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div className="phase-tabs-nav">
-            {availablePhases.map(phase => (
-              <button
-                key={phase.key}
-                onClick={() => handlePhaseChange(phase.key)}
-                className={`phase-tab ${selectedPhase === phase.key ? 'active' : ''}`}
-              >
-                {phase.name}
-              </button>
-            ))}
-          </div>
-          
-          {/* Export Button */}
-          {hasCurrentPhaseAnalysis && (
-            <HistoryPDFDownload
-              analysisData={analysisData}
-              currentPhase={selectedPhase}
-              businessName={selectedBusiness}
-              userDetails={userDetails}
-            />
-          )}
-        </div>
-      )}
 
-      {!hasCurrentPhaseAnalysis ? (
-        <div className="empty-state">
-          <Target size={48} />
-          <p className="empty-title">No {selectedPhase} phase analysis available</p>
-          <p className="empty-subtitle">No {selectedPhase} phase analysis generated for {selectedBusiness} yet</p>
-        </div>
-      ) : (
-        <AnalysisComponents analysisData={analysisData} selectedPhase={selectedPhase} />
-      )}
+      {/* Show All Analysis Components */}
+      <div className="analysis-components">
+        <AnalysisContentManager
+          // Phase Manager - use the safe fallback
+          phaseManager={safePhaseManager}
+
+          // Business Data
+          businessData={{ name: analysisData.businessName }}
+          questions={analysisData.questions}
+          userAnswers={analysisData.userAnswers}
+          selectedBusinessId={selectedBusinessId}
+
+          // Analysis Data States
+          swotAnalysisResult={analysisData.swot}
+          customerSegmentationData={analysisData.customerSegmentation}
+          purchaseCriteriaData={analysisData.purchaseCriteria}
+          channelHeatmapData={analysisData.channelHeatmap}
+          loyaltyNPSData={analysisData.loyaltyNPS}
+          capabilityHeatmapData={analysisData.capabilityHeatmap}
+          strategicData={analysisData.strategic}
+          portersData={analysisData.porters}
+          pestelData={analysisData.pestel}
+          fullSwotData={analysisData.fullSwot}
+          competitiveAdvantageData={analysisData.competitiveAdvantage}
+          channelEffectivenessData={analysisData.channelEffectiveness}
+          expandedCapabilityData={analysisData.expandedCapability}
+          strategicGoalsData={analysisData.strategicGoals}
+          strategicRadarData={analysisData.strategicRadar}
+          cultureProfileData={analysisData.cultureProfile}
+          productivityData={analysisData.productivityMetrics}
+          maturityData={analysisData.maturityScore}
+          costEfficiencyData={analysisData.costEfficiency}
+          financialPerformanceData={analysisData.financialPerformance}
+          financialBalanceData={analysisData.financialBalance}
+          operationalEfficiencyData={analysisData.operationalEfficiency}
+
+          // Data Setters (read-only mode)
+          setSwotAnalysisResult={() => { }}
+          setCustomerSegmentationData={() => { }}
+          setPurchaseCriteriaData={() => { }}
+          setChannelHeatmapData={() => { }}
+          setLoyaltyNPSData={() => { }}
+          setCapabilityHeatmapData={() => { }}
+          setPortersData={() => { }}
+          setPestelData={() => { }}
+          setFullSwotData={() => { }}
+          setCompetitiveAdvantageData={() => { }}
+          setChannelEffectivenessData={() => { }}
+          setExpandedCapabilityData={() => { }}
+          setStrategicGoalsData={() => { }}
+          setStrategicRadarData={() => { }}
+          setCultureProfileData={() => { }}
+          setProductivityData={() => { }}
+          setMaturityData={() => { }}
+          setCostEfficiencyData={() => { }}
+          setFinancialPerformanceData={() => { }}
+          setFinancialBalanceData={() => { }}
+          setOperationalEfficiencyData={() => { }}
+
+          // Regenerating States (all false for read-only)
+          isSwotAnalysisRegenerating={false}
+          isCustomerSegmentationRegenerating={false}
+          isPurchaseCriteriaRegenerating={false}
+          isChannelHeatmapRegenerating={false}
+          isLoyaltyNPSRegenerating={false}
+          isCapabilityHeatmapRegenerating={false}
+          isPortersRegenerating={false}
+          isPestelRegenerating={false}
+          isFullSwotRegenerating={false}
+          isCompetitiveAdvantageRegenerating={false}
+          isChannelEffectivenessRegenerating={false}
+          isExpandedCapabilityRegenerating={false}
+          isStrategicGoalsRegenerating={false}
+          isStrategicRadarRegenerating={false}
+          isCultureProfileRegenerating={false}
+          isProductivityRegenerating={false}
+          isMaturityRegenerating={false}
+          isCostEfficiencyRegenerating={false}
+          isFinancialPerformanceRegenerating={false}
+          isFinancialBalanceRegenerating={false}
+          isOperationalEfficiencyRegenerating={false}
+
+          // Other States
+          isAnalysisRegenerating={false}
+          isChannelHeatmapReady={true}
+          setIsChannelHeatmapReady={() => { }}
+          isCapabilityHeatmapReady={true}
+          setIsCapabilityHeatmapReady={() => { }}
+
+          // Refs (create empty refs)
+          swotRef={{ current: null }}
+          customerSegmentationRef={{ current: null }}
+          purchaseCriteriaRef={{ current: null }}
+          channelHeatmapRef={{ current: null }}
+          loyaltyNpsRef={{ current: null }}
+          capabilityHeatmapRef={{ current: null }}
+          portersRef={{ current: null }}
+          pestelRef={{ current: null }}
+          fullSwotRef={{ current: null }}
+          competitiveAdvantageRef={{ current: null }}
+          channelEffectivenessRef={{ current: null }}
+          expandedCapabilityRef={{ current: null }}
+          strategicGoalsRef={{ current: null }}
+          strategicRadarRef={{ current: null }}
+          cultureProfileRef={{ current: null }}
+          productivityRef={{ current: null }}
+          maturityScoreRef={{ current: null }}
+          costEfficiencyRef={{ current: null }}
+          financialPerformanceRef={{ current: null }}
+          financialBalanceRef={{ current: null }}
+          operationalEfficiencyRef={{ current: null }}
+
+          // Handlers (disabled for read-only)
+          handleRedirectToBrief={() => { }}
+          showToastMessage={() => { }}
+          apiService={null}
+          createSimpleRegenerationHandler={() => () => { }} // Return empty function
+
+          // Hide regenerate buttons in user history
+          hideRegenerateButtons={true}
+        />
+      </div>
     </div>
   );
 };
 
-// New StrategicTab Component
 const StrategicTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -1304,10 +1353,8 @@ const StrategicTab = ({
   totalQuestions = 0,
   completedQuestions = 0,
   conversationCount = 0,
-  selectedPhase = 'initial',
-  availablePhases = [],
   phaseManager,
-  onPhaseChange = () => {}
+  onToast
 }) => {
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
@@ -1316,6 +1363,9 @@ const StrategicTab = ({
     phases: conversationCount,
     progress: totalQuestions > 0 ? Math.round((totalCompletedQuestions / totalQuestions) * 100) : 0,
   };
+
+  // Create a fallback phase manager if none is provided
+  const safePhaseManager = phaseManager || createSimplePhaseManager(analysisData);
 
   if (!analysisData) {
     return (
@@ -1326,6 +1376,9 @@ const StrategicTab = ({
           onBusinessChange={onBusinessChange}
           isLoadingBusiness={isLoadingBusiness}
           stats={stats}
+          showPDFExport={false}
+          isStrategicTab={true}
+          onToast={onToast}
         />
         <div className="empty-state">
           <TrendingUp size={48} />
@@ -1345,6 +1398,9 @@ const StrategicTab = ({
           onBusinessChange={onBusinessChange}
           isLoadingBusiness={isLoadingBusiness}
           stats={stats}
+          showPDFExport={false}
+          isStrategicTab={true}
+          onToast={onToast}
         />
         <div className="empty-state">
           <TrendingUp size={48} />
@@ -1363,8 +1419,14 @@ const StrategicTab = ({
         onBusinessChange={onBusinessChange}
         isLoadingBusiness={isLoadingBusiness}
         stats={stats}
+        showPDFExport={true}
+        analysisData={analysisData}
+        selectedBusiness={selectedBusiness}
+        isStrategicTab={true}
+        onToast={onToast}
       />
-      
+
+      {/* Strategic analysis container with proper structure for PDF capture */}
       <div className="strategic-analysis-container">
         <StrategicAnalysis
           questions={analysisData.questions}
@@ -1374,77 +1436,10 @@ const StrategicTab = ({
           onRegenerate={null}
           isRegenerating={false}
           canRegenerate={false}
-          phaseManager={phaseManager}
-          hideDownload={false}
+          phaseManager={safePhaseManager}
+          hideDownload={true} // Hide the original download button since we have our custom one
         />
       </div>
-    </div>
-  );
-};
-
-// FIXED: Enhanced AnalysisComponents with ALL analysis types
-const AnalysisComponents = ({ analysisData, selectedPhase }) => {
-  const initialPhaseTypes = [
-    { key: 'swot', Component: SwotAnalysis, propName: 'analysisResult' },
-    { key: 'purchaseCriteria', Component: PurchaseCriteria, propName: 'purchaseCriteriaData' },
-    { key: 'channelHeatmap', Component: ChannelHeatmap, propName: 'channelHeatmapData' },
-    { key: 'loyaltyNPS', Component: LoyaltyNPS, propName: 'loyaltyNPSData' },
-    { key: 'capabilityHeatmap', Component: CapabilityHeatmap, propName: 'capabilityHeatmapData' },
-    { key: 'porters', Component: PortersFiveForces, propName: 'portersData' },
-    { key: 'pestel', Component: PestelAnalysis, propName: 'pestelData' } 
-  ];
-
-  const essentialPhaseTypes = [
-    { key: 'fullSwot', Component: FullSWOTPortfolio, propName: 'fullSwotData' },
-    { key: 'customerSegmentation', Component: CustomerSegmentation, propName: 'customerSegmentationData' },
-    { key: 'competitiveAdvantage', Component: CompetitiveAdvantageMatrix, propName: 'competitiveAdvantageData' },
-    { key: 'channelEffectiveness', Component: ChannelEffectivenessMap, propName: 'channelEffectivenessData' },
-    { key: 'expandedCapability', Component: ExpandedCapabilityHeatmap, propName: 'expandedCapabilityData' },
-    { key: 'strategicGoals', Component: StrategicGoals, propName: 'strategicGoalsData' },
-    { key: 'strategicRadar', Component: StrategicPositioningRadar, propName: 'strategicRadarData' },
-    { key: 'cultureProfile', Component: OrganizationalCultureProfile, propName: 'cultureProfileData' },
-    { key: 'productivityMetrics', Component: ProductivityMetrics, propName: 'productivityData' },
-    { key: 'maturityScore', Component: MaturityScoreLight, propName: 'maturityData' }
-  ];
-
-  const analysisTypes = selectedPhase === 'initial' ? initialPhaseTypes : essentialPhaseTypes;
- 
-  return (
-    <div className="analysis-components">
-      {analysisTypes.map(({ key, Component, propName }) => {
-        if (!analysisData[key]) {
-           
-          return null;
-        }
-
-        const props = {
-          businessName: analysisData.businessName,
-          onRegenerate: null,
-          isRegenerating: false,
-          canRegenerate: false,
-          questions: analysisData.questions,
-          userAnswers: analysisData.userAnswers,
-          onDataGenerated: () => {},
-          selectedBusinessId: null
-        };
-
-        // Set the specific data prop for each component
-        if (key === 'swot') {
-          props.analysisResult = analysisData[key];
-        } else if (key === 'strategic') {
-          props.strategicData = analysisData[key];
-          // Add phaseManager for strategic analysis
-          props.phaseManager = createSimplePhaseManager(analysisData);
-        } else {
-          props[propName] = analysisData[key];
-        }
-
-        return (
-          <div key={key} className="analysis-component" data-analysis-type={key}>
-            <Component {...props} />
-          </div>
-        );
-      })}
     </div>
   );
 };

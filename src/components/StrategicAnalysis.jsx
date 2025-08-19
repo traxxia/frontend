@@ -41,12 +41,14 @@ const StrategicAnalysis = ({
 }) => {
   const [localStrategicData, setLocalStrategicData] = useState(strategicData);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
 
   const generateStrategicAnalysis = async () => {
     try {
       setIsLoading(true);
+      setErrorMessage('');
 
       const questionsArray = [];
       const answersArray = [];
@@ -99,6 +101,7 @@ const StrategicAnalysis = ({
 
     } catch (error) {
       console.error('Error generating strategic analysis:', error);
+      setErrorMessage(error.message || 'Failed to generate strategic analysis');
       throw error;
     } finally {
       setIsLoading(false);
@@ -117,12 +120,14 @@ const StrategicAnalysis = ({
       }
     } catch (error) {
       console.error('Error regenerating strategic analysis:', error);
+      setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
     }
   };
 
   useEffect(() => {
     if (strategicData) {
       setLocalStrategicData(strategicData);
+      setErrorMessage(''); // Clear any previous errors when new data is loaded
     } else if (!localStrategicData && !isLoading && Object.keys(userAnswers).length >= 3) {
       generateStrategicAnalysis();
     }
@@ -166,7 +171,6 @@ const StrategicAnalysis = ({
     return phaseKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
  
-
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
     if (!pillars) return null;
@@ -834,6 +838,38 @@ const StrategicAnalysis = ({
       );
     }
 
+    if (errorMessage) {
+      return (
+        <div className="alert alert-danger" style={{ 
+          margin: '1rem', 
+          padding: '1rem', 
+          backgroundColor: '#f8d7da', 
+          color: '#721c24', 
+          border: '1px solid #f5c6cb', 
+          borderRadius: '8px' 
+        }}>
+          <h6>Error Generating Strategic Analysis</h6>
+          <p>{errorMessage}</p>
+          <button 
+            onClick={handleRegenerate} 
+            className="retry-button" 
+            style={{ 
+              marginTop: '0.5rem',
+              padding: '8px 16px',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+            disabled={isLoading || isRegenerating}
+          >
+            {(isLoading || isRegenerating) ? 'Retrying...' : 'Retry Analysis'}
+          </button>
+        </div>
+      );
+    }
+
     // Extract strategic_analysis from the response
     const analysisData = localStrategicData.strategic_analysis || localStrategicData;
 
@@ -852,42 +888,11 @@ const StrategicAnalysis = ({
 
   return (
     <div className="strategic-analysis-container">
-      <div className="strategic-header" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '0 20px'
-      }}>
-        <div className="section-header" style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          borderBottom: 'none',
-          marginBottom: '0px',
-          gap: '8px',
-          background: '#fff'
-        }}>
-          <Target size={24} style={{ color: 'blue' }} />
-          <h2>Strategic Analysis</h2>
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-           {!hideDownload && (
-            <DownloadStrategicAnalysis
-              strategicData={localStrategicData}
-              businessName={businessName}
-              isDisabled={!localStrategicData || isLoading || isRegenerating}
-              size="medium"
-            />
-          )} 
-        </div>
-
-      </div>
+       
 
       <div className="dashboard-container">
         {renderStrategicContent()}
-      </div>
+      </div> 
     </div>
   );
 };

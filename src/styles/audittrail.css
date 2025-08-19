@@ -451,8 +451,8 @@
 }
 
 .stat-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: transparent;
+  border: none;
   border-radius: 6px;
   padding: 12px;
 }

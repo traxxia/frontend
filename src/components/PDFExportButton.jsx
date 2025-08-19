@@ -11,11 +11,14 @@ const PDFExportButton = ({
   isCapabilityHeatmapReady = true,
   className = "",
   style = {},
-  // NEW: Add these props to determine actual available content
+  // NEW: Add export type prop
+  exportType = "analysis", // "analysis" or "strategic"
+  // Add strategic data prop
+  strategicData = null,
+  // Analysis data state indicators
   unlockedFeatures = {},
   hasEssentialData = false,
   hasGoodData = false,
-  // Additional data state indicators
   fullSwotData = null,
   customerSegmentationData = null,
   competitiveAdvantageData = null,
@@ -34,15 +37,13 @@ const PDFExportButton = ({
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const { t } = useTranslation();
 
-  // NEW: Function to determine actual export phase based on available content
+  // Function to determine actual export phase based on available content
   const getExportPhase = () => {
-    // Check if we have good phase data and it's unlocked
     const hasGoodPhaseData = !!(costEfficiencyData || financialPerformanceData || financialBalanceData || operationalEfficiencyData);
     if (unlockedFeatures.goodPhase && hasGoodPhaseData) {
       return 'good';
     }
     
-    // Check if we have essential phase data and it's unlocked
     const hasEssentialPhaseData = !!(fullSwotData || customerSegmentationData || competitiveAdvantageData || 
                                      channelEffectivenessData || expandedCapabilityData || strategicGoalsData || 
                                      strategicRadarData || cultureProfileData || productivityData || maturityData);
@@ -50,11 +51,10 @@ const PDFExportButton = ({
       return 'essential';
     }
     
-    // Default to initial phase
     return 'initial';
   };
 
-  // Define which components belong to each phase
+  // Define which components belong to each phase for analysis export
   const phaseComponents = {
     initial: [
       { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
@@ -66,13 +66,11 @@ const PDFExportButton = ({
       { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
     ],
     essential: [
-      // Include initial phase components first
       { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
       { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
       { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
       { selector: '[data-component="porters-analysis"]', name: 'Porter\'s Five Forces' },
       { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
-      // Essential phase specific components
       { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
       { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
       { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
@@ -85,7 +83,6 @@ const PDFExportButton = ({
       { selector: '[data-component="maturity"]', name: 'Business Maturity Score' }
     ],
     good: [
-      // Include essential phase components first
       { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
       { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
       { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
@@ -101,13 +98,17 @@ const PDFExportButton = ({
       { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
       { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
       { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-      // Good phase specific components
       { selector: '[data-component="cost-efficiency"]', name: 'Cost Efficiency Insight' },
       { selector: '[data-component="financial-performance"]', name: 'Financial Performance & Growth Trajectory' },
       { selector: '[data-component="financial-health"]', name: 'Financial Health Insight' },
       { selector: '[data-component="operational-efficiency"]', name: 'Operational Efficiency Insight' }
     ]
   };
+
+  // Define strategic components - all strategic analysis sections
+  const strategicComponents = [
+    { selector: '.strategic-page-section', name: 'Strategic Analysis' }
+  ];
 
   // Function to expand all cards and phases temporarily
   const expandAllContent = () => {
@@ -158,8 +159,160 @@ const PDFExportButton = ({
     });
   };
 
+  const handleDownloadStrategicAnalysis = async () => {
+    if (!strategicData) {
+      if (onToastMessage) {
+        onToastMessage('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
+      }
+      return;
+    }
+
+    let originalStates = [];
+
+    try {
+      setIsExportingPDF(true);
+
+      // Expand all content temporarily
+      originalStates = expandAllContent();
+      
+      // Wait for DOM to update and ensure content is visible
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const jsPDF = (await import('jspdf')).default;
+      const html2canvas = (await import('html2canvas')).default;
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let isFirstPage = true;
+
+      // Helper function to capture strategic components
+      const captureStrategicComponents = async () => {
+        const strategicContainer = document.querySelector('.strategic-content');
+        if (!strategicContainer || strategicContainer.offsetHeight === 0 || strategicContainer.offsetWidth === 0) {
+          return false;
+        }
+
+        // Get all strategic sections
+        const strategicSections = strategicContainer.querySelectorAll('.strategic-page-section');
+        let capturedCount = 0;
+
+        for (let i = 0; i < strategicSections.length; i++) {
+          const section = strategicSections[i];
+          if (!section || section.offsetHeight === 0 || section.offsetWidth === 0) {
+            continue;
+          }
+
+          // Get section title
+          const titleElement = section.querySelector('.section-header h2');
+          const sectionTitle = titleElement ? titleElement.textContent.trim() : `Strategic Section ${i + 1}`;
+
+          // Hide all buttons in this section
+          const buttons = section.querySelectorAll('button');
+          const originalDisplay = [];
+          buttons.forEach((btn, index) => {
+            originalDisplay[index] = btn.style.display;
+            btn.style.display = 'none';
+          });
+
+          try {
+            const canvas = await html2canvas(section, {
+              scale: 1.2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: '#ffffff',
+              logging: false,
+              windowWidth: section.scrollWidth,
+              windowHeight: section.scrollHeight
+            });
+
+            if (!isFirstPage) pdf.addPage();
+            
+            // Add section title
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(59, 130, 246);
+            pdf.text(sectionTitle, 20, 25);
+
+            const imgData = canvas.toDataURL('image/png', 0.8);
+            const imgWidth = pageWidth - 40;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const maxHeight = pageHeight - 60;
+            const finalHeight = imgHeight > maxHeight ? maxHeight : imgHeight;
+            const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
+
+            pdf.addImage(imgData, 'PNG', 20, 35, finalWidth, finalHeight);
+            isFirstPage = false;
+            capturedCount++;
+
+          } catch (error) {
+            console.error(`Error capturing strategic section ${i + 1}:`, error);
+          } finally {
+            // Restore button visibility
+            buttons.forEach((btn, index) => {
+              btn.style.display = originalDisplay[index];
+            });
+          }
+
+          // Add delay between sections
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        return capturedCount > 0;
+      };
+
+      // Add PDF cover page for strategic analysis
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(59, 130, 246);
+      pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
+      
+      pdf.setFontSize(16);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
+
+      isFirstPage = false;
+
+      // Capture strategic components
+      const success = await captureStrategicComponents();
+
+      if (!success) {
+        if (onToastMessage) {
+          onToastMessage('No strategic analysis components could be captured. Make sure you have generated strategic analysis first.', 'error');
+        }
+        return;
+      }
+
+      // Generate filename
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Save the PDF
+      pdf.save(filename);
+      
+      if (onToastMessage) {
+        onToastMessage('Strategic Analysis PDF exported successfully!', 'success');
+      }
+
+    } catch (error) {
+      console.error('Error generating strategic PDF:', error);
+      if (onToastMessage) {
+        onToastMessage('Failed to generate strategic PDF. Please try again.', 'error');
+      }
+    } finally {
+      // Always restore original states
+      if (originalStates.length > 0) {
+        restoreOriginalStates(originalStates);
+      }
+      
+      setIsExportingPDF(false);
+    }
+  };
+
   const handleDownloadPhaseAnalysis = async () => {
-    // NEW: Use the dynamically determined phase
     const exportPhase = getExportPhase();
     
     if (!exportPhase || !phaseComponents[exportPhase]) {
@@ -343,10 +496,18 @@ const PDFExportButton = ({
     }
   };
 
-  // NEW: Get the actual export phase for display
-  const exportPhase = getExportPhase();
-  const phaseLabel = exportPhase === 'initial' ? 'Initial' : 
+  // Determine button text and action based on export type
+  const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
+  
+  // Get the actual export phase for display (only for analysis type)
+  const exportPhase = exportType === "analysis" ? getExportPhase() : null;
+  const phaseLabel = exportType === "strategic" ? "Strategic" :
+                     exportPhase === 'initial' ? 'Initial' : 
                      exportPhase === 'essential' ? 'Essential' : 'Good';
+
+  const exportLabel =  "";
+  const loadingText = exportType === "strategic" ? "Generating Strategic PDF..." : "Generating PDF...";
+  const titleText = exportType === "strategic" ? "Export Strategic Analysis PDF" : `Export ${phaseLabel} Phase PDF`;
 
   return (
     <>
@@ -405,14 +566,14 @@ const PDFExportButton = ({
                 color: '#6b7280'
               }}
             >
-              Creating {phaseLabel} phase analysis for {businessName}...
+              Creating {phaseLabel.toLowerCase()} analysis for {businessName}...
             </p>
           </div>
         </div>
       )}
       
       <button
-        onClick={handleDownloadPhaseAnalysis}
+        onClick={handleDownload}
         disabled={disabled || isExportingPDF}
         className={`${className}`}
         style={{
@@ -441,17 +602,17 @@ const PDFExportButton = ({
           e.target.style.transform = "translateY(0)";
           e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
         }}
-        title={`Export ${phaseLabel} Phase PDF`}
+        title={titleText}
       >
         {isExportingPDF ? (
           <>
             <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
-            Generating PDF...
+            {loadingText}
           </>
         ) : (
           <>
             <Download size={16} /> 
-             PDF
+            {exportLabel}
           </>
         )}
       </button>
