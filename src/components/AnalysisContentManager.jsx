@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { 
-  Target, Award, TrendingDown, TrendingUp, DollarSign, Zap, 
-  CheckCircle, Loader, Lock, ChevronDown, ChevronUp, AlertCircle, XCircle 
+import {
+  Target, Award, TrendingDown, TrendingUp, DollarSign, Zap,
+  CheckCircle, Loader, Lock, ChevronDown, ChevronUp, AlertCircle, XCircle
 } from "lucide-react";
 
 // Import all analysis components
@@ -31,13 +31,13 @@ import RegenerateButton from "./RegenerateButton";
 const AnalysisContentManager = ({
   // Phase Manager
   phaseManager,
-  
+
   // Business Data
   businessData,
   questions,
   userAnswers,
   selectedBusinessId,
-  
+
   // Analysis Data States
   swotAnalysisResult,
   customerSegmentationData,
@@ -61,7 +61,7 @@ const AnalysisContentManager = ({
   financialPerformanceData,
   financialBalanceData,
   operationalEfficiencyData,
-  
+
   // Data Setters
   setSwotAnalysisResult,
   setCustomerSegmentationData,
@@ -84,7 +84,7 @@ const AnalysisContentManager = ({
   setFinancialPerformanceData,
   setFinancialBalanceData,
   setOperationalEfficiencyData,
-  
+
   // Regenerating States
   isSwotAnalysisRegenerating,
   isCustomerSegmentationRegenerating,
@@ -107,17 +107,17 @@ const AnalysisContentManager = ({
   isFinancialPerformanceRegenerating,
   isFinancialBalanceRegenerating,
   isOperationalEfficiencyRegenerating,
-  
+
   // Other States
   isAnalysisRegenerating,
   isChannelHeatmapReady,
   setIsChannelHeatmapReady,
   isCapabilityHeatmapReady,
   setIsCapabilityHeatmapReady,
-  
+
   // API Loading States - NEW
   apiLoadingStates = {},
-  
+
   // Refs
   swotRef,
   customerSegmentationRef,
@@ -140,7 +140,7 @@ const AnalysisContentManager = ({
   financialPerformanceRef,
   financialBalanceRef,
   operationalEfficiencyRef,
-  
+
   // Handlers
   handleRedirectToBrief,
   showToastMessage,
@@ -181,7 +181,7 @@ const AnalysisContentManager = ({
     const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
       .filter(([endpoint, analysis]) => analysis === analysisType)
       .map(([endpoint]) => endpoint);
-    
+
     return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
   };
 
@@ -321,6 +321,395 @@ const AnalysisContentManager = ({
         <div className="modern-analysis-content">
           <div className="modern-analysis-grid">
             {/* SWOT Analysis Card - Only show if essential phase is not unlocked */}
+
+
+            {unlockedFeatures.goodPhase && (
+              <>
+                {/* Cost Efficiency Insight Card */}
+                <ModernAnalysisCard
+                  id="cost-efficiency"
+                  title="Cost Efficiency Insight"
+                  description="Unit economics and cost optimization analysis"
+                  icon={TrendingDown}
+                  hasData={!!costEfficiencyData}
+                  onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
+                  isRegenerating={isCostEfficiencyRegenerating}
+                  isLoading={isAnalysisLoading('costEfficiency')} // NEW
+                  category="good"
+                >
+                  <div ref={costEfficiencyRef} data-component="cost-efficiency">
+                    <CostEfficiencyInsight
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
+                      isRegenerating={isCostEfficiencyRegenerating || isAnalysisLoading('costEfficiency')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      costEfficiencyData={costEfficiencyData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Financial Performance Card */}
+                <ModernAnalysisCard
+                  id="financial-performance"
+                  title="Financial Performance & Growth Trajectory"
+                  description="Multi-line chart with growth rate indicators and financial metrics analysis"
+                  icon={TrendingUp}
+                  hasData={!!financialPerformanceData}
+                  onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
+                  isRegenerating={isFinancialPerformanceRegenerating}
+                  isLoading={isAnalysisLoading('financialPerformance')} // NEW
+                  category="good"
+                >
+                  <div ref={financialPerformanceRef} data-component="financial-performance">
+                    <FinancialPerformance
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
+                      isRegenerating={isFinancialPerformanceRegenerating || isAnalysisLoading('financialPerformance')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      financialPerformanceData={financialPerformanceData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Financial Health Insight Card */}
+                <ModernAnalysisCard
+                  id="financial-health"
+                  title="Financial Health Insight"
+                  description="Balance sheet analysis with financial ratios and innovation investment tracking"
+                  icon={DollarSign}
+                  hasData={!!financialBalanceData}
+                  onRegenerate={createSimpleRegenerationHandler('financialHealth')}
+                  isRegenerating={isFinancialBalanceRegenerating}
+                  isLoading={isAnalysisLoading('financialHealth')} // NEW
+                  category="good"
+                >
+                  <div ref={financialBalanceRef} data-component="financial-health">
+                    <FinancialBalanceInsight
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('financialHealth')}
+                      isRegenerating={isFinancialBalanceRegenerating || isAnalysisLoading('financialHealth')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      financialBalanceData={financialBalanceData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Operational Efficiency Insight Card */}
+                <ModernAnalysisCard
+                  id="operational-efficiency"
+                  title="Operational Efficiency Insight"
+                  description="Resource utilization analysis with capability performance and efficiency trends"
+                  icon={Zap}
+                  hasData={!!operationalEfficiencyData}
+                  onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
+                  isRegenerating={isOperationalEfficiencyRegenerating}
+                  isLoading={isAnalysisLoading('operationalEfficiency')} // NEW
+                  category="good"
+                >
+                  <div ref={operationalEfficiencyRef} data-component="operational-efficiency">
+                    <OperationalEfficiencyInsight
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
+                      isRegenerating={isOperationalEfficiencyRegenerating || isAnalysisLoading('operationalEfficiency')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      operationalEfficiencyData={operationalEfficiencyData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+              </>
+            )}
+
+            {/* Essential Phase Components - Show only if unlocked */}
+            {unlockedFeatures.fullSwot && (
+              <>
+                {/* Full SWOT Portfolio Card */}
+                <ModernAnalysisCard
+                  id="full-swot"
+                  title="Full SWOT Portfolio"
+                  description="Comprehensive SWOT analysis with strategic recommendations"
+                  icon={Award}
+                  hasData={!!fullSwotData}
+                  onRegenerate={createSimpleRegenerationHandler('fullSwot')}
+                  isRegenerating={isFullSwotRegenerating}
+                  isLoading={isAnalysisLoading('fullSwot')} // NEW
+                  category="essential"
+                >
+                  <div ref={fullSwotRef} data-component="full-swot">
+                    <FullSWOTPortfolio
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      isRegenerating={isFullSwotRegenerating || isAnalysisLoading('fullSwot')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      fullSwotData={fullSwotData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                      onRegenerate={createSimpleRegenerationHandler('fullSwot')}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Customer Segmentation Card */}
+                <ModernAnalysisCard
+                  id="customer-segmentation"
+                  title="Customer Segmentation"
+                  description="Detailed analysis of customer segments and personas"
+                  icon={Award}
+                  hasData={!!customerSegmentationData}
+                  onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
+                  isRegenerating={isCustomerSegmentationRegenerating}
+                  isLoading={isAnalysisLoading('customerSegmentation')} // NEW
+                  category="essential"
+                >
+                  <div ref={customerSegmentationRef} data-component="customer-segmentation">
+                    <CustomerSegmentation
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onDataGenerated={setCustomerSegmentationData}
+                      onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
+                      isRegenerating={isCustomerSegmentationRegenerating || isAnalysisLoading('customerSegmentation')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      customerSegmentationData={customerSegmentationData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Competitive Advantage Card */}
+                <ModernAnalysisCard
+                  id="competitive-advantage"
+                  title="Competitive Advantage Matrix"
+                  description="Analysis of competitive positioning and advantages"
+                  icon={Award}
+                  hasData={!!competitiveAdvantageData}
+                  onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
+                  isRegenerating={isCompetitiveAdvantageRegenerating}
+                  isLoading={isAnalysisLoading('competitiveAdvantage')} // NEW
+                  category="essential"
+                >
+                  <div ref={competitiveAdvantageRef} data-component="competitive-advantage">
+                    <CompetitiveAdvantageMatrix
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      isRegenerating={isCompetitiveAdvantageRegenerating || isAnalysisLoading('competitiveAdvantage')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      competitiveAdvantageData={competitiveAdvantageData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                      onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Channel Effectiveness Card */}
+                <ModernAnalysisCard
+                  id="channel-effectiveness"
+                  title="Channel Effectiveness Map"
+                  description="Analysis of channel performance and effectiveness"
+                  icon={Award}
+                  hasData={!!channelEffectivenessData}
+                  onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
+                  isRegenerating={isChannelEffectivenessRegenerating}
+                  isLoading={isAnalysisLoading('channelEffectiveness')} // NEW
+                  category="essential"
+                >
+                  <div ref={channelEffectivenessRef} data-component="channel-effectiveness">
+                    <ChannelEffectivenessMap
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
+                      isRegenerating={isChannelEffectivenessRegenerating || isAnalysisLoading('channelEffectiveness')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      channelEffectivenessData={channelEffectivenessData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Expanded Capability Heatmap Card */}
+                <ModernAnalysisCard
+                  id="expanded-capability"
+                  title="Expanded Capability Heatmap"
+                  description="Advanced organizational capability analysis"
+                  icon={Award}
+                  hasData={!!expandedCapabilityData}
+                  onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
+                  isRegenerating={isExpandedCapabilityRegenerating}
+                  isLoading={isAnalysisLoading('expandedCapability')} // NEW
+                  category="essential"
+                >
+                  <div ref={expandedCapabilityRef} data-component="expanded-capability">
+                    <ExpandedCapabilityHeatmap
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
+                      isRegenerating={isExpandedCapabilityRegenerating || isAnalysisLoading('expandedCapability')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      expandedCapabilityData={expandedCapabilityData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Strategic Goals Card */}
+                <ModernAnalysisCard
+                  id="strategic-goals"
+                  title="Strategic Goals"
+                  description="Strategic goal setting and planning framework"
+                  icon={Award}
+                  hasData={!!strategicGoalsData}
+                  onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
+                  isRegenerating={isStrategicGoalsRegenerating}
+                  isLoading={isAnalysisLoading('strategicGoals')} // NEW
+                  category="essential"
+                >
+                  <div ref={strategicGoalsRef} data-component="strategic-goals">
+                    <StrategicGoals
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
+                      isRegenerating={isStrategicGoalsRegenerating || isAnalysisLoading('strategicGoals')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      strategicGoalsData={strategicGoalsData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Strategic Positioning Radar Card */}
+                <ModernAnalysisCard
+                  id="strategic-radar"
+                  title="Strategic Positioning Radar"
+                  description="Visual representation of strategic positioning across key dimensions"
+                  icon={Award}
+                  hasData={!!strategicRadarData}
+                  onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
+                  isRegenerating={isStrategicRadarRegenerating}
+                  isLoading={isAnalysisLoading('strategicRadar')} // NEW
+                  category="essential"
+                >
+                  <div ref={strategicRadarRef} data-component="strategic-radar">
+                    <StrategicPositioningRadar
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
+                      isRegenerating={isStrategicRadarRegenerating || isAnalysisLoading('strategicRadar')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      strategicRadarData={strategicRadarData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Organizational Culture Profile Card */}
+                <ModernAnalysisCard
+                  id="culture-profile"
+                  title="Organizational Culture Profile"
+                  description="Analysis of organizational culture and values"
+                  icon={Award}
+                  hasData={!!cultureProfileData}
+                  onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
+                  isRegenerating={isCultureProfileRegenerating}
+                  isLoading={isAnalysisLoading('cultureProfile')} // NEW
+                  category="essential"
+                >
+                  <div ref={cultureProfileRef} data-component="culture-profile">
+                    <OrganizationalCultureProfile
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
+                      isRegenerating={isCultureProfileRegenerating || isAnalysisLoading('cultureProfile')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      cultureProfileData={cultureProfileData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Productivity Metrics Card */}
+                <ModernAnalysisCard
+                  id="productivity"
+                  title="Productivity Metrics"
+                  description="Analysis of organizational productivity and efficiency metrics"
+                  icon={Award}
+                  hasData={!!productivityData}
+                  onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
+                  isRegenerating={isProductivityRegenerating}
+                  isLoading={isAnalysisLoading('productivityMetrics')} // NEW
+                  category="essential"
+                >
+                  <div ref={productivityRef} data-component="productivity">
+                    <ProductivityMetrics
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
+                      isRegenerating={isProductivityRegenerating || isAnalysisLoading('productivityMetrics')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      productivityData={productivityData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+
+                {/* Maturity Score Card */}
+                <ModernAnalysisCard
+                  id="maturity"
+                  title="Maturity Score"
+                  description="Business maturity assessment and scoring"
+                  icon={Award}
+                  hasData={!!maturityData}
+                  onRegenerate={createSimpleRegenerationHandler('maturityScore')}
+                  isRegenerating={isMaturityRegenerating}
+                  isLoading={isAnalysisLoading('maturityScore')} // NEW
+                  category="essential"
+                >
+                  <div ref={maturityScoreRef} data-component="maturity">
+                    <MaturityScoreLight
+                      questions={questions}
+                      userAnswers={userAnswers}
+                      businessName={businessData.name}
+                      onRegenerate={createSimpleRegenerationHandler('maturityScore')}
+                      isRegenerating={isMaturityRegenerating || isAnalysisLoading('maturityScore')} // UPDATED
+                      canRegenerate={!isAnalysisRegenerating}
+                      maturityData={maturityData}
+                      selectedBusinessId={selectedBusinessId}
+                      onRedirectToBrief={handleRedirectToBrief}
+                    />
+                  </div>
+                </ModernAnalysisCard>
+              </>
+            )}
             {!unlockedFeatures.fullSwot && (
               <ModernAnalysisCard
                 id="swot"
@@ -528,395 +917,6 @@ const AnalysisContentManager = ({
                 />
               </div>
             </ModernAnalysisCard>
-
-            {/* Essential Phase Components - Show only if unlocked */}
-            {unlockedFeatures.fullSwot && (
-              <>
-                {/* Full SWOT Portfolio Card */}
-                <ModernAnalysisCard
-                  id="full-swot"
-                  title="Full SWOT Portfolio"
-                  description="Comprehensive SWOT analysis with strategic recommendations"
-                  icon={Award}
-                  hasData={!!fullSwotData}
-                  onRegenerate={createSimpleRegenerationHandler('fullSwot')}
-                  isRegenerating={isFullSwotRegenerating}
-                  isLoading={isAnalysisLoading('fullSwot')} // NEW
-                  category="essential"
-                >
-                  <div ref={fullSwotRef} data-component="full-swot">
-                    <FullSWOTPortfolio
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      isRegenerating={isFullSwotRegenerating || isAnalysisLoading('fullSwot')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      fullSwotData={fullSwotData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      onRegenerate={createSimpleRegenerationHandler('fullSwot')}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Customer Segmentation Card */}
-                <ModernAnalysisCard
-                  id="customer-segmentation"
-                  title="Customer Segmentation"
-                  description="Detailed analysis of customer segments and personas"
-                  icon={Award}
-                  hasData={!!customerSegmentationData}
-                  onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
-                  isRegenerating={isCustomerSegmentationRegenerating}
-                  isLoading={isAnalysisLoading('customerSegmentation')} // NEW
-                  category="essential"
-                >
-                  <div ref={customerSegmentationRef} data-component="customer-segmentation">
-                    <CustomerSegmentation
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onDataGenerated={setCustomerSegmentationData}
-                      onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
-                      isRegenerating={isCustomerSegmentationRegenerating || isAnalysisLoading('customerSegmentation')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      customerSegmentationData={customerSegmentationData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Competitive Advantage Card */}
-                <ModernAnalysisCard
-                  id="competitive-advantage"
-                  title="Competitive Advantage Matrix"
-                  description="Analysis of competitive positioning and advantages"
-                  icon={Award}
-                  hasData={!!competitiveAdvantageData}
-                  onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
-                  isRegenerating={isCompetitiveAdvantageRegenerating}
-                  isLoading={isAnalysisLoading('competitiveAdvantage')} // NEW
-                  category="essential"
-                >
-                  <div ref={competitiveAdvantageRef} data-component="competitive-advantage">
-                    <CompetitiveAdvantageMatrix
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      isRegenerating={isCompetitiveAdvantageRegenerating || isAnalysisLoading('competitiveAdvantage')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      competitiveAdvantageData={competitiveAdvantageData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Channel Effectiveness Card */}
-                <ModernAnalysisCard
-                  id="channel-effectiveness"
-                  title="Channel Effectiveness Map"
-                  description="Analysis of channel performance and effectiveness"
-                  icon={Award}
-                  hasData={!!channelEffectivenessData}
-                  onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
-                  isRegenerating={isChannelEffectivenessRegenerating}
-                  isLoading={isAnalysisLoading('channelEffectiveness')} // NEW
-                  category="essential"
-                >
-                  <div ref={channelEffectivenessRef} data-component="channel-effectiveness">
-                    <ChannelEffectivenessMap
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
-                      isRegenerating={isChannelEffectivenessRegenerating || isAnalysisLoading('channelEffectiveness')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      channelEffectivenessData={channelEffectivenessData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief} 
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Expanded Capability Heatmap Card */}
-                <ModernAnalysisCard
-                  id="expanded-capability"
-                  title="Expanded Capability Heatmap"
-                  description="Advanced organizational capability analysis"
-                  icon={Award}
-                  hasData={!!expandedCapabilityData}
-                  onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-                  isRegenerating={isExpandedCapabilityRegenerating}
-                  isLoading={isAnalysisLoading('expandedCapability')} // NEW
-                  category="essential"
-                >
-                  <div ref={expandedCapabilityRef} data-component="expanded-capability">
-                    <ExpandedCapabilityHeatmap
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-                      isRegenerating={isExpandedCapabilityRegenerating || isAnalysisLoading('expandedCapability')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      expandedCapabilityData={expandedCapabilityData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Strategic Goals Card */}
-                <ModernAnalysisCard
-                  id="strategic-goals"
-                  title="Strategic Goals"
-                  description="Strategic goal setting and planning framework"
-                  icon={Award}
-                  hasData={!!strategicGoalsData}
-                  onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
-                  isRegenerating={isStrategicGoalsRegenerating}
-                  isLoading={isAnalysisLoading('strategicGoals')} // NEW
-                  category="essential"
-                >
-                  <div ref={strategicGoalsRef} data-component="strategic-goals">
-                    <StrategicGoals
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
-                      isRegenerating={isStrategicGoalsRegenerating || isAnalysisLoading('strategicGoals')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      strategicGoalsData={strategicGoalsData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Strategic Positioning Radar Card */}
-                <ModernAnalysisCard
-                  id="strategic-radar"
-                  title="Strategic Positioning Radar"
-                  description="Visual representation of strategic positioning across key dimensions"
-                  icon={Award}
-                  hasData={!!strategicRadarData}
-                  onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-                  isRegenerating={isStrategicRadarRegenerating}
-                  isLoading={isAnalysisLoading('strategicRadar')} // NEW
-                  category="essential"
-                >
-                  <div ref={strategicRadarRef} data-component="strategic-radar">
-                    <StrategicPositioningRadar
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-                      isRegenerating={isStrategicRadarRegenerating || isAnalysisLoading('strategicRadar')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      strategicRadarData={strategicRadarData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Organizational Culture Profile Card */}
-                <ModernAnalysisCard
-                  id="culture-profile"
-                  title="Organizational Culture Profile"
-                  description="Analysis of organizational culture and values"
-                  icon={Award}
-                  hasData={!!cultureProfileData}
-                  onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
-                  isRegenerating={isCultureProfileRegenerating}
-                  isLoading={isAnalysisLoading('cultureProfile')} // NEW
-                  category="essential"
-                >
-                  <div ref={cultureProfileRef} data-component="culture-profile">
-                    <OrganizationalCultureProfile
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
-                      isRegenerating={isCultureProfileRegenerating || isAnalysisLoading('cultureProfile')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      cultureProfileData={cultureProfileData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Productivity Metrics Card */}
-                <ModernAnalysisCard
-                  id="productivity"
-                  title="Productivity Metrics"
-                  description="Analysis of organizational productivity and efficiency metrics"
-                  icon={Award}
-                  hasData={!!productivityData}
-                  onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-                  isRegenerating={isProductivityRegenerating}
-                  isLoading={isAnalysisLoading('productivityMetrics')} // NEW
-                  category="essential"
-                >
-                  <div ref={productivityRef} data-component="productivity">
-                    <ProductivityMetrics
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-                      isRegenerating={isProductivityRegenerating || isAnalysisLoading('productivityMetrics')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      productivityData={productivityData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief} 
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Maturity Score Card */}
-                <ModernAnalysisCard
-                  id="maturity"
-                  title="Maturity Score"
-                  description="Business maturity assessment and scoring"
-                  icon={Award}
-                  hasData={!!maturityData}
-                  onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-                  isRegenerating={isMaturityRegenerating}
-                  isLoading={isAnalysisLoading('maturityScore')} // NEW
-                  category="essential"
-                >
-                  <div ref={maturityScoreRef} data-component="maturity">
-                    <MaturityScoreLight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-                      isRegenerating={isMaturityRegenerating || isAnalysisLoading('maturityScore')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      maturityData={maturityData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-              </>
-            )}
-
-            {/* Good Phase Components - Show only if unlocked */}
-            {unlockedFeatures.goodPhase && (
-              <>
-                {/* Cost Efficiency Insight Card */}
-                <ModernAnalysisCard
-                  id="cost-efficiency"
-                  title="Cost Efficiency Insight"
-                  description="Unit economics and cost optimization analysis"
-                  icon={TrendingDown}
-                  hasData={!!costEfficiencyData}
-                  onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
-                  isRegenerating={isCostEfficiencyRegenerating}
-                  isLoading={isAnalysisLoading('costEfficiency')} // NEW
-                  category="good"
-                >
-                  <div ref={costEfficiencyRef} data-component="cost-efficiency">
-                    <CostEfficiencyInsight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
-                      isRegenerating={isCostEfficiencyRegenerating || isAnalysisLoading('costEfficiency')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      costEfficiencyData={costEfficiencyData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Financial Performance Card */}
-                <ModernAnalysisCard
-                  id="financial-performance"
-                  title="Financial Performance & Growth Trajectory"
-                  description="Multi-line chart with growth rate indicators and financial metrics analysis"
-                  icon={TrendingUp}
-                  hasData={!!financialPerformanceData}
-                  onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
-                  isRegenerating={isFinancialPerformanceRegenerating}
-                  isLoading={isAnalysisLoading('financialPerformance')} // NEW
-                  category="good"
-                >
-                  <div ref={financialPerformanceRef} data-component="financial-performance">
-                    <FinancialPerformance
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
-                      isRegenerating={isFinancialPerformanceRegenerating || isAnalysisLoading('financialPerformance')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      financialPerformanceData={financialPerformanceData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Financial Health Insight Card */}
-                <ModernAnalysisCard
-                  id="financial-health"
-                  title="Financial Health Insight"
-                  description="Balance sheet analysis with financial ratios and innovation investment tracking"
-                  icon={DollarSign}
-                  hasData={!!financialBalanceData}
-                  onRegenerate={createSimpleRegenerationHandler('financialHealth')}
-                  isRegenerating={isFinancialBalanceRegenerating}
-                  isLoading={isAnalysisLoading('financialHealth')} // NEW
-                  category="good"
-                >
-                  <div ref={financialBalanceRef} data-component="financial-health">
-                    <FinancialBalanceInsight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('financialHealth')}
-                      isRegenerating={isFinancialBalanceRegenerating || isAnalysisLoading('financialHealth')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      financialBalanceData={financialBalanceData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-
-                {/* Operational Efficiency Insight Card */}
-                <ModernAnalysisCard
-                  id="operational-efficiency"
-                  title="Operational Efficiency Insight"
-                  description="Resource utilization analysis with capability performance and efficiency trends"
-                  icon={Zap}
-                  hasData={!!operationalEfficiencyData}
-                  onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
-                  isRegenerating={isOperationalEfficiencyRegenerating}
-                  isLoading={isAnalysisLoading('operationalEfficiency')} // NEW
-                  category="good"
-                >
-                  <div ref={operationalEfficiencyRef} data-component="operational-efficiency">
-                    <OperationalEfficiencyInsight
-                      questions={questions}
-                      userAnswers={userAnswers}
-                      businessName={businessData.name}
-                      onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
-                      isRegenerating={isOperationalEfficiencyRegenerating || isAnalysisLoading('operationalEfficiency')} // UPDATED
-                      canRegenerate={!isAnalysisRegenerating}
-                      operationalEfficiencyData={operationalEfficiencyData}
-                      selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                    />
-                  </div>
-                </ModernAnalysisCard>
-              </>
-            )}
 
           </div>
         </div>

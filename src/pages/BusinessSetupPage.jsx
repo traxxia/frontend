@@ -914,12 +914,7 @@ const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
         "Porter's Five Forces",
         "PESTEL Analysis"
       ],
-      essential: [
-        "Purchase Criteria",
-        "Channel Heatmap",
-        "Loyalty/NPS",
-        "Porter's Five Forces",
-        "PESTEL Analysis",
+      essential: [ 
         "Full SWOT Portfolio",
         "Customer Segmentation",
         "Competitive Advantage",
@@ -929,14 +924,18 @@ const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
         "Strategic Positioning Radar",
         "Organizational Culture Profile",
         "Productivity Metrics",
-        "Maturity Score"
+        "Maturity Score",
+        "Purchase Criteria",
+        "Channel Heatmap",
+        "Loyalty/NPS",
+        "Porter's Five Forces",
+        "PESTEL Analysis"
       ],
       good: [
-        "Purchase Criteria",
-        "Channel Heatmap",
-        "Loyalty/NPS",
-        "Porter's Five Forces",
-        "PESTEL Analysis",
+        "Cost Efficiency Insight",
+        "Financial Performance & Growth Trajectory",
+        "Financial Health Insight",
+        "Operational Efficiency Insight",
         "Full SWOT Portfolio",
         "Customer Segmentation",
         "Competitive Advantage",
@@ -947,17 +946,17 @@ const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
         "Organizational Culture Profile",
         "Productivity Metrics",
         "Maturity Score",
-        "Cost Efficiency Insight",
-        "Financial Performance & Growth Trajectory",
-        "Financial Health Insight",
-        "Operational Efficiency Insight"
+        "Purchase Criteria",
+        "Channel Heatmap",
+        "Loyalty/NPS",
+        "Porter's Five Forces",
+        "PESTEL Analysis"
       ],
       advanced: [
-        "Purchase Criteria",
-        "Channel Heatmap",
-        "Loyalty/NPS",
-        "Porter's Five Forces",
-        "PESTEL Analysis",
+        "Cost Efficiency Insight",
+        "Financial Performance & Growth Trajectory",
+        "Financial Health Insight",
+        "Operational Efficiency Insight",
         "Full SWOT Portfolio",
         "Customer Segmentation",
         "Competitive Advantage",
@@ -968,10 +967,11 @@ const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
         "Organizational Culture Profile",
         "Productivity Metrics",
         "Maturity Score",
-        "Cost Efficiency Insight",
-        "Financial Performance & Growth Trajectory",
-        "Financial Health Insight",
-        "Operational Efficiency Insight"
+        "Purchase Criteria",
+        "Channel Heatmap",
+        "Loyalty/NPS",
+        "Porter's Five Forces",
+        "PESTEL Analysis"
       ]
     };
 
