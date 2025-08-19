@@ -262,18 +262,7 @@ const PortersFiveForces = ({
                     ))}
                   </div>
                 </div>
-              )}
-
-              {parsedData.executive_summary.strategic_implications && (
-                <div className="subsection">
-                  <h4>Strategic Implications</h4>
-                  <ul className="implications-list">
-                    {parsedData.executive_summary.strategic_implications.map((implication, index) => (
-                      <li key={index}>{implication}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              )} 
             </div>
           )}
         </div>
@@ -494,106 +483,7 @@ const PortersFiveForces = ({
             </div>
           )}
         </div>
-      )}
-
-      {/* Strategic Recommendations Table */}
-      {parsedData.strategic_recommendations && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('recommendations')}>
-            <h3>Strategic Recommendations</h3>
-            {expandedSections.recommendations ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-
-          {expandedSections.recommendations !== false && (
-            <div className="table-container">
-              {/* Immediate Actions */}
-              {parsedData.strategic_recommendations.immediate_actions && (
-                <div className="subsection">
-                  <h4>Immediate Actions (Next 3-6 months)</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Action</th>
-                        <th>Rationale</th>
-                        <th>Timeline</th>
-                        <th>Expected Impact</th>
-                        <th>Resources Required</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.strategic_recommendations.immediate_actions.map((action, index) => (
-                        <tr key={index}>
-                          <td><strong>{action.action}</strong></td>
-                          <td>{action.rationale}</td>
-                          <td><span className="timeline-badge">{action.timeline}</span></td>
-                          <td>{action.expected_impact || 'N/A'}</td>
-                          <td>
-                            {action.resources_required ? action.resources_required.join(', ') : 'N/A'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Short-term Initiatives */}
-              {parsedData.strategic_recommendations.short_term_initiatives && (
-                <div className="subsection">
-                  <h4>Short-term Initiatives</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Initiative</th>
-                        <th>Strategic Pillar</th>
-                        <th>Expected Outcome</th>
-                        <th>Risk Mitigation</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.strategic_recommendations.short_term_initiatives.map((initiative, index) => (
-                        <tr key={index}>
-                          <td><strong>{initiative.initiative}</strong></td>
-                          <td>{initiative.strategic_pillar || 'N/A'}</td>
-                          <td>{initiative.expected_outcome || 'N/A'}</td>
-                          <td>{initiative.risk_mitigation || 'N/A'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Long-term Strategic Shifts */}
-              {parsedData.strategic_recommendations.long_term_strategic_shifts && (
-                <div className="subsection">
-                  <h4>Long-term Strategic Shifts</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Strategic Shift</th>
-                        <th>Transformation Required</th>
-                        <th>Competitive Advantage</th>
-                        <th>Sustainability</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.strategic_recommendations.long_term_strategic_shifts.map((shift, index) => (
-                        <tr key={index}>
-                          <td><strong>{shift.shift}</strong></td>
-                          <td>{shift.transformation_required || 'N/A'}</td>
-                          <td>{shift.competitive_advantage || 'N/A'}</td>
-                          <td>{shift.sustainability || 'N/A'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      )} 
 
       {/* Monitoring Dashboard Table */}
       {parsedData.monitoring_dashboard && (

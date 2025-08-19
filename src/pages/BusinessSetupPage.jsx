@@ -36,8 +36,22 @@ const BusinessSetupPage = () => {
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
+  const [apiLoadingStates, setApiLoadingStates] = useState({});
+  const setApiLoading = (apiEndpoint, isLoading) => {
+    setApiLoadingStates(prev => ({
+      ...prev,
+      [apiEndpoint]: isLoading
+    }));
+  };
+
   // Initialize simplified API service
-  const apiService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+  const apiService = new AnalysisApiService(
+    ML_API_BASE_URL, 
+    API_BASE_URL, 
+    getAuthToken,
+    setApiLoading // Pass the loading tracker function
+  );
+
 
   // Use our custom hooks
   const state = useBusinessSetup(business, selectedBusinessId);
@@ -1488,7 +1502,7 @@ const BusinessSetupPage = () => {
                         <AnalysisContentManager
                           // Phase Manager
                           phaseManager={phaseManager}
-
+ apiLoadingStates={apiLoadingStates}
                           // Business Data
                           businessData={businessData}
                           questions={questions}

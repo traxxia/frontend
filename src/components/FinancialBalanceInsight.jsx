@@ -58,16 +58,66 @@ const FinancialBalanceInsight = ({
     );
   };
 
-  // Check if the financial balance data is empty/incomplete
+  // Updated function to check if the financial balance data is empty/incomplete
   const isFinancialBalanceDataIncomplete = (data) => {
     if (!data) return true;
 
-    // Check if essential data is empty or null
-    if (!data.financialBalanceInsight) return true;
-    if (!data.financialBalanceInsight.balanceSheet) return true;
-    if (!data.financialBalanceInsight.ratios) return true;
+    // Check for new structure: financialHealth
+    if (data.financialHealth) {
+      const { balanceSheet, ratios, innovationInvestment } = data.financialHealth;
+      
+      // Check if essential data exists
+      if (!balanceSheet || !balanceSheet.assets || !balanceSheet.liabilities) return true;
+      if (!innovationInvestment) return true;
+      
+      return false;
+    }
 
-    return false;
+    // Check for old structure: financialBalanceInsight (for backwards compatibility)
+    if (data.financialBalanceInsight) {
+      if (!data.financialBalanceInsight.balanceSheet) return true;
+      if (!data.financialBalanceInsight.ratios) return true;
+      return false;
+    }
+
+    return true;
+  };
+
+  // Helper function to get financial data from either structure
+  const getFinancialData = (data) => {
+    if (!data) return null;
+    
+    // New structure
+    if (data.financialHealth) {
+      return data.financialHealth;
+    }
+    
+    // Old structure (backwards compatibility)
+    if (data.financialBalanceInsight) {
+      return data.financialBalanceInsight;
+    }
+    
+    return null;
+  };
+
+  // Helper function to parse currency strings to numbers
+  const parseCurrency = (value) => {
+    if (typeof value === 'number') return value;
+    if (!value || value === '') return 0;
+    
+    // Remove currency symbols and convert to number
+    const cleaned = value.toString().replace(/[$,KkMm\s]/g, '');
+    const number = parseFloat(cleaned);
+    
+    // Handle K and M suffixes
+    if (value.includes('K') || value.includes('k')) {
+      return number * 1000;
+    }
+    if (value.includes('M') || value.includes('m')) {
+      return number * 1000000;
+    }
+    
+    return number || 0;
   };
 
   // Handle regeneration
@@ -194,23 +244,14 @@ const FinancialBalanceInsight = ({
 
       const result = await response.json();
 
-      // Process the result
-      let financialBalanceContent = null;
-      if (result.financialBalanceInsight) {
-        financialBalanceContent = result;
-      } else if (result.financial_balance_insight) {
-        financialBalanceContent = { financialBalanceInsight: result.financial_balance_insight };
-      } else {
-        financialBalanceContent = { financialBalanceInsight: result };
-      }
-
-      setAnalysisData(financialBalanceContent);
+      // The result should already have the correct structure
+      setAnalysisData(result);
 
       // Save to backend
-      await saveAnalysisToBackend(financialBalanceContent);
+      await saveAnalysisToBackend(result);
 
       if (onDataGenerated) {
-        onDataGenerated(financialBalanceContent);
+        onDataGenerated(result);
       }
 
     } catch (error) {
@@ -259,70 +300,91 @@ const FinancialBalanceInsight = ({
     }
   };
 
-  // Prepare balance sheet chart data
+  // Updated prepare balance sheet chart data
   const prepareBalanceSheetData = (data) => {
-    if (!data?.financialBalanceInsight?.balanceSheet) return [];
+    const financialData = getFinancialData(data);
+    if (!financialData?.balanceSheet) return [];
 
-    const { assets, liabilities, equity } = data.financialBalanceInsight.balanceSheet;
+    const { assets, liabilities, equity } = financialData.balanceSheet;
     
     return [
       {
         category: 'Assets',
-        value: assets.total,
+        value: parseCurrency(assets.total),
         breakdown: assets.breakdown,
         type: 'assets'
       },
       {
         category: 'Liabilities',
-        value: liabilities.total,
+        value: parseCurrency(liabilities.total),
         breakdown: liabilities.breakdown,
         type: 'liabilities'
       },
       {
         category: 'Equity',
-        value: equity,
+        value: parseCurrency(equity),
         type: 'equity'
       }
     ];
   };
 
-  // Prepare assets breakdown data
+  // Updated prepare assets breakdown data
   const prepareAssetsBreakdownData = (data) => {
-    if (!data?.financialBalanceInsight?.balanceSheet?.assets?.breakdown) return [];
+    const financialData = getFinancialData(data);
+    if (!financialData?.balanceSheet?.assets?.breakdown) return [];
 
-    const breakdown = data.financialBalanceInsight.balanceSheet.assets.breakdown;
-    return Object.entries(breakdown).map(([key, value]) => ({
-      name: key.charAt(0).toUpperCase() + key.slice(1),
-      value: value,
-      fill: key === 'cash' ? '#10b981' : key === 'receivables' ? '#3b82f6' : '#f59e0b'
-    }));
+    const breakdown = financialData.balanceSheet.assets.breakdown;
+    const result = [];
+    
+    Object.entries(breakdown).forEach(([key, value]) => {
+      if (value && value !== '') {
+        result.push({
+          name: key.charAt(0).toUpperCase() + key.slice(1),
+          value: parseCurrency(value),
+          fill: key === 'cash' ? '#10b981' : key === 'receivables' ? '#3b82f6' : '#f59e0b'
+        });
+      }
+    });
+    
+    return result;
   };
 
-  // Prepare ratios data
+  // Updated prepare ratios data
   const prepareRatiosData = (data) => {
-    if (!data?.financialBalanceInsight?.ratios) return [];
+    const financialData = getFinancialData(data);
+    if (!financialData?.ratios) return [];
 
-    const ratios = data.financialBalanceInsight.ratios;
-    return [
-      {
+    const ratios = financialData.ratios;
+    const result = [];
+    
+    if (ratios.debtToEquity !== '' && ratios.debtToEquity !== undefined) {
+      result.push({
         name: 'Debt to Equity',
-        value: ratios.debtToEquity,
+        value: parseFloat(ratios.debtToEquity) || 0,
         target: 0.4,
-        status: ratios.debtToEquity <= 0.6 ? 'good' : 'warning'
-      },
-      {
+        status: (parseFloat(ratios.debtToEquity) || 0) <= 0.6 ? 'good' : 'warning'
+      });
+    }
+    
+    if (ratios.currentRatio !== '' && ratios.currentRatio !== undefined) {
+      result.push({
         name: 'Current Ratio',
-        value: ratios.currentRatio,
+        value: parseFloat(ratios.currentRatio) || 0,
         target: 2.0,
-        status: ratios.currentRatio >= 1.5 ? 'good' : 'warning'
-      },
-      {
+        status: (parseFloat(ratios.currentRatio) || 0) >= 1.5 ? 'good' : 'warning'
+      });
+    }
+    
+    if (ratios.quickRatio !== '' && ratios.quickRatio !== undefined) {
+      result.push({
         name: 'Quick Ratio',
-        value: ratios.quickRatio,
+        value: parseFloat(ratios.quickRatio) || 0,
         target: 1.5,
-        status: ratios.quickRatio >= 1.0 ? 'good' : 'warning'
-      }
-    ];
+        status: (parseFloat(ratios.quickRatio) || 0) >= 1.0 ? 'good' : 'warning'
+      });
+    }
+    
+    return result;
   };
 
   // Custom tooltip for balance sheet chart
@@ -337,7 +399,9 @@ const FinancialBalanceInsight = ({
             {data.breakdown && (
               <div className="breakdown-items">
                 {Object.entries(data.breakdown).map(([key, value]) => (
-                  <div key={key}>{`${key}: $${value.toLocaleString()}`}</div>
+                  value && value !== '' && (
+                    <div key={key}>{`${key}: ${value}`}</div>
+                  )
                 ))}
               </div>
             )}
@@ -414,15 +478,34 @@ const FinancialBalanceInsight = ({
     );
   }
 
-  const { balanceSheet, ratios, innovationInvestment } = analysisData.financialBalanceInsight;
+  // Get the financial data using helper function
+  const financialData = getFinancialData(analysisData);
+  if (!financialData) {
+    return (
+      <div className="channel-heatmap channel-heatmap-container">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Invalid Data Structure</h3>
+          <p>The financial data structure is not recognized.</p>
+          <button onClick={handleRegenerate} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { balanceSheet, ratios, innovationInvestment } = financialData;
   const balanceSheetData = prepareBalanceSheetData(analysisData);
   const assetsBreakdownData = prepareAssetsBreakdownData(analysisData);
   const ratiosData = prepareRatiosData(analysisData);
 
-  const totalAssets = balanceSheet.assets.total;
-  const totalLiabilities = balanceSheet.liabilities.total;
-  const netWorth = balanceSheet.equity;
-  const innovationROI = ((innovationInvestment.annual / totalAssets) * 100).toFixed(1);
+  const totalAssets = parseCurrency(balanceSheet.assets.total);
+  const totalLiabilities = parseCurrency(balanceSheet.liabilities.total);
+  const netWorth = parseCurrency(balanceSheet.equity);
+  const annualInvestment = parseCurrency(innovationInvestment.annual);
+  const percentOfRevenue = innovationInvestment.percentOfRevenue || 'N/A';
+  const innovationROI = totalAssets > 0 ? ((annualInvestment / totalAssets) * 100).toFixed(1) : '0';
 
   return (
     <div className="channel-heatmap channel-heatmap-container" data-analysis-type="financial-health"
@@ -450,9 +533,9 @@ const FinancialBalanceInsight = ({
         <div className="ch-metric-card ch-metric-purple">
           <div className="ch-metric-header">
             <TrendingUp size={20} />
-            <span>Debt-to-Equity</span>
+            <span>Total Liabilities</span>
           </div>
-          <p className="ch-metric-value">{ratios.debtToEquity}</p>
+          <p className="ch-metric-value">${totalLiabilities.toLocaleString()}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-orange">
@@ -460,7 +543,7 @@ const FinancialBalanceInsight = ({
             <Users size={20} />
             <span>Innovation Investment</span>
           </div>
-          <p className="ch-metric-value">{innovationInvestment.percentOfRevenue}% of revenue</p>
+          <p className="ch-metric-value">${annualInvestment.toLocaleString()}</p>
         </div>
       </div>
 
@@ -499,58 +582,115 @@ const FinancialBalanceInsight = ({
             </div>
 
             {/* Assets Breakdown */}
-            <div className="ch-chart-section">
-              <h4>Assets Breakdown</h4>
-              <div className="ch-chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={assetsBreakdownData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {assetsBreakdownData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+            {assetsBreakdownData.length > 0 && (
+              <div className="ch-chart-section">
+                <h4>Assets Breakdown</h4>
+                <div className="ch-chart-wrapper">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={assetsBreakdownData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {assetsBreakdownData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Financial Ratios */}
+      {ratiosData.length > 0 && (
+        <div className="ch-breakdown-section">
+          <h3 className="ch-section-title">Financial Ratios & Health</h3>
+          <div className="ch-breakdown-grid">
+            {ratiosData.map((ratio, index) => (
+              <div key={index} className="ch-breakdown-card">
+                <h4>{ratio.name}</h4>
+                <div className="ch-cost-item">
+                  <span>Current:</span>
+                  <span className={ratio.status === 'good' ? 'text-green-600' : 'text-yellow-600'}>
+                    {ratio.value}
+                  </span>
+                </div>
+                <div className="ch-cost-item">
+                  <span>Target:</span>
+                  <span>{ratio.target}</span>
+                </div>
+                <div className="ratio-status">
+                  <span className={`status-badge ${ratio.status}`}>
+                    {ratio.status === 'good' ? '✓ Good' : '⚠ Monitor'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Balance Sheet Details */}
       <div className="ch-breakdown-section">
-        <h3 className="ch-section-title">Financial Ratios & Health</h3>
+        <h3 className="ch-section-title">Balance Sheet Details</h3>
         <div className="ch-breakdown-grid">
-          {ratiosData.map((ratio, index) => (
-            <div key={index} className="ch-breakdown-card">
-              <h4>{ratio.name}</h4>
-              <div className="ch-cost-item">
-                <span>Current:</span>
-                <span className={ratio.status === 'good' ? 'text-green-600' : 'text-yellow-600'}>
-                  {ratio.value}
-                </span>
-              </div>
-              <div className="ch-cost-item">
-                <span>Target:</span>
-                <span>{ratio.target}</span>
-              </div>
-              <div className="ratio-status">
-                <span className={`status-badge ${ratio.status}`}>
-                  {ratio.status === 'good' ? '✓ Good' : '⚠ Monitor'}
-                </span>
-              </div>
+          {/* Assets Breakdown */}
+          <div className="ch-breakdown-card">
+            <h4>Assets</h4>
+            <div className="ch-cost-item">
+              <span>Total:</span>
+              <span>${totalAssets.toLocaleString()}</span>
             </div>
-          ))}
+            {balanceSheet.assets.breakdown && Object.entries(balanceSheet.assets.breakdown).map(([key, value]) => (
+              value && value !== '' && (
+                <div key={key} className="ch-cost-item">
+                  <span>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                  <span>{value}</span>
+                </div>
+              )
+            ))}
+          </div>
+
+          {/* Liabilities Breakdown */}
+          <div className="ch-breakdown-card">
+            <h4>Liabilities</h4>
+            <div className="ch-cost-item">
+              <span>Total:</span>
+              <span>${totalLiabilities.toLocaleString()}</span>
+            </div>
+            {balanceSheet.liabilities.breakdown && Object.entries(balanceSheet.liabilities.breakdown).map(([key, value]) => (
+              value && value !== '' && (
+                <div key={key} className="ch-cost-item">
+                  <span>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                  <span>{value}</span>
+                </div>
+              )
+            ))}
+          </div>
+
+          {/* Equity */}
+          <div className="ch-breakdown-card">
+            <h4>Owner's Equity</h4>
+            <div className="ch-cost-item">
+              <span>Net Worth:</span>
+              <span className="text-green-600">${netWorth.toLocaleString()}</span>
+            </div>
+            <div className="ch-cost-item">
+              <span>Assets - Liabilities:</span>
+              <span>${(totalAssets - totalLiabilities).toLocaleString()}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -562,19 +702,21 @@ const FinancialBalanceInsight = ({
             <h4>Annual Investment</h4>
             <div className="ch-cost-item">
               <span>Amount:</span>
-              <span>${innovationInvestment.annual.toLocaleString()}</span>
+              <span>${annualInvestment.toLocaleString()}</span>
             </div>
-            <div className="ch-cost-item">
-              <span>% of Revenue:</span>
-              <span>{innovationInvestment.percentOfRevenue}%</span>
-            </div>
+            {percentOfRevenue !== 'N/A' && percentOfRevenue !== '' && (
+              <div className="ch-cost-item">
+                <span>% of Revenue:</span>
+                <span>{percentOfRevenue}%</span>
+              </div>
+            )}
           </div>
 
           <div className="ch-breakdown-card">
             <h4>Focus Areas</h4>
             <div className="ch-cost-components">
               <ul>
-                {innovationInvestment.focusAreas.map((area, index) => (
+                {innovationInvestment.focusAreas && innovationInvestment.focusAreas.map((area, index) => (
                   <li key={index}>{area}</li>
                 ))}
               </ul>
@@ -582,15 +724,15 @@ const FinancialBalanceInsight = ({
           </div>
 
           <div className="ch-breakdown-card">
-            <h4>Investment ROI</h4>
+            <h4>Investment Analysis</h4>
             <div className="ch-cost-item">
               <span>ROI on Assets:</span>
               <span>{innovationROI}%</span>
             </div>
             <div className="ch-cost-item">
               <span>Status:</span>
-              <span className={innovationInvestment.percentOfRevenue > 5 ? 'text-green-600' : 'text-yellow-600'}>
-                {innovationInvestment.percentOfRevenue > 5 ? 'Above Average' : 'Below Average'}
+              <span className={parseFloat(percentOfRevenue) > 5 ? 'text-green-600' : 'text-yellow-600'}>
+                {parseFloat(percentOfRevenue) > 5 ? 'Above Average' : 'Needs Attention'}
               </span>
             </div>
           </div>

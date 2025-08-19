@@ -115,6 +115,9 @@ const AnalysisContentManager = ({
   isCapabilityHeatmapReady,
   setIsCapabilityHeatmapReady,
   
+  // API Loading States - NEW
+  apiLoadingStates = {},
+  
   // Refs
   swotRef,
   customerSegmentationRef,
@@ -143,10 +146,44 @@ const AnalysisContentManager = ({
   showToastMessage,
   apiService,
   createSimpleRegenerationHandler,
-   hideRegenerateButtons = false,
+  hideRegenerateButtons = false,
 }) => {
   // Local state for expand/collapse functionality
   const [expandedCards, setExpandedCards] = useState(new Set());
+
+  // API to Analysis mapping - NEW
+  const API_TO_ANALYSIS_MAP = {
+    'find': 'swot',
+    'purchase-criteria': 'purchaseCriteria',
+    'channel-heatmap': 'channelHeatmap',
+    'loyalty-metrics': 'loyaltyNPS',
+    'capability-heatmap': 'capabilityHeatmap',
+    'porter-analysis': 'porters',
+    'pestel-analysis': 'pestel',
+    'full-swot-portfolio': 'fullSwot',
+    'customer-segment': 'customerSegmentation',
+    'competitive-advantage': 'competitiveAdvantage',
+    'channel-effectiveness': 'channelEffectiveness',
+    'expanded-capability-heatmap': 'expandedCapability',
+    'strategic-goals': 'strategicGoals',
+    'strategic-positioning-radar': 'strategicRadar',
+    'culture-profile': 'cultureProfile',
+    'productivity-metrics': 'productivityMetrics',
+    'maturity-scoring': 'maturityScore',
+    'cost-efficiency-competitive-position': 'costEfficiency',
+    'financial-performance': 'financialPerformance',
+    'financial-health': 'financialHealth',
+    'operational-efficiency': 'operationalEfficiency'
+  };
+
+  // Helper function to check if a specific analysis is loading - NEW
+  const isAnalysisLoading = (analysisType) => {
+    const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
+      .filter(([endpoint, analysis]) => analysis === analysisType)
+      .map(([endpoint]) => endpoint);
+    
+    return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
+  };
 
   // Toggle functions for expand/collapse
   const toggleCard = (cardId) => {
@@ -171,13 +208,14 @@ const AnalysisContentManager = ({
     isRegenerating = false,
     hasData = false,
     category = 'initial',
-    status = 'completed' // 'completed', 'loading', 'locked', 'error'
+    status = 'completed', // 'completed', 'loading', 'locked', 'error'
+    isLoading = false // NEW - API loading state
   }) => {
     const isExpanded = expandedCards.has(id);
 
     const getStatusIcon = () => {
-      // If currently regenerating, always show loading spinner
-      if (isRegenerating) {
+      // If currently regenerating OR API loading, always show loading spinner - UPDATED
+      if (isRegenerating || isLoading) {
         return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
       }
 
@@ -190,15 +228,15 @@ const AnalysisContentManager = ({
         case 'locked':
           return <Lock className="modern-status-icon locked" size={16} />;
         case 'error':
-          return <XCircle className="modern-status-icon error" size={16} />;
+          return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
         default:
           return null;
       }
     };
 
-    // Determine the actual status based on data and regenerating state
+    // Determine the actual status based on data and regenerating state - UPDATED
     const getActualStatus = () => {
-      if (isRegenerating) return 'loading';
+      if (isRegenerating || isLoading) return 'loading';
       if (hasData) return 'completed';
       return 'error';
     };
@@ -234,7 +272,7 @@ const AnalysisContentManager = ({
             >
               <RegenerateButton
                 onRegenerate={onRegenerate}
-                isRegenerating={isRegenerating}
+                isRegenerating={isRegenerating || isLoading} // UPDATED - disable during API loading
                 canRegenerate={actualStatus === 'completed' && hasData && onRegenerate}
                 sectionName={title}
                 size="small"
@@ -250,7 +288,15 @@ const AnalysisContentManager = ({
 
         <div className={`modern-card-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
           <div className="modern-card-content-inner">
-            {children}
+            {/* Show loading placeholder when API is loading and no data exists - NEW */}
+            {(isLoading || isRegenerating) && !hasData ? (
+              <div className="loading-placeholder">
+                <Loader className="animate-spin" size={24} />
+                <p>Generating analysis...</p>
+              </div>
+            ) : (
+              children
+            )}
           </div>
         </div>
       </div>
@@ -284,6 +330,7 @@ const AnalysisContentManager = ({
                 hasData={!!swotAnalysisResult}
                 onRegenerate={createSimpleRegenerationHandler('swot')}
                 isRegenerating={isSwotAnalysisRegenerating}
+                isLoading={isAnalysisLoading('swot')} // NEW - API loading check
                 category="initial"
               >
                 <div ref={swotRef} data-component="swot-analysis">
@@ -297,7 +344,7 @@ const AnalysisContentManager = ({
                     onRedirectToBrief={handleRedirectToBrief}
                     onDataGenerated={setSwotAnalysisResult}
                     onRegenerate={createSimpleRegenerationHandler('swot')}
-                    isRegenerating={isSwotAnalysisRegenerating}
+                    isRegenerating={isSwotAnalysisRegenerating || isAnalysisLoading('swot')} // UPDATED
                     canRegenerate={!isAnalysisRegenerating}
                   />
                 </div>
@@ -313,6 +360,7 @@ const AnalysisContentManager = ({
               hasData={!!purchaseCriteriaData}
               onRegenerate={createSimpleRegenerationHandler('purchaseCriteria')}
               isRegenerating={isPurchaseCriteriaRegenerating}
+              isLoading={isAnalysisLoading('purchaseCriteria')} // NEW
               category="initial"
             >
               <div ref={purchaseCriteriaRef} data-component="purchase-criteria" >
@@ -322,7 +370,7 @@ const AnalysisContentManager = ({
                   businessName={businessData.name}
                   onDataGenerated={setPurchaseCriteriaData}
                   onRegenerate={createSimpleRegenerationHandler('purchaseCriteria')}
-                  isRegenerating={isPurchaseCriteriaRegenerating}
+                  isRegenerating={isPurchaseCriteriaRegenerating || isAnalysisLoading('purchaseCriteria')} // UPDATED
                   canRegenerate={!isAnalysisRegenerating}
                   purchaseCriteriaData={purchaseCriteriaData}
                   selectedBusinessId={selectedBusinessId}
@@ -340,6 +388,7 @@ const AnalysisContentManager = ({
               hasData={!!channelHeatmapData}
               onRegenerate={createSimpleRegenerationHandler('channelHeatmap')}
               isRegenerating={isChannelHeatmapRegenerating}
+              isLoading={isAnalysisLoading('channelHeatmap')} // NEW
               category="initial"
             >
               <div ref={channelHeatmapRef} data-component="channel-heatmap">
@@ -354,7 +403,7 @@ const AnalysisContentManager = ({
                     }
                   }}
                   onRegenerate={createSimpleRegenerationHandler('channelHeatmap')}
-                  isRegenerating={isChannelHeatmapRegenerating}
+                  isRegenerating={isChannelHeatmapRegenerating || isAnalysisLoading('channelHeatmap')} // UPDATED
                   canRegenerate={!isAnalysisRegenerating}
                   channelHeatmapData={channelHeatmapData}
                   selectedBusinessId={selectedBusinessId}
@@ -372,6 +421,7 @@ const AnalysisContentManager = ({
               hasData={!!loyaltyNPSData}
               onRegenerate={createSimpleRegenerationHandler('loyaltyNPS')}
               isRegenerating={isLoyaltyNPSRegenerating}
+              isLoading={isAnalysisLoading('loyaltyNPS')} // NEW
               category="initial"
             >
               <div ref={loyaltyNpsRef} data-component="loyalty-nps">
@@ -381,7 +431,7 @@ const AnalysisContentManager = ({
                   businessName={businessData.name}
                   onDataGenerated={setLoyaltyNPSData}
                   onRegenerate={createSimpleRegenerationHandler('loyaltyNPS')}
-                  isRegenerating={isLoyaltyNPSRegenerating}
+                  isRegenerating={isLoyaltyNPSRegenerating || isAnalysisLoading('loyaltyNPS')} // UPDATED
                   canRegenerate={!isAnalysisRegenerating}
                   loyaltyNPSData={loyaltyNPSData}
                   selectedBusinessId={selectedBusinessId}
@@ -400,6 +450,7 @@ const AnalysisContentManager = ({
                 hasData={!!capabilityHeatmapData}
                 onRegenerate={createSimpleRegenerationHandler('capabilityHeatmap')}
                 isRegenerating={isCapabilityHeatmapRegenerating}
+                isLoading={isAnalysisLoading('capabilityHeatmap')} // NEW
                 category="initial"
               >
                 <div ref={capabilityHeatmapRef} data-component="capability-heatmap">
@@ -414,7 +465,7 @@ const AnalysisContentManager = ({
                       }
                     }}
                     onRegenerate={createSimpleRegenerationHandler('capabilityHeatmap')}
-                    isRegenerating={isCapabilityHeatmapRegenerating}
+                    isRegenerating={isCapabilityHeatmapRegenerating || isAnalysisLoading('capabilityHeatmap')} // UPDATED
                     canRegenerate={!isAnalysisRegenerating}
                     capabilityHeatmapData={capabilityHeatmapData}
                     selectedBusinessId={selectedBusinessId}
@@ -433,6 +484,7 @@ const AnalysisContentManager = ({
               hasData={!!portersData}
               onRegenerate={createSimpleRegenerationHandler('porters')}
               isRegenerating={isPortersRegenerating}
+              isLoading={isAnalysisLoading('porters')} // NEW
               category="initial"
             >
               <div ref={portersRef} data-component="porters-analysis">
@@ -441,7 +493,7 @@ const AnalysisContentManager = ({
                   userAnswers={userAnswers}
                   businessName={businessData.name}
                   onRegenerate={createSimpleRegenerationHandler('porters')}
-                  isRegenerating={isPortersRegenerating}
+                  isRegenerating={isPortersRegenerating || isAnalysisLoading('porters')} // UPDATED
                   canRegenerate={!isAnalysisRegenerating}
                   portersData={portersData}
                   selectedBusinessId={selectedBusinessId}
@@ -459,6 +511,7 @@ const AnalysisContentManager = ({
               hasData={!!pestelData}
               onRegenerate={createSimpleRegenerationHandler('pestel')}
               isRegenerating={isPestelRegenerating}
+              isLoading={isAnalysisLoading('pestel')} // NEW
               category="initial"
             >
               <div ref={pestelRef} data-component="pestel-analysis">
@@ -467,7 +520,7 @@ const AnalysisContentManager = ({
                   userAnswers={userAnswers}
                   businessName={businessData.name}
                   onRegenerate={createSimpleRegenerationHandler('pestel')}
-                  isRegenerating={isPestelRegenerating}
+                  isRegenerating={isPestelRegenerating || isAnalysisLoading('pestel')} // UPDATED
                   canRegenerate={!isAnalysisRegenerating}
                   pestelData={pestelData}
                   selectedBusinessId={selectedBusinessId}
@@ -488,6 +541,7 @@ const AnalysisContentManager = ({
                   hasData={!!fullSwotData}
                   onRegenerate={createSimpleRegenerationHandler('fullSwot')}
                   isRegenerating={isFullSwotRegenerating}
+                  isLoading={isAnalysisLoading('fullSwot')} // NEW
                   category="essential"
                 >
                   <div ref={fullSwotRef} data-component="full-swot">
@@ -495,7 +549,7 @@ const AnalysisContentManager = ({
                       questions={questions}
                       userAnswers={userAnswers}
                       businessName={businessData.name}
-                      isRegenerating={isFullSwotRegenerating}
+                      isRegenerating={isFullSwotRegenerating || isAnalysisLoading('fullSwot')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       fullSwotData={fullSwotData}
                       selectedBusinessId={selectedBusinessId}
@@ -514,6 +568,7 @@ const AnalysisContentManager = ({
                   hasData={!!customerSegmentationData}
                   onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
                   isRegenerating={isCustomerSegmentationRegenerating}
+                  isLoading={isAnalysisLoading('customerSegmentation')} // NEW
                   category="essential"
                 >
                   <div ref={customerSegmentationRef} data-component="customer-segmentation">
@@ -523,7 +578,7 @@ const AnalysisContentManager = ({
                       businessName={businessData.name}
                       onDataGenerated={setCustomerSegmentationData}
                       onRegenerate={createSimpleRegenerationHandler('customerSegmentation')}
-                      isRegenerating={isCustomerSegmentationRegenerating}
+                      isRegenerating={isCustomerSegmentationRegenerating || isAnalysisLoading('customerSegmentation')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       customerSegmentationData={customerSegmentationData}
                       selectedBusinessId={selectedBusinessId}
@@ -541,6 +596,7 @@ const AnalysisContentManager = ({
                   hasData={!!competitiveAdvantageData}
                   onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
                   isRegenerating={isCompetitiveAdvantageRegenerating}
+                  isLoading={isAnalysisLoading('competitiveAdvantage')} // NEW
                   category="essential"
                 >
                   <div ref={competitiveAdvantageRef} data-component="competitive-advantage">
@@ -548,7 +604,7 @@ const AnalysisContentManager = ({
                       questions={questions}
                       userAnswers={userAnswers}
                       businessName={businessData.name}
-                      isRegenerating={isCompetitiveAdvantageRegenerating}
+                      isRegenerating={isCompetitiveAdvantageRegenerating || isAnalysisLoading('competitiveAdvantage')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       competitiveAdvantageData={competitiveAdvantageData}
                       selectedBusinessId={selectedBusinessId}
@@ -567,6 +623,7 @@ const AnalysisContentManager = ({
                   hasData={!!channelEffectivenessData}
                   onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
                   isRegenerating={isChannelEffectivenessRegenerating}
+                  isLoading={isAnalysisLoading('channelEffectiveness')} // NEW
                   category="essential"
                 >
                   <div ref={channelEffectivenessRef} data-component="channel-effectiveness">
@@ -575,12 +632,11 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('channelEffectiveness')}
-                      isRegenerating={isChannelEffectivenessRegenerating}
+                      isRegenerating={isChannelEffectivenessRegenerating || isAnalysisLoading('channelEffectiveness')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       channelEffectivenessData={channelEffectivenessData}
                       selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      isPhaseRegenerating={isAnalysisRegenerating}
+                      onRedirectToBrief={handleRedirectToBrief} 
                     />
                   </div>
                 </ModernAnalysisCard>
@@ -594,6 +650,7 @@ const AnalysisContentManager = ({
                   hasData={!!expandedCapabilityData}
                   onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
                   isRegenerating={isExpandedCapabilityRegenerating}
+                  isLoading={isAnalysisLoading('expandedCapability')} // NEW
                   category="essential"
                 >
                   <div ref={expandedCapabilityRef} data-component="expanded-capability">
@@ -602,7 +659,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-                      isRegenerating={isExpandedCapabilityRegenerating}
+                      isRegenerating={isExpandedCapabilityRegenerating || isAnalysisLoading('expandedCapability')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       expandedCapabilityData={expandedCapabilityData}
                       selectedBusinessId={selectedBusinessId}
@@ -620,6 +677,7 @@ const AnalysisContentManager = ({
                   hasData={!!strategicGoalsData}
                   onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
                   isRegenerating={isStrategicGoalsRegenerating}
+                  isLoading={isAnalysisLoading('strategicGoals')} // NEW
                   category="essential"
                 >
                   <div ref={strategicGoalsRef} data-component="strategic-goals">
@@ -628,7 +686,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('strategicGoals')}
-                      isRegenerating={isStrategicGoalsRegenerating}
+                      isRegenerating={isStrategicGoalsRegenerating || isAnalysisLoading('strategicGoals')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       strategicGoalsData={strategicGoalsData}
                       selectedBusinessId={selectedBusinessId}
@@ -646,6 +704,7 @@ const AnalysisContentManager = ({
                   hasData={!!strategicRadarData}
                   onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
                   isRegenerating={isStrategicRadarRegenerating}
+                  isLoading={isAnalysisLoading('strategicRadar')} // NEW
                   category="essential"
                 >
                   <div ref={strategicRadarRef} data-component="strategic-radar">
@@ -654,7 +713,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-                      isRegenerating={isStrategicRadarRegenerating}
+                      isRegenerating={isStrategicRadarRegenerating || isAnalysisLoading('strategicRadar')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       strategicRadarData={strategicRadarData}
                       selectedBusinessId={selectedBusinessId}
@@ -672,6 +731,7 @@ const AnalysisContentManager = ({
                   hasData={!!cultureProfileData}
                   onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
                   isRegenerating={isCultureProfileRegenerating}
+                  isLoading={isAnalysisLoading('cultureProfile')} // NEW
                   category="essential"
                 >
                   <div ref={cultureProfileRef} data-component="culture-profile">
@@ -680,7 +740,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('cultureProfile')}
-                      isRegenerating={isCultureProfileRegenerating}
+                      isRegenerating={isCultureProfileRegenerating || isAnalysisLoading('cultureProfile')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       cultureProfileData={cultureProfileData}
                       selectedBusinessId={selectedBusinessId}
@@ -698,6 +758,7 @@ const AnalysisContentManager = ({
                   hasData={!!productivityData}
                   onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
                   isRegenerating={isProductivityRegenerating}
+                  isLoading={isAnalysisLoading('productivityMetrics')} // NEW
                   category="essential"
                 >
                   <div ref={productivityRef} data-component="productivity">
@@ -706,12 +767,11 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-                      isRegenerating={isProductivityRegenerating}
+                      isRegenerating={isProductivityRegenerating || isAnalysisLoading('productivityMetrics')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       productivityData={productivityData}
                       selectedBusinessId={selectedBusinessId}
-                      onRedirectToBrief={handleRedirectToBrief}
-                      isPhaseRegenerating={isAnalysisRegenerating}
+                      onRedirectToBrief={handleRedirectToBrief} 
                     />
                   </div>
                 </ModernAnalysisCard>
@@ -725,6 +785,7 @@ const AnalysisContentManager = ({
                   hasData={!!maturityData}
                   onRegenerate={createSimpleRegenerationHandler('maturityScore')}
                   isRegenerating={isMaturityRegenerating}
+                  isLoading={isAnalysisLoading('maturityScore')} // NEW
                   category="essential"
                 >
                   <div ref={maturityScoreRef} data-component="maturity">
@@ -733,7 +794,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-                      isRegenerating={isMaturityRegenerating}
+                      isRegenerating={isMaturityRegenerating || isAnalysisLoading('maturityScore')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       maturityData={maturityData}
                       selectedBusinessId={selectedBusinessId}
@@ -756,6 +817,7 @@ const AnalysisContentManager = ({
                   hasData={!!costEfficiencyData}
                   onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
                   isRegenerating={isCostEfficiencyRegenerating}
+                  isLoading={isAnalysisLoading('costEfficiency')} // NEW
                   category="good"
                 >
                   <div ref={costEfficiencyRef} data-component="cost-efficiency">
@@ -764,7 +826,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('costEfficiency')}
-                      isRegenerating={isCostEfficiencyRegenerating}
+                      isRegenerating={isCostEfficiencyRegenerating || isAnalysisLoading('costEfficiency')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       costEfficiencyData={costEfficiencyData}
                       selectedBusinessId={selectedBusinessId}
@@ -782,6 +844,7 @@ const AnalysisContentManager = ({
                   hasData={!!financialPerformanceData}
                   onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
                   isRegenerating={isFinancialPerformanceRegenerating}
+                  isLoading={isAnalysisLoading('financialPerformance')} // NEW
                   category="good"
                 >
                   <div ref={financialPerformanceRef} data-component="financial-performance">
@@ -790,7 +853,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('financialPerformance')}
-                      isRegenerating={isFinancialPerformanceRegenerating}
+                      isRegenerating={isFinancialPerformanceRegenerating || isAnalysisLoading('financialPerformance')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       financialPerformanceData={financialPerformanceData}
                       selectedBusinessId={selectedBusinessId}
@@ -808,6 +871,7 @@ const AnalysisContentManager = ({
                   hasData={!!financialBalanceData}
                   onRegenerate={createSimpleRegenerationHandler('financialHealth')}
                   isRegenerating={isFinancialBalanceRegenerating}
+                  isLoading={isAnalysisLoading('financialHealth')} // NEW
                   category="good"
                 >
                   <div ref={financialBalanceRef} data-component="financial-health">
@@ -816,7 +880,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('financialHealth')}
-                      isRegenerating={isFinancialBalanceRegenerating}
+                      isRegenerating={isFinancialBalanceRegenerating || isAnalysisLoading('financialHealth')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       financialBalanceData={financialBalanceData}
                       selectedBusinessId={selectedBusinessId}
@@ -834,6 +898,7 @@ const AnalysisContentManager = ({
                   hasData={!!operationalEfficiencyData}
                   onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
                   isRegenerating={isOperationalEfficiencyRegenerating}
+                  isLoading={isAnalysisLoading('operationalEfficiency')} // NEW
                   category="good"
                 >
                   <div ref={operationalEfficiencyRef} data-component="operational-efficiency">
@@ -842,7 +907,7 @@ const AnalysisContentManager = ({
                       userAnswers={userAnswers}
                       businessName={businessData.name}
                       onRegenerate={createSimpleRegenerationHandler('operationalEfficiency')}
-                      isRegenerating={isOperationalEfficiencyRegenerating}
+                      isRegenerating={isOperationalEfficiencyRegenerating || isAnalysisLoading('operationalEfficiency')} // UPDATED
                       canRegenerate={!isAnalysisRegenerating}
                       operationalEfficiencyData={operationalEfficiencyData}
                       selectedBusinessId={selectedBusinessId}

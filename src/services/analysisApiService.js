@@ -98,10 +98,11 @@ export const API_ENDPOINTS = {
 };
 
 export class AnalysisApiService {
-  constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken) {
+  constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
     this.ML_API_BASE_URL = ML_API_BASE_URL;
     this.API_BASE_URL = API_BASE_URL;
     this.getAuthToken = getAuthToken;
+    this.setApiLoading = setApiLoading; // NEW - API loading state tracker
   }
 
   // Helper method to prepare questions and answers
@@ -123,30 +124,42 @@ export class AnalysisApiService {
     return { questionsArray, answersArray };
   }
 
-  // Generic API call method
+  // UPDATED - Generic API call method with loading tracking
   async makeAPICall(endpoint, questionsArray, answersArray) {
     if (questionsArray.length === 0) {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
 
-    const response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        questions: questionsArray,
-        answers: answersArray
-      })
-    });
+    try {
+      // NEW - Set loading state for this specific endpoint
+      if (this.setApiLoading) {
+        this.setApiLoading(endpoint, true);
+      }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
+      const response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
+      }
+
+      return await response.json();
+    } finally {
+      // NEW - Always clear loading state for this endpoint
+      if (this.setApiLoading) {
+        this.setApiLoading(endpoint, false);
+      }
     }
-
-    return await response.json();
   }
 
   // Save analysis to backend
@@ -219,7 +232,7 @@ export class AnalysisApiService {
     }
   }
 
-  // NEW: Generic method to call any analysis endpoint for simplified approach
+  // Generic method to call any analysis endpoint for simplified approach
   async callAnalysisEndpoint(analysisType, payload) {
     const endpoint = API_ENDPOINTS[analysisType];
     if (!endpoint) {
@@ -292,7 +305,7 @@ export class AnalysisApiService {
     return { data: processedData };
   }
 
-  // NEW: Main phase completion handler
+  // Main phase completion handler
   async handlePhaseCompletion(phase, questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage) {
     const analysisTypes = PHASE_API_CONFIG[phase];
     
@@ -344,70 +357,70 @@ export class AnalysisApiService {
     }
   }
 
-  // NEW: Call individual analysis API with automatic saving
+  // Call individual analysis API with automatic saving
   async callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId) {
-  try {
-    const setterName = this.getStateSetterName(analysisType);
-    console.log(`Looking for setter: ${setterName} for analysis: ${analysisType}`);
-    console.log('Available setters:', Object.keys(stateSetters));
-    
-    const setter = stateSetters[setterName];
-
-    if (!setter) {
-      console.error(`Missing setter for ${analysisType}. Expected: ${setterName}`);
-      throw new Error(`Missing setter for ${analysisType}`);
-    }
-
-    // Make API call
-    const response = await this.callAnalysisEndpoint(analysisType, payload);
-    
-    // Update state
-    setter(response.data);
-    
-    // Automatically save to backend
     try {
-      await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
-    } catch (saveError) {
-      console.warn(`Failed to save ${analysisType} analysis:`, saveError);
-      // Don't throw here - the analysis was generated successfully
+      const setterName = this.getStateSetterName(analysisType);
+      console.log(`Looking for setter: ${setterName} for analysis: ${analysisType}`);
+      console.log('Available setters:', Object.keys(stateSetters));
+      
+      const setter = stateSetters[setterName];
+
+      if (!setter) {
+        console.error(`Missing setter for ${analysisType}. Expected: ${setterName}`);
+        throw new Error(`Missing setter for ${analysisType}`);
+      }
+
+      // Make API call (loading state is handled in makeAPICall)
+      const response = await this.callAnalysisEndpoint(analysisType, payload);
+      
+      // Update state
+      setter(response.data);
+      
+      // Automatically save to backend
+      try {
+        await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
+      } catch (saveError) {
+        console.warn(`Failed to save ${analysisType} analysis:`, saveError);
+        // Don't throw here - the analysis was generated successfully
+      }
+      
+      return { analysisType, status: 'success' };
+    } catch (error) {
+      console.error(`Error calling ${analysisType} API:`, error);
+      throw error;
     }
-    
-    return { analysisType, status: 'success' };
-  } catch (error) {
-    console.error(`Error calling ${analysisType} API:`, error);
-    throw error;
   }
-}
 
-  // NEW: Get state setter name for analysis type
+  // Get state setter name for analysis type
   getStateSetterName(analysisType) {
-  const setterMap = {
-    swot: 'setSwotAnalysisResult',
-    purchaseCriteria: 'setPurchaseCriteriaData',
-    channelHeatmap: 'setChannelHeatmapData',
-    loyaltyNPS: 'setLoyaltyNPSData',
-    capabilityHeatmap: 'setCapabilityHeatmapData',
-    porters: 'setPortersData',
-    pestel: 'setPestelData',
-    fullSwot: 'setFullSwotData',
-    customerSegmentation: 'setCustomerSegmentationData',
-    competitiveAdvantage: 'setCompetitiveAdvantageData',
-    channelEffectiveness: 'setChannelEffectivenessData',
-    expandedCapability: 'setExpandedCapabilityData',
-    strategicGoals: 'setStrategicGoalsData',
-    strategicRadar: 'setStrategicRadarData',
-    cultureProfile: 'setCultureProfileData',
-    productivityMetrics: 'setProductivityData',
-    maturityScore: 'setMaturityData',
-    costEfficiency: 'setCostEfficiencyData',
-    financialPerformance: 'setFinancialPerformanceData',
-    financialHealth: 'setFinancialBalanceData',
-    operationalEfficiency: 'setOperationalEfficiencyData'
-  };
-  return setterMap[analysisType];
-}
+    const setterMap = {
+      swot: 'setSwotAnalysisResult',
+      purchaseCriteria: 'setPurchaseCriteriaData',
+      channelHeatmap: 'setChannelHeatmapData',
+      loyaltyNPS: 'setLoyaltyNPSData',
+      capabilityHeatmap: 'setCapabilityHeatmapData',
+      porters: 'setPortersData',
+      pestel: 'setPestelData',
+      fullSwot: 'setFullSwotData',
+      customerSegmentation: 'setCustomerSegmentationData',
+      competitiveAdvantage: 'setCompetitiveAdvantageData',
+      channelEffectiveness: 'setChannelEffectivenessData',
+      expandedCapability: 'setExpandedCapabilityData',
+      strategicGoals: 'setStrategicGoalsData',
+      strategicRadar: 'setStrategicRadarData',
+      cultureProfile: 'setCultureProfileData',
+      productivityMetrics: 'setProductivityData',
+      maturityScore: 'setMaturityData',
+      costEfficiency: 'setCostEfficiencyData',
+      financialPerformance: 'setFinancialPerformanceData',
+      financialHealth: 'setFinancialBalanceData',
+      operationalEfficiency: 'setOperationalEfficiencyData'
+    };
+    return setterMap[analysisType];
+  }
 
-  // NEW: Clear data for specific phase
+  // Clear data for specific phase
   clearPhaseData(phase, stateSetters) {
     const analysisTypes = PHASE_API_CONFIG[phase];
     
@@ -420,7 +433,7 @@ export class AnalysisApiService {
     });
   }
 
-  // NEW: Create simple regeneration handler for individual analysis
+  // UPDATED - Create simple regeneration handler for individual analysis
   createSimpleRegenerationHandler(analysisType, questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage) {
     return async () => {
       try {
@@ -442,7 +455,7 @@ export class AnalysisApiService {
           selectedBusinessId
         };
 
-        // Call API
+        // Call API (loading state is handled automatically in makeAPICall)
         const response = await this.callAnalysisEndpoint(analysisType, payload);
         
         // Update state
@@ -536,7 +549,6 @@ export class AnalysisApiService {
   }
 
   // Keep all other existing methods for backward compatibility...
-  // (All your existing individual analysis methods remain the same)
   async generatePortersAnalysis(questions, answers, selectedBusinessId) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);

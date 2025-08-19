@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Loader, RefreshCw, BarChart3 } from 'lucide-react'; 
+import { Loader, RefreshCw, BarChart3 } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -7,24 +7,23 @@ const ChannelEffectivenessMap = ({
   questions = [],
   userAnswers = {},
   businessName = '',
-  onRegenerate,
+  onRegenerate, // This is the key prop - same as FullSWOT
   isRegenerating = false,
   canRegenerate = true,
-  channelEffectivenessData = null,
+  channelEffectivenessData = null, // This comes from parent state
   selectedBusinessId,
-  onRedirectToBrief,
-  isPhaseRegenerating = false 
+  onRedirectToBrief
 }) => {
-  const [isGenerating, setIsGenerating] = useState(false);
+  // LOCAL STATE - same pattern as FullSWOT
+  const [data, setData] = useState(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const [error, setError] = useState(null);
   const [hoveredChannel, setHoveredChannel] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const bubbleChartRef = useRef(null);
-  const hasGeneratedRef = useRef(false);
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  // PREVENT MULTIPLE INITIALIZATIONS - same as FullSWOT
+  const hasInitialized = useRef(false);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -33,10 +32,10 @@ const ChannelEffectivenessMap = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.channelEffectiveness;  
-    
+    const analysisConfig = ANALYSIS_TYPES.channelEffectiveness;
+
     await checkMissingQuestionsAndRedirect(
-      'channelEffectiveness', 
+      'channelEffectiveness',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -46,39 +45,56 @@ const ChannelEffectivenessMap = ({
     );
   };
 
+  // HANDLE REGENERATE - same pattern as FullSWOT
+  const handleRegenerate = async () => {
+    console.log('ChannelEffectiveness handleRegenerate called', { onRegenerate: !!onRegenerate });
+    
+    if (onRegenerate) {
+      try {
+        await onRegenerate();
+      } catch (error) {
+        console.error('Error in ChannelEffectiveness regeneration:', error);
+        setError(error.message || 'Failed to regenerate analysis');
+      }
+    } else {
+      console.warn('No onRegenerate prop provided to ChannelEffectivenessMap');
+      setError('Regeneration not available');
+    }
+  };
+
   // Enhanced validation to check for NaN values and insufficient data indicators
   const isChannelEffectivenessDataIncomplete = (data) => {
     if (!data) return true;
-    
+
     // Check if channels array is empty or null
     if (!data.channelEffectiveness?.channels || data.channelEffectiveness.channels.length === 0) return true;
-    
+
     // Check if any critical fields are null/undefined in the main data structure
     const mainData = data.channelEffectiveness;
     if (!mainData) return true;
-    
+
     // Check if channels have essential data and no NaN values or insufficient data indicators
     const hasValidChannels = mainData.channels.some(channel => {
       if (!channel.name) return false;
-      
+
       // Check for "NOT ENOUGH DATA" or similar insufficient data indicators
       const hasInsufficientDataIndicators = (obj) => {
         if (!obj) return false;
-        
+
         const checkValue = (value) => {
           if (typeof value === 'string') {
             const lowerValue = value.toLowerCase();
-            return lowerValue.includes('not enough data') || 
-                   lowerValue.includes('insufficient data') ||
-                   lowerValue.includes('no data') ||
-                   lowerValue.includes('unavailable') ||
-                   lowerValue === 'n/a' ||
-                   lowerValue === 'null' ||
-                   lowerValue === 'undefined';
+            return lowerValue.includes('not enough data') ||
+              lowerValue.includes('insufficient data') ||
+              lowerValue.includes('no data') ||
+              lowerValue.includes('unavailable') ||
+              lowerValue === 'n/a' ||
+              lowerValue === 'null' ||
+              lowerValue === 'undefined';
           }
           return false;
         };
-        
+
         // Check all values in the object recursively
         for (const value of Object.values(obj)) {
           if (checkValue(value)) return true;
@@ -88,24 +104,24 @@ const ChannelEffectivenessMap = ({
         }
         return false;
       };
-      
+
       // Check if effectiveness or efficiency data contains insufficient data indicators
-      if (hasInsufficientDataIndicators(channel.effectiveness) || 
-          hasInsufficientDataIndicators(channel.efficiency)) {
+      if (hasInsufficientDataIndicators(channel.effectiveness) ||
+        hasInsufficientDataIndicators(channel.efficiency)) {
         return false;
       }
-      
+
       // Check for NaN values in effectiveness and efficiency
       const effectiveness = extractScore(channel.effectiveness, 'effectiveness');
       const efficiency = extractScore(channel.efficiency, 'efficiency');
-      
+
       // Return false if any values are NaN
       if (isNaN(effectiveness) || isNaN(efficiency)) return false;
       if (!isFinite(effectiveness) || !isFinite(efficiency)) return false;
-      
+
       return true;
     });
-    
+
     return !hasValidChannels;
   };
 
@@ -115,9 +131,9 @@ const ChannelEffectivenessMap = ({
       // Return a valid default instead of random
       return 50; // Default to middle value
     }
-    
+
     let score = null;
-    
+
     // Direct numeric values with validation
     if (typeof data.score === 'number' && !isNaN(data.score) && isFinite(data.score)) {
       score = Math.min(Math.max(data.score, 0), 100);
@@ -128,17 +144,17 @@ const ChannelEffectivenessMap = ({
     } else if (typeof data.costPerAcquisition === 'number' && !isNaN(data.costPerAcquisition) && isFinite(data.costPerAcquisition)) {
       score = Math.max(Math.min(100 - data.costPerAcquisition, 100), 0);
     }
-    
+
     // If we found a valid numeric score, return it
     if (score !== null) return score;
-    
+
     // Qualitative to numeric mapping
     const qualitativeMap = {
       'highest': 95, 'excellent': 90, 'high': 80,
       'good': 70, 'medium': 60, 'moderate': 50,
       'low': 30, 'poor': 20, 'lowest': 10
     };
-    
+
     // Check all values in the data object
     for (const value of Object.values(data)) {
       if (typeof value === 'string') {
@@ -146,7 +162,7 @@ const ChannelEffectivenessMap = ({
         if (mapped && !isNaN(mapped)) return mapped;
       }
     }
-    
+
     // Return valid default if nothing else works
     return 50;
   };
@@ -159,27 +175,27 @@ const ChannelEffectivenessMap = ({
   // Enhanced data processing with comprehensive validation
   const processBubbleData = (channels) => {
     if (!channels || channels.length === 0) return [];
-    
+
     const validChannels = channels
       .map((channel, index) => {
         // Check for insufficient data indicators in the channel data
         const hasInsufficientData = (obj) => {
           if (!obj) return false;
-          
+
           const checkValue = (value) => {
             if (typeof value === 'string') {
               const lowerValue = value.toLowerCase();
-              return lowerValue.includes('not enough data') || 
-                     lowerValue.includes('insufficient data') ||
-                     lowerValue.includes('no data') ||
-                     lowerValue.includes('unavailable') ||
-                     lowerValue === 'n/a' ||
-                     lowerValue === 'null' ||
-                     lowerValue === 'undefined';
+              return lowerValue.includes('not enough data') ||
+                lowerValue.includes('insufficient data') ||
+                lowerValue.includes('no data') ||
+                lowerValue.includes('unavailable') ||
+                lowerValue === 'n/a' ||
+                lowerValue === 'null' ||
+                lowerValue === 'undefined';
             }
             return false;
           };
-          
+
           // Check all values in the object recursively
           for (const value of Object.values(obj)) {
             if (checkValue(value)) return true;
@@ -189,34 +205,34 @@ const ChannelEffectivenessMap = ({
           }
           return false;
         };
-        
+
         // If channel contains insufficient data indicators, mark as invalid
         if (hasInsufficientData(channel)) {
           console.warn(`Skipping channel ${channel.name} due to insufficient data indicators`);
           return null;
         }
-        
+
         const effectiveness = extractScore(channel.effectiveness, 'effectiveness');
         const efficiency = extractScore(channel.efficiency, 'efficiency');
-        
+
         // Enhanced revenue extraction with string handling
         let revenue = 25; // Default value
-        
+
         // Try to extract revenue from various sources
         if (channel.effectiveness?.revenueContribution) {
           const revenueValue = channel.effectiveness.revenueContribution;
-          
+
           // Check if revenue value indicates insufficient data
           if (typeof revenueValue === 'string') {
             const lowerValue = revenueValue.toLowerCase();
-            if (lowerValue.includes('not enough data') || 
-                lowerValue.includes('insufficient data') ||
-                lowerValue.includes('no data') ||
-                lowerValue.includes('unavailable')) {
+            if (lowerValue.includes('not enough data') ||
+              lowerValue.includes('insufficient data') ||
+              lowerValue.includes('no data') ||
+              lowerValue.includes('unavailable')) {
               console.warn(`Skipping channel ${channel.name} due to insufficient revenue data: ${revenueValue}`);
               return null;
             }
-            
+
             // Try to extract numeric value from string
             const numericMatch = revenueValue.match(/(\d+(?:\.\d+)?)/);
             if (numericMatch) {
@@ -229,7 +245,7 @@ const ChannelEffectivenessMap = ({
             revenue = revenueValue;
           }
         }
-        
+
         // Additional fallback checks for revenue
         if (channel.revenue) {
           const channelRevenue = typeof channel.revenue === 'number' ? channel.revenue : parseFloat(channel.revenue);
@@ -237,17 +253,17 @@ const ChannelEffectivenessMap = ({
             revenue = channelRevenue;
           }
         }
-        
+
         // Validate all numeric values
         if (isNaN(effectiveness) || isNaN(efficiency) || isNaN(revenue) ||
-            !isFinite(effectiveness) || !isFinite(efficiency) || !isFinite(revenue)) {
+          !isFinite(effectiveness) || !isFinite(efficiency) || !isFinite(revenue)) {
           console.warn(`Skipping channel ${channel.name} due to invalid numeric values:`, {
-            effectiveness, efficiency, revenue, 
+            effectiveness, efficiency, revenue,
             originalRevenue: channel.effectiveness?.revenueContribution
           });
           return null;
         }
-        
+
         return {
           name: channel.name || `Channel ${index + 1}`,
           effectiveness: Math.max(0, Math.min(100, effectiveness)),
@@ -259,28 +275,57 @@ const ChannelEffectivenessMap = ({
         };
       })
       .filter(channel => channel !== null); // Remove invalid channels
-    
+
     return validChannels;
   };
 
+  // INITIALIZE COMPONENT - same pattern as FullSWOT
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    if (channelEffectivenessData) {
+      setData(channelEffectivenessData);
+      setHasGenerated(true);
+      setError(null);
+    }
+  }, [channelEffectivenessData]);
+
+  // UPDATE DATA WHEN PROP CHANGES - same pattern as FullSWOT
+  useEffect(() => {
+    if (channelEffectivenessData) {
+      setData(channelEffectivenessData);
+      setHasGenerated(true);
+      setError(null);
+    } else if (channelEffectivenessData === null) {
+      // Only reset if explicitly set to null (during regeneration)
+      setData(null);
+      setHasGenerated(false);
+    }
+  }, [channelEffectivenessData]);
+
+  // NO AUTO-GENERATION useEffect - this is the key difference!
+  // The component relies entirely on the parent to provide data via props
+  // Similar to how FullSWOT works
+
   // Memoize processed data to avoid recalculation
   const processedData = useMemo(() => {
-    if (!channelEffectivenessData?.channelEffectiveness?.channels) {
+    if (!data?.channelEffectiveness?.channels) {
       return [];
     }
-    return processBubbleData(channelEffectivenessData.channelEffectiveness.channels);
-  }, [channelEffectivenessData]);
+    return processBubbleData(data.channelEffectiveness.channels);
+  }, [data]);
 
   // Check if processed data contains any valid entries
   const hasValidData = processedData.length > 0;
 
   const handleMouseMove = (e, channel) => {
     if (!bubbleChartRef.current) return;
-    
+
     const rect = bubbleChartRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     setTooltipPosition({ x, y });
     setHoveredChannel(channel);
   };
@@ -293,11 +338,11 @@ const ChannelEffectivenessMap = ({
     // Additional validation before rendering
     if (!data || data.length === 0) {
       return (
-        <div style={{ 
-          width: 600, 
-          height: 400, 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          width: 600,
+          height: 400,
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           border: '2px dashed #d1d5db',
           borderRadius: '12px',
@@ -329,12 +374,12 @@ const ChannelEffectivenessMap = ({
       const scaled = (value / 100) * chartWidth;
       return isNaN(scaled) ? 0 : scaled;
     };
-    
+
     const yScale = (value) => {
       const scaled = chartHeight - (value / 100) * chartHeight;
       return isNaN(scaled) ? chartHeight : scaled;
     };
-    
+
     const radiusScale = (value) => {
       const normalized = (value - minRevenue) / (maxRevenue - minRevenue || 1);
       const radius = 15 + (normalized * 20);
@@ -342,8 +387,8 @@ const ChannelEffectivenessMap = ({
     };
 
     return (
-      <div 
-        className="bubble-chart-container" 
+      <div
+        className="bubble-chart-container"
         ref={bubbleChartRef}
         style={{ position: 'relative' }}
       >
@@ -374,12 +419,12 @@ const ChannelEffectivenessMap = ({
             {/* Main Axes */}
             <line
               x1={0} x2={chartWidth}
-              y1={chartHeight/2} y2={chartHeight/2}
+              y1={chartHeight / 2} y2={chartHeight / 2}
               stroke="#374151"
               strokeWidth="2"
             />
             <line
-              x1={chartWidth/2} x2={chartWidth/2}
+              x1={chartWidth / 2} x2={chartWidth / 2}
               y1={0} y2={chartHeight}
               stroke="#374151"
               strokeWidth="2"
@@ -404,20 +449,20 @@ const ChannelEffectivenessMap = ({
               const x = xScale(channel.effectiveness);
               const y = yScale(channel.efficiency);
               const radius = radiusScale(channel.revenue);
-              
+
               // Skip rendering if any coordinate is invalid
               if (isNaN(x) || isNaN(y) || isNaN(radius)) {
                 console.warn('Skipping bubble due to NaN coordinates:', channel);
                 return null;
               }
-              
+
               const isHovered = hoveredChannel?.name === channel.name;
 
               return (
                 <g key={channel.name}>
                   <circle
-                    cx={x} 
-                    cy={y} 
+                    cx={x}
+                    cy={y}
                     r={radius}
                     fill={channel.color}
                     fillOpacity="0.85"
@@ -433,28 +478,28 @@ const ChannelEffectivenessMap = ({
                     onMouseLeave={handleMouseLeave}
                   />
                   <text
-                    x={x} 
+                    x={x}
                     y={y + 4}
                     textAnchor="middle"
                     fontSize="12"
                     fontWeight="700"
                     fill="#1f2937"
-                    style={{ 
+                    style={{
                       pointerEvents: 'none',
                       textShadow: '1px 1px 2px rgba(255, 255, 255, 0.8)'
                     }}
                   >
                     {channel.name}
                   </text>
-                  
+
                   {/* Trend Arrow */}
                   {channel.trend !== 'stable' && (
                     <text
-                      x={x + radius + 8} 
+                      x={x + radius + 8}
                       y={y - radius - 5}
                       fontSize="16"
                       fill={channel.trend === 'increasing' ? '#00ff88' : '#ff4757'}
-                      style={{ 
+                      style={{
                         pointerEvents: 'none',
                         filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
                       }}
@@ -467,9 +512,9 @@ const ChannelEffectivenessMap = ({
             })}
 
             {/* Axis Labels */}
-            <text 
-              x={chartWidth / 2} 
-              y={chartHeight + 40} 
+            <text
+              x={chartWidth / 2}
+              y={chartHeight + 40}
               textAnchor="middle"
               fontSize="16"
               fontWeight="800"
@@ -477,9 +522,9 @@ const ChannelEffectivenessMap = ({
             >
               Effectiveness Score →
             </text>
-            <text 
-              x={-chartHeight / 2} 
-              y={-40} 
+            <text
+              x={-chartHeight / 2}
+              y={-40}
               textAnchor="middle"
               fontSize="16"
               fontWeight="800"
@@ -492,9 +537,9 @@ const ChannelEffectivenessMap = ({
             {/* Axis Values */}
             {[0, 25, 50, 75, 100].map(val => (
               <g key={val}>
-                <text 
-                  x={xScale(val)} 
-                  y={chartHeight + 20} 
+                <text
+                  x={xScale(val)}
+                  y={chartHeight + 20}
                   textAnchor="middle"
                   fontSize="13"
                   fontWeight="600"
@@ -502,9 +547,9 @@ const ChannelEffectivenessMap = ({
                 >
                   {val}
                 </text>
-                <text 
-                  x={-10} 
-                  y={yScale(val) + 4} 
+                <text
+                  x={-10}
+                  y={yScale(val) + 4}
                   textAnchor="middle"
                   fontSize="13"
                   fontWeight="600"
@@ -519,7 +564,7 @@ const ChannelEffectivenessMap = ({
 
         {/* Tooltip */}
         {hoveredChannel && (
-          <div 
+          <div
             style={{
               position: 'absolute',
               left: tooltipPosition.x + 15,
@@ -550,8 +595,8 @@ const ChannelEffectivenessMap = ({
               Revenue: {hoveredChannel.revenue.toFixed(1)}%
             </div>
             {hoveredChannel.trend !== 'stable' && (
-              <div 
-                style={{ 
+              <div
+                style={{
                   marginTop: '6px',
                   fontWeight: '600',
                   fontSize: '12px',
@@ -567,105 +612,27 @@ const ChannelEffectivenessMap = ({
     );
   };
 
-  const generateChannelEffectiveness = async () => {
-    try {
-      setIsGenerating(true);
-      setError(null);
-
-      const validQuestions = questions.filter(q => 
-        userAnswers[q._id] && 
-        userAnswers[q._id].trim() && 
-        userAnswers[q._id] !== '[Question Skipped]'
-      );
-
-      if (validQuestions.length === 0) {
-        throw new Error('No answered questions available');
-      }
-
-      const questionsArray = validQuestions.map(q => q.question_text.trim());
-      const answersArray = validQuestions.map(q => userAnswers[q._id].trim());
-
-      const response = await fetch(`${ML_API_BASE_URL}/channel-effectiveness`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error generating channel effectiveness:', error);
-      setError(error.message);
-      throw error;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
- useEffect(() => {
-    const hasAnswers = questions.some(q => userAnswers[q._id]?.trim());
-    
-    // Only auto-generate if not part of a phase regeneration
-    if (!channelEffectivenessData && 
-        hasAnswers && 
-        !isGenerating && 
-        !isRegenerating && 
-        !isPhaseRegenerating && 
-        !hasGeneratedRef.current) {
-      hasGeneratedRef.current = true;
-      generateChannelEffectiveness();
-    }
-  }, [questions, userAnswers, channelEffectivenessData, isRegenerating, isPhaseRegenerating]);
-
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      await onRegenerate();
-    } else {
-      hasGeneratedRef.current = false;
-      await generateChannelEffectiveness();
-    }
-  };
-
-  // Loading State
-  if (isGenerating || isRegenerating) {
+  // LOADING STATE - same pattern as FullSWOT
+  if (isRegenerating) {
     return (
       <div className="channel-effectiveness-analysis">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? "Regenerating channel effectiveness analysis..."
-              : "Generating channel effectiveness analysis..."
-            }
-          </span>
+          <span>Regenerating Channel Effectiveness Analysis...</span>
         </div>
       </div>
     );
   }
 
-  // Error State
-  if (error && !channelEffectivenessData) {
+  // ERROR STATE - same pattern as FullSWOT
+  if (error) {
     return (
       <div className="channel-effectiveness-analysis">
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
           <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
+          <button onClick={handleRegenerate} className="retry-button">
             Retry Analysis
           </button>
         </div>
@@ -673,8 +640,8 @@ const ChannelEffectivenessMap = ({
     );
   }
 
-  // Check if data is incomplete, has NaN values, or no valid processed data
-  if (!channelEffectivenessData || isChannelEffectivenessDataIncomplete(channelEffectivenessData) || !hasValidData) {
+  // CHECK IF DATA IS INCOMPLETE - same pattern as FullSWOT
+  if (!hasGenerated || !data?.channelEffectiveness || isChannelEffectivenessDataIncomplete(data) || !hasValidData) {
     return (
       <div className="channel-effectiveness-analysis">
         <AnalysisEmptyState
@@ -682,18 +649,21 @@ const ChannelEffectivenessMap = ({
           analysisDisplayName="Channel Effectiveness Analysis"
           icon={BarChart3}
           onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
+          onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
           isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
+          canRegenerate={canRegenerate && !!onRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       </div>
     );
   }
 
   return (
-    <div className='channel-effectiveness-analysis'> 
+    <div className='channel-effectiveness-analysis'
+         data-analysis-type="channelEffectiveness"
+         data-analysis-name="Channel Effectiveness Map"
+         data-analysis-order="11">
       <div style={{ padding: '24px' }}>
         <BubbleChart data={processedData} />
       </div>

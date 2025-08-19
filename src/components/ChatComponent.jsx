@@ -751,7 +751,7 @@ const ChatComponent = ({
             <span>
               {isSaving && 'Saving your answer...'}
               {isValidatingAnswer && 'Validating your answer...'}
-              {isSkipping && 'Skipping question...'}
+              {isSkipping && 'Please Wait...'}
             </span>
           </div>
         )}

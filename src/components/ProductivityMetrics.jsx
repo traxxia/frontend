@@ -8,22 +8,21 @@ const ProductivityMetrics = ({
   questions = [],
   userAnswers = {},
   businessName = '',
-  onRegenerate,
+  onRegenerate, // This is the key prop - same as FullSWOT
   isRegenerating = false,
   canRegenerate = true,
-  productivityData = null,
+  productivityData = null, // This comes from parent state
   selectedBusinessId,
-  onRedirectToBrief ,
-  isPhaseRegenerating = false 
+  onRedirectToBrief
 }) => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState(null);
+  // LOCAL STATE - same pattern as FullSWOT
+  const [data, setData] = useState(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
+  const [error, setError] = useState(null);
 
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
-  const hasGeneratedRef = useRef(false);
+  // PREVENT MULTIPLE INITIALIZATIONS - same as FullSWOT
+  const hasInitialized = useRef(false);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -43,6 +42,23 @@ const ProductivityMetrics = ({
         customMessage: analysisConfig.customMessage
       }
     );
+  };
+
+  // HANDLE REGENERATE - same pattern as FullSWOT
+  const handleRegenerate = async () => {
+    console.log('ProductivityMetrics handleRegenerate called', { onRegenerate: !!onRegenerate });
+    
+    if (onRegenerate) {
+      try {
+        await onRegenerate();
+      } catch (error) {
+        console.error('Error in ProductivityMetrics regeneration:', error);
+        setError(error.message || 'Failed to regenerate analysis');
+      }
+    } else {
+      console.warn('No onRegenerate prop provided to ProductivityMetrics');
+      setError('Regeneration not available');
+    }
   };
 
   // Check if the productivity data is empty/incomplete
@@ -76,10 +92,10 @@ const ProductivityMetrics = ({
     const hasValueDrivers = productivityMetrics.valueDrivers && productivityMetrics.valueDrivers.length > 0;
     const hasImprovementOpportunities = productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0;
     
-    // Consider data complete only if we have at least one meaningful data source
-    const hasEssentialData = hasValidEmployeeData || hasValidCostData || hasValueDrivers || hasImprovementOpportunities;
+    // At least 2 sections should have data for meaningful analysis
+    const sectionsWithData = [hasValidEmployeeData, hasValidCostData, hasValueDrivers, hasImprovementOpportunities].filter(Boolean).length;
     
-    return !hasEssentialData;
+    return sectionsWithData < 2;
   };
 
   // Toggle section expansion
@@ -90,80 +106,34 @@ const ProductivityMetrics = ({
     }));
   };
 
-  const generateProductivityMetrics = async () => {
-    try {
-      setIsGenerating(true);
+  // INITIALIZE COMPONENT - same pattern as FullSWOT
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    if (productivityData) {
+      setData(productivityData);
+      setHasGenerated(true);
       setError(null);
-
-      const questionsArray = [];
-      const answersArray = [];
-
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim() && userAnswers[q._id] !== '[Question Skipped]')
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No answered questions available for productivity metrics analysis');
-      }
- 
-      const response = await fetch(`${ML_API_BASE_URL}/productivity-metrics`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questions: questionsArray,
-          answers: answersArray
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Productivity Metrics API Error Response:', errorText);
-        throw new Error(`API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json(); 
-
-      const processedData = result.productivityMetrics ? result : { productivityMetrics: result }; 
-
-      return processedData;
-
-    } catch (error) {
-      console.error('💥 Error generating productivity metrics:', error);
-      setError(error.message);
-      throw error;
-    } finally {
-      setIsGenerating(false);
     }
-  };
+  }, [productivityData]);
 
-useEffect(() => {
-    const hasAnswers = questions.some(q => userAnswers[q._id] && userAnswers[q._id].trim());
- 
-    if (!productivityData && 
-        hasAnswers && 
-        !isGenerating && 
-        !isRegenerating && 
-        !isPhaseRegenerating && 
-        !hasGeneratedRef.current) { 
-      hasGeneratedRef.current = true;
-      generateProductivityMetrics();
+  // UPDATE DATA WHEN PROP CHANGES - same pattern as FullSWOT
+  useEffect(() => {
+    if (productivityData) {
+      setData(productivityData);
+      setHasGenerated(true);
+      setError(null);
+    } else if (productivityData === null) {
+      // Only reset if explicitly set to null (during regeneration)
+      setData(null);
+      setHasGenerated(false);
     }
-  }, [questions, userAnswers, productivityData, isRegenerating, isPhaseRegenerating]); 
+  }, [productivityData]);
 
-  const handleRegenerate = async () => { 
-hasGeneratedRef.current = false;
-    if (onRegenerate) { 
-      onRegenerate();
-    } else { 
-      await generateProductivityMetrics();
-    }
-  };
+  // NO AUTO-GENERATION useEffect - this is the key difference!
+  // The component relies entirely on the parent to provide data via props
+  // Similar to how FullSWOT works
 
   // Productivity Chart Component (keeping original chart)
   const ProductivityChart = ({ employeeProductivity = {} }) => {
@@ -220,37 +190,27 @@ hasGeneratedRef.current = false;
     return 'medium-intensity';
   };
 
-  // Loading state
-  if (isGenerating || isRegenerating) {
+  // LOADING STATE - same pattern as FullSWOT
+  if (isRegenerating) {
     return (
       <div className="porters-container productivity-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? "Regenerating productivity metrics analysis..."
-              : "Generating productivity metrics analysis..."
-            }
-          </span>
+          <span>Regenerating Productivity Metrics...</span>
         </div>
       </div>
     );
   }
 
-  // Error state
-  if (error && !productivityData) {
+  // ERROR STATE - same pattern as FullSWOT
+  if (error) {
     return (
       <div className="porters-container productivity-container"> 
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
           <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
+          <button onClick={handleRegenerate} className="retry-button">
             Retry Analysis
           </button>
         </div>
@@ -258,20 +218,18 @@ hasGeneratedRef.current = false;
     );
   }
 
-  // Check if data is incomplete and show missing questions checker
-  if (!productivityData || isProductivityDataIncomplete(productivityData)) {
+  // CHECK IF DATA IS INCOMPLETE - same pattern as FullSWOT
+  if (!hasGenerated || !data?.productivityMetrics || isProductivityDataIncomplete(data)) {
     return (
       <div className="porters-container productivity-container"> 
-
-        {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
           analysisType="productivityMetrics"
           analysisDisplayName="Productivity and Efficiency Metrics Analysis"
           icon={Activity}
           onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
+          onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
           isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
+          canRegenerate={canRegenerate && !!onRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
         /> 
@@ -280,10 +238,13 @@ hasGeneratedRef.current = false;
   }
 
   // Handle both wrapped and direct response structures
-  const productivityMetrics = productivityData?.productivityMetrics || productivityData;
+  const productivityMetrics = data?.productivityMetrics || data;
 
   return (
-    <div className="porters-container productivity-container"> 
+    <div className="porters-container productivity-container"
+         data-analysis-type="productivityMetrics"
+         data-analysis-name="Productivity Metrics"
+         data-analysis-order="14"> 
 
       {/* Employee Productivity Overview Chart */}
       {productivityMetrics.employeeProductivity && (

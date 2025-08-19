@@ -27,23 +27,7 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-
-.ch-metric-card.ch-metric-blue {
-  border-left-color: #3b82f6;
-}
-
-.ch-metric-card.ch-metric-green {
-  border-left-color: #10b981;
-}
-
-.ch-metric-card.ch-metric-purple {
-  border-left-color: #8b5cf6;
-}
-
-.ch-metric-card.ch-metric-orange {
-  border-left-color: #f59e0b;
-}
-
+ 
 .ch-metric-header {
   display: flex;
   align-items: center;

@@ -1,16 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
-import { Zap, TrendingUp, Users, Target, Loader, Upload, X, Activity } from 'lucide-react';
-import '../styles/goodPhase.css';
-import { useTranslation } from "../hooks/useTranslation";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { Zap, TrendingUp, Users, Target, Loader, X, Activity } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+
+// Utility function to handle empty values
+const formatValue = (value, type = 'text', fallback = '-') => {
+  if (value === null || value === undefined || value === '' || (typeof value === 'string' && value.trim() === '')) {
+    return fallback;
+  }
+  
+  switch (type) {
+    case 'currency':
+      return isNaN(value) ? fallback : `$${Number(value).toLocaleString()}`;
+    case 'percentage':
+      return isNaN(value) ? fallback : `${Number(value)}%`;
+    case 'number':
+      return isNaN(value) ? fallback : Number(value).toLocaleString();
+    default:
+      return value;
+  }
+};
 
 const OperationalEfficiencyInsight = ({
   questions = [],
   userAnswers = {},
-  businessName = "Your Business",
-  onDataGenerated,
+  businessName = '',
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
@@ -18,21 +33,12 @@ const OperationalEfficiencyInsight = ({
   selectedBusinessId,
   onRedirectToBrief
 }) => {
-  const [analysisData, setAnalysisData] = useState(operationalEfficiencyData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [analysisData, setAnalysisData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [uploadedFile, setUploadedFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
-  // Add refs to track component mount
-  const isMounted = useRef(false);
   const hasInitialized = useRef(false);
-  const fileInputRef = useRef(null);
-  const { t } = useTranslation();
-
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -40,15 +46,15 @@ const OperationalEfficiencyInsight = ({
     }
   };
 
-  // Function to check missing questions and redirect
   const handleMissingQuestionsCheck = async () => {
+    // Use the same pattern as FullSWOT
     const analysisConfig = ANALYSIS_TYPES.operationalEfficiency || {
-      displayName: 'Operational Efficiency Insight',
-      customMessage: 'Answer more operational questions to unlock detailed efficiency and resource utilization analysis'
+      displayName: 'Operational Efficiency Analysis',
+      customMessage: 'Complete operational questions to unlock efficiency insights, resource optimization recommendations, and performance analytics.'
     };
-
+    
     await checkMissingQuestionsAndRedirect(
-      'operationalEfficiency',
+      'operationalEfficiency', 
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -58,209 +64,101 @@ const OperationalEfficiencyInsight = ({
     );
   };
 
+  // Handle regenerate
+  const handleRegenerate = async () => {
+    console.log('OperationalEfficiency handleRegenerate called', { onRegenerate: !!onRegenerate });
+    
+    if (onRegenerate) {
+      try {
+        await onRegenerate();
+      } catch (error) {
+        console.error('Error in OperationalEfficiency regeneration:', error);
+        setError(error.message || 'Failed to regenerate analysis');
+      }
+    } else {
+      console.warn('No onRegenerate prop provided to OperationalEfficiencyInsight');
+      setError('Regeneration not available');
+    }
+  };
+
   // Check if the operational efficiency data is empty/incomplete
-  const isOperationalEfficiencyDataIncomplete = (data) => {
+  const isOperationalDataIncomplete = (data) => {
     if (!data) return true;
 
-    // Check if essential data is empty or null
     if (!data.operationalEfficiencyInsight) return true;
-    if (!data.operationalEfficiencyInsight.resourceUtilization) return true;
-    if (!data.operationalEfficiencyInsight.efficiencyTrends) return true;
-    if (!data.operationalEfficiencyInsight.capabilityPerformance) return true;
 
-    return false;
+    const insight = data.operationalEfficiencyInsight;
+
+    // Check if main sections have meaningful data
+    const hasResourceUtilization = insight.resourceUtilization && 
+      (insight.resourceUtilization.employeeROI?.totalValueGenerated || 
+       insight.resourceUtilization.costPerRevenueDollar);
+
+    const hasEfficiencyTrends = insight.efficiencyTrends &&
+      (insight.efficiencyTrends.costReductionRate || 
+       insight.efficiencyTrends.productivityGain || 
+       insight.efficiencyTrends.automationImpact);
+
+    const hasCapabilityData = insight.capabilityPerformance &&
+      Object.values(insight.capabilityPerformance).some(value => 
+        value !== '' && value !== null && value !== undefined
+      );
+
+    // Need at least 2 sections with data for meaningful analysis
+    const sectionsWithData = [hasResourceUtilization, hasEfficiencyTrends, hasCapabilityData].filter(Boolean).length;
+
+    return sectionsWithData < 2;
   };
 
-  // Handle regeneration
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      onRegenerate();
-    } else {
-      setAnalysisData(null);
-      setError(null);
-    }
-  };
-
-  // Update analysis data when prop changes
-  useEffect(() => {
-    if (operationalEfficiencyData && operationalEfficiencyData !== analysisData) {
-      setAnalysisData(operationalEfficiencyData);
-      if (onDataGenerated) {
-        onDataGenerated(operationalEfficiencyData);
+  // API call to fetch operational efficiency data
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/operational-efficiency');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
+      setAnalysisData(data);
+      setHasGenerated(true);
+    } catch (err) {
+      setError('Failed to fetch operational efficiency data');
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [operationalEfficiencyData]);
+  };
 
-  // Initialize component - only run once
+  // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
-
-    isMounted.current = true;
     hasInitialized.current = true;
 
     if (operationalEfficiencyData) {
       setAnalysisData(operationalEfficiencyData);
+      setHasGenerated(true);
+      setError(null);
     }
+  }, [operationalEfficiencyData]);
 
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
+  // Update data when prop changes
   useEffect(() => {
-    if (analysisData && onDataGenerated) {
-      onDataGenerated(analysisData);
+    if (operationalEfficiencyData) {
+      setAnalysisData(operationalEfficiencyData);
+      setHasGenerated(true);
+      setError(null);
+    } else if (operationalEfficiencyData === null) {
+      // Only reset if explicitly set to null (during regeneration)
+      setAnalysisData(null);
+      setHasGenerated(false);
     }
-  }, [analysisData]);
+  }, [operationalEfficiencyData]);
 
-  // File upload handlers
-  const handleFileUpload = (file) => {
-    if (file) {
-      // Validate file type (PDF, images, Excel, etc.)
-      const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'image/jpg',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',
-        'text/csv'
-      ];
-
-      if (allowedTypes.includes(file.type)) {
-        setUploadedFile(file);
-        setError(null);
-      } else {
-        setError('Please upload a PDF, image, Excel, or CSV file.');
-      }
-    }
-  };
-
-  const removeFile = () => {
-    setUploadedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const generateOperationalEfficiencyAnalysis = async (withFile = false) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Prepare questions and answers
-      const questionsArray = [];
-      const answersArray = [];
-
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('Please answer some questions first to generate operational efficiency analysis.');
-      }
-
-      // Create FormData
-      const formData = new FormData();
-
-      // Add file if provided and withFile is true
-      if (withFile && uploadedFile) {
-        formData.append('file', uploadedFile);
-      } else {
-        // Create a dummy text file with business information
-        const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
-        const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
-        formData.append('file', dummyFile, 'business_data.txt');
-      }
-
-      formData.append('questions', questionsArray.join(','));
-      formData.append('answers', answersArray.join('\n'));
-
-      const response = await fetch(`${ML_API_BASE_URL}/operational-efficiency`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json'
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-
-      // Process the result
-      let operationalEfficiencyContent = null;
-      if (result.operationalEfficiencyInsight) {
-        operationalEfficiencyContent = result;
-      } else if (result.operational_efficiency_insight) {
-        operationalEfficiencyContent = { operationalEfficiencyInsight: result.operational_efficiency_insight };
-      } else {
-        operationalEfficiencyContent = { operationalEfficiencyInsight: result };
-      }
-
-      setAnalysisData(operationalEfficiencyContent);
-
-      // Save to backend
-      await saveAnalysisToBackend(operationalEfficiencyContent);
-
-      if (onDataGenerated) {
-        onDataGenerated(operationalEfficiencyContent);
-      }
-
-    } catch (error) {
-      console.error('Error generating operational efficiency analysis:', error);
-      setError(`Failed to generate analysis: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Save analysis to backend using the API endpoint
-  const saveAnalysisToBackend = async (analysisData) => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          phase: 'good',
-          analysis_type: 'operationalEfficiency',
-          analysis_name: 'Operational Efficiency Insight',
-          analysis_data: analysisData,
-          business_id: selectedBusinessId,
-          metadata: {
-            generated_at: new Date().toISOString(),
-            business_name: businessName,
-            has_uploaded_file: !!uploadedFile
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save Operational Efficiency analysis');
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Error saving Operational Efficiency analysis to backend:', error);
-      throw error;
-    }
-  };
-
-  // Prepare efficiency trends data
+  // Prepare efficiency trends data with fallbacks
   const prepareEfficiencyTrendsData = (data) => {
     if (!data?.operationalEfficiencyInsight?.efficiencyTrends) return [];
 
@@ -268,37 +166,58 @@ const OperationalEfficiencyInsight = ({
     return [
       {
         metric: 'Cost Reduction',
-        value: trends.costReductionRate,
-        target: 25,
-        unit: '%'
+        value: trends.costReductionRate === '' ? 0 : Number(trends.costReductionRate) || 0,
+        target: trends.costReductionTarget || 25,
+        unit: '%',
+        hasValue: trends.costReductionRate !== '' && trends.costReductionRate !== null && trends.costReductionRate !== undefined
       },
       {
         metric: 'Productivity Gain',
-        value: trends.productivityGain,
-        target: 20,
-        unit: '%'
+        value: trends.productivityGain === '' ? 0 : Number(trends.productivityGain) || 0,
+        target: trends.productivityTarget || 20,
+        unit: '%',
+        hasValue: trends.productivityGain !== '' && trends.productivityGain !== null && trends.productivityGain !== undefined
       },
       {
         metric: 'Automation Impact',
-        value: trends.automationImpact,
-        target: 10,
-        unit: '%'
+        value: trends.automationImpact === '' ? 0 : Number(trends.automationImpact) || 0,
+        target: trends.automationTarget || 10,
+        unit: '%',
+        hasValue: trends.automationImpact !== '' && trends.automationImpact !== null && trends.automationImpact !== undefined
       }
     ];
   };
 
-  // Prepare capability performance radar data
+  // Prepare capability performance radar data with fallbacks
   const prepareCapabilityRadarData = (data) => {
     if (!data?.operationalEfficiencyInsight?.capabilityPerformance) return [];
 
     const capabilities = data.operationalEfficiencyInsight.capabilityPerformance;
-    const performanceMap = { low: 1, medium: 2, high: 3 };
+    
+    return Object.entries(capabilities).map(([key, value]) => {
+      let score = 0;
+      let hasValue = false;
+      
+      if (value !== '' && value !== null && value !== undefined) {
+        if (typeof value === 'string') {
+          const lowerValue = value.toLowerCase();
+          if (lowerValue === 'low') score = 1;
+          else if (lowerValue === 'medium') score = 2;
+          else if (lowerValue === 'high') score = 3;
+          else score = Number(value) || 0;
+        } else {
+          score = Number(value) || 0;
+        }
+        hasValue = true;
+      }
 
-    return Object.entries(capabilities).map(([key, value]) => ({
-      capability: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
-      score: performanceMap[value.toLowerCase()] || 1,
-      fullMark: 3
-    }));
+      return {
+        capability: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
+        score: Math.min(score, 10), // Cap at 10 for display
+        fullMark: 10,
+        hasValue
+      };
+    });
   };
 
   // Custom tooltip for efficiency trends
@@ -306,14 +225,26 @@ const OperationalEfficiencyInsight = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="ch-tooltip">
-          <div className="ch-tooltip-header">{data.metric}</div>
-          <div className="ch-tooltip-content">
-            <div>{`Current: ${data.value}${data.unit}`}</div>
-            <div>{`Target: ${data.target}${data.unit}`}</div>
-            <div className={data.value >= data.target ? 'text-green-600' : 'text-yellow-600'}>
-              {data.value >= data.target ? '✓ Above Target' : '⚠ Below Target'}
-            </div>
+        <div style={{
+          backgroundColor: 'white',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          padding: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{data.metric}</div>
+          <div>
+            {data.hasValue ? (
+              <>
+                <div>{`Current: ${data.value}${data.unit}`}</div>
+                <div>{`Target: ${data.target}${data.unit}`}</div>
+                <div style={{ color: data.value >= data.target ? '#10b981' : '#f59e0b' }}>
+                  {data.value >= data.target ? '✓ Above Target' : '⚠ Below Target'}
+                </div>
+              </>
+            ) : (
+              <div style={{ color: '#9ca3af' }}>No data available</div>
+            )}
           </div>
         </div>
       );
@@ -321,67 +252,85 @@ const OperationalEfficiencyInsight = ({
     return null;
   };
 
-  if (isLoading || isRegenerating) {
+  // Loading state during regeneration
+  if (isRegenerating) {
     return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <div className="loading-state">
-          <Loader size={24} className="loading-spinner" />
-          <span>
-            {isRegenerating
-              ? t("Regenerating operational efficiency analysis...")
-              : t("Generating operational efficiency analysis...")
-            }
-          </span>
+      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          height: '200px'
+        }}>
+          <Loader className="animate-spin" style={{ marginRight: '8px' }} />
+          Regenerating Operational Efficiency Analysis...
         </div>
       </div>
     );
   }
 
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          height: '200px'
+        }}>
+          <Loader className="animate-spin" style={{ marginRight: '8px' }} />
+          Loading operational efficiency data...
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
   if (error) {
     return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
+      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ 
+          padding: '20px', 
+          textAlign: 'center'
+        }}>
+          <div style={{ color: '#ef4444', marginBottom: '16px' }}>
+            <X size={48} style={{ margin: '0 auto 8px' }} />
+            <div>{error}</div>
+          </div>
+          <button 
+            onClick={handleRegenerate}
+            style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
           </button>
         </div>
       </div>
     );
   }
 
-  // Check if data is incomplete and show missing questions checker or file upload
-  if (!analysisData || isOperationalEfficiencyDataIncomplete(analysisData)) {
+  // Show empty state if no data or incomplete data
+  if (!hasGenerated || !analysisData?.operationalEfficiencyInsight || isOperationalDataIncomplete(analysisData)) {
     return (
-      <div className="channel-heatmap channel-heatmap-container">
+      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
         <AnalysisEmptyState
           analysisType="operationalEfficiency"
-          analysisDisplayName="Operational Efficiency Insight"
-          icon={Zap}
+          analysisDisplayName="Operational Efficiency Analysis"
+          icon={Activity}
           onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
+          onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
           isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
+          canRegenerate={canRegenerate && !!onRegenerate}
           userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-          
-          // File upload props
-          showFileUpload={true}
-          onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => generateOperationalEfficiencyAnalysis(true)}
-          onGenerateWithoutFile={() => generateOperationalEfficiencyAnalysis(false)}
-          uploadedFile={uploadedFile}
-          onRemoveFile={removeFile}
-          isUploading={isLoading}
-          fileUploadMessage="Upload operational documents (PDF, Excel, CSV, or images)"
-          acceptedFileTypes=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png"
+          minimumAnswersRequired={5}
+          customMessage="Complete operational questions to unlock efficiency insights, resource optimization recommendations, and performance analytics."
         />
       </div>
     );
@@ -391,170 +340,213 @@ const OperationalEfficiencyInsight = ({
   const efficiencyTrendsData = prepareEfficiencyTrendsData(analysisData);
   const capabilityRadarData = prepareCapabilityRadarData(analysisData);
 
-  const employeeROI = resourceUtilization.employeeROI.roi;
-  const costPerRevenueDollar = resourceUtilization.costPerRevenueDollar;
-  const totalValueGenerated = resourceUtilization.employeeROI.totalValueGenerated;
-  const totalEmployeeCost = resourceUtilization.employeeROI.totalEmployeeCost;
+  // Apply formatValue to all metrics
+  const employeeROI = formatValue(resourceUtilization?.employeeROI?.roi, 'percentage');
+  const costPerRevenueDollar = formatValue(resourceUtilization?.costPerRevenueDollar, 'currency');
+  const totalValueGenerated = formatValue(resourceUtilization?.employeeROI?.totalValueGenerated, 'currency');
+  const totalEmployeeCost = formatValue(resourceUtilization?.employeeROI?.totalEmployeeCost, 'currency');
 
   return (
-    <div className="channel-heatmap channel-heatmap-container" data-analysis-type="operational-efficiency"
-      data-analysis-name="Operational Efficiency Insight"
-      data-analysis-order="4">
-
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       {/* Key Metrics */}
-      <div className="ch-metrics">
-        <div className="ch-metric-card ch-metric-blue">
-          <div className="ch-metric-header">
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+        gap: '16px',
+        marginBottom: '32px'
+      }}>
+        <div style={{
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Users size={20} />
             <span>Employee ROI</span>
           </div>
-          <p className="ch-metric-value">{employeeROI}%</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{employeeROI}</p>
         </div>
 
-        <div className="ch-metric-card ch-metric-green">
-          <div className="ch-metric-header">
+        <div style={{
+          backgroundColor: '#10b981',
+          color: 'white',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Target size={20} />
             <span>Cost per Revenue $</span>
           </div>
-          <p className="ch-metric-value">${costPerRevenueDollar}</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>{costPerRevenueDollar}</p>
         </div>
 
-        <div className="ch-metric-card ch-metric-purple">
-          <div className="ch-metric-header">
+        <div style={{
+          backgroundColor: '#8b5cf6',
+          color: 'white',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <TrendingUp size={20} />
             <span>Productivity Gain</span>
           </div>
-          <p className="ch-metric-value">{efficiencyTrends.productivityGain}%</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>
+            {formatValue(efficiencyTrends?.productivityGain, 'percentage')}
+          </p>
         </div>
 
-        <div className="ch-metric-card ch-metric-orange">
-          <div className="ch-metric-header">
+        <div style={{
+          backgroundColor: '#f59e0b',
+          color: 'white',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Zap size={20} />
             <span>Automation Impact</span>
           </div>
-          <p className="ch-metric-value">{efficiencyTrends.automationImpact}%</p>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>
+            {formatValue(efficiencyTrends?.automationImpact, 'percentage')}
+          </p>
         </div>
       </div>
 
       {/* Charts Section */}
-      <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
-          <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Operational Efficiency Analysis</h3>
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ marginBottom: '24px', fontSize: '20px' }}>Operational Efficiency Analysis</h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+          {/* Efficiency Trends Chart */}
+          <div>
+            <h4 style={{ marginBottom: '16px' }}>Efficiency Trends vs Targets</h4>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={efficiencyTrendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="metric" />
+                  <YAxis />
+                  <Tooltip content={<EfficiencyTooltip />} />
+                  <Bar dataKey="value">
+                    {efficiencyTrendsData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.hasValue ? 
+                          (entry.value >= entry.target ? '#10b981' : '#f59e0b') : 
+                          '#d1d5db'
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          <div className="ch-charts-grid">
-            {/* Efficiency Trends Chart */}
-            <div className="ch-chart-section">
-              <h4>Efficiency Trends vs Targets</h4>
-              <div className="ch-chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={efficiencyTrendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="metric" />
-                    <YAxis />
-                    <Tooltip content={<EfficiencyTooltip />} />
-                    <Bar dataKey="value">
-                      {efficiencyTrendsData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.value >= entry.target ? '#10b981' : '#f59e0b'}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Capability Performance Radar */}
-            <div className="ch-chart-section">
-              <h4>Capability Performance Radar</h4>
-              <div className="ch-chart-wrapper">
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={capabilityRadarData}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="capability" />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 3]} 
-                      tick={false}
-                    />
-                    <Radar
-                      name="Performance"
-                      dataKey="score"
-                      stroke="#3b82f6"
-                      fill="#3b82f6"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
+          {/* Capability Performance Radar */}
+          <div>
+            <h4 style={{ marginBottom: '16px' }}>Capability Performance Radar</h4>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={capabilityRadarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="capability" />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 10]} 
+                    tick={false}
+                  />
+                  <Radar
+                    name="Performance"
+                    dataKey="score"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
       </div>
 
       {/* Resource Utilization Details */}
-      <div className="ch-breakdown-section">
-        <h3 className="ch-section-title">Resource Utilization Analysis</h3>
-        <div className="ch-breakdown-grid">
-          <div className="ch-breakdown-card">
-            <h4>Employee Economics</h4>
-            <div className="ch-cost-item">
+      <div>
+        <h3 style={{ marginBottom: '24px', fontSize: '20px' }}>Resource Utilization Analysis</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+          <div style={{
+            backgroundColor: '#f9fafb',
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <h4 style={{ marginBottom: '12px' }}>Employee Economics</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>Total Employee Cost:</span>
-              <span>${totalEmployeeCost.toLocaleString()}</span>
+              <span>{totalEmployeeCost}</span>
             </div>
-            <div className="ch-cost-item">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>Value Generated:</span>
-              <span>${totalValueGenerated.toLocaleString()}</span>
+              <span>{totalValueGenerated}</span>
             </div>
-            <div className="ch-cost-item">
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>ROI:</span>
-              <span className={employeeROI > 50 ? 'text-green-600' : 'text-yellow-600'}>
-                {employeeROI}%
+              <span style={{ 
+                color: employeeROI !== '-' && Number(employeeROI.replace('%', '')) > 50 ? '#10b981' : '#f59e0b' 
+              }}>
+                {employeeROI}
               </span>
             </div>
           </div>
 
-          <div className="ch-breakdown-card">
-            <h4>Efficiency Metrics</h4>
-            <div className="ch-cost-item">
+          <div style={{
+            backgroundColor: '#f9fafb',
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <h4 style={{ marginBottom: '12px' }}>Efficiency Metrics</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>Cost Reduction Rate:</span>
-              <span>{efficiencyTrends.costReductionRate}%</span>
+              <span>{formatValue(efficiencyTrends?.costReductionRate, 'percentage')}</span>
             </div>
-            <div className="ch-cost-item">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>Productivity Gain:</span>
-              <span>{efficiencyTrends.productivityGain}%</span>
+              <span>{formatValue(efficiencyTrends?.productivityGain, 'percentage')}</span>
             </div>
-            <div className="ch-cost-item">
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Automation Impact:</span>
-              <span>{efficiencyTrends.automationImpact}%</span>
+              <span>{formatValue(efficiencyTrends?.automationImpact, 'percentage')}</span>
             </div>
           </div>
 
-          <div className="ch-breakdown-card">
-            <h4>Performance Summary</h4>
-            <div className="ch-cost-components">
-              <strong>Top Performers:</strong>
-              <ul>
-                {Object.entries(capabilityPerformance)
-                  .filter(([key, value]) => value === 'high')
+          <div style={{
+            backgroundColor: '#f9fafb',
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <h4 style={{ marginBottom: '12px' }}>Capability Performance</h4>
+            <div>
+              <strong>Capabilities with Data:</strong>
+              <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                {Object.entries(capabilityPerformance || {})
+                  .filter(([key, value]) => value !== '' && value !== null && value !== undefined)
                   .map(([key, value], index) => (
-                    <li key={index} className="text-green-600">
+                    <li key={index} style={{ color: '#10b981', marginBottom: '4px' }}>
                       {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: {value}
                     </li>
                   ))}
               </ul>
-              <strong>Need Improvement:</strong>
-              <ul>
-                {Object.entries(capabilityPerformance)
-                  .filter(([key, value]) => value === 'low')
+              <strong>Missing Data:</strong>
+              <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                {Object.entries(capabilityPerformance || {})
+                  .filter(([key, value]) => value === '' || value === null || value === undefined)
                   .map(([key, value], index) => (
-                    <li key={index} className="text-red-600">
-                      {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: {value}
+                    <li key={index} style={{ color: '#9ca3af', marginBottom: '4px' }}>
+                      {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}: -
                     </li>
                   ))}
               </ul>

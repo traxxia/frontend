@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import '../styles/dashboard.css';
 import '../styles/analysis-components.css';
-import { Target, Loader } from 'lucide-react';
+import '../styles/EssentialPhase.css';
+import { Target, Loader, TrendingUp, TrendingDown, AlertTriangle, Zap, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -23,6 +24,9 @@ const SwotAnalysis = ({
   const [analysisResult, setAnalysisResult] = useState(initialAnalysisResult);
   const [internalRegenerating, setInternalRegenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [expandedSections, setExpandedSections] = useState({
+    swotAnalysis: true
+  });
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -35,10 +39,10 @@ const SwotAnalysis = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.swot; 
-    
+    const analysisConfig = ANALYSIS_TYPES.swot;
+
     await checkMissingQuestionsAndRedirect(
-      'swot', 
+      'swot',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -48,10 +52,18 @@ const SwotAnalysis = ({
     );
   };
 
+  // Toggle section expansion
+  const toggleSection = (sectionKey) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
+
   // Handle regenerate - this is the key function
   const handleRegenerate = async () => {
     console.log('SWOT handleRegenerate called', { onRegenerate: !!onRegenerate });
-    
+
     if (onRegenerate) {
       try {
         await onRegenerate();
@@ -100,8 +112,19 @@ const SwotAnalysis = ({
       throw new Error('Analysis result must be a string or object');
     }
 
+    // Clean the result string first - remove markdown code blocks and extra formatting
+    let cleanedResult = result.trim();
+
+    // Remove markdown code blocks if present
+    if (cleanedResult.startsWith('```json') || cleanedResult.startsWith('```')) {
+      cleanedResult = cleanedResult.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+    }
+
+    // Remove any leading/trailing backticks that might remain
+    cleanedResult = cleanedResult.replace(/^`+|`+$/g, '').trim();
+
     try {
-      let parsed = JSON.parse(result);
+      let parsed = JSON.parse(cleanedResult);
       if (typeof parsed === 'string') {
         parsed = JSON.parse(parsed);
       }
@@ -127,8 +150,9 @@ const SwotAnalysis = ({
           threats: /"threats":\s*"([^"]*(?:\\.[^"]*)*?)"/s
         };
 
+        // Use the cleaned result for pattern matching
         for (const [key, pattern] of Object.entries(patterns)) {
-          const match = result.match(pattern);
+          const match = cleanedResult.match(pattern);
           if (match) {
             extractedResult[key] = match[1]
               .replace(/\\"/g, '"')
@@ -299,43 +323,79 @@ const SwotAnalysis = ({
     }
   }
 
-  const renderSwotContent = (content, category) => {
-    if (!content) {
-      return (
-        <div className={`analysis-box ${category}-bg`}>
-          <em>No {category} identified</em>
-        </div>
-      );
-    }
+  // Parse SWOT content into items for table display
+  const parseSwotItems = (content) => {
+    if (!content) return [];
 
     const contentStr = String(content).trim();
     const items = contentStr
       .split(/(?<=[.!?])\s+/)
       .filter(item => item.trim().length > 10)
-      .map(item => item.trim());
+      .map((item, index) => ({
+        item: item.trim(),
+        id: index + 1
+      }));
 
-    if (items.length <= 1) {
-      return (
-        <div className={`analysis-box ${category}-bg`}>
-          {contentStr}
-        </div>
-      );
+    return items.length > 0 ? items : [{ item: contentStr, id: 1 }];
+  };
+
+  // Get SWOT icon based on type
+  const getSwotIcon = (type) => {
+    switch (type) {
+      case 'strengths': return <TrendingUp size={16} />;
+      case 'weaknesses': return <TrendingDown size={16} />;
+      case 'opportunities': return <Target size={16} />;
+      case 'threats': return <AlertTriangle size={16} />;
+      default: return <Zap size={16} />;
     }
+  };
 
-    return items.map((item, index) => (
-      <div key={index} className={`analysis-box ${category}-bg`} style={{ marginBottom: '0.5rem' }}>
-        {item}
-      </div>
-    ));
+  // Get SWOT type color
+  const getSwotTypeColor = (type) => {
+    switch (type) {
+      case 'strengths': return 'high-intensity';
+      case 'weaknesses': return 'medium-intensity';
+      case 'opportunities': return 'high-intensity';
+      case 'threats': return 'low-intensity';
+      default: return 'medium-intensity';
+    }
   };
 
   // Determine if we're currently regenerating (either internally or externally)
   const currentlyRegenerating = isRegenerating || internalRegenerating;
 
-  // Check if data is incomplete and show missing questions checker - only for truly empty data
-  if (!currentlyRegenerating && isSwotDataIncomplete(analysisResult)) {
+  // Loading state
+  if (currentlyRegenerating) {
     return (
-      <div className="swot-analysis-container"> 
+      <div className="porters-container">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner" />
+          <span>Regenerating SWOT Analysis...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (errorMessage) {
+    return (
+      <div className="porters-container">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
+          <p>{errorMessage}</p>
+          <button onClick={handleRegenerate} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if data is incomplete and show missing questions checker - only for truly empty data
+  if (isSwotDataIncomplete(analysisResult)) {
+    return (
+      <div className="porters-container">
         <AnalysisEmptyState
           analysisType="swot"
           analysisDisplayName="SWOT Analysis"
@@ -346,155 +406,87 @@ const SwotAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       </div>
     );
   }
 
+  // Prepare SWOT data for single table display
+  const prepareSwotTableData = () => {
+    const tableData = [];
+
+    if (swotData) {
+      const swotTypes = [
+        { key: 'strengths', label: 'Strengths', data: swotData.strengths },
+        { key: 'weaknesses', label: 'Weaknesses', data: swotData.weaknesses },
+        { key: 'opportunities', label: 'Opportunities', data: swotData.opportunities },
+        { key: 'threats', label: 'Threats', data: swotData.threats }
+      ];
+
+      swotTypes.forEach(type => {
+        if (type.data) {
+          const items = parseSwotItems(type.data);
+          items.forEach(item => {
+            tableData.push({
+              type: type.key,
+              label: type.label,
+              item: item.item,
+              id: item.id
+            });
+          });
+        }
+      });
+    }
+
+    return tableData;
+  };
+
+  const swotTableData = prepareSwotTableData();
+
   return (
-    <div className="swot-analysis-container swot-analysis"
+    <div className="porters-container"
       data-analysis-type="swot"
       data-analysis-name="SWOT Analysis"
-      data-analysis-order="1" > 
+      data-analysis-order="1">
 
-      {currentlyRegenerating && (
-        <div style={{ position: 'relative' }}>
-          <div className="table-responsive">
-            <table className="table table-bordered table-striped swot-table" style={{ tableLayout: 'fixed', width: '100%' }}>
-              <thead className="table-light">
-                <tr>
-                  <th className="swot-header strengths-bg" style={{ width: '25%' }}>
-                    <div className="swot-title">
-                      <strong>S</strong>trengths
-                    </div>
-                  </th>
-                  <th className="swot-header weaknesses-bg" style={{ width: '25%' }}>
-                    <div className="swot-title">
-                      <strong>W</strong>eaknesses
-                    </div>
-                  </th>
-                  <th className="swot-header opportunities-bg" style={{ width: '25%' }}>
-                    <div className="swot-title">
-                      <strong>O</strong>pportunities
-                    </div>
-                  </th>
-                  <th className="swot-header threats-bg" style={{ width: '25%' }}>
-                    <div className="swot-title">
-                      <strong>T</strong>hreats
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="swot-cell" style={{ height: '300px', verticalAlign: 'top', opacity: 0.3 }}></td>
-                  <td className="swot-cell" style={{ height: '300px', verticalAlign: 'top', opacity: 0.3 }}></td>
-                  <td className="swot-cell" style={{ height: '300px', verticalAlign: 'top', opacity: 0.3 }}></td>
-                  <td className="swot-cell" style={{ height: '300px', verticalAlign: 'top', opacity: 0.3 }}></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '2rem',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1rem',
-            zIndex: 10,
-            minWidth: '300px'
-          }}>
-            <Loader size={24} className="loading-spinner" style={{
-              animation: 'spin 1s linear infinite',
-              color: '#4F46E5'
-            }} />
-            <span style={{
-              fontSize: '14px',
-              color: '#6b7280',
-              fontWeight: '500'
-            }}>
-              {t("Regenerating SWOT analysis...")}
-            </span>
-          </div>
+      {swotData && swotTableData.length > 0 && (
+        <div className="section-container">
+          {expandedSections.swotAnalysis !== false && (
+            <div className="table-container">
+              <table className="data-table forces-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {swotTableData.map((row, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="force-name">
+                          {getSwotIcon(row.type)}
+                          <span>{row.label}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${getSwotTypeColor(row.type)}`}>
+                          {row.label}
+                        </span>
+                      </td>
+
+                      <td className="implications-cell">
+                        {row.item}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
-
-      {!currentlyRegenerating && swotData && (swotData.strengths || swotData.weaknesses || swotData.opportunities || swotData.threats) ? (
-        <div className="table-responsive">
-          <table className="table table-bordered table-striped swot-table">
-            <thead className="table-light">
-              <tr>
-                <th className="swot-header strengths-bg">
-                  <div className="swot-title">
-                    <strong>S</strong>trengths
-                  </div>
-                </th>
-                <th className="swot-header weaknesses-bg">
-                  <div className="swot-title">
-                    <strong>W</strong>eaknesses
-                  </div>
-                </th>
-                <th className="swot-header opportunities-bg">
-                  <div className="swot-title">
-                    <strong>O</strong>pportunities
-                  </div>
-                </th>
-                <th className="swot-header threats-bg">
-                  <div className="swot-title">
-                    <strong>T</strong>hreats
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="swot-cell">
-                  {renderSwotContent(swotData.strengths, 'strengths')}
-                </td>
-                <td className="swot-cell">
-                  {renderSwotContent(swotData.weaknesses, 'weaknesses')}
-                </td>
-                <td className="swot-cell">
-                  {renderSwotContent(swotData.opportunities, 'opportunities')}
-                </td>
-                <td className="swot-cell">
-                  {renderSwotContent(swotData.threats, 'threats')}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ) : !currentlyRegenerating && errorMessage ? (
-        <div className="alert alert-danger" style={{ margin: '1rem', padding: '1rem', backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', borderRadius: '8px' }}>
-          <h6>Error Parsing SWOT Data</h6>
-          <p>{errorMessage}</p>
-          <button onClick={handleRegenerate} className="retry-button" style={{ marginTop: '0.5rem' }}>
-            Retry Analysis
-          </button>
-          <details style={{ marginTop: '0.5rem' }}>
-            <summary style={{ cursor: 'pointer' }}>Show raw data</summary>
-            <pre style={{
-              background: '#f8f9fa',
-              padding: '10px',
-              borderRadius: '4px',
-              whiteSpace: 'pre-wrap',
-              fontSize: '12px',
-              maxHeight: '200px',
-              overflow: 'auto',
-              marginTop: '0.5rem'
-            }}>
-              {typeof analysisResult === 'string' ? analysisResult : JSON.stringify(analysisResult, null, 2)}
-            </pre>
-          </details>
-        </div>
-      ) : null}
     </div>
   );
 };
