@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader, SkipForward } from "lucide-react";
+import { Send, Loader, SkipForward, Upload, FileText } from "lucide-react";
 import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -9,7 +9,8 @@ const ChatComponent = ({
   onNewAnswer,
   onQuestionsLoaded,
   onQuestionCompleted,
-  onPhaseCompleted
+  onPhaseCompleted,
+   onFileUploaded 
 }) => {
   // Core state
   const [currentInput, setCurrentInput] = useState('');
@@ -28,6 +29,10 @@ const ChatComponent = ({
   const [isValidatingAnswer, setIsValidatingAnswer] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
 
+  // File upload states
+  const [isFileUploading, setIsFileUploading] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+
   // Toast state
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -35,11 +40,13 @@ const ChatComponent = ({
   const messagesEndRef = useRef(null);
   const hasInitialized = useRef(false);
   const processingAnswer = useRef(false);
+  const fileInputRef = useRef(null);
 
   // API configuration
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const getAuthToken = () => sessionStorage.getItem('token');
+const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
 
   // Initialize component
   useEffect(() => {
@@ -53,6 +60,71 @@ const ChatComponent = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Check if user is in good phase
+  const isInGoodPhase = () => {
+    if (!nextQuestion) return false;
+    return nextQuestion.phase === 'good';
+  };
+
+  // Check if good phase is unlocked (user has completed essential phase)
+  const isGoodPhaseUnlocked = () => {
+    const essentialQuestions = questions.filter(q => q.phase === 'essential');
+    const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
+    return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+  };
+ 
+  useEffect(() => { 
+    setShowFileUpload(isGoodPhaseUnlocked() && isInGoodPhase());
+  }, [questions, completedQuestions, nextQuestion]);
+ 
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = [
+    'application/pdf',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv'
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    showToastMessage('Please upload PDF, Excel, or CSV files only.', 'error');
+    return;
+  }
+
+  try {
+    setIsFileUploading(true);
+    
+    // Store the file for later use in good phase APIs
+    setUploadedFileForAnalysis(file);
+    
+    // Notify parent component about uploaded file
+    if (onFileUploaded) {
+      onFileUploaded(file);
+    }
+    
+    // Add file upload message to chat
+    addMessageLocally('user', `📄 Uploaded: ${file.name}`, {
+      isFileUpload: true,
+      fileName: file.name,
+      fileSize: (file.size / 1024).toFixed(1) + ' KB'
+    });
+
+    // Show success message in toast instead of chat message
+    showToastMessage('File uploaded successfully! This file will be automatically used when generating good phase financial analyses to provide more accurate and detailed insights.', 'success');
+    
+  } catch (error) {
+    console.error('File upload error:', error);
+    showToastMessage('Failed to process file. Please try again.', 'error');
+  } finally {
+    setIsFileUploading(false);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+};
   // Load initial data
   const loadQuestionsAndConversations = async () => {
     try {
@@ -295,10 +367,11 @@ const ChatComponent = ({
       msg.type === type &&
       msg.text === text &&
       msg.questionId === metadata.questionId &&
-      msg.isFollowUp === (metadata.isFollowUp || false)
+      msg.isFollowUp === (metadata.isFollowUp || false) &&
+      !metadata.isFileUpload
     );
 
-    if (isDuplicate) return null;
+    if (isDuplicate && !metadata.isFileUpload) return null;
 
     const messageData = {
       id: `${Date.now()}_${Math.random()}`,
@@ -404,14 +477,6 @@ const ChatComponent = ({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Phase constants
-  const PHASES = {
-    INITIAL: "initial",
-    ESSENTIAL: "essential",
-    GOOD: "good",
-    EXCELLENT: "excellent",
   };
 
   // Updated skip function to use the new API endpoint
@@ -689,25 +754,29 @@ const ChatComponent = ({
     isSaving ||
     isValidatingAnswer ||
     processingAnswer.current ||
-    isSkipping;
+    isSkipping ||
+    isFileUploading;
 
   const isSubmitDisabled = !currentInput.trim() ||
     (!nextQuestion && !pendingValidation) ||
     isSaving ||
     isValidatingAnswer ||
     processingAnswer.current ||
-    isSkipping;
+    isSkipping ||
+    isFileUploading;
 
   const isSkipDisabled = (!nextQuestion && !pendingValidation) ||
     isSaving ||
     isValidatingAnswer ||
     processingAnswer.current ||
-    isSkipping;
+    isSkipping ||
+    isFileUploading;
 
   const canShowSkipButton = (nextQuestion || pendingValidation) &&
     !isSaving &&
     !isValidatingAnswer &&
-    !processingAnswer.current;
+    !processingAnswer.current &&
+    !isFileUploading;
 
   return (
     <div className="chat-container">
@@ -716,6 +785,15 @@ const ChatComponent = ({
           {showToast.message}
         </div>
       )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.xlsx,.xls,.csv"
+        onChange={handleFileUpload}
+        style={{ display: 'none' }}
+      />
 
       <div className="messages-container">
         {messages
@@ -728,10 +806,16 @@ const ChatComponent = ({
                 </div>
               )}
 
-              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''}`}>
+              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''} ${message.isFileUpload ? 'file-upload' : ''}`}>
                 <div className="message-text">
+                  {message.isFileUpload && <FileText size={16} style={{ display: 'inline', marginRight: '8px', color: '#10b981' }} />}
                   {message.text}
                   {message.isSkipped && <span className="skip-indicator"></span>}
+                  {message.isFileUpload && (
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                      Size: {message.fileSize}
+                    </div>
+                  )}
                 </div>
                 <div className="message-timestamp">
                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -745,13 +829,14 @@ const ChatComponent = ({
             </div>
           ))}
 
-        {(isSaving || isValidatingAnswer || isSkipping) && (
+        {(isSaving || isValidatingAnswer || isSkipping || isFileUploading) && (
           <div className="generating-analysis">
             <Loader size={16} className="spinner" />
             <span>
               {isSaving && 'Saving your answer...'}
               {isValidatingAnswer && 'Validating your answer...'}
               {isSkipping && 'Please Wait...'}
+              {isFileUploading && 'Uploading file...'}
             </span>
           </div>
         )}
@@ -759,7 +844,7 @@ const ChatComponent = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Floating Skip Button in chat area */}
+      {/* Floating Skip Button */}
       {canShowSkipButton && (
         <button
           onClick={handleSkip}
@@ -770,6 +855,70 @@ const ChatComponent = ({
           <SkipForward size={18} />
           <span className="skip-text">Skip</span>
         </button>
+      )}
+
+      {/* Floating File Upload Button - Show when in good phase */}
+      {showFileUpload && (
+        <div className="floating-upload-container">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isFileUploading}
+            className="floating-upload-button"
+            onMouseEnter={(e) => {
+              const tooltip = e.currentTarget.querySelector('.upload-tooltip');
+              if (tooltip) tooltip.style.display = 'block';
+            }}
+            onMouseLeave={(e) => {
+              const tooltip = e.currentTarget.querySelector('.upload-tooltip');
+              if (tooltip) tooltip.style.display = 'none';
+            }}
+          >
+            {isFileUploading ? (
+              <Loader size={24} className="spinner" />
+            ) : (
+              <Upload size={24} />
+            )}
+            
+            {/* Tooltip */}
+            <div className="upload-tooltip" style={{
+              display: 'none',
+              position: 'absolute',
+              bottom: '120%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#1f2937',
+              color: 'white',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              zIndex: 1000,
+              maxWidth: '250px',
+              textAlign: 'center',
+              lineHeight: '1.4'
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                💡 Upload Financial Data (Optional)
+              </div>
+              <div style={{ fontSize: '11px', color: '#d1d5db' }}>
+                PDF, Excel, or CSV files to enhance analysis
+              </div>
+              {/* Tooltip arrow */}
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '6px solid #1f2937'
+              }}></div>
+            </div>
+          </button>
+        </div>
       )}
 
       <div className="input-area">
@@ -806,16 +955,18 @@ const ChatComponent = ({
           {pendingValidation ? (
             <span>
               Follow-up required • Please provide more details ({followupAttempts + 1}/2 attempts)
-              {(isSaving || isValidatingAnswer || isSkipping) && ' • Processing...'}
+              {(isSaving || isValidatingAnswer || isSkipping || isFileUploading) && ' • Processing...'}
             </span>
           ) : nextQuestion ? (
             <span>
               Question {completedQuestions.size + 1} of {questions.length} •
               Phase: {nextQuestion.phase.toUpperCase()}
+              {showFileUpload && isInGoodPhase() && ' • File upload available'}
               {isSaving && ` • Saving...`}
               {isValidatingAnswer && ` • Validating...`}
               {processingAnswer.current && ` • Processing...`}
               {isSkipping && ` • Skipping...`}
+              {isFileUploading && ` • Uploading...`}
             </span>
           ) : (
             <span>All questions completed!</span>

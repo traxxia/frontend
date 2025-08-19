@@ -26,6 +26,7 @@ const OperationalEfficiencyInsight = ({
   questions = [],
   userAnswers = {},
   businessName = '',
+  onDataGenerated,
   onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
@@ -37,8 +38,16 @@ const OperationalEfficiencyInsight = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const hasInitialized = useRef(false);
+  const fileInputRef = useRef(null);
+
+  // API URLs
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -47,7 +56,6 @@ const OperationalEfficiencyInsight = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    // Use the same pattern as FullSWOT
     const analysisConfig = ANALYSIS_TYPES.operationalEfficiency || {
       displayName: 'Operational Efficiency Analysis',
       customMessage: 'Complete operational questions to unlock efficiency insights, resource optimization recommendations, and performance analytics.'
@@ -64,6 +72,145 @@ const OperationalEfficiencyInsight = ({
     );
   };
 
+  // File upload handlers
+  const handleFileUpload = (file) => {
+    if (file) {
+      // Validate file type (PDF, images, Excel, etc.)
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+
+      if (allowedTypes.includes(file.type)) {
+        setUploadedFile(file);
+        setError(null);
+      } else {
+        setError('Please upload a PDF, image, Excel, or CSV file.');
+      }
+    }
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Generate operational efficiency analysis
+  const generateOperationalEfficiencyAnalysis = async (withFile = false) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Prepare questions and answers
+      const questionsArray = [];
+      const answersArray = [];
+
+      questions
+        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .forEach(question => {
+          questionsArray.push(question.question_text);
+          answersArray.push(userAnswers[question._id]);
+        });
+
+      if (questionsArray.length === 0) {
+        throw new Error('Please answer some questions first to generate operational efficiency analysis.');
+      }
+
+      // Create FormData
+      const formData = new FormData();
+
+      // Add file if provided and withFile is true
+      if (withFile && uploadedFile) {
+        formData.append('file', uploadedFile);
+      } else {
+        // Create a dummy text file with business information
+        const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
+        const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
+        formData.append('file', dummyFile, 'business_data.txt');
+      }
+
+      formData.append('questions', questionsArray.join(','));
+      formData.append('answers', answersArray.join('\n'));
+
+      const response = await fetch(`${ML_API_BASE_URL}/operational-efficiency`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json'
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      setAnalysisData(result);
+      setHasGenerated(true);
+
+      // Save to backend
+      await saveAnalysisToBackend(result);
+
+      if (onDataGenerated) {
+        onDataGenerated(result);
+      }
+
+    } catch (error) {
+      console.error('Error generating operational efficiency analysis:', error);
+      setError(`Failed to generate analysis: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save analysis to backend
+  const saveAnalysisToBackend = async (analysisData) => {
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(`${API_BASE_URL}/api/conversations/phase-analysis`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phase: 'good',
+          analysis_type: 'operationalEfficiency',
+          analysis_name: 'Operational Efficiency Analysis',
+          analysis_data: analysisData,
+          business_id: selectedBusinessId,
+          metadata: {
+            generated_at: new Date().toISOString(),
+            business_name: businessName,
+            has_uploaded_file: !!uploadedFile
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save Operational Efficiency analysis');
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error saving Operational Efficiency analysis to backend:', error);
+      throw error;
+    }
+  };
+
   // Handle regenerate
   const handleRegenerate = async () => {
     console.log('OperationalEfficiency handleRegenerate called', { onRegenerate: !!onRegenerate });
@@ -76,8 +223,10 @@ const OperationalEfficiencyInsight = ({
         setError(error.message || 'Failed to regenerate analysis');
       }
     } else {
-      console.warn('No onRegenerate prop provided to OperationalEfficiencyInsight');
-      setError('Regeneration not available');
+      // Fallback: reset data and allow generation
+      setAnalysisData(null);
+      setHasGenerated(false);
+      setError(null);
     }
   };
 
@@ -110,29 +259,6 @@ const OperationalEfficiencyInsight = ({
     return sectionsWithData < 2;
   };
 
-  // API call to fetch operational efficiency data
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/operational-efficiency');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setAnalysisData(data);
-      setHasGenerated(true);
-    } catch (err) {
-      setError('Failed to fetch operational efficiency data');
-      console.error('Error fetching data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -157,6 +283,13 @@ const OperationalEfficiencyInsight = ({
       setHasGenerated(false);
     }
   }, [operationalEfficiencyData]);
+
+  // Update effect for onDataGenerated
+  useEffect(() => {
+    if (analysisData && onDataGenerated) {
+      onDataGenerated(analysisData);
+    }
+  }, [analysisData]);
 
   // Prepare efficiency trends data with fallbacks
   const prepareEfficiencyTrendsData = (data) => {
@@ -252,8 +385,8 @@ const OperationalEfficiencyInsight = ({
     return null;
   };
 
-  // Loading state during regeneration
-  if (isRegenerating) {
+  // Loading state during regeneration or generation
+  if (isRegenerating || loading) {
     return (
       <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
         <div style={{ 
@@ -263,24 +396,10 @@ const OperationalEfficiencyInsight = ({
           height: '200px'
         }}>
           <Loader className="animate-spin" style={{ marginRight: '8px' }} />
-          Regenerating Operational Efficiency Analysis...
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (loading) {
-    return (
-      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          height: '200px'
-        }}>
-          <Loader className="animate-spin" style={{ marginRight: '8px' }} />
-          Loading operational efficiency data...
+          {isRegenerating
+            ? "Regenerating Operational Efficiency Analysis..."
+            : "Generating operational efficiency analysis..."
+          }
         </div>
       </div>
     );
@@ -299,7 +418,12 @@ const OperationalEfficiencyInsight = ({
             <div>{error}</div>
           </div>
           <button 
-            onClick={handleRegenerate}
+            onClick={() => {
+              setError(null);
+              if (onRegenerate) {
+                onRegenerate();
+              }
+            }}
             style={{
               backgroundColor: '#3b82f6',
               color: 'white',
@@ -309,7 +433,7 @@ const OperationalEfficiencyInsight = ({
               cursor: 'pointer'
             }}
           >
-            Retry
+            Retry Analysis
           </button>
         </div>
       </div>
@@ -331,6 +455,17 @@ const OperationalEfficiencyInsight = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={5}
           customMessage="Complete operational questions to unlock efficiency insights, resource optimization recommendations, and performance analytics."
+          
+          // File upload props (same as FinancialBalanceInsight)
+          showFileUpload={true}
+          onFileUpload={handleFileUpload}
+          onGenerateWithFile={() => generateOperationalEfficiencyAnalysis(true)}
+          onGenerateWithoutFile={() => generateOperationalEfficiencyAnalysis(false)}
+          uploadedFile={uploadedFile}
+          onRemoveFile={removeFile}
+          isUploading={loading}
+          fileUploadMessage="Upload operational documents (PDF, Excel, CSV, or images)"
+          acceptedFileTypes=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png"
         />
       </div>
     );

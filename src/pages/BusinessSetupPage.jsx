@@ -56,6 +56,7 @@ const BusinessSetupPage = () => {
   // Use our custom hooks
   const state = useBusinessSetup(business, selectedBusinessId);
   const [currentPhase, setCurrentPhase] = useState('initial');
+const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
 
   // Extract state
   const {
@@ -151,7 +152,8 @@ const BusinessSetupPage = () => {
     setCostEfficiencyData,
     setFinancialPerformanceData,
     setFinancialBalanceData,
-    setOperationalEfficiencyData
+    setOperationalEfficiencyData,
+    uploadedFile: uploadedFileForAnalysis
   };
 
   // Handle redirect to brief tab
@@ -1200,6 +1202,7 @@ const BusinessSetupPage = () => {
             onPhaseCompleted={async (phase, completedSet) => {
               console.log('ChatComponent phase completed:', phase);
             }}
+  onFileUploaded={setUploadedFileForAnalysis}
           />
         </div>
 

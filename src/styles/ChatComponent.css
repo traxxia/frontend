@@ -496,3 +496,115 @@
     0 2px 5px rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
+/* Add these styles to your existing ChatComponent.css */
+
+/* Floating Upload Button */
+.floating-upload-container {
+  position: absolute;
+  bottom: 80px;
+  right: 10px;
+  z-index: 999;
+}
+
+.floating-upload-button {
+  width: 50px;
+  height: 50px;
+  padding:10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  animation: floatUpload 3s ease-in-out infinite;
+}
+
+.floating-upload-button:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.1);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.floating-upload-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  animation: none;
+}
+
+.floating-upload-button:active:not(:disabled) {
+  transform: translateY(-1px) scale(1.05);
+}
+
+@keyframes floatUpload {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Upload tooltip styles */
+.upload-tooltip {
+  pointer-events: none;
+  animation: tooltipFadeIn 0.3s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0px);
+  }
+}
+
+/* File upload message styles */
+.message-bubble.file-upload {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: 2px solid #10b981;
+}
+
+.message-bubble.file-upload .message-text {
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .floating-upload-container {
+    bottom: 70px;
+    right: 15px;
+  }
+  
+  .floating-upload-button {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .upload-tooltip {
+    maxWidth: 200px;
+    fontSize: 11px;
+    padding: 10px 12px;
+  }
+}
+
+/* Ensure proper stacking with skip button */
+.floating-skip-button {
+  z-index: 998;
+}
+ 
+
+@media (max-width: 768px) {
+  .chat-container:has(.floating-upload-container) .floating-skip-button {
+    right: 75px;
+  }
+}

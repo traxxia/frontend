@@ -124,19 +124,57 @@ export class AnalysisApiService {
     return { questionsArray, answersArray };
   }
 
-  // UPDATED - Generic API call method with loading tracking
-  async makeAPICall(endpoint, questionsArray, answersArray) {
-    if (questionsArray.length === 0) {
-      throw new Error(`No questions available for ${endpoint} analysis`);
+  async makeAPICall(endpoint, questionsArray, answersArray, selectedBusinessId = null, uploadedFile = null) {
+  if (questionsArray.length === 0) {
+    throw new Error(`No questions available for ${endpoint} analysis`);
+  }
+
+  try {
+    // Set loading state for this specific endpoint
+    if (this.setApiLoading) {
+      this.setApiLoading(endpoint, true);
     }
 
-    try {
-      // NEW - Set loading state for this specific endpoint
-      if (this.setApiLoading) {
-        this.setApiLoading(endpoint, true);
-      }
+    // Check if this is a good phase API that supports file upload
+    const goodPhaseEndpoints = [
+      'cost-efficiency-competitive-position',
+      'financial-performance', 
+      'financial-health',
+      'operational-efficiency'
+    ];
 
-      const response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
+    const isGoodPhaseAPI = goodPhaseEndpoints.includes(endpoint);
+
+    let response;
+
+    if (isGoodPhaseAPI) {
+      // Always use FormData for good phase APIs (with or without file)
+      const formData = new FormData();
+      
+      if (uploadedFile) {
+        // Add the uploaded file if provided
+        formData.append('file', uploadedFile);
+      } else {
+        // Create a dummy text file with business information
+        const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
+        const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
+        formData.append('file', dummyFile, 'business_data.txt');
+      }
+      
+      // Add questions and answers
+      formData.append('questions', questionsArray.join(','));
+      formData.append('answers', answersArray.join('\n'));
+
+      response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json'
+        },
+        body: formData
+      });
+    } else {
+      // Use JSON for other APIs
+      response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -147,20 +185,21 @@ export class AnalysisApiService {
           answers: answersArray
         })
       });
+    }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
+    }
 
-      return await response.json();
-    } finally {
-      // NEW - Always clear loading state for this endpoint
-      if (this.setApiLoading) {
-        this.setApiLoading(endpoint, false);
-      }
+    return await response.json();
+  } finally {
+    // Always clear loading state for this endpoint
+    if (this.setApiLoading) {
+      this.setApiLoading(endpoint, false);
     }
   }
+}
 
   // Save analysis to backend
   async saveAnalysisToBackend(analysisData, analysisType, selectedBusinessId) {
@@ -232,130 +271,147 @@ export class AnalysisApiService {
     }
   }
 
-  // Generic method to call any analysis endpoint for simplified approach
   async callAnalysisEndpoint(analysisType, payload) {
-    const endpoint = API_ENDPOINTS[analysisType];
-    if (!endpoint) {
-      throw new Error(`Unknown analysis type: ${analysisType}`);
-    }
+  const endpoint = API_ENDPOINTS[analysisType];
+  if (!endpoint) {
+    throw new Error(`Unknown analysis type: ${analysisType}`);
+  }
 
-    const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-      payload.questions, 
-      payload.userAnswers
+  const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+    payload.questions, 
+    payload.userAnswers
+  );
+
+  // Pass uploadedFile from stateSetters for good phase APIs
+  const uploadedFile = payload.stateSetters?.uploadedFile || null;
+
+  const result = await this.makeAPICall(
+    endpoint, 
+    questionsArray, 
+    answersArray, 
+    payload.selectedBusinessId, 
+    uploadedFile
+  );
+  
+  // Process result based on analysis type
+  let processedData = null;
+  
+  switch (analysisType) {
+    case 'swot':
+      processedData = typeof result === 'string' ? result : JSON.stringify(result);
+      break;
+    case 'porters':
+      processedData = result.porters_analysis || result.porters || result;
+      break;
+    case 'purchaseCriteria':
+      processedData = result.purchase_criteria || result.purchaseCriteria || result;
+      break;
+    case 'channelHeatmap':
+      processedData = result.channel_heatmap || result.channelHeatmap || result;
+      break;
+    case 'loyaltyNPS':
+      processedData = result.loyalty_nps || result.loyaltyNPS || result;
+      break;
+    case 'capabilityHeatmap':
+      processedData = result.capabilities ? result : result.capability_heatmap || result;
+      break;
+    case 'channelEffectiveness':
+      processedData = result.channelEffectiveness ? result : { channelEffectiveness: result.channel_effectiveness || result };
+      break;
+    case 'expandedCapability':
+      processedData = result.expandedCapabilityHeatmap ? result : { expandedCapabilityHeatmap: result.expanded_capability_heatmap || result };
+      break;
+    case 'strategicRadar':
+      processedData = result.strategicRadar ? result : { strategicRadar: result.strategic_radar || result };
+      break;
+    case 'cultureProfile':
+      processedData = result.cultureProfile ? result : { cultureProfile: result.culture_profile || result };
+      break;
+    case 'productivityMetrics':
+      processedData = result.productivityMetrics ? result : { productivityMetrics: result.productivity_metrics || result };
+      break;
+    case 'maturityScore':
+      processedData = result.maturityScore || result.maturity_score ? result : { maturityScore: result };
+      break;
+    // GOOD PHASE APIs - Enhanced processing
+    case 'costEfficiency':
+      processedData = result.costEfficiencyInsight ? result : { costEfficiencyInsight: result.cost_efficiency_insight || result };
+      break;
+    case 'financialPerformance':
+      processedData = result.financialPerformance ? result : { financialPerformance: result.financial_performance || result };
+      break;
+    case 'financialHealth':
+      // Handle both old and new structure
+      if (result.financialHealth) {
+        processedData = result;
+      } else if (result.financialBalanceInsight) {
+        processedData = result;
+      } else if (result.financial_balance_insight) {
+        processedData = { financialBalanceInsight: result.financial_balance_insight };
+      } else {
+        processedData = { financialHealth: result };
+      }
+      break;
+    case 'operationalEfficiency':
+      processedData = result.operationalEfficiencyInsight ? result : { operationalEfficiencyInsight: result.operational_efficiency_insight || result };
+      break;
+    default:
+      processedData = result;
+  }
+
+  return { data: processedData };
+}
+async handlePhaseCompletion(phase, questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage) {
+  const analysisTypes = PHASE_API_CONFIG[phase];
+  
+  if (!analysisTypes) {
+    console.error(`Unknown phase: ${phase}`);
+    return;
+  }
+
+  showToastMessage(`${phase.charAt(0).toUpperCase() + phase.slice(1)} phase completed! Generating analyses...`, "info");
+
+  // Clear existing data for this phase
+  this.clearPhaseData(phase, stateSetters);
+
+  try {
+    // Get fresh conversation data
+    const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+    
+    // Prepare payload with all questions, answers, and file support
+    const payload = {
+      questions,
+      userAnswers: { ...userAnswers, ...freshAnswers },
+      selectedBusinessId,
+      phase,
+      stateSetters // Include stateSetters to access uploadedFile
+    };
+
+    // Call all APIs for this phase concurrently with file support
+    const results = await Promise.allSettled(
+      analysisTypes.map(analysisType => 
+        this.callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
+      )
     );
 
-    const result = await this.makeAPICall(endpoint, questionsArray, answersArray);
-    
-    // Process result based on analysis type
-    let processedData = null;
-    
-    switch (analysisType) {
-      case 'swot':
-        processedData = typeof result === 'string' ? result : JSON.stringify(result);
-        break;
-      case 'porters':
-        processedData = result.porters_analysis || result.porters || result;
-        break;
-      case 'purchaseCriteria':
-        processedData = result.purchase_criteria || result.purchaseCriteria || result;
-        break;
-      case 'channelHeatmap':
-        processedData = result.channel_heatmap || result.channelHeatmap || result;
-        break;
-      case 'loyaltyNPS':
-        processedData = result.loyalty_nps || result.loyaltyNPS || result;
-        break;
-      case 'capabilityHeatmap':
-        processedData = result.capabilities ? result : result.capability_heatmap || result;
-        break;
-      case 'channelEffectiveness':
-        processedData = result.channelEffectiveness ? result : { channelEffectiveness: result.channel_effectiveness || result };
-        break;
-      case 'expandedCapability':
-        processedData = result.expandedCapabilityHeatmap ? result : { expandedCapabilityHeatmap: result.expanded_capability_heatmap || result };
-        break;
-      case 'strategicRadar':
-        processedData = result.strategicRadar ? result : { strategicRadar: result.strategic_radar || result };
-        break;
-      case 'cultureProfile':
-        processedData = result.cultureProfile ? result : { cultureProfile: result.culture_profile || result };
-        break;
-      case 'productivityMetrics':
-        processedData = result.productivityMetrics ? result : { productivityMetrics: result.productivity_metrics || result };
-        break;
-      case 'maturityScore':
-        processedData = result.maturityScore || result.maturity_score ? result : { maturityScore: result };
-        break;
-      case 'costEfficiency':
-        processedData = result.costEfficiencyInsight ? result : { costEfficiencyInsight: result.cost_efficiency_insight || result };
-        break;
-      case 'financialPerformance':
-        processedData = result.financialPerformance ? result : { financialPerformance: result.financial_performance || result };
-        break;
-      case 'financialHealth':
-        processedData = result.financialBalanceInsight ? result : { financialBalanceInsight: result.financial_balance_insight || result };
-        break;
-      case 'operationalEfficiency':
-        processedData = result.operationalEfficiencyInsight ? result : { operationalEfficiencyInsight: result.operational_efficiency_insight || result };
-        break;
-      default:
-        processedData = result;
-    }
+    // Handle results
+    const successes = results.filter(r => r.status === 'fulfilled').length;
+    const failures = results.filter(r => r.status === 'rejected').length;
 
-    return { data: processedData };
-  }
-
-  // Main phase completion handler
-  async handlePhaseCompletion(phase, questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage) {
-    const analysisTypes = PHASE_API_CONFIG[phase];
-    
-    if (!analysisTypes) {
-      console.error(`Unknown phase: ${phase}`);
-      return;
-    }
-
-    showToastMessage(`${phase.charAt(0).toUpperCase() + phase.slice(1)} phase completed! Generating analyses...`, "info");
-
-    // Clear existing data for this phase
-    this.clearPhaseData(phase, stateSetters);
-
-    try {
-      // Get fresh conversation data
-      const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
-      
-      // Prepare payload with all questions and answers up to this stage
-      const payload = {
-        questions,
-        userAnswers: { ...userAnswers, ...freshAnswers },
-        selectedBusinessId,
-        phase
-      };
-
-      // Call all APIs for this phase concurrently
-      const results = await Promise.allSettled(
-        analysisTypes.map(analysisType => 
-          this.callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-        )
+    if (failures > 0) {
+      showToastMessage(
+        `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
+        failures < successes ? "warning" : "error"
       );
-
-      // Handle results
-      const successes = results.filter(r => r.status === 'fulfilled').length;
-      const failures = results.filter(r => r.status === 'rejected').length;
-
-      if (failures > 0) {
-        showToastMessage(
-          `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
-          failures < successes ? "warning" : "error"
-        );
-      } else {
-        showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
-      }
-
-    } catch (error) {
-      console.error(`Error generating ${phase} phase analysis:`, error);
-      showToastMessage(`Failed to generate ${phase} phase analyses. Please try again.`, "error");
+    } else {
+      showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
     }
+
+  } catch (error) {
+    console.error(`Error generating ${phase} phase analysis:`, error);
+    showToastMessage(`Failed to generate ${phase} phase analyses. Please try again.`, "error");
   }
+}
 
   // Call individual analysis API with automatic saving
   async callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId) {
