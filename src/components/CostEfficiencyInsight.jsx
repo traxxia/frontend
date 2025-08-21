@@ -352,11 +352,11 @@ const CostEfficiencyInsight = ({
           <div className="ch-tooltip-header">{`Year: ${label}`}</div>
           <div className="ch-tooltip-content">
             {data.type === 'start' ? (
-              <div>{`Starting Cost: $${data.value}`}</div>
+              <div>{`Starting Cost: ${data.value}`}</div>
             ) : (
               <>
-                <div>{`Change: ${data.change > 0 ? '+' : ''}$${data.change}`}</div>
-                <div>{`Cumulative: $${data.cumulative}`}</div>
+                <div>{`Change: ${data.change > 0 ? '+' : ''}${data.change}`}</div>
+                <div>{`Cumulative: ${data.cumulative}`}</div>
               </>
             )}
           </div>
@@ -374,7 +374,7 @@ const CostEfficiencyInsight = ({
         <div className="ch-tooltip">
           <div className="ch-tooltip-header">{label}</div>
           <div className="ch-tooltip-content">
-            <div>{`Cost: $${value}`}</div>
+            <div>{`Cost: ${value}`}</div>
           </div>
         </div>
       );
@@ -467,7 +467,7 @@ const CostEfficiencyInsight = ({
             <DollarSign size={20} />
             <span>Current Unit Cost</span>
           </div>
-          <p className="ch-metric-value">${unitEconomics.currentUnitCost}</p>
+          <p className="ch-metric-value">{unitEconomics.currentUnitCost}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-green">
@@ -475,7 +475,7 @@ const CostEfficiencyInsight = ({
             <Target size={20} />
             <span>Industry Average</span>
           </div>
-          <p className="ch-metric-value">${unitEconomics.competitorAvgCost}</p>
+          <p className="ch-metric-value">{unitEconomics.competitorAvgCost}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-purple">
@@ -484,7 +484,7 @@ const CostEfficiencyInsight = ({
             <span>{costSavings > 0 ? 'Cost Advantage' : 'Cost Gap'}</span>
           </div>
           <p className="ch-metric-value">
-            {costSavings > 0 ? '-' : '+'}${Math.abs(costSavings)} ({savingsPercentage}%)
+            {costSavings > 0 ? '-' : '+'}{Math.abs(costSavings)} ({savingsPercentage}%)
           </p>
         </div>
 
@@ -493,7 +493,7 @@ const CostEfficiencyInsight = ({
             <Users size={20} />
             <span>Value per Employee</span>
           </div>
-          <p className="ch-metric-value">${employeeProductivity.valuePerEmployee?.toLocaleString()}</p>
+          <p className="ch-metric-value">{employeeProductivity.valuePerEmployee?.toLocaleString()}</p>
         </div>
       </div>
 
@@ -566,11 +566,11 @@ const CostEfficiencyInsight = ({
             <h4>Fixed Costs</h4>
             <div className="ch-cost-item">
               <span>Monthly:</span>
-              <span>${costBreakdown.fixedCosts.monthly.toLocaleString()}</span>
+              <span>{costBreakdown.fixedCosts.monthly.toLocaleString()}</span>
             </div>
             <div className="ch-cost-item">
               <span>Annual:</span>
-              <span>${costBreakdown.fixedCosts.annualized.toLocaleString()}</span>
+              <span>{costBreakdown.fixedCosts.annualized.toLocaleString()}</span>
             </div>
             <div className="ch-cost-components">
               <strong>Components:</strong>
@@ -586,7 +586,7 @@ const CostEfficiencyInsight = ({
             <h4>Variable Costs</h4>
             <div className="ch-cost-item">
               <span>Per Unit:</span>
-              <span>${costBreakdown.variableCosts.perUnit}</span>
+              <span>{costBreakdown.variableCosts.perUnit}</span>
             </div>
             <div className="ch-cost-components">
               <strong>Components:</strong>
@@ -610,7 +610,7 @@ const CostEfficiencyInsight = ({
             </div>
             <div className="ch-cost-item">
               <span>Value/Employee:</span>
-              <span>${employeeProductivity.valuePerEmployee.toLocaleString()}</span>
+              <span>{employeeProductivity.valuePerEmployee.toLocaleString()}</span>
             </div>
           </div>
         </div>

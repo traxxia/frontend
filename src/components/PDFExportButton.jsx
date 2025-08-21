@@ -5,15 +5,13 @@ import { useTranslation } from "../hooks/useTranslation";
 const PDFExportButton = ({ 
   businessName, 
   onToastMessage,
-  currentPhase, // This should be dynamically determined
+  currentPhase,
   disabled = false,
   isChannelHeatmapReady = true,
   isCapabilityHeatmapReady = true,
   className = "",
   style = {},
-  // NEW: Add export type prop
   exportType = "analysis", // "analysis" or "strategic"
-  // Add strategic data prop
   strategicData = null,
   // Analysis data state indicators
   unlockedFeatures = {},
@@ -37,6 +35,76 @@ const PDFExportButton = ({
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const { t } = useTranslation();
 
+  // Fast preparation function - minimal DOM changes (from old version)
+  const prepareForCapture = () => {
+    const changes = [];
+    
+    // 1. Expand all cards instantly (no animation)
+    const cards = document.querySelectorAll('.modern-card-content.collapsed');
+    cards.forEach(card => {
+      changes.push({
+        element: card,
+        property: 'className',
+        oldValue: card.className,
+        newValue: card.className.replace('collapsed', 'expanded')
+      });
+      card.className = card.className.replace('collapsed', 'expanded');
+      card.style.maxHeight = 'none';
+      card.style.overflow = 'visible';
+    });
+
+    // 2. Expand all phase sections
+    const phaseSections = document.querySelectorAll('.modern-phase-content.collapsed');
+    phaseSections.forEach(section => {
+      changes.push({
+        element: section,
+        property: 'className',
+        oldValue: section.className,
+        newValue: section.className.replace('collapsed', 'expanded')
+      });
+      section.className = section.className.replace('collapsed', 'expanded');
+      section.style.maxHeight = 'none';
+      section.style.overflow = 'visible';
+    });
+
+    // 3. Hide buttons and interactive elements
+    const buttons = document.querySelectorAll('button, .regenerate-button, .dropdown-button');
+    buttons.forEach(btn => {
+      changes.push({
+        element: btn,
+        property: 'display',
+        oldValue: btn.style.display,
+        newValue: 'none'
+      });
+      btn.style.display = 'none';
+    });
+
+    // 4. Fix any overflow issues for better capture
+    const scrollContainers = document.querySelectorAll('.ch-heatmap-scroll, .scroll-container');
+    scrollContainers.forEach(container => {
+      changes.push({
+        element: container,
+        property: 'overflow',
+        oldValue: container.style.overflow,
+        newValue: 'visible'
+      });
+      container.style.overflow = 'visible';
+    });
+
+    return changes;
+  };
+
+  // Fast restore function (from old version)
+  const restoreChanges = (changes) => {
+    changes.forEach(({ element, property, oldValue }) => {
+      if (property === 'className') {
+        element.className = oldValue;
+      } else {
+        element.style[property] = oldValue;
+      }
+    });
+  };
+
   // Function to determine actual export phase based on available content
   const getExportPhase = () => {
     const hasGoodPhaseData = !!(costEfficiencyData || financialPerformanceData || financialBalanceData || operationalEfficiencyData);
@@ -54,214 +122,77 @@ const PDFExportButton = ({
     return 'initial';
   };
 
-  // Define which components belong to each phase for analysis export
-  const phaseComponents = {
-    initial: [
-      { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
-      { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-      { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
-      { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-      { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
-      { selector: '[data-component="porters-analysis"]', name: 'Porter\'s Five Forces' },
-      { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
-    ],
-    essential: [
-      { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-      { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
-      { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-      { selector: '[data-component="porters-analysis"]', name: 'Porter\'s Five Forces' },
-      { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
-      { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-      { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
-      { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-      { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
-      { selector: '[data-component="expanded-capability"]', name: 'Expanded Capability Heatmap' },
-      { selector: '[data-component="strategic-goals"]', name: 'Strategic Goals' },
-      { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-      { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
-      { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
-      { selector: '[data-component="maturity"]', name: 'Business Maturity Score' }
-    ],
-    good: [
-      { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-      { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
-      { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-      { selector: '[data-component="porters-analysis"]', name: 'Porter\'s Five Forces' },
-      { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
-      { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-      { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
-      { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-      { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
-      { selector: '[data-component="expanded-capability"]', name: 'Expanded Capability Heatmap' },
-      { selector: '[data-component="strategic-goals"]', name: 'Strategic Goals' },
-      { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-      { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
-      { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
-      { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-      { selector: '[data-component="cost-efficiency"]', name: 'Cost Efficiency Insight' },
-      { selector: '[data-component="financial-performance"]', name: 'Financial Performance & Growth Trajectory' },
-      { selector: '[data-component="financial-health"]', name: 'Financial Health Insight' },
-      { selector: '[data-component="operational-efficiency"]', name: 'Operational Efficiency Insight' }
-    ]
-  };
+  // Optimized single-page capture for each component (enhanced from old version)
+  const captureComponent = async (selector, name) => {
+    const component = document.querySelector(selector);
+    if (!component || component.offsetHeight === 0) {
+      return null;
+    }
 
-  // Define strategic components - all strategic analysis sections
-  const strategicComponents = [
-    { selector: '.strategic-page-section', name: 'Strategic Analysis' }
-  ];
-
-  // Function to expand all cards and phases temporarily
-  const expandAllContent = () => {
-    const originalStates = [];
-    
-    // Expand all phase sections
-    const phaseSections = document.querySelectorAll('.modern-phase-content');
-    phaseSections.forEach((section, index) => {
-      originalStates.push({
-        element: section,
-        type: 'phase',
-        wasExpanded: section.classList.contains('expanded')
-      });
+    try {
+      // Dynamic import for better performance
+      const html2canvas = (await import('html2canvas')).default;
       
-      section.classList.remove('collapsed');
-      section.classList.add('expanded');
-      section.style.maxHeight = 'none';
-      section.style.overflow = 'visible';
-    });
-    
-    // Expand all analysis cards
-    const allCards = document.querySelectorAll('.modern-card-content');
-    allCards.forEach((card, index) => {
-      originalStates.push({
-        element: card,
-        type: 'card',
-        wasExpanded: card.classList.contains('expanded')
+      const canvas = await html2canvas(component, {
+        scale: 1.2, // Good quality but not too slow
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        removeContainer: true,
+        imageTimeout: 3000, // Faster timeout
+        windowWidth: component.scrollWidth,
+        windowHeight: component.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Remove animations in cloned document for speed
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            * { 
+              animation: none !important; 
+              transition: none !important; 
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+        }
       });
-      
-      card.classList.remove('collapsed');
-      card.classList.add('expanded');
-      card.style.maxHeight = 'none';
-      card.style.overflow = 'visible';
-    });
-    
-    return originalStates;
+
+      return {
+        canvas,
+        name,
+        imgData: canvas.toDataURL('image/png', 0.85) // Good quality
+      };
+    } catch (error) {
+      console.error(`Failed to capture ${name}:`, error);
+      return null;
+    }
   };
 
-  // Function to restore original states
-  const restoreOriginalStates = (originalStates) => {
-    originalStates.forEach(({ element, wasExpanded }) => {
-      if (!wasExpanded) {
-        element.classList.remove('expanded');
-        element.classList.add('collapsed');
-        element.style.maxHeight = '';
-        element.style.overflow = '';
-      }
-    });
-  };
-
+  // Main strategic export function
   const handleDownloadStrategicAnalysis = async () => {
     if (!strategicData) {
-      if (onToastMessage) {
-        onToastMessage('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
-      }
+      onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
       return;
     }
 
-    let originalStates = [];
+    let changes = [];
 
     try {
       setIsExportingPDF(true);
 
-      // Expand all content temporarily
-      originalStates = expandAllContent();
-      
-      // Wait for DOM to update and ensure content is visible
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Fast preparation
+      changes = prepareForCapture();
 
+      // Short wait for DOM to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Dynamic imports
       const jsPDF = (await import('jspdf')).default;
-      const html2canvas = (await import('html2canvas')).default;
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      let isFirstPage = true;
 
-      // Helper function to capture strategic components
-      const captureStrategicComponents = async () => {
-        const strategicContainer = document.querySelector('.strategic-content');
-        if (!strategicContainer || strategicContainer.offsetHeight === 0 || strategicContainer.offsetWidth === 0) {
-          return false;
-        }
-
-        // Get all strategic sections
-        const strategicSections = strategicContainer.querySelectorAll('.strategic-page-section');
-        let capturedCount = 0;
-
-        for (let i = 0; i < strategicSections.length; i++) {
-          const section = strategicSections[i];
-          if (!section || section.offsetHeight === 0 || section.offsetWidth === 0) {
-            continue;
-          }
-
-          // Get section title
-          const titleElement = section.querySelector('.section-header h2');
-          const sectionTitle = titleElement ? titleElement.textContent.trim() : `Strategic Section ${i + 1}`;
-
-          // Hide all buttons in this section
-          const buttons = section.querySelectorAll('button');
-          const originalDisplay = [];
-          buttons.forEach((btn, index) => {
-            originalDisplay[index] = btn.style.display;
-            btn.style.display = 'none';
-          });
-
-          try {
-            const canvas = await html2canvas(section, {
-              scale: 1.2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: '#ffffff',
-              logging: false,
-              windowWidth: section.scrollWidth,
-              windowHeight: section.scrollHeight
-            });
-
-            if (!isFirstPage) pdf.addPage();
-            
-            // Add section title
-            pdf.setFontSize(16);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(59, 130, 246);
-            pdf.text(sectionTitle, 20, 25);
-
-            const imgData = canvas.toDataURL('image/png', 0.8);
-            const imgWidth = pageWidth - 40;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            const maxHeight = pageHeight - 60;
-            const finalHeight = imgHeight > maxHeight ? maxHeight : imgHeight;
-            const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
-
-            pdf.addImage(imgData, 'PNG', 20, 35, finalWidth, finalHeight);
-            isFirstPage = false;
-            capturedCount++;
-
-          } catch (error) {
-            console.error(`Error capturing strategic section ${i + 1}:`, error);
-          } finally {
-            // Restore button visibility
-            buttons.forEach((btn, index) => {
-              btn.style.display = originalDisplay[index];
-            });
-          }
-
-          // Add delay between sections
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        return capturedCount > 0;
-      };
-
-      // Add PDF cover page for strategic analysis
+      // Title page
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(59, 130, 246);
@@ -275,171 +206,109 @@ const PDFExportButton = ({
       pdf.setTextColor(128, 128, 128);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
 
-      isFirstPage = false;
+      // Define strategic components to capture
+      const strategicSelectors = [
+        '.strategic-content',
+        '.strategic-section', 
+        '.strategic-analysis-container',
+        '.strategic-page-section'
+      ];
+      
+      let capturedCount = 0;
+      
+      // Try each selector to find strategic content
+      for (const selector of strategicSelectors) {
+        const elements = document.querySelectorAll(selector);
+        
+        for (const element of elements) {
+          if (element && element.offsetHeight > 50) {
+            const result = await captureComponent(selector, 'Strategic Analysis');
+            
+            if (result) {
+              pdf.addPage();
+              
+              // Add section title
+              pdf.setFontSize(16);
+              pdf.setFont('helvetica', 'bold');
+              pdf.setTextColor(59, 130, 246);
+              pdf.text(result.name, 20, 25);
 
-      // Capture strategic components
-      const success = await captureStrategicComponents();
-
-      if (!success) {
-        if (onToastMessage) {
-          onToastMessage('No strategic analysis components could be captured. Make sure you have generated strategic analysis first.', 'error');
+              // Calculate image dimensions to fit page
+              const imgWidth = pageWidth - 40;
+              const canvas = result.canvas;
+              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+              const maxHeight = pageHeight - 60;
+              
+              if (imgHeight > maxHeight) {
+                const scale = maxHeight / imgHeight;
+                pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
+              } else {
+                pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
+              }
+              
+              capturedCount++;
+            }
+            break; // Only capture once per selector type
+          }
         }
+      }
+
+      if (capturedCount === 0) {
+        onToastMessage?.('No strategic analysis components could be captured', 'error');
         return;
       }
 
-      // Generate filename
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      // Save the PDF
+      // Save PDF
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${timestamp}.pdf`;
       pdf.save(filename);
-      
-      if (onToastMessage) {
-        onToastMessage('Strategic Analysis PDF exported successfully!', 'success');
-      }
+
+      onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
 
     } catch (error) {
-      console.error('Error generating strategic PDF:', error);
-      if (onToastMessage) {
-        onToastMessage('Failed to generate strategic PDF. Please try again.', 'error');
-      }
+      console.error('Strategic PDF export error:', error);
+      onToastMessage?.('Failed to generate strategic PDF. Please try again.', 'error');
     } finally {
-      // Always restore original states
-      if (originalStates.length > 0) {
-        restoreOriginalStates(originalStates);
+      // Always restore changes
+      if (changes.length > 0) {
+        restoreChanges(changes);
       }
-      
       setIsExportingPDF(false);
     }
   };
 
+  // Main analysis export function (enhanced with phase-by-phase content)
   const handleDownloadPhaseAnalysis = async () => {
     const exportPhase = getExportPhase();
     
-    if (!exportPhase || !phaseComponents[exportPhase]) {
+    if (!exportPhase) {
+      onToastMessage?.('Unable to determine export phase', 'error');
       return;
     }
 
-    // Check if we have any data to export for the determined phase
-    const checkDataAvailability = () => {
-      switch (exportPhase) {
-        case 'initial':
-          return document.querySelectorAll('[data-component*="swot"], [data-component*="purchase"], [data-component*="channel"], [data-component*="loyalty"], [data-component*="capability"], [data-component*="porter"], [data-component*="pestel"]').length > 0;
-        case 'essential':
-          return document.querySelectorAll('[data-component*="full-swot"], [data-component*="customer"], [data-component*="competitive"], [data-component*="channel-effectiveness"], [data-component*="expanded"], [data-component*="strategic"], [data-component*="culture"], [data-component*="productivity"], [data-component*="maturity"]').length > 0;
-        case 'good':
-          return document.querySelectorAll('[data-component*="cost-efficiency"], [data-component*="financial-performance"], [data-component*="financial-health"], [data-component*="operational-efficiency"]').length > 0;
-        default:
-          return false;
-      }
-    };
-
-    if (!checkDataAvailability()) {
-      if (onToastMessage) {
-        onToastMessage(`No ${exportPhase} analysis data available to export. Generate analysis first.`, 'warning');
-      }
-      return;
-    }
-
-    let originalStates = [];
+    let changes = [];
 
     try {
       setIsExportingPDF(true);
 
-      // Expand all content temporarily
-      originalStates = expandAllContent();
-      
-      // Wait for DOM to update and ensure content is visible
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Fast preparation
+      changes = prepareForCapture();
 
+      // Short wait for DOM to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Dynamic imports
       const jsPDF = (await import('jspdf')).default;
-      const html2canvas = (await import('html2canvas')).default;
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      let isFirstPage = true;
 
-      // Helper function to capture a single component
-      const captureComponent = async (componentSelector, componentName) => {
-        const component = document.querySelector(componentSelector);
-        if (!component || component.offsetHeight === 0 || component.offsetWidth === 0) {
-          return false;
-        }
-
-        // Save and remove scroll restrictions for heatmap scroll areas
-        const scrollAreas = component.querySelectorAll('.ch-heatmap-scroll');
-        const originalStyles = [];
-        scrollAreas.forEach((area, i) => {
-          originalStyles[i] = {
-            overflowX: area.style.overflowX,
-            width: area.style.width,
-            maxWidth: area.style.maxWidth
-          };
-          area.style.overflowX = 'visible';
-          area.style.width = 'auto';
-          area.style.maxWidth = 'none';
-        });
-
-        // Hide all buttons
-        const buttons = component.querySelectorAll('button');
-        const originalDisplay = [];
-        buttons.forEach((btn, index) => {
-          originalDisplay[index] = btn.style.display;
-          btn.style.display = 'none';
-        });
-
-        try {
-          const canvas = await html2canvas(component, {
-            scale: 1.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff',
-            logging: false,
-            windowWidth: component.scrollWidth,
-            windowHeight: component.scrollHeight
-          });
-
-          if (!isFirstPage) pdf.addPage();
-          pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246);
-          pdf.text(componentName, 20, 25);
-
-          const imgData = canvas.toDataURL('image/png', 0.8);
-          const imgWidth = pageWidth - 40;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          const maxHeight = pageHeight - 60;
-          const finalHeight = imgHeight > maxHeight ? maxHeight : imgHeight;
-          const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
-
-          pdf.addImage(imgData, 'PNG', 20, 35, finalWidth, finalHeight);
-          isFirstPage = false;
-
-          return true;
-        } catch (error) {
-          return false;
-        } finally {
-          // Restore button visibility
-          buttons.forEach((btn, index) => {
-            btn.style.display = originalDisplay[index];
-          });
-
-          // Restore original scroll styles
-          scrollAreas.forEach((area, i) => {
-            area.style.overflowX = originalStyles[i].overflowX;
-            area.style.width = originalStyles[i].width;
-            area.style.maxWidth = originalStyles[i].maxWidth;
-          });
-        }
-      };
-
-      // Add PDF cover page with correct phase title
+      // Title page
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(59, 130, 246);
-      const phaseTitle = exportPhase === 'initial' ? 'Initial Phase Analysis' : 
-                        exportPhase === 'essential' ? 'Essential Phase Analysis' : 
-                        'Good Phase Analysis';
+      const phaseTitle = 'Analysis Result';
       pdf.text(phaseTitle, pageWidth / 2, 30, { align: 'center' });
       
       pdf.setFontSize(16);
@@ -450,48 +319,147 @@ const PDFExportButton = ({
       pdf.setTextColor(128, 128, 128);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
 
-      isFirstPage = false;
+      // Define components for each phase (comprehensive list)
+      const phaseComponents = {
+        initial: [
+          { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+          { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
+          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+          { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
+          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
+          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
+        ],
+        essential: [
+          // Include all initial phase components
+          { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+          { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
+          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+          { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
+          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
+          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
+          // Essential phase specific components
+          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+          { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
+          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+          { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
+          { selector: '[data-component="expanded-capability"]', name: 'Expanded Capability Heatmap' },
+          { selector: '[data-component="strategic-goals"]', name: 'Strategic Goals' },
+          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+          { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
+          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
+          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' }
+        ],
+        good: [
+          // Include all previous phase components
+          { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+          { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
+          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+          { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
+          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
+          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
+          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+          { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
+          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+          { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
+          { selector: '[data-component="expanded-capability"]', name: 'Expanded Capability Heatmap' },
+          { selector: '[data-component="strategic-goals"]', name: 'Strategic Goals' },
+          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+          { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
+          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
+          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
+          // Good phase specific components
+          { selector: '[data-component="cost-efficiency"]', name: 'Cost Efficiency Analysis' },
+          { selector: '[data-component="financial-performance"]', name: 'Financial Performance & Growth Trajectory' },
+          { selector: '[data-component="financial-health"]', name: 'Financial Health Analysis' },
+          { selector: '[data-component="operational-efficiency"]', name: 'Operational Efficiency Analysis' }
+        ]
+      };
 
-      // Capture all components for the determined export phase
-      const components = phaseComponents[exportPhase];
-      let capturedCount = 0;
+      // Get components for the current export phase
+      const components = phaseComponents[exportPhase] || [];
 
-      for (const component of components) {
-        const success = await captureComponent(component.selector, component.name);
-        if (success) {
-          capturedCount++;
-        }
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-
-      if (capturedCount === 0) {
-        if (onToastMessage) {
-          onToastMessage('No analysis components could be captured. Make sure you have generated analysis data first.', 'error');
-        }
+      if (components.length === 0) {
+        onToastMessage?.('No components available for export', 'warning');
         return;
       }
 
-      // Generate filename with correct phase
-      const phaseLabel = exportPhase.charAt(0).toUpperCase() + exportPhase.slice(1);
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_Phase_${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      // Save the PDF
-      pdf.save(filename);
-      
-      if (onToastMessage) {
-        onToastMessage(`${phaseLabel} Phase PDF exported successfully! ${capturedCount} components included.`, 'success');
+      // Filter to only visible components with content
+      const visibleComponents = components.filter(({ selector }) => {
+        const element = document.querySelector(selector);
+        return element && 
+               element.offsetHeight > 50 && 
+               element.offsetWidth > 50 &&
+               !element.closest('.collapsed');
+      });
+
+      if (visibleComponents.length === 0) {
+        onToastMessage?.('No content available to export', 'warning');
+        return;
       }
 
-    } catch (error) {
-      if (onToastMessage) {
-        onToastMessage('Failed to generate PDF. Please try again.', 'error');
-      }
-    } finally {
-      // Always restore original states
-      if (originalStates.length > 0) {
-        restoreOriginalStates(originalStates);
-      }
+      // Capture components sequentially with minimal delay
+      let capturedCount = 0;
       
+      for (const { selector, name } of visibleComponents) {
+        const result = await captureComponent(selector, name);
+        
+        if (result) {
+          pdf.addPage();
+          
+          // Add section title
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(59, 130, 246);
+          pdf.text(result.name, 20, 25);
+
+          // Calculate image dimensions to fit page
+          const imgWidth = pageWidth - 40;
+          const canvas = result.canvas;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const maxHeight = pageHeight - 60;
+          
+          if (imgHeight > maxHeight) {
+            const scale = maxHeight / imgHeight;
+            pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
+          } else {
+            pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
+          }
+          
+          capturedCount++;
+        }
+        
+        // Small delay between captures to prevent memory issues
+        if (visibleComponents.length > 3) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      if (capturedCount === 0) {
+        onToastMessage?.('No components could be captured', 'error');
+        return;
+      }
+
+      // Save PDF
+      const timestamp = new Date().toISOString().split('T')[0];
+      const phaseLabel = exportPhase === 'good' ? 'Good_Phase' :
+                        exportPhase === 'essential' ? 'Essential_Phase' : 'Initial_Phase';
+      
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_${timestamp}.pdf`;
+      pdf.save(filename);
+
+      onToastMessage?.(`PDF exported successfully! ${capturedCount} sections included.`, 'success');
+
+    } catch (error) {
+      console.error('PDF export error:', error);
+      onToastMessage?.('Failed to generate PDF. Please try again.', 'error');
+    } finally {
+      // Always restore changes
+      if (changes.length > 0) {
+        restoreChanges(changes);
+      }
       setIsExportingPDF(false);
     }
   };
@@ -505,68 +473,37 @@ const PDFExportButton = ({
                      exportPhase === 'initial' ? 'Initial' : 
                      exportPhase === 'essential' ? 'Essential' : 'Good';
 
-  const exportLabel =  "";
-  const loadingText = exportType === "strategic" ? "Generating Strategic PDF..." : "Generating PDF...";
-  const titleText = exportType === "strategic" ? "Export Strategic Analysis PDF" : `Export ${phaseLabel} Phase PDF`;
-
   return (
     <>
-      {/* Fixed Loading Overlay - only shows when actually exporting */}
+      {/* Simplified loading overlay */}
       {isExportingPDF && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-            backdropFilter: 'blur(4px)',
-            pointerEvents: 'auto'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              padding: '32px',
-              textAlign: 'center',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
-              minWidth: '320px',
-              border: '2px solid #e2e8f0'
-            }}
-          >
-            <div style={{ marginBottom: '20px' }}>
-              <Loader 
-                size={48} 
-                style={{
-                  color: '#1a73e8',
-                  animation: 'spin 1s linear infinite'
-                }} 
-              />
-            </div>
-            <h3
-              style={{
-                margin: '0 0 8px 0',
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#1f2937'
-              }}
-            >
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            textAlign: 'center',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            minWidth: '280px'
+          }}>
+            <Loader size={32} style={{ 
+              color: '#1a73e8', 
+              animation: 'spin 1s linear infinite',
+              marginBottom: '12px'
+            }} />
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#1f2937' }}>
               Generating PDF
             </h3>
-            <p
-              style={{
-                margin: 0,
-                fontSize: '14px',
-                color: '#6b7280'
-              }}
-            >
-              Creating {phaseLabel.toLowerCase()} analysis for {businessName}...
+            <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+              Capturing analysis...
             </p>
           </div>
         </div>
@@ -575,7 +512,7 @@ const PDFExportButton = ({
       <button
         onClick={handleDownload}
         disabled={disabled || isExportingPDF}
-        className={`${className}`}
+        className={className}
         style={{
           backgroundColor: isExportingPDF ? "#f3f4f6" : "#1a73e8",
           color: isExportingPDF ? "#6b7280" : "#fff",
@@ -592,27 +529,17 @@ const PDFExportButton = ({
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           ...style
         }}
-        onMouseEnter={(e) => {
-          if (!isExportingPDF && !disabled) {
-            e.target.style.transform = "translateY(-1px)";
-            e.target.style.boxShadow = "0 4px 12px rgba(26, 115, 232, 0.3)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = "translateY(0)";
-          e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
-        }}
-        title={titleText}
+        title={`Export ${phaseLabel} Phase PDF`}
       >
         {isExportingPDF ? (
           <>
             <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
-            {loadingText}
+            Generating...
           </>
         ) : (
           <>
-            <Download size={16} /> 
-            {exportLabel}
+            <Download size={16} />
+            Export PDF
           </>
         )}
       </button>
