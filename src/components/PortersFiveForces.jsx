@@ -283,7 +283,7 @@ const PortersFiveForces = ({
                   <tr>
                     <th>Force</th>
                     <th>Intensity</th>
-                    <th>Score</th>
+                    {/* <th>Score</th> */}
                     <th>Strategic Implications</th>
                     <th>Key Factors</th>
                     <th>Additional Details</th>
@@ -305,9 +305,9 @@ const PortersFiveForces = ({
                           </span>
                         )}
                       </td>
-                      <td>
+                      {/* <td>
                         {forceData.score && <span className="score-badge">{forceData.score}/10</span>}
-                      </td>
+                      </td> */}
                       <td className="implications-cell">
                         {forceData.strategic_implications}
                       </td>
@@ -432,7 +432,7 @@ const PortersFiveForces = ({
                       <tr>
                         <th>Competitor</th>
                         <th>Threat Level</th>
-                        <th>Competitive Advantage</th>
+                        {/* <th>Competitive Advantage</th> */}
                       </tr>
                     </thead>
                     <tbody>
@@ -444,7 +444,7 @@ const PortersFiveForces = ({
                               {competitor.threat_level}
                             </span>
                           </td>
-                          <td>{competitor.competitive_advantage}</td>
+                          {/* <td>{competitor.competitive_advantage}</td> */}
                         </tr>
                       ))}
                     </tbody>
@@ -459,7 +459,7 @@ const PortersFiveForces = ({
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Category</th>
+                        {/* <th>Category</th> */}
                         <th>Likelihood</th>
                         <th>Barriers</th>
                       </tr>
@@ -467,7 +467,7 @@ const PortersFiveForces = ({
                     <tbody>
                       {parsedData.competitive_landscape.potential_entrants.map((entrant, index) => (
                         <tr key={index}>
-                          <td><strong>{entrant.category}</strong></td>
+                          {/* <td><strong>{entrant.category}</strong></td> */}
                           <td>
                             <span className={`status-badge ${getIntensityColor(entrant.likelihood)}`}>
                               {entrant.likelihood}
@@ -539,7 +539,7 @@ const PortersFiveForces = ({
                       <tr>
                         <th>Signal</th>
                         <th>Trigger Response</th>
-                        <th>Monitoring Source</th>
+                        {/* <th>Monitoring Source</th> */}
                       </tr>
                     </thead>
                     <tbody>
@@ -547,7 +547,7 @@ const PortersFiveForces = ({
                         <tr key={index}>
                           <td><strong>{signal.signal}</strong></td>
                           <td>{signal.trigger_response}</td>
-                          <td>{signal.monitoring_source}</td>
+                          {/* <td>{signal.monitoring_source}</td> */}
                         </tr>
                       ))}
                     </tbody>

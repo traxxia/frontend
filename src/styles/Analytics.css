@@ -41,7 +41,8 @@
 .competitive-advantage-container,
 .channel-effectiveness-map,
 .maturity-dashboard,
-.full-swot-container {
+.full-swot-container,
+.modern-card-content-inner {
   background: white;
   border-radius: 16px;
   box-shadow:none;
@@ -3646,20 +3647,7 @@
   border-radius: 6px;
   color: #1f2937;
   font-weight: 500;
-}
-
-.recommendation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.recommendation-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0px;
-  padding: 0px;
-}
+} 
 
 .rec-number {
   background: #3b82f6;
@@ -5548,7 +5536,7 @@
 }
  
 .table-value {
-  color: #4b5563;
+  color: #000;
 }
  
 .text-center {
@@ -5667,20 +5655,7 @@
   font-weight: 600;
   color: #374151;
 }
- 
-/* Recommendations in Table */
-.recommendations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
- 
-.recommendation-item {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 6px;
-}
+  
  
 .rec-header {
   display: flex;
@@ -5783,7 +5758,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #4b5563;
+  color: #000;
 }
  
 .requirement-item, .source-info, .frequency-info, .integration-info {
@@ -7255,8 +7230,7 @@
   border: 1px solid #e5e7eb;
 }
 
-.section-header {
-  background: #f9fafb;
+.section-header { 
   padding: 16px 20px;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -7656,7 +7630,7 @@
 
 /* Table Container */
 .table-container {
-  padding: 10px;
+  padding: 10px 0px;
 }
 
 /* Data Table */
@@ -7725,8 +7699,7 @@
 }
 
 .score-badge {
-  padding: 4px 8px;
-  background: #e3f2fd;
+  padding: 4px 8px; 
   color: #1976d2;
   border-radius: 4px;
   font-weight: 600;

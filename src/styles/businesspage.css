@@ -2538,3 +2538,211 @@ html, body {
     justify-content: center;
   }
 }
+/* Back button styles */
+.back-button {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #374151;
+}
+
+.back-button:hover {
+  background-color: #f3f4f6;
+}
+
+.back-button:not(:hover) {
+  background-color: transparent;
+}
+
+/* Desktop expanded analysis back button */
+.desktop-expanded-analysis .back-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #374151;
+  font-size: 14px;
+  gap: 6px;
+  position: static;
+}
+
+/* Analysis controls wrapper */
+.analysis-controls-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Regenerate button styles */
+.regenerate-button {
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.regenerate-button:disabled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Desktop tabs container */
+.desktop-tabs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.desktop-tabs-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.desktop-tabs-controls {
+  display: flex;
+  gap: 0;
+}
+
+.desktop-tabs-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Dropdown wrapper and button */
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-button {
+  background-color: #fff;
+  color: #3b82f6;
+  border: 1px solid #e1e5e9;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  min-width: 180px;
+  justify-content: space-between;
+}
+
+.dropdown-button:hover {
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.dropdown-button:not(:hover) {
+  border-color: #e2e8f0;
+  transform: translateY(0);
+}
+
+.dropdown-button .chevron {
+  margin-left: 8px;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-button .chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.dropdown-menu-options {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background-color: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: scroll;
+  backdrop-filter: blur(20px);
+}
+
+/* Dropdown phase header */
+.dropdown-phase-header {
+  padding: 12px 16px;
+  background-color: #dbeafe;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Dropdown option */
+.dropdown-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dropdown-option:hover {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding-left: 20px;
+}
+
+.dropdown-option:not(:hover) {
+  background-color: transparent;
+  color: #374151;
+  padding-left: 16px;
+}
+
+.dropdown-option .bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  flex-shrink: 0;
+}
+
+/* Analysis section mobile controls */
+.analysis-section-mobile-controls {
+  padding: 1rem;
+  background: #ffffffff;
+}

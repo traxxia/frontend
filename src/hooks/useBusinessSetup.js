@@ -27,60 +27,49 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [hasAnalysisData, setHasAnalysisData] = useState(false);
   const [isAnalysisRegenerating, setIsAnalysisRegenerating] = useState(false);
   const [swotAnalysisResult, setSwotAnalysisResult] = useState("");
-  const [customerSegmentationData, setCustomerSegmentationData] = useState(null);
   const [purchaseCriteriaData, setPurchaseCriteriaData] = useState(null);
-  const [channelHeatmapData, setChannelHeatmapData] = useState(null);
   const [loyaltyNPSData, setLoyaltyNPSData] = useState(null);
-  const [capabilityHeatmapData, setCapabilityHeatmapData] = useState(null);
-  const [strategicData, setStrategicData] = useState(null);
   const [portersData, setPortersData] = useState(null);
   const [pestelData, setPestelData] = useState(null);
   const [fullSwotData, setFullSwotData] = useState(null);
   const [competitiveAdvantageData, setCompetitiveAdvantageData] = useState(null);
+  const [strategicData, setStrategicData] = useState(null);
+  const [expandedCapabilityData, setExpandedCapabilityData] = useState(null);
+  const [strategicRadarData, setStrategicRadarData] = useState(null);
+  const [productivityData, setProductivityData] = useState(null);
+  const [maturityData, setMaturityData] = useState(null);
 
-  // NEW: Good Phase Analysis State
-  const [costEfficiencyData, setCostEfficiencyData] = useState(null);
+  // Financial analysis states (Good Phase)
+  const [profitabilityData, setProfitabilityData] = useState(null);
+  const [growthTrackerData, setGrowthTrackerData] = useState(null);
+  const [liquidityEfficiencyData, setLiquidityEfficiencyData] = useState(null);
+  const [investmentPerformanceData, setInvestmentPerformanceData] = useState(null);
+  const [leverageRiskData, setLeverageRiskData] = useState(null);
 
-  // Individual component regenerating states
+  // Individual component regenerating states - Active ones only
   const [isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating] = useState(false);
-  const [isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating] = useState(false);
   const [isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating] = useState(false);
-  const [isChannelHeatmapRegenerating, setIsChannelHeatmapRegenerating] = useState(false);
   const [isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating] = useState(false);
-  const [isCapabilityHeatmapRegenerating, setIsCapabilityHeatmapRegenerating] = useState(false);
-  const [isStrategicRegenerating, setIsStrategicRegenerating] = useState(false);
   const [isPortersRegenerating, setIsPortersRegenerating] = useState(false);
   const [isPestelRegenerating, setIsPestelRegenerating] = useState(false);
   const [isFullSwotRegenerating, setIsFullSwotRegenerating] = useState(false);
   const [isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating] = useState(false);
-  const [channelEffectivenessData, setChannelEffectivenessData] = useState(null);
-  const [isChannelEffectivenessRegenerating, setIsChannelEffectivenessRegenerating] = useState(false);
-  const [expandedCapabilityData, setExpandedCapabilityData] = useState(null);
   const [isExpandedCapabilityRegenerating, setIsExpandedCapabilityRegenerating] = useState(false);
-  const [strategicGoalsData, setStrategicGoalsData] = useState(null);
-  const [isStrategicGoalsRegenerating, setIsStrategicGoalsRegenerating] = useState(false);
-  const [strategicRadarData, setStrategicRadarData] = useState(null);
   const [isStrategicRadarRegenerating, setIsStrategicRadarRegenerating] = useState(false);
-  const [cultureProfileData, setCultureProfileData] = useState(null);
-  const [isCultureProfileRegenerating, setIsCultureProfileRegenerating] = useState(false);
-  const [productivityData, setProductivityData] = useState(null);
   const [isProductivityRegenerating, setIsProductivityRegenerating] = useState(false);
-  const [maturityData, setMaturityData] = useState(null);
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
-  const [financialPerformanceData, setFinancialPerformanceData] = useState(null);
 
-  const [isFinancialPerformanceRegenerating, setIsFinancialPerformanceRegenerating] = useState(false);
+  // Financial analysis regenerating states
+  const [isProfitabilityRegenerating, setIsProfitabilityRegenerating] = useState(false);
+  const [isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating] = useState(false);
+  const [isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating] = useState(false);
+  const [isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating] = useState(false);
+  const [isLeverageRiskRegenerating, setIsLeverageRiskRegenerating] = useState(false);
+  const [isStrategicRegenerating, setIsStrategicRegenerating] = useState(false);
 
-  // NEW: Good Phase regenerating states
-  const [isCostEfficiencyRegenerating, setIsCostEfficiencyRegenerating] = useState(false);
+  // Other states
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
-  const [isChannelHeatmapReady, setIsChannelHeatmapReady] = useState(false);
-  const [isCapabilityHeatmapReady, setIsCapabilityHeatmapReady] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState('initial');
-  const [financialBalanceData, setFinancialBalanceData] = useState(null);
-  const [operationalEfficiencyData, setOperationalEfficiencyData] = useState(null);
-  const [isFinancialBalanceRegenerating, setIsFinancialBalanceRegenerating] = useState(false);
-  const [isOperationalEfficiencyRegenerating, setIsOperationalEfficiencyRegenerating] = useState(false);
 
   // Dropdown State
   const [showDropdown, setShowDropdown] = useState(false);
@@ -93,32 +82,28 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     type: "success",
   });
 
-  // Refs
+  // Refs - Active ones only
   const swotRef = useRef(null);
-  const customerSegmentationRef = useRef(null);
   const purchaseCriteriaRef = useRef(null);
-  const channelHeatmapRef = useRef(null);
   const loyaltyNpsRef = useRef(null);
-  const capabilityHeatmapRef = useRef(null);
   const dropdownRef = useRef(null);
   const isRegeneratingRef = useRef(false);
   const portersRef = useRef(null);
   const pestelRef = useRef(null);
   const fullSwotRef = useRef(null);
   const competitiveAdvantageRef = useRef(null);
-  const cultureProfileRef = useRef(null);
   const productivityRef = useRef(null);
   const maturityScoreRef = useRef(null);
-  const strategicGoalsRef = useRef(null);
   const strategicRadarRef = useRef(null);
   const expandedCapabilityRef = useRef(null);
-  const channelEffectivenessRef = useRef(null);
 
-  // NEW: Good Phase refs
-  const costEfficiencyRef = useRef(null);
-  const financialBalanceRef = useRef(null);
-  const operationalEfficiencyRef = useRef(null);
-  const financialPerformanceRef = useRef(null);
+  // Financial analysis refs
+  const profitabilityRef = useRef(null);
+  const growthTrackerRef = useRef(null);
+  const liquidityEfficiencyRef = useRef(null);
+  const investmentPerformanceRef = useRef(null);
+  const leverageRiskRef = useRef(null);
+
   return {
     // UI State
     activeTab, setActiveTab,
@@ -137,55 +122,46 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     hasAnalysisData, setHasAnalysisData,
     isAnalysisRegenerating, setIsAnalysisRegenerating,
     swotAnalysisResult, setSwotAnalysisResult,
-    customerSegmentationData, setCustomerSegmentationData,
     purchaseCriteriaData, setPurchaseCriteriaData,
-    channelHeatmapData, setChannelHeatmapData,
     loyaltyNPSData, setLoyaltyNPSData,
-    capabilityHeatmapData, setCapabilityHeatmapData,
-    strategicData, setStrategicData,
-    portersData, setPortersData,
+    strategicData, setStrategicData, portersData, setPortersData,
     pestelData, setPestelData,
     fullSwotData, setFullSwotData,
     competitiveAdvantageData, setCompetitiveAdvantageData,
+    expandedCapabilityData, setExpandedCapabilityData,
+    strategicRadarData, setStrategicRadarData,
+    productivityData, setProductivityData,
+    maturityData, setMaturityData,
 
-    // NEW: Good Phase Analysis State
-    costEfficiencyData, setCostEfficiencyData,
+    // Financial analysis states
+    profitabilityData, setProfitabilityData,
+    growthTrackerData, setGrowthTrackerData,
+    liquidityEfficiencyData, setLiquidityEfficiencyData,
+    investmentPerformanceData, setInvestmentPerformanceData,
+    leverageRiskData, setLeverageRiskData,
 
-    // Regenerating states
+    // Regenerating states - Active ones only
     isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
-    isCustomerSegmentationRegenerating, setIsCustomerSegmentationRegenerating,
     isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating,
-    isChannelHeatmapRegenerating, setIsChannelHeatmapRegenerating,
     isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating,
-    isCapabilityHeatmapRegenerating, setIsCapabilityHeatmapRegenerating,
-    isStrategicRegenerating, setIsStrategicRegenerating,
     isPortersRegenerating, setIsPortersRegenerating,
     isPestelRegenerating, setIsPestelRegenerating,
     isFullSwotRegenerating, setIsFullSwotRegenerating,
     isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating,
-    channelEffectivenessData, setChannelEffectivenessData,
-    isChannelEffectivenessRegenerating, setIsChannelEffectivenessRegenerating,
-    expandedCapabilityData, setExpandedCapabilityData,
     isExpandedCapabilityRegenerating, setIsExpandedCapabilityRegenerating,
-    strategicGoalsData, setStrategicGoalsData,
-    isStrategicGoalsRegenerating, setIsStrategicGoalsRegenerating,
-    strategicRadarData, setStrategicRadarData,
     isStrategicRadarRegenerating, setIsStrategicRadarRegenerating,
-    cultureProfileData, setCultureProfileData,
-    isCultureProfileRegenerating, setIsCultureProfileRegenerating,
-    productivityData, setProductivityData,
     isProductivityRegenerating, setIsProductivityRegenerating,
-    maturityData, setMaturityData,
     isMaturityRegenerating, setIsMaturityRegenerating,
+    isStrategicRegenerating, setIsStrategicRegenerating,
+    // Financial analysis regenerating states
+    isProfitabilityRegenerating, setIsProfitabilityRegenerating,
+    isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
+    isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
+    isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
+    isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
 
-    // NEW: Good Phase regenerating states
-    isCostEfficiencyRegenerating, setIsCostEfficiencyRegenerating,
-    financialPerformanceData, setFinancialPerformanceData,
-    isFinancialPerformanceRegenerating, setIsFinancialPerformanceRegenerating,
-    financialPerformanceRef,
+    // Other states
     highlightedMissingQuestions, setHighlightedMissingQuestions,
-    isChannelHeatmapReady, setIsChannelHeatmapReady,
-    isCapabilityHeatmapReady, setIsCapabilityHeatmapReady,
     selectedPhase, setSelectedPhase,
 
     // Dropdown State
@@ -195,21 +171,26 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     // Toast State
     showToast, setShowToast,
 
-    // Refs
-    swotRef, customerSegmentationRef, purchaseCriteriaRef,
-    channelHeatmapRef, loyaltyNpsRef, capabilityHeatmapRef,
-    dropdownRef, isRegeneratingRef, portersRef,
-    pestelRef, fullSwotRef, competitiveAdvantageRef,
-    cultureProfileRef, productivityRef, maturityScoreRef,
-    strategicGoalsRef, strategicRadarRef, expandedCapabilityRef,
-    channelEffectivenessRef,
+    // Refs - Active ones only
+    swotRef,
+    purchaseCriteriaRef,
+    loyaltyNpsRef,
+    dropdownRef,
+    isRegeneratingRef,
+    portersRef,
+    pestelRef,
+    fullSwotRef,
+    competitiveAdvantageRef,
+    productivityRef,
+    maturityScoreRef,
+    strategicRadarRef,
+    expandedCapabilityRef,
 
-    // NEW: Good Phase refs
-    costEfficiencyRef,
-    financialBalanceData, setFinancialBalanceData,
-    operationalEfficiencyData, setOperationalEfficiencyData,
-    isFinancialBalanceRegenerating, setIsFinancialBalanceRegenerating,
-    isOperationalEfficiencyRegenerating, setIsOperationalEfficiencyRegenerating,
-    financialBalanceRef, operationalEfficiencyRef
+    // Financial analysis refs
+    profitabilityRef,
+    growthTrackerRef,
+    liquidityEfficiencyRef,
+    investmentPerformanceRef,
+    leverageRiskRef
   };
 };

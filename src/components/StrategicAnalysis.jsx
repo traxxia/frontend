@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  RefreshCw,
   Loader,
   Target,
   TrendingUp,
-  AlertTriangle,
   CheckCircle,
   Clock,
   Users,
@@ -17,16 +15,10 @@ import {
   Star,
   ArrowRight,
   Calendar,
-  DollarSign,
-  Award,
-  PlayCircle,
-  Monitor,
-  MessageCircle,
-  Building
-} from 'lucide-react'; 
-import DownloadStrategicAnalysis from './DownloadStrategicAnalysis';
+} from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import StrategicWheel from './StrategicWheel';
 
 const StrategicAnalysis = ({
   questions = [],
@@ -46,7 +38,7 @@ const StrategicAnalysis = ({
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Prevent multiple initializations and API calls
   const hasInitialized = useRef(false);
   const isGenerating = useRef(false);
@@ -61,7 +53,7 @@ const StrategicAnalysis = ({
 
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.strategic;
-    
+
     await checkMissingQuestionsAndRedirect(
       'strategic',
       selectedBusinessId,
@@ -161,7 +153,7 @@ const StrategicAnalysis = ({
 
   const handleRegenerate = async () => {
     console.log('Strategic handleRegenerate called', { onRegenerate: !!onRegenerate });
-    
+
     if (onRegenerate) {
       try {
         await onRegenerate();
@@ -184,15 +176,15 @@ const StrategicAnalysis = ({
     if (!analysisData) return true;
 
     // Check for key sections
-    const hasStrategicPillars = analysisData.strategic_pillars_analysis && 
+    const hasStrategicPillars = analysisData.strategic_pillars_analysis &&
       Object.keys(analysisData.strategic_pillars_analysis).length > 0;
-    
-    const hasRoadmap = analysisData.implementation_roadmap && 
+
+    const hasRoadmap = analysisData.implementation_roadmap &&
       Object.keys(analysisData.implementation_roadmap).length > 0;
-    
-    const hasRiskAssessment = analysisData.risk_assessment && 
-      (analysisData.risk_assessment.strategic_risks?.length > 0 || 
-       analysisData.risk_assessment.contingency_plans?.length > 0);
+
+    const hasRiskAssessment = analysisData.risk_assessment &&
+      (analysisData.risk_assessment.strategic_risks?.length > 0 ||
+        analysisData.risk_assessment.contingency_plans?.length > 0);
 
     // At least 2 main sections should have data for meaningful analysis
     const sectionsWithData = [hasStrategicPillars, hasRoadmap, hasRiskAssessment].filter(Boolean).length;
@@ -262,7 +254,7 @@ const StrategicAnalysis = ({
   const formatPhaseName = (phaseKey) => {
     return phaseKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
- 
+
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
     if (!pillars) return null;
@@ -271,7 +263,9 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
+          alignItems: 'center',
+          borderBottom: 'none',
+          marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
@@ -279,251 +273,230 @@ const StrategicAnalysis = ({
           <h2>Strategic Pillars Analysis</h2>
         </div>
 
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Pillar</th>
-                <th>Assessment Score</th>
-                <th>Relevance Score</th>
-                <th>Strengths</th>
-                <th>Weaknesses</th>
-                <th>Recommendations</th>
-                <th>Success Metrics</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(pillars).map(([pillarKey, pillar]) => {
-                const IconComponent = getPillarIcon(pillarKey);
-
-                return (
-                  <tr key={pillarKey}>
-                    <td className="table-value">
-                      <div className="pillar-name">
-                        <IconComponent size={16} />
-                        {formatPillarName(pillarKey)}
-                      </div>
-                    </td>
-                    <td className="table-value text-center">
-                      <span
-                        className="score-badge"
-                        style={{ color: getScoreColor(pillar.current_state?.assessment_score || 0) }}
-                      >
-                        {pillar.current_state?.assessment_score || 0}/10
-                      </span>
-                    </td>
-                    <td className="table-value text-center">
-                      <span className="score-badge">{pillar.relevance_score || 0}/10</span>
-                    </td>
-                    <td className="table-value">
-                      {pillar.current_state?.strengths && pillar.current_state.strengths.length > 0 && (
-                        <ul className="table-list">
-                          {pillar.current_state.strengths.map((strength, idx) => (
-                            <li key={idx} className="strength-item">
-                              <CheckCircle size={12} />
-                              {strength}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                    <td className="table-value">
-                      {pillar.current_state?.weaknesses && pillar.current_state.weaknesses.length > 0 && (
-                        <ul className="table-list">
-                          {pillar.current_state.weaknesses.map((weakness, idx) => (
-                            <li key={idx} className="weakness-item">
-                              <AlertTriangle size={12} />
-                              {weakness}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                    <td className="table-value">
-                      {pillar.recommendations && pillar.recommendations.length > 0 && (
-                        <div className="recommendations-list">
-                          {pillar.recommendations.map((rec, idx) => (
-                            <div key={idx} className="recommendation-item">
-                              <div className="rec-header">
-                                <span className="rec-text">{rec.action}</span>
-                                <span
-                                  className="priority-badge"
-                                  style={{ backgroundColor: getPriorityColor(rec.priority) }}
-                                >
-                                  {rec.priority}
-                                </span>
-                              </div>
-
-                              <div className="rec-details">
-                                {rec.timeline && (
-                                  <div className="detail-item">
-                                    <Clock size={10} />
-                                    {rec.timeline}
-                                  </div>
-                                )}
-
-                                {rec.expected_impact && (
-                                  <div className="detail-item">
-                                    <TrendingUp size={10} />
-                                    {rec.expected_impact}
-                                  </div>
-                                )}
-
-                                {rec.resources_required && rec.resources_required.length > 0 && (
-                                  <div className="detail-item">
-                                    <Users size={10} />
-                                    {rec.resources_required.join(', ')}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td className="table-value">
-                      {pillar.success_metrics && pillar.success_metrics.length > 0 && (
-                        <div className="metrics-list">
-                          {pillar.success_metrics.map((metric, idx) => (
-                            <div key={idx} className="metric-item">
-                              <div className="metric-name">{metric.metric}</div>
-                              <div className="metric-target">Target: {metric.target}</div>
-                              <div className="metric-frequency">Frequency: {metric.measurement_frequency}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {/* Add the Strategic Wheel */}
+        <StrategicWheel
+          pillarsData={pillars}
+          className="strategic-wheel-section"
+        />
       </section>
     );
   };
 
-  const renderCrossPillarSynthesisTable = (data) => {
-    const synthesis = data?.cross_pillar_synthesis;
-    if (!synthesis) return null;
+  const renderStrategicGoalsTable = (data) => {
+    const goals = data?.strategic_goals;
+    if (!goals) return null;
+
+    const getPriorityColor = (priority) => {
+      switch (priority) {
+        case '1': return '#ef4444'; // High priority - red
+        case '2': return '#f59e0b'; // Medium priority - orange  
+        case '3': return '#10b981'; // Lower priority - green
+        default: return '#6b7280';
+      }
+    };
+
+    const getAlignmentColor = (alignment) => {
+      switch (alignment?.toLowerCase()) {
+        case 'growth': return '#3b82f6';
+        case 'retention': return '#10b981';
+        case 'market expansion': return '#8b5cf6';
+        case 'efficiency': return '#f59e0b';
+        default: return '#6b7280';
+      }
+    };
+
+    const getProgressWidth = (progress) => {
+      const numericProgress = parseFloat(progress?.replace('%', '') || 0);
+      return Math.max(2, numericProgress); // Minimum 2% for visibility
+    };
+
+    const getProgressColor = (progress) => {
+      const numericProgress = parseFloat(progress?.replace('%', '') || 0);
+      if (numericProgress >= 80) return '#10b981';
+      if (numericProgress >= 60) return '#3b82f6';
+      if (numericProgress >= 40) return '#f59e0b';
+      return '#ef4444';
+    };
 
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
-          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
+          alignItems: 'center',
+          borderBottom: 'none',
+          marginBottom: '0px',
           gap: '8px',
           background: '#fff'
         }}>
-          <Activity size={24} style={{ color: 'blue' }} />
-          <h2>Cross-Pillar Synthesis</h2>
+          <Target size={24} style={{ color: 'blue' }} />
+          <h2>Strategic Goals ({goals.year})</h2>
         </div>
 
-        <div className="table-container">
-          {synthesis.interconnections && synthesis.interconnections.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Interconnections</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Connected Pillars</th>
-                    <th>Relationship</th>
-                    <th>Synergy Opportunity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {synthesis.interconnections.map((connection, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value">
-                        <strong>{connection.pillars.join(' ↔ ')}</strong>
-                      </td>
-                      <td className="table-value">{connection.relationship}</td>
-                      <td className="table-value">{connection.synergy_opportunity || 'N/A'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {synthesis.holistic_recommendations && synthesis.holistic_recommendations.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Holistic Recommendations</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Recommendation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {synthesis.holistic_recommendations.map((rec, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value">
-                        <div className="recommendation-row">
-                          <ArrowRight size={14} />
-                          {rec}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  const renderAgileFrameworksTable = (data) => {
-    const frameworks = data?.agile_frameworks_recommendations;
-    if (!frameworks) return null;
-
-    return (
-      <section className="strategic-page-section">
-        <div className="section-header" style={{
-          display: 'inline-flex',
-          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
-          gap: '8px',
-          background: '#fff'
+        {/* Overall Progress Summary */}
+        <div style={{
+          backgroundColor: '#f9fafb',
+          padding: '20px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #e5e7eb'
         }}>
-          <PlayCircle size={24} style={{ color: 'blue' }} />
-          <h2>Agile Frameworks Recommendations</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: '0', fontSize: '16px', fontWeight: '600' }}>
+              Overall Strategic Progress
+            </h3>
+            <div style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: getProgressColor(goals.overall_progress)
+            }}>
+              {goals.overall_progress}
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div style={{
+            width: '100%',
+            height: '10px',
+            backgroundColor: '#e5e7eb',
+            borderRadius: '5px',
+            overflow: 'hidden',
+            marginBottom: '15px'
+          }}>
+            <div style={{
+              width: `${getProgressWidth(goals.overall_progress)}%`,
+              height: '100%',
+              backgroundColor: getProgressColor(goals.overall_progress),
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
+
+          {/* Strategic Themes */}
+          {goals.strategic_themes && goals.strategic_themes.length > 0 && (
+            <div>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600' }}>
+                Key Strategic Themes:
+              </h4>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {goals.strategic_themes.map((theme, index) => (
+                  <span key={index} style={{
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    {theme}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Objectives Table */}
         <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Framework</th>
-                <th>Implementation Priority</th>
-                <th>Applicability</th>
-                <th>Use Cases</th>
+                <th>Objective</th>
+                <th>Priority</th>
+                <th>Owner</th>
+                <th>Timeline</th>
+                <th>Alignment</th>
+                <th>Key Results</th>
+                <th>Progress</th>
               </tr>
             </thead>
             <tbody>
-              {Object.entries(frameworks).map(([frameworkKey, framework]) => (
-                <tr key={frameworkKey}>
+              {goals.objectives && goals.objectives.map((objective, index) => (
+                <tr key={index}>
                   <td className="table-value">
-                    <strong>{frameworkKey.toUpperCase()}</strong>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                      {objective.objective}
+                    </div>
                   </td>
                   <td className="table-value text-center">
-                    <span
-                      className="priority-badge"
-                      style={{ backgroundColor: getPriorityColor(framework.implementation_priority) }}
-                    >
-                      {framework.implementation_priority}
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: getPriorityColor(objective.priority),
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      {objective.priority}
+                    </div>
+                  </td>
+                  <td className="table-value">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Users size={14} />
+                      {objective.owner}
+                    </div>
+                  </td>
+                  <td className="table-value">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Calendar size={14} />
+                      <span style={{ fontSize: '12px' }}>{objective.timeline}</span>
+                    </div>
+                  </td>
+                  <td className="table-value">
+                    <span style={{
+                      backgroundColor: getAlignmentColor(objective.alignment),
+                      color: 'white',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: '500',
+                      textTransform: 'capitalize'
+                    }}>
+                      {objective.alignment}
                     </span>
                   </td>
-                  <td className="table-value">{framework.applicability}</td>
                   <td className="table-value">
-                    {framework.use_cases && framework.use_cases.length > 0 && (
+                    {objective.keyResults && objective.keyResults.length > 0 && (
                       <ul className="table-list">
-                        {framework.use_cases.map((useCase, idx) => (
-                          <li key={idx}>{useCase}</li>
+                        {objective.keyResults.map((result, idx) => (
+                          <li key={idx} style={{ fontSize: '12px' }}>
+                            <div style={{ fontWeight: '500' }}>{result.metric}</div>
+                            <div style={{ color: '#6b7280' }}>
+                              Target: {result.target}
+                            </div>
+                          </li>
                         ))}
                       </ul>
+                    )}
+                  </td>
+                  <td className="table-value text-center">
+                    {objective.keyResults && objective.keyResults[0] && (
+                      <div style={{ minWidth: '80px' }}>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: getProgressColor(objective.keyResults[0].progress),
+                          marginBottom: '4px'
+                        }}>
+                          {objective.keyResults[0].progress}
+                        </div>
+                        <div style={{
+                          width: '100%',
+                          height: '6px',
+                          backgroundColor: '#e5e7eb',
+                          borderRadius: '3px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            width: `${getProgressWidth(objective.keyResults[0].progress)}%`,
+                            height: '100%',
+                            backgroundColor: getProgressColor(objective.keyResults[0].progress),
+                            transition: 'width 0.3s ease'
+                          }} />
+                        </div>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -531,180 +504,51 @@ const StrategicAnalysis = ({
             </tbody>
           </table>
         </div>
-      </section>
-    );
-  };
 
-  const renderRiskAssessmentTable = (data) => {
-    const riskAssessment = data?.risk_assessment;
-    if (!riskAssessment) return null;
-
-    return (
-      <section className="strategic-page-section">
-        <div className="section-header" style={{
-          display: 'inline-flex',
-          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
-          gap: '8px',
-          background: '#fff'
-        }}>
-          <Shield size={24} style={{ color: 'blue' }} />
-          <h2>Risk Assessment</h2>
-        </div>
-
-        <div className="table-container">
-          {riskAssessment.strategic_risks && riskAssessment.strategic_risks.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Strategic Risks</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Risk</th>
-                    <th>Probability</th>
-                    <th>Impact</th>
-                    <th>Mitigation</th>
-                    <th>Owner</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {riskAssessment.strategic_risks.map((risk, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value"><strong>{risk.risk}</strong></td>
-                      <td className="table-value text-center">
-                        <span className={`risk-badge ${risk.probability?.toLowerCase()}`}>
-                          {risk.probability}
-                        </span>
-                      </td>
-                      <td className="table-value text-center">
-                        <span className={`risk-badge ${risk.impact?.toLowerCase()}`}>
-                          {risk.impact}
-                        </span>
-                      </td>
-                      <td className="table-value">{risk.mitigation || 'N/A'}</td>
-                      <td className="table-value">
-                        {risk.owner && (
-                          <div className="owner-info">
-                            <Users size={12} />
-                            {risk.owner}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {riskAssessment.contingency_plans && riskAssessment.contingency_plans.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Contingency Plans</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Scenario</th>
-                    <th>Response</th>
-                    <th>Trigger Indicators</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {riskAssessment.contingency_plans.map((plan, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value"><strong>{plan.scenario}</strong></td>
-                      <td className="table-value">{plan.response}</td>
-                      <td className="table-value">
-                        {plan.trigger_indicators && plan.trigger_indicators.length > 0 && (
-                          <ul className="table-list">
-                            {plan.trigger_indicators.map((indicator, i) => (
-                              <li key={i}>{indicator}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  const renderSuccessBenchmarksTable = (data) => {
-    const benchmarks = data?.success_benchmarks;
-    if (!benchmarks) return null;
-
-    return (
-      <section className="strategic-page-section">
-        <div className="section-header" style={{
-          display: 'inline-flex',
-          alignItems: 'center', borderBottom: 'none', marginBottom: '0px',
-          gap: '8px',
-          background: '#fff'
-        }}>
-          <Award size={24} style={{ color: 'blue' }} />
-          <h2>Success Benchmarks</h2>
-        </div>
-
-        <div className="table-container">
-          {benchmarks.case_study_parallels && benchmarks.case_study_parallels.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Case Study Parallels</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Company</th>
-                    <th>Parallel</th>
-                    <th>Applicable Lesson</th>
-                    <th>Success Metric</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {benchmarks.case_study_parallels.map((study, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value">
-                        <div className="company-name">
-                          <Building size={14} />
-                          <strong>{study.company}</strong>
-                        </div>
-                      </td>
-                      <td className="table-value">{study.parallel}</td>
-                      <td className="table-value">{study.applicable_lesson}</td>
-                      <td className="table-value">{study.success_metric}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {benchmarks.industry_benchmarks && benchmarks.industry_benchmarks.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Industry Benchmarks</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Metric</th>
-                    <th>Industry Average</th>
-                    <th>Target</th>
-                    <th>Timeframe</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {benchmarks.industry_benchmarks.map((benchmark, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value"><strong>{benchmark.metric}</strong></td>
-                      <td className="table-value">{benchmark.industry_average}</td>
-                      <td className="table-value">{benchmark.target}</td>
-                      <td className="table-value">{benchmark.timeframe}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
+        {/* Quarterly Milestones */}
+        {goals.quarterly_milestones && goals.quarterly_milestones.length > 0 && (
+          <div style={{
+            marginTop: '20px',
+            backgroundColor: '#f9fafb',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Calendar size={20} />
+              Quarterly Milestones
+            </h3>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {goals.quarterly_milestones.map((milestone, index) => (
+                <div key={index} style={{
+                  backgroundColor: 'white',
+                  padding: '15px',
+                  borderRadius: '6px',
+                  border: '1px solid #e5e7eb'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div style={{
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                      {milestone.quarter}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: '600', marginBottom: '6px' }}>
+                    {milestone.milestone}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                    <strong>Success Criteria:</strong> {milestone.success_criteria}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     );
   };
@@ -713,18 +557,155 @@ const StrategicAnalysis = ({
     const roadmap = data?.implementation_roadmap;
     if (!roadmap) return null;
 
+    // Extract duration in months for Gantt visualization
+    const parseDuration = (duration) => {
+      if (!duration) return 1;
+      const match = duration.toLowerCase().match(/(\d+)\s*(month|week|day)/);
+      if (!match) return 1;
+
+      const value = parseInt(match[1]);
+      const unit = match[2];
+
+      switch (unit) {
+        case 'week': return Math.max(0.25, value / 4);
+        case 'day': return Math.max(0.1, value / 30);
+        case 'month':
+        default: return Math.max(1, value);
+      }
+    };
+
+    const phases = Object.entries(roadmap);
+    const maxDuration = Math.max(...phases.map(([_, phase]) => parseDuration(phase.duration)));
+
+    // Calculate cumulative timeline for Gantt
+    let cumulativeMonths = 0;
+    const phasesWithTimeline = phases.map(([phaseKey, phase]) => {
+      const duration = parseDuration(phase.duration);
+      const startMonth = cumulativeMonths;
+      cumulativeMonths += duration;
+
+      return {
+        key: phaseKey,
+        phase,
+        duration,
+        startMonth,
+        endMonth: cumulativeMonths
+      };
+    });
+
+    const totalTimeline = cumulativeMonths;
+
+    const renderGanttBar = (startMonth, duration, index) => {
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+      const color = colors[index % colors.length];
+
+      const leftPercent = (startMonth / totalTimeline) * 100;
+      const widthPercent = (duration / totalTimeline) * 100;
+
+      return (
+        <div
+          className="gantt-bar"
+          style={{
+            position: 'absolute',
+            left: `${leftPercent}%`,
+            width: `${widthPercent}%`,
+            height: '20px',
+            backgroundColor: color,
+            borderRadius: '4px',
+            opacity: 0.8,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: 'bold'
+          }}
+        >
+          {Math.round(duration)}m
+        </div>
+      );
+    };
+
+    const renderTimelineHeader = () => {
+      const months = Math.ceil(totalTimeline);
+      return (
+        <div style={{ display: 'flex', marginBottom: '10px', fontSize: '12px', color: '#000' }}>
+          {Array.from({ length: months }, (_, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                borderLeft: i > 0 ? '1px solid #e5e7eb' : 'none',
+                padding: '4px 2px'
+              }}
+            >
+              M{i + 1}
+            </div>
+          ))}
+        </div>
+      );
+    };
+
     return (
       <section className="strategic-page-section">
         <div className="section-header" style={{
           display: 'inline-flex',
           alignItems: 'center', borderBottom: 'none',
-          gap: '8px', marginBottom: '0px',
+          gap: '8px', marginBottom: '20px',
           background: '#fff'
         }}>
           <Calendar size={24} style={{ color: 'blue' }} />
           <h2>Implementation Roadmap</h2>
         </div>
 
+        {/* Gantt Chart Visualization */}
+        <div style={{
+          backgroundColor: '#f9fafb',
+          padding: '20px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
+            Timeline Overview ({Math.ceil(totalTimeline)} months)
+          </h3>
+
+          {renderTimelineHeader()}
+
+          <div style={{ position: 'relative', minHeight: `${phasesWithTimeline.length * 35}px` }}>
+            {phasesWithTimeline.map(({ key, phase, startMonth, duration }, index) => (
+              <div key={key} style={{
+                position: 'relative',
+                height: '30px',
+                marginBottom: '5px',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <div style={{
+                  width: '120px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  marginRight: '10px',
+                  textAlign: 'right'
+                }}>
+                  {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </div>
+                <div style={{
+                  flex: 1,
+                  position: 'relative',
+                  height: '25px',
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '4px'
+                }}>
+                  {renderGanttBar(startMonth, duration, index)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Detailed Table */}
         <div className="table-container">
           <table className="data-table">
             <thead>
@@ -738,12 +719,12 @@ const StrategicAnalysis = ({
               </tr>
             </thead>
             <tbody>
-              {Object.entries(roadmap).map(([phaseKey, phase], index) => (
-                <tr key={phaseKey}>
+              {phasesWithTimeline.map(({ key, phase }, index) => (
+                <tr key={key}>
                   <td className="table-value">
                     <div className="phase-name">
                       <div className="phase-number">{index + 1}</div>
-                      <strong>{formatPhaseName(phaseKey)}</strong>
+                      <strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>
                     </div>
                   </td>
                   <td className="table-value text-center">
@@ -757,7 +738,6 @@ const StrategicAnalysis = ({
                   <td className="table-value text-center">
                     {phase.budget && (
                       <div className="budget-info">
-                        <DollarSign size={12} />
                         {phase.budget}
                       </div>
                     )}
@@ -796,132 +776,21 @@ const StrategicAnalysis = ({
     );
   };
 
-  const renderMonitoringAndFeedbackTable = (data) => {
-    const monitoring = data?.monitoring_and_feedback;
-    if (!monitoring) return null;
-
-    return (
-      <section className="strategic-page-section">
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: '#fff'
-          }}
-        >
-          <Monitor size={24} style={{ color: 'blue', flexShrink: 0 }} />
-          <h2 style={{ margin: 0, display: 'inline', whiteSpace: 'nowrap' }}>
-            Monitoring & Feedback
-          </h2>
-        </div>
-
-        <div className="table-container">
-          {monitoring.dashboard_requirements && monitoring.dashboard_requirements.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Dashboard Requirements</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Requirement</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monitoring.dashboard_requirements.map((requirement, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value">
-                        <div className="requirement-item">
-                          <CheckCircle size={12} />
-                          {requirement}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {monitoring.review_cycles && (
-            <>
-              <h3 className="table-subtitle">Review Cycles</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Cycle</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(monitoring.review_cycles).map(([cycle, description]) => (
-                    <tr key={cycle}>
-                      <td className="table-value">
-                        <strong>{cycle.charAt(0).toUpperCase() + cycle.slice(1)}</strong>
-                      </td>
-                      <td className="table-value">{description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
-            <>
-              <h3 className="table-subtitle">Feedback Loops</h3>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Source</th>
-                    <th>Frequency</th>
-                    <th>Integration Point</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monitoring.feedback_loops.map((loop, idx) => (
-                    <tr key={idx}>
-                      <td className="table-value">
-                        <div className="source-info">
-                          <MessageCircle size={12} />
-                          {loop.source}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        <div className="frequency-info">
-                          <Clock size={12} />
-                          {loop.frequency}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        <div className="integration-info">
-                          <ArrowRight size={12} />
-                          {loop.integration_point}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-      </section>
-    );
-  };
 
   const renderStrategicContent = () => {
     // Extract strategic_analysis from the response
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
 
     return (
-      <div className="strategic-content"> 
+      <div className="strategic-content">
         {renderStrategicPillarsTable(analysisData)}
-        {renderCrossPillarSynthesisTable(analysisData)}
-        {renderAgileFrameworksTable(analysisData)}
-        {renderRiskAssessmentTable(analysisData)}
-        {renderSuccessBenchmarksTable(analysisData)}
+        {renderStrategicGoalsTable(analysisData)}
+        {/* {renderCrossPillarSynthesisTable(analysisData)} */}
+        {/* {renderAgileFrameworksTable(analysisData)} */}
+        {/* {renderRiskAssessmentTable(analysisData)}
+        {renderSuccessBenchmarksTable(analysisData)} */}
         {renderImplementationRoadmapTable(analysisData)}
-        {renderMonitoringAndFeedbackTable(analysisData)}
+        {/* {renderMonitoringAndFeedbackTable(analysisData)} */}
       </div>
     );
   };
@@ -959,9 +828,9 @@ const StrategicAnalysis = ({
   if (!hasGenerated || !localStrategicData || isStrategicDataIncomplete(localStrategicData)) {
     return (
       <div className="strategic-analysis-container"
-           data-analysis-type="strategic"
-           data-analysis-name="Strategic Analysis"
-           data-analysis-order="10"> 
+        data-analysis-type="strategic"
+        data-analysis-name="Strategic Analysis"
+        data-analysis-order="10">
         <AnalysisEmptyState
           analysisType="strategic"
           analysisDisplayName="Strategic Analysis"
@@ -973,19 +842,19 @@ const StrategicAnalysis = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={5}
           customMessage="Complete essential phase questions to unlock comprehensive strategic analysis with implementation roadmaps and risk assessments."
-        /> 
+        />
       </div>
     );
   }
 
   return (
     <div className="strategic-analysis-container"
-         data-analysis-type="strategic"
-         data-analysis-name="Strategic Analysis"
-         data-analysis-order="10">
+      data-analysis-type="strategic"
+      data-analysis-name="Strategic Analysis"
+      data-analysis-order="10">
       <div className="dashboard-container">
         {renderStrategicContent()}
-      </div> 
+      </div>
     </div>
   );
 };

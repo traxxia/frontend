@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader, SkipForward, Upload, FileText } from "lucide-react";
+import { Send, Loader, SkipForward, Upload, FileText, Database } from "lucide-react";
 import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
+import FinancialTemplatesPopup from './FinancialTemplatesPopup';
+import { detectTemplateType, validateAgainstTemplate, formatValidationResults } from '../utils/templateValidator';
 
 const ChatComponent = ({
   selectedBusinessId,
@@ -10,7 +12,7 @@ const ChatComponent = ({
   onQuestionsLoaded,
   onQuestionCompleted,
   onPhaseCompleted,
-   onFileUploaded 
+  onFileUploaded
 }) => {
   // Core state
   const [currentInput, setCurrentInput] = useState('');
@@ -28,26 +30,32 @@ const ChatComponent = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isValidatingAnswer, setIsValidatingAnswer] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
-
+  const [isValidating, setIsValidating] = useState(false);
   // File upload states
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
 
   // Toast state
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
 
   const { t } = useTranslation();
   const messagesEndRef = useRef(null);
   const hasInitialized = useRef(false);
   const processingAnswer = useRef(false);
   const fileInputRef = useRef(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   // API configuration
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const getAuthToken = () => sessionStorage.getItem('token');
-const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
-
+  const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
+  const [businessUploadDecision, setBusinessUploadDecision] = useState({
+    upload_decision_made: false,
+    upload_decision: null
+  });
   // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -59,6 +67,36 @@ const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+  useEffect(() => {
+    // Only run this effect after businessUploadDecision is loaded and we have questions
+    if (questions.length > 0 && completedQuestions.size > 0) {
+      const essentialQuestions = questions.filter(q => q.phase === 'essential');
+      const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
+      const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+
+      // If essential is complete and we haven't made an upload decision AND no document has been uploaded
+      if (isEssentialComplete &&
+        !businessUploadDecision.upload_decision_made &&
+        !hasUploadedDocument &&
+        !nextQuestion &&
+        businessUploadDecision.upload_decision !== 'upload') { // Add this check
+
+        // Check if upload decision message is already shown
+        const hasUploadDecisionMessage = messages.some(msg => msg.questionId === 'upload_option'); 
+        if (!hasUploadDecisionMessage) {
+          addMessageLocally('bot',
+            'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
+            {
+              questionId: 'upload_option',
+              phase: 'upload_decision',
+              severity: 'optional',
+              showUploadButtons: true
+            }
+          );
+        }
+      }
+    }
+  }, [questions, completedQuestions, businessUploadDecision, hasUploadedDocument, nextQuestion, messages]);
 
   // Check if user is in good phase
   const isInGoodPhase = () => {
@@ -72,59 +110,105 @@ const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
     const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
     return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
   };
- 
-  useEffect(() => { 
+
+  useEffect(() => {
     setShowFileUpload(isGoodPhaseUnlocked() && isInGoodPhase());
   }, [questions, completedQuestions, nextQuestion]);
- 
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
 
-  const allowedTypes = [
-    'application/pdf',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/csv'
-  ];
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  if (!allowedTypes.includes(file.type)) {
-    showToastMessage('Please upload PDF, Excel, or CSV files only.', 'error');
-    return;
-  }
+    const allowedTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv'
+    ];
 
-  try {
-    setIsFileUploading(true);
-    
-    // Store the file for later use in good phase APIs
-    setUploadedFileForAnalysis(file);
-    
-    // Notify parent component about uploaded file
-    if (onFileUploaded) {
-      onFileUploaded(file);
+    if (!allowedTypes.includes(file.type)) {
+      showToastMessage('Please upload Excel (.xlsx, .xls) or CSV files only.', 'error');
+      return;
     }
-    
-    // Add file upload message to chat
-    addMessageLocally('user', `📄 Uploaded: ${file.name}`, {
-      isFileUpload: true,
-      fileName: file.name,
-      fileSize: (file.size / 1024).toFixed(1) + ' KB'
-    });
 
-    // Show success message in toast instead of chat message
-    showToastMessage('File uploaded successfully! This file will be automatically used when generating good phase financial analyses to provide more accurate and detailed insights.', 'success');
-    
-  } catch (error) {
-    console.error('File upload error:', error);
-    showToastMessage('Failed to process file. Please try again.', 'error');
-  } finally {
-    setIsFileUploading(false);
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    try {
+      setIsFileUploading(true);
+      setIsValidating(true); 
+      // Step 1: Auto-detect template type
+      const detection = await detectTemplateType(file); 
+
+      if (detection.confidence === 'none' || detection.score < 0.3) {
+        const errorMessage = `Unable to identify template type. Please ensure your file is based on one of our template files. Download a template first, fill it with your data, and upload the completed file.`;
+        throw new Error(errorMessage);
+      }
+
+      // Step 2: Validate against detected template
+      const validation = await validateAgainstTemplate(file, detection.type); 
+
+      if (!validation.isValid) {
+        // Create detailed error message
+        let errorMessage = `❌ Your file doesn't match the ${validation.templateName} format:\n\n`;
+
+        if (validation.errors.length > 0) {
+          errorMessage += 'ERRORS:\n';
+          validation.errors.forEach(error => errorMessage += `• ${error}\n`);
+          errorMessage += '\n';
+        }
+
+        if (validation.warnings.length > 0) {
+          errorMessage += 'WARNINGS:\n';
+          validation.warnings.forEach(warning => errorMessage += `• ${warning}\n`);
+          errorMessage += '\n';
+        }
+
+        errorMessage += `Please download the ${validation.templateName} template again and ensure:\n`;
+        errorMessage += `• All sheet names match exactly\n`;
+        errorMessage += `• All column headers match exactly (including spelling and spacing)\n`;
+        errorMessage += `• Don't add, remove, or rename any sheets or columns\n`;
+        errorMessage += `• Only add your data in the appropriate rows`;
+
+        throw new Error(errorMessage);
+      }
+
+      // File is valid - save to database
+      const validationResult = {
+        templateType: detection.type,
+        templateName: validation.templateName,
+        validation: validation,
+        confidence: detection.confidence,
+        uploadMode: 'auto-detect'
+      };
+
+      setIsValidating(false);
+      const dbResult = await saveFileToDatabase(file, validationResult);
+
+      // Store the validated file
+      setUploadedFileForAnalysis(file);
+
+      // Notify parent component
+      if (onFileUploaded) {
+        onFileUploaded(file, {
+          ...validationResult,
+          dbResult: dbResult
+        });
+      }
+
+      // Show success message
+      showToastMessage(
+        `✅ File uploaded and saved successfully! Detected as ${validation.templateName} with ${detection.confidence} confidence.`,
+        'success'
+      );
+
+    } catch (error) {
+      console.error('File upload/validation error:', error);
+      showToastMessage(error.message || 'Failed to process file. Please try again.', 'error');
+    } finally {
+      setIsFileUploading(false);
+      setIsValidating(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-  }
-};
+  };
   // Load initial data
   const loadQuestionsAndConversations = async () => {
     try {
@@ -146,6 +230,9 @@ const handleFileUpload = async (event) => {
 
       setQuestions(availableQuestions);
       onQuestionsLoaded?.(availableQuestions);
+
+      // Check existing document status first
+      await checkExistingDocument();
 
       // Load existing conversations
       const conversationUrl = `${API_BASE_URL}/api/conversations${selectedBusinessId ? `?business_id=${selectedBusinessId}` : ''}`;
@@ -189,7 +276,6 @@ const handleFileUpload = async (event) => {
     }
   };
 
-  // Process existing conversations data
   const processConversationsData = (conversationsData, availableQuestions) => {
     const chatMessages = [];
     const completedQuestionIds = new Set();
@@ -299,11 +385,59 @@ const handleFileUpload = async (event) => {
     setMessages(chatMessages);
     setCompletedQuestions(completedQuestionIds);
 
+    // Check if essential phase is complete
+    const essentialQuestions = availableQuestions.filter(q => q.phase === 'essential');
+    const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestionIds.has(q._id));
+    const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+
     // Determine current state
     const lastConversation = conversationsData.conversations
       .filter(conv => conv.conversation_flow.length > 0 || conv.is_skipped)
       .sort((a, b) => new Date(b.last_updated || b.created_at) - new Date(a.last_updated || a.created_at))[0];
 
+    // Handle essential completion and upload decision logic
+    if (isEssentialComplete && !businessUploadDecision.upload_decision_made && !hasUploadedDocument) {
+      // Check if there's already an upload decision message in chat
+      const hasUploadDecisionMessage = conversationsData?.document_info?.file_content_available ? true : false;
+
+      if (!hasUploadDecisionMessage) {
+        // Add upload decision message
+        chatMessages.push({
+          id: 'upload_decision_message',
+          type: 'bot',
+          text: 'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
+          timestamp: new Date(),
+          questionId: 'upload_option',
+          phase: 'upload_decision',
+          severity: 'optional',
+          showUploadButtons: true
+        });
+
+        // Update messages with the new upload decision message
+        setMessages([...chatMessages]);
+        setNextQuestion(null);
+        return;
+      }
+    }
+
+    // If essential is complete and upload decision was made or document uploaded, continue to good phase
+    if (isEssentialComplete && (businessUploadDecision.upload_decision === 'skip' || hasUploadedDocument)) {
+      const goodQuestions = availableQuestions.filter(q => q.phase === 'good');
+      if (goodQuestions.length > 0) {
+        const firstGoodQuestion = goodQuestions.find(q => !completedQuestionIds.has(q._id));
+        if (firstGoodQuestion && !askedQuestions.has(firstGoodQuestion._id)) {
+          setNextQuestion(firstGoodQuestion);
+          addMessageLocally('bot', firstGoodQuestion.question_text, {
+            questionId: firstGoodQuestion._id,
+            phase: firstGoodQuestion.phase,
+            severity: firstGoodQuestion.severity
+          });
+          return;
+        }
+      }
+    }
+
+    // Handle incomplete conversation state
     if (lastConversation?.completion_status === 'incomplete' && !lastConversation.is_skipped) {
       handleIncompleteConversation(lastConversation, questionMap, availableQuestions, completedQuestionIds, askedQuestions);
     } else {
@@ -459,7 +593,7 @@ const handleFileUpload = async (event) => {
           }
 
           // Notify parent about completed question
-          if (onQuestionCompleted) { 
+          if (onQuestionCompleted) {
             await onQuestionCompleted(questionId);
           }
 
@@ -500,7 +634,7 @@ const handleFileUpload = async (event) => {
       if (response.ok) {
         // Notify parent about skipped question
         onNewAnswer?.(questionId, '[Question Skipped]');
-        if (onQuestionCompleted) { 
+        if (onQuestionCompleted) {
           await onQuestionCompleted(questionId);
         }
 
@@ -514,6 +648,107 @@ const handleFileUpload = async (event) => {
       throw error;
     }
   };
+
+  const saveFileToDatabase = async (file, validationResult) => {
+    try {
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      if (!selectedBusinessId) {
+        throw new Error('No business selected');
+      }
+
+      const formData = new FormData();
+      formData.append('document', file); 
+      const backendComplexity = validationResult.templateType  || 'simple';
+
+      formData.append('template_type', backendComplexity);  
+      formData.append('template_name', validationResult.templateName);
+      formData.append('validation_confidence', validationResult.confidence || 'high');
+      formData.append('upload_mode', validationResult.uploadMode || 'auto-detect');
+
+      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save file to database');
+      }
+
+      setHasUploadedDocument(true);
+      setShowSuccessAlert(true);
+
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+      }, 5000);
+
+      return result;
+    } catch (error) {
+      console.error('Database save error:', error);
+      throw error;
+    }
+  };
+
+  const checkExistingDocument = async () => {
+    if (!selectedBusinessId) {
+      setHasUploadedDocument(false);
+      setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        const documentExists = result.has_document === true;
+        setHasUploadedDocument(documentExists);
+
+        // Set business upload decision data - ensure we handle all possible states
+        const uploadDecisionMade = result.upload_decision_made === true;
+        const uploadDecision = result.upload_decision || null;
+
+        setBusinessUploadDecision({
+          upload_decision_made: uploadDecisionMade,
+          upload_decision: uploadDecision
+        });
+
+        if (documentExists && !showSuccessAlert) {
+          setShowSuccessAlert(true);
+          setTimeout(() => {
+            setShowSuccessAlert(false);
+          }, 5000);
+        }
+      } else {
+        setHasUploadedDocument(false);
+        setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+      }
+    } catch (error) {
+      console.error('Error checking existing document:', error);
+      setHasUploadedDocument(false);
+      setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+    }
+  };
+
+  useEffect(() => {
+    checkExistingDocument();
+  }, [selectedBusinessId]);
 
   const saveFollowupQuestion = async (questionId, followupText) => {
     try {
@@ -536,12 +771,94 @@ const handleFileUpload = async (event) => {
     }
   };
 
-  // Move to next question after completion
   const moveToNextQuestion = async (updatedCompletedSet = null) => {
     try {
       const currentCompleted = updatedCompletedSet || completedQuestions;
-      const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
+      const essentialQuestions = questions.filter(q => q.phase === 'essential');
+      const completedEssentialQuestions = essentialQuestions.filter(q => currentCompleted.has(q._id));
+      const justCompletedEssential = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
 
+      // Check if essential is complete and no upload decision has been made
+      if (justCompletedEssential &&
+        !businessUploadDecision.upload_decision_made &&
+        !hasUploadedDocument &&
+        businessUploadDecision.upload_decision !== 'upload') { // Add this check
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ decision: 'pending' })
+          });
+
+          if (response.ok) {
+            setBusinessUploadDecision({
+              upload_decision_made: false,
+              upload_decision: 'pending'
+            });
+          }
+        } catch (error) {
+          console.error('Failed to initialize upload decision:', error);
+        }
+
+        // Add upload option message in chat
+        addMessageLocally('bot',
+          'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
+          {
+            questionId: 'upload_option',
+            phase: 'upload_decision',
+            severity: 'optional',
+            showUploadButtons: true
+          }
+        );
+        setNextQuestion(null);
+        return;
+      }
+
+      // If upload decision was made to skip, continue to advanced phase (NO Good phase generation)
+      if (businessUploadDecision.upload_decision === 'skip') {
+        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+        if (advancedQuestions.length > 0) {
+          const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
+          if (firstAdvancedQuestion) {
+            setNextQuestion(firstAdvancedQuestion);
+            addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+              questionId: firstAdvancedQuestion._id,
+              phase: firstAdvancedQuestion.phase,
+              severity: firstAdvancedQuestion.severity
+            });
+            return;
+          }
+        } else {
+          // No advanced questions available, show completion
+          showToastMessage('All available questions completed!', 'success');
+          return;
+        }
+      }
+
+      // If file was uploaded (good phase should be handled by onPhaseCompleted)
+      // Just continue to advanced phase questions
+      if (businessUploadDecision.upload_decision === 'upload' || hasUploadedDocument) {
+        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+        if (advancedQuestions.length > 0) {
+          const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
+          if (firstAdvancedQuestion) {
+            setNextQuestion(firstAdvancedQuestion);
+            addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+              questionId: firstAdvancedQuestion._id,
+              phase: firstAdvancedQuestion.phase,
+              severity: firstAdvancedQuestion.severity
+            });
+            return;
+          }
+        }
+      }
+
+      // Continue with regular next question logic for other phases
+      const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
       setNextQuestion(nextQuestionCandidate);
 
       if (nextQuestionCandidate) {
@@ -559,15 +876,109 @@ const handleFileUpload = async (event) => {
     }
   };
 
-  // Handle skip functionality
+  const handleUploadDecision = async (decision) => {
+    if (decision === 'upload') {
+      setShowTemplatesPopup(true);
+    } else if (decision === 'skip') {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ decision: 'skip' })
+        });
+
+        if (response.ok) {
+          setBusinessUploadDecision({
+            upload_decision_made: true,
+            upload_decision: 'skip'
+          });
+
+          // Skip Good phase entirely - go directly to Advanced phase questions
+          const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+          if (advancedQuestions.length > 0) {
+            const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
+            if (firstAdvancedQuestion) {
+              setNextQuestion(firstAdvancedQuestion);
+              addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+                questionId: firstAdvancedQuestion._id,
+                phase: firstAdvancedQuestion.phase,
+                severity: firstAdvancedQuestion.severity
+              });
+            }
+          } else {
+            // If no advanced questions, show completion message
+            addMessageLocally('bot', 'All available questions have been completed!', {
+              questionId: 'completion',
+              phase: 'complete',
+              severity: 'info'
+            });
+          }
+
+          showToastMessage('Continuing to Advanced phase questions', 'info');
+        }
+      } catch (error) {
+        showToastMessage('Failed to save decision', 'error');
+      }
+    }
+  };
+
   const handleSkip = async () => {
     if (isSkipping || (!nextQuestion && !pendingValidation)) return;
 
     try {
       setIsSkipping(true);
 
+      // Check if we're in the upload decision state
+      const essentialQuestions = questions.filter(q => q.phase === 'essential');
+      const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
+      const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+
+      // If essential is complete and no document uploaded and no next question, handle upload skip
+      if (isEssentialComplete && !hasUploadedDocument && !nextQuestion && !businessUploadDecision.upload_decision_made) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ decision: 'skip' })
+          });
+
+          if (response.ok) {
+            setBusinessUploadDecision({
+              upload_decision_made: true,
+              upload_decision: 'skip'
+            });
+
+            // Skip Good phase - go directly to Advanced phase questions
+            const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+            if (advancedQuestions.length > 0) {
+              const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
+              if (firstAdvancedQuestion) {
+                setNextQuestion(firstAdvancedQuestion);
+                addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+                  questionId: firstAdvancedQuestion._id,
+                  phase: firstAdvancedQuestion.phase,
+                  severity: firstAdvancedQuestion.severity
+                });
+                showToastMessage('Proceeding to Advanced phase questions', 'info');
+              }
+            } else {
+              showToastMessage('All available questions completed!', 'success');
+            }
+          }
+        } catch (error) {
+          showToastMessage('Failed to skip upload decision', 'error');
+        }
+        return;
+      }
+
+      // Handle regular question skipping
       if (pendingValidation) {
-        // Skip follow-up question
         addMessageLocally('user', '[Question Skipped]', {
           questionId: pendingValidation.questionId,
           phase: pendingValidation.phase,
@@ -576,14 +987,11 @@ const handleFileUpload = async (event) => {
         });
 
         const saveResult = await saveSkippedQuestion(pendingValidation.questionId);
-
         setPendingValidation(null);
         setFollowupAttempts(0);
-
         await moveToNextQuestion(saveResult.updatedCompleted);
         showToastMessage('Question skipped', 'info');
       } else if (nextQuestion) {
-        // Skip main question
         addMessageLocally('user', '[Question Skipped]', {
           questionId: nextQuestion._id,
           phase: nextQuestion.phase,
@@ -601,7 +1009,6 @@ const handleFileUpload = async (event) => {
       setIsSkipping(false);
     }
   };
-
   // Handle form submission
   const handleSubmit = async () => {
     if (!currentInput.trim() || processingAnswer.current) return;
@@ -622,6 +1029,227 @@ const handleFileUpload = async (event) => {
 
     } finally {
       processingAnswer.current = false;
+    }
+  };
+
+  const handleFileUploadFromPopup = async (file, expectedTemplateType = null) => {
+    try {
+      setIsFileUploading(true);
+      setIsValidating(true);
+
+      // Add user response in chat
+      addMessageLocally('user', `Uploaded file: ${file.name}`, {
+        questionId: 'upload_option',
+        phase: 'upload_decision',
+        isFileUpload: true
+      });
+
+      if (expectedTemplateType) {
+        const validation = await validateAgainstTemplate(file, expectedTemplateType);
+
+        if (!validation.isValid) {
+          let errorMessage = `File doesn't match the ${validation.templateName} template exactly:\n\n`;
+
+          if (validation.details && validation.details.sheetComparison) {
+            Object.entries(validation.details.sheetComparison).forEach(([sheetName, details]) => {
+              if (details.missingColumns.length > 0) {
+                errorMessage += `Sheet "${sheetName}":\n`;
+                errorMessage += `  Missing columns: ${details.missingColumns.join(', ')}\n`;
+              }
+              if (details.mismatchedColumns.length > 0) {
+                errorMessage += `Sheet "${sheetName}" column mismatches:\n`;
+                details.mismatchedColumns.forEach(({ expected, found }) => {
+                  errorMessage += `  "${found}" should be "${expected}"\n`;
+                });
+              }
+            });
+          }
+
+          errorMessage += `\nTo fix this:\n`;
+          errorMessage += `1. Download the ${validation.templateName} template again\n`;
+          errorMessage += `2. Copy your data to the new template\n`;
+          errorMessage += `3. Don't modify any sheet names or column headers\n`;
+          errorMessage += `4. Upload the completed template`;
+
+          throw new Error(errorMessage);
+        }
+
+        // Map template type for backend
+        const templateComplexityMap = {
+          'simplified': 'simple',
+          'standard': 'medium',
+          'detailed': 'medium'
+        };
+
+        const validationResult = {
+          templateType: expectedTemplateType,  // Keep original type for reference
+          backendType: templateComplexityMap[expectedTemplateType],
+          templateName: validation.templateName,
+          validation: validation,
+          uploadMode: 'template-specific',
+          confidence: 'high'
+        };
+
+        setIsValidating(false);
+        const dbResult = await saveFileToDatabase(file, validationResult);
+        setUploadedFileForAnalysis(file);
+        setShowTemplatesPopup(false);
+
+        if (onFileUploaded) {
+          onFileUploaded(file, {
+            ...validationResult,
+            dbResult: dbResult
+          });
+        }
+
+        // Save upload decision to backend FIRST
+        try {
+          await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ decision: 'upload' })
+          });
+
+          setBusinessUploadDecision({
+            upload_decision_made: true,
+            upload_decision: 'upload'
+          });
+        } catch (error) {
+          console.error('Failed to save upload decision:', error);
+        }
+
+        // DON'T add any chat messages here - let the phase completion handle it
+
+        // Generate Good phase analysis immediately
+        if (onPhaseCompleted) {
+          try {
+            await onPhaseCompleted('good', completedQuestions);
+
+            // After good phase is complete, move to advanced questions
+            setTimeout(async () => {
+              const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+              if (advancedQuestions.length > 0) {
+                const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
+                if (firstAdvancedQuestion) {
+                  setNextQuestion(firstAdvancedQuestion);
+                  addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+                    questionId: firstAdvancedQuestion._id,
+                    phase: firstAdvancedQuestion.phase,
+                    severity: firstAdvancedQuestion.severity
+                  });
+                }
+              }
+            }, 1000); // Small delay to ensure phase completion finishes
+
+          } catch (phaseError) {
+            console.error('Error generating good phase analysis:', phaseError);
+            showToastMessage('File uploaded but analysis generation failed', 'warning');
+          }
+        }
+
+        showToastMessage(
+          `File uploaded successfully as ${validation.templateName}.`,
+          'success'
+        );
+
+      } else { 
+        // Auto-detect logic with mapping (similar pattern as above)
+        const detection = await detectTemplateType(file);
+
+        if (detection.confidence === 'none' || detection.score < 0.3) {
+          const errorMessage = `Unable to identify template type. Please use template-specific upload or ensure your file is based on one of our templates.`;
+          throw new Error(errorMessage);
+        }
+
+        const validation = await validateAgainstTemplate(file, detection.type);
+
+        if (!validation.isValid) {
+          const errorMessage = `File validation failed: ${validation.errors.join(', ')}`;
+          throw new Error(errorMessage);
+        }
+
+        const validationResult = {
+          templateType: detection.backendType,
+          originalTemplateType: detection.type,
+          templateName: validation.templateName,
+          validation: validation,
+          confidence: detection.confidence,
+          uploadMode: 'auto-detect'
+        };
+
+        setIsValidating(false);
+        const dbResult = await saveFileToDatabase(file, validationResult);
+        setUploadedFileForAnalysis(file);
+        setShowTemplatesPopup(false);
+
+        if (onFileUploaded) {
+          onFileUploaded(file, {
+            ...validationResult,
+            dbResult: dbResult
+          });
+        }
+
+        // Save upload decision to backend
+        try {
+          await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ decision: 'upload' })
+          });
+
+          setBusinessUploadDecision({
+            upload_decision_made: true,
+            upload_decision: 'upload'
+          });
+        } catch (error) {
+          console.error('Failed to save upload decision:', error);
+        }
+
+        // Generate Good phase analysis immediately
+        if (onPhaseCompleted) {
+          try {
+            await onPhaseCompleted('good', completedQuestions);
+
+            // After good phase is complete, move to advanced questions
+            setTimeout(async () => {
+              const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+              if (advancedQuestions.length > 0) {
+                const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
+                if (firstAdvancedQuestion) {
+                  setNextQuestion(firstAdvancedQuestion);
+                  addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+                    questionId: firstAdvancedQuestion._id,
+                    phase: firstAdvancedQuestion.phase,
+                    severity: firstAdvancedQuestion.severity
+                  });
+                }
+              }
+            }, 1000);
+
+          } catch (phaseError) {
+            console.error('Error generating good phase analysis:', phaseError);
+            showToastMessage('File uploaded but analysis generation failed', 'warning');
+          }
+        }
+
+        showToastMessage(
+          `File uploaded successfully as ${validation.templateName}.`,
+          'success'
+        );
+      }
+
+    } catch (error) {
+      console.error('File upload error:', error);
+      showToastMessage(error.message || 'Failed to process file. Please try again.', 'error');
+    } finally {
+      setIsFileUploading(false);
+      setIsValidating(false);
     }
   };
 
@@ -680,7 +1308,7 @@ const handleFileUpload = async (event) => {
     }
 
     const questionId = nextQuestion._id;
-    const questionText = nextQuestion.question_text; 
+    const questionText = nextQuestion.question_text;
 
     addMessageLocally('user', answer, {
       questionId,
@@ -715,7 +1343,7 @@ const handleFileUpload = async (event) => {
         });
 
         setFollowupAttempts(0);
-      } else { 
+      } else {
         const saveResult = await saveAnswer(questionId, answer, true);
 
         await moveToNextQuestion(saveResult.updatedCompleted);
@@ -730,7 +1358,7 @@ const handleFileUpload = async (event) => {
     setShowToast({ show: true, message, type });
     setTimeout(() => {
       setShowToast({ show: false, message: '', type: 'success' });
-    }, 4000);
+    }, 5000);
   };
 
   const handleKeyPress = (e) => {
@@ -806,17 +1434,59 @@ const handleFileUpload = async (event) => {
                 </div>
               )}
 
-              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''} ${message.isFileUpload ? 'file-upload' : ''}`}>
+              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''}`}>
                 <div className="message-text">
-                  {message.isFileUpload && <FileText size={16} style={{ display: 'inline', marginRight: '8px', color: '#10b981' }} />}
                   {message.text}
                   {message.isSkipped && <span className="skip-indicator"></span>}
-                  {message.isFileUpload && (
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                      Size: {message.fileSize}
-                    </div>
-                  )}
                 </div>
+
+                {/* Add upload decision buttons */}
+                {message.showUploadButtons && !hasUploadedDocument && (
+                  <div className="upload-decision-buttons" style={{
+                    display: 'flex',
+                    gap: '12px',
+                    marginTop: '12px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <button
+                      onClick={() => handleUploadDecision('upload')}
+                      disabled={isFileUploading}
+                      style={{
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Database size={16} />
+                      Upload Financial Data
+                    </button>
+                    <button
+                      onClick={() => handleUploadDecision('skip')}
+                      disabled={isFileUploading}
+                      style={{
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Skip & Continue
+                    </button>
+                  </div>
+                )}
+
                 <div className="message-timestamp">
                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {message.type === 'bot' && message.phase && (
@@ -857,69 +1527,7 @@ const handleFileUpload = async (event) => {
         </button>
       )}
 
-      {/* Floating File Upload Button - Show when in good phase */}
-      {showFileUpload && (
-        <div className="floating-upload-container">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isFileUploading}
-            className="floating-upload-button"
-            onMouseEnter={(e) => {
-              const tooltip = e.currentTarget.querySelector('.upload-tooltip');
-              if (tooltip) tooltip.style.display = 'block';
-            }}
-            onMouseLeave={(e) => {
-              const tooltip = e.currentTarget.querySelector('.upload-tooltip');
-              if (tooltip) tooltip.style.display = 'none';
-            }}
-          >
-            {isFileUploading ? (
-              <Loader size={24} className="spinner" />
-            ) : (
-              <Upload size={24} />
-            )}
-            
-            {/* Tooltip */}
-            <div className="upload-tooltip" style={{
-              display: 'none',
-              position: 'absolute',
-              bottom: '120%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              backgroundColor: '#1f2937',
-              color: 'white',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              fontSize: '12px',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              zIndex: 1000,
-              maxWidth: '250px',
-              textAlign: 'center',
-              lineHeight: '1.4'
-            }}>
-              <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                💡 Upload Financial Data (Optional)
-              </div>
-              <div style={{ fontSize: '11px', color: '#d1d5db' }}>
-                PDF, Excel, or CSV files to enhance analysis
-              </div>
-              {/* Tooltip arrow */}
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 0,
-                height: 0,
-                borderLeft: '6px solid transparent',
-                borderRight: '6px solid transparent',
-                borderTop: '6px solid #1f2937'
-              }}></div>
-            </div>
-          </button>
-        </div>
-      )}
+
 
       <div className="input-area">
         <div className="input-wrapper">
@@ -961,7 +1569,7 @@ const handleFileUpload = async (event) => {
             <span>
               Question {completedQuestions.size + 1} of {questions.length} •
               Phase: {nextQuestion.phase.toUpperCase()}
-              {showFileUpload && isInGoodPhase() && ' • File upload available'}
+
               {isSaving && ` • Saving...`}
               {isValidatingAnswer && ` • Validating...`}
               {processingAnswer.current && ` • Processing...`}
@@ -973,6 +1581,47 @@ const handleFileUpload = async (event) => {
           )}
         </div>
       </div>
+      <FinancialTemplatesPopup
+        isOpen={showTemplatesPopup}
+        onClose={() => setShowTemplatesPopup(false)}
+        onFileUploaded={handleFileUploadFromPopup}
+        isFileUploading={isFileUploading}
+      />
+      {showSuccessAlert && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#10b981',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '16px',
+          fontWeight: '500'
+        }}>
+          <span style={{ fontSize: '24px' }}>🎉</span>
+          Financial document uploaded successfully!
+          <button
+            onClick={() => setShowSuccessAlert(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '18px',
+              marginLeft: '8px'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 };

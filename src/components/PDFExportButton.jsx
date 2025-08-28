@@ -365,16 +365,16 @@ const PDFExportButton = ({
           { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
           { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
           { selector: '[data-component="expanded-capability"]', name: 'Expanded Capability Heatmap' },
-          { selector: '[data-component="strategic-goals"]', name: 'Strategic Goals' },
           { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
           { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
           { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
           { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-          // Good phase specific components
-          { selector: '[data-component="cost-efficiency"]', name: 'Cost Efficiency Analysis' },
-          { selector: '[data-component="financial-performance"]', name: 'Financial Performance & Growth Trajectory' },
-          { selector: '[data-component="financial-health"]', name: 'Financial Health Analysis' },
-          { selector: '[data-component="operational-efficiency"]', name: 'Operational Efficiency Analysis' }
+          // Good phase specific components - Updated to match new components
+          { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
+          { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
+          { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
+          { selector: '[data-component="investment-performance"]', name: 'Investment Performance' },
+          { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' }
         ]
       };
 
