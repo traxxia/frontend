@@ -54,33 +54,26 @@ const ProfitabilityAnalysis = ({
   };
 
   // UPDATED: Handle the new backend response structure
-  const isProfitabilityDataIncomplete = (data) => {
-    console.log('Checking profitability data:', data);
+  const isProfitabilityDataIncomplete = (data) => { 
     
-    if (!data || !data.profitability) {
-      console.log('No profitability data found');
+    if (!data || !data.profitability) { 
       return true;
     }
     
-    const profitabilityMetrics = data.profitability;
-    console.log('Profitability metrics:', profitabilityMetrics);
+    const profitabilityMetrics = data.profitability; 
     
-    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
-      console.log('Invalid profitability metrics object');
+    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') { 
       return true;
     }
-    
-    // Check if at least one profitability metric has non-null value
+     
     const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => {
       const isValid = value !== null && 
         value !== undefined &&
         value !== '' &&
-        !isNaN(parseFloat(value));
-      console.log(`Checking ${key}: ${value} -> ${isValid}`);
+        !isNaN(parseFloat(value)); 
       return isValid;
     });
-    
-    console.log('Has valid metric:', hasValidMetric);
+     
     return !hasValidMetric;
   };
 
@@ -97,15 +90,11 @@ const ProfitabilityAnalysis = ({
       setAnalysisData(null);
       setError(null);
     }
-  };
-
-  // Update analysis data when profitabilityData prop changes
-  useEffect(() => {
-    console.log('useEffect triggered with profitabilityData:', profitabilityData);
-    console.log('Current analysisData:', analysisData);
+  }; 
+  
+  useEffect(() => { 
     
-    if (profitabilityData && profitabilityData !== analysisData) {
-      console.log('Profitability data updated:', profitabilityData);
+    if (profitabilityData && profitabilityData !== analysisData) { 
       setAnalysisData(profitabilityData);
       setError(null);
       
@@ -131,8 +120,7 @@ const ProfitabilityAnalysis = ({
     };
   }, [profitabilityData]);
 
-  const handleFileUpload = (file) => {
-    console.log('File upload requested:', file);
+  const handleFileUpload = (file) => { 
     if (file) {
       const allowedTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -170,77 +158,6 @@ const ProfitabilityAnalysis = ({
     }
     
     return null;
-  };
-
-  // UPDATED: Get thresholds from backend response
-  const getThreshold = (metricKey, thresholds) => {
-    if (!thresholds) return null;
-    
-    const thresholdMap = {
-      'gross_margin': 'gross_margin',
-      'operating_margin': 'operating_margin', 
-      'ebitda_margin': 'ebitda',
-      'net_margin': 'net_margin'
-    };
-    
-    const thresholdKey = thresholdMap[metricKey];
-    return thresholds[thresholdKey] || null;
-  };
-
-  // UPDATED: Color determination with threshold support
-  const getMarginColor = (value, metricKey, thresholds) => {
-    if (value === null || value === undefined || value === '') return '#e5e7eb';
-    
-    let numValue = typeof value === 'number' ? value : parseFloat(value);
-    if (isNaN(numValue)) return '#e5e7eb';
-    
-    // Get threshold from backend or use default benchmarks
-    const threshold = getThreshold(metricKey, thresholds);
-    let benchmarkValue = null;
-    
-    if (threshold) {
-      benchmarkValue = parseFloat(threshold.replace('%', '')) / 100;
-    } else {
-      // Fallback to default benchmarks
-      const defaultBenchmarks = {
-        'gross_margin': 0.4,
-        'operating_margin': 0.15,
-        'ebitda_margin': 0.2,
-        'net_margin': 0.1
-      };
-      benchmarkValue = defaultBenchmarks[metricKey] || 0.1;
-    }
-
-    if (numValue >= benchmarkValue) return '#10b981'; // Good - Green
-    if (numValue >= benchmarkValue * 0.7) return '#f59e0b'; // Fair - Orange
-    return '#ef4444'; // Poor - Red
-  };
-
-  // UPDATED: Get status text with threshold support
-  const getStatusText = (value, metricKey, thresholds) => {
-    if (value === null || value === undefined || value === '') return null;
-    
-    let numValue = typeof value === 'number' ? value : parseFloat(value);
-    if (isNaN(numValue)) return null;
-    
-    const threshold = getThreshold(metricKey, thresholds);
-    let benchmarkValue = null;
-    
-    if (threshold) {
-      benchmarkValue = parseFloat(threshold.replace('%', '')) / 100;
-    } else {
-      const defaultBenchmarks = {
-        'gross_margin': 0.4,
-        'operating_margin': 0.15,
-        'ebitda_margin': 0.2,
-        'net_margin': 0.1
-      };
-      benchmarkValue = defaultBenchmarks[metricKey] || 0.1;
-    }
-
-    if (numValue >= benchmarkValue) return 'Excellent';
-    if (numValue >= benchmarkValue * 0.7) return 'Good';
-    return 'Needs Improvement';
   };
 
   // UPDATED: Convert snake_case to display names
@@ -310,14 +227,8 @@ const ProfitabilityAnalysis = ({
 
   // UPDATED: Extract data from new backend structure
   const profitabilityMetrics = analysisData.profitability;
-  const thresholds = analysisData.threshold;
   
-  console.log('Analysis data:', analysisData);
-  console.log('Profitability metrics:', profitabilityMetrics);
-  console.log('Thresholds:', thresholds);
-  
-  if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
-    console.log('No valid profitability metrics found');
+  if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') { 
     return (
       <div className="channel-heatmap channel-heatmap-container">
         <AnalysisEmptyState
@@ -343,13 +254,7 @@ const ProfitabilityAnalysis = ({
 
       {/* Header */}
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
-          <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Profitability Margins</h3>
-            <p className="ch-section-subtitle">
-              Key profitability metrics with industry benchmark comparisons
-            </p>
-          </div>
+        <div className="ch-heatmap-scroll"> 
 
           {/* Check if all values are null and show warning */}
           {Object.values(profitabilityMetrics).every(value => value === null) && (
@@ -366,84 +271,30 @@ const ProfitabilityAnalysis = ({
             </div>
           )}
 
-          {/* Profitability Metrics Grid */}
-          <div className="profitability-metrics-grid">
-            {Object.entries(profitabilityMetrics).map(([key, value]) => {
-              const formattedValue = formatPercentage(value);
-              const isNull = value === null || value === undefined || value === '';
-              const displayName = getDisplayName(key);
-              const color = getMarginColor(value, key, thresholds);
-              const statusText = getStatusText(value, key, thresholds);
-              
-              return (
-                <div key={key} className={`profitability-metric-card ${isNull ? 'no-data' : ''}`}>
-                  <div className="profitability-metric-header">
-                    <h4 className="profitability-metric-title">
-                      {displayName}
-                    </h4>
-                    <Info size={16} color="#6b7280" title="Industry benchmark comparison" />
-                  </div>
-                  
-                  <div 
-                    className={`profitability-metric-value ${isNull ? 'no-data' : ''}`}
-                    style={{ color: isNull ? '#9ca3af' : color }}
-                  >
-                    {isNull ? 'No Data' : formattedValue}
-                  </div>
-                  
-                  {!isNull && statusText && (
-                    <div className="profitability-metric-status">
-                      <span 
-                        className="profitability-status-indicator"
-                        style={{ backgroundColor: color }}
-                      ></span>
-                      {statusText}
-                    </div>
-                  )}
-
-                  {isNull && (
-                    <div className="profitability-no-data-text">
-                      Data not available in uploaded file
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Explanations */}
-          <div className="profitability-explanations">
-            <h4 className="profitability-explanations-title">
-              Margin Explanations
-            </h4>
-            
-            <div className="profitability-explanations-grid">
-              <div className="profitability-explanation-item">
-                <span className="profitability-explanation-label">Gross Margin:</span>
-                <span className="profitability-explanation-text">
-                  Revenue minus cost of goods sold, showing basic profitability
-                </span>
-              </div>
-              <div className="profitability-explanation-item">
-                <span className="profitability-explanation-label">Operating Margin:</span>
-                <span className="profitability-explanation-text">
-                  Profit after operating expenses, indicating operational efficiency
-                </span>
-              </div>
-              <div className="profitability-explanation-item">
-                <span className="profitability-explanation-label">EBITDA Margin:</span>
-                <span className="profitability-explanation-text">
-                  Earnings before interest, taxes, depreciation & amortization
-                </span>
-              </div>
-              <div className="profitability-explanation-item">
-                <span className="profitability-explanation-label">Net Margin:</span>
-                <span className="profitability-explanation-text">
-                  Final profit margin after all expenses and taxes
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* Profitability Metrics Table */}
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(profitabilityMetrics).map(([key, value]) => {
+                const formattedValue = formatPercentage(value);
+                const isNull = value === null || value === undefined || value === '';
+                const displayName = getDisplayName(key);
+                
+                return (
+                  <tr key={key}>
+                    <td><strong>{displayName}</strong></td>
+                    <td>{isNull ? 'No Data' : formattedValue}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+ 
         </div>
       </div>
     </div>

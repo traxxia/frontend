@@ -8387,3 +8387,902 @@
   background-color: #f3f4f6;
   color: #6b7280;
 }
+
+/* LiquidityEfficiency Component Styles */
+
+/* Main container */
+.liquidity-efficiency {
+  /* Additional container-specific styles if needed */
+}
+
+/* Warning message */
+.liquidity-efficiency__warning {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #92400e;
+}
+
+.liquidity-efficiency__warning h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.liquidity-efficiency__warning p {
+  font-size: 13px;
+  margin: 4px 0 0 0;
+}
+
+/* Ratios grid */
+.liquidity-efficiency__ratios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+/* Individual ratio card */
+.liquidity-efficiency__ratio-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  transition: opacity 0.2s ease;
+}
+
+.liquidity-efficiency__ratio-card--null {
+  opacity: 0.6;
+}
+
+.liquidity-efficiency__ratio-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  text-align: center;
+}
+
+/* Ratio details */
+.liquidity-efficiency__ratio-details {
+  text-align: center;
+}
+
+.liquidity-efficiency__ratio-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.liquidity-efficiency__ratio-value--null {
+  color: #9ca3af;
+}
+
+.liquidity-efficiency__ratio-value--green {
+  color: #10b981;
+}
+
+.liquidity-efficiency__ratio-value--yellow {
+  color: #f59e0b;
+}
+
+.liquidity-efficiency__ratio-value--red {
+  color: #ef4444;
+}
+
+.liquidity-efficiency__ratio-status {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.liquidity-efficiency__status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.liquidity-efficiency__status-indicator--green {
+  background-color: #10b981;
+}
+
+.liquidity-efficiency__status-indicator--yellow {
+  background-color: #f59e0b;
+}
+
+.liquidity-efficiency__status-indicator--red {
+  background-color: #ef4444;
+}
+
+.liquidity-efficiency__ratio-message {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Gauge Chart Styles */
+.gauge-chart {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.gauge-chart--no-data {
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gauge-chart__svg {
+  transform: rotate(-90deg);
+}
+
+.gauge-chart__background {
+  stroke: #e5e7eb;
+  stroke-width: 8;
+  fill: transparent;
+}
+
+.gauge-chart__progress {
+  stroke-width: 8;
+  fill: transparent;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s ease-in-out;
+}
+
+.gauge-chart__progress--green {
+  stroke: #10b981;
+}
+
+.gauge-chart__progress--yellow {
+  stroke: #f59e0b;
+}
+
+.gauge-chart__progress--red {
+  stroke: #ef4444;
+}
+
+.gauge-chart__progress--gray-light {
+  stroke: #e5e7eb;
+}
+
+.gauge-chart__progress--gray-default {
+  stroke: #6b7280;
+}
+
+.gauge-chart__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.gauge-chart__value--green {
+  color: #10b981;
+}
+
+.gauge-chart__value--yellow {
+  color: #f59e0b;
+}
+
+.gauge-chart__value--red {
+  color: #ef4444;
+}
+
+.gauge-chart__value--gray-light,
+.gauge-chart__value--gray-default {
+  color: #6b7280;
+}
+
+/* Explanations section */
+.liquidity-efficiency__explanations {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.liquidity-efficiency__explanations-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.liquidity-efficiency__explanations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.liquidity-efficiency__explanation strong {
+  color: #1f2937;
+}
+
+.liquidity-efficiency__explanation span {
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .liquidity-efficiency__ratios-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .liquidity-efficiency__explanations-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .liquidity-efficiency__ratio-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gauge-chart,
+  .gauge-chart--no-data {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .gauge-chart__svg {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .gauge-chart__background,
+  .gauge-chart__progress {
+    r: 37.5;
+    stroke-width: 6;
+  }
+  
+  .gauge-chart__value {
+    font-size: 14px;
+  }
+  
+  .liquidity-efficiency__ratio-card {
+    padding: 16px;
+  }
+}
+
+/* Investment Performance Component Styles */
+
+.investment-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+/* Loading State */
+.investment-loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.investment-loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.investment-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  color: #374151;
+}
+
+.investment-error-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.investment-error-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #ef4444;
+}
+
+.investment-error-state p {
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.investment-retry-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.investment-retry-button:hover {
+  background-color: #2563eb;
+}
+
+/* Metrics Section */
+.investment-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.investment-metric-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid;
+  transition: transform 0.2s ease;
+}
+
+.investment-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.investment-metric-blue {
+  border-left-color: #3b82f6;
+}
+
+.investment-metric-green {
+  border-left-color: #10b981;
+}
+
+.investment-metric-purple {
+  border-left-color: #8b5cf6;
+}
+
+.investment-metric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.investment-metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.investment-metric-comparison {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Ratio Color Classes */
+.ratio-good {
+  color: #10b981;
+}
+
+.ratio-fair {
+  color: #f59e0b;
+}
+
+.ratio-poor {
+  color: #ef4444;
+}
+
+.ratio-unavailable {
+  color: #6b7280;
+}
+
+/* Charts Container */
+.investment-charts-container {
+  flex: 1;
+  background: white;
+  overflow: hidden;
+}
+
+.investment-charts-scroll {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.investment-header-section {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.investment-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.investment-section-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Charts Grid */
+.investment-charts-grid {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.investment-chart-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.investment-chart-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.investment-chart-wrapper {
+  height: 400px;
+  width: 100%;
+}
+
+/* Custom Tooltip */
+.investment-tooltip {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  font-size: 12px;
+}
+
+.investment-tooltip-header {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+}
+
+.investment-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.investment-tooltip-item {
+  font-weight: 500;
+}
+
+/* Analysis Section */
+.investment-analysis-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.investment-analysis-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.investment-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.investment-analysis-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.investment-analysis-label {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.investment-analysis-description {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .investment-metrics {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .investment-charts-scroll {
+    padding: 16px;
+  }
+
+  .investment-metric-value {
+    font-size: 24px;
+  }
+
+  .investment-chart-wrapper {
+    height: 300px;
+  }
+
+  .investment-analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .investment-metric-card {
+    padding: 16px;
+  }
+
+  .investment-metric-value {
+    font-size: 20px;
+  }
+
+  .investment-analysis-section {
+    padding: 16px;
+  }
+}
+/* Leverage Risk Component Styles */
+
+.leverage-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.leverage-risk-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.leverage-risk-card.no-data {
+  opacity: 0.6;
+}
+
+.leverage-risk-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.metric-indicator {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.traffic-light-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 2px solid;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.traffic-light-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.traffic-light-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.no-data-indicator {
+  padding: 12px;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  border: 2px dashed #d1d5db;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.risk-explanation {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* No Data Warning */
+.no-data-warning {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-data-warning svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.warning-title {
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.warning-text {
+  color: #92400e;
+  font-size: 13px;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Risk Assessment Summary */
+.risk-summary {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.summary-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.risk-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.risk-level-item {
+  text-align: center;
+}
+
+.risk-level-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.risk-level-circle:hover {
+  transform: scale(1.1);
+}
+
+.risk-level-circle.low-risk {
+  background-color: #10b981;
+}
+
+.risk-level-circle.medium-risk {
+  background-color: #f59e0b;
+}
+
+.risk-level-circle.high-risk {
+  background-color: #ef4444;
+}
+
+.risk-level-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Risk Explanations */
+.leverage-explanations {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.explanations-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.explanations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.explanation-item {
+  line-height: 1.5;
+}
+
+.explanation-item strong {
+  color: #1f2937;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.explanation-item span {
+  color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .leverage-risk-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .leverage-risk-card {
+    padding: 20px;
+  }
+  
+  .metric-value {
+    font-size: 28px;
+  }
+  
+  .risk-levels-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .explanations-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .traffic-light-indicator {
+    padding: 10px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .leverage-risk-card {
+    padding: 16px;
+  }
+  
+  .metric-value {
+    font-size: 24px;
+  }
+  
+  .card-title {
+    font-size: 16px;
+  }
+  
+  .risk-summary,
+  .leverage-explanations {
+    padding: 16px;
+  }
+}
+
+/* Animation for metric cards */
+.leverage-risk-card .metric-value {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Traffic light indicator hover effects */
+.traffic-light-indicator:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.traffic-light-indicator:hover .traffic-light-circle {
+  transform: scale(1.1);
+}

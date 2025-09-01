@@ -275,8 +275,6 @@ const BusinessSetupPage = () => {
       // Use the phaseOverride if provided, otherwise calculate current phase
       const targetPhase = phaseOverride || getCurrentPhase();
 
-      console.log('Regenerating phase:', targetPhase);
-
       await apiService.handlePhaseCompletion(
         targetPhase,
         questions,
@@ -604,12 +602,10 @@ const BusinessSetupPage = () => {
       }
 
       if (isRegeneratingRef.current) {
-        console.log(`Regeneration already in progress for ${analysisType}`);
         return;
       }
 
       try {
-        console.log(`Starting regeneration for ${analysisType}`);
         setIsRegenerating(true);
         isRegeneratingRef.current = true;
         showToastMessage(`Regenerating ${displayName}...`, "info");
@@ -677,39 +673,33 @@ const BusinessSetupPage = () => {
 
             case 'profitabilityAnalysis':
               result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setProfitabilityData }, showToastMessage);
-              if (result && result.profitabilityAnalysis) {
-                result = result.profitabilityAnalysis;
-              } else if (result && result.excel_analysis) {
-                result = result.excel_analysis;
-              }
+
               break;
 
             case 'growthTracker':
               result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setGrowthTrackerData }, showToastMessage);
-              if (result && result.growthTracker) result = result.growthTracker;
+
               break;
 
             case 'liquidityEfficiency':
               result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setLiquidityEfficiencyData }, showToastMessage);
-              if (result && result.liquidityEfficiency) result = result.liquidityEfficiency;
+
               break;
 
             case 'investmentPerformance':
               result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setInvestmentPerformanceData }, showToastMessage);
-              if (result && result.investmentPerformance) result = result.investmentPerformance;
+
               break;
 
             case 'leverageRisk':
               result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setLeverageRiskData }, showToastMessage);
-              if (result && result.leverageRisk) result = result.leverageRisk;
-              break;
 
+              break;
             default:
               throw new Error(`Unknown analysis type: ${analysisType}`);
           }
 
           if (result) {
-            console.log(`Setting data for ${analysisType}:`, result);
             setData(result);
           } else {
             console.warn(`No result returned for ${analysisType}`);
@@ -728,7 +718,6 @@ const BusinessSetupPage = () => {
         showToastMessage(errorMessage, "error");
 
       } finally {
-        console.log(`Finishing regeneration for ${analysisType}`);
         setIsRegenerating(false);
         isRegeneratingRef.current = false;
       }
@@ -814,7 +803,7 @@ const BusinessSetupPage = () => {
 
     if (phase === 'initial' && !unlockedFeatures.fullSwot) {
       return [
-        "SWOT", 
+        "SWOT",
         ...baseOptions.initial
       ];
     }
@@ -1012,14 +1001,9 @@ const BusinessSetupPage = () => {
             // Alternative approach using phase manager directly:
 
             onPhaseCompleted={async (phase, completedSet) => {
-              console.log('ChatComponent phase completed:', phase);
 
               if (phase === 'good') {
-                // Use phase manager to handle good phase completion
                 try {
-                  console.log('Generating Good phase analysis after file upload...');
-
-                  // Call the API service directly for Good phase
                   await apiService.handlePhaseCompletion(
                     'good',
                     questions,

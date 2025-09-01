@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertTriangle, Loader, Shield, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css';
+import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -55,8 +55,12 @@ const LeverageRisk = ({
     // Handle different data structures from API
     let leverageMetrics = null;
     
-    // Check if data has "Leverage & Risk" key (direct from API)
-    if (data['Leverage & Risk']) {
+    // Check if data has "leverage" key (new API structure)
+    if (data.leverage) {
+      leverageMetrics = data.leverage;
+    }
+    // Check if data has "Leverage & Risk" key (legacy structure)
+    else if (data['Leverage & Risk']) {
       leverageMetrics = data['Leverage & Risk'];
     }
     // Check if data has nested leverageRisk key (processed)
@@ -124,7 +128,6 @@ const LeverageRisk = ({
   }, [leverageData]);
 
   const handleFileUpload = (file) => {
-    console.log('File upload requested:', file);
     if (file) {
       const allowedTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -146,11 +149,19 @@ const LeverageRisk = ({
     }
   };
 
-  const getRiskColor = (value, type) => {
-    if (value === null || value === undefined) return '#e5e7eb';
-    
-    // Risk-based color coding - traffic light system
-    const riskLevels = {
+  // Dynamic field mapping for different API response formats
+  const getFieldDisplayName = (fieldKey) => {
+    const fieldMapping = {
+      'debt_to_equity': 'Debt-to-Equity',
+      'interest_coverage': 'Interest Coverage',
+      'Debt-to-Equity': 'Debt-to-Equity',
+      'Interest Coverage': 'Interest Coverage'
+    };
+    return fieldMapping[fieldKey] || fieldKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getRiskThresholds = (fieldName) => {
+    const thresholds = {
       'Debt-to-Equity': { 
         low: 0.3,    // Green - Low risk
         medium: 1.0  // Yellow - Medium risk, above is Red - High risk
@@ -160,64 +171,71 @@ const LeverageRisk = ({
         medium: 2.5  // Yellow - Medium risk, below is Red - High risk
       }
     };
+    return thresholds[fieldName];
+  };
+  const getRiskColor = (value, fieldName) => {
+    if (value === null || value === undefined) return '#e5e7eb';
+    
+    const thresholds = getRiskThresholds(fieldName);
+    if (!thresholds) return '#6b7280';
 
-    const levels = riskLevels[type];
-    if (!levels) return '#6b7280';
-
-    if (type === 'Interest Coverage') {
+    if (fieldName === 'Interest Coverage') {
       // For Interest Coverage, higher values are better (less risky)
-      if (value >= levels.low) return '#10b981';      // Green
-      if (value >= levels.medium) return '#f59e0b';   // Yellow
+      if (value >= thresholds.low) return '#10b981';      // Green
+      if (value >= thresholds.medium) return '#f59e0b';   // Yellow
       return '#ef4444';                               // Red
     } else {
       // For Debt-to-Equity, lower values are better (less risky)
-      if (value <= levels.low) return '#10b981';      // Green
-      if (value <= levels.medium) return '#f59e0b';   // Yellow
+      if (value <= thresholds.low) return '#10b981';      // Green
+      if (value <= thresholds.medium) return '#f59e0b';   // Yellow
       return '#ef4444';                               // Red
     }
   };
 
-  const getRiskLevel = (value, type) => {
+  const getRiskLevel = (value, fieldName) => {
     if (value === null || value === undefined) return 'No Data';
     
-    const color = getRiskColor(value, type);
+    const color = getRiskColor(value, fieldName);
     if (color === '#10b981') return 'Low Risk';
     if (color === '#f59e0b') return 'Medium Risk';
     return 'High Risk';
   };
 
-  const formatRatio = (value, type) => {
+  const formatRatio = (value, fieldName) => {
     if (value === null || value === undefined) return null;
     
-    if (type === 'Interest Coverage') {
+    if (fieldName === 'Interest Coverage') {
       return `${value.toFixed(1)}x`;
     }
     return value.toFixed(2);
   };
 
+  const getFieldDescription = (fieldName) => {
+    const descriptions = {
+      'Debt-to-Equity': 'Lower ratios indicate less financial risk',
+      'Interest Coverage': 'Higher ratios indicate better debt servicing ability'
+    };
+    return descriptions[fieldName] || 'Financial risk indicator';
+  };
+
+  const getFieldExplanation = (fieldName) => {
+    const explanations = {
+      'Debt-to-Equity': 'Total Debt ÷ Total Equity. Low: <0.3, Medium: 0.3-1.0, High: >1.0',
+      'Interest Coverage': 'EBIT ÷ Interest Expense. Low Risk: >5x, Medium: 2.5-5x, High Risk: <2.5x'
+    };
+    return explanations[fieldName] || 'Ratio calculation and thresholds';
+  };
+
   const TrafficLightIndicator = ({ color, label }) => (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      padding: '12px',
-      backgroundColor: '#fff',
-      borderRadius: '8px',
-      border: `2px solid ${color}`,
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-    }}>
-      <div style={{
-        width: '20px',
-        height: '20px',
-        borderRadius: '50%',
-        backgroundColor: color,
-        boxShadow: `0 0 10px ${color}40`
-      }}></div>
-      <span style={{
-        fontSize: '14px',
-        fontWeight: 600,
-        color: '#374151'
-      }}>
+    <div className="traffic-light-indicator">
+      <div 
+        className="traffic-light-circle"
+        style={{
+          backgroundColor: color,
+          boxShadow: `0 0 10px ${color}40`
+        }}
+      ></div>
+      <span className="traffic-light-label">
         {label}
       </span>
     </div>
@@ -280,7 +298,9 @@ const LeverageRisk = ({
   let leverageMetrics = null;
   
   // Handle different data structures from API
-  if (analysisData['Leverage & Risk']) {
+  if (analysisData.leverage) {
+    leverageMetrics = analysisData.leverage;
+  } else if (analysisData['Leverage & Risk']) {
     leverageMetrics = analysisData['Leverage & Risk'];
   } else if (analysisData.leverageRisk) {
     leverageMetrics = analysisData.leverageRisk;
@@ -307,6 +327,8 @@ const LeverageRisk = ({
     );
   }
 
+  const allValuesNull = Object.values(leverageMetrics).every(value => value === null);
+
   return (
     <div 
       className="channel-heatmap channel-heatmap-container" 
@@ -314,7 +336,6 @@ const LeverageRisk = ({
       data-analysis-name="Leverage & Risk"
       data-analysis-order="5"
     >
-      {/* Header */}
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
           <div className="ch-heatmap-header-section">
@@ -324,24 +345,15 @@ const LeverageRisk = ({
             </p>
           </div>
 
-          {/* Check if all values are null and show warning */}
-          {Object.values(leverageMetrics).every(value => value === null) && (
-            <div style={{
-              backgroundColor: '#fef3c7',
-              border: '1px solid #f59e0b',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <AlertCircle size={20} color="#f59e0b" />
+          {/* Warning for no data */}
+          {allValuesNull && (
+            <div className="no-data-warning">
+              <AlertCircle size={20} />
               <div>
-                <h4 style={{ color: '#92400e', fontSize: '14px', fontWeight: '600', margin: 0 }}>
+                <h4 className="warning-title">
                   No Risk Data Available
                 </h4>
-                <p style={{ color: '#92400e', fontSize: '13px', margin: '4px 0 0 0' }}>
+                <p className="warning-text">
                   Upload an Excel file with financial data or ensure your spreadsheet contains the required leverage ratios.
                 </p>
               </div>
@@ -349,87 +361,47 @@ const LeverageRisk = ({
           )}
 
           {/* Risk Metrics Grid */}
-          <div className="leverage-risk-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-            gap: '30px',
-            marginBottom: '30px'
-          }}>
+          <div className="leverage-risk-grid">
             {Object.entries(leverageMetrics).map(([key, value]) => {
-              const color = getRiskColor(value, key);
-              const riskLevel = getRiskLevel(value, key);
+              const displayName = getFieldDisplayName(key);
+              const color = getRiskColor(value, displayName);
+              const riskLevel = getRiskLevel(value, displayName);
               const isNull = value === null || value === undefined;
               
               return (
-                <div key={key} className="leverage-risk-card" style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  padding: '24px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                  opacity: isNull ? 0.6 : 1
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '20px'
-                  }}>
-                    <h4 style={{
-                      fontSize: '18px',
-                      fontWeight: 600,
-                      color: '#374151',
-                      margin: 0
-                    }}>
-                      {key}
+                <div 
+                  key={key} 
+                  className={`leverage-risk-card ${isNull ? 'no-data' : ''}`}
+                >
+                  <div className="card-header">
+                    <h4 className="card-title">
+                      {displayName}
                     </h4>
-                    {!isNull && (color === '#ef4444' ? <AlertTriangle size={20} color={color} /> : <Shield size={20} color={color} />)}
+                    {!isNull && (color === '#ef4444' ? 
+                      <AlertTriangle size={20} color={color} /> : 
+                      <Shield size={20} color={color} />
+                    )}
                   </div>
                   
-                  <div style={{
-                    fontSize: '32px',
-                    fontWeight: 700,
-                    color: isNull ? '#9ca3af' : color,
-                    marginBottom: '16px',
-                    textAlign: 'center'
-                  }}>
-                    {isNull ? 'No Data' : formatRatio(value, key)}
+                  <div 
+                    className="metric-value"
+                    style={{ color: isNull ? '#9ca3af' : color }}
+                  >
+                    {isNull ? 'No Data' : formatRatio(value, displayName)}
                   </div>
                   
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginBottom: '16px'
-                  }}>
+                  <div className="metric-indicator">
                     {!isNull ? (
                       <TrafficLightIndicator color={color} label={riskLevel} />
                     ) : (
-                      <div style={{
-                        padding: '12px',
-                        backgroundColor: '#f3f4f6',
-                        borderRadius: '8px',
-                        border: '2px dashed #d1d5db',
-                        color: '#9ca3af',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}>
+                      <div className="no-data-indicator">
                         Data not available
                       </div>
                     )}
                   </div>
 
-                  {/* Risk explanation */}
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#6b7280',
-                    textAlign: 'center',
-                    fontStyle: 'italic'
-                  }}>
-                    {isNull ? 'Data not available in uploaded file' : (
-                      key === 'Debt-to-Equity' 
-                        ? 'Lower ratios indicate less financial risk'
-                        : 'Higher ratios indicate better debt servicing ability'
-                    )}
+                  <div className="risk-explanation">
+                    {isNull ? 'Data not available in uploaded file' : getFieldDescription(displayName)}
                   </div>
                 </div>
               );
@@ -437,121 +409,54 @@ const LeverageRisk = ({
           </div>
 
           {/* Risk Assessment Summary */}
-          <div className="risk-summary" style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #e2e8f0',
-            marginBottom: '20px'
-          }}>
-            <h4 style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#374151',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
+          <div className="risk-summary">
+            <h4 className="summary-title">
               <Shield size={20} />
               Overall Risk Assessment
             </h4>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '16px',
-              marginBottom: '20px'
-            }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10b981',
-                  margin: '0 auto 8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 600
-                }}>
+            <div className="risk-levels-grid">
+              <div className="risk-level-item">
+                <div className="risk-level-circle low-risk">
                   L
                 </div>
-                <div style={{ fontSize: '12px', color: '#6b7280' }}>Low Risk</div>
+                <div className="risk-level-label">Low Risk</div>
               </div>
               
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f59e0b',
-                  margin: '0 auto 8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 600
-                }}>
+              <div className="risk-level-item">
+                <div className="risk-level-circle medium-risk">
                   M
                 </div>
-                <div style={{ fontSize: '12px', color: '#6b7280' }}>Medium Risk</div>
+                <div className="risk-level-label">Medium Risk</div>
               </div>
               
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ef4444',
-                  margin: '0 auto 8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 600
-                }}>
+              <div className="risk-level-item">
+                <div className="risk-level-circle high-risk">
                   H
                 </div>
-                <div style={{ fontSize: '12px', color: '#6b7280' }}>High Risk</div>
+                <div className="risk-level-label">High Risk</div>
               </div>
             </div>
           </div>
 
           {/* Risk Explanations */}
-          <div className="leverage-explanations" style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <h4 style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#374151',
-              marginBottom: '16px'
-            }}>
+          <div className="leverage-explanations">
+            <h4 className="explanations-title">
               Risk Ratio Explanations
             </h4>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '16px'
-            }}>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Debt-to-Equity Ratio:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                  Total Debt ÷ Total Equity. Low: &lt;0.3, Medium: 0.3-1.0, High: &gt;1.0
-                </span>
-              </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Interest Coverage Ratio:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                  EBIT ÷ Interest Expense. Low Risk: &gt;5x, Medium: 2.5-5x, High Risk: &lt;2.5x
-                </span>
-              </div>
+            <div className="explanations-grid">
+              {Object.keys(leverageMetrics).map((key) => {
+                const displayName = getFieldDisplayName(key);
+                return (
+                  <div key={key} className="explanation-item">
+                    <strong>{displayName} Ratio:</strong>
+                    <span>
+                      {getFieldExplanation(displayName)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

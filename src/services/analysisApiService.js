@@ -101,7 +101,7 @@ export class AnalysisApiService {
       if (!token) {
         console.warn('No auth token available for document fetch');
         return null;
-      } 
+      }
 
       const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/financial-document`, {
         headers: {
@@ -116,9 +116,9 @@ export class AnalysisApiService {
 
       const documentInfo = await response.json();
 
-      if (!documentInfo.has_document) { 
+      if (!documentInfo.has_document) {
         return null;
-      } 
+      }
 
       return documentInfo.document;
 
@@ -135,7 +135,7 @@ export class AnalysisApiService {
       if (!token) {
         console.warn('No auth token available for document download');
         return null;
-      } 
+      }
 
       const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/financial-document/download`, {
         headers: {
@@ -148,7 +148,7 @@ export class AnalysisApiService {
         return null;
       }
 
-      const blob = await response.blob(); 
+      const blob = await response.blob();
 
       return blob;
 
@@ -186,7 +186,7 @@ export class AnalysisApiService {
       const file = new File([documentBlob], documentInfo.filename, {
         type: mimeType,
         lastModified: new Date(documentInfo.upload_date).getTime()
-      }); 
+      });
 
       return file;
 
@@ -239,23 +239,23 @@ export class AnalysisApiService {
         // Try to get financial document from backend first
         let fileToUpload = uploadedFile;
         let documentInfo = null;
-        if (!fileToUpload && selectedBusinessId && endpoint === 'excel-analysis') { 
+        if (!fileToUpload && selectedBusinessId && endpoint === 'excel-analysis') {
 
           // Fetch document info
-          documentInfo = await this.fetchFinancialDocument(selectedBusinessId); 
+          documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
           if (documentInfo) {
             // Download the actual file
             const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
 
             if (documentBlob) {
               // Create File object from blob
-              fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo); 
+              fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
             }
           }
         }
 
         if (fileToUpload) {
-          formData.append('file', fileToUpload); 
+          formData.append('file', fileToUpload);
         } else {
           const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
           const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
@@ -273,7 +273,7 @@ export class AnalysisApiService {
 
         if (endpoint === 'excel-analysis') {
           headers['source'] = documentInfo?.template_type || 'simple';
-          formData.append('source', documentInfo?.template_type || 'simple'); 
+          formData.append('source', documentInfo?.template_type || 'simple');
         }
 
         response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
@@ -335,19 +335,52 @@ export class AnalysisApiService {
       let processedData = null;
       switch (analysisType) {
         case 'profitabilityAnalysis':
-          processedData = { profitability: this.excelAnalysisCache.Profitability };
+          if (this.excelAnalysisCache.profitability) {
+            processedData = { profitability: this.excelAnalysisCache.profitability };
+          } else if (this.excelAnalysisCache.Profitability) {
+            processedData = { profitability: this.excelAnalysisCache.Profitability };
+          } else {
+            processedData = this.excelAnalysisCache;
+          }
           break;
         case 'growthTracker':
-          processedData = { growthTracker: this.excelAnalysisCache['Growth Tracker'] };
+          if (this.excelAnalysisCache.growth_trends) {
+            processedData = { growth_trends: this.excelAnalysisCache.growth_trends };
+          } else if (this.excelAnalysisCache['Growth Tracker']) {
+            processedData = { growthTracker: this.excelAnalysisCache['Growth Tracker'] };
+          } else {
+            processedData = this.excelAnalysisCache;
+          }
           break;
+
         case 'liquidityEfficiency':
-          processedData = { liquidityEfficiency: this.excelAnalysisCache['Liquidity & Efficiency'] };
+          if (this.excelAnalysisCache.liquidity) {
+            processedData = { liquidity: this.excelAnalysisCache.liquidity };
+          } else if (this.excelAnalysisCache['Liquidity & Efficiency']) {
+            processedData = { liquidityEfficiency: this.excelAnalysisCache['Liquidity & Efficiency'] };
+          } else {
+            processedData = this.excelAnalysisCache;
+          }
           break;
+
         case 'investmentPerformance':
-          processedData = { investmentPerformance: this.excelAnalysisCache['Investment Performance'] };
+          if (this.excelAnalysisCache.investment) {
+            processedData = { investment: this.excelAnalysisCache.investment };
+          } else if (this.excelAnalysisCache['Investment Performance']) {
+            processedData = { investmentPerformance: this.excelAnalysisCache['Investment Performance'] };
+          } else {
+            processedData = this.excelAnalysisCache;
+          }
           break;
+
         case 'leverageRisk':
-          processedData = { leverageRisk: this.excelAnalysisCache['Leverage & Risk'] };
+          if (this.excelAnalysisCache.leverage) {
+            processedData = { leverage: this.excelAnalysisCache.leverage };
+          } else if (this.excelAnalysisCache['Leverage & Risk']) {
+            processedData = { leverageRisk: this.excelAnalysisCache['Leverage & Risk'] };
+          } else {
+            processedData = this.excelAnalysisCache;
+          }
           break;
       }
 
@@ -446,9 +479,16 @@ export class AnalysisApiService {
         showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
       }
 
+      if (phase === 'good' && this.excelAnalysisCache) {
+        console.log('Returning excel analysis result for good phase:', this.excelAnalysisCache);
+        return this.excelAnalysisCache;
+      }
+      return { success: true, phase };
+
     } catch (error) {
       console.error(`Error generating ${phase} phase analysis:`, error);
       showToastMessage(`Failed to generate ${phase} phase analyses. Please try again.`, "error");
+      throw error; 
     }
   }
 

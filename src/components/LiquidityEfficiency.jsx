@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Activity, Loader, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css';
+import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -49,23 +49,22 @@ const LiquidityEfficiency = ({
     );
   };
 
-  // UPDATED: Handle the new API structure
   const isLiquidityDataIncomplete = (data) => {
     if (!data) return true;
     
-    // Handle different data structures from API
     let liquidityMetrics = null;
     
-    // Check if data has "Liquidity & Efficiency" key (direct from API)
-    if (data['Liquidity & Efficiency']) {
+    if (data.liquidity) {
+      liquidityMetrics = data.liquidity;
+    } else if (data['Liquidity & Efficiency']) {
       liquidityMetrics = data['Liquidity & Efficiency'];
-    }
-    // Check if data has nested liquidityEfficiency key (processed)
-    else if (data.liquidityEfficiency) {
+    } else if (data.liquidityEfficiency) {
       liquidityMetrics = data.liquidityEfficiency;
-    }
-    // If data is directly the metrics object
-    else if (data && typeof data === 'object') {
+    } else if (data.liquidity_efficiency) {
+      liquidityMetrics = data.liquidity_efficiency;
+    } else if (data.LiquidityEfficiency) {
+      liquidityMetrics = data.LiquidityEfficiency;
+    } else if (data && typeof data === 'object') {
       liquidityMetrics = data;
     }
     
@@ -73,7 +72,6 @@ const LiquidityEfficiency = ({
       return true;
     }
     
-    // Check if at least one ratio has non-null value
     const hasValidRatio = Object.entries(liquidityMetrics).some(([key, value]) => 
       value !== null && 
       value !== undefined &&
@@ -89,7 +87,6 @@ const LiquidityEfficiency = ({
         setError(null);
         await onRegenerate();
       } catch (error) {
-        console.error('Error during regeneration:', error);
         setError('Failed to regenerate analysis. Please try again.');
       }
     } else {
@@ -125,7 +122,6 @@ const LiquidityEfficiency = ({
   }, [liquidityData]);
 
   const handleFileUpload = (file) => {
-    console.log('File upload requested:', file);
     if (file) {
       const allowedTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -147,30 +143,26 @@ const LiquidityEfficiency = ({
     }
   };
 
-  // UPDATED: Handle null values in color determination
   const getRatioColor = (value, type) => {
-    if (value === null || value === undefined) return '#e5e7eb';
+    if (value === null || value === undefined) return 'gray-light';
     
-    // Industry benchmarks for color coding
     const benchmarks = {
       'Current Ratio': { good: 2.0, fair: 1.2 },
       'Quick Ratio': { good: 1.0, fair: 0.8 },
-      'Cash Conversion Cycle': { good: 30, fair: 60 } // Lower is better for CCC
+      'Cash Conversion Cycle': { good: 30, fair: 60 }
     };
 
     const benchmark = benchmarks[type];
-    if (!benchmark) return '#6b7280';
+    if (!benchmark) return 'gray-default';
 
     if (type === 'Cash Conversion Cycle') {
-      // For CCC, lower values are better
-      if (value <= benchmark.good) return '#10b981';
-      if (value <= benchmark.fair) return '#f59e0b';
-      return '#ef4444';
+      if (value <= benchmark.good) return 'green';
+      if (value <= benchmark.fair) return 'yellow';
+      return 'red';
     } else {
-      // For other ratios, higher values are better
-      if (value >= benchmark.good) return '#10b981';
-      if (value >= benchmark.fair) return '#f59e0b';
-      return '#ef4444';
+      if (value >= benchmark.good) return 'green';
+      if (value >= benchmark.fair) return 'yellow';
+      return 'red';
     }
   };
 
@@ -178,8 +170,8 @@ const LiquidityEfficiency = ({
     if (value === null || value === undefined) return 'No Data';
     
     const color = getRatioColor(value, type);
-    if (color === '#10b981') return 'Excellent';
-    if (color === '#f59e0b') return 'Good';
+    if (color === 'green') return 'Excellent';
+    if (color === 'yellow') return 'Good';
     return 'Needs Improvement';
   };
 
@@ -192,23 +184,10 @@ const LiquidityEfficiency = ({
     return value.toFixed(2);
   };
 
-  // UPDATED: Enhanced gauge chart with null handling
-  const GaugeChart = ({ value, max, color, title }) => {
+  const GaugeChart = ({ value, max, colorClass, title }) => {
     if (value === null || value === undefined) {
       return (
-        <div style={{
-          width: '120px',
-          height: '120px',
-          borderRadius: '50%',
-          background: '#f3f4f6',
-          border: '2px dashed #d1d5db',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#9ca3af',
-          fontSize: '14px',
-          fontWeight: '500'
-        }}>
+        <div className="gauge-chart gauge-chart--no-data">
           No Data
         </div>
       );
@@ -219,43 +198,68 @@ const LiquidityEfficiency = ({
     const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
 
     return (
-      <div style={{ position: 'relative', width: '120px', height: '120px' }}>
-        <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
+      <div className="gauge-chart">
+        <svg width="120" height="120" className="gauge-chart__svg">
           <circle
             cx="60"
             cy="60"
             r="45"
-            stroke="#e5e7eb"
-            strokeWidth="8"
-            fill="transparent"
+            className="gauge-chart__background"
           />
           <circle
             cx="60"
             cy="60"
             r="45"
-            stroke={color}
-            strokeWidth="8"
-            fill="transparent"
+            className={`gauge-chart__progress gauge-chart__progress--${colorClass}`}
             strokeDasharray={strokeDasharray}
-            strokeLinecap="round"
-            style={{ transition: 'stroke-dasharray 0.5s ease-in-out' }}
           />
         </svg>
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '16px',
-          fontWeight: 600,
-          color: color
-        }}>
+        <div className={`gauge-chart__value gauge-chart__value--${colorClass}`}>
           {title === 'Cash Conversion Cycle' ? `${value.toFixed(0)}d` : value.toFixed(1)}
         </div>
       </div>
     );
+  };
+
+  const extractLiquidityMetrics = (data) => {
+    let liquidityMetrics = null;
+    
+    const possiblePaths = [
+      { path: 'liquidity', data: data.liquidity },
+      { path: 'Liquidity & Efficiency', data: data['Liquidity & Efficiency'] },
+      { path: 'liquidityEfficiency', data: data.liquidityEfficiency },
+      { path: 'liquidity_efficiency', data: data.liquidity_efficiency },
+      { path: 'LiquidityEfficiency', data: data.LiquidityEfficiency },
+      { path: 'direct', data: data }
+    ];
+
+    for (const { path, data: pathData } of possiblePaths) {
+      if (pathData && typeof pathData === 'object') {
+        liquidityMetrics = pathData;
+        break;
+      }
+    }
+
+    if (liquidityMetrics) {
+      const transformedMetrics = {};
+      const keyMappings = {
+        'current_ratio': 'Current Ratio',
+        'quick_ratio': 'Quick Ratio',
+        'cash_conversion_cycle': 'Cash Conversion Cycle',
+        'Current Ratio': 'Current Ratio',
+        'Quick Ratio': 'Quick Ratio',
+        'Cash Conversion Cycle': 'Cash Conversion Cycle'
+      };
+
+      Object.entries(liquidityMetrics).forEach(([key, value]) => {
+        const displayKey = keyMappings[key] || key;
+        transformedMetrics[displayKey] = value;
+      });
+
+      return transformedMetrics;
+    }
+
+    return liquidityMetrics;
   };
 
   if (isRegenerating) {
@@ -311,19 +315,8 @@ const LiquidityEfficiency = ({
     );
   }
 
-  // UPDATED: Extract liquidity data with proper structure handling
-  let liquidityMetrics = null;
-  
-  // Handle different data structures from API
-  if (analysisData['Liquidity & Efficiency']) {
-    liquidityMetrics = analysisData['Liquidity & Efficiency'];
-  } else if (analysisData.liquidityEfficiency) {
-    liquidityMetrics = analysisData.liquidityEfficiency;
-  } else {
-    liquidityMetrics = analysisData;
-  }
+  const liquidityMetrics = extractLiquidityMetrics(analysisData);
 
-  // If still no valid data, show empty state
   if (!liquidityMetrics || typeof liquidityMetrics !== 'object') {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -342,122 +335,60 @@ const LiquidityEfficiency = ({
     );
   }
 
+  const allMetricsNull = Object.values(liquidityMetrics).every(value => value === null);
+
   return (
     <div 
-      className="channel-heatmap channel-heatmap-container" 
+      className="channel-heatmap channel-heatmap-container liquidity-efficiency" 
       data-analysis-type="liquidity-efficiency"
       data-analysis-name="Liquidity & Efficiency"
       data-analysis-order="3"
     >
-      {/* Header */}
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
-          <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Liquidity & Operational Efficiency</h3>
-            <p className="ch-section-subtitle">
-              Key ratios with industry benchmarks and color-coded performance indicators
-            </p>
-          </div>
+        <div className="ch-heatmap-scroll"> 
 
-          {/* UPDATED: Check if all values are null and show warning */}
-          {Object.values(liquidityMetrics).every(value => value === null) && (
-            <div style={{
-              backgroundColor: '#fef3c7',
-              border: '1px solid #f59e0b',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <AlertCircle size={20} color="#f59e0b" />
+          {allMetricsNull && (
+            <div className="liquidity-efficiency__warning">
+              <AlertCircle size={20} />
               <div>
-                <h4 style={{ color: '#92400e', fontSize: '14px', fontWeight: '600', margin: 0 }}>
-                  No Liquidity Data Available
-                </h4>
-                <p style={{ color: '#92400e', fontSize: '13px', margin: '4px 0 0 0' }}>
-                  Upload an Excel file with financial data or ensure your spreadsheet contains the required liquidity ratios.
-                </p>
+                <h4>No Liquidity Data Available</h4>
+                <p>Upload an Excel file with financial data or ensure your spreadsheet contains the required liquidity ratios.</p>
               </div>
             </div>
           )}
 
-          {/* Ratio Gauges */}
-          <div className="liquidity-ratios-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '30px',
-            marginBottom: '30px'
-          }}>
+          <div className="liquidity-efficiency__ratios-grid">
             {Object.entries(liquidityMetrics).map(([key, value]) => {
-              const color = getRatioColor(value, key);
+              const colorClass = getRatioColor(value, key);
               const maxValue = key === 'Cash Conversion Cycle' ? 120 : 3;
               const isNull = value === null || value === undefined;
               
               return (
-                <div key={key} className="liquidity-ratio-card" style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  padding: '24px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '16px',
-                  opacity: isNull ? 0.6 : 1
-                }}>
-                  <h4 style={{
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#374151',
-                    margin: 0,
-                    textAlign: 'center'
-                  }}>
-                    {key}
-                  </h4>
+                <div 
+                  key={key} 
+                  className={`liquidity-efficiency__ratio-card ${isNull ? 'liquidity-efficiency__ratio-card--null' : ''}`}
+                >
+                  <h4 className="liquidity-efficiency__ratio-title">{key}</h4>
                   
                   <GaugeChart 
                     value={value} 
                     max={maxValue} 
-                    color={color}
+                    colorClass={colorClass}
                     title={key}
                   />
                   
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: isNull ? '#9ca3af' : color,
-                      marginBottom: '4px'
-                    }}>
+                  <div className="liquidity-efficiency__ratio-details">
+                    <div className={`liquidity-efficiency__ratio-value ${isNull ? 'liquidity-efficiency__ratio-value--null' : `liquidity-efficiency__ratio-value--${colorClass}`}`}>
                       {isNull ? 'No Data' : formatRatio(value, key)}
                     </div>
                     
                     {!isNull ? (
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#6b7280',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px'
-                      }}>
-                        <span style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: color
-                        }}></span>
+                      <div className="liquidity-efficiency__ratio-status">
+                        <span className={`liquidity-efficiency__status-indicator liquidity-efficiency__status-indicator--${colorClass}`}></span>
                         {getRatioStatus(value, key)}
                       </div>
                     ) : (
-                      <div style={{
-                        fontSize: '12px',
-                        color: '#9ca3af',
-                        fontStyle: 'italic'
-                      }}>
+                      <div className="liquidity-efficiency__ratio-message">
                         Data not available in uploaded file
                       </div>
                     )}
@@ -465,49 +396,7 @@ const LiquidityEfficiency = ({
                 </div>
               );
             })}
-          </div>
-
-          {/* Ratio Explanations */}
-          <div className="liquidity-explanations" style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <h4 style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#374151',
-              marginBottom: '16px'
-            }}>
-              Ratio Explanations & Benchmarks
-            </h4>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '16px'
-            }}>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Current Ratio:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                  Current Assets ÷ Current Liabilities. Target: &gt;2.0 (Excellent), &gt;1.2 (Good)
-                </span>
-              </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Quick Ratio:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                  (Current Assets - Inventory) ÷ Current Liabilities. Target: &gt;1.0 (Excellent), &gt;0.8 (Good)
-                </span>
-              </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Cash Conversion Cycle:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                  Days to convert investments back to cash. Target: &lt;30 days (Excellent), &lt;60 days (Good)
-                </span>
-              </div>
-            </div>
-          </div>
+          </div> 
         </div>
       </div>
     </div>
