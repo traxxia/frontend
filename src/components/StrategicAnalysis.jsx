@@ -65,92 +65,6 @@ const StrategicAnalysis = ({
     );
   };
 
-  const generateStrategicAnalysis = async () => {
-    // Prevent multiple simultaneous calls
-    if (isGenerating.current || isLoading) {
-      console.log('Strategic analysis already generating, skipping...');
-      return;
-    }
-
-    try {
-      isGenerating.current = true;
-      setIsLoading(true);
-      setErrorMessage('');
-
-      const questionsArray = [];
-      const answersArray = [];
-
-      questions
-        .filter(q => userAnswers[q._id] && userAnswers[q._id].trim())
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .forEach(question => {
-          questionsArray.push(question.question_text);
-          answersArray.push(userAnswers[question._id]);
-        });
-
-      if (questionsArray.length === 0) {
-        throw new Error('No questions available for strategic analysis');
-      }
-
-      console.log('Generating strategic analysis with', questionsArray.length, 'questions');
-
-      const requestPayload = {
-        questions: questionsArray,
-        answers: answersArray
-      };
-
-      const response = await fetch(`${ML_API_BASE_URL}/strategic-analysis`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestPayload)
-      });
-
-      if (!response.ok) {
-        let errorText;
-        try {
-          const errorData = await response.json();
-          errorText = errorData.detail || errorData.message || `HTTP ${response.status}`;
-        } catch {
-          errorText = await response.text();
-        }
-        throw new Error(`Strategic Analysis API returned ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('Strategic analysis result received:', !!result);
-
-      // Validate the result structure
-      if (!result || typeof result !== 'object') {
-        throw new Error('Invalid response format received from strategic analysis API');
-      }
-
-      // Save to backend (overwrite existing result)
-      if (saveAnalysisToBackend && typeof saveAnalysisToBackend === 'function') {
-        try {
-          await saveAnalysisToBackend(result, 'strategic');
-        } catch (saveError) {
-          console.error('Error saving strategic analysis:', saveError);
-          // Don't throw - continue with setting local data even if save fails
-        }
-      }
-
-      setLocalStrategicData(result);
-      setHasGenerated(true);
-      return result;
-
-    } catch (error) {
-      console.error('Error generating strategic analysis:', error);
-      setErrorMessage(error.message || 'Failed to generate strategic analysis');
-      throw error;
-    } finally {
-      setIsLoading(false);
-      isGenerating.current = false;
-    }
-  };
-
   const handleRegenerate = async () => {
     console.log('Strategic handleRegenerate called', { onRegenerate: !!onRegenerate });
 
@@ -216,45 +130,7 @@ const StrategicAnalysis = ({
       setHasGenerated(false);
     }
   }, [strategicData]);
-
-  const getPillarIcon = (pillarKey) => {
-    const icons = {
-      strategy: Target,
-      tactics: BarChart3,
-      resources: Users,
-      analysis_and_data: Activity,
-      technology_and_digitization: Zap,
-      execution: TrendingUp,
-      governance: Shield,
-      innovation: Star,
-      culture: Eye
-    };
-    return icons[pillarKey] || Settings;
-  };
-
-  const getScoreColor = (score) => {
-    if (score >= 7) return '#10b981';
-    if (score >= 5) return '#f59e0b';
-    return '#ef4444';
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
-
-  const formatPillarName = (pillarKey) => {
-    return pillarKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const formatPhaseName = (phaseKey) => {
-    return phaseKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
+ 
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
     if (!pillars) return null;
@@ -270,7 +146,7 @@ const StrategicAnalysis = ({
           background: '#fff'
         }}>
           <BarChart3 size={24} style={{ color: 'blue' }} />
-          <h2>Strategic Pillars Analysis</h2>
+          <h4>Strategic Pillars Analysis</h4>
         </div>
 
         {/* Add the Strategic Wheel */}
@@ -329,7 +205,7 @@ const StrategicAnalysis = ({
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
-          <h2>Strategic Goals ({goals.year})</h2>
+          <h4>Strategic Goals ({goals.year})</h4>
         </div>
 
         {/* Overall Progress Summary */}
@@ -686,7 +562,7 @@ const StrategicAnalysis = ({
           background: '#fff'
         }}>
           <Calendar size={24} style={{ color: 'blue' }} />
-          <h2>Implementation Roadmap</h2>
+          <h4>Implementation Roadmap</h4>
         </div>
 
         {/* Gantt Chart Visualization */}
@@ -807,6 +683,146 @@ const StrategicAnalysis = ({
     );
   };
 
+  const renderMonitoringDashboardTable = (data) => {
+    const monitoring = data?.monitoring_and_feedback;
+    if (!monitoring) return null;
+
+    return (
+      <section className="strategic-page-section">
+        <div className="section-headers" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderBottom: 'none',
+          marginBottom: '0px',
+          gap: '8px',
+          background: '#fff'
+        }}>
+          <Activity size={24} style={{ color: 'blue' }} />
+          <h4>Monitoring & Performance Dashboard</h4>
+        </div>
+
+        {/* Dashboard Requirements */}
+        {monitoring.dashboard_requirements && monitoring.dashboard_requirements.length > 0 && (
+          <div style={{
+            backgroundColor: '#f0f9ff',
+            padding: '20px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            border: '1px solid #bae6fd'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 15px 0', 
+              fontSize: '16px', 
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <BarChart3 size={20} />
+              Dashboard Requirements
+            </h3>
+            
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {monitoring.dashboard_requirements.map((requirement, index) => (
+                <span key={index} style={{
+                  backgroundColor: '#0284c7',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <Eye size={12} />
+                  {requirement}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Review Cycles Table */}
+        {monitoring.review_cycles && (
+          <div style={{ marginBottom: '30px' }}>
+            <h3 style={{ 
+              margin: '0 0 15px 0', 
+              fontSize: '16px', 
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <Clock size={20} />
+              Review Cycles
+            </h3>
+
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Frequency</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(monitoring.review_cycles).map(([frequency, description]) => (
+                    <tr key={frequency}>
+                      <td className="table-value" style={{ textTransform: 'capitalize' }}>
+                        {frequency}
+                      </td>
+                      <td className="table-value">
+                        {description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Feedback Loops Table */}
+        {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
+          <div>
+            <h3 style={{ 
+              margin: '0 0 15px 0', 
+              fontSize: '16px', 
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <ArrowRight size={20} />
+              Feedback Loops
+            </h3>
+
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Frequency</th>
+                    <th>Integration Point</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monitoring.feedback_loops.map((loop, index) => (
+                    <tr key={index}>
+                      <td className="table-value">{loop.source}</td>
+                      <td className="table-value">{loop.frequency}</td>
+                      <td className="table-value">{loop.integration_point}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  };
 
   const renderStrategicContent = () => {
     // Extract strategic_analysis from the response
@@ -821,7 +837,7 @@ const StrategicAnalysis = ({
         {/* {renderRiskAssessmentTable(analysisData)}
         {renderSuccessBenchmarksTable(analysisData)} */}
         {renderImplementationRoadmapTable(analysisData)}
-        {/* {renderMonitoringAndFeedbackTable(analysisData)} */}
+        {renderMonitoringDashboardTable(analysisData)}
       </div>
     );
   };

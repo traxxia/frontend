@@ -82,7 +82,7 @@ const ChatComponent = ({
         businessUploadDecision.upload_decision !== 'upload') { // Add this check
 
         // Check if upload decision message is already shown
-        const hasUploadDecisionMessage = messages.some(msg => msg.questionId === 'upload_option'); 
+        const hasUploadDecisionMessage = messages.some(msg => msg.questionId === 'upload_option');
         if (!hasUploadDecisionMessage) {
           addMessageLocally('bot',
             'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
@@ -132,44 +132,24 @@ const ChatComponent = ({
 
     try {
       setIsFileUploading(true);
-      setIsValidating(true); 
-      // Step 1: Auto-detect template type
-      const detection = await detectTemplateType(file); 
+      setIsValidating(true);
+
+      // Use the new detection method
+      const detection = await detectTemplateType(file);
 
       if (detection.confidence === 'none' || detection.score < 0.3) {
-        const errorMessage = `Unable to identify template type. Please ensure your file is based on one of our template files. Download a template first, fill it with your data, and upload the completed file.`;
+        const errorMessage = `Unable to identify template type. Please ensure your file is based on one of our template files.`;
         throw new Error(errorMessage);
       }
 
-      // Step 2: Validate against detected template
-      const validation = await validateAgainstTemplate(file, detection.type); 
+      const validation = await validateAgainstTemplate(file, detection.type);
 
       if (!validation.isValid) {
-        // Create detailed error message
-        let errorMessage = `❌ Your file doesn't match the ${validation.templateName} format:\n\n`;
-
-        if (validation.errors.length > 0) {
-          errorMessage += 'ERRORS:\n';
-          validation.errors.forEach(error => errorMessage += `• ${error}\n`);
-          errorMessage += '\n';
-        }
-
-        if (validation.warnings.length > 0) {
-          errorMessage += 'WARNINGS:\n';
-          validation.warnings.forEach(warning => errorMessage += `• ${warning}\n`);
-          errorMessage += '\n';
-        }
-
-        errorMessage += `Please download the ${validation.templateName} template again and ensure:\n`;
-        errorMessage += `• All sheet names match exactly\n`;
-        errorMessage += `• All column headers match exactly (including spelling and spacing)\n`;
-        errorMessage += `• Don't add, remove, or rename any sheets or columns\n`;
-        errorMessage += `• Only add your data in the appropriate rows`;
-
+        let errorMessage = `Your file doesn't match the ${validation.templateName} format:\n\n`;
+        validation.errors.forEach(error => errorMessage += `• ${error}\n`);
         throw new Error(errorMessage);
       }
 
-      // File is valid - save to database
       const validationResult = {
         templateType: detection.type,
         templateName: validation.templateName,
@@ -180,11 +160,8 @@ const ChatComponent = ({
 
       setIsValidating(false);
       const dbResult = await saveFileToDatabase(file, validationResult);
-
-      // Store the validated file
       setUploadedFileForAnalysis(file);
 
-      // Notify parent component
       if (onFileUploaded) {
         onFileUploaded(file, {
           ...validationResult,
@@ -192,9 +169,8 @@ const ChatComponent = ({
         });
       }
 
-      // Show success message
       showToastMessage(
-        `✅ File uploaded and saved successfully! Detected as ${validation.templateName} with ${detection.confidence} confidence.`,
+        `✅ File uploaded successfully! Detected as ${validation.templateName}.`,
         'success'
       );
 
@@ -209,13 +185,10 @@ const ChatComponent = ({
       }
     }
   };
-  // Load initial data
   const loadQuestionsAndConversations = async () => {
     try {
       setIsLoading(true);
       const token = getAuthToken();
-
-      // Load questions
       const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -230,11 +203,7 @@ const ChatComponent = ({
 
       setQuestions(availableQuestions);
       onQuestionsLoaded?.(availableQuestions);
-
-      // Check existing document status first
       await checkExistingDocument();
-
-      // Load existing conversations
       const conversationUrl = `${API_BASE_URL}/api/conversations${selectedBusinessId ? `?business_id=${selectedBusinessId}` : ''}`;
 
       const conversationsResponse = await fetch(conversationUrl, {
@@ -652,21 +621,22 @@ const ChatComponent = ({
   const saveFileToDatabase = async (file, validationResult) => {
     try {
       const token = getAuthToken();
-
       if (!token) {
         throw new Error('Authentication token not found');
       }
-
       if (!selectedBusinessId) {
         throw new Error('No business selected');
       }
-
       const formData = new FormData();
-      formData.append('document', file); 
-      const backendComplexity = validationResult.templateType  || 'simple';
-
-      formData.append('template_type', backendComplexity);  
-      formData.append('template_name', validationResult.templateName);
+      formData.append('document', file);
+      const templateComplexityMap = {
+        'simplified': 'simple',
+        'standard': 'medium',
+        'detailed': 'medium'
+      };
+      const backendTemplateType = templateComplexityMap[validationResult.templateType] || 'simple';
+      formData.append('template_type', backendTemplateType);
+      formData.append('template_name', validationResult.templateName || '');
       formData.append('validation_confidence', validationResult.confidence || 'high');
       formData.append('upload_mode', validationResult.uploadMode || 'auto-detect');
 
@@ -719,8 +689,6 @@ const ChatComponent = ({
 
         const documentExists = result.has_document === true;
         setHasUploadedDocument(documentExists);
-
-        // Set business upload decision data - ensure we handle all possible states
         const uploadDecisionMade = result.upload_decision_made === true;
         const uploadDecision = result.upload_decision || null;
 
@@ -778,12 +746,10 @@ const ChatComponent = ({
       const completedEssentialQuestions = essentialQuestions.filter(q => currentCompleted.has(q._id));
       const justCompletedEssential = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
 
-      // Check if essential is complete and no upload decision has been made
       if (justCompletedEssential &&
         !businessUploadDecision.upload_decision_made &&
         !hasUploadedDocument &&
-        businessUploadDecision.upload_decision !== 'upload') { // Add this check
-
+        businessUploadDecision.upload_decision !== 'upload') {
         try {
           const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
             method: 'POST',
@@ -803,8 +769,6 @@ const ChatComponent = ({
         } catch (error) {
           console.error('Failed to initialize upload decision:', error);
         }
-
-        // Add upload option message in chat
         addMessageLocally('bot',
           'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
           {
@@ -817,8 +781,6 @@ const ChatComponent = ({
         setNextQuestion(null);
         return;
       }
-
-      // If upload decision was made to skip, continue to advanced phase (NO Good phase generation)
       if (businessUploadDecision.upload_decision === 'skip') {
         const advancedQuestions = questions.filter(q => q.phase === 'advanced');
         if (advancedQuestions.length > 0) {
@@ -833,14 +795,11 @@ const ChatComponent = ({
             return;
           }
         } else {
-          // No advanced questions available, show completion
           showToastMessage('All available questions completed!', 'success');
           return;
         }
       }
 
-      // If file was uploaded (good phase should be handled by onPhaseCompleted)
-      // Just continue to advanced phase questions
       if (businessUploadDecision.upload_decision === 'upload' || hasUploadedDocument) {
         const advancedQuestions = questions.filter(q => q.phase === 'advanced');
         if (advancedQuestions.length > 0) {
@@ -857,7 +816,6 @@ const ChatComponent = ({
         }
       }
 
-      // Continue with regular next question logic for other phases
       const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
       setNextQuestion(nextQuestionCandidate);
 
@@ -896,7 +854,6 @@ const ChatComponent = ({
             upload_decision: 'skip'
           });
 
-          // Skip Good phase entirely - go directly to Advanced phase questions
           const advancedQuestions = questions.filter(q => q.phase === 'advanced');
           if (advancedQuestions.length > 0) {
             const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
@@ -909,7 +866,6 @@ const ChatComponent = ({
               });
             }
           } else {
-            // If no advanced questions, show completion message
             addMessageLocally('bot', 'All available questions have been completed!', {
               questionId: 'completion',
               phase: 'complete',
@@ -931,12 +887,10 @@ const ChatComponent = ({
     try {
       setIsSkipping(true);
 
-      // Check if we're in the upload decision state
       const essentialQuestions = questions.filter(q => q.phase === 'essential');
       const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
       const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
 
-      // If essential is complete and no document uploaded and no next question, handle upload skip
       if (isEssentialComplete && !hasUploadedDocument && !nextQuestion && !businessUploadDecision.upload_decision_made) {
         try {
           const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
@@ -953,8 +907,6 @@ const ChatComponent = ({
               upload_decision_made: true,
               upload_decision: 'skip'
             });
-
-            // Skip Good phase - go directly to Advanced phase questions
             const advancedQuestions = questions.filter(q => q.phase === 'advanced');
             if (advancedQuestions.length > 0) {
               const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
@@ -976,8 +928,6 @@ const ChatComponent = ({
         }
         return;
       }
-
-      // Handle regular question skipping
       if (pendingValidation) {
         addMessageLocally('user', '[Question Skipped]', {
           questionId: pendingValidation.questionId,
@@ -1009,7 +959,6 @@ const ChatComponent = ({
       setIsSkipping(false);
     }
   };
-  // Handle form submission
   const handleSubmit = async () => {
     if (!currentInput.trim() || processingAnswer.current) return;
 
@@ -1018,13 +967,10 @@ const ChatComponent = ({
     setCurrentInput('');
 
     try {
-      // Handle follow-up answer
       if (pendingValidation) {
         await handleFollowupAnswer(answer);
         return;
       }
-
-      // Handle main question answer
       await handleMainAnswer(answer);
 
     } finally {
@@ -1037,12 +983,14 @@ const ChatComponent = ({
       setIsFileUploading(true);
       setIsValidating(true);
 
-      // Add user response in chat
       addMessageLocally('user', `Uploaded file: ${file.name}`, {
         questionId: 'upload_option',
         phase: 'upload_decision',
         isFileUpload: true
       });
+
+      let detectedTemplateType = null;
+      let validationResult = null;
 
       if (expectedTemplateType) {
         const validation = await validateAgainstTemplate(file, expectedTemplateType);
@@ -1074,89 +1022,16 @@ const ChatComponent = ({
           throw new Error(errorMessage);
         }
 
-        // Map template type for backend
-        const templateComplexityMap = {
-          'simplified': 'simple',
-          'standard': 'medium',
-          'detailed': 'medium'
-        };
-
-        const validationResult = {
-          templateType: expectedTemplateType,  // Keep original type for reference
-          backendType: templateComplexityMap[expectedTemplateType],
+        validationResult = {
+          templateType: expectedTemplateType,
           templateName: validation.templateName,
           validation: validation,
           uploadMode: 'template-specific',
           confidence: 'high'
         };
 
-        setIsValidating(false);
-        const dbResult = await saveFileToDatabase(file, validationResult);
-        setUploadedFileForAnalysis(file);
-        setShowTemplatesPopup(false);
-
-        if (onFileUploaded) {
-          onFileUploaded(file, {
-            ...validationResult,
-            dbResult: dbResult
-          });
-        }
-
-        // Save upload decision to backend FIRST
-        try {
-          await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${getAuthToken()}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ decision: 'upload' })
-          });
-
-          setBusinessUploadDecision({
-            upload_decision_made: true,
-            upload_decision: 'upload'
-          });
-        } catch (error) {
-          console.error('Failed to save upload decision:', error);
-        }
-
-        // DON'T add any chat messages here - let the phase completion handle it
-
-        // Generate Good phase analysis immediately
-        if (onPhaseCompleted) {
-          try {
-            await onPhaseCompleted('good', completedQuestions);
-
-            // After good phase is complete, move to advanced questions
-            setTimeout(async () => {
-              const advancedQuestions = questions.filter(q => q.phase === 'advanced');
-              if (advancedQuestions.length > 0) {
-                const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
-                if (firstAdvancedQuestion) {
-                  setNextQuestion(firstAdvancedQuestion);
-                  addMessageLocally('bot', firstAdvancedQuestion.question_text, {
-                    questionId: firstAdvancedQuestion._id,
-                    phase: firstAdvancedQuestion.phase,
-                    severity: firstAdvancedQuestion.severity
-                  });
-                }
-              }
-            }, 1000); // Small delay to ensure phase completion finishes
-
-          } catch (phaseError) {
-            console.error('Error generating good phase analysis:', phaseError);
-            showToastMessage('File uploaded but analysis generation failed', 'warning');
-          }
-        }
-
-        showToastMessage(
-          `File uploaded successfully as ${validation.templateName}.`,
-          'success'
-        );
-
-      } else { 
-        // Auto-detect logic with mapping (similar pattern as above)
+      } else {
+        // Auto-detect logic
         const detection = await detectTemplateType(file);
 
         if (detection.confidence === 'none' || detection.score < 0.3) {
@@ -1171,78 +1046,72 @@ const ChatComponent = ({
           throw new Error(errorMessage);
         }
 
-        const validationResult = {
-          templateType: detection.backendType,
-          originalTemplateType: detection.type,
+        validationResult = {
+          templateType: detection.type,
           templateName: validation.templateName,
           validation: validation,
           confidence: detection.confidence,
           uploadMode: 'auto-detect'
         };
-
-        setIsValidating(false);
-        const dbResult = await saveFileToDatabase(file, validationResult);
-        setUploadedFileForAnalysis(file);
-        setShowTemplatesPopup(false);
-
-        if (onFileUploaded) {
-          onFileUploaded(file, {
-            ...validationResult,
-            dbResult: dbResult
-          });
-        }
-
-        // Save upload decision to backend
-        try {
-          await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${getAuthToken()}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ decision: 'upload' })
-          });
-
-          setBusinessUploadDecision({
-            upload_decision_made: true,
-            upload_decision: 'upload'
-          });
-        } catch (error) {
-          console.error('Failed to save upload decision:', error);
-        }
-
-        // Generate Good phase analysis immediately
-        if (onPhaseCompleted) {
-          try {
-            await onPhaseCompleted('good', completedQuestions);
-
-            // After good phase is complete, move to advanced questions
-            setTimeout(async () => {
-              const advancedQuestions = questions.filter(q => q.phase === 'advanced');
-              if (advancedQuestions.length > 0) {
-                const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
-                if (firstAdvancedQuestion) {
-                  setNextQuestion(firstAdvancedQuestion);
-                  addMessageLocally('bot', firstAdvancedQuestion.question_text, {
-                    questionId: firstAdvancedQuestion._id,
-                    phase: firstAdvancedQuestion.phase,
-                    severity: firstAdvancedQuestion.severity
-                  });
-                }
-              }
-            }, 1000);
-
-          } catch (phaseError) {
-            console.error('Error generating good phase analysis:', phaseError);
-            showToastMessage('File uploaded but analysis generation failed', 'warning');
-          }
-        }
-
-        showToastMessage(
-          `File uploaded successfully as ${validation.templateName}.`,
-          'success'
-        );
       }
+      setIsValidating(false);
+      const dbResult = await saveFileToDatabase(file, validationResult);
+      setUploadedFileForAnalysis(file);
+      setShowTemplatesPopup(false);
+
+      if (onFileUploaded) {
+        onFileUploaded(file, {
+          ...validationResult,
+          dbResult: dbResult
+        });
+      }
+      try {
+        await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ decision: 'upload' })
+        });
+
+        setBusinessUploadDecision({
+          upload_decision_made: true,
+          upload_decision: 'upload'
+        });
+      } catch (error) {
+        console.error('Failed to save upload decision:', error);
+      }
+
+      if (onPhaseCompleted) {
+        try {
+          await onPhaseCompleted('good', completedQuestions);
+
+          setTimeout(async () => {
+            const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+            if (advancedQuestions.length > 0) {
+              const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
+              if (firstAdvancedQuestion) {
+                setNextQuestion(firstAdvancedQuestion);
+                addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+                  questionId: firstAdvancedQuestion._id,
+                  phase: firstAdvancedQuestion.phase,
+                  severity: firstAdvancedQuestion.severity
+                });
+              }
+            }
+          }, 1000);
+
+        } catch (phaseError) {
+          console.error('Error generating good phase analysis:', phaseError);
+          showToastMessage('File uploaded but analysis generation failed', 'warning');
+        }
+      }
+
+      showToastMessage(
+        `File uploaded successfully as ${validationResult.templateName}.`,
+        'success'
+      );
 
     } catch (error) {
       console.error('File upload error:', error);
@@ -1276,7 +1145,6 @@ const ChatComponent = ({
         setFollowupAttempts(0);
         await moveToNextQuestion(saveResult.updatedCompleted);
       } else {
-        // Continue with more follow-up questions
         const newFollowupQuestion = mlValidation.feedback;
 
         addMessageLocally('bot', newFollowupQuestion, {
@@ -1321,7 +1189,6 @@ const ChatComponent = ({
       setIsValidatingAnswer(false);
 
       if (!mlValidation.valid && mlValidation.feedback) {
-        // Need follow-up
         await saveAnswer(questionId, answer, false);
 
         const followupQuestion = mlValidation.feedback;
@@ -1353,7 +1220,6 @@ const ChatComponent = ({
     }
   };
 
-  // Utility functions
   const showToastMessage = (message, type = 'success') => {
     setShowToast({ show: true, message, type });
     setTimeout(() => {
@@ -1368,7 +1234,6 @@ const ChatComponent = ({
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="loading-container">
