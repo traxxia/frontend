@@ -195,7 +195,7 @@ export const useAnalysisGeneration = (
       await saveAnalysisToBackend(expandedCapabilityContent, 'expandedCapability');
       return expandedCapabilityContent;
     } catch (error) {
-      console.error('Error generating Expanded Capability Heatmap:', error);
+      console.error('Error generating Capability Heatmap:', error);
       throw new Error(`Expanded Capability analysis failed: ${error.message}`);
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);

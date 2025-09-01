@@ -355,59 +355,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                 PILLARS
                             </text>
                         </svg>
-                    </div>
-
-                    {/* Legend */}
-                    <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                        gap: '15px',
-                        marginTop: '20px',
-                        maxWidth: '600px'
-                    }}>
-                        {pillarsArray.map(([pillarKey, pillarData], index) => {
-                            const IconComponent = getPillarIcon(pillarKey);
-                            const score = pillarData.current_state?.assessment_score || 0;
-
-                            return (
-                                <div
-                                    key={pillarKey}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        padding: '8px 12px',
-                                        backgroundColor: '#f8f9fa',
-                                        borderRadius: '6px',
-                                        border: `2px solid ${segmentColors[index % segmentColors.length]}`,
-                                        fontSize: '12px',
-                                        fontWeight: '500'
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width: '12px',
-                                            height: '12px',
-                                            borderRadius: '50%',
-                                            backgroundColor: segmentColors[index % segmentColors.length]
-                                        }}
-                                    />
-                                    <IconComponent size={14} style={{ color: '#64748b' }} />
-                                    <span>{formatPillarName(pillarKey)}</span>
-                                    <span
-                                        style={{
-                                            color: getScoreColor(score),
-                                            fontWeight: 'bold',
-                                            marginLeft: '4px'
-                                        }}
-                                    >
-                                        ({score}/10)
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    </div> 
                 </>
             ) : (
                 renderTableView()

@@ -131,55 +131,50 @@ const ProductivityMetrics = ({
     }
   }, [productivityData]);
 
-  // NO AUTO-GENERATION useEffect - this is the key difference!
-  // The component relies entirely on the parent to provide data via props
-  // Similar to how FullSWOT works
-
-  // Productivity Chart Component (keeping original chart)
   const ProductivityChart = ({ employeeProductivity = {} }) => {
-    const {
-      totalEmployees = 0,
-      averageValuePerEmployee = 0,
-      totalValueGenerated = 0,
-      productivityIndex = 0,
-      totalCostPercentage = 0
-    } = employeeProductivity;
+ const {
+   totalEmployees = 0,
+   averageValuePerEmployee = 0,
+   totalValueGenerated = 0,
+   productivityIndex = 0,
+   totalCostPercentage = 0
+ } = employeeProductivity;
 
-    return (
-      <div className="productivity-chart">
-        <div className="chart-metrics">
-          <div className="metric-card primary">
-            <div className="metric-value">{totalEmployees}</div>
-            <div className="metric-label">Total Employees</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">${averageValuePerEmployee?.toLocaleString()}</div>
-            <div className="metric-label">Avg Value/Employee</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">${totalValueGenerated?.toLocaleString()}</div>
-            <div className="metric-label">Total Value Generated</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{productivityIndex}</div>
-            <div className="metric-label">Productivity Index</div>
-          </div>
-        </div>
-        
-        {totalCostPercentage > 0 && (
-          <div className="cost-indicator">
-            <div className="cost-bar">
-              <div 
-                className="cost-fill" 
-                style={{ width: `${totalCostPercentage}%` }}
-              ></div>
-            </div>
-            <div className="cost-label">Employee Cost: {totalCostPercentage}%</div>
-          </div>
-        )}
-      </div>
-    );
-  };
+ return (
+   <div className="productivity-chart">
+     <table className="data-table">
+       <thead>
+         <tr>
+           <th>Metric</th>
+           <th>Value</th>
+         </tr>
+       </thead>
+       <tbody>
+         <tr>
+           <td><strong>Employee Cost</strong></td>
+           <td>{totalCostPercentage}%</td>
+         </tr>
+         <tr>
+           <td><strong>Total Employees</strong></td>
+           <td>{totalEmployees?.toLocaleString()}</td>
+         </tr>
+         <tr>
+           <td><strong>Avg Value/Employee</strong></td>
+           <td>${averageValuePerEmployee?.toLocaleString()}</td>
+         </tr>
+         <tr>
+           <td><strong>Total Value Generated</strong></td>
+           <td>${totalValueGenerated?.toLocaleString()}</td>
+         </tr>
+         <tr>
+           <td><strong>Productivity Index</strong></td>
+           <td>{productivityIndex}</td>
+         </tr>
+       </tbody>
+     </table>
+   </div>
+ );
+};
 
   // Get efficiency color helper
   const getEfficiencyColor = (efficiency) => {
@@ -261,60 +256,7 @@ const ProductivityMetrics = ({
           )}
         </div>
       )} 
-
-      {/* Improvement Opportunities Table */}
-      {productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0 && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('opportunities')}>
-            <h3>Improvement Opportunities</h3>
-            {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.opportunities !== false && (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Opportunity</th>
-                    <th>Priority</th>
-                    <th>Expected Impact</th>
-                    <th>Implementation Difficulty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productivityMetrics.improvementOpportunities.map((opportunity, index) => (
-                    <tr key={index}>
-                      <td>
-                        <div className="force-name">
-                          <TrendingUp size={16} />
-                          <span>{opportunity}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${index < 2 ? 'high-intensity' : index < 4 ? 'medium-intensity' : 'low-intensity'}`}>
-                          {index < 2 ? 'High' : index < 4 ? 'Medium' : 'Low'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="implications-cell">
-                          {index < 2 ? 'High potential for productivity gains' : 
-                           index < 4 ? 'Moderate productivity improvement' : 'Incremental efficiency gains'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`score-badge ${index < 2 ? 'medium' : index < 4 ? 'low' : 'high'}`}>
-                          {index < 2 ? 'Medium' : index < 4 ? 'Easy' : 'Complex'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
+ 
       {/* Bar Chart: Value Per Employee by Function */}
       {productivityMetrics.employeeProductivity && (
         <div className="section-container">
@@ -467,6 +409,60 @@ const ProductivityMetrics = ({
           )}
         </div>
       )} 
+
+      {/* Improvement Opportunities Table */}
+      {productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('opportunities')}>
+            <h3>Improvement Opportunities</h3>
+            {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections.opportunities !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Opportunity</th>
+                    <th>Priority</th>
+                    <th>Expected Impact</th>
+                    <th>Implementation Difficulty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productivityMetrics.improvementOpportunities.map((opportunity, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="force-name">
+                          <TrendingUp size={16} />
+                          <span>{opportunity}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${index < 2 ? 'high-intensity' : index < 4 ? 'medium-intensity' : 'low-intensity'}`}>
+                          {index < 2 ? 'High' : index < 4 ? 'Medium' : 'Low'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="implications-cell">
+                          {index < 2 ? 'High potential for productivity gains' : 
+                           index < 4 ? 'Moderate productivity improvement' : 'Incremental efficiency gains'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`score-badge ${index < 2 ? 'medium' : index < 4 ? 'low' : 'high'}`}>
+                          {index < 2 ? 'Medium' : index < 4 ? 'Easy' : 'Complex'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 };

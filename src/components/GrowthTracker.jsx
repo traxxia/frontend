@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { TrendingUp, Loader } from 'lucide-react';
-import '../styles/goodPhase.css';
+import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -51,10 +51,13 @@ const GrowthTracker = ({
   };
 
   const isGrowthDataIncomplete = (data) => {
-    if (!data || !data.growthTracker) return true;
+    if (!data) return true;
     
-    const { growthTracker } = data;
-    return !growthTracker['Revenue Trend'] && !growthTracker['Net Income Trend'];
+    // Check for new structure
+    const hasRevenueData = data.growth_trends?.revenue?.values;
+    const hasProfitabilityData = data.profitability;
+    
+    return !hasRevenueData && !hasProfitabilityData;
   };
 
   const handleRegenerate = async () => {
@@ -120,18 +123,21 @@ const GrowthTracker = ({
     }
   };
 
-  const prepareChartData = (revenueTrend, netIncomeTrend) => {
-    if (!revenueTrend || !netIncomeTrend) return [];
+  const prepareChartData = (revenueData) => {
+    if (!revenueData || !revenueData.values) return [];
     
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
     
-    return revenueTrend.map((revenue, index) => ({
-      month: months[index] || `M${index + 1}`,
-      revenue: revenue,
-      netIncome: netIncomeTrend[index] || 0,
-      period: index + 1
-    }));
+    return monthOrder.map(month => {
+      const revenue = revenueData.values[month] || 0;
+      return {
+        month: month.substr(0, 3), // Convert to 3-letter abbreviation
+        revenue: revenue,
+        netIncome: 0, // Net income data structure is empty in the new format
+        period: monthOrder.indexOf(month) + 1
+      };
+    }).filter(item => item.revenue > 0); // Only show months with data
   };
 
   const formatCurrency = (value) => {
@@ -144,6 +150,16 @@ const GrowthTracker = ({
     return `$${value.toFixed(0)}`;
   };
 
+  const formatPercentage = (value) => {
+    if (value === null || value === undefined) return 'N/A';
+    return `${(value * 100).toFixed(1)}%`;
+  };
+
+  const getGrowthColor = (value) => {
+    if (value === null || value === undefined) return '#6b7280';
+    return value >= 0 ? '#10b981' : '#ef4444';
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -152,9 +168,6 @@ const GrowthTracker = ({
           <div className="ch-tooltip-content">
             <div style={{ color: '#8884d8' }}>
               Revenue: {formatCurrency(payload[0]?.value || 0)}
-            </div>
-            <div style={{ color: '#82ca9d' }}>
-              Net Income: {formatCurrency(payload[1]?.value || 0)}
             </div>
           </div>
         </div>
@@ -222,18 +235,50 @@ const GrowthTracker = ({
     );
   }
 
-  const { growthTracker } = analysisData;
-  const chartData = prepareChartData(growthTracker['Revenue Trend'], growthTracker['Net Income Trend']);
+  const { profitability, growth_trends, threshold } = analysisData;
+  const chartData = prepareChartData(growth_trends?.revenue);
 
-  // Calculate totals
-  const totalRevenue = growthTracker['Revenue Trend']?.reduce((sum, val) => sum + val, 0) || 0;
-  const totalNetIncome = growthTracker['Net Income Trend']?.reduce((sum, val) => sum + val, 0) || 0;
+  // Calculate totals from new structure
+  const revenueValues = Object.values(growth_trends?.revenue?.values || {});
+  const totalRevenue = revenueValues.reduce((sum, val) => sum + val, 0);
+  const avgMonthlyRevenue = totalRevenue / (revenueValues.length || 1);
 
   return (
     <div className="channel-heatmap channel-heatmap-container" 
          data-analysis-type="growth-tracker"
          data-analysis-name="Growth Tracker"
          data-analysis-order="2">
+
+      {/* Profitability Metrics */}
+      {profitability && (
+        <div className="profitability-metrics">
+          <div className="profitability-card">
+            <h5>Gross Margin</h5>
+            <div className="value">{formatPercentage(profitability.gross_margin)}</div>
+          </div>
+          <div className="profitability-card">
+            <h5>Operating Margin</h5>
+            <div className="value">{formatPercentage(profitability.operating_margin)}</div>
+            {threshold?.operating_margin && (
+              <div className="threshold">Target: {threshold.operating_margin}</div>
+            )}
+          </div>
+          <div className="profitability-card">
+            <h5>Net Margin</h5>
+            <div className="value">{formatPercentage(profitability.net_margin)}</div>
+            {threshold?.net_margin && (
+              <div className="threshold">Target: {threshold.net_margin}</div>
+            )}
+          </div>
+          <div className="profitability-card">
+            <h5>EBITDA Margin</h5>
+            <div className="value">{formatPercentage(profitability.ebitda_margin)}</div>
+            {threshold?.ebitda && (
+              <div className="threshold">Target: {threshold.ebitda}</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Key Metrics */}
       <div className="ch-metrics">
@@ -248,23 +293,17 @@ const GrowthTracker = ({
         <div className="ch-metric-card ch-metric-green">
           <div className="ch-metric-header">
             <TrendingUp size={20} />
-            <span>Total Net Income</span>
+            <span>Avg Monthly Revenue</span>
           </div>
-          <p className="ch-metric-value" style={{
-            color: totalNetIncome >= 0 ? '#10b981' : '#ef4444'
-          }}>
-            {formatCurrency(totalNetIncome)}
-          </p>
+          <p className="ch-metric-value">{formatCurrency(avgMonthlyRevenue)}</p>
         </div>
 
         <div className="ch-metric-card ch-metric-purple">
           <div className="ch-metric-header">
             <TrendingUp size={20} />
-            <span>Avg Monthly Revenue</span>
+            <span>Operating Margin</span>
           </div>
-          <p className="ch-metric-value">
-            {formatCurrency(totalRevenue / (growthTracker['Revenue Trend']?.length || 1))}
-          </p>
+          <p className="ch-metric-value">{formatPercentage(profitability?.operating_margin)}</p>
         </div>
       </div>
 
@@ -272,17 +311,17 @@ const GrowthTracker = ({
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
           <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Revenue & Net Income Trends</h3>
+            <h3 className="ch-section-title">Revenue Trends</h3>
             <p className="ch-section-subtitle">
               Monthly performance tracking with growth patterns
             </p>
           </div>
 
           <div className="ch-charts-grid">
-            {/* Combined Growth Chart */}
-            <div className="ch-chart-section" style={{ gridColumn: '1 / -1' }}>
-              <h4>Revenue vs Net Income Trend</h4>
-              <div className="ch-chart-wrapper" style={{ height: '400px' }}>
+            {/* Revenue Chart */}
+            <div className="ch-chart-section ch-chart-section-full">
+              <h4>Monthly Revenue Trend</h4>
+              <div className="ch-chart-wrapper ch-chart-wrapper-large">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -290,58 +329,47 @@ const GrowthTracker = ({
                     <YAxis tickFormatter={formatCurrency} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="revenue" fill="#8884d8" name="Revenue" />
-                    <Bar dataKey="netIncome" name="Net Income">
-                      {chartData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.netIncome >= 0 ? '#82ca9d' : '#ff7c7c'}
-                        />
-                      ))}
-                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              
+              {/* QoQ Growth Indicators */}
+              {growth_trends?.revenue?.qoq_growth && (
+                <div className="qoq-indicators">
+                  {Object.entries(growth_trends.revenue.qoq_growth).map(([quarter, growth]) => (
+                    <div 
+                      key={quarter} 
+                      className={`qoq-badge ${growth === null ? 'neutral' : growth >= 0 ? 'positive' : 'negative'}`}
+                    >
+                      {quarter}: {growth === null ? 'N/A' : formatPercentage(growth)}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Growth Insights */}
-          <div className="growth-insights" style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #e2e8f0',
-            marginTop: '20px'
-          }}>
-            <h4 style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#374151',
-              marginBottom: '16px'
-            }}>
-              Growth Insights
-            </h4>
+          <div className="growth-insights">
+            <h4>Growth Insights</h4>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px'
-            }}>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Revenue Performance:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
+            <div className="growth-insights-grid">
+              <div className="growth-insight-item">
+                <strong>Revenue Performance:</strong>
+                <span className="growth-insight-value neutral">
                   {totalRevenue > 0 ? 'Positive revenue generation' : 'Revenue challenges'}
                 </span>
               </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Profitability:</strong>
-                <span style={{ color: totalNetIncome >= 0 ? '#10b981' : '#ef4444', marginLeft: '8px' }}>
-                  {totalNetIncome >= 0 ? 'Profitable operations' : 'Loss-making periods'}
+              <div className="growth-insight-item">
+                <strong>Profitability:</strong>
+                <span className={`growth-insight-value ${profitability?.net_margin >= 0 ? 'positive' : 'negative'}`}>
+                  {profitability?.net_margin >= 0 ? 'Profitable operations' : 'Margin improvement needed'}
                 </span>
               </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Data Points:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
-                  {growthTracker['Revenue Trend']?.length || 0} months of data
+              <div className="growth-insight-item">
+                <strong>Data Points:</strong>
+                <span className="growth-insight-value neutral">
+                  {revenueValues.length} months of data
                 </span>
               </div>
             </div>

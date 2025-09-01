@@ -216,7 +216,7 @@
 }
 
 .modern-card-header {
-  padding: 1.5rem;
+  padding: 10px 1.5rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;

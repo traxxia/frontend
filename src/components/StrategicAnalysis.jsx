@@ -261,7 +261,7 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header" style={{
+        <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center',
           borderBottom: 'none',
@@ -320,7 +320,7 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header" style={{
+        <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center',
           borderBottom: 'none',
@@ -507,45 +507,76 @@ const StrategicAnalysis = ({
 
         {/* Quarterly Milestones */}
         {goals.quarterly_milestones && goals.quarterly_milestones.length > 0 && (
-          <div style={{
-            marginTop: '20px',
-            backgroundColor: '#f9fafb',
-            padding: '20px',
-            borderRadius: '8px',
-            border: '1px solid #e5e7eb'
-          }}>
-            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ marginTop: '20px' }}>
+            <h3 style={{ 
+              margin: '0 0 15px 0', 
+              fontSize: '16px', 
+              fontWeight: '600', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px' 
+            }}>
               <Calendar size={20} />
               Quarterly Milestones
             </h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {goals.quarterly_milestones.map((milestone, index) => (
-                <div key={index} style={{
-                  backgroundColor: 'white',
-                  padding: '15px',
-                  borderRadius: '6px',
-                  border: '1px solid #e5e7eb'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <div style={{
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>
-                      {milestone.quarter}
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: '600', marginBottom: '6px' }}>
-                    {milestone.milestone}
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#6b7280' }}>
-                    <strong>Success Criteria:</strong> {milestone.success_criteria}
-                  </div>
-                </div>
-              ))}
+            
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Quarter</th>
+                    <th>Milestone</th>
+                    <th>Success Criteria</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {goals.quarterly_milestones.map((milestone, index) => (
+                    <tr key={index}>
+                      <td className="table-value text-center">
+                        <div style={{
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          display: 'inline-block'
+                        }}>
+                          {milestone.quarter}
+                        </div>
+                      </td>
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600' }}>
+                          {milestone.milestone}
+                        </div>
+                      </td>
+                      <td className="table-value">
+                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                          {milestone.success_criteria}
+                        </div>
+                      </td>
+                      <td className="table-value text-center">
+                        <div style={{
+                          backgroundColor: milestone.status ? 
+                            (milestone.status.toLowerCase() === 'completed' ? '#10b981' :
+                             milestone.status.toLowerCase() === 'in progress' ? '#f59e0b' : 
+                             milestone.status.toLowerCase() === 'pending' ? '#6b7280' : '#3b82f6') : '#3b82f6',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          textTransform: 'capitalize',
+                          display: 'inline-block'
+                        }}>
+                          {milestone.status || 'Planned'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -648,7 +679,7 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-header" style={{
+        <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center', borderBottom: 'none',
           gap: '8px', marginBottom: '20px',

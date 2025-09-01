@@ -221,8 +221,7 @@ const FullSWOTPortfolio = ({
                                     <tr>
                                         <th>Strength</th>
                                         <th>Score</th>
-                                        <th>Category</th>
-                                        <th>Source</th>
+                                        <th>Category</th> 
                                         <th>Competitive Advantage</th>
                                         <th>Customer Validated</th>
                                     </tr>
@@ -242,8 +241,7 @@ const FullSWOTPortfolio = ({
                                                 <span className="force-tag">
                                                     {item.category?.replace('_', ' ')}
                                                 </span>
-                                            </td>
-                                            <td>Question {item.source}</td>
+                                            </td> 
                                             <td>
                                                 {item.competitiveAdvantage ? (
                                                     <span className="status-badge high-intensity">
@@ -291,8 +289,7 @@ const FullSWOTPortfolio = ({
                                     <tr>
                                         <th>Weakness</th>
                                         <th>Score</th>
-                                        <th>Category</th>
-                                        <th>Source</th>
+                                        <th>Category</th> 
                                         <th>Improvement Priority</th>
                                     </tr>
                                 </thead>
@@ -311,8 +308,7 @@ const FullSWOTPortfolio = ({
                                                 <span className="force-tag">
                                                     {item.category?.replace('_', ' ')}
                                                 </span>
-                                            </td>
-                                            <td>Question {item.source}</td>
+                                            </td> 
                                             <td>
                                                 {item.improvementPriority && (
                                                     <span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>
@@ -347,8 +343,7 @@ const FullSWOTPortfolio = ({
                                     <tr>
                                         <th>Opportunity</th>
                                         <th>Score</th>
-                                        <th>Category</th>
-                                        <th>Source</th>
+                                        <th>Category</th> 
                                         <th>Market Trend</th>
                                         <th>Timeframe</th>
                                     </tr>
@@ -368,8 +363,7 @@ const FullSWOTPortfolio = ({
                                                 <span className="force-tag">
                                                     {item.category?.replace('_', ' ')}
                                                 </span>
-                                            </td>
-                                            <td>Question {item.source}</td>
+                                            </td> 
                                             <td>
                                                 {item.marketTrend ? (
                                                     <span className="status-badge high-intensity">
@@ -415,8 +409,7 @@ const FullSWOTPortfolio = ({
                                     <tr>
                                         <th>Threat</th>
                                         <th>Score</th>
-                                        <th>Category</th>
-                                        <th>Source</th>
+                                        <th>Category</th> 
                                         <th>Likelihood</th>
                                         <th>Impact</th>
                                     </tr>
@@ -436,8 +429,7 @@ const FullSWOTPortfolio = ({
                                                 <span className="force-tag">
                                                     {item.category?.replace('_', ' ')}
                                                 </span>
-                                            </td>
-                                            <td>Question {item.source}</td>
+                                            </td> 
                                             <td>
                                                 {item.likelihood && (
                                                     <span className={`status-badge ${getPriorityColor(item.likelihood.toLowerCase())}`}>

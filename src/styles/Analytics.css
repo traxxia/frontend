@@ -46,7 +46,7 @@
   background: white;
   border-radius: 16px;
   box-shadow:none;
-  padding: 20px; 
+  padding: 10px 20px 10px 10px; 
   transition: none;
   overflow-x: hidden;
 }
@@ -8103,4 +8103,287 @@
     background: #383838;
     color: #e0e0e0;
   }
+}
+
+.section-container {
+ background: #ffffff;
+ border-radius: 12px;
+ box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+ margin-bottom: 24px;
+ border: 1px solid #e5e7eb;
+ overflow: hidden;
+ transition: box-shadow 0.2s ease;
+}
+
+.section-container:hover {
+ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+ padding: 15px 20px;
+ background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+ border-bottom: 1px solid #e2e8f0;
+ cursor: pointer;
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ transition: background-color 0.2s ease;
+ user-select: none;
+}
+.section-header{
+      background: #cccced !important;
+}
+ .section-container .table-container{
+  border: none !important;
+  background: #ffffff !important;
+  padding: 0px 20px !important;
+ }
+ /* Profitability Analysis Styles */
+.profitability-analysis {
+  /* Main container styles will be inherited from parent */
+}
+
+.profitability-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.profitability-metric-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.profitability-metric-card.no-data {
+  opacity: 0.6;
+}
+
+.profitability-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.profitability-metric-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.profitability-metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.profitability-metric-value.no-data {
+  color: #9ca3af;
+}
+
+.profitability-metric-status {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profitability-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.profitability-no-data-text {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.profitability-warning {
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profitability-warning-title {
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.profitability-warning-text {
+  color: #92400e;
+  font-size: 13px;
+  margin: 4px 0 0 0;
+}
+
+.profitability-explanations {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.profitability-explanations-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.profitability-explanations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.profitability-explanation-item {
+  /* Container for each explanation item */
+}
+
+.profitability-explanation-label {
+  color: #1f2937;
+  font-weight: bold;
+}
+
+.profitability-explanation-text {
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+/* Growth Tracker Component Styles */
+.growth-insights {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  margin-top: 20px;
+}
+
+.growth-insights h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.growth-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.growth-insight-item strong {
+  color: #1f2937;
+}
+
+.growth-insight-value {
+  margin-left: 8px;
+}
+
+.growth-insight-value.positive {
+  color: #10b981;
+}
+
+.growth-insight-value.negative {
+  color: #ef4444;
+}
+
+.growth-insight-value.neutral {
+  color: #6b7280;
+}
+
+.ch-metric-value.positive {
+  color: #10b981;
+}
+
+.ch-metric-value.negative {
+  color: #ef4444;
+}
+
+.ch-chart-section-full {
+  grid-column: 1 / -1;
+}
+
+.ch-chart-wrapper-large {
+  height: 400px;
+}
+
+/* Profitability Metrics Grid */
+.profitability-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.profitability-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.profitability-card h5 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.profitability-card .value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.profitability-card .threshold {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* QoQ Growth Indicators */
+.qoq-indicators {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.qoq-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.qoq-badge.positive {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.qoq-badge.negative {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.qoq-badge.neutral {
+  background-color: #f3f4f6;
+  color: #6b7280;
 }

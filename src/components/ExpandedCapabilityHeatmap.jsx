@@ -322,7 +322,7 @@ const ExpandedCapabilityHeatmap = ({
             <div className="error-state">
                 <div className="error-icon">⚠️</div>
                 <h3>Analysis Error</h3>
-                <p>Unable to generate expanded capability heatmap. Please try regenerating.</p>
+                <p>Unable to generate capability heatmap. Please try regenerating.</p>
                 <button onClick={() => {
                     if (onRegenerate) {
                         onRegenerate();

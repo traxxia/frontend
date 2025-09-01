@@ -553,7 +553,7 @@ export class AnalysisApiService {
         'pestel': 'PESTEL Analysis',
         'fullSwot': 'Full SWOT Portfolio',
         'competitiveAdvantage': 'Competitive Advantage',
-        'expandedCapability': 'Expanded Capability Heatmap',
+        'expandedCapability': 'Capability Heatmap',
         'strategicRadar': 'Strategic Positioning Radar',
         'productivityMetrics': 'Productivity Metrics',
         'maturityScore': 'Maturity Score'
@@ -819,7 +819,7 @@ export class AnalysisApiService {
       await this.saveAnalysisToBackend(expandedCapabilityContent, 'expandedCapability', selectedBusinessId);
       return expandedCapabilityContent;
     } catch (error) {
-      console.error('Error generating Expanded Capability Heatmap:', error);
+      console.error('Error generating Capability Heatmap:', error);
       throw error;
     }
   }

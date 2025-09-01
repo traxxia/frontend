@@ -68,7 +68,7 @@ const PhaseTabsComponent = ({
         "Customer Segmentation",
         "Competitive Advantage",
         "Channel Effectiveness",
-        "Expanded Capability Heatmap",
+        "Capability Heatmap",
         "Strategic Goals",
         "Strategic Positioning Radar",
         "Organizational Culture Profile",

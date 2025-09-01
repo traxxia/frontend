@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, Loader, Info, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css';
+import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -53,41 +53,34 @@ const ProfitabilityAnalysis = ({
     }
   };
 
+  // UPDATED: Handle the new backend response structure
   const isProfitabilityDataIncomplete = (data) => {
-    if (!data) return true;
+    console.log('Checking profitability data:', data);
     
-    // UPDATED: Handle the nested structure from API response
-    let profitabilityMetrics = null;
-    
-    // Check if data has the "Profitability" key (direct from API)
-    if (data.Profitability) {
-      profitabilityMetrics = data.Profitability;
-    } 
-    // Check if data has the "profitability" key (processed)
-    else if (data.profitability) {
-      profitabilityMetrics = data.profitability;
-    }
-    // Check if data has "metrics" key (alternative structure)
-    else if (data.metrics) {
-      profitabilityMetrics = data.metrics;
-    }
-    // If data is directly the metrics object
-    else if (data && typeof data === 'object') {
-      profitabilityMetrics = data;
-    }
-    
-    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
+    if (!data || !data.profitability) {
+      console.log('No profitability data found');
       return true;
     }
     
-    // UPDATED: Check if at least one profitability metric has non-null value
-    const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => 
-      value !== null && 
-      value !== undefined &&
-      value !== '' &&
-      !isNaN(parseFloat(value))
-    );
+    const profitabilityMetrics = data.profitability;
+    console.log('Profitability metrics:', profitabilityMetrics);
     
+    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
+      console.log('Invalid profitability metrics object');
+      return true;
+    }
+    
+    // Check if at least one profitability metric has non-null value
+    const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => {
+      const isValid = value !== null && 
+        value !== undefined &&
+        value !== '' &&
+        !isNaN(parseFloat(value));
+      console.log(`Checking ${key}: ${value} -> ${isValid}`);
+      return isValid;
+    });
+    
+    console.log('Has valid metric:', hasValidMetric);
     return !hasValidMetric;
   };
 
@@ -108,6 +101,9 @@ const ProfitabilityAnalysis = ({
 
   // Update analysis data when profitabilityData prop changes
   useEffect(() => {
+    console.log('useEffect triggered with profitabilityData:', profitabilityData);
+    console.log('Current analysisData:', analysisData);
+    
     if (profitabilityData && profitabilityData !== analysisData) {
       console.log('Profitability data updated:', profitabilityData);
       setAnalysisData(profitabilityData);
@@ -158,58 +154,104 @@ const ProfitabilityAnalysis = ({
     }
   };
 
-  // UPDATED: Handle null values and percentage formatting
+  // Handle percentage formatting with proper null checks
   const formatPercentage = (value) => {
     if (value === null || value === undefined || value === '') return null;
     
-    // Handle string values that might be percentages already
     if (typeof value === 'string') {
       if (value.includes('%')) return value;
       const numValue = parseFloat(value);
       if (isNaN(numValue)) return null;
-      return `${numValue.toFixed(2)}%`;
+      return `${(numValue * 100).toFixed(2)}%`;
     }
     
     if (typeof value === 'number') {
-      // If value is already a percentage (> 1), don't multiply by 100
-      if (value > 1) {
-        return `${value.toFixed(2)}%`;
-      }
       return `${(value * 100).toFixed(2)}%`;
     }
     
     return null;
   };
 
-  // UPDATED: Handle null values in color determination
-  const getMarginColor = (value, type) => {
+  // UPDATED: Get thresholds from backend response
+  const getThreshold = (metricKey, thresholds) => {
+    if (!thresholds) return null;
+    
+    const thresholdMap = {
+      'gross_margin': 'gross_margin',
+      'operating_margin': 'operating_margin', 
+      'ebitda_margin': 'ebitda',
+      'net_margin': 'net_margin'
+    };
+    
+    const thresholdKey = thresholdMap[metricKey];
+    return thresholds[thresholdKey] || null;
+  };
+
+  // UPDATED: Color determination with threshold support
+  const getMarginColor = (value, metricKey, thresholds) => {
     if (value === null || value === undefined || value === '') return '#e5e7eb';
     
-    // Convert string percentages to numbers
-    let numValue = value;
-    if (typeof value === 'string') {
-      numValue = parseFloat(value.replace('%', ''));
-      if (isNaN(numValue)) return '#e5e7eb';
-      // Convert percentage to decimal if it was a string percentage
-      if (value.includes('%')) {
-        numValue = numValue / 100;
-      }
-    }
+    let numValue = typeof value === 'number' ? value : parseFloat(value);
+    if (isNaN(numValue)) return '#e5e7eb';
     
-    // Industry benchmarks for color coding (as decimals)
-    const benchmarks = {
-      'Gross Margin': { good: 0.4, fair: 0.2 },
-      'Operating Margin': { good: 0.15, fair: 0.05 },
-      'EBITDA Margin': { good: 0.2, fair: 0.1 },
-      'Net Margin': { good: 0.1, fair: 0.05 }
+    // Get threshold from backend or use default benchmarks
+    const threshold = getThreshold(metricKey, thresholds);
+    let benchmarkValue = null;
+    
+    if (threshold) {
+      benchmarkValue = parseFloat(threshold.replace('%', '')) / 100;
+    } else {
+      // Fallback to default benchmarks
+      const defaultBenchmarks = {
+        'gross_margin': 0.4,
+        'operating_margin': 0.15,
+        'ebitda_margin': 0.2,
+        'net_margin': 0.1
+      };
+      benchmarkValue = defaultBenchmarks[metricKey] || 0.1;
+    }
+
+    if (numValue >= benchmarkValue) return '#10b981'; // Good - Green
+    if (numValue >= benchmarkValue * 0.7) return '#f59e0b'; // Fair - Orange
+    return '#ef4444'; // Poor - Red
+  };
+
+  // UPDATED: Get status text with threshold support
+  const getStatusText = (value, metricKey, thresholds) => {
+    if (value === null || value === undefined || value === '') return null;
+    
+    let numValue = typeof value === 'number' ? value : parseFloat(value);
+    if (isNaN(numValue)) return null;
+    
+    const threshold = getThreshold(metricKey, thresholds);
+    let benchmarkValue = null;
+    
+    if (threshold) {
+      benchmarkValue = parseFloat(threshold.replace('%', '')) / 100;
+    } else {
+      const defaultBenchmarks = {
+        'gross_margin': 0.4,
+        'operating_margin': 0.15,
+        'ebitda_margin': 0.2,
+        'net_margin': 0.1
+      };
+      benchmarkValue = defaultBenchmarks[metricKey] || 0.1;
+    }
+
+    if (numValue >= benchmarkValue) return 'Excellent';
+    if (numValue >= benchmarkValue * 0.7) return 'Good';
+    return 'Needs Improvement';
+  };
+
+  // UPDATED: Convert snake_case to display names
+  const getDisplayName = (key) => {
+    const displayNames = {
+      'gross_margin': 'Gross Margin',
+      'operating_margin': 'Operating Margin', 
+      'ebitda_margin': 'EBITDA Margin',
+      'net_margin': 'Net Margin'
     };
-
-    const benchmark = benchmarks[type];
-    if (!benchmark) return '#6b7280';
-
-    if (numValue >= benchmark.good) return '#10b981';
-    if (numValue >= benchmark.fair) return '#f59e0b';
-    return '#ef4444';
+    return displayNames[key] || key.replace('_', ' ').toUpperCase();
   };
 
   if (isRegenerating) {
@@ -266,22 +308,16 @@ const ProfitabilityAnalysis = ({
     );
   }
 
-  // UPDATED: Extract profitability data with proper structure handling
-  let profitabilityMetrics = null;
+  // UPDATED: Extract data from new backend structure
+  const profitabilityMetrics = analysisData.profitability;
+  const thresholds = analysisData.threshold;
   
-  // Handle different data structures from API
-  if (analysisData.Profitability) {
-    profitabilityMetrics = analysisData.Profitability;
-  } else if (analysisData.profitability) {
-    profitabilityMetrics = analysisData.profitability;
-  } else if (analysisData.metrics) {
-    profitabilityMetrics = analysisData.metrics;
-  } else {
-    profitabilityMetrics = analysisData;
-  }
+  console.log('Analysis data:', analysisData);
+  console.log('Profitability metrics:', profitabilityMetrics);
+  console.log('Thresholds:', thresholds);
   
-  // If still no valid data, show empty state
   if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
+    console.log('No valid profitability metrics found');
     return (
       <div className="channel-heatmap channel-heatmap-container">
         <AnalysisEmptyState
@@ -315,24 +351,15 @@ const ProfitabilityAnalysis = ({
             </p>
           </div>
 
-          {/* UPDATED: Check if all values are null and show warning */}
+          {/* Check if all values are null and show warning */}
           {Object.values(profitabilityMetrics).every(value => value === null) && (
-            <div style={{
-              backgroundColor: '#fef3c7',
-              border: '1px solid #f59e0b',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
+            <div className="profitability-warning">
               <AlertCircle size={20} color="#f59e0b" />
               <div>
-                <h4 style={{ color: '#92400e', fontSize: '14px', fontWeight: '600', margin: 0 }}>
+                <h4 className="profitability-warning-title">
                   No Financial Data Available
                 </h4>
-                <p style={{ color: '#92400e', fontSize: '13px', margin: '4px 0 0 0' }}>
+                <p className="profitability-warning-text">
                   Upload an Excel file with financial data or ensure your spreadsheet contains the required profitability metrics.
                 </p>
               </div>
@@ -340,84 +367,42 @@ const ProfitabilityAnalysis = ({
           )}
 
           {/* Profitability Metrics Grid */}
-          <div className="profitability-metrics-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-            marginBottom: '30px'
-          }}>
+          <div className="profitability-metrics-grid">
             {Object.entries(profitabilityMetrics).map(([key, value]) => {
               const formattedValue = formatPercentage(value);
               const isNull = value === null || value === undefined || value === '';
+              const displayName = getDisplayName(key);
+              const color = getMarginColor(value, key, thresholds);
+              const statusText = getStatusText(value, key, thresholds);
               
               return (
-                <div key={key} className="profitability-metric-card" style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                  position: 'relative',
-                  opacity: isNull ? 0.6 : 1
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '12px'
-                  }}>
-                    <h4 style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: '#374151',
-                      margin: 0
-                    }}>
-                      {key}
+                <div key={key} className={`profitability-metric-card ${isNull ? 'no-data' : ''}`}>
+                  <div className="profitability-metric-header">
+                    <h4 className="profitability-metric-title">
+                      {displayName}
                     </h4>
                     <Info size={16} color="#6b7280" title="Industry benchmark comparison" />
                   </div>
                   
-                  <div style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: isNull ? '#9ca3af' : getMarginColor(value, key),
-                    marginBottom: '8px'
-                  }}>
+                  <div 
+                    className={`profitability-metric-value ${isNull ? 'no-data' : ''}`}
+                    style={{ color: isNull ? '#9ca3af' : color }}
+                  >
                     {isNull ? 'No Data' : formattedValue}
                   </div>
                   
-                  {!isNull && (
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#6b7280',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      <span style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: getMarginColor(value, key)
-                      }}></span>
-                      {(() => {
-                        let numValue = value;
-                        if (typeof value === 'string') {
-                          numValue = parseFloat(value.replace('%', ''));
-                          if (value.includes('%')) numValue = numValue / 100;
-                        }
-                        return numValue >= 0.15 ? 'Excellent' : 
-                               numValue >= 0.05 ? 'Good' : 'Needs Improvement';
-                      })()}
+                  {!isNull && statusText && (
+                    <div className="profitability-metric-status">
+                      <span 
+                        className="profitability-status-indicator"
+                        style={{ backgroundColor: color }}
+                      ></span>
+                      {statusText}
                     </div>
                   )}
 
                   {isNull && (
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#9ca3af',
-                      fontStyle: 'italic'
-                    }}>
+                    <div className="profitability-no-data-text">
                       Data not available in uploaded file
                     </div>
                   )}
@@ -427,47 +412,33 @@ const ProfitabilityAnalysis = ({
           </div>
 
           {/* Explanations */}
-          <div className="profitability-explanations" style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '20px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <h4 style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#374151',
-              marginBottom: '16px'
-            }}>
+          <div className="profitability-explanations">
+            <h4 className="profitability-explanations-title">
               Margin Explanations
             </h4>
             
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '16px'
-            }}>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Gross Margin:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
+            <div className="profitability-explanations-grid">
+              <div className="profitability-explanation-item">
+                <span className="profitability-explanation-label">Gross Margin:</span>
+                <span className="profitability-explanation-text">
                   Revenue minus cost of goods sold, showing basic profitability
                 </span>
               </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Operating Margin:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
+              <div className="profitability-explanation-item">
+                <span className="profitability-explanation-label">Operating Margin:</span>
+                <span className="profitability-explanation-text">
                   Profit after operating expenses, indicating operational efficiency
                 </span>
               </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>EBITDA Margin:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
+              <div className="profitability-explanation-item">
+                <span className="profitability-explanation-label">EBITDA Margin:</span>
+                <span className="profitability-explanation-text">
                   Earnings before interest, taxes, depreciation & amortization
                 </span>
               </div>
-              <div>
-                <strong style={{ color: '#1f2937' }}>Net Margin:</strong>
-                <span style={{ color: '#6b7280', marginLeft: '8px' }}>
+              <div className="profitability-explanation-item">
+                <span className="profitability-explanation-label">Net Margin:</span>
+                <span className="profitability-explanation-text">
                   Final profit margin after all expenses and taxes
                 </span>
               </div>

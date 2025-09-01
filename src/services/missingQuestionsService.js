@@ -175,8 +175,8 @@ export const ANALYSIS_TYPES = {
     customMessage: 'Please provide more detailed answers for channel effectiveness analysis. The current answers are insufficient to generate meaningful channel insights.'
   },
   expandedCapability: {
-    displayName: 'Expanded Capability Heatmap',
-    customMessage: 'Please provide more detailed answers for expanded capability heatmap analysis. The current answers are insufficient to generate comprehensive capability insights.'
+    displayName: 'Capability Heatmap',
+    customMessage: 'Please provide more detailed answers for capability heatmap analysis. The current answers are insufficient to generate comprehensive capability insights.'
   },
   strategicGoals: {
     displayName: 'Strategic Goals Analysis',
@@ -205,8 +205,8 @@ export const ANALYSIS_TYPES = {
     customMessage: 'Please provide more detailed answers for loyalty metrics analysis. The current answers are insufficient to generate meaningful loyalty insights.'
   },
   expandedCapabilityHeatmap: {
-    displayName: 'Expanded Capability Heatmap Analysis',
-    customMessage: 'Please provide more detailed answers for expanded capability heatmap analysis. The current answers are insufficient to generate comprehensive capability insights.'
+    displayName: 'Capability Heatmap Analysis',
+    customMessage: 'Please provide more detailed answers for capability heatmap analysis. The current answers are insufficient to generate comprehensive capability insights.'
   },
   costEfficiency: {
     displayName: 'Cost Efficiency Insight',

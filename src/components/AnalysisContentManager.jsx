@@ -491,10 +491,10 @@ const AnalysisContentManager = ({
                   </div>
                 </ModernAnalysisCard>
 
-                {/* Expanded Capability Heatmap Card */}
+                {/* Capability Heatmap Card */}
                 <ModernAnalysisCard
                   id="expanded-capability"
-                  title="Expanded Capability Heatmap"
+                  title="Capability Heatmap"
                   description="Advanced organizational capability analysis"
                   icon={Award}
                   hasData={!!expandedCapabilityData}

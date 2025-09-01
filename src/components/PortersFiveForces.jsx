@@ -283,10 +283,10 @@ const PortersFiveForces = ({
                   <tr>
                     <th>Force</th>
                     <th>Intensity</th>
-                    {/* <th>Score</th> */}
-                    <th>Strategic Implications</th>
+                    {/* <th>Score</th> */} 
                     <th>Key Factors</th>
                     <th>Additional Details</th>
+                    <th>Strategic Implications</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -307,10 +307,7 @@ const PortersFiveForces = ({
                       </td>
                       {/* <td>
                         {forceData.score && <span className="score-badge">{forceData.score}/10</span>}
-                      </td> */}
-                      <td className="implications-cell">
-                        {forceData.strategic_implications}
-                      </td>
+                      </td> */} 
                       <td>
                         <div className="factors-cell">
                           {forceData.key_factors?.map((factor, index) => (
@@ -361,6 +358,9 @@ const PortersFiveForces = ({
                           )}
                         </div>
                       </td>
+                      <td className="implications-cell">
+                        {forceData.strategic_implications}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -368,196 +368,7 @@ const PortersFiveForces = ({
             </div>
           )}
         </div>
-      )}
-
-      {/* Competitive Landscape Table */}
-      {parsedData.competitive_landscape && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('competitors')}>
-            <h3>Competitive Landscape</h3>
-            {expandedSections.competitors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-
-          {expandedSections.competitors !== false && (
-            <div className="table-container">
-              {/* Direct Competitors */}
-              {parsedData.competitive_landscape.direct_competitors && (
-                <div className="subsection">
-                  <h4>Direct Competitors</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Competitor</th>
-                        <th>Market Share</th>
-                        <th>Strengths</th>
-                        <th>Weaknesses</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.competitive_landscape.direct_competitors.map((competitor, index) => (
-                        <tr key={index}>
-                          <td><strong>{competitor.name}</strong></td>
-                          <td>{competitor.market_share || 'N/A'}</td>
-                          <td>
-                            {competitor.strengths && (
-                              <ul className="list-items">
-                                {competitor.strengths.map((strength, idx) => (
-                                  <li key={idx}>{strength}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </td>
-                          <td>
-                            {competitor.weaknesses && (
-                              <ul className="list-items">
-                                {competitor.weaknesses.map((weakness, idx) => (
-                                  <li key={idx}>{weakness}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Indirect Competitors */}
-              {parsedData.competitive_landscape.indirect_competitors && (
-                <div className="subsection">
-                  <h4>Indirect Competitors</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Competitor</th>
-                        <th>Threat Level</th>
-                        {/* <th>Competitive Advantage</th> */}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.competitive_landscape.indirect_competitors.map((competitor, index) => (
-                        <tr key={index}>
-                          <td><strong>{competitor.name}</strong></td>
-                          <td>
-                            <span className={`status-badge ${getIntensityColor(competitor.threat_level)}`}>
-                              {competitor.threat_level}
-                            </span>
-                          </td>
-                          {/* <td>{competitor.competitive_advantage}</td> */}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Potential Entrants */}
-              {parsedData.competitive_landscape.potential_entrants && (
-                <div className="subsection">
-                  <h4>Potential Entrants</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        {/* <th>Category</th> */}
-                        <th>Likelihood</th>
-                        <th>Barriers</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.competitive_landscape.potential_entrants.map((entrant, index) => (
-                        <tr key={index}>
-                          {/* <td><strong>{entrant.category}</strong></td> */}
-                          <td>
-                            <span className={`status-badge ${getIntensityColor(entrant.likelihood)}`}>
-                              {entrant.likelihood}
-                            </span>
-                          </td>
-                          <td>{entrant.barriers}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )} 
-
-      {/* Monitoring Dashboard Table */}
-      {parsedData.monitoring_dashboard && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('monitoring')}>
-            <h3>Monitoring Dashboard</h3>
-            {expandedSections.monitoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-
-          {expandedSections.monitoring !== false && (
-            <div className="table-container">
-              {/* Key Performance Indicators */}
-              {parsedData.monitoring_dashboard.key_indicators && (
-                <div className="subsection">
-                  <h4>Key Performance Indicators</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Indicator</th>
-                        <th>Related Force</th>
-                        <th>Measurement Frequency</th>
-                        <th>Threshold Values</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.monitoring_dashboard.key_indicators.map((indicator, index) => (
-                        <tr key={index}>
-                          <td><strong>{indicator.indicator}</strong></td>
-                          <td>{indicator.force}</td>
-                          <td><span className="frequency-badge">{indicator.measurement_frequency}</span></td>
-                          <td>
-                            {indicator.threshold_values && (
-                              <div className="thresholds">
-                                <div className="threshold green">✓ {indicator.threshold_values.green}</div>
-                                <div className="threshold yellow">⚠ {indicator.threshold_values.yellow}</div>
-                                <div className="threshold red">✗ {indicator.threshold_values.red}</div>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Early Warning Signals */}
-              {parsedData.monitoring_dashboard.early_warning_signals && (
-                <div className="subsection">
-                  <h4>Early Warning Signals</h4>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Signal</th>
-                        <th>Trigger Response</th>
-                        {/* <th>Monitoring Source</th> */}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parsedData.monitoring_dashboard.early_warning_signals.map((signal, index) => (
-                        <tr key={index}>
-                          <td><strong>{signal.signal}</strong></td>
-                          <td>{signal.trigger_response}</td>
-                          {/* <td>{signal.monitoring_source}</td> */}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      )}   
     </div>
   );
 };
