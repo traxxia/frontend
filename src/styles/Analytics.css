@@ -7656,13 +7656,16 @@
 }
 
 .data-table tbody td {
-  padding: 5px 10px;
+  padding: 10px 10px;
   border-bottom: 1px solid #e0e0e0;
   vertical-align: top;
   font-size: 0.9rem;
   line-height: 1.5;
 }
-
+img, svg{
+  margin-top: -4px;
+  margin-right: 5px;
+}
 .data-table tbody tr:hover {
   background-color: #f8f9ff;
 }

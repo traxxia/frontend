@@ -81,6 +81,8 @@ export const API_ENDPOINTS = {
   leverageRisk: 'excel-analysis'
 };
 
+const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis', 'strategic-analysis'];
+
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
     this.ML_API_BASE_URL = ML_API_BASE_URL;
@@ -92,6 +94,10 @@ export class AnalysisApiService {
 
   isExcelAnalysisType(analysisType) {
     return ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'].includes(analysisType);
+  }
+
+  requiresDeepSearch(endpoint) {
+    return DEEP_SEARCH_ENDPOINTS.includes(endpoint);
   }
 
   // Fetch document metadata from backend
@@ -281,13 +287,19 @@ export class AnalysisApiService {
           headers: headers,
           body: formData
         });
-      } else {
+      } else { 
+        const headers = {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        };
+ 
+        if (this.requiresDeepSearch(endpoint)) {
+          headers['deep_search'] = 'true';
+        }
+
         response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
           method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
+          headers: headers,
           body: JSON.stringify({
             questions: questionsArray,
             answers: answersArray
