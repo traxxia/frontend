@@ -527,202 +527,188 @@ const BusinessSetupPage = () => {
   };
 
   const createSimpleRegenerationHandler = (analysisType) => {
-    return async () => {
-      const regeneratingStateMap = {
-        'swot': setIsSwotAnalysisRegenerating,
-        'purchaseCriteria': setIsPurchaseCriteriaRegenerating,
-        'loyaltyNPS': setIsLoyaltyNPSRegenerating,
-        'porters': setIsPortersRegenerating,
-        'pestel': setIsPestelRegenerating,
-        'fullSwot': setIsFullSwotRegenerating,
-        'competitiveAdvantage': setIsCompetitiveAdvantageRegenerating,
-        'expandedCapability': setIsExpandedCapabilityRegenerating,
-        'strategicRadar': setIsStrategicRadarRegenerating,
-        'productivityMetrics': setIsProductivityRegenerating,
-        'maturityScore': setIsMaturityRegenerating,
-        'profitabilityAnalysis': setIsProfitabilityRegenerating,
-        'growthTracker': setIsGrowthTrackerRegenerating,
-        'liquidityEfficiency': setIsLiquidityEfficiencyRegenerating,
-        'investmentPerformance': setIsInvestmentPerformanceRegenerating,
-        'leverageRisk': setIsLeverageRiskRegenerating,
-      };
+  return async () => {
+    const regeneratingStateMap = {
+      'swot': setIsSwotAnalysisRegenerating,
+      'purchaseCriteria': setIsPurchaseCriteriaRegenerating,
+      'loyaltyNPS': setIsLoyaltyNPSRegenerating,
+      'porters': setIsPortersRegenerating,
+      'pestel': setIsPestelRegenerating,
+      'fullSwot': setIsFullSwotRegenerating,
+      'competitiveAdvantage': setIsCompetitiveAdvantageRegenerating,
+      'expandedCapability': setIsExpandedCapabilityRegenerating,
+      'strategicRadar': setIsStrategicRadarRegenerating,
+      'productivityMetrics': setIsProductivityRegenerating,
+      'maturityScore': setIsMaturityRegenerating,
+      'profitabilityAnalysis': setIsProfitabilityRegenerating,
+      'growthTracker': setIsGrowthTrackerRegenerating,
+      'liquidityEfficiency': setIsLiquidityEfficiencyRegenerating,
+      'investmentPerformance': setIsInvestmentPerformanceRegenerating,
+      'leverageRisk': setIsLeverageRiskRegenerating,
+    };
 
-      const dataStateMap = {
-        'swot': setSwotAnalysisResult,
-        'purchaseCriteria': setPurchaseCriteriaData,
-        'loyaltyNPS': setLoyaltyNPSData,
-        'porters': setPortersData,
-        'pestel': setPestelData,
-        'fullSwot': setFullSwotData,
-        'competitiveAdvantage': setCompetitiveAdvantageData,
-        'expandedCapability': setExpandedCapabilityData,
-        'strategicRadar': setStrategicRadarData,
-        'productivityMetrics': setProductivityData,
-        'maturityScore': setMaturityData,
-        'profitabilityAnalysis': setProfitabilityData,
-        'growthTracker': setGrowthTrackerData,
-        'liquidityEfficiency': setLiquidityEfficiencyData,
-        'investmentPerformance': setInvestmentPerformanceData,
-        'leverageRisk': setLeverageRiskData,
-      };
+    const dataStateMap = {
+      'swot': setSwotAnalysisResult,
+      'purchaseCriteria': setPurchaseCriteriaData,
+      'loyaltyNPS': setLoyaltyNPSData,
+      'porters': setPortersData,
+      'pestel': setPestelData,
+      'fullSwot': setFullSwotData,
+      'competitiveAdvantage': setCompetitiveAdvantageData,
+      'expandedCapability': setExpandedCapabilityData,
+      'strategicRadar': setStrategicRadarData,
+      'productivityMetrics': setProductivityData,
+      'maturityScore': setMaturityData,
+      'profitabilityAnalysis': setProfitabilityData,
+      'growthTracker': setGrowthTrackerData,
+      'liquidityEfficiency': setLiquidityEfficiencyData,
+      'investmentPerformance': setInvestmentPerformanceData,
+      'leverageRisk': setLeverageRiskData,
+    };
 
-      const displayNameMap = {
-        'swot': 'SWOT Analysis',
-        'purchaseCriteria': 'Purchase Criteria',
-        'loyaltyNPS': 'Loyalty & NPS',
-        'porters': "Porter's Five Forces",
-        'pestel': 'PESTEL Analysis',
-        'fullSwot': 'Full SWOT Portfolio',
-        'competitiveAdvantage': 'Competitive Advantage Matrix',
-        'expandedCapability': 'Capability Heatmap',
-        'strategicRadar': 'Strategic Positioning Radar',
-        'productivityMetrics': 'Productivity Metrics',
-        'maturityScore': 'Maturity Score',
-        'profitabilityAnalysis': 'Profitability Analysis',
-        'growthTracker': 'Growth Tracker',
-        'liquidityEfficiency': 'Liquidity & Efficiency',
-        'investmentPerformance': 'Investment Performance',
-        'leverageRisk': 'Leverage & Risk'
-      };
+    const displayNameMap = {
+      'swot': 'SWOT Analysis',
+      'purchaseCriteria': 'Purchase Criteria',
+      'loyaltyNPS': 'Loyalty & NPS',
+      'porters': "Porter's Five Forces",
+      'pestel': 'PESTEL Analysis',
+      'fullSwot': 'Full SWOT Portfolio',
+      'competitiveAdvantage': 'Competitive Advantage Matrix',
+      'expandedCapability': 'Capability Heatmap',
+      'strategicRadar': 'Strategic Positioning Radar',
+      'productivityMetrics': 'Productivity Metrics',
+      'maturityScore': 'Maturity Score',
+      'profitabilityAnalysis': 'Profitability Analysis',
+      'growthTracker': 'Growth Tracker',
+      'liquidityEfficiency': 'Liquidity & Efficiency',
+      'investmentPerformance': 'Investment Performance',
+      'leverageRisk': 'Leverage & Risk'
+    };
 
-      const setIsRegenerating = regeneratingStateMap[analysisType];
-      const setData = dataStateMap[analysisType];
-      const displayName = displayNameMap[analysisType] || analysisType;
+    const setIsRegenerating = regeneratingStateMap[analysisType];
+    const setData = dataStateMap[analysisType];
+    const displayName = displayNameMap[analysisType] || analysisType;
 
-      if (!setIsRegenerating) {
-        console.error(`No regenerating state setter found for analysis type: ${analysisType}`);
-        showToastMessage(`Cannot regenerate ${displayName} - missing regeneration handler`, "error");
-        return;
-      }
+    if (!setIsRegenerating) {
+      console.error(`No regenerating state setter found for analysis type: ${analysisType}`);
+      showToastMessage(`Cannot regenerate ${displayName} - missing regeneration handler`, "error");
+      return;
+    }
 
-      if (!setData) {
-        console.error(`No data state setter found for analysis type: ${analysisType}`);
-        showToastMessage(`Cannot regenerate ${displayName} - missing data handler`, "error");
-        return;
-      }
+    if (!setData) {
+      console.error(`No data state setter found for analysis type: ${analysisType}`);
+      showToastMessage(`Cannot regenerate ${displayName} - missing data handler`, "error");
+      return;
+    }
 
-      if (isRegeneratingRef.current) {
-        return;
-      }
+    if (isRegeneratingRef.current) {
+      return;
+    }
+
+    try {
+      setIsRegenerating(true);
+      isRegeneratingRef.current = true;
+      showToastMessage(`Regenerating ${displayName}...`, "info");
+      setData(null);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      let result;
 
       try {
-        setIsRegenerating(true);
-        isRegeneratingRef.current = true;
-        showToastMessage(`Regenerating ${displayName}...`, "info");
-        setData(null);
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Use individual API methods instead of handlePhaseCompletion
+        switch (analysisType) {
+          case 'swot':
+            result = await apiService.generateSWOTAnalysis(questions, userAnswers, selectedBusinessId);
+            break;
 
-        let result;
+          case 'purchaseCriteria':
+            result = await apiService.generatePurchaseCriteria(questions, userAnswers, selectedBusinessId);
+            break;
 
-        try {
-          switch (analysisType) {
-            case 'swot':
-              result = await apiService.handlePhaseCompletion('initial', questions, userAnswers, selectedBusinessId, { setSwotAnalysisResult }, showToastMessage);
-              if (result && result.swot) result = result.swot;
-              break;
+          case 'loyaltyNPS':
+            result = await apiService.generateLoyaltyNPS(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'purchaseCriteria':
-              result = await apiService.handlePhaseCompletion('initial', questions, userAnswers, selectedBusinessId, { setPurchaseCriteriaData }, showToastMessage);
-              if (result && result.purchaseCriteria) result = result.purchaseCriteria;
-              break;
+          case 'porters':
+            result = await apiService.generatePortersAnalysis(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'loyaltyNPS':
-              result = await apiService.handlePhaseCompletion('initial', questions, userAnswers, selectedBusinessId, { setLoyaltyNPSData }, showToastMessage);
-              if (result && result.loyaltyNPS) result = result.loyaltyNPS;
-              break;
+          case 'pestel':
+            result = await apiService.generatePestelAnalysis(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'porters':
-              result = await apiService.handlePhaseCompletion('initial', questions, userAnswers, selectedBusinessId, { setPortersData }, showToastMessage);
-              if (result && result.porters) result = result.porters;
-              break;
+          case 'fullSwot':
+            result = await apiService.generateFullSwotPortfolio(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'pestel':
-              result = await apiService.handlePhaseCompletion('initial', questions, userAnswers, selectedBusinessId, { setPestelData }, showToastMessage);
-              if (result && result.pestel) result = result.pestel;
-              break;
+          case 'competitiveAdvantage':
+            result = await apiService.generateCompetitiveAdvantage(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'fullSwot':
-              result = await apiService.handlePhaseCompletion('essential', questions, userAnswers, selectedBusinessId, { setFullSwotData }, showToastMessage);
-              if (result && result.fullSwot) result = result.fullSwot;
-              break;
+          case 'expandedCapability':
+            result = await apiService.generateExpandedCapability(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'competitiveAdvantage':
-              result = await apiService.handlePhaseCompletion('essential', questions, userAnswers, selectedBusinessId, { setCompetitiveAdvantageData }, showToastMessage);
-              if (result && result.competitiveAdvantage) result = result.competitiveAdvantage;
-              break;
+          case 'strategicRadar':
+            result = await apiService.generateStrategicRadar(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'expandedCapability':
-              result = await apiService.handlePhaseCompletion('essential', questions, userAnswers, selectedBusinessId, { setExpandedCapabilityData }, showToastMessage);
-              if (result && result.expandedCapability) result = result.expandedCapability;
-              break;
+          case 'productivityMetrics':
+            result = await apiService.generateProductivityMetrics(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'strategicRadar':
-              result = await apiService.handlePhaseCompletion('essential', questions, userAnswers, selectedBusinessId, { setStrategicRadarData }, showToastMessage);
-              if (result && result.strategicRadar) result = result.strategicRadar;
-              break;
+          case 'maturityScore':
+            result = await apiService.generateMaturityScore(questions, userAnswers, selectedBusinessId);
+            break;
 
-            case 'productivityMetrics':
-              result = await apiService.handlePhaseCompletion('essential', questions, userAnswers, selectedBusinessId, { setProductivityData }, showToastMessage);
-              if (result && result.productivityMetrics) result = result.productivityMetrics;
-              break;
+          case 'profitabilityAnalysis':
+            result = await apiService.generateProfitabilityAnalysis(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
+            break;
 
-            case 'maturityScore':
-              result = await apiService.handlePhaseCompletion('essential', questions, userAnswers, selectedBusinessId, { setMaturityData }, showToastMessage);
-              if (result && result.maturityScore) result = result.maturityScore;
-              break;
+          case 'growthTracker':
+            result = await apiService.generateGrowthTracker(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
+            break;
 
-            case 'profitabilityAnalysis':
-              result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setProfitabilityData }, showToastMessage);
+          case 'liquidityEfficiency':
+            result = await apiService.generateLiquidityEfficiency(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
+            break;
 
-              break;
+          case 'investmentPerformance':
+            result = await apiService.generateInvestmentPerformance(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
+            break;
 
-            case 'growthTracker':
-              result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setGrowthTrackerData }, showToastMessage);
+          case 'leverageRisk':
+            result = await apiService.generateLeverageRisk(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
+            break;
 
-              break;
-
-            case 'liquidityEfficiency':
-              result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setLiquidityEfficiencyData }, showToastMessage);
-
-              break;
-
-            case 'investmentPerformance':
-              result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setInvestmentPerformanceData }, showToastMessage);
-
-              break;
-
-            case 'leverageRisk':
-              result = await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, { setLeverageRiskData }, showToastMessage);
-
-              break;
-            default:
-              throw new Error(`Unknown analysis type: ${analysisType}`);
-          }
-
-          if (result) {
-            setData(result);
-          } else {
-            console.warn(`No result returned for ${analysisType}`);
-          }
-
-          showToastMessage(`${displayName} regenerated successfully!`, "success");
-
-        } catch (apiError) {
-          console.error(`API error regenerating ${analysisType}:`, apiError);
-          throw apiError;
+          default:
+            throw new Error(`Unknown analysis type: ${analysisType}`);
         }
 
-      } catch (error) {
-        console.error(`Error regenerating ${analysisType}:`, error);
-        const errorMessage = error.message || `Failed to regenerate ${displayName}`;
-        showToastMessage(errorMessage, "error");
+        if (result) {
+          setData(result);
+        } else {
+          console.warn(`No result returned for ${analysisType}`);
+        }
 
-      } finally {
-        setIsRegenerating(false);
-        isRegeneratingRef.current = false;
+        showToastMessage(`${displayName} regenerated successfully!`, "success");
+
+      } catch (apiError) {
+        console.error(`API error regenerating ${analysisType}:`, apiError);
+        throw apiError;
       }
-    };
+
+    } catch (error) {
+      console.error(`Error regenerating ${analysisType}:`, error);
+      const errorMessage = error.message || `Failed to regenerate ${displayName}`;
+      showToastMessage(errorMessage, "error");
+
+    } finally {
+      setIsRegenerating(false);
+      isRegeneratingRef.current = false;
+    }
   };
+};
 
 
   const analysisProps = createAnalysisContentManagerProps(state, {
