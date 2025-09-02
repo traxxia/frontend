@@ -3,6 +3,7 @@ import { AlertTriangle, Loader, Shield, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LeverageRisk = ({
@@ -205,41 +206,10 @@ const LeverageRisk = ({
     if (value === null || value === undefined) return null;
     
     if (fieldName === 'Interest Coverage') {
-      return `${value.toFixed(1)}x`;
+      return `${value.toFixed(3)}`;
     }
-    return value.toFixed(2);
-  };
-
-  const getFieldDescription = (fieldName) => {
-    const descriptions = {
-      'Debt-to-Equity': 'Lower ratios indicate less financial risk',
-      'Interest Coverage': 'Higher ratios indicate better debt servicing ability'
-    };
-    return descriptions[fieldName] || 'Financial risk indicator';
-  };
-
-  const getFieldExplanation = (fieldName) => {
-    const explanations = {
-      'Debt-to-Equity': 'Total Debt ÷ Total Equity. Low: <0.3, Medium: 0.3-1.0, High: >1.0',
-      'Interest Coverage': 'EBIT ÷ Interest Expense. Low Risk: >5x, Medium: 2.5-5x, High Risk: <2.5x'
-    };
-    return explanations[fieldName] || 'Ratio calculation and thresholds';
-  };
-
-  const TrafficLightIndicator = ({ color, label }) => (
-    <div className="traffic-light-indicator">
-      <div 
-        className="traffic-light-circle"
-        style={{
-          backgroundColor: color,
-          boxShadow: `0 0 10px ${color}40`
-        }}
-      ></div>
-      <span className="traffic-light-label">
-        {label}
-      </span>
-    </div>
-  );
+    return value.toFixed(3);
+  };  
 
   if (isRegenerating) {
     return (
@@ -270,9 +240,9 @@ const LeverageRisk = ({
   if (!analysisData || isLeverageDataIncomplete(analysisData)) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="leverageRisk"
-          analysisDisplayName="Leverage & Risk"
+          analysisDisplayName="Leverage & Risk Analysis"
           icon={AlertTriangle}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -282,13 +252,12 @@ const LeverageRisk = ({
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => handleRegenerate()}
-          onGenerateWithoutFile={() => handleRegenerate()}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
-          fileUploadMessage="Upload Excel files for detailed leverage analysis"
+          fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          customMessage="No leverage & risk analysis results found. The uploaded financial document doesn't contain the required leverage ratios (debt-to-equity, interest coverage) or proper values for analysis."
         />
       </div>
     );
@@ -312,9 +281,9 @@ const LeverageRisk = ({
   if (!leverageMetrics || typeof leverageMetrics !== 'object') {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="leverageRisk"
-          analysisDisplayName="Leverage & Risk"
+          analysisDisplayName="Leverage & Risk Analysis"
           icon={AlertTriangle}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -322,6 +291,12 @@ const LeverageRisk = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showFileUpload={true}
+          onFileUpload={handleFileUpload}
+          uploadedFile={uploadedFile}
+          onRemoveFile={removeFile}
+          fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
+          acceptedFileTypes=".xlsx,.xls,.csv"
         />
       </div>
     );
@@ -338,12 +313,6 @@ const LeverageRisk = ({
     >
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
-          <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Leverage & Risk Overview</h3>
-            <p className="ch-section-subtitle">
-              Financial risk assessment with traffic-light risk indicators
-            </p>
-          </div>
 
           {/* Warning for no data */}
           {allValuesNull && (
@@ -364,8 +333,7 @@ const LeverageRisk = ({
           <div className="leverage-risk-grid">
             {Object.entries(leverageMetrics).map(([key, value]) => {
               const displayName = getFieldDisplayName(key);
-              const color = getRiskColor(value, displayName);
-              const riskLevel = getRiskLevel(value, displayName);
+              const color = getRiskColor(value, displayName); 
               const isNull = value === null || value === undefined;
               
               return (
@@ -388,77 +356,11 @@ const LeverageRisk = ({
                     style={{ color: isNull ? '#9ca3af' : color }}
                   >
                     {isNull ? 'No Data' : formatRatio(value, displayName)}
-                  </div>
-                  
-                  <div className="metric-indicator">
-                    {!isNull ? (
-                      <TrafficLightIndicator color={color} label={riskLevel} />
-                    ) : (
-                      <div className="no-data-indicator">
-                        Data not available
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="risk-explanation">
-                    {isNull ? 'Data not available in uploaded file' : getFieldDescription(displayName)}
-                  </div>
+                  </div> 
                 </div>
               );
             })}
-          </div>
-
-          {/* Risk Assessment Summary */}
-          <div className="risk-summary">
-            <h4 className="summary-title">
-              <Shield size={20} />
-              Overall Risk Assessment
-            </h4>
-            
-            <div className="risk-levels-grid">
-              <div className="risk-level-item">
-                <div className="risk-level-circle low-risk">
-                  L
-                </div>
-                <div className="risk-level-label">Low Risk</div>
-              </div>
-              
-              <div className="risk-level-item">
-                <div className="risk-level-circle medium-risk">
-                  M
-                </div>
-                <div className="risk-level-label">Medium Risk</div>
-              </div>
-              
-              <div className="risk-level-item">
-                <div className="risk-level-circle high-risk">
-                  H
-                </div>
-                <div className="risk-level-label">High Risk</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Risk Explanations */}
-          <div className="leverage-explanations">
-            <h4 className="explanations-title">
-              Risk Ratio Explanations
-            </h4>
-            
-            <div className="explanations-grid">
-              {Object.keys(leverageMetrics).map((key) => {
-                const displayName = getFieldDisplayName(key);
-                return (
-                  <div key={key} className="explanation-item">
-                    <strong>{displayName} Ratio:</strong>
-                    <span>
-                      {getFieldExplanation(displayName)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          </div> 
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { TrendingUp, Loader } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const InvestmentPerformance = ({
@@ -58,7 +59,13 @@ const InvestmentPerformance = ({
 
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      onRegenerate();
+      try {
+        setError(null);
+        await onRegenerate();
+      } catch (error) {
+        console.error('Error during regeneration:', error);
+        setError('Failed to regenerate analysis. Please try again.');
+      }
     } else {
       setAnalysisData(null);
       setError(null);
@@ -68,11 +75,13 @@ const InvestmentPerformance = ({
   useEffect(() => {
     if (investmentData && investmentData !== analysisData) {      
       setAnalysisData(investmentData);
+      setError(null);
+      
       if (onDataGenerated) {
         onDataGenerated(investmentData);
       }
     }
-  }, [investmentData]);
+  }, [investmentData, analysisData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -80,7 +89,8 @@ const InvestmentPerformance = ({
     isMounted.current = true;
     hasInitialized.current = true;
 
-    if (investmentData) { setAnalysisData(investmentData);
+    if (investmentData) {
+      setAnalysisData(investmentData);
     }
 
     return () => {
@@ -165,9 +175,9 @@ const InvestmentPerformance = ({
   if (!analysisData || isInvestmentDataIncomplete(analysisData)) {
     return (
       <div className="investment-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="investmentPerformance"
-          analysisDisplayName="Investment Performance"
+          analysisDisplayName="Investment Performance Analysis"
           icon={TrendingUp}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -177,13 +187,12 @@ const InvestmentPerformance = ({
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => {}}
-          onGenerateWithoutFile={() => {}}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
-          fileUploadMessage="Upload Excel files for detailed investment analysis"
+          fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          customMessage="No investment performance analysis results found. The uploaded financial document doesn't contain the required investment metrics (ROA, ROE, ROIC) or proper values for analysis."
         />
       </div>
     );

@@ -3,6 +3,7 @@ import { TrendingUp, Loader, Info, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ProfitabilityAnalysis = ({
@@ -200,7 +201,7 @@ const ProfitabilityAnalysis = ({
   if (!analysisData || isProfitabilityDataIncomplete(analysisData)) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="profitability"
           analysisDisplayName="Profitability Analysis"
           icon={TrendingUp}
@@ -210,16 +211,14 @@ const ProfitabilityAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          
           showFileUpload={true}
           onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => handleRegenerate()} 
-          onGenerateWithoutFile={() => handleRegenerate()} 
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
-          fileUploadMessage="Upload Excel files for detailed financial analysis"
+          fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          customMessage="No profitability analysis results found. The uploaded financial document doesn't contain the required profitability metrics or proper values for analysis."
         />
       </div>
     );
@@ -231,7 +230,7 @@ const ProfitabilityAnalysis = ({
   if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') { 
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="profitability"
           analysisDisplayName="Profitability Analysis"
           icon={TrendingUp}
@@ -241,6 +240,12 @@ const ProfitabilityAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showFileUpload={true}
+          onFileUpload={handleFileUpload}
+          uploadedFile={uploadedFile}
+          onRemoveFile={removeFile}
+          fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
+          acceptedFileTypes=".xlsx,.xls,.csv"
         />
       </div>
     );

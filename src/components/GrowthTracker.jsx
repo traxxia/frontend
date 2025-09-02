@@ -4,6 +4,7 @@ import { TrendingUp, Loader } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const GrowthTracker = ({
@@ -60,7 +61,13 @@ const GrowthTracker = ({
 
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      onRegenerate();
+      try {
+        setError(null);
+        await onRegenerate();
+      } catch (error) {
+        console.error('Error during regeneration:', error);
+        setError('Failed to regenerate analysis. Please try again.');
+      }
     } else {
       setAnalysisData(null);
       setError(null);
@@ -71,11 +78,13 @@ const GrowthTracker = ({
     if (growthData && growthData !== analysisData) { 
       
       setAnalysisData(growthData);
+      setError(null);
+      
       if (onDataGenerated) {
         onDataGenerated(growthData);
       }
     }
-  }, [growthData]);
+  }, [growthData, analysisData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -212,9 +221,9 @@ const GrowthTracker = ({
   if (!analysisData || isGrowthDataIncomplete(analysisData)) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="growthTracker"
-          analysisDisplayName="Growth Tracker"
+          analysisDisplayName="Growth Tracker Analysis"
           icon={TrendingUp}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -222,16 +231,14 @@ const GrowthTracker = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          
           showFileUpload={true}
           onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => {}}
-          onGenerateWithoutFile={() => {}}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
-          fileUploadMessage="Upload Excel files for detailed growth analysis"
+          fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          customMessage="No growth tracker analysis results found. The uploaded financial document doesn't contain the required revenue data by time period (monthly/quarterly revenue trends) or proper values for growth analysis."
         />
       </div>
     );

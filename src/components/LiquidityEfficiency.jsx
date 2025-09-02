@@ -3,6 +3,7 @@ import { Activity, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LiquidityEfficiency = ({
@@ -291,9 +292,9 @@ const LiquidityEfficiency = ({
   if (!analysisData || isLiquidityDataIncomplete(analysisData)) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="liquidityEfficiency"
-          analysisDisplayName="Liquidity & Efficiency"
+          analysisDisplayName="Liquidity & Efficiency Analysis"
           icon={Activity}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -303,13 +304,12 @@ const LiquidityEfficiency = ({
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
-          onGenerateWithFile={() => handleRegenerate()}
-          onGenerateWithoutFile={() => handleRegenerate()}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
-          fileUploadMessage="Upload Excel files for detailed liquidity analysis"
+          fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          customMessage="No liquidity & efficiency analysis results found. The uploaded financial document doesn't contain the required liquidity ratios (current ratio, quick ratio, cash conversion cycle) or proper values for analysis."
         />
       </div>
     );
@@ -320,9 +320,9 @@ const LiquidityEfficiency = ({
   if (!liquidityMetrics || typeof liquidityMetrics !== 'object') {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <AnalysisEmptyState
+        <FinancialEmptyState
           analysisType="liquidityEfficiency"
-          analysisDisplayName="Liquidity & Efficiency"
+          analysisDisplayName="Liquidity & Efficiency Analysis"
           icon={Activity}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -330,6 +330,12 @@ const LiquidityEfficiency = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showFileUpload={true}
+          onFileUpload={handleFileUpload}
+          uploadedFile={uploadedFile}
+          onRemoveFile={removeFile}
+          fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
+          acceptedFileTypes=".xlsx,.xls,.csv"
         />
       </div>
     );
