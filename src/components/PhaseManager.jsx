@@ -68,9 +68,7 @@ const PhaseManager = ({
         const isInitialComplete = initialQuestions.length > 0 && completedInitial.length === initialQuestions.length;
         const isEssentialComplete = essentialQuestions.length > 0 && completedEssential.length === essentialQuestions.length;
         const isAdvancedComplete = advancedQuestions.length > 0 && completedAdvanced.length === advancedQuestions.length;
-
-        // Good phase is unlocked based on financial document upload, not question completion
-        // Since good phase questions have been removed from backend
+ 
         const isGoodPhaseUnlocked = hasUploadedDocument || false;
 
         return {
@@ -125,7 +123,7 @@ const PhaseManager = ({
 
                 // Check document status from API response and update parent state
                 if (data.document_info) {
-                    const hasDocument = data.document_info.has_document && data.document_info.file_exists;  
+                    const hasDocument = data.document_info.has_document;  
                     if (setHasUploadedDocument) {
                         setHasUploadedDocument(hasDocument);
                     }
@@ -156,7 +154,7 @@ const PhaseManager = ({
                     }
 
                     // Good phase completion is now based on document upload, not questions
-                    if (data.document_info?.has_document && data.document_info?.file_exists) {
+                    if (data.document_info?.has_document) {
                         newCompletedPhases.add('good');
                     }
 
