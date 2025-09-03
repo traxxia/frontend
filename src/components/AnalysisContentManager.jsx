@@ -118,9 +118,11 @@ const AnalysisContentManager = ({
   apiService,
   createSimpleRegenerationHandler,
   hideRegenerateButtons = false,
+  highlightedCard,
+  expandedCards,
+  setExpandedCards,
 }) => {
-  // Local state for expand/collapse functionality
-  const [expandedCards, setExpandedCards] = useState(new Set());
+  // Local state for expand/collapse functionality 
 
   // API to Analysis mapping
   const API_TO_ANALYSIS_MAP = {
@@ -181,10 +183,10 @@ const AnalysisContentManager = ({
     hasData = false,
     category = 'initial',
     status = 'completed',
-    isLoading = false
+    isLoading = false,
   }) => {
     const isExpanded = expandedCards.has(id);
-
+    const isHighlighted = highlightedCard === id;
     const getStatusIcon = () => {
       if (isRegenerating || isLoading) {
         return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
@@ -213,7 +215,7 @@ const AnalysisContentManager = ({
     const actualStatus = getActualStatus();
 
     return (
-      <div className={`modern-analysis-card ${actualStatus}`}>
+      <div className={`modern-analysis-card ${actualStatus} ${isHighlighted ? 'highlighted' : ''}`}>
         <div
           className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
           onClick={() => toggleCard(id)}
@@ -242,7 +244,7 @@ const AnalysisContentManager = ({
               <RegenerateButton
                 onRegenerate={onRegenerate}
                 isRegenerating={isRegenerating || isLoading}
-                canRegenerate={!!onRegenerate} // CHANGED: Remove hasData requirement
+                canRegenerate={!!onRegenerate}
                 sectionName={title}
                 size="small"
                 hideRegenerateButtons={hideRegenerateButtons}
@@ -288,11 +290,8 @@ const AnalysisContentManager = ({
       <div className="modern-analysis-container">
         <div className="modern-analysis-content">
           <div className="modern-analysis-grid">
-
-            {/* Good Phase Components - Financial Analyses */}
             {unlockedFeatures.goodPhase && (
-              <>
-                {/* Profitability Analysis Card */}
+              <> 
                 <ModernAnalysisCard
                   id="profitability-analysis"
                   title="Profitability Analysis"
@@ -303,6 +302,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isProfitabilityRegenerating}
                   isLoading={isAnalysisLoading('profitabilityAnalysis')}
                   category="good"
+                  isHighlighted={highlightedCard === 'profitability-analysis'}
                 >
                   <div ref={profitabilityRef} data-component="profitability-analysis">
                     <ProfitabilityAnalysis
@@ -318,9 +318,7 @@ const AnalysisContentManager = ({
                       uploadedFile={uploadedFileForAnalysis}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Growth Tracker Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="growth-tracker"
                   title="Growth Tracker"
@@ -331,6 +329,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isGrowthTrackerRegenerating}
                   isLoading={isAnalysisLoading('growthTracker')}
                   category="good"
+                  isHighlighted={highlightedCard === 'growth-tracker'}
                 >
                   <div ref={growthTrackerRef} data-component="growth-tracker">
                     <GrowthTracker
@@ -346,9 +345,7 @@ const AnalysisContentManager = ({
                       uploadedFile={uploadedFileForAnalysis}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Liquidity & Efficiency Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="liquidity-efficiency"
                   title="Liquidity & Efficiency"
@@ -359,6 +356,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isLiquidityEfficiencyRegenerating}
                   isLoading={isAnalysisLoading('liquidityEfficiency')}
                   category="good"
+                  isHighlighted={highlightedCard === 'liquidity-efficiency'}
                 >
                   <div ref={liquidityEfficiencyRef} data-component="liquidity-efficiency">
                     <LiquidityEfficiency
@@ -374,9 +372,7 @@ const AnalysisContentManager = ({
                       uploadedFile={uploadedFileForAnalysis}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Investment Performance Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="investment-performance"
                   title="Investment Performance"
@@ -387,6 +383,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isInvestmentPerformanceRegenerating}
                   isLoading={isAnalysisLoading('investmentPerformance')}
                   category="good"
+                  isHighlighted={highlightedCard === 'investment-performance'}
                 >
                   <div ref={investmentPerformanceRef} data-component="investment-performance">
                     <InvestmentPerformance
@@ -402,9 +399,7 @@ const AnalysisContentManager = ({
                       uploadedFile={uploadedFileForAnalysis}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Leverage & Risk Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="leverage-risk"
                   title="Leverage & Risk"
@@ -415,6 +410,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isLeverageRiskRegenerating}
                   isLoading={isAnalysisLoading('leverageRisk')}
                   category="good"
+                  isHighlighted={highlightedCard === 'leverage-risk'}
                 >
                   <div ref={leverageRiskRef} data-component="leverage-risk">
                     <LeverageRisk
@@ -432,12 +428,9 @@ const AnalysisContentManager = ({
                   </div>
                 </ModernAnalysisCard>
               </>
-            )}
-
-            {/* Essential Phase Components */}
+            )} 
             {unlockedFeatures.fullSwot && (
-              <>
-                {/* Full SWOT Portfolio Card */}
+              <> 
                 <ModernAnalysisCard
                   id="full-swot"
                   title="Full SWOT Portfolio"
@@ -448,6 +441,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isFullSwotRegenerating}
                   isLoading={isAnalysisLoading('fullSwot')}
                   category="essential"
+                  isHighlighted={highlightedCard === 'full-swot'}
                 >
                   <div ref={fullSwotRef} data-component="full-swot">
                     <FullSWOTPortfolio
@@ -462,9 +456,7 @@ const AnalysisContentManager = ({
                       onRegenerate={createSimpleRegenerationHandler('fullSwot')}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Competitive Advantage Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="competitive-advantage"
                   title="Competitive Advantage Matrix"
@@ -475,6 +467,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isCompetitiveAdvantageRegenerating}
                   isLoading={isAnalysisLoading('competitiveAdvantage')}
                   category="essential"
+                  isHighlighted={highlightedCard === 'competitive-advantage'}
                 >
                   <div ref={competitiveAdvantageRef} data-component="competitive-advantage">
                     <CompetitiveAdvantageMatrix
@@ -489,9 +482,7 @@ const AnalysisContentManager = ({
                       onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Capability Heatmap Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="expanded-capability"
                   title="Capability Heatmap"
@@ -502,6 +493,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isExpandedCapabilityRegenerating}
                   isLoading={isAnalysisLoading('expandedCapability')}
                   category="essential"
+                  isHighlighted={highlightedCard === 'expanded-capability'}
                 >
                   <div ref={expandedCapabilityRef} data-component="expanded-capability">
                     <ExpandedCapabilityHeatmap
@@ -516,9 +508,7 @@ const AnalysisContentManager = ({
                       onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Strategic Positioning Radar Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="strategic-radar"
                   title="Strategic Positioning Radar"
@@ -529,6 +519,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isStrategicRadarRegenerating}
                   isLoading={isAnalysisLoading('strategicRadar')}
                   category="essential"
+                  isHighlighted={highlightedCard === 'strategic-radar'}
                 >
                   <div ref={strategicRadarRef} data-component="strategic-radar">
                     <StrategicPositioningRadar
@@ -543,9 +534,7 @@ const AnalysisContentManager = ({
                       onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Productivity Metrics Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="productivity"
                   title="Productivity Metrics"
@@ -556,6 +545,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isProductivityRegenerating}
                   isLoading={isAnalysisLoading('productivityMetrics')}
                   category="essential"
+                  isHighlighted={highlightedCard === 'productivity'}
                 >
                   <div ref={productivityRef} data-component="productivity">
                     <ProductivityMetrics
@@ -570,9 +560,7 @@ const AnalysisContentManager = ({
                       onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
-                </ModernAnalysisCard>
-
-                {/* Maturity Score Card */}
+                </ModernAnalysisCard> 
                 <ModernAnalysisCard
                   id="maturity"
                   title="Maturity Score"
@@ -583,6 +571,7 @@ const AnalysisContentManager = ({
                   isRegenerating={isMaturityRegenerating}
                   isLoading={isAnalysisLoading('maturityScore')}
                   category="essential"
+                  isHighlighted={highlightedCard === 'maturity'}
                 >
                   <div ref={maturityScoreRef} data-component="maturity">
                     <MaturityScoreLight
@@ -599,11 +588,7 @@ const AnalysisContentManager = ({
                   </div>
                 </ModernAnalysisCard>
               </>
-            )}
-
-            {/* Initial Phase Components */}
-
-            {/* SWOT Analysis Card - Only show if essential phase is not unlocked */}
+            )}  
             {!unlockedFeatures.fullSwot && (
               <ModernAnalysisCard
                 id="swot"
@@ -615,6 +600,7 @@ const AnalysisContentManager = ({
                 isRegenerating={isSwotAnalysisRegenerating}
                 isLoading={isAnalysisLoading('swot')}
                 category="initial"
+                isHighlighted={highlightedCard === 'swot'}
               >
                 <div ref={swotRef} data-component="swot-analysis">
                   <SwotAnalysis
@@ -632,9 +618,7 @@ const AnalysisContentManager = ({
                   />
                 </div>
               </ModernAnalysisCard>
-            )}
-
-            {/* Purchase Criteria Card */}
+            )} 
             <ModernAnalysisCard
               id="purchase-criteria"
               title="Purchase Criteria"
@@ -645,6 +629,7 @@ const AnalysisContentManager = ({
               isRegenerating={isPurchaseCriteriaRegenerating}
               isLoading={isAnalysisLoading('purchaseCriteria')}
               category="initial"
+              isHighlighted={highlightedCard === 'purchase-criteria'}
             >
               <div ref={purchaseCriteriaRef} data-component="purchase-criteria">
                 <PurchaseCriteria
@@ -660,9 +645,7 @@ const AnalysisContentManager = ({
                   onRedirectToBrief={handleRedirectToBrief}
                 />
               </div>
-            </ModernAnalysisCard>
-
-            {/* Loyalty NPS Card */}
+            </ModernAnalysisCard> 
             <ModernAnalysisCard
               id="loyalty-nps"
               title="Loyalty & NPS"
@@ -673,6 +656,7 @@ const AnalysisContentManager = ({
               isRegenerating={isLoyaltyNPSRegenerating}
               isLoading={isAnalysisLoading('loyaltyNPS')}
               category="initial"
+              isHighlighted={highlightedCard === 'loyalty-nps'}
             >
               <div ref={loyaltyNpsRef} data-component="loyalty-nps">
                 <LoyaltyNPS
@@ -688,9 +672,7 @@ const AnalysisContentManager = ({
                   onRedirectToBrief={handleRedirectToBrief}
                 />
               </div>
-            </ModernAnalysisCard>
-
-            {/* Porter's Five Forces Card */}
+            </ModernAnalysisCard> 
             <ModernAnalysisCard
               id="porters"
               title="Porter's Five Forces"
@@ -701,6 +683,7 @@ const AnalysisContentManager = ({
               isRegenerating={isPortersRegenerating}
               isLoading={isAnalysisLoading('porters')}
               category="initial"
+              isHighlighted={highlightedCard === 'porters'}
             >
               <div ref={portersRef} data-component="porters-analysis">
                 <PortersFiveForces
@@ -715,9 +698,7 @@ const AnalysisContentManager = ({
                   onRedirectToBrief={handleRedirectToBrief}
                 />
               </div>
-            </ModernAnalysisCard>
-
-            {/* PESTEL Analysis Card */}
+            </ModernAnalysisCard> 
             <ModernAnalysisCard
               id="pestel"
               title="PESTEL Analysis"
@@ -728,6 +709,7 @@ const AnalysisContentManager = ({
               isRegenerating={isPestelRegenerating}
               isLoading={isAnalysisLoading('pestel')}
               category="initial"
+              isHighlighted={highlightedCard === 'pestel'}
             >
               <div ref={pestelRef} data-component="pestel-analysis">
                 <PestelAnalysis
@@ -743,7 +725,6 @@ const AnalysisContentManager = ({
                 />
               </div>
             </ModernAnalysisCard>
-
           </div>
         </div>
       </div>

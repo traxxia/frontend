@@ -254,7 +254,7 @@ const PortersFiveForces = ({
                 </tbody>
               </table>
 
-              {parsedData.executive_summary.key_competitive_forces && (
+              {parsedData.executive_summary.key_competitive_forces?.length > 0 && (
                 <div className="subsection">
                   <h4>Key Competitive Forces</h4>
                   <div className="forces-tags">
