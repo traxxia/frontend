@@ -40,10 +40,10 @@ const PortersFiveForces = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.porters; 
-    
+    const analysisConfig = ANALYSIS_TYPES.porters;
+
     await checkMissingQuestionsAndRedirect(
-      'porters', 
+      'porters',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -180,7 +180,7 @@ const PortersFiveForces = ({
   // Check if data is incomplete and show missing questions checker
   if (!parsedData || isPortersDataIncomplete(parsedData)) {
     return (
-      <div className="porters-container"> 
+      <div className="porters-container">
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -193,7 +193,7 @@ const PortersFiveForces = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       </div>
     );
   }
@@ -201,7 +201,7 @@ const PortersFiveForces = ({
   return (
     <div className="porters-container" data-analysis-type="porters"
       data-analysis-name="Porter's Five Forces"
-      data-analysis-order="6"> 
+      data-analysis-order="6">
 
       {/* Executive Summary Table */}
       {parsedData.executive_summary && (
@@ -263,7 +263,7 @@ const PortersFiveForces = ({
                     ))}
                   </div>
                 </div>
-              )} 
+              )}
             </div>
           )}
         </div>
@@ -284,7 +284,7 @@ const PortersFiveForces = ({
                   <tr>
                     <th>Force</th>
                     <th>Intensity</th>
-                    {/* <th>Score</th> */} 
+                    {/* <th>Score</th> */}
                     <th>Key Factors</th>
                     <th>Additional Details</th>
                     <th>Strategic Implications</th>
@@ -308,7 +308,7 @@ const PortersFiveForces = ({
                       </td>
                       {/* <td>
                         {forceData.score && <span className="score-badge">{forceData.score}/10</span>}
-                      </td> */} 
+                      </td> */}
                       <td>
                         <div className="factors-cell">
                           {forceData.key_factors?.map((factor, index) => (
@@ -371,8 +371,8 @@ const PortersFiveForces = ({
         </div>
       )}
 
-      {/* Key Improvements Section */}
-      {parsedData.key_improvements && parsedData.key_improvements.length > 0 && (
+      {/* Key Improvements Section */} 
+      {parsedData.key_improvements && Array.isArray(parsedData.key_improvements) && parsedData.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
             <h3>Key Improvements</h3>
@@ -382,7 +382,6 @@ const PortersFiveForces = ({
           {expandedSections.improvements && (
             <div className="table-container">
               <table className="data-table">
-                
                 <tbody>
                   {parsedData.key_improvements.map((improvement, index) => (
                     <tr key={index}>
@@ -391,7 +390,7 @@ const PortersFiveForces = ({
                           <TrendingUp size={16} />
                           <span>{improvement}</span>
                         </div>
-                      </td> 
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -399,7 +398,7 @@ const PortersFiveForces = ({
             </div>
           )}
         </div>
-      )}   
+      )}
     </div>
   );
 };
