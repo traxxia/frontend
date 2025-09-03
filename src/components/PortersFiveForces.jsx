@@ -23,7 +23,8 @@ const PortersFiveForces = ({
     forces: true,
     competitors: true,
     recommendations: true,
-    monitoring: true
+    monitoring: true,
+    improvements: true
   });
 
   const isMounted = useRef(false);
@@ -361,6 +362,36 @@ const PortersFiveForces = ({
                       <td className="implications-cell">
                         {forceData.strategic_implications}
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Key Improvements Section */}
+      {parsedData.key_improvements && parsedData.key_improvements.length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('improvements')}>
+            <h3>Key Improvements</h3>
+            {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+
+          {expandedSections.improvements && (
+            <div className="table-container">
+              <table className="data-table">
+                
+                <tbody>
+                  {parsedData.key_improvements.map((improvement, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="force-name">
+                          <TrendingUp size={16} />
+                          <span>{improvement}</span>
+                        </div>
+                      </td> 
                     </tr>
                   ))}
                 </tbody>

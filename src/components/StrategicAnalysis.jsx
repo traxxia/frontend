@@ -130,7 +130,264 @@ const StrategicAnalysis = ({
       setHasGenerated(false);
     }
   }, [strategicData]);
- 
+  // Add this function to your StrategicAnalysis component
+  const renderCompetitiveLandscapeTable = (data) => {
+    const competitiveLandscape = data?.competitive_landscape;
+    if (!competitiveLandscape) return null;
+
+    const getThreatLevelColor = (level) => {
+      switch (level?.toLowerCase()) {
+        case 'high': return '#ef4444';
+        case 'medium': return '#f59e0b';
+        case 'low': return '#10b981';
+        default: return '#6b7280';
+      }
+    };
+
+    const getLikelihoodColor = (likelihood) => {
+      switch (likelihood?.toLowerCase()) {
+        case 'high': return '#ef4444';
+        case 'medium': return '#f59e0b';
+        case 'low': return '#10b981';
+        default: return '#6b7280';
+      }
+    };
+
+    return (
+      <section className="strategic-page-section">
+        <div className="section-headers" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderBottom: 'none',
+          marginBottom: '20px',
+          gap: '8px',
+          background: '#fff'
+        }}>
+          <Target size={24} style={{ color: 'blue' }} />
+          <h4>Competitive Landscape Analysis</h4>
+        </div>
+
+        {/* Direct Competitors */}
+        {competitiveLandscape.direct_competitors && competitiveLandscape.direct_competitors.length > 0 && (
+          <div style={{ marginBottom: '30px' }}>
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#1f2937'
+            }}>
+              <Users size={20} />
+              Direct Competitors
+            </h3>
+
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Market Share</th>
+                    <th>Strengths</th>
+                    <th>Weaknesses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competitiveLandscape.direct_competitors.map((competitor, index) => (
+                    <tr key={index}>
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {competitor.name}
+                        </div>
+                      </td>
+                      <td className="table-value text-center">
+                        <div style={{
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          display: 'inline-block'
+                        }}>
+                          {competitor.market_share}
+                        </div>
+                      </td>
+                      <td className="table-value">
+                        {competitor.strengths && competitor.strengths.length > 0 && (
+                          <ul className="table-list">
+                            {competitor.strengths.map((strength, idx) => (
+                              <li key={idx} style={{
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: '#059669'
+                              }}>
+                                <CheckCircle size={12} />
+                                {strength}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                      <td className="table-value">
+                        {competitor.weaknesses && competitor.weaknesses.length > 0 && (
+                          <ul className="table-list">
+                            {competitor.weaknesses.map((weakness, idx) => (
+                              <li key={idx} style={{
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: '#dc2626'
+                              }}>
+                                <Target size={12} />
+                                {weakness}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Indirect Competitors */}
+        {competitiveLandscape.indirect_competitors && competitiveLandscape.indirect_competitors.length > 0 && (
+          <div style={{ marginBottom: '30px' }}>
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#1f2937'
+            }}>
+              <Eye size={20} />
+              Indirect Competitors
+            </h3>
+
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Threat Level</th>
+                    <th>Competitive Advantage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competitiveLandscape.indirect_competitors.map((competitor, index) => (
+                    <tr key={index}>
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {competitor.name}
+                        </div>
+                      </td>
+                      <td className="table-value text-center">
+                        <div style={{
+                          backgroundColor: getThreatLevelColor(competitor.threat_level),
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          display: 'inline-block',
+                          textTransform: 'capitalize'
+                        }}>
+                          {competitor.threat_level}
+                        </div>
+                      </td>
+                      <td className="table-value">
+                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                          {competitor.competitive_advantage}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Potential Entrants */}
+        {competitiveLandscape.potential_entrants && competitiveLandscape.potential_entrants.length > 0 && (
+          <div>
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#1f2937'
+            }}>
+              <TrendingUp size={20} />
+              Potential Market Entrants
+            </h3>
+
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Entry Likelihood</th>
+                    <th>Market Barriers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competitiveLandscape.potential_entrants.map((entrant, index) => (
+                    <tr key={index}>
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {entrant.category}
+                        </div>
+                      </td>
+                      <td className="table-value text-center">
+                        <div style={{
+                          backgroundColor: getLikelihoodColor(entrant.likelihood),
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          display: 'inline-block',
+                          textTransform: 'capitalize'
+                        }}>
+                          {entrant.likelihood}
+                        </div>
+                      </td>
+                      <td className="table-value">
+                        <div style={{
+                          fontSize: '13px',
+                          color: '#374151',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Shield size={14} />
+                          {entrant.barriers}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+      </section>
+    );
+  };
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
     if (!pillars) return null;
@@ -384,18 +641,18 @@ const StrategicAnalysis = ({
         {/* Quarterly Milestones */}
         {goals.quarterly_milestones && goals.quarterly_milestones.length > 0 && (
           <div style={{ marginTop: '20px' }}>
-            <h3 style={{ 
-              margin: '0 0 15px 0', 
-              fontSize: '16px', 
-              fontWeight: '600', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px' 
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
               <Calendar size={20} />
               Quarterly Milestones
             </h3>
-            
+
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -434,10 +691,10 @@ const StrategicAnalysis = ({
                       </td>
                       <td className="table-value text-center">
                         <div style={{
-                          backgroundColor: milestone.status ? 
+                          backgroundColor: milestone.status ?
                             (milestone.status.toLowerCase() === 'completed' ? '#10b981' :
-                             milestone.status.toLowerCase() === 'in progress' ? '#f59e0b' : 
-                             milestone.status.toLowerCase() === 'pending' ? '#6b7280' : '#3b82f6') : '#3b82f6',
+                              milestone.status.toLowerCase() === 'in progress' ? '#f59e0b' :
+                                milestone.status.toLowerCase() === 'pending' ? '#6b7280' : '#3b82f6') : '#3b82f6',
                           color: 'white',
                           padding: '4px 8px',
                           borderRadius: '12px',
@@ -710,9 +967,9 @@ const StrategicAnalysis = ({
             marginBottom: '20px',
             border: '1px solid #bae6fd'
           }}>
-            <h3 style={{ 
-              margin: '0 0 15px 0', 
-              fontSize: '16px', 
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
@@ -721,7 +978,7 @@ const StrategicAnalysis = ({
               <BarChart3 size={20} />
               Dashboard Requirements
             </h3>
-            
+
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               {monitoring.dashboard_requirements.map((requirement, index) => (
                 <span key={index} style={{
@@ -746,9 +1003,9 @@ const StrategicAnalysis = ({
         {/* Review Cycles Table */}
         {monitoring.review_cycles && (
           <div style={{ marginBottom: '30px' }}>
-            <h3 style={{ 
-              margin: '0 0 15px 0', 
-              fontSize: '16px', 
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
@@ -786,9 +1043,9 @@ const StrategicAnalysis = ({
         {/* Feedback Loops Table */}
         {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
           <div>
-            <h3 style={{ 
-              margin: '0 0 15px 0', 
-              fontSize: '16px', 
+            <h3 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
@@ -824,6 +1081,7 @@ const StrategicAnalysis = ({
     );
   };
 
+
   const renderStrategicContent = () => {
     // Extract strategic_analysis from the response
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
@@ -837,6 +1095,7 @@ const StrategicAnalysis = ({
         {/* {renderRiskAssessmentTable(analysisData)}
         {renderSuccessBenchmarksTable(analysisData)} */}
         {renderImplementationRoadmapTable(analysisData)}
+        {renderCompetitiveLandscapeTable(analysisData)}
         {renderMonitoringDashboardTable(analysisData)}
       </div>
     );

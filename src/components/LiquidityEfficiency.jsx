@@ -3,7 +3,7 @@ import { Activity, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
-import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
+import FinancialEmptyState from './FinancialEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LiquidityEfficiency = ({
@@ -73,11 +73,14 @@ const LiquidityEfficiency = ({
       return true;
     }
     
-    const hasValidRatio = Object.entries(liquidityMetrics).some(([key, value]) => 
-      value !== null && 
-      value !== undefined &&
-      !isNaN(parseFloat(value))
-    );
+    const hasValidRatio = Object.entries(liquidityMetrics).some(([key, value]) => {
+      if (key.includes('_threshold') || key.includes('threshold')) {
+        return false;
+      }
+      return value !== null && 
+             value !== undefined &&
+             !isNaN(parseFloat(value));
+    });
     
     return !hasValidRatio;
   };
@@ -179,10 +182,14 @@ const LiquidityEfficiency = ({
   const formatRatio = (value, type) => {
     if (value === null || value === undefined) return null;
     
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    if (isNaN(numValue)) return null;
+    
     if (type === 'Cash Conversion Cycle') {
-      return `${value.toFixed(0)} days`;
+      return `${numValue.toFixed(0)} days`;
     }
-    return value.toFixed(2);
+    return numValue.toFixed(2);
   };
 
   const GaugeChart = ({ value, max, colorClass, title }) => {
@@ -194,7 +201,16 @@ const LiquidityEfficiency = ({
       );
     }
 
-    const percentage = Math.min((value / max) * 100, 100);
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) {
+      return (
+        <div className="gauge-chart gauge-chart--no-data">
+          No Data
+        </div>
+      );
+    }
+
+    const percentage = Math.min((numValue / max) * 100, 100);
     const circumference = 2 * Math.PI * 45;
     const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
 
@@ -216,7 +232,7 @@ const LiquidityEfficiency = ({
           />
         </svg>
         <div className={`gauge-chart__value gauge-chart__value--${colorClass}`}>
-          {title === 'Cash Conversion Cycle' ? `${value.toFixed(0)}d` : value.toFixed(1)}
+          {title === 'Cash Conversion Cycle' ? `${numValue.toFixed(0)}d` : numValue.toFixed(1)}
         </div>
       </div>
     );
@@ -243,6 +259,8 @@ const LiquidityEfficiency = ({
 
     if (liquidityMetrics) {
       const transformedMetrics = {};
+      const thresholds = {};
+      
       const keyMappings = {
         'current_ratio': 'Current Ratio',
         'quick_ratio': 'Quick Ratio',
@@ -253,14 +271,32 @@ const LiquidityEfficiency = ({
       };
 
       Object.entries(liquidityMetrics).forEach(([key, value]) => {
-        const displayKey = keyMappings[key] || key;
-        transformedMetrics[displayKey] = value;
+        if (key.includes('_threshold') || key.includes('threshold')) {
+          const baseKey = key.replace('_threshold', '').replace('threshold', '');
+          const displayKey = keyMappings[baseKey] || baseKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+          thresholds[displayKey] = value;
+        } else {
+          const displayKey = keyMappings[key] || key;
+          transformedMetrics[displayKey] = value;
+        }
       });
 
-      return transformedMetrics;
+      return { metrics: transformedMetrics, thresholds };
     }
 
-    return liquidityMetrics;
+    return { metrics: liquidityMetrics, thresholds: {} };
+  };
+
+  const getThresholdText = (type, threshold) => {
+    if (!threshold) return null;
+    
+    const numThreshold = typeof threshold === 'string' ? parseFloat(threshold) : threshold;
+    if (isNaN(numThreshold)) return null;
+    
+    if (type === 'Cash Conversion Cycle') {
+      return `Threshold: ${numThreshold.toFixed(0)} days`;
+    }
+    return `Threshold: ${numThreshold.toFixed(1)}`;
   };
 
   if (isRegenerating) {
@@ -315,7 +351,7 @@ const LiquidityEfficiency = ({
     );
   }
 
-  const liquidityMetrics = extractLiquidityMetrics(analysisData);
+  const { metrics: liquidityMetrics, thresholds } = extractLiquidityMetrics(analysisData);
 
   if (!liquidityMetrics || typeof liquidityMetrics !== 'object') {
     return (
@@ -368,6 +404,7 @@ const LiquidityEfficiency = ({
               const colorClass = getRatioColor(value, key);
               const maxValue = key === 'Cash Conversion Cycle' ? 120 : 3;
               const isNull = value === null || value === undefined;
+              const threshold = thresholds[key];
               
               return (
                 <div 
@@ -396,6 +433,12 @@ const LiquidityEfficiency = ({
                     ) : (
                       <div className="liquidity-efficiency__ratio-message">
                         Data not available in uploaded file
+                      </div>
+                    )}
+                    
+                    {threshold && (
+                      <div className="liquidity-efficiency__ratio-threshold profitability-threshold">
+                        {getThresholdText(key, threshold)}
                       </div>
                     )}
                   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight, BarChart3, Target, AlertTriangle, Activity, Clock, RefreshCw, Loader } from 'lucide-react';
+import { ChevronDown, ChevronRight, BarChart3, Target, AlertTriangle, Activity, Clock, RefreshCw, Loader, TrendingUp } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -18,7 +18,8 @@ const PestelAnalysis = ({
     executive: true,
     factors: true,
     actions: true,
-    monitoring: true
+    monitoring: true,
+    improvements: true
   });
 
   const isMounted = useRef(false);
@@ -185,7 +186,36 @@ const PestelAnalysis = ({
             </div>
           )}
         </div>
-      )} 
+      )}
+
+      {/* Key Improvements Section */}
+      {analysis.key_improvements && analysis.key_improvements.length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('improvements')}>
+            <h3>Key Improvements</h3>
+            {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+
+          {expandedSections.improvements && (
+            <div className="table-container">
+              <table className="data-table">
+                <tbody>
+                  {analysis.key_improvements.map((improvement, index) => (
+                    <tr key={index}>
+                      <td>
+                        <div className="force-name">
+                          <TrendingUp size={16} />
+                          <span>{improvement}</span>
+                        </div>
+                      </td> 
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
  
     </div>
   );

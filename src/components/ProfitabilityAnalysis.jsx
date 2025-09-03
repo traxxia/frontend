@@ -3,7 +3,7 @@ import { TrendingUp, Loader, Info, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
-import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
+import FinancialEmptyState from './FinancialEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ProfitabilityAnalysis = ({
@@ -54,9 +54,7 @@ const ProfitabilityAnalysis = ({
     }
   };
 
-  // UPDATED: Handle the new backend response structure
   const isProfitabilityDataIncomplete = (data) => { 
-    
     if (!data || !data.profitability) { 
       return true;
     }
@@ -68,6 +66,9 @@ const ProfitabilityAnalysis = ({
     }
      
     const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => {
+      if (key.includes('_threshold') || key.includes('threshold')) {
+        return false;
+      }
       const isValid = value !== null && 
         value !== undefined &&
         value !== '' &&
@@ -94,7 +95,6 @@ const ProfitabilityAnalysis = ({
   }; 
   
   useEffect(() => { 
-    
     if (profitabilityData && profitabilityData !== analysisData) { 
       setAnalysisData(profitabilityData);
       setError(null);
@@ -105,7 +105,6 @@ const ProfitabilityAnalysis = ({
     }
   }, [profitabilityData, analysisData, onDataGenerated]);
 
-  // Initial setup
   useEffect(() => {
     if (hasInitialized.current) return;
 
@@ -143,7 +142,6 @@ const ProfitabilityAnalysis = ({
     }
   };
 
-  // Handle percentage formatting with proper null checks
   const formatPercentage = (value) => {
     if (value === null || value === undefined || value === '') return null;
     
@@ -151,17 +149,16 @@ const ProfitabilityAnalysis = ({
       if (value.includes('%')) return value;
       const numValue = parseFloat(value);
       if (isNaN(numValue)) return null;
-      return `${(numValue * 100).toFixed(2)}%`;
+      return `${(numValue).toFixed(3)}`;
     }
     
     if (typeof value === 'number') {
-      return `${(value * 100).toFixed(2)}%`;
+      return `${(value).toFixed(3)}`;
     }
     
     return null;
   };
 
-  // UPDATED: Convert snake_case to display names
   const getDisplayName = (key) => {
     const displayNames = {
       'gross_margin': 'Gross Margin',
@@ -172,6 +169,43 @@ const ProfitabilityAnalysis = ({
     return displayNames[key] || key.replace('_', ' ').toUpperCase();
   };
 
+  const extractProfitabilityMetrics = (data) => {
+    if (!data || !data.profitability) {
+      return { metrics: {}, thresholds: {} };
+    }
+
+    const profitabilityData = data.profitability;
+    const metrics = {};
+    const thresholds = {};
+
+    Object.entries(profitabilityData).forEach(([key, value]) => {
+      if (key.includes('_threshold') || key.includes('threshold')) {
+        const baseKey = key.replace('_threshold', '').replace('threshold', '');
+        const displayKey = getDisplayName(baseKey);
+        thresholds[displayKey] = value;
+      } else {
+        const displayKey = getDisplayName(key);
+        metrics[displayKey] = value;
+      }
+    });
+
+    return { metrics, thresholds };
+  };
+
+  const getThresholdText = (threshold) => {
+    if (!threshold) return null;
+    
+    if (typeof threshold === 'string') {
+      return `Threshold:   ${threshold}`;
+    }
+    
+    const numThreshold = typeof threshold === 'number' ? threshold : parseFloat(threshold);
+    if (isNaN(numThreshold)) return null;
+    
+    return `Threshold:   ${(numThreshold).toFixed(1)}`;
+  };
+
+  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -183,24 +217,25 @@ const ProfitabilityAnalysis = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
+  // REMOVED THE ERROR STATE RETURN - now error will be shown within the normal component structure
+  
+  const renderContent = () => {
+    // Show error message within the normal structure if there's an error
+    if (error) {
+      return (
+        <div className="profitability-warning">
+          <AlertCircle size={20} color="#f59e0b" />
+          <div>
+            <h4 className="profitability-warning-title">Analysis Error</h4>
+            <p className="profitability-warning-text">{error}</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!analysisData || isProfitabilityDataIncomplete(analysisData)) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    // Show empty state if no data
+    if (!analysisData || isProfitabilityDataIncomplete(analysisData)) {
+      return (
         <FinancialEmptyState
           analysisType="profitability"
           analysisDisplayName="Profitability Analysis"
@@ -220,16 +255,13 @@ const ProfitabilityAnalysis = ({
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No profitability analysis results found. The uploaded financial document doesn't contain the required profitability metrics or proper values for analysis."
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  // UPDATED: Extract data from new backend structure
-  const profitabilityMetrics = analysisData.profitability;
-  
-  if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') { 
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    const { metrics, thresholds } = extractProfitabilityMetrics(analysisData);
+    
+    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) { 
+      return (
         <FinancialEmptyState
           analysisType="profitability"
           analysisDisplayName="Profitability Analysis"
@@ -247,22 +279,15 @@ const ProfitabilityAnalysis = ({
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="profitability-analysis" 
-         data-analysis-type="profitability"
-         data-analysis-name="Profitability Analysis"
-         data-analysis-order="1">
-
-      {/* Header */}
+    // Show normal analysis content
+    return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll"> 
 
-          {/* Check if all values are null and show warning */}
-          {Object.values(profitabilityMetrics).every(value => value === null) && (
+          {Object.values(metrics).every(value => value === null) && (
             <div className="profitability-warning">
               <AlertCircle size={20} color="#f59e0b" />
               <div>
@@ -276,7 +301,6 @@ const ProfitabilityAnalysis = ({
             </div>
           )}
 
-          {/* Profitability Metrics Table */}
           <table className="data-table">
             <thead>
               <tr>
@@ -285,15 +309,24 @@ const ProfitabilityAnalysis = ({
               </tr>
             </thead>
             <tbody>
-              {Object.entries(profitabilityMetrics).map(([key, value]) => {
+              {Object.entries(metrics).map(([key, value]) => {
                 const formattedValue = formatPercentage(value);
                 const isNull = value === null || value === undefined || value === '';
-                const displayName = getDisplayName(key);
+                const threshold = thresholds[key];
                 
                 return (
                   <tr key={key}>
-                    <td><strong>{displayName}</strong></td>
-                    <td>{isNull ? 'No Data' : formattedValue}</td>
+                    <td><strong>{key}</strong></td>
+                    <td>
+                       <div className="profitability-metric-value">
+                        {isNull ? 'No Data' : formattedValue}
+                        {threshold && (
+                          <div className="profitability-threshold">
+                            {getThresholdText(threshold)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -302,6 +335,17 @@ const ProfitabilityAnalysis = ({
  
         </div>
       </div>
+    );
+  };
+
+  // Main component structure - now always shows the same structure with regenerate button
+  return (
+    <div className="profitability-analysis" 
+         data-analysis-type="profitability"
+         data-analysis-name="Profitability Analysis"
+         data-analysis-order="1">
+ 
+      {renderContent()}
     </div>
   );
 };

@@ -154,7 +154,7 @@ const FullSWOTPortfolio = ({
             <div className="porters-container">
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
+                    <h5>Analysis Error</h5>
                     <p>{error}</p>
                     <button onClick={handleRegenerate} className="retry-button">
                         Retry Analysis
@@ -207,10 +207,10 @@ const FullSWOTPortfolio = ({
             {portfolio.strengths && portfolio.strengths.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('strengths')}>
-                        <h3>
+                        <h5>
                             <TrendingUp size={20} />
                             Strengths 
-                        </h3>
+                        </h5>
                         {expandedSections.strengths ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
 
@@ -281,10 +281,10 @@ const FullSWOTPortfolio = ({
             {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('weaknesses')}>
-                        <h3>
+                        <h5>
                             <TrendingDown size={20} />
                             Weaknesses 
-                        </h3>
+                        </h5>
                         {expandedSections.weaknesses ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
 
@@ -335,10 +335,10 @@ const FullSWOTPortfolio = ({
             {portfolio.opportunities && portfolio.opportunities.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('opportunities')}>
-                        <h3>
+                        <h5>
                             <Target size={20} />
                             Opportunities 
-                        </h3>
+                        </h5>
                         {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
 
@@ -404,10 +404,10 @@ const FullSWOTPortfolio = ({
             {portfolio.threats && portfolio.threats.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('threats')}>
-                        <h3>
+                        <h5>
                             <AlertTriangle size={20} />
                             Threats 
-                        </h3>
+                        </h5>
                         {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
 
@@ -466,10 +466,10 @@ const FullSWOTPortfolio = ({
             {portfolio.strategicOptions && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('strategicOptions')}>
-                        <h3>
+                        <h5>
                             <Lightbulb size={20} />
-                            Strategic Options
-                        </h3>
+                            Cross Dimensional Action Items
+                        </h5>
                         {expandedSections.strategicOptions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
 

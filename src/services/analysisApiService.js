@@ -81,7 +81,7 @@ export const API_ENDPOINTS = {
   leverageRisk: 'excel-analysis'
 };
 
-const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis', 'strategic-analysis'];
+const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis'];
 
 export class AnalysisApiService {
   constructor(ML_API_BASE_URL, API_BASE_URL, getAuthToken, setApiLoading = null) {
@@ -948,7 +948,7 @@ export class AnalysisApiService {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
       const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
 
-      const profitabilityData = { profitability: result.Profitability };
+      const profitabilityData = { profitability: result.profitability };
       await this.saveAnalysisToBackend(profitabilityData, 'profitabilityAnalysis', selectedBusinessId);
       return profitabilityData;
     } catch (error) {
@@ -962,7 +962,7 @@ export class AnalysisApiService {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
       const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
 
-      const growthData = { growthTracker: result['Growth Tracker'] };
+      const growthData = { growth_trends: result.growth_trends };
       await this.saveAnalysisToBackend(growthData, 'growthTracker', selectedBusinessId);
       return growthData;
     } catch (error) {
@@ -976,7 +976,7 @@ export class AnalysisApiService {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
       const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
 
-      const liquidityData = { liquidityEfficiency: result['Liquidity & Efficiency'] };
+      const liquidityData = { liquidity: result.liquidity };
       await this.saveAnalysisToBackend(liquidityData, 'liquidityEfficiency', selectedBusinessId);
       return liquidityData;
     } catch (error) {
@@ -990,7 +990,7 @@ export class AnalysisApiService {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
       const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
 
-      const investmentData = { investmentPerformance: result['Investment Performance'] };
+      const investmentData = { investment: result.investment};
       await this.saveAnalysisToBackend(investmentData, 'investmentPerformance', selectedBusinessId);
       return investmentData;
     } catch (error) {
@@ -1004,7 +1004,7 @@ export class AnalysisApiService {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
       const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
 
-      const leverageData = { leverageRisk: result['Leverage & Risk'] };
+      const leverageData = { leverage: result.leverage};
       await this.saveAnalysisToBackend(leverageData, 'leverageRisk', selectedBusinessId);
       return leverageData;
     } catch (error) {

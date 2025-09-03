@@ -49,7 +49,7 @@ const AnalysisContentManager = ({
   growthTrackerData,
   liquidityEfficiencyData,
   investmentPerformanceData,
-  leverageRiskData, 
+  leverageRiskData,
   setSwotAnalysisResult,
   setPurchaseCriteriaData,
   setLoyaltyNPSData,
@@ -242,7 +242,7 @@ const AnalysisContentManager = ({
               <RegenerateButton
                 onRegenerate={onRegenerate}
                 isRegenerating={isRegenerating || isLoading}
-                canRegenerate={actualStatus === 'completed' && hasData && onRegenerate}
+                canRegenerate={!!onRegenerate} // CHANGED: Remove hasData requirement
                 sectionName={title}
                 size="small"
                 hideRegenerateButtons={hideRegenerateButtons}
