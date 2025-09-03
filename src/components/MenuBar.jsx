@@ -12,8 +12,6 @@ const MenuBar = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userName, setUserName] = useState('User');
   const [userRole, setUserRole] = useState('');
-  const [companyLogo, setCompanyLogo] = useState('');
-  const [companyName, setCompanyName] = useState('');
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   const { t } = useTranslation();
@@ -22,16 +20,13 @@ const MenuBar = () => {
     const isAdminStored = sessionStorage.getItem('isAdmin');
     const userNameStored = sessionStorage.getItem('userName');
     const userRoleStored = sessionStorage.getItem('userRole');
-    const companyLogoStored = sessionStorage.getItem('companyLogo');
-    const companyNameStored = sessionStorage.getItem('companyName');
 
     setIsAdmin(isAdminStored === 'true');
     setUserName(userNameStored || 'User');
     setUserRole(userRoleStored || '');
-    setCompanyLogo(companyLogoStored || '');
-    setCompanyName(companyNameStored || '');
     setIsSuperAdmin(userRoleStored === 'super_admin');
   }, []);
+  
   const logout = async () => {
     try {
       const token = sessionStorage.getItem('token');
@@ -52,6 +47,7 @@ const MenuBar = () => {
       navigate('/login');
     }
   };
+  
   const handleLogout = () => {
     logout();
   };
@@ -72,7 +68,7 @@ const MenuBar = () => {
 
           {/* Left side - Company Logo */}
           <div className="navbar-left">
-            {companyLogo && (
+            {/* {companyLogo && (
               <div
                 className="company-logo"
                 onClick={() => navigate('/dashboard')}
@@ -92,7 +88,7 @@ const MenuBar = () => {
                   }}
                 />
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Center - Traxxia Logo */}
@@ -128,11 +124,11 @@ const MenuBar = () => {
                       Role: {userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </div>
                   )}
-                  {companyName && (
+                  {/* {companyName && (
                     <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                       Company: {companyName}
                     </div>
-                  )}
+                  )} */}
                 </Dropdown.Header>
                 <Dropdown.Divider />
 
