@@ -93,6 +93,59 @@ const ProfitabilityAnalysis = ({
       setError(null);
     }
   }; 
+
+  // Helper function to get traffic light color based on value vs threshold
+  const getTrafficLightColor = (value, threshold, isHigherBetter = true) => {
+    if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
+      return '#6b7280'; // Gray for NA
+    }
+    
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
+    const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
+    
+    if (isNaN(numValue) || isNaN(numThreshold)) {
+      return '#6b7280'; // Gray for invalid values
+    }
+    
+    if (isHigherBetter) {
+      if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
+      if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
+      return '#ef4444'; // Red - below threshold
+    } else {
+      if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
+      if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
+      return '#ef4444'; // Red - above threshold
+    }
+  };
+
+  // Helper function to render traffic light indicator with text
+  const TrafficLightIndicator = ({ value, threshold, isHigherBetter = true, displayValue }) => {
+    const color = getTrafficLightColor(value, threshold, isHigherBetter);
+    
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <div style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          border: '1px solid rgba(0,0,0,0.1)',
+          flexShrink: 0
+        }} />
+        <span style={{
+          color: color,
+          fontWeight: '500',
+          whiteSpace: 'nowrap'
+        }}>
+          {displayValue}
+        </span>
+      </div>
+    );
+  };
   
   useEffect(() => { 
     if (profitabilityData && profitabilityData !== analysisData) { 
@@ -149,14 +202,31 @@ const ProfitabilityAnalysis = ({
       if (value.includes('%')) return value;
       const numValue = parseFloat(value);
       if (isNaN(numValue)) return null;
-      return `${(numValue).toFixed(3)}`;
+      return `${(numValue).toFixed(3)}%`;
     }
     
     if (typeof value === 'number') {
-      return `${(value).toFixed(3)}`;
+      return `${(value).toFixed(3)}%`;
     }
     
     return null;
+  };
+
+  const formatThreshold = (threshold) => {
+    if (!threshold || threshold === 'NA') return 'NA';
+    
+    if (typeof threshold === 'string') {
+      if (threshold.includes('%')) return threshold;
+      const numValue = parseFloat(threshold);
+      if (isNaN(numValue)) return 'NA';
+      return `${(numValue).toFixed(1)}%`;
+    }
+    
+    if (typeof threshold === 'number') {
+      return `${(threshold).toFixed(1)}%`;
+    }
+    
+    return 'NA';
   };
 
   const getDisplayName = (key) => {
@@ -164,6 +234,7 @@ const ProfitabilityAnalysis = ({
       'gross_margin': 'Gross Margin',
       'operating_margin': 'Operating Margin', 
       'ebitda_margin': 'EBITDA Margin',
+      'ebitda': 'EBITDA Margin', // Handle ebitda_threshold -> ebitda -> EBITDA Margin
       'net_margin': 'Net Margin'
     };
     return displayNames[key] || key.replace('_', ' ').toUpperCase();
@@ -190,19 +261,6 @@ const ProfitabilityAnalysis = ({
     });
 
     return { metrics, thresholds };
-  };
-
-  const getThresholdText = (threshold) => {
-    if (!threshold) return null;
-    
-    if (typeof threshold === 'string') {
-      return `Threshold:   ${threshold}`;
-    }
-    
-    const numThreshold = typeof threshold === 'number' ? threshold : parseFloat(threshold);
-    if (isNaN(numThreshold)) return null;
-    
-    return `Threshold:   ${(numThreshold).toFixed(1)}`;
   };
 
   // Show loading state
@@ -306,6 +364,7 @@ const ProfitabilityAnalysis = ({
               <tr>
                 <th>Metric</th>
                 <th>Value</th>
+                <th>Industry Average</th>
               </tr>
             </thead>
             <tbody>
@@ -313,19 +372,25 @@ const ProfitabilityAnalysis = ({
                 const formattedValue = formatPercentage(value);
                 const isNull = value === null || value === undefined || value === '';
                 const threshold = thresholds[key];
+                const formattedThreshold = formatThreshold(threshold);
                 
                 return (
                   <tr key={key}>
                     <td><strong>{key}</strong></td>
                     <td>
-                       <div className="profitability-metric-value">
-                        {isNull ? 'No Data' : formattedValue}
-                        {threshold && (
-                          <div className="profitability-threshold">
-                            {getThresholdText(threshold)}
-                          </div>
-                        )}
-                      </div>
+                      {isNull ? (
+                        <span style={{ color: '#6b7280' }}>No Data</span>
+                      ) : (
+                        <TrafficLightIndicator 
+                          value={value} 
+                          threshold={threshold} 
+                          isHigherBetter={true}
+                          displayValue={formattedValue}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      {formattedThreshold}
                     </td>
                   </tr>
                 );
@@ -337,8 +402,7 @@ const ProfitabilityAnalysis = ({
       </div>
     );
   };
-
-  // Main component structure - now always shows the same structure with regenerate button
+ 
   return (
     <div className="profitability-analysis" 
          data-analysis-type="profitability"

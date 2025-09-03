@@ -29,10 +29,10 @@ const CompetitiveAdvantageMatrix = ({
     };
 
     const handleMissingQuestionsCheck = async () => {
-        const analysisConfig = ANALYSIS_TYPES.competitiveAdvantage; 
-        
+        const analysisConfig = ANALYSIS_TYPES.competitiveAdvantage;
+
         await checkMissingQuestionsAndRedirect(
-            'competitiveAdvantage', 
+            'competitiveAdvantage',
             selectedBusinessId,
             handleRedirectToBrief,
             {
@@ -45,7 +45,7 @@ const CompetitiveAdvantageMatrix = ({
     // Handle regenerate - this is the key function
     const handleRegenerate = async () => {
         console.log('CompetitiveAdvantage handleRegenerate called', { onRegenerate: !!onRegenerate });
-        
+
         if (onRegenerate) {
             try {
                 await onRegenerate();
@@ -62,20 +62,20 @@ const CompetitiveAdvantageMatrix = ({
     // Check if the competitive advantage data is empty/incomplete
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
-        
+
         // Check if competitiveAdvantage is empty or null
         if (!data.competitiveAdvantage) return true;
-        
+
         const advantage = data.competitiveAdvantage;
-        
+
         // Check if key sections are missing
         const hasDifferentiators = advantage.differentiators && advantage.differentiators.length > 0;
         const hasCompetitivePosition = advantage.competitivePosition && advantage.competitivePosition.overallScore;
         const hasCustomerChoiceReasons = advantage.customerChoiceReasons && advantage.customerChoiceReasons.length > 0;
-        
+
         // At least 2 out of 3 key sections should have data for meaningful analysis
         const sectionsWithData = [hasDifferentiators, hasCompetitivePosition, hasCustomerChoiceReasons].filter(Boolean).length;
-        
+
         return sectionsWithData < 2;
     };
 
@@ -90,7 +90,7 @@ const CompetitiveAdvantageMatrix = ({
     // Initialize component - only handle data display, no generation
     useEffect(() => {
         if (hasInitialized.current) return;
-        
+
         hasInitialized.current = true;
 
         if (competitiveAdvantageData) {
@@ -213,8 +213,8 @@ const CompetitiveAdvantageMatrix = ({
                                         cy={y}
                                         r={8 + (diff.sustainability || 5) / 2}
                                         className={`data-point ${diff.uniqueness >= 7 && diff.customerValue >= 7 ? 'sweet-spot' :
-                                                diff.uniqueness >= 7 ? 'niche' :
-                                                    diff.customerValue >= 7 ? 'high-value' : 'improve'
+                                            diff.uniqueness >= 7 ? 'niche' :
+                                                diff.customerValue >= 7 ? 'high-value' : 'improve'
                                             }`}
                                     />
                                     <text
@@ -398,7 +398,7 @@ const CompetitiveAdvantageMatrix = ({
     // Check if data is incomplete and show missing questions checker
     if (!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) {
         return (
-            <div className="competitive-advantage-container"> 
+            <div className="competitive-advantage-container">
                 <AnalysisEmptyState
                     analysisType="competitiveAdvantage"
                     analysisDisplayName="Competitive Advantage Matrix"
@@ -410,7 +410,7 @@ const CompetitiveAdvantageMatrix = ({
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
                     customMessage="Complete essential phase questions to unlock competitive advantage analysis."
-                /> 
+                />
             </div>
         );
     }
@@ -418,10 +418,10 @@ const CompetitiveAdvantageMatrix = ({
     const advantage = data.competitiveAdvantage;
 
     return (
-        <div className="competitive-advantage-container" 
-             data-analysis-type="competitiveAdvantage"
-             data-analysis-name="Competitive Advantage Matrix"
-             data-analysis-order="9"> 
+        <div className="competitive-advantage-container"
+            data-analysis-type="competitiveAdvantage"
+            data-analysis-name="Competitive Advantage Matrix"
+            data-analysis-order="9">
 
             {/* Navigation Tabs */}
             <div className="competitive-advantage-tabs">
@@ -448,7 +448,7 @@ const CompetitiveAdvantageMatrix = ({
             {/* Content */}
             <div className="competitive-advantage-content">
                 {activeTab === 'overview' && (
-                    <div className="overview-content">
+                    <div className="overview-content"> 
                         {/* Market Position Section */}
                         {advantage.competitivePosition && (
                             <div className="section-container">
@@ -464,39 +464,38 @@ const CompetitiveAdvantageMatrix = ({
                                                 <tr>
                                                     <th>Metric</th>
                                                     <th>Value</th>
-                                                    <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr>
                                                     <td><strong>Overall Score</strong></td>
-                                                    <td>{advantage.competitivePosition.overallScore}/10</td>
-                                                    <td>
-                                                        <span className={`status-badge ${getIntensityColor(advantage.competitivePosition.overallScore)}`}>
-                                                            {advantage.competitivePosition.overallScore >= 8 ? 'Strong' :
-                                                                advantage.competitivePosition.overallScore >= 6 ? 'Moderate' : 'Weak'}
-                                                        </span>
-                                                    </td>
+                                                    <td>{advantage.competitivePosition.overallScore}</td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>Market Position</strong></td>
                                                     <td>{advantage.competitivePosition.marketPosition}</td>
-                                                    <td>
-                                                        <span className={`status-badge ${advantage.competitivePosition.marketPosition?.toLowerCase()}`}>
-                                                            {advantage.competitivePosition.marketPosition}
-                                                        </span>
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>Sustainable Advantages</strong></td>
                                                     <td>{advantage.competitivePosition.sustainableAdvantages}</td>
-                                                    <td>-</td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>Vulnerable Advantages</strong></td>
                                                     <td>{advantage.competitivePosition.vulnerableAdvantages}</td>
-                                                    <td>-</td>
                                                 </tr>
+                                                {/* Add Key Improvements row */}
+                                                {advantage.competitivePosition.key_improvements && Array.isArray(advantage.competitivePosition.key_improvements) && advantage.competitivePosition.key_improvements.length > 0 && (
+                                                    <tr>
+                                                        <td><strong>Key Improvements</strong></td>
+                                                        <td>
+                                                            <ul className="list-items">
+                                                                {advantage.competitivePosition.key_improvements.map((improvement, idx) => (
+                                                                    <li key={idx}>{improvement}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -520,7 +519,6 @@ const CompetitiveAdvantageMatrix = ({
                                                     <th>Reason</th>
                                                     <th>Frequency</th>
                                                     <th>Linked Differentiator</th>
-                                                    <th>Impact</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -530,7 +528,7 @@ const CompetitiveAdvantageMatrix = ({
                                                         <tr key={index}>
                                                             <td><strong>{reason.reason}</strong></td>
                                                             <td>
-                                                                <span className="frequency-badge">{reason.frequency || 0}%</span>
+                                                                <span className="frequency-badge">{reason.frequency || 0}</span>
                                                             </td>
                                                             <td>
                                                                 {reason.linkedDifferentiator && (
@@ -538,14 +536,6 @@ const CompetitiveAdvantageMatrix = ({
                                                                         {reason.linkedDifferentiator}
                                                                     </span>
                                                                 )}
-                                                            </td>
-                                                            <td>
-                                                                <span className={`status-badge ${(reason.frequency || 0) >= 70 ? 'high-intensity' :
-                                                                        (reason.frequency || 0) >= 40 ? 'medium-intensity' : 'low-intensity'
-                                                                    }`}>
-                                                                    {(reason.frequency || 0) >= 70 ? 'High' :
-                                                                        (reason.frequency || 0) >= 40 ? 'Medium' : 'Low'}
-                                                                </span>
                                                             </td>
                                                         </tr>
                                                     ))}

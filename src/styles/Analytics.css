@@ -7660,7 +7660,7 @@
   line-height: 1.5;
 }
 img, svg{
-  margin-top: -4px;
+  margin-top: 3px;
   margin-right: 5px;
 }
 .data-table tbody tr:hover {

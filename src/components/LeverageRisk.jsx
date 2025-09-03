@@ -3,7 +3,7 @@ import { AlertTriangle, Loader, Shield, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
-import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
+import FinancialEmptyState from './FinancialEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LeverageRisk = ({
@@ -51,40 +51,28 @@ const LeverageRisk = ({
   };
 
   const isLeverageDataIncomplete = (data) => {
-    if (!data) return true;
+    if (!data || !data.leverage) {
+      return true;
+    }
     
-    // Handle different data structures from API
-    let leverageMetrics = null;
-    
-    // Check if data has "leverage" key (new API structure)
-    if (data.leverage) {
-      leverageMetrics = data.leverage;
-    }
-    // Check if data has "Leverage & Risk" key (legacy structure)
-    else if (data['Leverage & Risk']) {
-      leverageMetrics = data['Leverage & Risk'];
-    }
-    // Check if data has nested leverageRisk key (processed)
-    else if (data.leverageRisk) {
-      leverageMetrics = data.leverageRisk;
-    }
-    // If data is directly the metrics object
-    else if (data && typeof data === 'object') {
-      leverageMetrics = data;
-    }
+    const leverageMetrics = data.leverage;
     
     if (!leverageMetrics || typeof leverageMetrics !== 'object') {
       return true;
     }
-    
-    // Check if at least one ratio has non-null value
-    const hasValidRatio = Object.entries(leverageMetrics).some(([key, value]) => 
-      value !== null && 
-      value !== undefined &&
-      !isNaN(parseFloat(value))
-    );
-    
-    return !hasValidRatio;
+     
+    const hasValidMetric = Object.entries(leverageMetrics).some(([key, value]) => {
+      if (key.includes('_threshold') || key.includes('threshold')) {
+        return false;
+      }
+      const isValid = value !== null && 
+        value !== undefined &&
+        value !== '' &&
+        !isNaN(parseFloat(value)); 
+      return isValid;
+    });
+     
+    return !hasValidMetric;
   };
 
   const handleRegenerate = async () => {
@@ -100,6 +88,61 @@ const LeverageRisk = ({
       setAnalysisData(null);
       setError(null);
     }
+  };
+
+  // Helper function to get traffic light color based on value vs threshold
+  const getTrafficLightColor = (value, threshold, metricType) => {
+    if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
+      return '#6b7280'; // Gray for NA
+    }
+    
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
+    const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
+    
+    if (isNaN(numValue) || isNaN(numThreshold)) {
+      return '#6b7280'; // Gray for invalid values
+    }
+    
+    // Interest Coverage - higher is better
+    if (metricType === 'Interest Coverage') {
+      if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
+      if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
+      return '#ef4444'; // Red - below threshold
+    } else {
+      // Debt-to-Equity - lower is better
+      if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
+      if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
+      return '#ef4444'; // Red - above threshold
+    }
+  };
+
+  // Helper function to render traffic light indicator with text
+  const TrafficLightIndicator = ({ value, threshold, metricType, displayValue }) => {
+    const color = getTrafficLightColor(value, threshold, metricType);
+    
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <div style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          border: '1px solid rgba(0,0,0,0.1)',
+          flexShrink: 0
+        }} />
+        <span style={{
+          color: color,
+          fontWeight: '500',
+          whiteSpace: 'nowrap'
+        }}>
+          {displayValue}
+        </span>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -150,67 +193,64 @@ const LeverageRisk = ({
     }
   };
 
-  // Dynamic field mapping for different API response formats
-  const getFieldDisplayName = (fieldKey) => {
-    const fieldMapping = {
+  const formatRatio = (value, type) => {
+    if (value === null || value === undefined || value === '') return null;
+    
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    if (isNaN(numValue)) return null;
+    
+    return numValue.toFixed(3);
+  };
+
+  const formatThreshold = (threshold) => {
+    if (!threshold || threshold === 'NA') return 'NA';
+    
+    if (typeof threshold === 'string') {
+      const numValue = parseFloat(threshold);
+      if (isNaN(numValue)) return 'NA';
+      return numValue.toFixed(1);
+    }
+    
+    if (typeof threshold === 'number') {
+      return threshold.toFixed(1);
+    }
+    
+    return 'NA';
+  };
+
+  const getDisplayName = (key) => {
+    const displayNames = {
       'debt_to_equity': 'Debt-to-Equity',
-      'interest_coverage': 'Interest Coverage',
-      'Debt-to-Equity': 'Debt-to-Equity',
-      'Interest Coverage': 'Interest Coverage'
+      'interest_coverage': 'Interest Coverage'
     };
-    return fieldMapping[fieldKey] || fieldKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return displayNames[key] || key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const getRiskThresholds = (fieldName) => {
-    const thresholds = {
-      'Debt-to-Equity': { 
-        low: 0.3,    // Green - Low risk
-        medium: 1.0  // Yellow - Medium risk, above is Red - High risk
-      },
-      'Interest Coverage': { 
-        low: 5.0,    // Green - Low risk (higher is better)
-        medium: 2.5  // Yellow - Medium risk, below is Red - High risk
+  const extractLeverageMetrics = (data) => {
+    if (!data || !data.leverage) {
+      return { metrics: {}, thresholds: {} };
+    }
+
+    const leverageData = data.leverage;
+    const metrics = {};
+    const thresholds = {};
+
+    Object.entries(leverageData).forEach(([key, value]) => {
+      if (key.includes('_threshold') || key.includes('threshold')) {
+        const baseKey = key.replace('_threshold', '').replace('threshold', '');
+        const displayKey = getDisplayName(baseKey);
+        thresholds[displayKey] = value;
+      } else {
+        const displayKey = getDisplayName(key);
+        metrics[displayKey] = value;
       }
-    };
-    return thresholds[fieldName];
-  };
-  const getRiskColor = (value, fieldName) => {
-    if (value === null || value === undefined) return '#e5e7eb';
-    
-    const thresholds = getRiskThresholds(fieldName);
-    if (!thresholds) return '#6b7280';
+    });
 
-    if (fieldName === 'Interest Coverage') {
-      // For Interest Coverage, higher values are better (less risky)
-      if (value >= thresholds.low) return '#10b981';      // Green
-      if (value >= thresholds.medium) return '#f59e0b';   // Yellow
-      return '#ef4444';                               // Red
-    } else {
-      // For Debt-to-Equity, lower values are better (less risky)
-      if (value <= thresholds.low) return '#10b981';      // Green
-      if (value <= thresholds.medium) return '#f59e0b';   // Yellow
-      return '#ef4444';                               // Red
-    }
+    return { metrics, thresholds };
   };
 
-  const getRiskLevel = (value, fieldName) => {
-    if (value === null || value === undefined) return 'No Data';
-    
-    const color = getRiskColor(value, fieldName);
-    if (color === '#10b981') return 'Low Risk';
-    if (color === '#f59e0b') return 'Medium Risk';
-    return 'High Risk';
-  };
-
-  const formatRatio = (value, fieldName) => {
-    if (value === null || value === undefined) return null;
-    
-    if (fieldName === 'Interest Coverage') {
-      return `${value.toFixed(3)}`;
-    }
-    return value.toFixed(3);
-  };  
-
+  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -222,24 +262,23 @@ const LeverageRisk = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
+  const renderContent = () => {
+    // Show error message within the normal structure if there's an error
+    if (error) {
+      return (
+        <div className="leverage-risk__warning">
+          <AlertCircle size={20} color="#f59e0b" />
+          <div>
+            <h4 className="leverage-risk__warning-title">Analysis Error</h4>
+            <p className="leverage-risk__warning-text">{error}</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!analysisData || isLeverageDataIncomplete(analysisData)) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    // Show empty state if no data
+    if (!analysisData || isLeverageDataIncomplete(analysisData)) {
+      return (
         <FinancialEmptyState
           analysisType="leverageRisk"
           analysisDisplayName="Leverage & Risk Analysis"
@@ -259,28 +298,13 @@ const LeverageRisk = ({
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No leverage & risk analysis results found. The uploaded financial document doesn't contain the required leverage ratios (debt-to-equity, interest coverage) or proper values for analysis."
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  // Extract leverage data with proper structure handling
-  let leverageMetrics = null;
-  
-  // Handle different data structures from API
-  if (analysisData.leverage) {
-    leverageMetrics = analysisData.leverage;
-  } else if (analysisData['Leverage & Risk']) {
-    leverageMetrics = analysisData['Leverage & Risk'];
-  } else if (analysisData.leverageRisk) {
-    leverageMetrics = analysisData.leverageRisk;
-  } else {
-    leverageMetrics = analysisData;
-  }
+    const { metrics, thresholds } = extractLeverageMetrics(analysisData);
 
-  // If still no valid data, show empty state
-  if (!leverageMetrics || typeof leverageMetrics !== 'object') {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
+      return (
         <FinancialEmptyState
           analysisType="leverageRisk"
           analysisDisplayName="Leverage & Risk Analysis"
@@ -298,71 +322,82 @@ const LeverageRisk = ({
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  const allValuesNull = Object.values(leverageMetrics).every(value => value === null);
+    const allMetricsNull = Object.values(metrics).every(value => value === null);
 
-  return (
-    <div 
-      className="channel-heatmap channel-heatmap-container" 
-      data-analysis-type="leverage-risk"
-      data-analysis-name="Leverage & Risk"
-      data-analysis-order="5"
-    >
+    // Show normal analysis content
+    return (
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll">
+        <div className="ch-heatmap-scroll"> 
 
-          {/* Warning for no data */}
-          {allValuesNull && (
-            <div className="no-data-warning">
-              <AlertCircle size={20} />
+          {allMetricsNull && (
+            <div className="leverage-risk__warning">
+              <AlertCircle size={20} color="#f59e0b" />
               <div>
-                <h4 className="warning-title">
+                <h4 className="leverage-risk__warning-title">
                   No Risk Data Available
                 </h4>
-                <p className="warning-text">
+                <p className="leverage-risk__warning-text">
                   Upload an Excel file with financial data or ensure your spreadsheet contains the required leverage ratios.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Risk Metrics Grid */}
-          <div className="leverage-risk-grid">
-            {Object.entries(leverageMetrics).map(([key, value]) => {
-              const displayName = getFieldDisplayName(key);
-              const color = getRiskColor(value, displayName); 
-              const isNull = value === null || value === undefined;
-              
-              return (
-                <div 
-                  key={key} 
-                  className={`leverage-risk-card ${isNull ? 'no-data' : ''}`}
-                >
-                  <div className="card-header">
-                    <h4 className="card-title">
-                      {displayName}
-                    </h4>
-                    {!isNull && (color === '#ef4444' ? 
-                      <AlertTriangle size={20} color={color} /> : 
-                      <Shield size={20} color={color} />
-                    )}
-                  </div>
-                  
-                  <div 
-                    className="metric-value"
-                    style={{ color: isNull ? '#9ca3af' : color }}
-                  >
-                    {isNull ? 'No Data' : formatRatio(value, displayName)}
-                  </div> 
-                </div>
-              );
-            })}
-          </div> 
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Industry Average</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(metrics).map(([key, value]) => {
+                const formattedValue = formatRatio(value, key);
+                const isNull = value === null || value === undefined || value === '';
+                const threshold = thresholds[key];
+                const formattedThreshold = formatThreshold(threshold);
+                
+                return (
+                  <tr key={key}>
+                    <td><strong>{key}</strong></td>
+                    <td>
+                      {isNull ? (
+                        <span style={{ color: '#6b7280' }}>No Data</span>
+                      ) : (
+                        <TrafficLightIndicator 
+                          value={value} 
+                          threshold={threshold} 
+                          metricType={key}
+                          displayValue={formattedValue}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      {formattedThreshold}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
+    );
+  };
+
+  // Main component structure
+  return (
+    <div 
+      className="leverage-risk" 
+      data-analysis-type="leverage-risk"
+      data-analysis-name="Leverage & Risk"
+      data-analysis-order="5"
+    >
+      {renderContent()}
     </div>
   );
 };

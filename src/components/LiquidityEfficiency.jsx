@@ -99,6 +99,61 @@ const LiquidityEfficiency = ({
     }
   };
 
+  // Helper function to get traffic light color based on value vs threshold
+  const getTrafficLightColor = (value, threshold, metricType) => {
+    if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
+      return '#6b7280'; // Gray for NA
+    }
+    
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
+    const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
+    
+    if (isNaN(numValue) || isNaN(numThreshold)) {
+      return '#6b7280'; // Gray for invalid values
+    }
+    
+    // Cash Conversion Cycle - lower is better
+    if (metricType === 'Cash Conversion Cycle') {
+      if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
+      if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
+      return '#ef4444'; // Red - above threshold
+    } else {
+      // Current Ratio and Quick Ratio - higher is better
+      if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
+      if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
+      return '#ef4444'; // Red - below threshold
+    }
+  };
+
+  // Helper function to render traffic light indicator with text
+  const TrafficLightIndicator = ({ value, threshold, metricType, displayValue }) => {
+    const color = getTrafficLightColor(value, threshold, metricType);
+    
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <div style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          border: '1px solid rgba(0,0,0,0.1)',
+          flexShrink: 0
+        }} />
+        <span style={{
+          color: color,
+          fontWeight: '500',
+          whiteSpace: 'nowrap'
+        }}>
+          {displayValue}
+        </span>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (liquidityData && liquidityData !== analysisData) {
       setAnalysisData(liquidityData);
@@ -147,40 +202,8 @@ const LiquidityEfficiency = ({
     }
   };
 
-  const getRatioColor = (value, type) => {
-    if (value === null || value === undefined) return 'gray-light';
-    
-    const benchmarks = {
-      'Current Ratio': { good: 2.0, fair: 1.2 },
-      'Quick Ratio': { good: 1.0, fair: 0.8 },
-      'Cash Conversion Cycle': { good: 30, fair: 60 }
-    };
-
-    const benchmark = benchmarks[type];
-    if (!benchmark) return 'gray-default';
-
-    if (type === 'Cash Conversion Cycle') {
-      if (value <= benchmark.good) return 'green';
-      if (value <= benchmark.fair) return 'yellow';
-      return 'red';
-    } else {
-      if (value >= benchmark.good) return 'green';
-      if (value >= benchmark.fair) return 'yellow';
-      return 'red';
-    }
-  };
-
-  const getRatioStatus = (value, type) => {
-    if (value === null || value === undefined) return 'No Data';
-    
-    const color = getRatioColor(value, type);
-    if (color === 'green') return 'Excellent';
-    if (color === 'yellow') return 'Good';
-    return 'Needs Improvement';
-  };
-
   const formatRatio = (value, type) => {
-    if (value === null || value === undefined) return null;
+    if (value === null || value === undefined || value === '') return null;
     
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     
@@ -192,50 +215,26 @@ const LiquidityEfficiency = ({
     return numValue.toFixed(2);
   };
 
-  const GaugeChart = ({ value, max, colorClass, title }) => {
-    if (value === null || value === undefined) {
-      return (
-        <div className="gauge-chart gauge-chart--no-data">
-          No Data
-        </div>
-      );
+  const formatThreshold = (threshold, type) => {
+    if (!threshold || threshold === 'NA') return 'NA';
+    
+    if (typeof threshold === 'string') {
+      const numValue = parseFloat(threshold);
+      if (isNaN(numValue)) return 'NA';
+      if (type === 'Cash Conversion Cycle') {
+        return `${numValue.toFixed(0)} days`;
+      }
+      return numValue.toFixed(1);
     }
-
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(numValue)) {
-      return (
-        <div className="gauge-chart gauge-chart--no-data">
-          No Data
-        </div>
-      );
+    
+    if (typeof threshold === 'number') {
+      if (type === 'Cash Conversion Cycle') {
+        return `${threshold.toFixed(0)} days`;
+      }
+      return threshold.toFixed(1);
     }
-
-    const percentage = Math.min((numValue / max) * 100, 100);
-    const circumference = 2 * Math.PI * 45;
-    const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-
-    return (
-      <div className="gauge-chart">
-        <svg width="120" height="120" className="gauge-chart__svg">
-          <circle
-            cx="60"
-            cy="60"
-            r="45"
-            className="gauge-chart__background"
-          />
-          <circle
-            cx="60"
-            cy="60"
-            r="45"
-            className={`gauge-chart__progress gauge-chart__progress--${colorClass}`}
-            strokeDasharray={strokeDasharray}
-          />
-        </svg>
-        <div className={`gauge-chart__value gauge-chart__value--${colorClass}`}>
-          {title === 'Cash Conversion Cycle' ? `${numValue.toFixed(0)}d` : numValue.toFixed(1)}
-        </div>
-      </div>
-    );
+    
+    return 'NA';
   };
 
   const extractLiquidityMetrics = (data) => {
@@ -287,18 +286,7 @@ const LiquidityEfficiency = ({
     return { metrics: liquidityMetrics, thresholds: {} };
   };
 
-  const getThresholdText = (type, threshold) => {
-    if (!threshold) return null;
-    
-    const numThreshold = typeof threshold === 'string' ? parseFloat(threshold) : threshold;
-    if (isNaN(numThreshold)) return null;
-    
-    if (type === 'Cash Conversion Cycle') {
-      return `Threshold: ${numThreshold.toFixed(0)} days`;
-    }
-    return `Threshold: ${numThreshold.toFixed(1)}`;
-  };
-
+  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -310,24 +298,23 @@ const LiquidityEfficiency = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
+  const renderContent = () => {
+    // Show error message within the normal structure if there's an error
+    if (error) {
+      return (
+        <div className="liquidity-efficiency__warning">
+          <AlertCircle size={20} color="#f59e0b" />
+          <div>
+            <h4 className="liquidity-efficiency__warning-title">Analysis Error</h4>
+            <p className="liquidity-efficiency__warning-text">{error}</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!analysisData || isLiquidityDataIncomplete(analysisData)) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    // Show empty state if no data
+    if (!analysisData || isLiquidityDataIncomplete(analysisData)) {
+      return (
         <FinancialEmptyState
           analysisType="liquidityEfficiency"
           analysisDisplayName="Liquidity & Efficiency Analysis"
@@ -347,15 +334,13 @@ const LiquidityEfficiency = ({
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No liquidity & efficiency analysis results found. The uploaded financial document doesn't contain the required liquidity ratios (current ratio, quick ratio, cash conversion cycle) or proper values for analysis."
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  const { metrics: liquidityMetrics, thresholds } = extractLiquidityMetrics(analysisData);
+    const { metrics: liquidityMetrics, thresholds } = extractLiquidityMetrics(analysisData);
 
-  if (!liquidityMetrics || typeof liquidityMetrics !== 'object') {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    if (!liquidityMetrics || typeof liquidityMetrics !== 'object' || Object.keys(liquidityMetrics).length === 0) {
+      return (
         <FinancialEmptyState
           analysisType="liquidityEfficiency"
           analysisDisplayName="Liquidity & Efficiency Analysis"
@@ -373,81 +358,82 @@ const LiquidityEfficiency = ({
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  const allMetricsNull = Object.values(liquidityMetrics).every(value => value === null);
+    const allMetricsNull = Object.values(liquidityMetrics).every(value => value === null);
 
-  return (
-    <div 
-      className="channel-heatmap channel-heatmap-container liquidity-efficiency" 
-      data-analysis-type="liquidity-efficiency"
-      data-analysis-name="Liquidity & Efficiency"
-      data-analysis-order="3"
-    >
+    // Show normal analysis content
+    return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll"> 
 
           {allMetricsNull && (
             <div className="liquidity-efficiency__warning">
-              <AlertCircle size={20} />
+              <AlertCircle size={20} color="#f59e0b" />
               <div>
-                <h4>No Liquidity Data Available</h4>
-                <p>Upload an Excel file with financial data or ensure your spreadsheet contains the required liquidity ratios.</p>
+                <h4 className="liquidity-efficiency__warning-title">
+                  No Liquidity Data Available
+                </h4>
+                <p className="liquidity-efficiency__warning-text">
+                  Upload an Excel file with financial data or ensure your spreadsheet contains the required liquidity ratios.
+                </p>
               </div>
             </div>
           )}
 
-          <div className="liquidity-efficiency__ratios-grid">
-            {Object.entries(liquidityMetrics).map(([key, value]) => {
-              const colorClass = getRatioColor(value, key);
-              const maxValue = key === 'Cash Conversion Cycle' ? 120 : 3;
-              const isNull = value === null || value === undefined;
-              const threshold = thresholds[key];
-              
-              return (
-                <div 
-                  key={key} 
-                  className={`liquidity-efficiency__ratio-card ${isNull ? 'liquidity-efficiency__ratio-card--null' : ''}`}
-                >
-                  <h4 className="liquidity-efficiency__ratio-title">{key}</h4>
-                  
-                  <GaugeChart 
-                    value={value} 
-                    max={maxValue} 
-                    colorClass={colorClass}
-                    title={key}
-                  />
-                  
-                  <div className="liquidity-efficiency__ratio-details">
-                    <div className={`liquidity-efficiency__ratio-value ${isNull ? 'liquidity-efficiency__ratio-value--null' : `liquidity-efficiency__ratio-value--${colorClass}`}`}>
-                      {isNull ? 'No Data' : formatRatio(value, key)}
-                    </div>
-                    
-                    {!isNull ? (
-                      <div className="liquidity-efficiency__ratio-status">
-                        <span className={`liquidity-efficiency__status-indicator liquidity-efficiency__status-indicator--${colorClass}`}></span>
-                        {getRatioStatus(value, key)}
-                      </div>
-                    ) : (
-                      <div className="liquidity-efficiency__ratio-message">
-                        Data not available in uploaded file
-                      </div>
-                    )}
-                    
-                    {threshold && (
-                      <div className="liquidity-efficiency__ratio-threshold profitability-threshold">
-                        {getThresholdText(key, threshold)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div> 
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Industry Average</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(liquidityMetrics).map(([key, value]) => {
+                const formattedValue = formatRatio(value, key);
+                const isNull = value === null || value === undefined || value === '';
+                const threshold = thresholds[key];
+                const formattedThreshold = formatThreshold(threshold, key);
+                
+                return (
+                  <tr key={key}>
+                    <td><strong>{key}</strong></td>
+                    <td>
+                      {isNull ? (
+                        <span style={{ color: '#6b7280' }}>No Data</span>
+                      ) : (
+                        <TrafficLightIndicator 
+                          value={value} 
+                          threshold={threshold} 
+                          metricType={key}
+                          displayValue={formattedValue}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      {formattedThreshold}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
+    );
+  };
+
+  // Main component structure
+  return (
+    <div 
+      className="liquidity-efficiency" 
+      data-analysis-type="liquidity-efficiency"
+      data-analysis-name="Liquidity & Efficiency"
+      data-analysis-order="3"
+    >
+      {renderContent()}
     </div>
   );
 };

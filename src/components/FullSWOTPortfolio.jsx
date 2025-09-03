@@ -207,8 +207,7 @@ const FullSWOTPortfolio = ({
             {portfolio.strengths && portfolio.strengths.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('strengths')}>
-                        <h5>
-                            <TrendingUp size={20} />
+                        <h5> 
                             Strengths 
                         </h5>
                         {expandedSections.strengths ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -244,26 +243,22 @@ const FullSWOTPortfolio = ({
                                             </td> 
                                             <td>
                                                 {item.competitiveAdvantage ? (
-                                                    <span className="status-badge high-intensity">
-                                                        <Award size={12} />
+                                                    <span className="status-badge high-intensity"> 
                                                         Yes
                                                     </span>
                                                 ) : (
-                                                    <span className="status-badge low-intensity">
-                                                        <XCircle size={12} />
+                                                    <span className="status-badge low-intensity"> 
                                                         No
                                                     </span>
                                                 )}
                                             </td>
                                             <td>
                                                 {item.customerValidated ? (
-                                                    <span className="status-badge high-intensity">
-                                                        <Star size={12} />
+                                                    <span className="status-badge high-intensity"> 
                                                         Yes
                                                     </span>
                                                 ) : (
-                                                    <span className="status-badge low-intensity">
-                                                        <XCircle size={12} />
+                                                    <span className="status-badge low-intensity"> 
                                                         No
                                                     </span>
                                                 )}
@@ -281,8 +276,7 @@ const FullSWOTPortfolio = ({
             {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('weaknesses')}>
-                        <h5>
-                            <TrendingDown size={20} />
+                        <h5> 
                             Weaknesses 
                         </h5>
                         {expandedSections.weaknesses ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -335,8 +329,7 @@ const FullSWOTPortfolio = ({
             {portfolio.opportunities && portfolio.opportunities.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('opportunities')}>
-                        <h5>
-                            <Target size={20} />
+                        <h5> 
                             Opportunities 
                         </h5>
                         {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -372,21 +365,18 @@ const FullSWOTPortfolio = ({
                                             </td> 
                                             <td>
                                                 {item.marketTrend ? (
-                                                    <span className="status-badge high-intensity">
-                                                        <TrendingUp size={12} />
+                                                    <span className="status-badge high-intensity"> 
                                                         Yes
                                                     </span>
                                                 ) : (
-                                                    <span className="status-badge low-intensity">
-                                                        <XCircle size={12} />
+                                                    <span className="status-badge low-intensity"> 
                                                         No
                                                     </span>
                                                 )}
                                             </td>
                                             <td>
                                                 {item.timeframe && (
-                                                    <span className="timeline-badge">
-                                                        <Clock size={12} />
+                                                    <span className="timeline-badge"> 
                                                         {item.timeframe}
                                                     </span>
                                                 )}
@@ -404,8 +394,7 @@ const FullSWOTPortfolio = ({
             {portfolio.threats && portfolio.threats.length > 0 && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('threats')}>
-                        <h5>
-                            <AlertTriangle size={20} />
+                        <h5> 
                             Threats 
                         </h5>
                         {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -466,8 +455,7 @@ const FullSWOTPortfolio = ({
             {portfolio.strategicOptions && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('strategicOptions')}>
-                        <h5>
-                            <Lightbulb size={20} />
+                        <h5> 
                             Cross Dimensional Action Items
                         </h5>
                         {expandedSections.strategicOptions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -534,8 +522,7 @@ const FullSWOTPortfolio = ({
             {portfolio.riskAssessment && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('riskAssessment')}>
-                        <h3>
-                            <Shield size={20} />
+                        <h3> 
                             Risk Assessment
                         </h3>
                         {expandedSections.riskAssessment ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -557,8 +544,7 @@ const FullSWOTPortfolio = ({
                                     {portfolio.riskAssessment.operationalRisks && portfolio.riskAssessment.operationalRisks.map((risk, index) => (
                                         <tr key={`operational-${index}`}>
                                             <td>
-                                                <span className="force-tag" >
-                                                    <Activity size={12} />
+                                                <span className="force-tag" > 
                                                     Operational
                                                 </span>
                                             </td>
@@ -579,8 +565,7 @@ const FullSWOTPortfolio = ({
                                     {portfolio.riskAssessment.strategicRisks && portfolio.riskAssessment.strategicRisks.map((risk, index) => (
                                         <tr key={`strategic-${index}`}>
                                             <td>
-                                                <span className="force-tag">
-                                                    <Target size={12} />
+                                                <span className="force-tag"> 
                                                     Strategic
                                                 </span>
                                             </td>
@@ -609,8 +594,7 @@ const FullSWOTPortfolio = ({
             {portfolio.competitivePositioning && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('competitivePositioning')}>
-                        <h3>
-                            <PieChart size={20} />
+                        <h3> 
                             Competitive Positioning
                         </h3>
                         {expandedSections.competitivePositioning ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -630,8 +614,7 @@ const FullSWOTPortfolio = ({
                                     {portfolio.competitivePositioning.marketShare && (
                                         <tr>
                                             <td>
-                                                <strong>
-                                                    <BarChart3 size={16} />
+                                                <strong> 
                                                     Market Share
                                                 </strong>
                                             </td>
@@ -646,8 +629,7 @@ const FullSWOTPortfolio = ({
                                     {portfolio.competitivePositioning.competitiveAdvantage && (
                                         <tr>
                                             <td>
-                                                <strong>
-                                                    <Award size={16} />
+                                                <strong> 
                                                     Competitive Advantage
                                                 </strong>
                                             </td>
@@ -662,8 +644,7 @@ const FullSWOTPortfolio = ({
                                     {portfolio.competitivePositioning.customerSegments && portfolio.competitivePositioning.customerSegments.length > 0 && (
                                         <tr>
                                             <td>
-                                                <strong>
-                                                    <Users size={16} />
+                                                <strong> 
                                                     Customer Segments
                                                 </strong>
                                             </td>
