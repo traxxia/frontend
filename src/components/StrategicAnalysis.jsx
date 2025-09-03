@@ -158,8 +158,7 @@ const StrategicAnalysis = ({
         <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center',
-          borderBottom: 'none',
-          marginBottom: '20px',
+          borderBottom: 'none', 
           gap: '8px',
           background: '#fff'
         }}>
@@ -169,9 +168,8 @@ const StrategicAnalysis = ({
 
         {/* Direct Competitors */}
         {competitiveLandscape.direct_competitors && competitiveLandscape.direct_competitors.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{
-              margin: '0 0 15px 0',
+          <div>
+            <h3 style={{ 
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -260,9 +258,8 @@ const StrategicAnalysis = ({
 
         {/* Indirect Competitors */}
         {competitiveLandscape.indirect_competitors && competitiveLandscape.indirect_competitors.length > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{
-              margin: '0 0 15px 0',
+          <div>
+            <h3 style={{ 
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -321,8 +318,7 @@ const StrategicAnalysis = ({
         {/* Potential Entrants */}
         {competitiveLandscape.potential_entrants && competitiveLandscape.potential_entrants.length > 0 && (
           <div>
-            <h3 style={{
-              margin: '0 0 15px 0',
+            <h3 style={{ 
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -388,6 +384,62 @@ const StrategicAnalysis = ({
       </section>
     );
   };
+
+  const renderKeyImprovementsTable = (data) => {
+  const improvements = data?.key_improvements;
+  if (!improvements || !Array.isArray(improvements) || improvements.length === 0) return null;
+
+  return (
+    <section className="strategic-page-section">
+      <div className="section-headers" style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderBottom: 'none', 
+        gap: '8px',
+        background: '#fff'
+      }}>
+        <TrendingUp size={24} style={{ color: 'blue' }} />
+        <h4>Key Improvements</h4>
+      </div>
+
+      <div className="table-container">
+        <table className="data-table">
+          <tbody>
+            {improvements.map((improvement, index) => (
+              <tr key={index}>
+                <td className="table-value">
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '8px 0'
+                  }}> 
+                    <div style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}> 
+                      <span style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        lineHeight: '1.4',
+                        color: '#1f2937'
+                      }}>
+                        {improvement}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+};
+
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
     if (!pillars) return null;
@@ -815,7 +867,7 @@ const StrategicAnalysis = ({
         <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center', borderBottom: 'none',
-          gap: '8px', marginBottom: '20px',
+          gap: '8px',
           background: '#fff'
         }}>
           <Calendar size={24} style={{ color: 'blue' }} />
@@ -967,8 +1019,7 @@ const StrategicAnalysis = ({
             marginBottom: '20px',
             border: '1px solid #bae6fd'
           }}>
-            <h3 style={{
-              margin: '0 0 15px 0',
+            <h3 style={{ 
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -1002,9 +1053,8 @@ const StrategicAnalysis = ({
 
         {/* Review Cycles Table */}
         {monitoring.review_cycles && (
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{
-              margin: '0 0 15px 0',
+          <div>
+            <h3 style={{ 
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -1043,8 +1093,7 @@ const StrategicAnalysis = ({
         {/* Feedback Loops Table */}
         {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
           <div>
-            <h3 style={{
-              margin: '0 0 15px 0',
+            <h3 style={{ 
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -1096,6 +1145,7 @@ const StrategicAnalysis = ({
         {renderSuccessBenchmarksTable(analysisData)} */}
         {renderImplementationRoadmapTable(analysisData)}
         {renderCompetitiveLandscapeTable(analysisData)}
+        {renderKeyImprovementsTable(analysisData)}
         {renderMonitoringDashboardTable(analysisData)}
       </div>
     );

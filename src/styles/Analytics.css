@@ -4167,8 +4167,7 @@
 .competitive-advantage-container {
   background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
   overflow: hidden;
 }
 
@@ -4356,8 +4355,7 @@
 
 .overview-content {
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  flex-direction: column; 
 }
 
 .overview-section h3 {
@@ -6356,14 +6354,14 @@
 
 .gauge-content {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 60%;
+  left: 65%;
   transform: translate(-50%, -30%);
   text-align: center;
 }
 
 .score-number {
-  font-size: 48px;
+  font-size: 30px;
   font-weight: 800;
   color: #1e293b;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -6376,7 +6374,7 @@
 }
 
 .score-level {
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 700;
   margin-top: 8px;
   text-transform: uppercase;
@@ -6385,9 +6383,10 @@
 
 .maturity-profile {
   font-size: 14px;
-  color: #64748b;
+  color: #000;
   margin-top: 6px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Section Headers */
@@ -7624,11 +7623,7 @@
   font-weight: 600;
   color: #333;
 }
-
-/* Table Container */
-.table-container {
-  padding: 10px 0px;
-}
+ 
 
 /* Data Table */
 .data-table {
@@ -7700,7 +7695,7 @@ img, svg{
 
 .score-badge {
   padding: 4px 8px; 
-  color: #1976d2;
+  color: #000;
   border-radius: 4px;
   font-weight: 600;
   font-size: 0.8rem;
@@ -7956,8 +7951,7 @@ img, svg{
     font-size: 1.2rem;
   }
   
-  .table-container {
-    padding: 15px;
+  .table-container { 
     overflow-x: auto;
   }
   
@@ -7996,10 +7990,6 @@ img, svg{
   
   .section-header {
     padding: 15px;
-  }
-  
-  .table-container {
-    padding: 10px;
   }
   
   .data-table {

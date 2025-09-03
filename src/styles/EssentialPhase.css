@@ -1415,17 +1415,6 @@
   position: relative;
 }
 
-.capability-gaps::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  border-radius: 12px 12px 0 0;
-}
-
 .capability-gaps h4 {
   margin: 0 0 16px 0;
   color: #92400e;
@@ -1439,8 +1428,7 @@
 .gap-item {
   background: white;
   padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  border-radius: 8px; 
   border-left: 4px solid #f59e0b;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
@@ -1476,7 +1464,7 @@
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  color: #6b7280;
+  color: #000;
 }
 
 .gap-progression {
@@ -2546,7 +2534,7 @@
 .capability-gaps {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 10px 15px;
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
@@ -2594,7 +2582,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #000;
   flex-wrap: wrap;
 }
 
@@ -3223,8 +3211,7 @@
   background: white;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
 }
 
 .radar-header {

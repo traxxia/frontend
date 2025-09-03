@@ -313,7 +313,7 @@ const PurchaseCriteria = ({
               <Star size={20} />
               <span>Overall Alignment</span>
             </div>
-            <p className="pc-metric-value">{criteriaData.overallAlignment.toFixed(1)}/10</p>
+            <p className="pc-metric-value">{criteriaData.overallAlignment.toFixed(1)}</p>
           </div>
         )}
 

@@ -187,7 +187,7 @@ const MaturityScore = ({
         // Extract strengths and development areas
         if (dimension.score >= 4.0) {
           transformed.strengths.push(
-            `Strong ${dimension.name}: Achieving ${dimension.level} level performance (${dimension.score}/5.0)`
+            `Strong ${dimension.name}: Achieving ${dimension.level} level performance (${dimension.score})`
           );
         }
         
@@ -310,7 +310,7 @@ const MaturityScore = ({
         <div className="gauge-content">
           <div className="score-number">
             {transformedData.overallScore}
-            <span className="score-max">/5.0</span>
+            <span className="score-max"></span>
           </div>
           <div 
             className="score-level"
@@ -350,7 +350,7 @@ const MaturityScore = ({
               <tbody>
                 <tr>
                   <td><strong>Overall Maturity Score</strong></td>
-                  <td>{transformedData.overallScore}/5.0</td>
+                  <td>{transformedData.overallScore}</td>
                   <td>
                     <span className={`status-badge ${getScoreClass(transformedData.overallScore)}`}>
                       {transformedData.level}
@@ -359,7 +359,7 @@ const MaturityScore = ({
                 </tr>
                 <tr>
                   <td><strong>Industry Percentile</strong></td>
-                  <td>{transformedData.industryBenchmark.percentile}th percentile</td>
+                  <td>{transformedData.industryBenchmark.percentile}</td>
                   <td>
                     <span className="status-badge medium-intensity">
                       {transformedData.industryBenchmark.comparison}
@@ -368,7 +368,7 @@ const MaturityScore = ({
                 </tr>
                 <tr>
                   <td><strong>Industry Average</strong></td>
-                  <td>{transformedData.industryBenchmark.average}/5.0</td>
+                  <td>{transformedData.industryBenchmark.average}</td>
                   <td>-</td>
                 </tr>
               </tbody>
@@ -412,7 +412,7 @@ const MaturityScore = ({
                       </div>
                     </td>
                     <td>
-                      <span className="score-badge">{dimension.score}/5.0</span>
+                      <span className="score-badge">{dimension.score}</span>
                     </td>
                     <td>
                       <span className={`status-badge ${getScoreClass(dimension.score)}`}>
@@ -423,7 +423,7 @@ const MaturityScore = ({
                     <td>
                       {dimension.gap && (
                         <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>
-                          {dimension.gap > 0 ? '+' : ''}{dimension.gap}
+                          {dimension.gap}
                         </span>
                       )}
                     </td>
@@ -455,85 +455,13 @@ const MaturityScore = ({
                             <span 
                               className={`score-badge ${getScoreClass(subDim.score)}`}
                             >
-                              {subDim.score}/5.0
+                              {subDim.score}
                             </span>
                           </td>
                           <td>{subDim.description}</td>
                         </tr>
                       ))
                     )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Insights Table
-  const renderInsights = () => {
-    const { strengths, developmentAreas } = transformedData;
-    
-    if (!strengths?.length && !developmentAreas?.length) return null;
-
-    return (
-      <div className="section-container">
-        <div className="section-header" onClick={() => toggleSection('insights')}>
-          <h3>Key Insights</h3>
-          {expandedSections.insights ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-        </div>
-        
-        {expandedSections.insights !== false && (
-          <div className="table-container">
-            {/* Strengths */}
-            {strengths?.length > 0 && (
-              <div className="subsection">
-                <h4>Key Strengths</h4>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Strength</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {strengths.map((strength, index) => (
-                      <tr key={index}>
-                        <td>
-                          <CheckCircle size={16} className="insight-icon" style={{ color: '#10b981' }} />
-                          <span>Strength</span>
-                        </td>
-                        <td>{strength}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Development Areas */}
-            {developmentAreas?.length > 0 && (
-              <div className="subsection">
-                <h4>Development Areas</h4>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Development Area</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {developmentAreas.map((area, index) => (
-                      <tr key={index}>
-                        <td>
-                          <AlertCircle size={16} className="insight-icon" style={{ color: '#f59e0b' }} />
-                          <span>Opportunity</span>
-                        </td>
-                        <td>{area}</td>
-                      </tr>
-                    ))}
                   </tbody>
                 </table>
               </div>
@@ -578,7 +506,7 @@ const MaturityScore = ({
                         <td><strong>{corr.dimension2}</strong></td>
                         <td>
                           <span className={`status-badge ${corr.correlation > 0.7 ? 'high-intensity' : 'medium-intensity'}`}>
-                            {(corr.correlation * 100).toFixed(0)}%
+                            { corr.correlation}
                           </span>
                         </td>
                         <td>{corr.impact}</td>
@@ -606,7 +534,7 @@ const MaturityScore = ({
                       <tr key={index}>
                         <td><strong>{synergy.combination}</strong></td>
                         <td>
-                          <span className="score-badge">{synergy.synergyScore}/10</span>
+                          <span className="score-badge">{synergy.synergyScore}</span>
                         </td>
                         <td>{synergy.description}</td>
                       </tr>
@@ -639,28 +567,24 @@ const MaturityScore = ({
               <thead>
                 <tr>
                   <th>Metric</th>
-                  <th>Value</th>
-                  <th>Details</th>
+                  <th>Value</th> 
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><strong>Target Level</strong></td>
-                  <td>{nextLevel.target}</td>
-                  <td>Next maturity milestone</td>
+                  <td>{nextLevel.target}</td> 
                 </tr>
                 <tr>
                   <td><strong>Estimated Timeline</strong></td>
                   <td>
                     <span className="timeline-badge">{nextLevel.estimatedTimeframe}</span>
-                  </td>
-                  <td>Expected time to achieve target</td>
+                  </td> 
                 </tr>
                 {nextLevel.investment && (
                   <tr>
                     <td><strong>Investment Required</strong></td>
-                    <td>{nextLevel.investment}</td>
-                    <td>Resource commitment needed</td>
+                    <td>{nextLevel.investment}</td> 
                   </tr>
                 )}
               </tbody>
@@ -673,18 +597,15 @@ const MaturityScore = ({
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Requirement</th>
-                      <th>Priority</th>
+                      <th>Requirement</th> 
                     </tr>
                   </thead>
                   <tbody>
                     {nextLevel.requirements.map((requirement, index) => (
                       <tr key={index}>
                         <td>
-                          <Target size={12} className="requirement-icon" />
                           {requirement}
-                        </td>
-                        <td>High</td>
+                        </td> 
                       </tr>
                     ))}
                   </tbody>
@@ -731,8 +652,7 @@ const MaturityScore = ({
       <div className="dashboard-content">
         {renderGaugeChart()}
         {renderMaturityOverview()}
-        {renderBusinessAreas()}
-        {renderInsights()}
+        {renderBusinessAreas()} 
         {renderCrossScoring()}
         {renderNextLevel()}
       </div>

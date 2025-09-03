@@ -634,7 +634,7 @@ const StrategicPositioningRadar = ({
                                             <tbody>
                                                 <tr>
                                                     <td><strong>Current Average Score</strong></td>
-                                                    <td>{overallPosition.currentAverage}/10</td>
+                                                    <td>{overallPosition.currentAverage}</td>
                                                     <td>
                                                         <span className={`status-badge ${getScoreClass(overallPosition.currentAverage)}`}>
                                                             {overallPosition.currentAverage >= 8 ? 'Excellent' : 
@@ -645,7 +645,7 @@ const StrategicPositioningRadar = ({
                                                 </tr>
                                                 <tr>
                                                     <td><strong>Target Average Score</strong></td>
-                                                    <td>{overallPosition.targetAverage}/10</td>
+                                                    <td>{overallPosition.targetAverage}</td>
                                                     <td>
                                                         <span className={`status-badge ${getScoreClass(overallPosition.targetAverage)}`}>
                                                             {overallPosition.targetAverage >= 8 ? 'Excellent' : 
@@ -656,7 +656,7 @@ const StrategicPositioningRadar = ({
                                                 </tr>
                                                 <tr>
                                                     <td><strong>Improvement Gap</strong></td>
-                                                    <td>{(overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1)} points</td>
+                                                    <td>{(overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1)}</td>
                                                     <td>
                                                         <span className={`status-badge ${getPerformanceStatusClass(overallPosition.currentAverage, overallPosition.targetAverage)}`}>
                                                             {getPerformanceStatus(overallPosition.currentAverage, overallPosition.targetAverage)}
@@ -708,46 +708,32 @@ const StrategicPositioningRadar = ({
                                                     <th>Dimension</th>
                                                     <th>Current Score</th>
                                                     <th>Target Score</th>
-                                                    <th>Industry Average</th>
-                                                    <th>Gap Analysis</th>
-                                                    <th>Performance Status</th>
+                                                    <th>Industry Average</th>  
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {dimensions.map((dimension, index) => (
                                                     <tr key={index}>
                                                         <td>
-                                                            <div className="force-name">
-                                                                <Target size={16} />
+                                                            <div className="force-name"> 
                                                                 <span><strong>{dimension.name}</strong></span>
                                                             </div>
                                                         </td>
                                                         <td>
                                                             <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
-                                                                {dimension.currentScore}/10
+                                                                {dimension.currentScore}
                                                             </span>
                                                         </td>
                                                         <td>
                                                             <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
-                                                                {dimension.targetScore}/10
+                                                                {dimension.targetScore}
                                                             </span>
                                                         </td>
                                                         <td>
                                                             <span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>
-                                                                {dimension.industryAverage}/10
+                                                                {dimension.industryAverage}
                                                             </span>
-                                                        </td>
-                                                        <td>
-                                                            <div className="gap-analysis">
-                                                                <div><strong>vs Target:</strong> {(dimension.targetScore - dimension.currentScore).toFixed(1)}</div>
-                                                                <div><strong>vs Industry:</strong> {(dimension.currentScore - dimension.industryAverage).toFixed(1)}</div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span className={`status-badge ${getPerformanceStatusClass(dimension.currentScore, dimension.targetScore)}`}>
-                                                                {getPerformanceStatus(dimension.currentScore, dimension.targetScore)}
-                                                            </span>
-                                                        </td>
+                                                        </td>  
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -984,12 +970,12 @@ const StrategicPositioningRadar = ({
                                                             <td>{dimension.name} Performance Index</td>
                                                             <td>
                                                                 <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
-                                                                    {dimension.currentScore}/10
+                                                                    {dimension.currentScore}
                                                                 </span>
                                                             </td>
                                                             <td>
                                                                 <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
-                                                                    {dimension.targetScore}/10
+                                                                    {dimension.targetScore}
                                                                 </span>
                                                             </td>
                                                             <td><span className="frequency-badge">Monthly</span></td>
@@ -1015,8 +1001,8 @@ const StrategicPositioningRadar = ({
                                                 <tbody>
                                                     <tr>
                                                         <td><strong>Overall Strategic Score</strong></td>
-                                                        <td>{overallPosition?.currentAverage}/10</td>
-                                                        <td>{overallPosition?.targetAverage}/10</td>
+                                                        <td>{overallPosition?.currentAverage}</td>
+                                                        <td>{overallPosition?.targetAverage}</td>
                                                         <td>
                                                             <div className="progress-bar">
                                                                 <div 

@@ -8,20 +8,20 @@ const ProductivityMetrics = ({
   questions = [],
   userAnswers = {},
   businessName = '',
-  onRegenerate, // This is the key prop - same as FullSWOT
+  onRegenerate,
   isRegenerating = false,
   canRegenerate = true,
-  productivityData = null, // This comes from parent state
+  productivityData = null,
   selectedBusinessId,
   onRedirectToBrief
 }) => {
-  // LOCAL STATE - same pattern as FullSWOT
+  // LOCAL STATE
   const [data, setData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
   const [error, setError] = useState(null);
 
-  // PREVENT MULTIPLE INITIALIZATIONS - same as FullSWOT
+  // PREVENT MULTIPLE INITIALIZATIONS
   const hasInitialized = useRef(false);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -44,7 +44,7 @@ const ProductivityMetrics = ({
     );
   };
 
-  // HANDLE REGENERATE - same pattern as FullSWOT
+  // HANDLE REGENERATE
   const handleRegenerate = async () => {
     console.log('ProductivityMetrics handleRegenerate called', { onRegenerate: !!onRegenerate });
     
@@ -106,7 +106,7 @@ const ProductivityMetrics = ({
     }));
   };
 
-  // INITIALIZE COMPONENT - same pattern as FullSWOT
+  // INITIALIZE COMPONENT
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
@@ -118,7 +118,7 @@ const ProductivityMetrics = ({
     }
   }, [productivityData]);
 
-  // UPDATE DATA WHEN PROP CHANGES - same pattern as FullSWOT
+  // UPDATE DATA WHEN PROP CHANGES
   useEffect(() => {
     if (productivityData) {
       setData(productivityData);
@@ -131,61 +131,7 @@ const ProductivityMetrics = ({
     }
   }, [productivityData]);
 
-  const ProductivityChart = ({ employeeProductivity = {} }) => {
- const {
-   totalEmployees = 0,
-   averageValuePerEmployee = 0,
-   totalValueGenerated = 0,
-   productivityIndex = 0,
-   totalCostPercentage = 0
- } = employeeProductivity;
-
- return (
-   <div className="productivity-chart">
-     <table className="data-table">
-       <thead>
-         <tr>
-           <th>Metric</th>
-           <th>Value</th>
-         </tr>
-       </thead>
-       <tbody>
-         <tr>
-           <td><strong>Employee Cost</strong></td>
-           <td>{totalCostPercentage}%</td>
-         </tr>
-         <tr>
-           <td><strong>Total Employees</strong></td>
-           <td>{totalEmployees?.toLocaleString()}</td>
-         </tr>
-         <tr>
-           <td><strong>Avg Value/Employee</strong></td>
-           <td>${averageValuePerEmployee?.toLocaleString()}</td>
-         </tr>
-         <tr>
-           <td><strong>Total Value Generated</strong></td>
-           <td>${totalValueGenerated?.toLocaleString()}</td>
-         </tr>
-         <tr>
-           <td><strong>Productivity Index</strong></td>
-           <td>{productivityIndex}</td>
-         </tr>
-       </tbody>
-     </table>
-   </div>
- );
-};
-
-  // Get efficiency color helper
-  const getEfficiencyColor = (efficiency) => {
-    const level = efficiency?.toLowerCase() || '';
-    if (level.includes('high')) return 'high-intensity';
-    if (level.includes('medium') || level.includes('moderate')) return 'medium-intensity';
-    if (level.includes('low')) return 'low-intensity';
-    return 'medium-intensity';
-  };
-
-  // LOADING STATE - same pattern as FullSWOT
+  // LOADING STATE
   if (isRegenerating) {
     return (
       <div className="porters-container productivity-container">
@@ -197,7 +143,7 @@ const ProductivityMetrics = ({
     );
   }
 
-  // ERROR STATE - same pattern as FullSWOT
+  // ERROR STATE
   if (error) {
     return (
       <div className="porters-container productivity-container"> 
@@ -213,7 +159,7 @@ const ProductivityMetrics = ({
     );
   }
 
-  // CHECK IF DATA IS INCOMPLETE - same pattern as FullSWOT
+  // CHECK IF DATA IS INCOMPLETE
   if (!hasGenerated || !data?.productivityMetrics || isProductivityDataIncomplete(data)) {
     return (
       <div className="porters-container productivity-container"> 
@@ -235,225 +181,99 @@ const ProductivityMetrics = ({
   // Handle both wrapped and direct response structures
   const productivityMetrics = data?.productivityMetrics || data;
 
-  return (
-    <div className="porters-container productivity-container"
-         data-analysis-type="productivityMetrics"
-         data-analysis-name="Productivity Metrics"
-         data-analysis-order="14"> 
+  // Helper function to format field names for display
+  const formatFieldName = (fieldName) => {
+    return fieldName
+      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+      .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+      .trim();
+  };
 
-      {/* Employee Productivity Overview Chart */}
-      {productivityMetrics.employeeProductivity && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('overview')}>
-            <h3>Employee Productivity Overview</h3>
-            {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.overview !== false && (
-            <div className="table-container">
-              <ProductivityChart employeeProductivity={productivityMetrics.employeeProductivity} />
-            </div>
-          )}
+  // Helper function to format values for display
+  const formatValue = (value, key) => {
+    if (value === null || value === undefined) return 'N/A';
+    
+    // Format percentage fields
+    if (key.toLowerCase().includes('percentage') || key.toLowerCase().includes('costs')) {
+      return `${value}`;
+    }
+    
+    // Format currency fields
+    if (key.toLowerCase().includes('value') && typeof value === 'number' && value > 1000) {
+      return `${value.toLocaleString()}`;
+    }
+    
+    // Format numbers
+    if (typeof value === 'number' && value > 1000) {
+      return value.toLocaleString();
+    }
+    
+    return value;
+  };
+
+  // Helper function to render dynamic table for objects
+  const renderObjectTable = (obj, sectionKey, sectionTitle) => {
+    if (!obj || typeof obj !== 'object') return null;
+    
+    const keys = Object.keys(obj);
+    if (keys.length === 0) return null;
+
+    return (
+      <div className="section-container">
+        <div className="section-header" onClick={() => toggleSection(sectionKey)}>
+          <h3>{sectionTitle}</h3>
+          {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-      )} 
- 
-      {/* Bar Chart: Value Per Employee by Function */}
-      {productivityMetrics.employeeProductivity && (
+        
+        {expandedSections[sectionKey] !== false && (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {keys.map((key, index) => (
+                  <tr key={index}>
+                    <td><strong>{formatFieldName(key)}</strong></td>
+                    <td>{formatValue(obj[key], key)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Helper function to render dynamic table for arrays
+  const renderArrayTable = (array, sectionKey, sectionTitle) => {
+    if (!array || !Array.isArray(array) || array.length === 0) return null;
+
+    // Handle array of strings (like improvementOpportunities)
+    if (typeof array[0] === 'string') {
+      return (
         <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('valuePerEmployee')}>
-            <h3>Bar Chart: Value per Employee by Function</h3>
-            {expandedSections.valuePerEmployee ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          <div className="section-header" onClick={() => toggleSection(sectionKey)}>
+            <h3>{sectionTitle}</h3>
+            {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
           
-          {expandedSections.valuePerEmployee !== false && (
-            <div className="table-container">
-              {/* Bar Chart Visualization */}
-              <div className="bar-chart-container" style={{ marginBottom: '20px' }}>
-                {[
-                  { 
-                    name: 'Sales & Marketing', 
-                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.6),
-                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.25),
-                    color: '#10b981'
-                  },
-                  { 
-                    name: 'Product Development', 
-                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.4),
-                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20),
-                    color: '#3b82f6'
-                  },
-                  { 
-                    name: 'Operations', 
-                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.85),
-                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.35),
-                    color: '#f59e0b'
-                  },
-                  { 
-                    name: 'Support Functions', 
-                    value: Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.75),
-                    employees: Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20),
-                    color: '#ef4444'
-                  }
-                ].map((func, index) => {
-                  const maxValue = Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.6);
-                  const barWidth = (func.value / maxValue) * 100;
-                  
-                  return (
-                    <div key={index} className="bar-item" style={{ marginBottom: '15px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                        <span style={{ fontWeight: '600' }}>{func.name}</span>
-                        <span style={{ fontWeight: '600' }}>${func.value.toLocaleString()}</span>
-                      </div>
-                      <div style={{ 
-                        width: '100%', 
-                        height: '25px', 
-                        backgroundColor: '#f3f4f6', 
-                        borderRadius: '4px',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          width: `${barWidth}%`,
-                          height: '100%',
-                          backgroundColor: func.color,
-                          transition: 'width 0.3s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          paddingLeft: '8px'
-                        }}>
-                          <span style={{ 
-                            color: 'white', 
-                            fontSize: '12px', 
-                            fontWeight: '500'
-                          }}>
-                            {func.employees} employees
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Data Table */}
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Function</th>
-                    <th>Employees</th>
-                    <th>Value Generated</th>
-                    <th>Value per Employee</th>
-                    <th>Performance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div className="force-name">
-                        <BarChart3 size={16} />
-                        <span><strong>Sales & Marketing</strong></span>
-                      </div>
-                    </td>
-                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.25)}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.4).toLocaleString()}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.6).toLocaleString()}</td>
-                    <td>
-                      <span className="status-badge high-intensity">Above Average</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="force-name">
-                        <BarChart3 size={16} />
-                        <span><strong>Product Development</strong></span>
-                      </div>
-                    </td>
-                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20)}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.28).toLocaleString()}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 1.4).toLocaleString()}</td>
-                    <td>
-                      <span className="status-badge high-intensity">Above Average</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="force-name">
-                        <BarChart3 size={16} />
-                        <span><strong>Operations</strong></span>
-                      </div>
-                    </td>
-                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.35)}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.3).toLocaleString()}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.85).toLocaleString()}</td>
-                    <td>
-                      <span className="status-badge medium-intensity">Average</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="force-name">
-                        <BarChart3 size={16} />
-                        <span><strong>Support Functions</strong></span>
-                      </div>
-                    </td>
-                    <td>{Math.round(productivityMetrics.employeeProductivity.totalEmployees * 0.20)}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.totalValueGenerated * 0.15).toLocaleString()}</td>
-                    <td>${Math.round(productivityMetrics.employeeProductivity.averageValuePerEmployee * 0.75).toLocaleString()}</td>
-                    <td>
-                      <span className="status-badge low-intensity">Below Average</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )} 
-
-      {/* Improvement Opportunities Table */}
-      {productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0 && (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection('opportunities')}>
-            <h3>Improvement Opportunities</h3>
-            {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-          
-          {expandedSections.opportunities !== false && (
+          {expandedSections[sectionKey] !== false && (
             <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Opportunity</th>
-                    <th>Priority</th>
-                    <th>Expected Impact</th>
-                    <th>Implementation Difficulty</th>
+                    <th>Item</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {productivityMetrics.improvementOpportunities.map((opportunity, index) => (
+                  {array.map((item, index) => (
                     <tr key={index}>
-                      <td>
-                        <div className="force-name">
-                          <TrendingUp size={16} />
-                          <span>{opportunity}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${index < 2 ? 'high-intensity' : index < 4 ? 'medium-intensity' : 'low-intensity'}`}>
-                          {index < 2 ? 'High' : index < 4 ? 'Medium' : 'Low'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="implications-cell">
-                          {index < 2 ? 'High potential for productivity gains' : 
-                           index < 4 ? 'Moderate productivity improvement' : 'Incremental efficiency gains'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`score-badge ${index < 2 ? 'medium' : index < 4 ? 'low' : 'high'}`}>
-                          {index < 2 ? 'Medium' : index < 4 ? 'Easy' : 'Complex'}
-                        </span>
-                      </td>
+                      <td>{item}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -461,7 +281,74 @@ const ProductivityMetrics = ({
             </div>
           )}
         </div>
-      )}
+      );
+    }
+
+    // Handle array of objects (like valueDrivers)
+    if (typeof array[0] === 'object' && array[0] !== null) {
+      const keys = Object.keys(array[0]);
+      
+      return (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection(sectionKey)}>
+            <h3>{sectionTitle}</h3>
+            {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+          
+          {expandedSections[sectionKey] !== false && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    {keys.map((key, index) => (
+                      <th key={index}>{formatFieldName(key)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {array.map((item, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {keys.map((key, colIndex) => (
+                        <td key={colIndex}>
+                          {colIndex === 0 ? <strong>{formatValue(item[key], key)}</strong> : formatValue(item[key], key)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="porters-container productivity-container"
+         data-analysis-type="productivityMetrics"
+         data-analysis-name="Productivity Metrics"
+         data-analysis-order="14"> 
+
+      {/* Dynamically render all sections from API response */}
+      {Object.keys(productivityMetrics).map((sectionKey) => {
+        const sectionData = productivityMetrics[sectionKey];
+        const sectionTitle = formatFieldName(sectionKey);
+        
+        // Handle objects
+        if (sectionData && typeof sectionData === 'object' && !Array.isArray(sectionData)) {
+          return renderObjectTable(sectionData, sectionKey, sectionTitle);
+        }
+        
+        // Handle arrays
+        if (Array.isArray(sectionData) && sectionData.length > 0) {
+          return renderArrayTable(sectionData, sectionKey, sectionTitle);
+        }
+        
+        return null;
+      })}
 
     </div>
   );
