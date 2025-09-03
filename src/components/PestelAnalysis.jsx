@@ -188,8 +188,8 @@ const PestelAnalysis = ({
         </div>
       )}
 
-      {/* Key Improvements Section */}
-      {analysis.key_improvements && analysis.key_improvements.length > 0 && (
+      {/* Key Improvements Section */} 
+      {analysis.key_improvements && Array.isArray(analysis.key_improvements) && analysis.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
             <h3>Key Improvements</h3>
