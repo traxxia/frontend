@@ -120,7 +120,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
 
     const renderTableView = () => {
         return (
-            <div className="table-container">
+            <div className="table-container" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
                 <table className="data-table">
                     <thead>
                         <tr>
@@ -260,8 +260,8 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
 
             {viewMode === 'wheel' ? (
                 <>
-                    <div style={{ position: 'relative' }}>
-                        <svg width="440" height="440" viewBox="0 0 440 440">
+                    <div style={{ position: "relative", width: "100%", maxWidth: "440px" }}>
+                        <svg viewBox="0 0 440 440" style={{ width: "100%", height: "auto"}}>
                             {/* Render segments */}
                             {pillarsArray.map(([pillarKey, pillarData], index) => {
                                 const IconComponent = getPillarIcon(pillarKey);

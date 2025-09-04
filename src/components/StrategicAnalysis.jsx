@@ -160,10 +160,11 @@ const StrategicAnalysis = ({
           alignItems: 'center',
           borderBottom: 'none', 
           gap: '8px',
+          marginBottom:'10px',
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
-          <h4>Competitive Landscape Analysis</h4>
+          <h4  style={{marginTop:'5px'}} >Competitive Landscape Analysis</h4>
         </div>
 
         {/* Direct Competitors */}
@@ -181,7 +182,7 @@ const StrategicAnalysis = ({
               Direct Competitors
             </h3>
 
-            <div className="table-container">
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px', marginBottom:'20px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -271,7 +272,7 @@ const StrategicAnalysis = ({
               Indirect Competitors
             </h3>
 
-            <div className="table-container">
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px', marginBottom:'20px'  }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -324,13 +325,14 @@ const StrategicAnalysis = ({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              color: '#1f2937'
+              color: '#1f2937',
+              marginBottom:'20px'
             }}>
               <TrendingUp size={20} />
               Potential Market Entrants
             </h3>
 
-            <div className="table-container">
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px'}}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -402,7 +404,7 @@ const StrategicAnalysis = ({
         <h4>Key Improvements</h4>
       </div>
 
-      <div className="table-container">
+      <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px'}}>
         <table className="data-table">
           <tbody>
             {improvements.map((improvement, index) => (
@@ -450,12 +452,12 @@ const StrategicAnalysis = ({
           display: 'inline-flex',
           alignItems: 'center',
           borderBottom: 'none',
-          marginBottom: '0px',
+          marginBottom: '10px',
           gap: '8px',
           background: '#fff'
         }}>
           <BarChart3 size={24} style={{ color: 'blue' }} />
-          <h4>Strategic Pillars Analysis</h4>
+          <h4 style={{marginTop:'5px' }}>Strategic Pillars Analysis</h4>
         </div>
 
         {/* Add the Strategic Wheel */}
@@ -509,12 +511,12 @@ const StrategicAnalysis = ({
           display: 'inline-flex',
           alignItems: 'center',
           borderBottom: 'none',
-          marginBottom: '0px',
+          marginBottom: '10px',
           gap: '8px',
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
-          <h4>Strategic Goals ({goals.year})</h4>
+          <h4 style={{ marginTop:'5px' }}>Strategic Goals ({goals.year})</h4>
         </div>
 
         {/* Overall Progress Summary */}
@@ -580,7 +582,7 @@ const StrategicAnalysis = ({
         </div>
 
         {/* Objectives Table */}
-        <div className="table-container">
+        <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px' }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -692,7 +694,7 @@ const StrategicAnalysis = ({
 
         {/* Quarterly Milestones */}
         {goals.quarterly_milestones && goals.quarterly_milestones.length > 0 && (
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '30px' }}>
             <h3 style={{
               margin: '0 0 15px 0',
               fontSize: '16px',
@@ -705,7 +707,7 @@ const StrategicAnalysis = ({
               Quarterly Milestones
             </h3>
 
-            <div className="table-container">
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px'}}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -868,61 +870,69 @@ const StrategicAnalysis = ({
           display: 'inline-flex',
           alignItems: 'center', borderBottom: 'none',
           gap: '8px',
+          marginBottom:'10px',
           background: '#fff'
         }}>
           <Calendar size={24} style={{ color: 'blue' }} />
-          <h4>Implementation Roadmap</h4>
+          <h4 style={{ marginTop:'5px' }} >Implementation Roadmap</h4>
         </div>
 
         {/* Gantt Chart Visualization */}
         <div style={{
-          backgroundColor: '#f9fafb',
-          padding: '20px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
-            Timeline Overview ({Math.ceil(totalTimeline)} months)
-          </h3>
+  backgroundColor: '#f9fafb',
+  padding: '20px',
+  borderRadius: '8px',
+  marginBottom: '20px',
+  border: '1px solid #e5e7eb',
+}}>
+  <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
+    Timeline Overview ({Math.ceil(totalTimeline)} months)
+  </h3>
 
-          {renderTimelineHeader()}
+  <div style={{ overflowX: 'auto' }}>
+    <div style={{ minWidth: '700px' }}>
+      {renderTimelineHeader()}
 
-          <div style={{ position: 'relative', minHeight: `${phasesWithTimeline.length * 35}px` }}>
-            {phasesWithTimeline.map(({ key, phase, startMonth, duration }, index) => (
-              <div key={key} style={{
-                position: 'relative',
-                height: '30px',
-                marginBottom: '5px',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <div style={{
-                  width: '120px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  marginRight: '10px',
-                  textAlign: 'right'
-                }}>
-                  {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </div>
-                <div style={{
-                  flex: 1,
-                  position: 'relative',
-                  height: '25px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '4px'
-                }}>
-                  {renderGanttBar(startMonth, duration, index)}
-                </div>
-              </div>
-            ))}
+      <div style={{ position: 'relative', minHeight: `${phasesWithTimeline.length * 35}px` }}>
+        {phasesWithTimeline.map(({ key, phase, startMonth, duration }, index) => (
+          <div key={key} style={{
+            position: 'relative',
+            height: '30px',
+            marginBottom: '5px',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              width: '120px',
+              fontSize: '12px',
+              fontWeight: '500',
+              marginRight: '10px',
+              textAlign: 'right'
+            }}>
+              {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </div>
+            <div style={{
+              flex: 1,
+              position: 'relative',
+              height: '25px',
+              backgroundColor: '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '4px',
+              minWidth: '600px' 
+            }}>
+              {renderGanttBar(startMonth, duration, index)}
+            </div>
           </div>
-        </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
         {/* Detailed Table */}
-        <div className="table-container">
+        <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px' }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -1002,7 +1012,7 @@ const StrategicAnalysis = ({
           display: 'inline-flex',
           alignItems: 'center',
           borderBottom: 'none',
-          marginBottom: '0px',
+          marginBottom: '10px',
           gap: '8px',
           background: '#fff'
         }}>
@@ -1065,7 +1075,7 @@ const StrategicAnalysis = ({
               Review Cycles
             </h3>
 
-            <div className="table-container">
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px', marginBottom:'20px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -1104,7 +1114,7 @@ const StrategicAnalysis = ({
               Feedback Loops
             </h3>
 
-            <div className="table-container">
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
