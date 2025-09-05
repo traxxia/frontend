@@ -304,6 +304,7 @@ const QuestionManagement = ({ onToast }) => {
             </div>
 
             {!isCollapsed && (
+              <div style={{ overflowX: "auto" }}>
               <table className="questions-table">
                 <thead>
                   <tr className="questions-table__header">
@@ -354,6 +355,7 @@ const QuestionManagement = ({ onToast }) => {
                   )}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         );

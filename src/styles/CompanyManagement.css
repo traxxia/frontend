@@ -927,3 +927,16 @@ body.modal-open {
     height: 24px;
   }
 }
+
+
+
+
+
+
+
+
+@media (max-width: 1024px) { 
+  h2 {
+    text-align: center; 
+  }
+}

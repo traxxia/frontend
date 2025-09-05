@@ -4413,3 +4413,70 @@
   color: #6b7280;
   display: inline;
 }
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 768px) {
+  .search-container-row {
+    display: flex;
+    flex-direction: column; 
+    gap: 1px; 
+    align-items: center; 
+  }
+
+  .compact-search,
+  .company-filter-container {
+    width: 100%;
+    max-width: 400px; 
+  }
+
+  .compact-search input {
+    width: 100%; 
+  }
+
+  .company-filter-container {
+    text-align: center; 
+  }
+
+  .company-filter-select {
+    display: inline-block; 
+    width: 80%; 
+    max-width: 300px;
+  }
+
+    .pagination {
+    flex-wrap: wrap;
+    justify-content: center; 
+    gap: 4px; 
+  }
+
+  .pagination-numbers {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    gap: 4px;
+    margin: 4px 0;
+  }
+
+  .pagination-btn {
+    flex: 1 1 auto; 
+    min-width: 80px; 
+    font-size: 14px; 
+    padding: 4px 8px;
+  }
+
+  .pagination-number {
+    min-width: 32px; 
+    font-size: 14px;
+    padding: 4px 6px;
+  }
+}
+
