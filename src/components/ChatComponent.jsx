@@ -698,7 +698,7 @@ const ChatComponent = ({
         });
 
         if (documentExists && !showSuccessAlert) {
-          setShowSuccessAlert(true);
+          setShowSuccessAlert(false);
           setTimeout(() => {
             setShowSuccessAlert(false);
           }, 5000);
@@ -740,99 +740,88 @@ const ChatComponent = ({
   };
 
   const moveToNextQuestion = async (updatedCompletedSet = null) => {
-    try {
-      const currentCompleted = updatedCompletedSet || completedQuestions;
-      const essentialQuestions = questions.filter(q => q.phase === 'essential');
-      const completedEssentialQuestions = essentialQuestions.filter(q => currentCompleted.has(q._id));
-      const justCompletedEssential = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
-
-      if (justCompletedEssential &&
+  try {
+    const currentCompleted = updatedCompletedSet || completedQuestions;
+    const essentialQuestions = questions.filter(q => q.phase === 'essential');
+    const completedEssentialQuestions = essentialQuestions.filter(q => currentCompleted.has(q._id));
+    const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+ 
+    if (isEssentialComplete &&
         !businessUploadDecision.upload_decision_made &&
         !hasUploadedDocument &&
+        businessUploadDecision.upload_decision !== 'pending' &&
         businessUploadDecision.upload_decision !== 'upload') {
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${getAuthToken()}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ decision: 'pending' })
-          });
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getAuthToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ decision: 'pending' })
+        });
 
-          if (response.ok) {
-            setBusinessUploadDecision({
-              upload_decision_made: false,
-              upload_decision: 'pending'
-            });
-          }
-        } catch (error) {
-          console.error('Failed to initialize upload decision:', error);
+        if (response.ok) {
+          setBusinessUploadDecision({
+            upload_decision_made: false,
+            upload_decision: 'pending'
+          });
         }
-        addMessageLocally('bot',
-          'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
-          {
-            questionId: 'upload_option',
-            phase: 'upload_decision',
-            severity: 'optional',
-            showUploadButtons: true
-          }
-        );
-        setNextQuestion(null);
-        return;
+      } catch (error) {
+        console.error('Failed to initialize upload decision:', error);
       }
-      if (businessUploadDecision.upload_decision === 'skip') {
-        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
-        if (advancedQuestions.length > 0) {
-          const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
-          if (firstAdvancedQuestion) {
-            setNextQuestion(firstAdvancedQuestion);
-            addMessageLocally('bot', firstAdvancedQuestion.question_text, {
-              questionId: firstAdvancedQuestion._id,
-              phase: firstAdvancedQuestion.phase,
-              severity: firstAdvancedQuestion.severity
-            });
-            return;
-          }
-        } else {
-          showToastMessage('All available questions completed!', 'success');
+
+      addMessageLocally('bot',
+        'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
+        {
+          questionId: 'upload_option',
+          phase: 'upload_decision',
+          severity: 'optional',
+          showUploadButtons: true
+        }
+      );
+      setNextQuestion(null);
+      return;
+    }
+ 
+    if (isEssentialComplete) {
+      const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+      if (advancedQuestions.length > 0) {
+        const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
+        if (firstAdvancedQuestion) {
+          setNextQuestion(firstAdvancedQuestion);
+          addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+            questionId: firstAdvancedQuestion._id,
+            phase: firstAdvancedQuestion.phase,
+            severity: firstAdvancedQuestion.severity
+          });
           return;
         }
-      }
-
-      if (businessUploadDecision.upload_decision === 'upload' || hasUploadedDocument) {
-        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
-        if (advancedQuestions.length > 0) {
-          const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
-          if (firstAdvancedQuestion) {
-            setNextQuestion(firstAdvancedQuestion);
-            addMessageLocally('bot', firstAdvancedQuestion.question_text, {
-              questionId: firstAdvancedQuestion._id,
-              phase: firstAdvancedQuestion.phase,
-              severity: firstAdvancedQuestion.severity
-            });
-            return;
-          }
-        }
-      }
-
-      const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
-      setNextQuestion(nextQuestionCandidate);
-
-      if (nextQuestionCandidate) {
-        addMessageLocally('bot', nextQuestionCandidate.question_text, {
-          questionId: nextQuestionCandidate._id,
-          phase: nextQuestionCandidate.phase,
-          severity: nextQuestionCandidate.severity
-        });
       } else {
-        showToastMessage('🎉 All questions completed!', 'success');
+        showToastMessage('All available questions completed!', 'success');
+        return;
       }
-    } catch (error) {
-      console.error('Error in moveToNextQuestion:', error);
-      showToastMessage('Error loading next question. Please try again.', 'error');
     }
-  };
+
+    // For any other case, find the next unanswered question
+    const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
+    setNextQuestion(nextQuestionCandidate);
+
+    if (nextQuestionCandidate) {
+      addMessageLocally('bot', nextQuestionCandidate.question_text, {
+        questionId: nextQuestionCandidate._id,
+        phase: nextQuestionCandidate.phase,
+        severity: nextQuestionCandidate.severity
+      });
+    } else {
+      showToastMessage('🎉 All questions completed!', 'success');
+    }
+  } catch (error) {
+    console.error('Error in moveToNextQuestion:', error);
+    showToastMessage('Error loading next question. Please try again.', 'error');
+  }
+};
 
   const handleUploadDecision = async (decision) => {
     if (decision === 'upload') {

@@ -296,7 +296,7 @@ const LeverageRisk = ({
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No leverage & risk analysis results found. The uploaded financial document doesn't contain the required leverage ratios (debt-to-equity, interest coverage) or proper values for analysis."
+          customMessage="No leverage & risk analysis results found. The uploaded financial document doesn't contain the required leverage ratios (Total Debt, Shareholder Equity, Interest Expense, Operating Income) or proper values for analysis."
         />
       );
     }

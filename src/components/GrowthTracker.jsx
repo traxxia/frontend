@@ -238,7 +238,7 @@ const GrowthTracker = ({
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No growth tracker analysis results found. The uploaded financial document doesn't contain the required revenue data by time period (monthly/quarterly revenue trends) or proper values for growth analysis."
+          customMessage="No growth tracker analysis results found. The uploaded financial document doesn't contain the required growth ratios (Revenue (by time period), Historical Revenue data, Monthly/Quarterly Revenue trends) or proper values for analysis."
         />
       </div>
     );

@@ -796,11 +796,13 @@ const BusinessSetupPage = () => {
         "PESTEL Analysis"
       ],
       good: [
-        "Profitability Analysis",
-        "Growth Tracker",
-        "Liquidity & Efficiency",
-        "Investment Performance",
-        "Leverage & Risk",
+        ...(hasUploadedDocument ? [
+          "Profitability Analysis",
+          "Growth Tracker",
+          "Liquidity & Efficiency",
+          "Investment Performance",
+          "Leverage & Risk"
+        ] : []),
         "Full SWOT Portfolio",
         "Competitive Advantage",
         "Capability Heatmap",
@@ -813,11 +815,13 @@ const BusinessSetupPage = () => {
         "PESTEL Analysis"
       ],
       advanced: [
-        "Profitability Analysis",
-        "Growth Tracker",
-        "Liquidity & Efficiency",
-        "Investment Performance",
-        "Leverage & Risk",
+        ...(hasUploadedDocument ? [
+          "Profitability Analysis",
+          "Growth Tracker",
+          "Liquidity & Efficiency",
+          "Investment Performance",
+          "Leverage & Risk"
+        ] : []),
         "Full SWOT Portfolio",
         "Competitive Advantage",
         "Capability Heatmap",

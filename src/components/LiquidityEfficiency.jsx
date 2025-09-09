@@ -332,7 +332,7 @@ const LiquidityEfficiency = ({
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No liquidity & efficiency analysis results found. The uploaded financial document doesn't contain the required liquidity ratios (current ratio, quick ratio, cash conversion cycle) or proper values for analysis."
+          customMessage="No liquidity & efficiency analysis results found. The uploaded financial document doesn't contain the required liquidity ratios (Current Assets, Current Liabilities, Cash, Inventory) or proper values for analysis."
         />
       );
     }

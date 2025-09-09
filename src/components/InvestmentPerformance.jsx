@@ -303,7 +303,7 @@ const InvestmentPerformance = ({
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No investment performance analysis results found. The uploaded financial document doesn't contain the required investment metrics (ROA, ROE, ROIC) or proper values for analysis."
+          customMessage="No investment performance analysis results found. The uploaded financial document doesn't contain the required investment metrics (Total Assets, Shareholder Equity, Net Income, Operating Income) or proper values for analysis."
         />
       );
     }

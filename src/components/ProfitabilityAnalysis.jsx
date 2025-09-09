@@ -311,7 +311,7 @@ const ProfitabilityAnalysis = ({
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No profitability analysis results found. The uploaded financial document doesn't contain the required profitability metrics or proper values for analysis."
+          customMessage="No profitability analysis results found. The uploaded financial document doesn't contain the required profitability ratios(Revenue, Cost of Goods Sold, EBITDA, Net Income, Operating Income, Operating Expenses, Gross Profit) or proper values for analysis."
         />
       );
     }
