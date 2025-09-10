@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertTriangle, Loader, Shield, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css'; 
+import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
@@ -17,7 +17,11 @@ const LeverageRisk = ({
   leverageData = null,
   selectedBusinessId,
   onRedirectToBrief,
-  uploadedFile = null
+  uploadedFile = null,
+  onRedirectToChat,
+  isMobile,
+  setActiveTab,
+  hasUploadedDocument = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(leverageData);
   const [error, setError] = useState(null);
@@ -54,24 +58,24 @@ const LeverageRisk = ({
     if (!data || !data.leverage) {
       return true;
     }
-    
+
     const leverageMetrics = data.leverage;
-    
+
     if (!leverageMetrics || typeof leverageMetrics !== 'object') {
       return true;
     }
-     
+
     const hasValidMetric = Object.entries(leverageMetrics).some(([key, value]) => {
       if (key.includes('_threshold') || key.includes('threshold')) {
         return false;
       }
-      const isValid = value !== null && 
+      const isValid = value !== null &&
         value !== undefined &&
         value !== '' &&
-        !isNaN(parseFloat(value)); 
+        !isNaN(parseFloat(value));
       return isValid;
     });
-     
+
     return !hasValidMetric;
   };
 
@@ -95,14 +99,14 @@ const LeverageRisk = ({
     if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
       return '#6b7280'; // Gray for NA
     }
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
     const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
-    
+
     if (isNaN(numValue) || isNaN(numThreshold)) {
       return '#6b7280'; // Gray for invalid values
     }
-    
+
     // Interest Coverage - higher is better
     if (metricType === 'Interest Coverage') {
       if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
@@ -119,7 +123,7 @@ const LeverageRisk = ({
   // Helper function to render traffic light indicator with text
   const TrafficLightIndicator = ({ value, threshold, metricType, displayValue }) => {
     const color = getTrafficLightColor(value, threshold, metricType);
-    
+
     return (
       <div style={{
         display: 'flex',
@@ -149,7 +153,7 @@ const LeverageRisk = ({
     if (leverageData && leverageData !== analysisData) {
       setAnalysisData(leverageData);
       setError(null);
-      
+
       if (onDataGenerated) {
         onDataGenerated(leverageData);
       }
@@ -195,27 +199,27 @@ const LeverageRisk = ({
 
   const formatRatio = (value, type) => {
     if (value === null || value === undefined || value === '') return null;
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
+
     if (isNaN(numValue)) return null;
-    
+
     return numValue.toFixed(3);
   };
 
   const formatThreshold = (threshold) => {
     if (!threshold || threshold === 'NA') return 'NA';
-    
+
     if (typeof threshold === 'string') {
       const numValue = parseFloat(threshold);
       if (isNaN(numValue)) return 'NA';
       return numValue.toFixed(1);
     }
-    
+
     if (typeof threshold === 'number') {
       return threshold.toFixed(1);
     }
-    
+
     return 'NA';
   };
 
@@ -294,6 +298,10 @@ const LeverageRisk = ({
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No leverage & risk analysis results found. The uploaded financial document doesn't contain the required leverage ratios (Total Debt, Shareholder Equity, Interest Expense, Operating Income) or proper values for analysis."
@@ -318,6 +326,10 @@ const LeverageRisk = ({
           showFileUpload={true}
           onFileUpload={handleFileUpload}
           uploadedFile={uploadedFile}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
@@ -330,7 +342,7 @@ const LeverageRisk = ({
     // Show normal analysis content
     return (
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll"> 
+        <div className="ch-heatmap-scroll">
 
           {allMetricsNull && (
             <div className="leverage-risk__warning">
@@ -360,7 +372,7 @@ const LeverageRisk = ({
                 const isNull = value === null || value === undefined || value === '';
                 const threshold = thresholds[key];
                 const formattedThreshold = formatThreshold(threshold);
-                
+
                 return (
                   <tr key={key}>
                     <td><strong>{key}</strong></td>
@@ -368,9 +380,9 @@ const LeverageRisk = ({
                       {isNull ? (
                         <span style={{ color: '#6b7280' }}>No Data</span>
                       ) : (
-                        <TrafficLightIndicator 
-                          value={value} 
-                          threshold={threshold} 
+                        <TrafficLightIndicator
+                          value={value}
+                          threshold={threshold}
                           metricType={key}
                           displayValue={formattedValue}
                         />
@@ -391,8 +403,8 @@ const LeverageRisk = ({
 
   // Main component structure
   return (
-    <div 
-      className="leverage-risk" 
+    <div
+      className="leverage-risk"
       data-analysis-type="leverage-risk"
       data-analysis-name="Leverage & Risk"
       data-analysis-order="5"

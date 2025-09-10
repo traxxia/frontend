@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Activity, Loader, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css'; 
+import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
@@ -16,8 +16,11 @@ const LiquidityEfficiency = ({
   canRegenerate = true,
   liquidityData = null,
   selectedBusinessId,
-  onRedirectToBrief,
-  uploadedFile = null
+  onRedirectToBrief, uploadedFile = null,
+  onRedirectToChat,
+  isMobile,
+  setActiveTab,
+  hasUploadedDocument = false
 }) => {
   const [analysisData, setAnalysisData] = useState(liquidityData);
   const [error, setError] = useState(null);
@@ -52,9 +55,9 @@ const LiquidityEfficiency = ({
 
   const isLiquidityDataIncomplete = (data) => {
     if (!data) return true;
-    
+
     let liquidityMetrics = null;
-    
+
     if (data.liquidity) {
       liquidityMetrics = data.liquidity;
     } else if (data['Liquidity & Efficiency']) {
@@ -68,20 +71,20 @@ const LiquidityEfficiency = ({
     } else if (data && typeof data === 'object') {
       liquidityMetrics = data;
     }
-    
+
     if (!liquidityMetrics || typeof liquidityMetrics !== 'object') {
       return true;
     }
-    
+
     const hasValidRatio = Object.entries(liquidityMetrics).some(([key, value]) => {
       if (key.includes('_threshold') || key.includes('threshold')) {
         return false;
       }
-      return value !== null && 
-             value !== undefined &&
-             !isNaN(parseFloat(value));
+      return value !== null &&
+        value !== undefined &&
+        !isNaN(parseFloat(value));
     });
-    
+
     return !hasValidRatio;
   };
 
@@ -104,14 +107,14 @@ const LiquidityEfficiency = ({
     if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
       return '#6b7280'; // Gray for NA
     }
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
     const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
-    
+
     if (isNaN(numValue) || isNaN(numThreshold)) {
       return '#6b7280'; // Gray for invalid values
     }
-    
+
     // Cash Conversion Cycle - lower is better
     if (metricType === 'Cash Conversion Cycle') {
       if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
@@ -128,7 +131,7 @@ const LiquidityEfficiency = ({
   // Helper function to render traffic light indicator with text
   const TrafficLightIndicator = ({ value, threshold, metricType, displayValue }) => {
     const color = getTrafficLightColor(value, threshold, metricType);
-    
+
     return (
       <div style={{
         display: 'flex',
@@ -158,7 +161,7 @@ const LiquidityEfficiency = ({
     if (liquidityData && liquidityData !== analysisData) {
       setAnalysisData(liquidityData);
       setError(null);
-      
+
       if (onDataGenerated) {
         onDataGenerated(liquidityData);
       }
@@ -204,11 +207,11 @@ const LiquidityEfficiency = ({
 
   const formatRatio = (value, type) => {
     if (value === null || value === undefined || value === '') return null;
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
+
     if (isNaN(numValue)) return null;
-    
+
     if (type === 'Cash Conversion Cycle') {
       return `${numValue.toFixed(0)} days`;
     }
@@ -217,7 +220,7 @@ const LiquidityEfficiency = ({
 
   const formatThreshold = (threshold, type) => {
     if (!threshold || threshold === 'NA') return 'NA';
-    
+
     if (typeof threshold === 'string') {
       const numValue = parseFloat(threshold);
       if (isNaN(numValue)) return 'NA';
@@ -226,20 +229,20 @@ const LiquidityEfficiency = ({
       }
       return numValue.toFixed(1);
     }
-    
+
     if (typeof threshold === 'number') {
       if (type === 'Cash Conversion Cycle') {
         return `${threshold.toFixed(0)} days`;
       }
       return threshold.toFixed(1);
     }
-    
+
     return 'NA';
   };
 
   const extractLiquidityMetrics = (data) => {
     let liquidityMetrics = null;
-    
+
     const possiblePaths = [
       { path: 'liquidity', data: data.liquidity },
       { path: 'Liquidity & Efficiency', data: data['Liquidity & Efficiency'] },
@@ -259,7 +262,7 @@ const LiquidityEfficiency = ({
     if (liquidityMetrics) {
       const transformedMetrics = {};
       const thresholds = {};
-      
+
       const keyMappings = {
         'current_ratio': 'Current Ratio',
         'quick_ratio': 'Quick Ratio',
@@ -329,6 +332,10 @@ const LiquidityEfficiency = ({
           onFileUpload={handleFileUpload}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
@@ -354,6 +361,10 @@ const LiquidityEfficiency = ({
           showFileUpload={true}
           onFileUpload={handleFileUpload}
           uploadedFile={uploadedFile}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
@@ -366,7 +377,7 @@ const LiquidityEfficiency = ({
     // Show normal analysis content
     return (
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll"> 
+        <div className="ch-heatmap-scroll">
 
           {allMetricsNull && (
             <div className="liquidity-efficiency__warning">
@@ -396,7 +407,7 @@ const LiquidityEfficiency = ({
                 const isNull = value === null || value === undefined || value === '';
                 const threshold = thresholds[key];
                 const formattedThreshold = formatThreshold(threshold, key);
-                
+
                 return (
                   <tr key={key}>
                     <td><strong>{key}</strong></td>
@@ -404,9 +415,9 @@ const LiquidityEfficiency = ({
                       {isNull ? (
                         <span style={{ color: '#6b7280' }}>No Data</span>
                       ) : (
-                        <TrafficLightIndicator 
-                          value={value} 
-                          threshold={threshold} 
+                        <TrafficLightIndicator
+                          value={value}
+                          threshold={threshold}
                           metricType={key}
                           displayValue={formattedValue}
                         />
@@ -427,8 +438,8 @@ const LiquidityEfficiency = ({
 
   // Main component structure
   return (
-    <div 
-      className="liquidity-efficiency" 
+    <div
+      className="liquidity-efficiency"
       data-analysis-type="liquidity-efficiency"
       data-analysis-name="Liquidity & Efficiency"
       data-analysis-order="3"

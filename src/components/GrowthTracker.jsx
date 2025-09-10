@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Loader, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css'; 
+import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
@@ -19,6 +19,10 @@ const GrowthTracker = ({
   selectedBusinessId,
   onRedirectToBrief,
   uploadedFile = null,
+  onRedirectToChat,
+  isMobile,
+  setActiveTab,
+  hasUploadedDocument = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(growthData);
   const [error, setError] = useState(null);
@@ -59,7 +63,7 @@ const GrowthTracker = ({
     if (!data) return true;
     // Check if revenue data exists - actual API structure: growth_trends.revenue.values
     const hasRevenueData = data.growth_trends?.revenue?.values && Object.keys(data.growth_trends.revenue.values).length > 0;
-     
+
     return !hasRevenueData;
   };
 
@@ -79,11 +83,11 @@ const GrowthTracker = ({
   };
 
   // Fixed useEffect pattern - same as ProfitabilityAnalysis
-  useEffect(() => { 
-    if (growthData && growthData !== analysisData) { 
+  useEffect(() => {
+    if (growthData && growthData !== analysisData) {
       setAnalysisData(growthData);
       setError(null);
-      
+
       if (onDataGenerated) {
         onDataGenerated(growthData);
       }
@@ -127,12 +131,12 @@ const GrowthTracker = ({
     }
   };
 
-  const prepareChartData = (revenueData) => { 
+  const prepareChartData = (revenueData) => {
     if (!revenueData || !revenueData.values) return [];
-    
-    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 
-                       'July', 'August', 'September', 'October', 'November', 'December'];
-    
+
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+
     const chartData = monthOrder.map(month => {
       const revenue = revenueData.values[month] || 0;
       return {
@@ -140,7 +144,7 @@ const GrowthTracker = ({
         revenue: revenue,
         period: monthOrder.indexOf(month) + 1
       };
-    }).filter(item => item.revenue > 0);    
+    }).filter(item => item.revenue > 0);
     return chartData;
   };
 
@@ -153,9 +157,9 @@ const GrowthTracker = ({
     const revenueValues = Object.values(data.growth_trends.revenue.values);
     const totalRevenue = revenueValues.reduce((sum, val) => sum + val, 0);
     const avgMonthlyRevenue = totalRevenue / revenueValues.length;
-    
+
     const bestMonth = Object.entries(data.growth_trends.revenue.values)
-      .reduce((max, [month, revenue]) => revenue > max.revenue ? {month, revenue} : max, {month: 'N/A', revenue: 0});
+      .reduce((max, [month, revenue]) => revenue > max.revenue ? { month, revenue } : max, { month: 'N/A', revenue: 0 });
 
     const metrics = {
       totalRevenue,
@@ -251,6 +255,10 @@ const GrowthTracker = ({
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           isUploading={false}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No growth tracker analysis results found. The uploaded financial document doesn't contain the required growth ratios (Revenue (by time period), Historical Revenue data, Monthly/Quarterly Revenue trends) or proper values for analysis."
@@ -260,8 +268,8 @@ const GrowthTracker = ({
 
     // Show normal analysis content
     const { chartData, metrics } = extractGrowthMetrics(analysisData);
-    
-    if (!chartData || chartData.length === 0) { 
+
+    if (!chartData || chartData.length === 0) {
       return (
         <FinancialEmptyState
           analysisType="growthTracker"
@@ -277,6 +285,10 @@ const GrowthTracker = ({
           onFileUpload={handleFileUpload}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
         />
@@ -285,7 +297,7 @@ const GrowthTracker = ({
 
     return (
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll"> 
+        <div className="ch-heatmap-scroll">
 
           {chartData.length === 0 && (
             <div className="profitability-warning">
@@ -316,13 +328,13 @@ const GrowthTracker = ({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              
+
               {/* QoQ Growth Indicators */}
               {analysisData?.growth_trends?.revenue?.qoq_growth && (
                 <div className="qoq-indicators">
                   {Object.entries(analysisData.growth_trends.revenue.qoq_growth).map(([quarter, growth]) => (
-                    <div 
-                      key={quarter} 
+                    <div
+                      key={quarter}
                       className={`qoq-badge ${growth === null ? 'neutral' : growth >= 0 ? 'positive' : 'negative'}`}
                     >
                       {quarter}: {growth === null ? 'N/A' : formatPercentage(growth)}
@@ -336,7 +348,7 @@ const GrowthTracker = ({
           {/* Simple Revenue Insights */}
           <div className="growth-insights">
             <h4>Revenue Insights</h4>
-            
+
             <div className="growth-insights-grid">
               <div className="growth-insight-item">
                 <strong>Total Revenue:</strong>
@@ -364,10 +376,10 @@ const GrowthTracker = ({
   };
 
   return (
-    <div className="channel-heatmap channel-heatmap-container" 
-         data-analysis-type="growth-tracker"
-         data-analysis-name="Growth Tracker"
-         data-analysis-order="2">
+    <div className="channel-heatmap channel-heatmap-container"
+      data-analysis-type="growth-tracker"
+      data-analysis-name="Growth Tracker"
+      data-analysis-order="2">
 
       {renderContent()}
     </div>

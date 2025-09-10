@@ -14,40 +14,30 @@ const ChatComponent = ({
   onPhaseCompleted,
   onFileUploaded
 }) => {
-  // Core state
   const [currentInput, setCurrentInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [completedQuestions, setCompletedQuestions] = useState(new Set());
   const [nextQuestion, setNextQuestion] = useState(null);
-
-  // Follow-up state
   const [pendingValidation, setPendingValidation] = useState(null);
   const [followupAttempts, setFollowupAttempts] = useState(0);
-
-  // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidatingAnswer, setIsValidatingAnswer] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  // File upload states
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
-
-  // Toast state
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
-
   const { t } = useTranslation();
   const messagesEndRef = useRef(null);
   const hasInitialized = useRef(false);
   const processingAnswer = useRef(false);
   const fileInputRef = useRef(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-
-  // API configuration
+  const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -56,32 +46,36 @@ const ChatComponent = ({
     upload_decision_made: false,
     upload_decision: null
   });
-  // Initialize component
+
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
     loadQuestionsAndConversations();
   }, [selectedBusinessId]);
 
-  // Auto-scroll to bottom
+  useEffect(() => {
+    if (uploadedFileForAnalysis) {
+      setUploadedFileInfo({
+        name: uploadedFileForAnalysis.name || 'Financial Document',
+        size: uploadedFileForAnalysis.size,
+        uploadDate: new Date().toLocaleDateString()
+      });
+    }
+  }, [uploadedFileForAnalysis]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
   useEffect(() => {
-    // Only run this effect after businessUploadDecision is loaded and we have questions
     if (questions.length > 0 && completedQuestions.size > 0) {
       const essentialQuestions = questions.filter(q => q.phase === 'essential');
       const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
       const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
-
-      // If essential is complete and we haven't made an upload decision AND no document has been uploaded
       if (isEssentialComplete &&
         !businessUploadDecision.upload_decision_made &&
         !hasUploadedDocument &&
-        !nextQuestion &&
-        businessUploadDecision.upload_decision !== 'upload') { // Add this check
-
-        // Check if upload decision message is already shown
+        !nextQuestion) {
         const hasUploadDecisionMessage = messages.some(msg => msg.questionId === 'upload_option');
         if (!hasUploadDecisionMessage) {
           addMessageLocally('bot',
@@ -98,13 +92,15 @@ const ChatComponent = ({
     }
   }, [questions, completedQuestions, businessUploadDecision, hasUploadedDocument, nextQuestion, messages]);
 
-  // Check if user is in good phase
+  const handleFileReplace = () => {
+    setShowTemplatesPopup(true);
+  };
+
   const isInGoodPhase = () => {
     if (!nextQuestion) return false;
     return nextQuestion.phase === 'good';
   };
 
-  // Check if good phase is unlocked (user has completed essential phase)
   const isGoodPhaseUnlocked = () => {
     const essentialQuestions = questions.filter(q => q.phase === 'essential');
     const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
@@ -133,23 +129,17 @@ const ChatComponent = ({
     try {
       setIsFileUploading(true);
       setIsValidating(true);
-
-      // Use the new detection method
       const detection = await detectTemplateType(file);
-
       if (detection.confidence === 'none' || detection.score < 0.3) {
         const errorMessage = `Unable to identify template type. Please ensure your file is based on one of our template files.`;
         throw new Error(errorMessage);
       }
-
       const validation = await validateAgainstTemplate(file, detection.type);
-
       if (!validation.isValid) {
         let errorMessage = `Your file doesn't match the ${validation.templateName} format:\n\n`;
         validation.errors.forEach(error => errorMessage += `• ${error}\n`);
         throw new Error(errorMessage);
       }
-
       const validationResult = {
         templateType: detection.type,
         templateName: validation.templateName,
@@ -157,7 +147,6 @@ const ChatComponent = ({
         confidence: detection.confidence,
         uploadMode: 'auto-detect'
       };
-
       setIsValidating(false);
       const dbResult = await saveFileToDatabase(file, validationResult);
       setUploadedFileForAnalysis(file);
@@ -185,10 +174,13 @@ const ChatComponent = ({
       }
     }
   };
+
   const loadQuestionsAndConversations = async () => {
     try {
       setIsLoading(true);
       const token = getAuthToken();
+
+      // Load questions first
       const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -203,7 +195,8 @@ const ChatComponent = ({
 
       setQuestions(availableQuestions);
       onQuestionsLoaded?.(availableQuestions);
-      await checkExistingDocument();
+
+      // Single API call for conversations (which includes document info)
       const conversationUrl = `${API_BASE_URL}/api/conversations${selectedBusinessId ? `?business_id=${selectedBusinessId}` : ''}`;
 
       const conversationsResponse = await fetch(conversationUrl, {
@@ -215,24 +208,62 @@ const ChatComponent = ({
 
       if (conversationsResponse.ok) {
         const conversationsData = await conversationsResponse.json();
+
+        // Handle document info from the conversations API response
+        const documentExists = conversationsData.document_info?.has_document === true;
+        setHasUploadedDocument(documentExists);
+
+        if (documentExists && conversationsData.document_info) {
+          setUploadedFileInfo({
+            name: conversationsData.document_info.filename || 'Financial Document',
+            size: conversationsData.document_info.file_size || 0,
+            uploadDate: conversationsData.document_info.upload_date ?
+              new Date(conversationsData.document_info.upload_date).toLocaleDateString() :
+              'Previously uploaded'
+          });
+        } else {
+          setUploadedFileInfo(null);
+        }
+
+        // Handle business info
+        const businessInfo = conversationsData.business_info;
+        if (businessInfo) {
+          const uploadDecisionMade = businessInfo.upload_decision_made === true;
+          const uploadDecision = businessInfo.upload_decision || null;
+
+          setBusinessUploadDecision({
+            upload_decision_made: uploadDecisionMade,
+            upload_decision: uploadDecision
+          });
+        } else {
+          setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+        }
+
         if (conversationsData.conversations?.length > 0) {
           processConversationsData(conversationsData, availableQuestions);
         } else {
           startFreshConversation(availableQuestions);
         }
       } else {
+        // Reset states if API call fails
+        setHasUploadedDocument(false);
+        setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+        setUploadedFileInfo(null);
         startFreshConversation(availableQuestions);
       }
 
     } catch (error) {
       console.error('Error loading data:', error);
       showToastMessage('Error loading data. Please refresh the page.', 'error');
+      // Reset states on error
+      setHasUploadedDocument(false);
+      setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+      setUploadedFileInfo(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Start fresh conversation with first question
   const startFreshConversation = (availableQuestions) => {
     const firstQuestion = findNextUnansweredQuestion(availableQuestions, new Set());
     if (firstQuestion) {
@@ -246,32 +277,26 @@ const ChatComponent = ({
   };
 
   const processConversationsData = (conversationsData, availableQuestions) => {
-    const chatMessages = [];
+    const initialMessages = [];
+    const essentialMessages = [];
+    const advancedMessages = [];
     const completedQuestionIds = new Set();
     const askedQuestions = new Set();
-
-    // Create question lookup map
     const questionMap = availableQuestions.reduce((map, q) => {
       map[q._id] = q;
       return map;
     }, {});
-
-    // Process each conversation
     conversationsData.conversations.forEach((conversation) => {
       const questionId = conversation.question_id;
       const question = questionMap[questionId];
 
       if (!question) return;
 
-      // Track completed and skipped questions
       if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
         completedQuestionIds.add(questionId);
-
-        // Handle skipped questions
         if (conversation.completion_status === 'skipped') {
           onNewAnswer?.(questionId, '[Question Skipped]');
         } else {
-          // Get all answers for completed questions and concatenate them
           const allAnswers = conversation.conversation_flow
             .filter(item => item.type === 'answer')
             .map(a => a.text.trim())
@@ -283,36 +308,47 @@ const ChatComponent = ({
           }
         }
       }
-
-      // Add main question if there are interactions or if it's skipped
+      let messagesArray;
+      switch (question.phase) {
+        case 'initial':
+          messagesArray = initialMessages;
+          break;
+        case 'essential':
+          messagesArray = essentialMessages;
+          break;
+        case 'advanced':
+          messagesArray = advancedMessages;
+          break;
+        default:
+          messagesArray = advancedMessages;
+      }
       if (conversation.conversation_flow.length > 0 || conversation.is_skipped) {
-        chatMessages.push({
+        messagesArray.push({
           id: `${questionId}_main_question`,
           type: 'bot',
           text: question.question_text,
           timestamp: new Date(conversation.conversation_flow[0]?.timestamp || new Date()),
           questionId: questionId,
-          phase: conversation.phase,
+          phase: question.phase,
+          order: question.order,
           isFollowUp: false
         });
         askedQuestions.add(questionId);
 
-        // If question is skipped, add the skip message
         if (conversation.is_skipped) {
-          chatMessages.push({
+          messagesArray.push({
             id: `${questionId}_skipped`,
             type: 'user',
             text: '[Question Skipped]',
             timestamp: new Date(conversation.last_updated || new Date()),
             questionId: questionId,
-            phase: conversation.phase,
+            phase: question.phase,
+            order: question.order + 0.1,
             isFollowUp: false,
             isSkipped: true
           });
         }
       }
-
-      // Process conversation flow for non-skipped questions
       if (!conversation.is_skipped) {
         let followupQuestionCount = 0;
 
@@ -320,93 +356,125 @@ const ChatComponent = ({
           const messageId = `${questionId}_${interaction.timestamp}_${index}`;
 
           if (interaction.type === 'question') {
-            // Follow-up question
             followupQuestionCount++;
-            chatMessages.push({
+            messagesArray.push({
               id: messageId,
               type: 'bot',
               text: interaction.text,
               timestamp: new Date(interaction.timestamp),
               questionId: questionId,
-              phase: conversation.phase,
+              phase: question.phase,
+              order: question.order + 0.3 + (followupQuestionCount * 0.1),
               isFollowUp: true
             });
           } else if (interaction.type === 'answer') {
-            // Answer (main or follow-up)
             const isFollowupAnswer = followupQuestionCount > 0;
-
-            chatMessages.push({
+            messagesArray.push({
               id: messageId,
               type: 'user',
               text: interaction.text,
               timestamp: new Date(interaction.timestamp),
               questionId: questionId,
-              phase: conversation.phase,
+              phase: question.phase,
+              order: question.order + 0.2 + (followupQuestionCount * 0.1),
               isFollowUp: isFollowupAnswer
             });
           }
         });
       }
     });
-
-    // Sort messages chronologically and update state
-    chatMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    setMessages(chatMessages);
-    setCompletedQuestions(completedQuestionIds);
-
-    // Check if essential phase is complete
+    initialMessages.sort((a, b) => a.order - b.order);
+    essentialMessages.sort((a, b) => a.order - b.order);
+    advancedMessages.sort((a, b) => a.order - b.order);
     const essentialQuestions = availableQuestions.filter(q => q.phase === 'essential');
     const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestionIds.has(q._id));
     const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+    const businessInfo = conversationsData.business_info;
+    const uploadDecisionMade = businessInfo?.upload_decision_made === true;
+    const uploadDecision = businessInfo?.upload_decision || null;
+    const hasDocument = conversationsData.document_info?.has_document === true;
+    if (businessInfo) {
+      setBusinessUploadDecision({
+        upload_decision_made: uploadDecisionMade,
+        upload_decision: uploadDecision
+      });
+    }
 
-    // Determine current state
-    const lastConversation = conversationsData.conversations
-      .filter(conv => conv.conversation_flow.length > 0 || conv.is_skipped)
-      .sort((a, b) => new Date(b.last_updated || b.created_at) - new Date(a.last_updated || a.created_at))[0];
+    if (hasDocument) {
+      setHasUploadedDocument(true);
+      if (conversationsData.document_info) {
+        setUploadedFileInfo({
+          name: conversationsData.document_info.filename || 'Financial Document',
+          size: conversationsData.document_info.file_size || 0,
+          uploadDate: conversationsData.document_info.upload_date ?
+            new Date(conversationsData.document_info.upload_date).toLocaleDateString() :
+            'Previously uploaded'
+        });
+      }
+    } else {
+      setHasUploadedDocument(false);
+      setUploadedFileInfo(null);
+    }
+    let finalMessages = [];
+    finalMessages = [...finalMessages, ...initialMessages];
+    finalMessages = [...finalMessages, ...essentialMessages];
+    const uploadDecisionMessages = [];
 
-    // Handle essential completion and upload decision logic
-    if (isEssentialComplete && !businessUploadDecision.upload_decision_made && !hasUploadedDocument) {
-      // Check if there's already an upload decision message in chat
-      const hasUploadDecisionMessage = conversationsData?.document_info?.file_content_available ? true : false;
-
-      if (!hasUploadDecisionMessage) {
-        // Add upload decision message
-        chatMessages.push({
+    if (isEssentialComplete) {
+      if (!uploadDecisionMade && !hasDocument) {
+        uploadDecisionMessages.push({
           id: 'upload_decision_message',
           type: 'bot',
           text: 'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
           timestamp: new Date(),
           questionId: 'upload_option',
           phase: 'upload_decision',
+          order: 1000,
           severity: 'optional',
           showUploadButtons: true
         });
-
-        // Update messages with the new upload decision message
-        setMessages([...chatMessages]);
-        setNextQuestion(null);
-        return;
+      } else if (uploadDecision === 'skip' && !hasDocument) {
+        uploadDecisionMessages.push({
+          id: 'upload_skipped_message',
+          type: 'bot',
+          text: 'Financial data upload skipped. You can continue with the remaining questions. If you change your mind later, you can still upload your financial data using the button below.',
+          timestamp: new Date(),
+          questionId: 'upload_skipped',
+          phase: 'upload_decision',
+          order: 1001,
+          severity: 'info',
+          showUploadButton: true
+        });
       }
     }
+    finalMessages = [...finalMessages, ...uploadDecisionMessages];
+    finalMessages = [...finalMessages, ...advancedMessages];
+    setMessages(finalMessages);
+    setCompletedQuestions(completedQuestionIds);
+    if (isEssentialComplete && !uploadDecisionMade && !hasDocument) {
+      setNextQuestion(null);
+      return;
+    }
 
-    // If essential is complete and upload decision was made or document uploaded, continue to good phase
-    if (isEssentialComplete && (businessUploadDecision.upload_decision === 'skip' || hasUploadedDocument)) {
-      const goodQuestions = availableQuestions.filter(q => q.phase === 'good');
-      if (goodQuestions.length > 0) {
-        const firstGoodQuestion = goodQuestions.find(q => !completedQuestionIds.has(q._id));
-        if (firstGoodQuestion && !askedQuestions.has(firstGoodQuestion._id)) {
-          setNextQuestion(firstGoodQuestion);
-          addMessageLocally('bot', firstGoodQuestion.question_text, {
-            questionId: firstGoodQuestion._id,
-            phase: firstGoodQuestion.phase,
-            severity: firstGoodQuestion.severity
+    if (isEssentialComplete && uploadDecisionMade) {
+      const advancedQuestions = availableQuestions.filter(q => q.phase === 'advanced');
+      if (advancedQuestions.length > 0) {
+        const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestionIds.has(q._id));
+        if (firstAdvancedQuestion && !askedQuestions.has(firstAdvancedQuestion._id)) {
+          setNextQuestion(firstAdvancedQuestion);
+          addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+            questionId: firstAdvancedQuestion._id,
+            phase: firstAdvancedQuestion.phase,
+            severity: firstAdvancedQuestion.severity
           });
           return;
         }
       }
     }
+    const lastConversation = conversationsData.conversations
+      .filter(conv => conv.conversation_flow.length > 0 || conv.is_skipped)
+      .sort((a, b) => new Date(b.last_updated || b.created_at) - new Date(a.last_updated || a.created_at))[0];
 
-    // Handle incomplete conversation state
     if (lastConversation?.completion_status === 'incomplete' && !lastConversation.is_skipped) {
       handleIncompleteConversation(lastConversation, questionMap, availableQuestions, completedQuestionIds, askedQuestions);
     } else {
@@ -414,13 +482,11 @@ const ChatComponent = ({
     }
   };
 
-  // Handle incomplete conversation state
   const handleIncompleteConversation = (lastConversation, questionMap, availableQuestions, completedQuestionIds, askedQuestions) => {
     const lastFlow = lastConversation.conversation_flow;
     const lastInteraction = lastFlow[lastFlow.length - 1];
 
     if (lastInteraction?.type === 'question' && lastInteraction.is_followup) {
-      // Resume follow-up state
       const questionId = lastConversation.question_id;
       const question = questionMap[questionId];
 
@@ -443,7 +509,6 @@ const ChatComponent = ({
     }
   };
 
-  // Show next unanswered question
   const showNextQuestion = (availableQuestions, completedQuestionIds, askedQuestions) => {
     const nextQuestion = findNextUnansweredQuestion(availableQuestions, completedQuestionIds);
     setNextQuestion(nextQuestion);
@@ -457,15 +522,12 @@ const ChatComponent = ({
     }
   };
 
-  // Find next unanswered question
   const findNextUnansweredQuestion = (availableQuestions, completedQuestionIds) => {
     const sortedQuestions = [...availableQuestions].sort((a, b) => a.order - b.order);
     return sortedQuestions.find(question => !completedQuestionIds.has(question._id));
   };
 
-  // Add message to local state
   const addMessageLocally = (type, text, metadata = {}) => {
-    // Prevent duplicates
     const isDuplicate = messages.some(msg =>
       msg.type === type &&
       msg.text === text &&
@@ -475,7 +537,6 @@ const ChatComponent = ({
     );
 
     if (isDuplicate && !metadata.isFileUpload) return null;
-
     const messageData = {
       id: `${Date.now()}_${Math.random()}`,
       type,
@@ -488,7 +549,6 @@ const ChatComponent = ({
     return messageData;
   };
 
-  // API calls
   const validateAnswerWithML = async (questionText, answerText) => {
     try {
       const response = await fetch(`${ML_API_BASE_URL}/analyze`, {
@@ -532,9 +592,7 @@ const ChatComponent = ({
       const result = await response.json();
 
       if (response.ok) {
-        // Only call onNewAnswer and onQuestionCompleted when question is complete
         if (isComplete) {
-          // Load the complete conversation to get all answers for this question
           const conversationResponse = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -547,7 +605,6 @@ const ChatComponent = ({
             const questionConversation = conversationData.conversations.find(conv => conv.question_id === questionId);
 
             if (questionConversation) {
-              // Get all answers for this question and concatenate them
               const allAnswers = questionConversation.conversation_flow
                 .filter(item => item.type === 'answer')
                 .map(a => a.text.trim())
@@ -557,11 +614,8 @@ const ChatComponent = ({
               onNewAnswer?.(questionId, concatenatedAnswer);
             }
           } else {
-            // Fallback: just use the current answer
             onNewAnswer?.(questionId, answerText);
           }
-
-          // Notify parent about completed question
           if (onQuestionCompleted) {
             await onQuestionCompleted(questionId);
           }
@@ -581,8 +635,6 @@ const ChatComponent = ({
       setIsSaving(false);
     }
   };
-
-  // Updated skip function to use the new API endpoint
   const saveSkippedQuestion = async (questionId) => {
     try {
       const token = getAuthToken();
@@ -601,7 +653,6 @@ const ChatComponent = ({
 
       const result = await response.json();
       if (response.ok) {
-        // Notify parent about skipped question
         onNewAnswer?.(questionId, '[Question Skipped]');
         if (onQuestionCompleted) {
           await onQuestionCompleted(questionId);
@@ -669,15 +720,20 @@ const ChatComponent = ({
   };
 
   const checkExistingDocument = async () => {
+    if (checkExistingDocument.isRunning) return;
+    checkExistingDocument.isRunning = true;
+
     if (!selectedBusinessId) {
       setHasUploadedDocument(false);
       setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+      setUploadedFileInfo(null);
+      checkExistingDocument.isRunning = false;
       return;
     }
 
     try {
       const token = getAuthToken();
-      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
+      const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -686,37 +742,47 @@ const ChatComponent = ({
 
       if (response.ok) {
         const result = await response.json();
-
-        const documentExists = result.has_document === true;
+        const documentExists = result.document_info?.has_document === true;
         setHasUploadedDocument(documentExists);
-        const uploadDecisionMade = result.upload_decision_made === true;
-        const uploadDecision = result.upload_decision || null;
 
-        setBusinessUploadDecision({
-          upload_decision_made: uploadDecisionMade,
-          upload_decision: uploadDecision
-        });
+        if (documentExists && result.document_info) {
+          setUploadedFileInfo({
+            name: result.document_info.filename || 'Financial Document',
+            size: result.document_info.file_size || 0,
+            uploadDate: result.document_info.upload_date ?
+              new Date(result.document_info.upload_date).toLocaleDateString() :
+              'Previously uploaded'
+          });
+        } else {
+          setUploadedFileInfo(null);
+        }
 
-        if (documentExists && !showSuccessAlert) {
-          setShowSuccessAlert(false);
-          setTimeout(() => {
-            setShowSuccessAlert(false);
-          }, 5000);
+        const businessInfo = result.business_info;
+        if (businessInfo) {
+          const uploadDecisionMade = businessInfo.upload_decision_made === true;
+          const uploadDecision = businessInfo.upload_decision || null;
+
+          setBusinessUploadDecision({
+            upload_decision_made: uploadDecisionMade,
+            upload_decision: uploadDecision
+          });
+        } else {
+          setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
         }
       } else {
         setHasUploadedDocument(false);
         setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+        setUploadedFileInfo(null);
       }
     } catch (error) {
-      console.error('Error checking existing document:', error);
+      console.error('Error in checkExistingDocument:', error);
       setHasUploadedDocument(false);
       setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
+      setUploadedFileInfo(null);
+    } finally {
+      checkExistingDocument.isRunning = false;
     }
   };
-
-  useEffect(() => {
-    checkExistingDocument();
-  }, [selectedBusinessId]);
 
   const saveFollowupQuestion = async (questionId, followupText) => {
     try {
@@ -740,18 +806,65 @@ const ChatComponent = ({
   };
 
   const moveToNextQuestion = async (updatedCompletedSet = null) => {
-  try {
-    const currentCompleted = updatedCompletedSet || completedQuestions;
-    const essentialQuestions = questions.filter(q => q.phase === 'essential');
-    const completedEssentialQuestions = essentialQuestions.filter(q => currentCompleted.has(q._id));
-    const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
- 
-    if (isEssentialComplete &&
+    try {
+      const currentCompleted = updatedCompletedSet || completedQuestions;
+      const essentialQuestions = questions.filter(q => q.phase === 'essential');
+      const completedEssentialQuestions = essentialQuestions.filter(q => currentCompleted.has(q._id));
+      const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+      if (isEssentialComplete &&
         !businessUploadDecision.upload_decision_made &&
-        !hasUploadedDocument &&
-        businessUploadDecision.upload_decision !== 'pending' &&
-        businessUploadDecision.upload_decision !== 'upload') {
-      
+        !hasUploadedDocument) {
+
+        addMessageLocally('bot',
+          'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
+          {
+            questionId: 'upload_option',
+            phase: 'upload_decision',
+            severity: 'optional',
+            showUploadButtons: true
+          }
+        );
+        setNextQuestion(null);
+        return;
+      }
+      if (isEssentialComplete) {
+        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+        if (advancedQuestions.length > 0) {
+          const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
+          if (firstAdvancedQuestion) {
+            setNextQuestion(firstAdvancedQuestion);
+            addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+              questionId: firstAdvancedQuestion._id,
+              phase: firstAdvancedQuestion.phase,
+              severity: firstAdvancedQuestion.severity
+            });
+            return;
+          }
+        } else {
+          showToastMessage('All available questions completed!', 'success');
+          return;
+        }
+      }
+      const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
+      setNextQuestion(nextQuestionCandidate);
+
+      if (nextQuestionCandidate) {
+        addMessageLocally('bot', nextQuestionCandidate.question_text, {
+          questionId: nextQuestionCandidate._id,
+          phase: nextQuestionCandidate.phase,
+          severity: nextQuestionCandidate.severity
+        });
+      } else {
+        showToastMessage('🎉 All questions completed!', 'success');
+      }
+    } catch (error) {
+      console.error('Error in moveToNextQuestion:', error);
+      showToastMessage('Error loading next question. Please try again.', 'error');
+    }
+  };
+
+  const handleUploadDecision = async (decision) => {
+    if (decision === 'upload') {
       try {
         const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
           method: 'POST',
@@ -759,73 +872,24 @@ const ChatComponent = ({
             'Authorization': `Bearer ${getAuthToken()}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ decision: 'pending' })
+          body: JSON.stringify({ decision: 'upload' })
         });
 
         if (response.ok) {
           setBusinessUploadDecision({
-            upload_decision_made: false,
-            upload_decision: 'pending'
+            upload_decision_made: true,
+            upload_decision: 'upload'
           });
+          setShowTemplatesPopup(true);
+        } else {
+          throw new Error('Failed to save upload decision');
         }
       } catch (error) {
-        console.error('Failed to initialize upload decision:', error);
-      }
-
-      addMessageLocally('bot',
-        'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
-        {
-          questionId: 'upload_option',
-          phase: 'upload_decision',
-          severity: 'optional',
-          showUploadButtons: true
-        }
-      );
-      setNextQuestion(null);
-      return;
-    }
- 
-    if (isEssentialComplete) {
-      const advancedQuestions = questions.filter(q => q.phase === 'advanced');
-      if (advancedQuestions.length > 0) {
-        const firstAdvancedQuestion = advancedQuestions.find(q => !currentCompleted.has(q._id));
-        if (firstAdvancedQuestion) {
-          setNextQuestion(firstAdvancedQuestion);
-          addMessageLocally('bot', firstAdvancedQuestion.question_text, {
-            questionId: firstAdvancedQuestion._id,
-            phase: firstAdvancedQuestion.phase,
-            severity: firstAdvancedQuestion.severity
-          });
-          return;
-        }
-      } else {
-        showToastMessage('All available questions completed!', 'success');
+        console.error('Failed to save upload decision:', error);
+        showToastMessage('Failed to save decision', 'error');
         return;
       }
-    }
 
-    // For any other case, find the next unanswered question
-    const nextQuestionCandidate = findNextUnansweredQuestion(questions, currentCompleted);
-    setNextQuestion(nextQuestionCandidate);
-
-    if (nextQuestionCandidate) {
-      addMessageLocally('bot', nextQuestionCandidate.question_text, {
-        questionId: nextQuestionCandidate._id,
-        phase: nextQuestionCandidate.phase,
-        severity: nextQuestionCandidate.severity
-      });
-    } else {
-      showToastMessage('🎉 All questions completed!', 'success');
-    }
-  } catch (error) {
-    console.error('Error in moveToNextQuestion:', error);
-    showToastMessage('Error loading next question. Please try again.', 'error');
-  }
-};
-
-  const handleUploadDecision = async (decision) => {
-    if (decision === 'upload') {
-      setShowTemplatesPopup(true);
     } else if (decision === 'skip') {
       try {
         const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
@@ -842,25 +906,35 @@ const ChatComponent = ({
             upload_decision_made: true,
             upload_decision: 'skip'
           });
-
-          const advancedQuestions = questions.filter(q => q.phase === 'advanced');
-          if (advancedQuestions.length > 0) {
-            const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
-            if (firstAdvancedQuestion) {
-              setNextQuestion(firstAdvancedQuestion);
-              addMessageLocally('bot', firstAdvancedQuestion.question_text, {
-                questionId: firstAdvancedQuestion._id,
-                phase: firstAdvancedQuestion.phase,
-                severity: firstAdvancedQuestion.severity
+          addMessageLocally('bot',
+            'Financial data upload skipped. You can continue with the remaining questions. If you change your mind later, you can still upload your financial data using the button below.',
+            {
+              questionId: 'upload_skipped',
+              phase: 'upload_decision',
+              severity: 'info',
+              showUploadButton: true
+            }
+          );
+          setTimeout(() => {
+            const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+            if (advancedQuestions.length > 0) {
+              const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestions.has(q._id));
+              if (firstAdvancedQuestion) {
+                setNextQuestion(firstAdvancedQuestion);
+                addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+                  questionId: firstAdvancedQuestion._id,
+                  phase: firstAdvancedQuestion.phase,
+                  severity: firstAdvancedQuestion.severity
+                });
+              }
+            } else {
+              addMessageLocally('bot', 'All available questions have been completed!', {
+                questionId: 'completion',
+                phase: 'complete',
+                severity: 'info'
               });
             }
-          } else {
-            addMessageLocally('bot', 'All available questions have been completed!', {
-              questionId: 'completion',
-              phase: 'complete',
-              severity: 'info'
-            });
-          }
+          }, 1000);
 
           showToastMessage('Continuing to Advanced phase questions', 'info');
         }
@@ -948,6 +1022,7 @@ const ChatComponent = ({
       setIsSkipping(false);
     }
   };
+
   const handleSubmit = async () => {
     if (!currentInput.trim() || processingAnswer.current) return;
 
@@ -1020,7 +1095,6 @@ const ChatComponent = ({
         };
 
       } else {
-        // Auto-detect logic
         const detection = await detectTemplateType(file);
 
         if (detection.confidence === 'none' || detection.score < 0.3) {
@@ -1053,23 +1127,6 @@ const ChatComponent = ({
           ...validationResult,
           dbResult: dbResult
         });
-      }
-      try {
-        await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/upload-decision`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ decision: 'upload' })
-        });
-
-        setBusinessUploadDecision({
-          upload_decision_made: true,
-          upload_decision: 'upload'
-        });
-      } catch (error) {
-        console.error('Failed to save upload decision:', error);
       }
 
       if (onPhaseCompleted) {
@@ -1260,6 +1317,64 @@ const ChatComponent = ({
     !processingAnswer.current &&
     !isFileUploading;
 
+
+  const UploadedFileCard = () => {
+    if (!uploadedFileInfo && !hasUploadedDocument) return null;
+
+    const displayInfo = uploadedFileInfo || {
+      name: 'Financial Document',
+      uploadDate: 'Previously uploaded'
+    };
+
+    return (
+      <div style={{
+        backgroundColor: '#f0f9ff',
+        border: '1px solid #0ea5e9',
+        borderRadius: '8px',
+        padding: '12px',
+        margin: '12px 0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FileText size={20} color="#0ea5e9" />
+          <div>
+            <div style={{ fontWeight: '500', color: '#0f172a' }}>
+              {displayInfo.name}
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              Uploaded: {displayInfo.uploadDate}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={handleFileReplace}
+            style={{
+              backgroundColor: '#0ea5e9',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#0284c7'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#0ea5e9'}
+          >
+            <Upload size={14} />
+            Change
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="chat-container">
       {showToast.show && (
@@ -1267,8 +1382,6 @@ const ChatComponent = ({
           {showToast.message}
         </div>
       )}
-
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -1280,78 +1393,129 @@ const ChatComponent = ({
       <div className="messages-container">
         {messages
           .filter(message => message.type !== 'system')
-          .map(message => (
-            <div key={message.id} className={`message-wrapper ${message.type}`}>
-              {message.type === 'bot' && (
-                <div className="bot-avatar">
-                  <img src="/chat-bot.png" alt="Bot Avatar" />
-                </div>
-              )}
+          .map((message, index) => {
+            const isEssentialPhaseComplete = () => {
+              const essentialQuestions = questions.filter(q => q.phase === 'essential');
+              const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
+              return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+            };
 
-              <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''}`}>
-                <div className="message-text">
-                  {message.text}
-                  {message.isSkipped && <span className="skip-indicator"></span>}
-                </div>
+            // Check if this is the last essential phase message or upload decision message
+            const shouldShowFileCardAfter = (
+              (message.phase === 'essential' || message.questionId === 'upload_option' || message.questionId === 'upload_skipped') &&
+              isEssentialPhaseComplete() &&
+              (uploadedFileInfo || hasUploadedDocument) &&
+              // Only show after the last essential/upload decision related message
+              (index === messages.length - 1 ||
+                messages[index + 1]?.phase === 'advanced' ||
+                !messages.slice(index + 1).some(m => m.phase === 'essential' || m.questionId === 'upload_option' || m.questionId === 'upload_skipped'))
+            );
 
-                {/* Add upload decision buttons */}
-                {message.showUploadButtons && !hasUploadedDocument && (
-                  <div className="upload-decision-buttons" style={{
-                    display: 'flex',
-                    gap: '12px',
-                    marginTop: '12px',
-                    flexWrap: 'wrap'
-                  }}>
-                    <button
-                      onClick={() => handleUploadDecision('upload')}
-                      disabled={isFileUploading}
-                      style={{
-                        backgroundColor: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Database size={16} />
-                      Upload Financial Data
-                    </button>
-                    <button
-                      onClick={() => handleUploadDecision('skip')}
-                      disabled={isFileUploading}
-                      style={{
-                        backgroundColor: '#6b7280',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}
-                    >
-                      Skip & Continue
-                    </button>
-                  </div>
-                )}
-
-                <div className="message-timestamp">
-                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  {message.type === 'bot' && message.phase && (
-                    <span style={{ fontStyle: 'italic' }}>
-                      - {message.phase} phase{message.isFollowUp && ' followup'}
-                    </span>
+            return (
+              <React.Fragment key={message.id}>
+                <div className={`message-wrapper ${message.type}`}>
+                  {message.type === 'bot' && (
+                    <div className="bot-avatar">
+                      <img src="/chat-bot.png" alt="Bot Avatar" />
+                    </div>
                   )}
+
+                  <div className={`message-bubble ${message.type} ${message.isFollowUp ? 'follow-up' : ''} ${message.isSkipped ? 'skipped' : ''}`}>
+                    <div className="message-text">
+                      {message.text}
+                      {message.isSkipped && <span className="skip-indicator"></span>}
+                    </div>
+
+                    {message.showUploadButtons && !hasUploadedDocument && (
+                      <div className="upload-decision-buttons" style={{
+                        display: 'flex',
+                        gap: '12px',
+                        marginTop: '12px',
+                        flexWrap: 'wrap'
+                      }}>
+                        <button
+                          onClick={() => handleUploadDecision('upload')}
+                          disabled={isFileUploading}
+                          style={{
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Database size={16} />
+                          Upload Financial Data
+                        </button>
+                        <button
+                          onClick={() => handleUploadDecision('skip')}
+                          disabled={isFileUploading}
+                          style={{
+                            backgroundColor: '#6b7280',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                          }}
+                        >
+                          Skip & Continue
+                        </button>
+                      </div>
+                    )}
+
+                    {message.showUploadButton && !hasUploadedDocument && (
+                      <div style={{
+                        display: 'flex',
+                        marginTop: '12px'
+                      }}>
+                        <button
+                          onClick={() => setShowTemplatesPopup(true)}
+                          disabled={isFileUploading}
+                          style={{
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '8px 16px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Database size={16} />
+                          Upload Financial Data
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="message-timestamp">
+                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {message.type === 'bot' && message.phase && (
+                        <span style={{ fontStyle: 'italic' }}>
+                          - {message.phase} phase{message.isFollowUp && ' followup'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+
+                {/* Show file card after the appropriate message */}
+                {shouldShowFileCardAfter && <UploadedFileCard />}
+              </React.Fragment>
+            );
+          })}
 
         {(isSaving || isValidatingAnswer || isSkipping || isFileUploading) && (
           <div className="generating-analysis">
@@ -1367,8 +1531,6 @@ const ChatComponent = ({
 
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Floating Skip Button */}
       {canShowSkipButton && (
         <button
           onClick={handleSkip}
@@ -1380,9 +1542,6 @@ const ChatComponent = ({
           <span className="skip-text">Skip</span>
         </button>
       )}
-
-
-
       <div className="input-area">
         <div className="input-wrapper">
           <textarea

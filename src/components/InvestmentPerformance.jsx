@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, Loader, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css'; 
+import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
@@ -17,7 +17,11 @@ const InvestmentPerformance = ({
   investmentData = null,
   selectedBusinessId,
   onRedirectToBrief,
-  uploadedFile = null
+  uploadedFile = null,
+  onRedirectToChat,
+  isMobile,
+  setActiveTab,
+  hasUploadedDocument = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(investmentData);
   const [error, setError] = useState(null);
@@ -54,24 +58,24 @@ const InvestmentPerformance = ({
     if (!data || !data.investment) {
       return true;
     }
-    
+
     const investmentMetrics = data.investment;
-    
+
     if (!investmentMetrics || typeof investmentMetrics !== 'object') {
       return true;
     }
-     
+
     const hasValidMetric = Object.entries(investmentMetrics).some(([key, value]) => {
       if (key.includes('_threshold') || key.includes('threshold')) {
         return false;
       }
-      const isValid = value !== null && 
+      const isValid = value !== null &&
         value !== undefined &&
         value !== '' &&
-        !isNaN(parseFloat(value)); 
+        !isNaN(parseFloat(value));
       return isValid;
     });
-     
+
     return !hasValidMetric;
   };
 
@@ -95,14 +99,14 @@ const InvestmentPerformance = ({
     if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
       return '#6b7280'; // Gray for NA
     }
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
     const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
-    
+
     if (isNaN(numValue) || isNaN(numThreshold)) {
       return '#6b7280'; // Gray for invalid values
     }
-    
+
     if (isHigherBetter) {
       if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
       if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
@@ -117,7 +121,7 @@ const InvestmentPerformance = ({
   // Helper function to render traffic light indicator with text
   const TrafficLightIndicator = ({ value, threshold, isHigherBetter = true, displayValue }) => {
     const color = getTrafficLightColor(value, threshold, isHigherBetter);
-    
+
     return (
       <div style={{
         display: 'flex',
@@ -144,10 +148,10 @@ const InvestmentPerformance = ({
   };
 
   useEffect(() => {
-    if (investmentData && investmentData !== analysisData) {      
+    if (investmentData && investmentData !== analysisData) {
       setAnalysisData(investmentData);
       setError(null);
-      
+
       if (onDataGenerated) {
         onDataGenerated(investmentData);
       }
@@ -193,42 +197,42 @@ const InvestmentPerformance = ({
 
   const formatPercentage = (value) => {
     if (value === null || value === undefined || value === '') return null;
-    
+
     if (typeof value === 'string') {
       if (value.includes('%')) return value;
       const numValue = parseFloat(value);
       if (isNaN(numValue)) return null;
       return `${(numValue).toFixed(3)}%`;
     }
-    
+
     if (typeof value === 'number') {
       return `${(value).toFixed(3)}%`;
     }
-    
+
     return null;
   };
 
   const formatThreshold = (threshold) => {
     if (!threshold || threshold === 'NA') return 'NA';
-    
+
     if (typeof threshold === 'string') {
       if (threshold.includes('%')) return threshold;
       const numValue = parseFloat(threshold);
       if (isNaN(numValue)) return 'NA';
       return `${(numValue).toFixed(1)}%`;
     }
-    
+
     if (typeof threshold === 'number') {
       return `${(threshold).toFixed(1)}%`;
     }
-    
+
     return 'NA';
   };
 
   const getDisplayName = (key) => {
     const displayNames = {
       'roa': 'ROA (Return on Assets)',
-      'roe': 'ROE (Return on Equity)', 
+      'roe': 'ROE (Return on Equity)',
       'roic': 'ROIC (Return on Invested Capital)'
     };
     return displayNames[key] || key.replace('_', ' ').toUpperCase();
@@ -300,6 +304,10 @@ const InvestmentPerformance = ({
           onFileUpload={handleFileUpload}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
@@ -309,8 +317,8 @@ const InvestmentPerformance = ({
     }
 
     const { metrics, thresholds } = extractInvestmentMetrics(analysisData);
-    
-    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) { 
+
+    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
       return (
         <FinancialEmptyState
           analysisType="investmentPerformance"
@@ -324,6 +332,10 @@ const InvestmentPerformance = ({
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
@@ -335,7 +347,7 @@ const InvestmentPerformance = ({
     // Show normal analysis content
     return (
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll"> 
+        <div className="ch-heatmap-scroll">
 
           {Object.values(metrics).every(value => value === null) && (
             <div className="investment-warning">
@@ -365,7 +377,7 @@ const InvestmentPerformance = ({
                 const isNull = value === null || value === undefined || value === '';
                 const threshold = thresholds[key];
                 const formattedThreshold = formatThreshold(threshold);
-                
+
                 return (
                   <tr key={key}>
                     <td><strong>{key}</strong></td>
@@ -373,9 +385,9 @@ const InvestmentPerformance = ({
                       {isNull ? (
                         <span style={{ color: '#6b7280' }}>No Data</span>
                       ) : (
-                        <TrafficLightIndicator 
-                          value={value} 
-                          threshold={threshold} 
+                        <TrafficLightIndicator
+                          value={value}
+                          threshold={threshold}
                           isHigherBetter={true}
                           displayValue={formattedValue}
                         />
@@ -389,7 +401,7 @@ const InvestmentPerformance = ({
               })}
             </tbody>
           </table>
- 
+
         </div>
       </div>
     );
@@ -397,8 +409,8 @@ const InvestmentPerformance = ({
 
   // Main component structure
   return (
-    <div 
-      className="investment-performance" 
+    <div
+      className="investment-performance"
       data-analysis-type="investment-performance"
       data-analysis-name="Investment Performance"
       data-analysis-order="4"

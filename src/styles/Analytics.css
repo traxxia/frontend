@@ -9513,13 +9513,4 @@ img, svg{
   color: #6b7280;
   margin-top: 2px;
   font-weight: 500;
-}.modern-analysis-card.highlighted {
-  border: 2px solid #3b82f6;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
-  transform: scale(1.02);
-  transition: all 0.3s ease;
-}
-
-.modern-analysis-card.highlighted .modern-card-header {
-  background-color: rgba(59, 130, 246, 0.05);
-}
+} 

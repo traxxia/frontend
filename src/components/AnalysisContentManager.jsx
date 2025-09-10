@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import {
-  Target, Award, TrendingDown, TrendingUp, DollarSign, Zap,
-  CheckCircle, Loader, Lock, ChevronDown, ChevronUp, AlertCircle, XCircle, Activity, AlertTriangle
-} from "lucide-react";
-
-// Import active analysis components only
+  Target, Award, TrendingUp,
+  CheckCircle, Loader, Lock, ChevronDown, ChevronUp,  
+} from "lucide-react"; 
 import SwotAnalysis from "./SwotAnalysis";
 import PurchaseCriteria from "./PurchaseCriteria";
 import LoyaltyNPS from "./LoyaltyNPS";
@@ -23,17 +21,12 @@ import LiquidityEfficiency from "./LiquidityEfficiency";
 import InvestmentPerformance from "./InvestmentPerformance";
 import LeverageRisk from "./LeverageRisk";
 
-const AnalysisContentManager = ({
-  // Phase Manager
-  phaseManager,
-
-  // Business Data  
+const AnalysisContentManager = ({ 
+  phaseManager, 
   businessData,
   questions,
   userAnswers,
-  selectedBusinessId,
-
-  // Analysis Data States - Active ones only
+  selectedBusinessId, 
   swotAnalysisResult,
   purchaseCriteriaData,
   loyaltyNPSData,
@@ -65,9 +58,7 @@ const AnalysisContentManager = ({
   setGrowthTrackerData,
   setLiquidityEfficiencyData,
   setInvestmentPerformanceData,
-  setLeverageRiskData,
-
-  // Regenerating States - Active ones only
+  setLeverageRiskData, 
   isSwotAnalysisRegenerating,
   isPurchaseCriteriaRegenerating,
   isLoyaltyNPSRegenerating,
@@ -83,15 +74,9 @@ const AnalysisContentManager = ({
   isGrowthTrackerRegenerating,
   isLiquidityEfficiencyRegenerating,
   isInvestmentPerformanceRegenerating,
-  isLeverageRiskRegenerating,
-
-  // Other States
-  isAnalysisRegenerating,
-
-  // API Loading States
-  apiLoadingStates = {},
-
-  // Refs - Active ones only
+  isLeverageRiskRegenerating, 
+  isAnalysisRegenerating, 
+  apiLoadingStates = {}, 
   swotRef,
   purchaseCriteriaRef,
   loyaltyNpsRef,
@@ -107,12 +92,8 @@ const AnalysisContentManager = ({
   growthTrackerRef,
   liquidityEfficiencyRef,
   investmentPerformanceRef,
-  leverageRiskRef,
-
-  // File Upload
-  uploadedFileForAnalysis,
-
-  // Handlers
+  leverageRiskRef, 
+  uploadedFileForAnalysis, 
   handleRedirectToBrief,
   showToastMessage,
   apiService,
@@ -121,10 +102,11 @@ const AnalysisContentManager = ({
   highlightedCard,
   expandedCards,
   setExpandedCards,
-}) => {
-  // Local state for expand/collapse functionality 
-
-  // API to Analysis mapping
+  onRedirectToChat,
+  isMobile,
+  setActiveTab,
+  hasUploadedDocument
+}) => { 
   const API_TO_ANALYSIS_MAP = {
     'find': 'swot',
     'purchase-criteria': 'purchaseCriteria',
@@ -137,14 +119,13 @@ const AnalysisContentManager = ({
     'strategic-positioning-radar': 'strategicRadar',
     'productivity-metrics': 'productivityMetrics',
     'maturity-scoring': 'maturityScore',
-    'excel-analysis': 'profitabilityAnalysis', // Main mapping
+    'excel-analysis': 'profitabilityAnalysis',  
     'excel-analysis-growth': 'growthTracker',
     'excel-analysis-liquidity': 'liquidityEfficiency',
     'excel-analysis-investment': 'investmentPerformance',
     'excel-analysis-leverage': 'leverageRisk'
   };
-
-  // Helper function to check if a specific analysis is loading
+ 
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
@@ -158,8 +139,7 @@ const AnalysisContentManager = ({
 
     return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
   };
-
-  // Toggle functions for expand/collapse
+ 
   const toggleCard = (cardId) => {
     setExpandedCards(prev => {
       const newSet = new Set(prev);
@@ -291,10 +271,11 @@ const AnalysisContentManager = ({
         <div className="modern-analysis-content">
           <div className="modern-analysis-grid">
             {unlockedFeatures.goodPhase && (
-              <> 
+              <>
                 <ModernAnalysisCard
                   id="profitability-analysis"
                   title="Profitability Analysis"
+                  data-card-id="profitability-analysis"
                   description="Detailed profitability margins with industry benchmark comparisons"
                   icon={TrendingUp}
                   hasData={!!profitabilityData}
@@ -314,14 +295,19 @@ const AnalysisContentManager = ({
                       canRegenerate={!isAnalysisRegenerating}
                       profitabilityData={profitabilityData}
                       selectedBusinessId={selectedBusinessId}
+                      onRedirectToChat={onRedirectToChat}
+                      isMobile={isMobile}
+                      setActiveTab={setActiveTab}
+                      hasUploadedDocument={hasUploadedDocument}
                       onRedirectToBrief={handleRedirectToBrief}
                       uploadedFile={uploadedFileForAnalysis}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="growth-tracker"
                   title="Growth Tracker"
+                  data-card-id="growth-tracker"
                   description="Revenue and net income trends with growth pattern analysis"
                   icon={TrendingUp}
                   hasData={!!growthTrackerData}
@@ -343,12 +329,17 @@ const AnalysisContentManager = ({
                       selectedBusinessId={selectedBusinessId}
                       onRedirectToBrief={handleRedirectToBrief}
                       uploadedFile={uploadedFileForAnalysis}
+                      onRedirectToChat={onRedirectToChat}
+                      isMobile={isMobile}
+                      setActiveTab={setActiveTab}
+                      hasUploadedDocument={hasUploadedDocument}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="liquidity-efficiency"
                   title="Liquidity & Efficiency"
+                  data-card-id="liquidity-efficiency"
                   description="Financial ratios with gauges and color-coded risk indicators"
                   icon={TrendingUp}
                   hasData={!!liquidityEfficiencyData}
@@ -370,12 +361,17 @@ const AnalysisContentManager = ({
                       selectedBusinessId={selectedBusinessId}
                       onRedirectToBrief={handleRedirectToBrief}
                       uploadedFile={uploadedFileForAnalysis}
+                      onRedirectToChat={onRedirectToChat}
+                      isMobile={isMobile}
+                      setActiveTab={setActiveTab}
+                      hasUploadedDocument={hasUploadedDocument}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="investment-performance"
                   title="Investment Performance"
+                  data-card-id="investment-performance"
                   description="ROA, ROE, ROIC analysis with benchmark comparisons and trend charts"
                   icon={TrendingUp}
                   hasData={!!investmentPerformanceData}
@@ -397,12 +393,17 @@ const AnalysisContentManager = ({
                       selectedBusinessId={selectedBusinessId}
                       onRedirectToBrief={handleRedirectToBrief}
                       uploadedFile={uploadedFileForAnalysis}
+                      onRedirectToChat={onRedirectToChat}
+                      isMobile={isMobile}
+                      setActiveTab={setActiveTab}
+                      hasUploadedDocument={hasUploadedDocument}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="leverage-risk"
                   title="Leverage & Risk"
+                  data-card-id="leverage-risk"
                   description="Financial risk assessment with traffic light risk indicators"
                   icon={TrendingUp}
                   hasData={!!leverageRiskData}
@@ -424,15 +425,20 @@ const AnalysisContentManager = ({
                       selectedBusinessId={selectedBusinessId}
                       onRedirectToBrief={handleRedirectToBrief}
                       uploadedFile={uploadedFileForAnalysis}
+                      onRedirectToChat={onRedirectToChat}
+                      isMobile={isMobile}
+                      setActiveTab={setActiveTab}
+                      hasUploadedDocument={hasUploadedDocument}
                     />
                   </div>
                 </ModernAnalysisCard>
               </>
-            )} 
+            )}
             {unlockedFeatures.fullSwot && (
-              <> 
+              <>
                 <ModernAnalysisCard
                   id="full-swot"
+                  data-card-id="full-swot"
                   title="Full SWOT Portfolio"
                   description="Comprehensive SWOT analysis with strategic recommendations"
                   icon={Award}
@@ -456,9 +462,10 @@ const AnalysisContentManager = ({
                       onRegenerate={createSimpleRegenerationHandler('fullSwot')}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="competitive-advantage"
+                  data-card-id="competitive-advantage"
                   title="Competitive Advantage Matrix"
                   description="Analysis of competitive positioning and advantages"
                   icon={Award}
@@ -482,9 +489,10 @@ const AnalysisContentManager = ({
                       onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="expanded-capability"
+                  data-card-id="expanded-capability"
                   title="Capability Heatmap"
                   description="Advanced organizational capability analysis"
                   icon={Award}
@@ -508,9 +516,10 @@ const AnalysisContentManager = ({
                       onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="strategic-radar"
+                  data-card-id="strategic-radar"
                   title="Strategic Positioning Radar"
                   description="Visual representation of strategic positioning across key dimensions"
                   icon={Award}
@@ -534,9 +543,10 @@ const AnalysisContentManager = ({
                       onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="productivity"
+                  data-card-id="productivity"
                   title="Productivity Metrics"
                   description="Analysis of organizational productivity and efficiency metrics"
                   icon={Award}
@@ -560,9 +570,10 @@ const AnalysisContentManager = ({
                       onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
-                </ModernAnalysisCard> 
+                </ModernAnalysisCard>
                 <ModernAnalysisCard
                   id="maturity"
+                  data-card-id="maturity"
                   title="Maturity Score"
                   description="Business maturity assessment and scoring"
                   icon={Award}
@@ -588,10 +599,11 @@ const AnalysisContentManager = ({
                   </div>
                 </ModernAnalysisCard>
               </>
-            )}  
+            )}
             {!unlockedFeatures.fullSwot && (
               <ModernAnalysisCard
                 id="swot"
+                data-card-id="swot"
                 title="SWOT Analysis"
                 description="Comprehensive strengths, weaknesses, opportunities, and threats analysis"
                 icon={Target}
@@ -618,9 +630,10 @@ const AnalysisContentManager = ({
                   />
                 </div>
               </ModernAnalysisCard>
-            )} 
+            )}
             <ModernAnalysisCard
               id="purchase-criteria"
+              data-card-id="purchase-criteria"
               title="Purchase Criteria"
               description="Key factors influencing customer buying decisions"
               icon={Target}
@@ -645,9 +658,10 @@ const AnalysisContentManager = ({
                   onRedirectToBrief={handleRedirectToBrief}
                 />
               </div>
-            </ModernAnalysisCard> 
+            </ModernAnalysisCard>
             <ModernAnalysisCard
               id="loyalty-nps"
+              data-card-id="loyalty-nps"
               title="Loyalty & NPS"
               description="Customer loyalty metrics and Net Promoter Score analysis"
               icon={Target}
@@ -672,9 +686,10 @@ const AnalysisContentManager = ({
                   onRedirectToBrief={handleRedirectToBrief}
                 />
               </div>
-            </ModernAnalysisCard> 
+            </ModernAnalysisCard>
             <ModernAnalysisCard
               id="porters"
+              data-card-id="porters"
               title="Porter's Five Forces"
               description="Competitive analysis using Porter's strategic framework"
               icon={Target}
@@ -698,9 +713,10 @@ const AnalysisContentManager = ({
                   onRedirectToBrief={handleRedirectToBrief}
                 />
               </div>
-            </ModernAnalysisCard> 
+            </ModernAnalysisCard>
             <ModernAnalysisCard
               id="pestel"
+              data-card-id="pestel"
               title="PESTEL Analysis"
               description="External environment analysis covering political, economic, social, technological, environmental, and legal factors"
               icon={Target}

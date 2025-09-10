@@ -15,7 +15,6 @@ import "../styles/business.css";
 import PDFExportButton from "../components/PDFExportButton";
 import { AnalysisApiService } from '../services/analysisApiService';
 
-
 const createAnalysisContentManagerProps = (state, props) => {
   const {
     swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, strategicData,
@@ -44,7 +43,7 @@ const createAnalysisContentManagerProps = (state, props) => {
     phaseManager, businessData, questions, userAnswers, selectedBusinessId,
     handleRedirectToBrief, showToastMessage, apiService, createSimpleRegenerationHandler,
     apiLoadingStates, uploadedFileForAnalysis,
-    highlightedCard, expandedCards, setExpandedCards
+    highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument
   } = props;
 
   return {
@@ -127,9 +126,14 @@ const createAnalysisContentManagerProps = (state, props) => {
     createSimpleRegenerationHandler,
     highlightedCard,
     expandedCards,
-    setExpandedCards
+    setExpandedCards,
+    onRedirectToChat: handleRedirectToChat,   
+    isMobile, 
+    setActiveTab,
+    hasUploadedDocument
   };
 };
+
 const BusinessSetupPage = () => {
   const location = useLocation();
   const business = location.state?.business;
@@ -211,45 +215,36 @@ const BusinessSetupPage = () => {
   const hasLoadedAnalysis = useRef(false);
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
-  }, [uploadedFileForAnalysis]);
-  // Create toast message helper
+  }, [uploadedFileForAnalysis]); 
   const showToastMessage = createToastMessage(setShowToast);
 
-  const stateSetters = {
-    // Initial phase setters
+  const stateSetters = { 
     setSwotAnalysisResult,
     setPurchaseCriteriaData,
     setLoyaltyNPSData,
     setPortersData,
-    setPestelData,
-
-    // Essential phase setters
+    setPestelData, 
     setFullSwotData,
     setCompetitiveAdvantageData,
     setExpandedCapabilityData,
     setStrategicRadarData,
     setProductivityData,
-    setMaturityData,
-
-    // Good phase setters
+    setMaturityData, 
     setProfitabilityData,
     setGrowthTrackerData,
     setLiquidityEfficiencyData,
     setInvestmentPerformanceData,
-    setLeverageRiskData,
-
-    // File upload support
+    setLeverageRiskData, 
     uploadedFile: uploadedFileForAnalysis,
   };
 
   const handleFileUploaded = (file, validationResult) => {
     setUploadedFileForAnalysis(file);
     setHasUploadedDocument(true);
-  };
-  // Handle redirect to brief tab
+  }; 
+
   const handleRedirectToBrief = (missingQuestionsData) => {
     setHighlightedMissingQuestions(missingQuestionsData);
-
     if (isMobile) {
       setActiveTab("brief");
     } else {
@@ -276,9 +271,7 @@ const BusinessSetupPage = () => {
 
     try {
       isRegeneratingRef.current = true;
-      setIsAnalysisRegenerating(true);
-
-      // Use the phaseOverride if provided, otherwise calculate current phase
+      setIsAnalysisRegenerating(true); 
       const targetPhase = phaseOverride || getCurrentPhase();
 
       await apiService.handlePhaseCompletion(
@@ -296,9 +289,8 @@ const BusinessSetupPage = () => {
       isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
     }
-  };
+  }; 
 
-  // Load existing analysis data
   const loadExistingAnalysisData = (phaseAnalysisArray) => {
     try {
       const latestAnalysisByType = {};
@@ -393,18 +385,15 @@ const BusinessSetupPage = () => {
     } finally {
       setIsStrategicRegenerating(false);
     }
-  };
+  }; 
 
-  // Event Handlers
   const handleQuestionsLoaded = (loadedQuestions) => {
     setQuestions(loadedQuestions);
     setQuestionsLoaded(true);
   };
 
   const handleNewAnswer = async (questionId, answer) => {
-    setUserAnswers(prev => ({ ...prev, [questionId]: answer }));
-
-    // Update business data based on specific questions
+    setUserAnswers(prev => ({ ...prev, [questionId]: answer })); 
     const updates = {};
     if (questionId === 1) {
       const businessName = extractBusinessName(answer);
@@ -420,13 +409,10 @@ const BusinessSetupPage = () => {
       setBusinessData(prev => ({ ...prev, ...updates }));
     }
   };
-
-  // Question completion handler
+ 
   const handleQuestionCompleted = async (questionId) => {
     const newCompletedSet = new Set([...completedQuestions, questionId]);
     setCompletedQuestions(newCompletedSet);
-
-    // Use phase manager's simplified question completion handler
     return await phaseManager.handleQuestionCompleted(questionId);
   };
 
@@ -435,9 +421,7 @@ const BusinessSetupPage = () => {
   };
 
   const handleAnswerUpdate = (questionId, newAnswer) => {
-    setUserAnswers(prev => ({ ...prev, [questionId]: newAnswer }));
-
-    // Update business data
+    setUserAnswers(prev => ({ ...prev, [questionId]: newAnswer })); 
     const updates = {};
     if (questionId === 1) {
       const businessName = extractBusinessName(newAnswer);
@@ -448,13 +432,11 @@ const BusinessSetupPage = () => {
     } else if (questionId === 4) {
       updates.products = newAnswer;
     }
-
     if (Object.keys(updates).length > 0) {
       setBusinessData(prev => ({ ...prev, ...updates }));
     }
   };
-
-  // Navigation handlers
+ 
   const handleAnalysisTabClick = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     if (!unlockedFeatures.analysis) return;
@@ -496,13 +478,10 @@ const BusinessSetupPage = () => {
     }
   };
 
-  const handleBack = () => window.history.back();
+  const handleBack = () => window.history.back(); 
 
-  // Handle option click for dropdown navigation 
   const handleOptionClick = (option) => {
-    setShowDropdown(false);
-
-    // Set the highlighted card
+    setShowDropdown(false); 
     const cardIdMap = {
       "SWOT": "swot",
       "Purchase Criteria": "purchase-criteria",
@@ -523,14 +502,9 @@ const BusinessSetupPage = () => {
     };
 
     const cardId = cardIdMap[option];
-    if (cardId) {
-      // Set highlight
-      setHighlightedCard(cardId);
-
-      // Auto-expand the card
-      setExpandedCards(prev => new Set([...prev, cardId]));
-
-      // Clear highlight after 3 seconds
+    if (cardId) { 
+      setHighlightedCard(cardId); 
+      setExpandedCards(prev => new Set([...prev, cardId])); 
       setTimeout(() => {
         setHighlightedCard(null);
       }, 3000);
@@ -560,12 +534,11 @@ const BusinessSetupPage = () => {
       if (targetRef?.current) {
         targetRef.current.scrollIntoView({
           behavior: "smooth",
-          block: "center"
+          block: "start"
         });
       }
     }, 100);
   };
-
 
   const createSimpleRegenerationHandler = (analysisType) => {
     return async () => {
@@ -655,8 +628,7 @@ const BusinessSetupPage = () => {
 
         let result;
 
-        try {
-          // Use individual API methods instead of handlePhaseCompletion
+        try { 
           switch (analysisType) {
             case 'swot':
               result = await apiService.generateSWOTAnalysis(questions, userAnswers, selectedBusinessId);
@@ -750,7 +722,20 @@ const BusinessSetupPage = () => {
       }
     };
   };
-
+  const handleRedirectToChat = () => {
+    if (isMobile) {
+      setActiveTab("chat");
+    } else { 
+      if (isAnalysisExpanded) {
+        setIsSliding(true);
+        setIsAnalysisExpanded(false);
+        setActiveTab("brief");
+        setTimeout(() => setIsSliding(false), 1000);
+      } else {
+        setActiveTab("brief");
+      }
+    }
+  };
 
   const analysisProps = createAnalysisContentManagerProps(state, {
     phaseManager,
@@ -764,9 +749,12 @@ const BusinessSetupPage = () => {
     createSimpleRegenerationHandler,
     apiLoadingStates,
     uploadedFileForAnalysis,
-    highlightedCard, // Add this
-    expandedCards,    // Add this
-    setExpandedCards
+    highlightedCard, 
+    expandedCards,     
+    setExpandedCards,
+    handleRedirectToChat,  
+    isMobile,  
+    setActiveTab
   });
 
   useEffect(() => {
@@ -841,11 +829,9 @@ const BusinessSetupPage = () => {
         ...baseOptions.initial
       ];
     }
-
     return baseOptions[phase] || [];
   };
-
-  // Add this function to determine the current phase based on unlocked features
+ 
   const getCurrentPhase = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
@@ -862,7 +848,6 @@ const BusinessSetupPage = () => {
 
   useEffect(() => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
-
     if (unlockedFeatures.advancedPhase) {
       setCurrentPhase('advanced');
     } else if (unlockedFeatures.goodPhase) {
@@ -872,9 +857,8 @@ const BusinessSetupPage = () => {
     } else {
       setCurrentPhase('initial');
     }
-  }, [phaseManager, hasAnalysisData, fullSwotData, profitabilityData]);
+  }, [phaseManager, hasAnalysisData, fullSwotData, profitabilityData]); 
 
-  // Analysis Controls Component
   const AnalysisControls = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     const currentPhase = getCurrentPhase();
@@ -901,8 +885,7 @@ const BusinessSetupPage = () => {
       </div>
     );
   };
-
-  // Effects
+ 
   useEffect(() => {
     if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
       hasLoadedAnalysis.current = true;
@@ -1031,11 +1014,8 @@ const BusinessSetupPage = () => {
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
             onQuestionsLoaded={handleQuestionsLoaded}
-            onQuestionCompleted={handleQuestionCompleted}
-            // Alternative approach using phase manager directly:
-
+            onQuestionCompleted={handleQuestionCompleted} 
             onPhaseCompleted={async (phase, completedSet) => {
-
               if (phase === 'good') {
                 try {
                   await apiService.handlePhaseCompletion(

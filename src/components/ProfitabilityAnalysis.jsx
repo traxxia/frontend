@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, Loader, Info, AlertCircle } from 'lucide-react';
-import '../styles/goodPhase.css'; 
+import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
@@ -17,6 +17,10 @@ const ProfitabilityAnalysis = ({
   profitabilityData = null,
   selectedBusinessId,
   onRedirectToBrief,
+  onRedirectToChat,
+  isMobile,
+  setActiveTab,
+  hasUploadedDocument = false,
   uploadedFile = null,
 }) => {
   const [analysisData, setAnalysisData] = useState(profitabilityData);
@@ -54,28 +58,28 @@ const ProfitabilityAnalysis = ({
     }
   };
 
-  const isProfitabilityDataIncomplete = (data) => { 
-    if (!data || !data.profitability) { 
+  const isProfitabilityDataIncomplete = (data) => {
+    if (!data || !data.profitability) {
       return true;
     }
-    
-    const profitabilityMetrics = data.profitability; 
-    
-    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') { 
+
+    const profitabilityMetrics = data.profitability;
+
+    if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
       return true;
     }
-     
+
     const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => {
       if (key.includes('_threshold') || key.includes('threshold')) {
         return false;
       }
-      const isValid = value !== null && 
+      const isValid = value !== null &&
         value !== undefined &&
         value !== '' &&
-        !isNaN(parseFloat(value)); 
+        !isNaN(parseFloat(value));
       return isValid;
     });
-     
+
     return !hasValidMetric;
   };
 
@@ -92,21 +96,21 @@ const ProfitabilityAnalysis = ({
       setAnalysisData(null);
       setError(null);
     }
-  }; 
+  };
 
   // Helper function to get traffic light color based on value vs threshold
   const getTrafficLightColor = (value, threshold, isHigherBetter = true) => {
     if (!threshold || threshold === 'NA' || threshold === null || threshold === undefined) {
       return '#6b7280'; // Gray for NA
     }
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value.replace(/[,$%]/g, '')) : value;
     const numThreshold = typeof threshold === 'string' ? parseFloat(threshold.replace(/[,$%]/g, '')) : threshold;
-    
+
     if (isNaN(numValue) || isNaN(numThreshold)) {
       return '#6b7280'; // Gray for invalid values
     }
-    
+
     if (isHigherBetter) {
       if (numValue >= numThreshold * 1.1) return '#10b981'; // Green - 10% above threshold
       if (numValue >= numThreshold * 0.9) return '#f59e0b'; // Yellow - within 10% of threshold
@@ -121,7 +125,7 @@ const ProfitabilityAnalysis = ({
   // Helper function to render traffic light indicator with text
   const TrafficLightIndicator = ({ value, threshold, isHigherBetter = true, displayValue }) => {
     const color = getTrafficLightColor(value, threshold, isHigherBetter);
-    
+
     return (
       <div style={{
         display: 'flex',
@@ -146,12 +150,12 @@ const ProfitabilityAnalysis = ({
       </div>
     );
   };
-  
-  useEffect(() => { 
-    if (profitabilityData && profitabilityData !== analysisData) { 
+
+  useEffect(() => {
+    if (profitabilityData && profitabilityData !== analysisData) {
       setAnalysisData(profitabilityData);
       setError(null);
-      
+
       if (onDataGenerated) {
         onDataGenerated(profitabilityData);
       }
@@ -173,7 +177,7 @@ const ProfitabilityAnalysis = ({
     };
   }, [profitabilityData]);
 
-  const handleFileUpload = (file) => { 
+  const handleFileUpload = (file) => {
     if (file) {
       const allowedTypes = [
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -197,42 +201,42 @@ const ProfitabilityAnalysis = ({
 
   const formatPercentage = (value) => {
     if (value === null || value === undefined || value === '') return null;
-    
+
     if (typeof value === 'string') {
       if (value.includes('%')) return value;
       const numValue = parseFloat(value);
       if (isNaN(numValue)) return null;
       return `${(numValue).toFixed(3)}%`;
     }
-    
+
     if (typeof value === 'number') {
       return `${(value).toFixed(3)}%`;
     }
-    
+
     return null;
   };
 
   const formatThreshold = (threshold) => {
     if (!threshold || threshold === 'NA') return 'NA';
-    
+
     if (typeof threshold === 'string') {
       if (threshold.includes('%')) return threshold;
       const numValue = parseFloat(threshold);
       if (isNaN(numValue)) return 'NA';
       return `${(numValue).toFixed(1)}%`;
     }
-    
+
     if (typeof threshold === 'number') {
       return `${(threshold).toFixed(1)}%`;
     }
-    
+
     return 'NA';
   };
 
   const getDisplayName = (key) => {
     const displayNames = {
       'gross_margin': 'Gross Margin',
-      'operating_margin': 'Operating Margin', 
+      'operating_margin': 'Operating Margin',
       'ebitda_margin': 'EBITDA Margin',
       'ebitda': 'EBITDA Margin', // Handle ebitda_threshold -> ebitda -> EBITDA Margin
       'net_margin': 'Net Margin'
@@ -276,7 +280,7 @@ const ProfitabilityAnalysis = ({
   }
 
   // REMOVED THE ERROR STATE RETURN - now error will be shown within the normal component structure
-  
+
   const renderContent = () => {
     // Show error message within the normal structure if there's an error
     if (error) {
@@ -308,6 +312,10 @@ const ProfitabilityAnalysis = ({
           onFileUpload={handleFileUpload}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
@@ -317,8 +325,8 @@ const ProfitabilityAnalysis = ({
     }
 
     const { metrics, thresholds } = extractProfitabilityMetrics(analysisData);
-    
-    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) { 
+
+    if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
       return (
         <FinancialEmptyState
           analysisType="profitability"
@@ -332,6 +340,10 @@ const ProfitabilityAnalysis = ({
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
+          onRedirectToChat={onRedirectToChat}
+          isMobile={isMobile}
+          setActiveTab={setActiveTab}
+          hasUploadedDocument={hasUploadedDocument}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
@@ -343,7 +355,7 @@ const ProfitabilityAnalysis = ({
     // Show normal analysis content
     return (
       <div className="ch-heatmap-container">
-        <div className="ch-heatmap-scroll"> 
+        <div className="ch-heatmap-scroll">
 
           {Object.values(metrics).every(value => value === null) && (
             <div className="profitability-warning">
@@ -373,7 +385,7 @@ const ProfitabilityAnalysis = ({
                 const isNull = value === null || value === undefined || value === '';
                 const threshold = thresholds[key];
                 const formattedThreshold = formatThreshold(threshold);
-                
+
                 return (
                   <tr key={key}>
                     <td><strong>{key}</strong></td>
@@ -381,9 +393,9 @@ const ProfitabilityAnalysis = ({
                       {isNull ? (
                         <span style={{ color: '#6b7280' }}>No Data</span>
                       ) : (
-                        <TrafficLightIndicator 
-                          value={value} 
-                          threshold={threshold} 
+                        <TrafficLightIndicator
+                          value={value}
+                          threshold={threshold}
                           isHigherBetter={true}
                           displayValue={formattedValue}
                         />
@@ -397,18 +409,18 @@ const ProfitabilityAnalysis = ({
               })}
             </tbody>
           </table>
- 
+
         </div>
       </div>
     );
   };
- 
+
   return (
-    <div className="profitability-analysis" 
-         data-analysis-type="profitability"
-         data-analysis-name="Profitability Analysis"
-         data-analysis-order="1">
- 
+    <div className="profitability-analysis"
+      data-analysis-type="profitability"
+      data-analysis-name="Profitability Analysis"
+      data-analysis-order="1">
+
       {renderContent()}
     </div>
   );
