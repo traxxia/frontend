@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
 import "../styles/EssentialPhase.css"; 
@@ -15,14 +15,9 @@ const ProductivityMetrics = ({
   selectedBusinessId,
   onRedirectToBrief
 }) => {
-  // LOCAL STATE
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(productivityData);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
-  const [error, setError] = useState(null);
-
-  // PREVENT MULTIPLE INITIALIZATIONS
-  const hasInitialized = useRef(false);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -44,58 +39,40 @@ const ProductivityMetrics = ({
     );
   };
 
-  // HANDLE REGENERATE
   const handleRegenerate = async () => {
-    console.log('ProductivityMetrics handleRegenerate called', { onRegenerate: !!onRegenerate });
-    
     if (onRegenerate) {
-      try {
-        await onRegenerate();
-      } catch (error) {
-        console.error('Error in ProductivityMetrics regeneration:', error);
-        setError(error.message || 'Failed to regenerate analysis');
-      }
-    } else {
-      console.warn('No onRegenerate prop provided to ProductivityMetrics');
-      setError('Regeneration not available');
+      onRegenerate();
     }
   };
 
-  // Check if the productivity data is empty/incomplete
+  // Simplified validation - EXACTLY like other components
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
     
-    // Handle both wrapped and direct response structures
-    const productivityMetrics = data?.productivityMetrics || data;
+    // Handle both wrapped and direct API response formats
+    let normalizedData;
+    if (data.productivityMetrics) {
+      normalizedData = data;
+    } else if (data.employeeProductivity || data.costStructure) {
+      normalizedData = { productivityMetrics: data };
+    } else {
+      return true;
+    }
     
-    // Check if essential productivity data exists
-    if (!productivityMetrics) return true;
+    // Check if productivityMetrics exists
+    if (!normalizedData.productivityMetrics) {
+      return true;
+    }
     
-    // Check employee productivity - if all values are 0 or null, it's incomplete
-    const employeeProductivity = productivityMetrics.employeeProductivity;
-    const hasValidEmployeeData = employeeProductivity && (
-      (employeeProductivity.totalEmployees > 0) ||
-      (employeeProductivity.averageValuePerEmployee > 0) ||
-      (employeeProductivity.totalValueGenerated > 0) ||
-      (employeeProductivity.productivityIndex > 0)
-    );
-    
-    // Check cost structure - if all values are 0 or empty, it's incomplete
-    const costStructure = productivityMetrics.costStructure;
-    const hasValidCostData = costStructure && (
-      (costStructure.employeeCosts > 0) ||
-      (costStructure.otherCosts > 0) ||
-      (costStructure.costEfficiency && costStructure.costEfficiency !== 'unknown' && costStructure.costEfficiency !== '')
-    );
-    
-    // Check if arrays have meaningful data
-    const hasValueDrivers = productivityMetrics.valueDrivers && productivityMetrics.valueDrivers.length > 0;
-    const hasImprovementOpportunities = productivityMetrics.improvementOpportunities && productivityMetrics.improvementOpportunities.length > 0;
-    
-    // At least 2 sections should have data for meaningful analysis
-    const sectionsWithData = [hasValidEmployeeData, hasValidCostData, hasValueDrivers, hasImprovementOpportunities].filter(Boolean).length;
-    
-    return sectionsWithData < 2;
+    const metrics = normalizedData.productivityMetrics;
+    const hasEmployeeData = metrics.employeeProductivity && Object.keys(metrics.employeeProductivity).length > 0;
+    const hasCostData = metrics.costStructure && Object.keys(metrics.costStructure).length > 0;
+    const hasValueDrivers = metrics.valueDrivers && metrics.valueDrivers.length > 0;
+    const hasImprovements = metrics.improvementOpportunities && metrics.improvementOpportunities.length > 0;
+
+    // Need at least some data to show something meaningful
+    const sectionsWithData = [hasEmployeeData, hasCostData, hasValueDrivers, hasImprovements].filter(Boolean).length;
+    return sectionsWithData === 0;
   };
 
   // Toggle section expansion
@@ -106,80 +83,33 @@ const ProductivityMetrics = ({
     }));
   };
 
-  // INITIALIZE COMPONENT
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
-    if (productivityData) {
-      setData(productivityData);
-      setHasGenerated(true);
-      setError(null);
-    }
-  }, [productivityData]);
-
-  // UPDATE DATA WHEN PROP CHANGES
+  // EXACTLY the same useEffect pattern as other components
   useEffect(() => {
     if (productivityData) {
-      setData(productivityData);
-      setHasGenerated(true);
-      setError(null);
-    } else if (productivityData === null) {
-      // Only reset if explicitly set to null (during regeneration)
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (productivityData.productivityMetrics) {
+        // Data is already wrapped
+        normalizedData = productivityData;
+      } else if (productivityData.employeeProductivity || productivityData.costStructure) {
+        // Data is direct from API, needs wrapping
+        normalizedData = { productivityMetrics: productivityData };
+      } else {
+        normalizedData = null;
+      }
+      
+      if (normalizedData) {
+        setData(normalizedData);
+        setHasGenerated(true);
+      } else {
+        setData(null);
+        setHasGenerated(false);
+      }
+    } else {
       setData(null);
       setHasGenerated(false);
     }
   }, [productivityData]);
-
-  // LOADING STATE
-  if (isRegenerating) {
-    return (
-      <div className="porters-container productivity-container">
-        <div className="loading-state">
-          <Loader size={24} className="loading-spinner" />
-          <span>Regenerating Productivity Metrics...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // ERROR STATE
-  if (error) {
-    return (
-      <div className="porters-container productivity-container"> 
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // CHECK IF DATA IS INCOMPLETE
-  if (!hasGenerated || !data?.productivityMetrics || isProductivityDataIncomplete(data)) {
-    return (
-      <div className="porters-container productivity-container"> 
-        <AnalysisEmptyState
-          analysisType="productivityMetrics"
-          analysisDisplayName="Productivity and Efficiency Metrics Analysis"
-          icon={Activity}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate && !!onRegenerate}
-          userAnswers={userAnswers}
-          minimumAnswersRequired={3}
-        /> 
-      </div>
-    );
-  }
-
-  // Handle both wrapped and direct response structures
-  const productivityMetrics = data?.productivityMetrics || data;
 
   // Helper function to format field names for display
   const formatFieldName = (fieldName) => {
@@ -325,6 +255,85 @@ const ProductivityMetrics = ({
 
     return null;
   };
+
+  // Loading state
+  if (isRegenerating) {
+    return (
+      <div className="porters-container productivity-container">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner" />
+          <span>
+            {isRegenerating
+              ? "Regenerating productivity metrics analysis..."
+              : "Generating productivity metrics analysis..."
+            }
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+    return (
+      <div className="porters-container productivity-container"> 
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
+          <p>Unable to generate productivity metrics analysis. Please try regenerating or check your inputs.</p>
+          <button onClick={() => {
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if data is incomplete and show missing questions checker
+  if (!productivityData || isProductivityDataIncomplete(productivityData)) {
+    return (
+      <div className="porters-container productivity-container"> 
+        <AnalysisEmptyState
+          analysisType="productivityMetrics"
+          analysisDisplayName="Productivity and Efficiency Metrics Analysis"
+          icon={Activity}
+          onImproveAnswers={handleMissingQuestionsCheck}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+        /> 
+      </div>
+    );
+  }
+
+  // Check if data structure is valid
+  if (!data?.productivityMetrics) {
+    return (
+      <div className="porters-container productivity-container">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Invalid Data Structure</h3>
+          <p>The productivity metrics data received is not in the expected format. Please regenerate the analysis.</p>
+          <button onClick={() => {
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle both wrapped and direct response structures
+  const productivityMetrics = data.productivityMetrics;
 
   return (
     <div className="porters-container productivity-container"

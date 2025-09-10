@@ -90,7 +90,6 @@ const AnalysisEmptyState = ({
           flexWrap: 'wrap'
         }}>
 
-
           {showImproveButton && (
             <button 
               onClick={onImproveAnswers}
@@ -104,15 +103,16 @@ const AnalysisEmptyState = ({
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = '#d97706';
-                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
               }}
               onMouseLeave={(e) => {
                 e.target.style.backgroundColor = '#f59e0b';
-                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
               }}
             >
               Improve Your Answers
@@ -133,19 +133,20 @@ const AnalysisEmptyState = ({
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: isRegenerating || !canRegenerate ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                opacity: isRegenerating || !canRegenerate ? 0.6 : 1
+                transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+                opacity: isRegenerating || !canRegenerate ? 0.6 : 1,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
               }}
               onMouseEnter={(e) => {
                 if (!isRegenerating && canRegenerate) {
                   e.target.style.backgroundColor = '#4F46E5';
-                  e.target.style.transform = 'translateY(-1px)';
+                  e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isRegenerating && canRegenerate) {
                   e.target.style.backgroundColor = '#6366F1';
-                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                 }
               }}
             >

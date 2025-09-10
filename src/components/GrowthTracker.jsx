@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Loader } from 'lucide-react';
+import { TrendingUp, Loader, AlertCircle } from 'lucide-react';
 import '../styles/goodPhase.css'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
-import FinancialEmptyState from './FinancialEmptyState'; // Import the new component
+import FinancialEmptyState from './FinancialEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const GrowthTracker = ({
@@ -17,11 +17,11 @@ const GrowthTracker = ({
   canRegenerate = true,
   growthData = null,
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  uploadedFile = null,
 }) => {
   const [analysisData, setAnalysisData] = useState(growthData);
   const [error, setError] = useState(null);
-  const [uploadedFile, setUploadedFile] = useState(null);
 
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
@@ -35,20 +35,24 @@ const GrowthTracker = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.growthTracker || {
-      displayName: 'Growth Tracker',
-      customMessage: 'Answer more questions to unlock detailed growth analysis'
-    };
+    try {
+      const analysisConfig = ANALYSIS_TYPES.growthTracker || {
+        displayName: 'Growth Tracker',
+        customMessage: 'Answer more questions to unlock detailed growth analysis'
+      };
 
-    await checkMissingQuestionsAndRedirect(
-      'growthTracker',
-      selectedBusinessId,
-      handleRedirectToBrief,
-      {
-        displayName: analysisConfig.displayName,
-        customMessage: analysisConfig.customMessage
-      }
-    );
+      await checkMissingQuestionsAndRedirect(
+        'growthTracker',
+        selectedBusinessId,
+        handleRedirectToBrief,
+        {
+          displayName: analysisConfig.displayName,
+          customMessage: analysisConfig.customMessage
+        }
+      );
+    } catch (error) {
+      console.error('Error checking missing questions:', error);
+    }
   };
 
   const isGrowthDataIncomplete = (data) => {
@@ -74,9 +78,9 @@ const GrowthTracker = ({
     }
   };
 
-  useEffect(() => {
+  // Fixed useEffect pattern - same as ProfitabilityAnalysis
+  useEffect(() => { 
     if (growthData && growthData !== analysisData) { 
-      
       setAnalysisData(growthData);
       setError(null);
       
@@ -99,13 +103,7 @@ const GrowthTracker = ({
     return () => {
       isMounted.current = false;
     };
-  }, []);
-
-  useEffect(() => {
-    if (analysisData && onDataGenerated) {
-      onDataGenerated(analysisData);
-    }
-  }, [analysisData]);
+  }, [growthData]);
 
   const handleFileUpload = (file) => {
     if (file) {
@@ -116,7 +114,6 @@ const GrowthTracker = ({
       ];
 
       if (allowedTypes.includes(file.type)) {
-        setUploadedFile(file);
         setError(null);
       } else {
         setError('Please upload an Excel or CSV file.');
@@ -125,14 +122,12 @@ const GrowthTracker = ({
   };
 
   const removeFile = () => {
-    setUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   const prepareChartData = (revenueData) => { 
-    
     if (!revenueData || !revenueData.values) return [];
     
     const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 
@@ -147,6 +142,29 @@ const GrowthTracker = ({
       };
     }).filter(item => item.revenue > 0);    
     return chartData;
+  };
+
+  const extractGrowthMetrics = (data) => {
+    if (!data || !data.growth_trends?.revenue?.values) {
+      return { chartData: [], metrics: {} };
+    }
+
+    const chartData = prepareChartData(data.growth_trends.revenue);
+    const revenueValues = Object.values(data.growth_trends.revenue.values);
+    const totalRevenue = revenueValues.reduce((sum, val) => sum + val, 0);
+    const avgMonthlyRevenue = totalRevenue / revenueValues.length;
+    
+    const bestMonth = Object.entries(data.growth_trends.revenue.values)
+      .reduce((max, [month, revenue]) => revenue > max.revenue ? {month, revenue} : max, {month: 'N/A', revenue: 0});
+
+    const metrics = {
+      totalRevenue,
+      avgMonthlyRevenue,
+      bestMonth,
+      dataCount: revenueValues.length
+    };
+
+    return { chartData, metrics };
   };
 
   const formatCurrency = (value) => {
@@ -164,6 +182,7 @@ const GrowthTracker = ({
     return `${(value * 100).toFixed(1)}%`;
   };
 
+  // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -187,6 +206,7 @@ const GrowthTracker = ({
     return null;
   };
 
+  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -198,29 +218,24 @@ const GrowthTracker = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
+  // Main render function following ProfitabilityAnalysis pattern
+  const renderContent = () => {
+    // Show error message within the normal structure if there's an error
+    if (error) {
+      return (
+        <div className="profitability-warning">
+          <AlertCircle size={20} color="#f59e0b" />
+          <div>
+            <h4 className="profitability-warning-title">Analysis Error</h4>
+            <p className="profitability-warning-text">{error}</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!analysisData || isGrowthDataIncomplete(analysisData)) {
-    return (
-      <div className="channel-heatmap channel-heatmap-container">
+    // Show empty state if no data
+    if (!analysisData || isGrowthDataIncomplete(analysisData)) {
+      return (
         <FinancialEmptyState
           analysisType="growthTracker"
           analysisDisplayName="Growth Tracker Analysis"
@@ -240,26 +255,51 @@ const GrowthTracker = ({
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No growth tracker analysis results found. The uploaded financial document doesn't contain the required growth ratios (Revenue (by time period), Historical Revenue data, Monthly/Quarterly Revenue trends) or proper values for analysis."
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  const chartData = prepareChartData(analysisData?.growth_trends?.revenue);
-  
-  // Calculate metrics from actual API data
-  const revenueValues = Object.values(analysisData?.growth_trends?.revenue?.values || {});
-  const totalRevenue = revenueValues.reduce((sum, val) => sum + val, 0);
-  const avgMonthlyRevenue = totalRevenue / revenueValues.length; 
+    // Show normal analysis content
+    const { chartData, metrics } = extractGrowthMetrics(analysisData);
+    
+    if (!chartData || chartData.length === 0) { 
+      return (
+        <FinancialEmptyState
+          analysisType="growthTracker"
+          analysisDisplayName="Growth Tracker Analysis"
+          icon={TrendingUp}
+          onImproveAnswers={handleMissingQuestionsCheck}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+          showFileUpload={true}
+          onFileUpload={handleFileUpload}
+          uploadedFile={uploadedFile}
+          onRemoveFile={removeFile}
+          fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
+          acceptedFileTypes=".xlsx,.xls,.csv"
+        />
+      );
+    }
 
-  return (
-    <div className="channel-heatmap channel-heatmap-container" 
-         data-analysis-type="growth-tracker"
-         data-analysis-name="Growth Tracker"
-         data-analysis-order="2">
-
-      {/* Charts Section */}
+    return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll"> 
+
+          {chartData.length === 0 && (
+            <div className="profitability-warning">
+              <AlertCircle size={20} color="#f59e0b" />
+              <div>
+                <h4 className="profitability-warning-title">
+                  No Revenue Data Available
+                </h4>
+                <p className="profitability-warning-text">
+                  Upload an Excel file with historical revenue data or ensure your spreadsheet contains monthly/quarterly revenue information.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="ch-charts-grid">
             {/* Revenue Chart */}
@@ -301,29 +341,35 @@ const GrowthTracker = ({
               <div className="growth-insight-item">
                 <strong>Total Revenue:</strong>
                 <span className="growth-insight-value positive">
-                  {formatCurrency(totalRevenue)}
+                  {formatCurrency(metrics.totalRevenue)}
                 </span>
               </div>
               <div className="growth-insight-item">
                 <strong>Best Month:</strong>
                 <span className="growth-insight-value positive">
-                  {Object.entries(analysisData?.growth_trends?.revenue?.values || {})
-                    .reduce((max, [month, revenue]) => revenue > max.revenue ? {month, revenue} : max, {month: 'N/A', revenue: 0})
-                    .month} ({formatCurrency(Object.entries(analysisData?.growth_trends?.revenue?.values || {})
-                    .reduce((max, [month, revenue]) => revenue > max.revenue ? {month, revenue} : max, {month: 'N/A', revenue: 0})
-                    .revenue)})
+                  {metrics.bestMonth.month} ({formatCurrency(metrics.bestMonth.revenue)})
                 </span>
               </div>
               <div className="growth-insight-item">
                 <strong>Data Coverage:</strong>
                 <span className="growth-insight-value neutral">
-                  {revenueValues.length} months tracked
+                  {metrics.dataCount} months tracked
                 </span>
               </div>
             </div>
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="channel-heatmap channel-heatmap-container" 
+         data-analysis-type="growth-tracker"
+         data-analysis-name="Growth Tracker"
+         data-analysis-order="2">
+
+      {renderContent()}
     </div>
   );
 };

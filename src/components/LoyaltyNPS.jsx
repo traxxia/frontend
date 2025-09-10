@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -17,17 +17,10 @@ const LoyaltyNPS = ({
   onRedirectToBrief
 }) => { 
   
-  const [loyaltyData, setLoyaltyData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Add refs to track component mount
-  const isMounted = useRef(false);
-  const hasInitialized = useRef(false);
+  const [data, setData] = useState(loyaltyNPSData);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  
   const { t } = useTranslation();
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -49,113 +42,70 @@ const LoyaltyNPS = ({
     );
   };
 
-  // Extract loyalty data from the new API structure
-  const extractLoyaltyData = (data) => {
-    if (!data) return null;
-
-    // Handle both old structure and new structure with loyaltyMetrics
-    if (data.loyaltyMetrics) {
-      return data.loyaltyMetrics;
-    }
-
-    // If it's already in the old format, return as is
-    if (data.method && data.overallScore !== undefined) {
-      return data;
-    }
-
-    return null;
-  };
-
-  // Check if the loyalty data is empty/incomplete - UPDATED for new structure
-  const isLoyaltyDataIncomplete = (data) => { 
-    
-    if (!data) return true;
-
-    // Check if essential fields are missing or null
-    if (data.overallScore === null || data.overallScore === undefined) return true;
-    if (!data.method) return true;
-    if (!data.scale) return true;
-
-    // Check if scale object has required properties
-    if (data.scale.min === null || data.scale.min === undefined) return true;
-    if (data.scale.max === null || data.scale.max === undefined) return true;
- 
-    return false;
-  };
-
-  // Check if analysis failed (all required questions answered but data is incomplete)
-  const isAnalysisFailed = async () => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/questions/missing-for-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysis_type: 'loyaltyNPS',
-            business_id: selectedBusinessId
-          })
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        // If no missing questions but data is incomplete, it's an analysis failure
-        return result.missing_count === 0 && isLoyaltyDataIncomplete(loyaltyData);
-      }
-      return false;
-    } catch (error) {
-      console.error('Error checking analysis status:', error);
-      return false;
-    }
-  };
-
-  // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
       onRegenerate();
-    } else {
-      setLoyaltyData(null);
-      setError(null);
     }
   };
 
-  // Update loyalty data when prop changes - UPDATED for new structure
-  useEffect(() => { 
+  // Simplified validation - EXACTLY like other components
+  const isLoyaltyNPSDataIncomplete = (data) => {
+    if (!data) return true;
     
-    if (loyaltyNPSData) {
-      const extractedData = extractLoyaltyData(loyaltyNPSData); 
-      
-      if (extractedData && extractedData !== loyaltyData) {
-        setLoyaltyData(extractedData);
-        if (onDataGenerated) {
-          onDataGenerated(extractedData);
-        }
-      }
+    // Handle both wrapped and direct API response formats
+    let normalizedData;
+    if (data.loyaltyMetrics) {
+      normalizedData = data;
+    } else if (data.method && data.overallScore !== undefined) {
+      normalizedData = { loyaltyMetrics: data };
+    } else {
+      return true;
     }
-  }, [loyaltyNPSData]);
+    
+    // Check if loyaltyMetrics exists
+    if (!normalizedData.loyaltyMetrics) {
+      return true;
+    }
+    
+    const metrics = normalizedData.loyaltyMetrics;
+    const hasOverallScore = metrics.overallScore !== null && metrics.overallScore !== undefined;
+    const hasMethod = metrics.method && metrics.method !== '';
+    const hasScale = metrics.scale && metrics.scale.min !== undefined && metrics.scale.max !== undefined;
 
-  // Initialize component - only run once
+    // Need at least basic data to show something meaningful
+    return !hasOverallScore || !hasMethod || !hasScale;
+  };
+
+  // EXACTLY the same useEffect pattern as other components
   useEffect(() => {
-    if (hasInitialized.current) return;
-
-    isMounted.current = true;
-    hasInitialized.current = true;
-
     if (loyaltyNPSData) {
-      const extractedData = extractLoyaltyData(loyaltyNPSData);
-      setLoyaltyData(extractedData);
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (loyaltyNPSData.loyaltyMetrics) {
+        // Data is already wrapped
+        normalizedData = loyaltyNPSData;
+      } else if (loyaltyNPSData.method && loyaltyNPSData.overallScore !== undefined) {
+        // Data is direct from API, needs wrapping
+        normalizedData = { loyaltyMetrics: loyaltyNPSData };
+      } else {
+        normalizedData = null;
+      }
+      
+      if (normalizedData) {
+        setData(normalizedData);
+        setHasGenerated(true);
+        if (onDataGenerated) {
+          onDataGenerated(normalizedData);
+        }
+      } else {
+        setData(null);
+        setHasGenerated(false);
+      }
+    } else {
+      setData(null);
+      setHasGenerated(false);
     }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+  }, [loyaltyNPSData, onDataGenerated]);
 
   // Get score classification based on NPS zones
   const getScoreClassification = (score, method = 'NPS') => {
@@ -178,7 +128,7 @@ const LoyaltyNPS = ({
   };
 
   // Create gauge chart SVG
-  const createGaugeChart = () => {
+  const createGaugeChart = (loyaltyData) => {
     if (!loyaltyData) return null;
 
     const { overallScore, method, scale } = loyaltyData;
@@ -275,7 +225,7 @@ const LoyaltyNPS = ({
   };
 
   // Create Score Interpretation component
-  const createScoreInterpretation = () => {
+  const createScoreInterpretation = (loyaltyData) => {
     if (!loyaltyData?.scale) return null;
 
     return (
@@ -331,9 +281,9 @@ const LoyaltyNPS = ({
         return { icon: Target, color: '#6B7280', label: 'No Data', rotation: 0 };
     }
   };
- 
 
-  if (isLoading || isRegenerating) {
+  // Loading state
+  if (isRegenerating) {
     return (
       <div className="loyalty-nps">
         <div className="loading-state">
@@ -349,15 +299,15 @@ const LoyaltyNPS = ({
     );
   }
 
-  if (error) {
+  // Error state
+  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="loyalty-nps">
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
-          <p>{error}</p>
+          <p>Unable to generate loyalty & NPS analysis. Please try regenerating or check your inputs.</p>
           <button onClick={() => {
-            setError(null);
             if (onRegenerate) {
               onRegenerate();
             }
@@ -370,8 +320,7 @@ const LoyaltyNPS = ({
   }
 
   // Check if data is incomplete and show missing questions checker
-  if (!loyaltyData || isLoyaltyDataIncomplete(loyaltyData)) { 
-    
+  if (!loyaltyNPSData || isLoyaltyNPSDataIncomplete(loyaltyNPSData)) { 
     return (
       <div className="loyalty-nps"> 
         <AnalysisEmptyState
@@ -389,6 +338,27 @@ const LoyaltyNPS = ({
     );
   }
 
+  // Check if data structure is valid
+  if (!data?.loyaltyMetrics) {
+    return (
+      <div className="loyalty-nps">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Invalid Data Structure</h3>
+          <p>The loyalty NPS data received is not in the expected format. Please regenerate the analysis.</p>
+          <button onClick={() => {
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const loyaltyData = data.loyaltyMetrics;
   const classification = getScoreClassification(loyaltyData.overallScore, loyaltyData.method);
   const trendIndicator = getTrendIndicator(loyaltyData.trend); 
 
@@ -470,10 +440,10 @@ const LoyaltyNPS = ({
         {/* Gauge Chart with Score Interpretation below it */}
         <div className="ln-chart-container">
           <h3 className="ln-section-title">Overall {loyaltyData.method} Score</h3>
-          {createGaugeChart()}
+          {createGaugeChart(loyaltyData)}
 
           {/* Score Interpretation - moved here, directly below the chart */}
-          {createScoreInterpretation()}
+          {createScoreInterpretation(loyaltyData)}
         </div>
       </div>
     </div>

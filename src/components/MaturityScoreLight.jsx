@@ -26,13 +26,11 @@ const MaturityScore = ({
   questions = [],
   userAnswers = {},
   selectedBusinessId,
-  onRedirectToBrief // Add this prop
+  onRedirectToBrief
 }) => {
-  const [transformedData, setTransformedData] = useState(null);
+  const [data, setData] = useState(maturityData);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -54,74 +52,40 @@ const MaturityScore = ({
     );
   };
 
-  // Check if a value contains "NOT ENOUGH DATA" (case-insensitive)
-  const hasNotEnoughDataValue = (value) => {
-    if (typeof value === 'string') {
-      return value.toUpperCase().includes('NOT ENOUGH DATA');
+  const handleRegenerate = async () => {
+    if (onRegenerate) {
+      onRegenerate();
     }
-    return false;
   };
 
-  // Check if any data contains "NOT ENOUGH DATA"
-  const containsNotEnoughData = (data) => {
-    if (!data) return false;
-
-    // Helper function to recursively check an object for "NOT ENOUGH DATA"
-    const checkObjectRecursively = (obj) => {
-      if (!obj || typeof obj !== 'object') {
-        return hasNotEnoughDataValue(obj);
-      }
-
-      if (Array.isArray(obj)) {
-        return obj.some(item => checkObjectRecursively(item));
-      }
-
-      return Object.values(obj).some(value => checkObjectRecursively(value));
-    };
-
-    return checkObjectRecursively(data);
-  };
-
-  // Check if the maturity data is empty/incomplete
+  // Simplified validation - EXACTLY like other components
   const isMaturityDataIncomplete = (data) => {
     if (!data) return true;
     
-    // Check for "NOT ENOUGH DATA" values first
-    if (containsNotEnoughData(data)) return true;
-    
-    // Handle various nested structures
-    let scoreData;
-    if (data.maturityScore && data.maturityScore.maturityScoring) {
-      scoreData = data.maturityScore.maturityScoring;
+    // Handle both wrapped and direct API response formats
+    let normalizedData;
+    if (data.maturityScore) {
+      normalizedData = data;
     } else if (data.maturityScoring) {
-      scoreData = data.maturityScoring;
-    } else if (data.maturityScore) {
-      scoreData = data.maturityScore;
-    } else if (data.dimensions && data.overallMaturity) {
-      scoreData = data;
+      normalizedData = { maturityScore: data.maturityScoring };
+    } else if (data.dimensions || data.overallMaturity) {
+      normalizedData = { maturityScore: data };
     } else {
-      scoreData = data;
+      return true;
     }
     
-    // Check if essential maturity data exists
-    if (!scoreData) return true;
+    // Check if maturityScore exists
+    if (!normalizedData.maturityScore) {
+      return true;
+    }
     
-    // Check if we have meaningful data
-    const hasOverallMaturity = scoreData.overallMaturity && scoreData.overallMaturity > 0;
-    const hasValidDimensions = scoreData.dimensions && 
-                               Array.isArray(scoreData.dimensions) && 
-                               scoreData.dimensions.length > 0 &&
-                               scoreData.dimensions.some(dim => dim.score && dim.score > 0);
-    
-    // Check if maturity level exists and is not empty/default
-    const hasMaturityLevel = scoreData.maturityLevel && 
-                             scoreData.maturityLevel !== '' && 
-                             scoreData.maturityLevel.toLowerCase() !== 'unknown';
-    
-    // Consider data complete only if we have meaningful maturity information
-    const hasEssentialData = hasOverallMaturity || hasValidDimensions || hasMaturityLevel;
-    
-    return !hasEssentialData;
+    const score = normalizedData.maturityScore;
+    const hasOverallMaturity = score.overallMaturity && score.overallMaturity > 0;
+    const hasDimensions = score.dimensions && score.dimensions.length > 0;
+    const hasMaturityLevel = score.maturityLevel && score.maturityLevel !== '';
+
+    // Need at least some data to show something meaningful
+    return !hasOverallMaturity && !hasDimensions && !hasMaturityLevel;
   };
 
   // Toggle section expansion
@@ -132,37 +96,44 @@ const MaturityScore = ({
     }));
   };
 
-  // Transform raw API response to component-friendly format
+  // SINGLE useEffect - exactly like other working components
   useEffect(() => {
-    if (!maturityData) return;
-    
-    // Check for "NOT ENOUGH DATA" before processing
-    if (containsNotEnoughData(maturityData)) {
-      console.error('Maturity data contains "NOT ENOUGH DATA" values:', maturityData);
-      setTransformedData(null);
-      return;
-    }
-    
-    // Fixed: Handle the nested API response structure properly
-    let scoreData;
-    
-    // Handle various nested structures
-    if (maturityData.maturityScore && maturityData.maturityScore.maturityScoring) {
-      // Structure: { maturityScore: { maturityScoring: { ... } } }
-      scoreData = maturityData.maturityScore.maturityScoring;
-    } else if (maturityData.maturityScoring) {
-      // Structure: { maturityScoring: { ... } }
-      scoreData = maturityData.maturityScoring;
-    } else if (maturityData.maturityScore) {
-      // Structure: { maturityScore: { ... } }
-      scoreData = maturityData.maturityScore;
-    } else if (maturityData.dimensions && maturityData.overallMaturity) {
-      // Direct structure with dimensions at root
-      scoreData = maturityData;
+    if (maturityData) {
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (maturityData.maturityScore) {
+        // Data is already wrapped
+        normalizedData = maturityData;
+      } else if (maturityData.maturityScoring) {
+        // Data has maturityScoring wrapper
+        normalizedData = { maturityScore: maturityData.maturityScoring };
+      } else if (maturityData.dimensions || maturityData.overallMaturity) {
+        // Data is direct from API, needs wrapping
+        normalizedData = { maturityScore: maturityData };
+      } else {
+        normalizedData = null;
+      }
+      
+      if (normalizedData) {
+        setData(normalizedData);
+        setHasGenerated(true);
+      } else {
+        setData(null);
+        setHasGenerated(false);
+      }
     } else {
-      // Fallback
-      scoreData = maturityData;
+      setData(null);
+      setHasGenerated(false);
     }
+  }, [maturityData]);
+
+  // Transform data for rendering - moved to helper function
+  const getTransformedData = () => {
+    if (!data?.maturityScore) {
+      return null;
+    }
+
+    const scoreData = data.maturityScore;
     
     const transformed = {
       overallScore: scoreData.overallMaturity,
@@ -219,8 +190,8 @@ const MaturityScore = ({
       };
     }
   
-    setTransformedData(transformed);
-  }, [maturityData]);
+    return transformed;
+  };
 
   // Helper functions
   const getScoreColor = (score) => {
@@ -257,38 +228,7 @@ const MaturityScore = ({
     return <BarChart3 size={16} />;
   };
 
-  const renderLoadingState = () => (
-    <div className="maturity-container">
-      <div className="loading-state">
-        <Loader size={24} className="loading-spinner" />
-        <span>
-          {isRegenerating
-            ? "Regenerating business maturity score analysis..."
-            : "Generating business maturity score analysis..."
-          }
-        </span>
-      </div>
-    </div>
-  );
-
-  const renderErrorState = () => (
-    <div className="maturity-container"> 
-      <div className="error-state">
-        <div className="error-icon">⚠️</div>
-        <h3>Analysis Error</h3>
-        <p>Unable to generate business maturity score. Please try regenerating or check your inputs.</p>
-        <button onClick={() => {
-          if (onRegenerate) {
-            onRegenerate();
-          }
-        }} className="retry-button">
-          Retry Analysis
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderGaugeChart = () => (
+  const renderGaugeChart = (transformedData) => (
     <div className="gauge-section">
       <div className="gauge-container">
         <svg viewBox="0 0 200 120" className="gauge-svg">
@@ -327,7 +267,7 @@ const MaturityScore = ({
   );
 
   // Maturity Overview Table
-  const renderMaturityOverview = () => {
+  const renderMaturityOverview = (transformedData) => {
     if (!transformedData.industryBenchmark) return null;
 
     return (
@@ -380,7 +320,7 @@ const MaturityScore = ({
   };
 
   // Business Areas Table
-  const renderBusinessAreas = () => {
+  const renderBusinessAreas = (transformedData) => {
     if (!transformedData.dimensions?.length) return null;
 
     return (
@@ -473,7 +413,7 @@ const MaturityScore = ({
   };
 
   // Cross-Scoring Analysis Table
-  const renderCrossScoring = () => {
+  const renderCrossScoring = (transformedData) => {
     const { crossScoring } = transformedData;
     if (!crossScoring) return null;
 
@@ -550,7 +490,7 @@ const MaturityScore = ({
   };
 
   // Progression Path Table
-  const renderNextLevel = () => {
+  const renderNextLevel = (transformedData) => {
     const { nextLevel } = transformedData;
     if (!nextLevel) return null;
 
@@ -618,12 +558,44 @@ const MaturityScore = ({
     );
   };
 
-  // Main render logic
+  // Loading state
   if (isRegenerating) {
-    return renderLoadingState();
+    return (
+      <div className="maturity-container">
+        <div className="loading-state">
+          <Loader size={24} className="loading-spinner" />
+          <span>
+            {isRegenerating
+              ? "Regenerating business maturity score analysis..."
+              : "Generating business maturity score analysis..."
+            }
+          </span>
+        </div>
+      </div>
+    );
   }
 
-  // Check if data is incomplete (including "NOT ENOUGH DATA" values) and show missing questions checker
+  // Error state
+  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+    return (
+      <div className="maturity-container"> 
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
+          <p>Unable to generate business maturity score analysis. Please try regenerating or check your inputs.</p>
+          <button onClick={() => {
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if data is incomplete and show missing questions checker
   if (!maturityData || isMaturityDataIncomplete(maturityData)) {
     return (
       <div className="maturity-container"> 
@@ -632,7 +604,7 @@ const MaturityScore = ({
           analysisDisplayName="Business Maturity Score Analysis"
           icon={Award}
           onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={onRegenerate}
+          onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
@@ -642,19 +614,57 @@ const MaturityScore = ({
     );
   }
 
+  // Check if data structure is valid
+  if (!data?.maturityScore) {
+    return (
+      <div className="maturity-container">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Invalid Data Structure</h3>
+          <p>The maturity score data received is not in the expected format. Please regenerate the analysis.</p>
+          <button onClick={() => {
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Get transformed data for rendering
+  const transformedData = getTransformedData();
+  
   if (!transformedData) {
-    return renderErrorState();
+    return (
+      <div className="maturity-container">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analysis Error</h3>
+          <p>Unable to process maturity score data. Please try regenerating.</p>
+          <button onClick={() => {
+            if (onRegenerate) {
+              onRegenerate();
+            }
+          }} className="retry-button">
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="maturity-container fade-in-up"> 
+    <div className="maturity-container"> 
       
       <div className="dashboard-content">
-        {renderGaugeChart()}
-        {renderMaturityOverview()}
-        {renderBusinessAreas()} 
-        {renderCrossScoring()}
-        {renderNextLevel()}
+        {renderGaugeChart(transformedData)}
+        {renderMaturityOverview(transformedData)}
+        {renderBusinessAreas(transformedData)} 
+        {renderCrossScoring(transformedData)}
+        {renderNextLevel(transformedData)}
       </div>
     </div>
   );

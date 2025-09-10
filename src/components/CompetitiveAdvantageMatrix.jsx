@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -7,20 +7,17 @@ const CompetitiveAdvantageMatrix = ({
     questions = [],
     userAnswers = {},
     businessName = '',
-    onRegenerate, // Add this prop for regenerate functionality
+    onRegenerate,
     isRegenerating = false,
     canRegenerate = true,
     competitiveAdvantageData = null,
     selectedBusinessId,
     onRedirectToBrief
 }) => {
-    const [data, setData] = useState(null);
+    const [data, setData] = useState(competitiveAdvantageData);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
     const [expandedSections, setExpandedSections] = useState({});
-    const [error, setError] = useState(null);
-
-    const hasInitialized = useRef(false);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -42,31 +39,32 @@ const CompetitiveAdvantageMatrix = ({
         );
     };
 
-    // Handle regenerate - this is the key function
     const handleRegenerate = async () => {
-        console.log('CompetitiveAdvantage handleRegenerate called', { onRegenerate: !!onRegenerate });
-
         if (onRegenerate) {
-            try {
-                await onRegenerate();
-            } catch (error) {
-                console.error('Error in CompetitiveAdvantage regeneration:', error);
-                setError(error.message || 'Failed to regenerate analysis');
-            }
-        } else {
-            console.warn('No onRegenerate prop provided to CompetitiveAdvantageMatrix');
-            setError('Regeneration not available');
+            onRegenerate();
         }
     };
 
     // Check if the competitive advantage data is empty/incomplete
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
+        
+        // Handle both wrapped and direct API response formats
+        let normalizedData;
+        if (data.competitiveAdvantage) {
+            normalizedData = data;
+        } else if (data.differentiators || data.competitivePosition) {
+            normalizedData = { competitiveAdvantage: data };
+        } else {
+            return true;
+        }
+        
+        // Check if competitiveAdvantage exists
+        if (!normalizedData.competitiveAdvantage) {
+            return true;
+        }
 
-        // Check if competitiveAdvantage is empty or null
-        if (!data.competitiveAdvantage) return true;
-
-        const advantage = data.competitiveAdvantage;
+        const advantage = normalizedData.competitiveAdvantage;
 
         // Check if key sections are missing
         const hasDifferentiators = advantage.differentiators && advantage.differentiators.length > 0;
@@ -87,49 +85,32 @@ const CompetitiveAdvantageMatrix = ({
         }));
     };
 
-    // Initialize component - only handle data display, no generation
-    useEffect(() => {
-        if (hasInitialized.current) return;
-
-        hasInitialized.current = true;
-
-        if (competitiveAdvantageData) {
-            setData(competitiveAdvantageData);
-            setHasGenerated(true);
-            setError(null);
-        }
-    }, [competitiveAdvantageData]);
-
-    // Update data when prop changes
     useEffect(() => {
         if (competitiveAdvantageData) {
-            setData(competitiveAdvantageData);
-            setHasGenerated(true);
-            setError(null);
-        } else if (competitiveAdvantageData === null) {
-            // Only reset if explicitly set to null (during regeneration)
+            // Handle both wrapped and direct API response formats
+            let normalizedData;
+            if (competitiveAdvantageData.competitiveAdvantage) {
+                // Data is already wrapped
+                normalizedData = competitiveAdvantageData;
+            } else if (competitiveAdvantageData.differentiators || competitiveAdvantageData.competitivePosition) {
+                // Data is direct from API, needs wrapping
+                normalizedData = { competitiveAdvantage: competitiveAdvantageData };
+            } else {
+                normalizedData = null;
+            }
+            
+            if (normalizedData) {
+                setData(normalizedData);
+                setHasGenerated(true);
+            } else {
+                setData(null);
+                setHasGenerated(false);
+            }
+        } else {
             setData(null);
             setHasGenerated(false);
         }
     }, [competitiveAdvantageData]);
-
-    // Get position color
-    const getPositionColor = (position) => {
-        const colors = {
-            'leader': '#10b981',
-            'challenger': '#f59e0b',
-            'follower': '#6b7280',
-            'nicher': '#8b5cf6'
-        };
-        return colors[position] || '#6b7280';
-    };
-
-    // Get score color
-    const getScoreColor = (score) => {
-        if (score >= 8) return '#10b981';
-        if (score >= 6) return '#f59e0b';
-        return '#ef4444';
-    };
 
     // Get intensity color class
     const getIntensityColor = (score) => {
@@ -372,22 +353,30 @@ const CompetitiveAdvantageMatrix = ({
             <div className="competitive-advantage-container">
                 <div className="loading-state">
                     <Loader className="loading-spinner" />
-                    <h3>Regenerating Competitive Advantage Analysis...</h3>
-                    <p>Evaluating your market position and competitive differentiators...</p>
+                    <span>
+                        {isRegenerating
+                            ? "Regenerating Competitive Advantage Analysis..."
+                            : "Generating Competitive Advantage Analysis..."
+                        }
+                    </span>
                 </div>
             </div>
         );
     }
 
-    // Error state
-    if (error) {
+    // Error state for when we have answers but no generated data
+    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="competitive-advantage-container">
+            <div className="competitive-advantage-container"> 
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
-                    <p>{error}</p>
-                    <button onClick={handleRegenerate} className="retry-button">
+                    <p>Unable to generate Competitive Advantage analysis. Please try regenerating or check your inputs.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
                         Retry Analysis
                     </button>
                 </div>
@@ -396,7 +385,7 @@ const CompetitiveAdvantageMatrix = ({
     }
 
     // Check if data is incomplete and show missing questions checker
-    if (!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) {
+    if (!competitiveAdvantageData || isCompetitiveAdvantageDataIncomplete(competitiveAdvantageData)) {
         return (
             <div className="competitive-advantage-container">
                 <AnalysisEmptyState
@@ -404,13 +393,33 @@ const CompetitiveAdvantageMatrix = ({
                     analysisDisplayName="Competitive Advantage Matrix"
                     icon={Shield}
                     onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
+                    onRegenerate={handleRegenerate}
                     isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate && !!onRegenerate}
+                    canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
                     customMessage="Complete essential phase questions to unlock competitive advantage analysis."
                 />
+            </div>
+        );
+    }
+
+    // Check if data structure is valid
+    if (!data?.competitiveAdvantage) {
+        return (
+            <div className="competitive-advantage-container">
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
+                    <h3>Invalid Data Structure</h3>
+                    <p>The Competitive Advantage data received is not in the expected format. Please regenerate the analysis.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
+                </div>
             </div>
         );
     }

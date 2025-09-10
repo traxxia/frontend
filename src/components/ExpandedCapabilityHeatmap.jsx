@@ -12,14 +12,11 @@ const ExpandedCapabilityHeatmap = ({
     canRegenerate = true,
     expandedCapabilityData = null,
     selectedBusinessId,
-    onRedirectToBrief // Add this prop
+    onRedirectToBrief
 }) => {
-    const [data, setData] = useState(null);
+    const [data, setData] = useState(expandedCapabilityData);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [hoveredCell, setHoveredCell] = useState(null);
-
-    const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-    const getAuthToken = () => sessionStorage.getItem('token');
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -41,89 +38,70 @@ const ExpandedCapabilityHeatmap = ({
         );
     };
 
-    // Check if a value contains "NOT ENOUGH DATA" (case-insensitive)
-    const hasNotEnoughDataValue = (value) => {
-        if (typeof value === 'string') {
-            return value.toUpperCase().includes('NOT ENOUGH DATA');
-        }
-        return false;
-    };
-
-    // Check if any data contains "NOT ENOUGH DATA"
-    const containsNotEnoughData = (data) => {
-        if (!data) return false;
-
-        // Check capabilities array
-        if (data.capabilities && Array.isArray(data.capabilities)) {
-            for (const capability of data.capabilities) {
-                if (hasNotEnoughDataValue(capability.name) ||
-                    hasNotEnoughDataValue(capability.category) ||
-                    hasNotEnoughDataValue(capability.performanceRating) ||
-                    hasNotEnoughDataValue(capability.maturityLevel)) {
-                    return true;
-                }
-            }
-        }
-
-        // Check capability gaps
-        if (data.capabilityGaps && Array.isArray(data.capabilityGaps)) {
-            for (const gap of data.capabilityGaps) {
-                if (hasNotEnoughDataValue(gap.capability) ||
-                    hasNotEnoughDataValue(gap.currentLevel) ||
-                    hasNotEnoughDataValue(gap.requiredLevel) ||
-                    hasNotEnoughDataValue(gap.businessImpact)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    };
-
-    // Check if the expanded capability data is empty/incomplete
-    const isExpandedCapabilityDataIncomplete = (data) => {
-        if (!data) return true;
-        
-        // Check if the data structure exists
-        let processedData = null;
-        
-        if (data.expandedCapabilityHeatmap) {
-            processedData = data.expandedCapabilityHeatmap;
-        } else if (data.expanded_capability_heatmap) {
-            processedData = data.expanded_capability_heatmap;
-        } else if (data.capabilities && Array.isArray(data.capabilities)) {
-            processedData = data;
-        } else {
-            processedData = data;
-        }
-        
-        // Check for "NOT ENOUGH DATA" values
-        if (containsNotEnoughData(processedData)) return true;
-        
-        // Check if capabilities array is empty or null
-        if (!processedData?.capabilities || !Array.isArray(processedData.capabilities) || processedData.capabilities.length === 0) {
-            return true;
-        }
-        
-        // Check if capabilities have essential data
-        const hasValidCapabilities = processedData.capabilities.some(capability => 
-            capability.name && 
-            capability.category &&
-            capability.maturityLevel
-        );
-        
-        return !hasValidCapabilities;
-    };
-
-    // Handle regeneration
     const handleRegenerate = async () => {
         if (onRegenerate) {
             onRegenerate();
+        }
+    };
+
+    // Simplified validation - EXACTLY like other components
+    const isExpandedCapabilityDataIncomplete = (data) => {
+        if (!data) return true;
+        
+        // Handle both wrapped and direct API response formats
+        let normalizedData;
+        if (data.expandedCapabilityHeatmap) {
+            normalizedData = data;
+        } else if (data.expanded_capability_heatmap) {
+            normalizedData = { expandedCapabilityHeatmap: data.expanded_capability_heatmap };
+        } else if (data.capabilities) {
+            normalizedData = { expandedCapabilityHeatmap: data };
+        } else {
+            return true;
+        }
+        
+        // Check if expandedCapabilityHeatmap exists
+        if (!normalizedData.expandedCapabilityHeatmap) {
+            return true;
+        }
+        
+        const heatmap = normalizedData.expandedCapabilityHeatmap;
+        const hasCapabilities = heatmap.capabilities && heatmap.capabilities.length > 0;
+
+        // Need at least capabilities to show something meaningful
+        return !hasCapabilities;
+    };
+
+    // EXACTLY the same useEffect pattern as other components
+    useEffect(() => {
+        if (expandedCapabilityData) {
+            // Handle both wrapped and direct API response formats
+            let normalizedData;
+            if (expandedCapabilityData.expandedCapabilityHeatmap) {
+                // Data is already wrapped
+                normalizedData = expandedCapabilityData;
+            } else if (expandedCapabilityData.expanded_capability_heatmap) {
+                // Alternative API response structure
+                normalizedData = { expandedCapabilityHeatmap: expandedCapabilityData.expanded_capability_heatmap };
+            } else if (expandedCapabilityData.capabilities) {
+                // Direct capability data structure
+                normalizedData = { expandedCapabilityHeatmap: expandedCapabilityData };
+            } else {
+                normalizedData = null;
+            }
+            
+            if (normalizedData) {
+                setData(normalizedData);
+                setHasGenerated(true);
+            } else {
+                setData(null);
+                setHasGenerated(false);
+            }
         } else {
             setData(null);
             setHasGenerated(false);
         }
-    };
+    }, [expandedCapabilityData]);
 
     // Vibrant color scheme for maturity levels
     const maturityLevels = [1, 2, 3, 4, 5];
@@ -150,47 +128,12 @@ const ExpandedCapabilityHeatmap = ({
         return icons[rating?.toLowerCase()] || <BarChart3 {...iconProps} color="#6b7280" />;
     };
 
-    useEffect(() => {
-        if (expandedCapabilityData) { 
-            
-            // Handle different API response structures
-            let processedData = null;
-            
-            if (expandedCapabilityData.expandedCapabilityHeatmap) {
-                // When data comes from generateExpandedCapability function
-                processedData = expandedCapabilityData.expandedCapabilityHeatmap;
-            } else if (expandedCapabilityData.expanded_capability_heatmap) {
-                // Alternative API response structure
-                processedData = expandedCapabilityData.expanded_capability_heatmap;
-            } else if (expandedCapabilityData.capabilities && Array.isArray(expandedCapabilityData.capabilities)) {
-                // Direct capability data structure
-                processedData = expandedCapabilityData;
-            } else {
-                // Fallback - use the data as-is
-                processedData = expandedCapabilityData;
-            } 
-            
-            // Validate that the processed data has the expected structure and doesn't contain "NOT ENOUGH DATA"
-            if (processedData && processedData.capabilities && Array.isArray(processedData.capabilities) && !containsNotEnoughData(processedData)) {
-                setData(processedData);
-                setHasGenerated(true);
-            } else {
-                console.error('Invalid data structure or insufficient data for ExpandedCapabilityHeatmap:', processedData);
-                setData(null);
-                setHasGenerated(false);
-            }
-        } else {
-            setData(null);
-            setHasGenerated(false);
-        }
-    }, [expandedCapabilityData]);
-
     const getHeatmapData = () => {
-        if (!data?.capabilities || !Array.isArray(data.capabilities)) {
+        if (!data?.expandedCapabilityHeatmap?.capabilities || !Array.isArray(data.expandedCapabilityHeatmap.capabilities)) {
             return null;
         }
 
-        const capabilities = data.capabilities;
+        const capabilities = data.expandedCapabilityHeatmap.capabilities;
         
         // Extract unique business functions (categories) and sort them
         const businessFunctions = [...new Set(capabilities.map(cap => cap.category))].sort();
@@ -224,7 +167,7 @@ const ExpandedCapabilityHeatmap = ({
         // Calculate intensity based on number of capabilities in this cell
         // Find the maximum number of capabilities in any single cell for normalization
         const allCellCounts = [];
-        if (data?.capabilities) {
+        if (data?.expandedCapabilityHeatmap?.capabilities) {
             const heatmapData = getHeatmapData();
             if (heatmapData) {
                 Object.values(heatmapData.heatmapMatrix).forEach(row => {
@@ -303,43 +246,44 @@ const ExpandedCapabilityHeatmap = ({
         </div>
     );
 
-    const renderLoadingState = () => (
-        <div className="expanded-capability-heatmap">
-            <div className="loading-state">
-                <Loader size={24} className="loading-spinner" />
-                <span>
-                    {isRegenerating
-                        ? "Regenerating expanded capability analysis..."
-                        : "Generating expanded capability analysis..."
-                    }
-                </span>
-            </div>
-        </div>
-    );
-
-    const renderErrorState = () => (
-        <div className="expanded-capability-heatmap"> 
-            <div className="error-state">
-                <div className="error-icon">⚠️</div>
-                <h3>Analysis Error</h3>
-                <p>Unable to generate capability heatmap. Please try regenerating.</p>
-                <button onClick={() => {
-                    if (onRegenerate) {
-                        onRegenerate();
-                    }
-                }} className="retry-button">
-                    Retry Analysis
-                </button>
-            </div>
-        </div>
-    );
-
-    // Loading State
+    // Loading state
     if (isRegenerating) {
-        return renderLoadingState();
+        return (
+            <div className="expanded-capability-heatmap">
+                <div className="loading-state">
+                    <Loader size={24} className="loading-spinner" />
+                    <span>
+                        {isRegenerating
+                            ? "Regenerating expanded capability analysis..."
+                            : "Generating expanded capability analysis..."
+                        }
+                    </span>
+                </div>
+            </div>
+        );
     }
 
-    // Check if data is incomplete (including "NOT ENOUGH DATA" values) and show missing questions checker
+    // Error state
+    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+        return (
+            <div className="expanded-capability-heatmap"> 
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
+                    <h3>Analysis Error</h3>
+                    <p>Unable to generate expanded capability analysis. Please try regenerating or check your inputs.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Check if data is incomplete and show missing questions checker
     if (!expandedCapabilityData || isExpandedCapabilityDataIncomplete(expandedCapabilityData)) {
         return (
             <div className="expanded-capability-heatmap"> 
@@ -358,14 +302,49 @@ const ExpandedCapabilityHeatmap = ({
         );
     }
 
+    // Check if data structure is valid
+    if (!data?.expandedCapabilityHeatmap) {
+        return (
+            <div className="expanded-capability-heatmap">
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
+                    <h3>Invalid Data Structure</h3>
+                    <p>The expanded capability data received is not in the expected format. Please regenerate the analysis.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const heatmapData = getHeatmapData();
     if (!heatmapData) {
-        return renderErrorState();
+        return (
+            <div className="expanded-capability-heatmap">
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
+                    <h3>Analysis Error</h3>
+                    <p>Unable to generate capability heatmap. Please try regenerating.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     const { businessFunctions, heatmapMatrix } = heatmapData;
-    const capabilities = data?.capabilities || [];
-    const capabilityGaps = data?.capabilityGaps || [];
+    const capabilities = data?.expandedCapabilityHeatmap?.capabilities || [];
+    const capabilityGaps = data?.expandedCapabilityHeatmap?.capabilityGaps || [];
 
     return (
         <div className="expanded-capability-heatmap"> 

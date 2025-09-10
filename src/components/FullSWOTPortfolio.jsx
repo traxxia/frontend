@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap, 
     ChevronDown, ChevronRight, Shield, Users, BarChart3, Lightbulb, PieChart,
@@ -13,13 +13,13 @@ const FullSWOTPortfolio = ({
     userAnswers = {},
     businessName = '',
     onRegenerate,
-    isRegenerating,
+    isRegenerating = false,
     canRegenerate = true,
     fullSwotData = null,
     selectedBusinessId,
     onRedirectToBrief
 }) => {
-    const [data, setData] = useState(null);
+    const [data, setData] = useState(fullSwotData);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [expandedSections, setExpandedSections] = useState({
         strengths: true,
@@ -30,9 +30,6 @@ const FullSWOTPortfolio = ({
         riskAssessment: true,
         competitivePositioning: true
     });
-    const [error, setError] = useState(null);
-
-    const hasInitialized = useRef(false);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -55,26 +52,31 @@ const FullSWOTPortfolio = ({
     };
 
     const handleRegenerate = async () => {
-        console.log('FullSWOT handleRegenerate called', { onRegenerate: !!onRegenerate });
-        
         if (onRegenerate) {
-            try {
-                await onRegenerate();
-            } catch (error) {
-                console.error('Error in FullSWOT regeneration:', error);
-                setError(error.message || 'Failed to regenerate analysis');
-            }
-        } else {
-            console.warn('No onRegenerate prop provided to FullSWOTPortfolio');
-            setError('Regeneration not available');
+            onRegenerate();
         }
     };
 
+    // Check if the full swot data is empty/incomplete
     const isFullSwotDataIncomplete = (data) => {
         if (!data) return true;
-        if (!data.swotPortfolio) return true;
-
-        const portfolio = data.swotPortfolio;
+        
+        // Handle both wrapped and direct API response formats
+        let normalizedData;
+        if (data.swotPortfolio) {
+            normalizedData = data;
+        } else if (data.strengths || data.weaknesses) {
+            normalizedData = { swotPortfolio: data };
+        } else {
+            return true;
+        }
+        
+        // Check if swotPortfolio exists
+        if (!normalizedData.swotPortfolio) {
+            return true;
+        }
+        
+        const portfolio = normalizedData.swotPortfolio;
         const hasStrengths = portfolio.strengths && portfolio.strengths.length > 0;
         const hasWeaknesses = portfolio.weaknesses && portfolio.weaknesses.length > 0;
         const hasOpportunities = portfolio.opportunities && portfolio.opportunities.length > 0;
@@ -92,28 +94,31 @@ const FullSWOTPortfolio = ({
     };
 
     useEffect(() => {
-        if (hasInitialized.current) return;
-        hasInitialized.current = true;
-
         if (fullSwotData) {
-            setData(fullSwotData);
-            setHasGenerated(true);
-            setError(null);
-        }
-    }, [fullSwotData]);
-
-    useEffect(() => {
-        if (fullSwotData) {
-            setData(fullSwotData);
-            setHasGenerated(true);
-            setError(null);
-        } else if (fullSwotData === null) {
+            // Handle both wrapped and direct API response formats
+            let normalizedData;
+            if (fullSwotData.swotPortfolio) {
+                // Data is already wrapped
+                normalizedData = fullSwotData;
+            } else if (fullSwotData.strengths || fullSwotData.weaknesses) {
+                // Data is direct from API, needs wrapping
+                normalizedData = { swotPortfolio: fullSwotData };
+            } else {
+                normalizedData = null;
+            }
+            
+            if (normalizedData) {
+                setData(normalizedData);
+                setHasGenerated(true);
+            } else {
+                setData(null);
+                setHasGenerated(false);
+            }
+        } else {
             setData(null);
             setHasGenerated(false);
         }
     }, [fullSwotData]);
-
-
 
     const getScoreColor = (score) => {
         if (score >= 8) return 'high-intensity';
@@ -135,28 +140,37 @@ const FullSWOTPortfolio = ({
         if (likelihood >= 3) return 'medium-intensity';
         return 'low-intensity';
     };
- 
+
     // Loading state
     if (isRegenerating) {
         return (
             <div className="porters-container">
                 <div className="loading-state">
                     <Loader size={24} className="loading-spinner" />
-                    <span>Regenerating Full SWOT Portfolio...</span>
+                    <span>
+                        {isRegenerating
+                            ? "Regenerating Full SWOT Portfolio..."
+                            : "Generating Full SWOT Portfolio..."
+                        }
+                    </span>
                 </div>
             </div>
         );
     }
 
-    // Error state
-    if (error) {
+    // Error state for when we have answers but no generated data
+    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="porters-container">
+            <div className="porters-container"> 
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
-                    <h5>Analysis Error</h5>
-                    <p>{error}</p>
-                    <button onClick={handleRegenerate} className="retry-button">
+                    <h3>Analysis Error</h3>
+                    <p>Unable to generate Full SWOT Portfolio analysis. Please try regenerating or check your inputs.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
                         Retry Analysis
                     </button>
                 </div>
@@ -164,22 +178,41 @@ const FullSWOTPortfolio = ({
         );
     }
 
-    // Check if data is incomplete
-    if (!hasGenerated || !data?.swotPortfolio || isFullSwotDataIncomplete(data)) {
+    // Check if data is incomplete and show missing questions checker
+    if (!fullSwotData || isFullSwotDataIncomplete(fullSwotData)) {
         return (
             <div className="porters-container"> 
                 <AnalysisEmptyState
                     analysisType="fullSwot"
-                    analysisDisplayName="Full SWOT Portfolio (Enhanced)"
+                    analysisDisplayName="Full SWOT Portfolio"
                     icon={Target}
                     onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
+                    onRegenerate={handleRegenerate}
                     isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate && !!onRegenerate}
+                    canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
-                    minimumAnswersRequired={5}
-                    customMessage="Complete essential phase questions to unlock enhanced SWOT analysis with competitive positioning and strategic options."
+                    minimumAnswersRequired={3}
                 /> 
+            </div>
+        );
+    }
+
+    // Check if data structure is valid
+    if (!data?.swotPortfolio) {
+        return (
+            <div className="porters-container">
+                <div className="error-state">
+                    <div className="error-icon">⚠️</div>
+                    <h3>Invalid Data Structure</h3>
+                    <p>The Full SWOT Portfolio data received is not in the expected format. Please regenerate the analysis.</p>
+                    <button onClick={() => {
+                        if (onRegenerate) {
+                            onRegenerate();
+                        }
+                    }} className="retry-button">
+                        Retry Analysis
+                    </button>
+                </div>
             </div>
         );
     }
