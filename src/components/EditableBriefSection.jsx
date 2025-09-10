@@ -109,6 +109,8 @@ const EditableBriefSection = ({
    const fields = [];
    const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
 
+   let sequentialNumber = 1; // Add sequential counter
+   
    sortedQuestions.forEach(question => {
      const qId = question._id || question.question_id;
      const answer = userAnswers[qId];
@@ -121,7 +123,8 @@ const EditableBriefSection = ({
          questionId: qId,
          phase: question.phase,
          severity: question.severity,
-         order: question.order
+         order: question.order,
+         sequentialNumber: sequentialNumber++ // Use sequential number instead of question.order
        });
      }
    });
@@ -286,7 +289,7 @@ const handleSave = async (field) => {
              padding: '2px 6px',
              borderRadius: '4px',
            }}>
-             {field.order || 1}.
+             {field.sequentialNumber}.
            </span>
            {field.label}
 
