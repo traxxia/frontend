@@ -447,62 +447,133 @@ export class AnalysisApiService {
     return { data: processedData };
   }
 
-  async handlePhaseCompletion(phase, questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage) {
-    const analysisTypes = PHASE_API_CONFIG[phase];
+ async handlePhaseCompletion(
+  phase,
+  questions,
+  userAnswers,
+  selectedBusinessId,
+  stateSetters,
+  showToastMessage
+) {
+  const analysisTypes = PHASE_API_CONFIG[phase];
 
-    if (!analysisTypes) {
-      console.error(`Unknown phase: ${phase}`);
-      return;
-    }
-
-    showToastMessage(`${phase.charAt(0).toUpperCase() + phase.slice(1)} phase completed! Generating analyses...`, "info");
-
-    this.clearPhaseData(phase, stateSetters);
-
-    try {
-      const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
-
-      const payload = {
-        questions,
-        userAnswers: { ...userAnswers, ...freshAnswers },
-        selectedBusinessId,
-        phase,
-        stateSetters
-      };
-
-      // Clear cache before processing
-      this.excelAnalysisCache = null;
-
-      const results = await Promise.allSettled(
-        analysisTypes.map(analysisType =>
-          this.callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-        )
-      );
-
-      const successes = results.filter(r => r.status === 'fulfilled').length;
-      const failures = results.filter(r => r.status === 'rejected').length;
-
-      if (failures > 0) {
-        showToastMessage(
-          `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
-          failures < successes ? "warning" : "error"
-        );
-      } else {
-        showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
-      }
-
-      if (phase === 'good' && this.excelAnalysisCache) {
-        console.log('Returning excel analysis result for good phase:', this.excelAnalysisCache);
-        return this.excelAnalysisCache;
-      }
-      return { success: true, phase };
-
-    } catch (error) {
-      console.error(`Error generating ${phase} phase analysis:`, error);
-      showToastMessage(`Failed to generate ${phase} phase analyses. Please try again.`, "error");
-      throw error; 
-    }
+  if (!analysisTypes) {
+    console.error(`Unknown phase: ${phase}`);
+    return;
   }
+
+  
+  showToastMessage(
+    `${phase.charAt(0).toUpperCase() + phase.slice(1)} phase started! Generating analyses...`,
+    "info",
+    { duration: 0 } 
+  );
+
+  this.clearPhaseData(phase, stateSetters);
+
+  try {
+    const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+
+    const payload = {
+      questions,
+      userAnswers: { ...userAnswers, ...freshAnswers },
+      selectedBusinessId,
+      phase,
+      stateSetters,
+    };
+
+    this.excelAnalysisCache = null;
+
+    let completed = 0;
+    const total = analysisTypes.length;
+
+    for (const analysisType of analysisTypes) {
+      const displayName = this.getDisplayName(analysisType); 
+
+      try {
+        await this.callAnalysisAPIWithSave(
+          analysisType,
+          payload,
+          stateSetters,
+          selectedBusinessId
+        );
+        completed++;
+
+        
+        showToastMessage(
+          `${completed}/${total} ${phase} phase analyses — "${displayName}" completed successfully`,
+          "info",
+          { duration: 0 }
+        );
+      } catch (error) {
+        console.error(`Error with ${analysisType} analysis:`, error);
+        completed++;
+
+        
+        showToastMessage(
+          `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
+          "warning",
+          { duration: 0 }
+        );
+      }
+    }
+
+    // Final  — closes after 4s
+    if (completed === total) {
+      showToastMessage(
+        `All ${phase} phase analyses processed (${completed}/${total})`,
+        "success",
+        { duration: 4000 }
+      );
+    }
+
+    if (phase === "good" && this.excelAnalysisCache) {
+      console.log(
+        "Returning excel analysis result for good phase:",
+        this.excelAnalysisCache
+      );
+      return this.excelAnalysisCache;
+    }
+
+    return { success: true, phase };
+  } catch (error) {
+    console.error(`Error generating ${phase} phase analysis:`, error);
+
+    showToastMessage(
+      `Failed to generate ${phase} phase analyses. Please try again.`,
+      "error",
+      { duration: 4000 }
+    );
+
+    throw error;
+  }
+}
+
+
+getDisplayName(analysisType) {
+  const displayNames = {
+    profitabilityAnalysis: "Profitability Analysis",
+    growthTracker: "Growth Tracker",
+    liquidityEfficiency: "Liquidity & Efficiency",
+    investmentPerformance: "Investment Performance",
+    leverageRisk: "Leverage & Risk",
+    swot: "SWOT Analysis",
+    purchaseCriteria: "Purchase Criteria",
+    loyaltyNPS: "Loyalty & NPS",
+    porters: "Porter’s Five Forces",
+    pestel: "PESTEL Analysis",
+    fullSwot: "Full SWOT Portfolio",
+    competitiveAdvantage: "Competitive Advantage",
+    expandedCapability: "Capability Heatmap",
+    strategicRadar: "Strategic Positioning Radar",
+    productivityMetrics: "Productivity Metrics",
+    maturityScore: "Maturity Score",
+  };
+
+  return displayNames[analysisType] || analysisType;
+}
+
+
 
   async callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId) {
     try {

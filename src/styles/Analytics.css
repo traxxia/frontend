@@ -7198,7 +7198,7 @@
 }
 
 .regenerate-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.25);
+  background-color: #35dea6;
   border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-1px);
 }

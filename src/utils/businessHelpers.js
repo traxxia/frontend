@@ -15,11 +15,16 @@ export const extractBusinessName = (text) => {
   return null;
 };
 
-export const showToastMessage = (setShowToast) => (message, type = "success") => {
+export const showToastMessage = (setShowToast) => (message, type = "success", options = {}) => {
+  const { duration = 4000 } = options;
   setShowToast({ show: true, message, type });
-  setTimeout(() => {
-    setShowToast({ show: false, message: "", type: "success" });
-  }, 4000);
+
+  
+  if (duration > 0) {
+    setTimeout(() => {
+      setShowToast({ show: false, message: "", type: "success" });
+    }, duration);
+  }
 };
 
 export const clearAllAnalysisData = (setters) => {
