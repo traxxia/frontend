@@ -210,6 +210,7 @@ const BusinessSetupPage = () => {
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
   const [expandedCards, setExpandedCards] = useState(new Set());
+  const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
 
   const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
   const hasLoadedAnalysis = useRef(false);
@@ -722,7 +723,7 @@ const BusinessSetupPage = () => {
       }
     };
   };
-  const handleRedirectToChat = () => {
+  const handleRedirectToChat = (params = {}) => {
     if (isMobile) {
       setActiveTab("chat");
     } else {
@@ -734,6 +735,11 @@ const BusinessSetupPage = () => {
       } else {
         setActiveTab("brief");
       }
+    }
+
+    // Handle scroll request
+    if (params.scrollToUploadCard) {
+      setShouldScrollToUpload(true);
     }
   };
 
@@ -1058,6 +1064,8 @@ const BusinessSetupPage = () => {
               }
             }}
             onFileUploaded={handleFileUploaded}
+            scrollToUploadCard={shouldScrollToUpload}   
+            onScrollCompleted={() => setShouldScrollToUpload(false)} 
           />
         </div>
         {questionsLoaded && (

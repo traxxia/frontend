@@ -36,10 +36,11 @@ const FinancialEmptyState = ({
   const handleRedirectToFileManagement = () => {
     if (isMobile && setActiveTab) {
       setActiveTab('chat');
-    } else if (onRedirectToChat) {
-      onRedirectToChat();
-    } else {
-      // Fallback: scroll to chat section if no redirect function provided
+    }
+
+    if (onRedirectToChat) {
+      onRedirectToChat({ scrollToUploadCard: true }); 
+    } else { 
       const chatSection = document.querySelector('.chat-section');
       if (chatSection) {
         chatSection.scrollIntoView({ behavior: 'smooth' });

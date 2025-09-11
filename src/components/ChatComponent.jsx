@@ -12,7 +12,9 @@ const ChatComponent = ({
   onQuestionsLoaded,
   onQuestionCompleted,
   onPhaseCompleted,
-  onFileUploaded
+  onFileUploaded,
+  scrollToUploadCard = false,   
+  onScrollCompleted = null
 }) => {
   const [currentInput, setCurrentInput] = useState('');
   const [messages, setMessages] = useState([]);
@@ -46,6 +48,7 @@ const ChatComponent = ({
     upload_decision_made: false,
     upload_decision: null
   });
+  const uploadedFileCardRef = useRef(null);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -62,6 +65,32 @@ const ChatComponent = ({
       });
     }
   }, [uploadedFileForAnalysis]);
+
+  useEffect(() => {
+    if (scrollToUploadCard && uploadedFileCardRef.current) {
+      setTimeout(() => {
+        if (uploadedFileCardRef.current) {
+          uploadedFileCardRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+
+          // Optional: Add highlight effect
+          uploadedFileCardRef.current.style.boxShadow = '0 0 0 3px rgba(14, 165, 233, 0.3)';
+          setTimeout(() => {
+            if (uploadedFileCardRef.current) {
+              uploadedFileCardRef.current.style.boxShadow = '';
+            }
+          }, 2000);
+
+          // Notify completion
+          if (onScrollCompleted) {
+            onScrollCompleted();
+          }
+        }
+      }, 500); // Wait for tab change
+    }
+  }, [scrollToUploadCard, uploadedFileInfo, hasUploadedDocument]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1327,7 +1356,8 @@ const ChatComponent = ({
     };
 
     return (
-      <div style={{
+      <div ref={uploadedFileCardRef} 
+      style={{
         backgroundColor: '#f0f9ff',
         border: '1px solid #0ea5e9',
         borderRadius: '8px',

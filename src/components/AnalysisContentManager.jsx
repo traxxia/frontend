@@ -279,7 +279,7 @@ const AnalysisContentManager = ({
         >
           <div className="category-header-left">
             <IconComponent size={24} className="category-icon" />
-            <h2 className="category-title">{title}</h2> 
+            <h2 className="category-title">{title}</h2>
           </div>
           <div className="category-toggle">
             {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -346,6 +346,8 @@ const AnalysisContentManager = ({
         analyses: []
       }
     ];
+
+    // In the renderModernAnalysisContent function, replace the existing logic with this:
 
     if (unlockedFeatures.goodPhase) {
       categories[0].analyses.push(
@@ -509,37 +511,37 @@ const AnalysisContentManager = ({
           </div>
         </ModernAnalysisCard>
       );
+    }
 
-      if (unlockedFeatures.fullSwot) {
-        categories[0].analyses.push(
-          <ModernAnalysisCard
-            key="productivity"
-            id="productivity"
-            title="Productivity Metrics"
-            description="Analysis of organizational productivity and efficiency metrics"
-            icon={TrendingUp}
-            hasData={!!productivityData}
-            onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-            isRegenerating={isProductivityRegenerating}
-            isLoading={isAnalysisLoading('productivityMetrics')}
-            category="essential"
-          >
-            <div ref={productivityRef} data-component="productivity">
-              <ProductivityMetrics
-                questions={questions}
-                userAnswers={userAnswers}
-                businessName={businessData.name}
-                onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-                isRegenerating={isProductivityRegenerating || isAnalysisLoading('productivityMetrics')}
-                canRegenerate={!isAnalysisRegenerating}
-                productivityData={productivityData}
-                selectedBusinessId={selectedBusinessId}
-                onRedirectToBrief={handleRedirectToBrief}
-              />
-            </div>
-          </ModernAnalysisCard>
-        );
-      }
+    if (unlockedFeatures.fullSwot) {
+      categories[0].analyses.push(
+        <ModernAnalysisCard
+          key="productivity"
+          id="productivity"
+          title="Productivity Metrics"
+          description="Analysis of organizational productivity and efficiency metrics"
+          icon={TrendingUp}
+          hasData={!!productivityData}
+          onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
+          isRegenerating={isProductivityRegenerating}
+          isLoading={isAnalysisLoading('productivityMetrics')}
+          category="essential"
+        >
+          <div ref={productivityRef} data-component="productivity">
+            <ProductivityMetrics
+              questions={questions}
+              userAnswers={userAnswers}
+              businessName={businessData.name}
+              onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
+              isRegenerating={isProductivityRegenerating || isAnalysisLoading('productivityMetrics')}
+              canRegenerate={!isAnalysisRegenerating}
+              productivityData={productivityData}
+              selectedBusinessId={selectedBusinessId}
+              onRedirectToBrief={handleRedirectToBrief}
+            />
+          </div>
+        </ModernAnalysisCard>
+      );
     }
 
     if (unlockedFeatures.fullSwot) {
