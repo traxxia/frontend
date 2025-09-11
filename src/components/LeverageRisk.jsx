@@ -120,31 +120,191 @@ const LeverageRisk = ({
     }
   };
 
-  // Helper function to render traffic light indicator with text
-  const TrafficLightIndicator = ({ value, threshold, metricType, displayValue }) => {
-    const color = getTrafficLightColor(value, threshold, metricType);
+  // Helper function to parse ratio values
+  const parseRatioValue = (value, type) => {
+    if (value === null || value === undefined || value === '' || value === 'NA') return 0;
+    
+    if (typeof value === 'string') {
+      const numValue = parseFloat(value.replace(/[,$%]/g, ''));
+      return isNaN(numValue) ? 0 : numValue;
+    }
+    
+    if (typeof value === 'number') {
+      return value;
+    }
+    
+    return 0;
+  };
+
+  // Paired Bar Chart Component
+  const PairedBarChart = ({ metrics, thresholds }) => {
+    const [containerWidth, setContainerWidth] = useState(600);
+    const containerRef = useRef(null);
+
+    const chartData = Object.entries(metrics)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => ({
+        metric: key,
+        actualValue: parseRatioValue(value, key),
+        benchmarkValue: parseRatioValue(thresholds[key], key),
+        color: getTrafficLightColor(value, thresholds[key], key),
+        hasData: value !== null && value !== undefined && value !== '',
+        type: key
+      }));
+
+    useEffect(() => {
+      const updateWidth = () => {
+        if (containerRef.current) {
+          const width = containerRef.current.offsetWidth - 40; // Account for padding
+          setContainerWidth(Math.max(width, 500)); // Minimum width of 500px
+        }
+      };
+
+      updateWidth();
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
+    }, []);
+
+    if (chartData.length === 0) {
+      return null;
+    }
+
+    const maxValue = Math.max(
+      ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
+      10
+    );
+    const chartHeight = chartData.length * 80 + 40; // 80px per metric + padding
+    const chartWidth = containerWidth;
+    const leftMargin = 120;
+    const rightMargin = 60;
+    const barHeight = 25;
+    const groupSpacing = 80;
+
+    const formatDisplayValue = (value, type) => {
+      return value.toFixed(3);
+    };
 
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-      }}>
-        <div style={{
-          width: '12px',
-          height: '12px',
-          borderRadius: '50%',
-          backgroundColor: color,
-          border: '1px solid rgba(0,0,0,0.1)',
-          flexShrink: 0
-        }} />
-        <span style={{
-          color: color,
-          fontWeight: '500',
-          whiteSpace: 'nowrap'
+      <div 
+        ref={containerRef}
+        style={{ 
+          width: '99%',
+          padding: '20px',
+          background: '#fff',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb'
         }}>
-          {displayValue}
-        </span>
+        <h3 style={{ 
+          marginBottom: '20px', 
+          color: '#1f2937',
+          fontSize: '18px',
+          fontWeight: '600'
+        }}>
+          Leverage & Risk Metrics vs Industry Benchmarks
+        </h3>
+        
+        <div style={{ overflowX: 'auto' }}>
+          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '99%' }}>
+          {/* Chart background */}
+          <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
+          
+          {/* Y-axis labels and bars */}
+          {chartData.map((data, index) => {
+            const y = index * groupSpacing + 30;
+            const barWidth = (chartWidth - leftMargin - rightMargin);
+            
+            // Calculate bar lengths as percentages of max value
+            const actualBarLength = (data.actualValue / maxValue) * barWidth;
+            const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
+            
+            return (
+              <g key={data.metric}>
+                {/* Metric label */}
+                <text
+                  x={leftMargin - 10}
+                  y={y + 15}
+                  textAnchor="end"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    fill: '#374151'
+                  }}
+                >
+                  {data.metric}
+                </text>
+                
+                {/* Actual value bar */}
+                <rect
+                  x={leftMargin}
+                  y={y}
+                  width={actualBarLength}
+                  height={barHeight}
+                  fill={data.color}
+                  opacity={0.8}
+                />
+                
+                {/* Benchmark value bar */}
+                <rect
+                  x={leftMargin}
+                  y={y + barHeight + 5}
+                  width={benchmarkBarLength}
+                  height={barHeight}
+                  fill="#94a3b8"
+                  opacity={0.6}
+                />
+                
+                {/* Value labels */}
+                <text
+                  x={leftMargin + actualBarLength + 5}
+                  y={y + 17}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    fill: data.color
+                  }}
+                >
+                  {formatDisplayValue(data.actualValue, data.type)}
+                </text>
+                
+                <text
+                  x={leftMargin + benchmarkBarLength + 5}
+                  y={y + barHeight + 22}
+                  style={{
+                    fontSize: '12px',
+                    fill: '#64748b'
+                  }}
+                >
+                  {formatDisplayValue(data.benchmarkValue, data.type)}
+                </text>
+                
+                {/* Grid lines */}
+                <line
+                  x1={leftMargin}
+                  y1={y + barHeight * 2 + 15}
+                  x2={chartWidth - rightMargin}
+                  y2={y + barHeight * 2 + 15}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
+                  opacity={0.3}
+                />
+              </g>
+            );
+          })}
+          
+          {/* Legend */}
+          <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
+            <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
+            <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+              Your Business
+            </text>
+            
+            <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
+            <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+              Industry Average
+            </text>
+          </g>
+          </svg>
+        </div> 
       </div>
     );
   };
@@ -339,7 +499,7 @@ const LeverageRisk = ({
 
     const allMetricsNull = Object.values(metrics).every(value => value === null);
 
-    // Show normal analysis content
+    // Show normal analysis content with paired bar chart
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
@@ -358,44 +518,8 @@ const LeverageRisk = ({
             </div>
           )}
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Value</th>
-                <th>Industry Average</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(metrics).map(([key, value]) => {
-                const formattedValue = formatRatio(value, key);
-                const isNull = value === null || value === undefined || value === '';
-                const threshold = thresholds[key];
-                const formattedThreshold = formatThreshold(threshold);
+          <PairedBarChart metrics={metrics} thresholds={thresholds} />
 
-                return (
-                  <tr key={key}>
-                    <td><strong>{key}</strong></td>
-                    <td>
-                      {isNull ? (
-                        <span style={{ color: '#6b7280' }}>No Data</span>
-                      ) : (
-                        <TrafficLightIndicator
-                          value={value}
-                          threshold={threshold}
-                          metricType={key}
-                          displayValue={formattedValue}
-                        />
-                      )}
-                    </td>
-                    <td>
-                      {formattedThreshold}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       </div>
     );
