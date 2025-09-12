@@ -443,15 +443,26 @@ body {
 }
 
 .bot-avatar {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  width: 36px;
+  height: 36px;
+  background: rgb(26, 115, 232);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  margin-right: 12px;
   flex-shrink: 0;
+  box-shadow:
+    0 2px 8px rgba(16, 185, 129, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.bot-avatar:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow:
+    0 4px 12px rgba(16, 185, 129, 0.35),
+    0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .message-bubble {
@@ -2824,13 +2835,3 @@ body {
   padding: 1rem;
   background: #ffffffff;
 }
-
-
-
-
-
-
-
-
-
-

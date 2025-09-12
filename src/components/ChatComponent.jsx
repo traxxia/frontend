@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader, SkipForward, Upload, FileText, Database } from "lucide-react";
+import { Send, Loader, SkipForward, Upload, FileText, Database, MessageCircle, Sparkles, Zap, Brain } from "lucide-react";
 import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
@@ -13,7 +13,7 @@ const ChatComponent = ({
   onQuestionCompleted,
   onPhaseCompleted,
   onFileUploaded,
-  scrollToUploadCard = false,   
+  scrollToUploadCard = false,
   onScrollCompleted = null
 }) => {
   const [currentInput, setCurrentInput] = useState('');
@@ -1355,20 +1355,21 @@ const ChatComponent = ({
       uploadDate: 'Previously uploaded'
     };
 
-    return (
-      <div ref={uploadedFileCardRef} 
-      style={{
-        backgroundColor: '#f0f9ff',
-        border: '1px solid #0ea5e9',
-        borderRadius: '8px',
-        padding: '12px',
-        margin: '12px 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
+    return (<div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+      <div ref={uploadedFileCardRef}
+        style={{
+          backgroundColor: '#f0f9ff',
+          border: '1px solid rgb(26, 115, 232)',
+          borderRadius: '8px',
+          padding: '5px',
+          margin: '5px 0',
+          width: 'max-content',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FileText size={20} color="#0ea5e9" />
+          <FileText size={20} color="rgb(26, 115, 232)" />
           <div>
             <div style={{ fontWeight: '500', color: '#0f172a' }}>
               {displayInfo.name}
@@ -1382,7 +1383,7 @@ const ChatComponent = ({
           <button
             onClick={handleFileReplace}
             style={{
-              backgroundColor: '#0ea5e9',
+              backgroundColor: 'rgb(26, 115, 232)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -1390,18 +1391,17 @@ const ChatComponent = ({
               fontSize: '12px',
               cursor: 'pointer',
               fontWeight: '500',
+              margin: '10px',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
             }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#0284c7'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#0ea5e9'}
           >
             <Upload size={14} />
             Change
           </button>
         </div>
-      </div>
+      </div></div>
     );
   };
 
@@ -1446,7 +1446,7 @@ const ChatComponent = ({
                 <div className={`message-wrapper ${message.type}`}>
                   {message.type === 'bot' && (
                     <div className="bot-avatar">
-                      <img src="/chat-bot.png" alt="Bot Avatar" />
+                      <MessageCircle size={18} color="white" />
                     </div>
                   )}
 
@@ -1541,7 +1541,6 @@ const ChatComponent = ({
                   </div>
                 </div>
 
-                {/* Show file card after the appropriate message */}
                 {shouldShowFileCardAfter && <UploadedFileCard />}
               </React.Fragment>
             );

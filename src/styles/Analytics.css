@@ -7386,11 +7386,11 @@
    font-size: 0.9rem;
  }
 
- img,
+ /* img,
  svg {
    margin-top: 3px;
    margin-right: 5px;
- }
+ } */
 
  .data-table tbody tr:hover {
    background-color: #f8f9ff;
