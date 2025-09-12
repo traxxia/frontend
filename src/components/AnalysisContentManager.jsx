@@ -189,7 +189,7 @@ const AnalysisContentManager = ({
 
       switch (status) {
         case 'completed':
-          return <CheckCircle className="modern-status-icon completed" size={16} />;
+          return;
         case 'loading':
           return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
         case 'locked':
@@ -230,11 +230,18 @@ const AnalysisContentManager = ({
 
             <div
               onClick={(e) => {
-                e.stopPropagation();
                 e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent?.stopImmediatePropagation?.();
               }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseUp={(e) => e.stopPropagation()}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onMouseUp={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
             >
               <RegenerateButton
                 onRegenerate={onRegenerate}
@@ -245,7 +252,6 @@ const AnalysisContentManager = ({
                 hideRegenerateButtons={hideRegenerateButtons}
               />
             </div>
-
             <button className="modern-expand-btn">
               {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>

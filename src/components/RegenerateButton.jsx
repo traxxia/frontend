@@ -13,7 +13,7 @@ const RegenerateButton = ({
   const sizes = {
     small: {
       padding: "5px",
-      fontSize: "12px",
+      fontSize: "13px",
       iconSize: 12
     },
     medium: {
@@ -45,7 +45,7 @@ const RegenerateButton = ({
     <button
       onClick={onRegenerate}
       style={{
-        backgroundColor: "#6366f1",
+        backgroundColor: "rgb(26, 115, 232)",
         color: "#fff",
         border: "none",
         borderRadius: "8px",
@@ -55,7 +55,6 @@ const RegenerateButton = ({
         display: "flex",
         alignItems: "center",
         cursor: "pointer",
-        gap: "6px",
         transition: "all 0.2s ease",
         marginLeft: "auto"
       }}

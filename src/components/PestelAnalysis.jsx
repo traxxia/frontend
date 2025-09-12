@@ -35,10 +35,10 @@ const PestelAnalysis = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.pestel; 
-    
+    const analysisConfig = ANALYSIS_TYPES.pestel;
+
     await checkMissingQuestionsAndRedirect(
-      'pestel', 
+      'pestel',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -106,7 +106,7 @@ const PestelAnalysis = ({
   // Check if data is incomplete and show missing questions checker
   if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
     return (
-      <div className="porters-container"> 
+      <div className="porters-container">
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -119,7 +119,7 @@ const PestelAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       </div>
     );
   }
@@ -130,7 +130,7 @@ const PestelAnalysis = ({
   return (
     <div className="porters-container pestel-container" data-analysis-type="pestel"
       data-analysis-name="PESTEL Analysis"
-      data-analysis-order="7"> 
+      data-analysis-order="7">
 
       {/* PESTEL Factors Section */}
       {analysis.factor_summary && (
@@ -157,21 +157,12 @@ const PestelAnalysis = ({
                     <tr key={factor}>
                       <td>
                         <div className="force-name">
-                          <BarChart3 size={16} />
                           <span>{factor.toUpperCase()}</span>
                         </div>
                       </td>
-                      <td>
-                        <span className={`status-badge ${data?.strategic_priority?.toLowerCase() || 'medium-intensity'}`}>
-                          {data?.strategic_priority || 'N/A'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="score-badge">{data?.total_mentions || 0}</span>
-                      </td>
-                      <td>
-                        <span className="score-badge">{data?.high_impact_count || 0}</span>
-                      </td>
+                      <td>{data?.strategic_priority || 'N/A'} </td>
+                      <td>{data?.total_mentions || 0}</td>
+                      <td>{data?.high_impact_count || 0}</td>
                       <td>
                         <div className="forces-tags">
                           {(data?.key_themes || []).map((theme, index) => (
@@ -188,7 +179,7 @@ const PestelAnalysis = ({
         </div>
       )}
 
-      {/* Key Improvements Section */} 
+      {/* Key Improvements Section */}
       {analysis.key_improvements && Array.isArray(analysis.key_improvements) && analysis.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
@@ -207,7 +198,7 @@ const PestelAnalysis = ({
                           <TrendingUp size={16} />
                           <span>{improvement}</span>
                         </div>
-                      </td> 
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -216,7 +207,7 @@ const PestelAnalysis = ({
           )}
         </div>
       )}
- 
+
     </div>
   );
 };

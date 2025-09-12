@@ -158,19 +158,19 @@ const StrategicAnalysis = ({
         <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center',
-          borderBottom: 'none', 
+          borderBottom: 'none',
           gap: '8px',
-          marginBottom:'10px',
+          marginBottom: '10px',
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
-          <h4  style={{marginTop:'5px'}} >Competitive Landscape Analysis</h4>
+          <h4 style={{ marginTop: '5px' }} >Competitive Landscape Analysis</h4>
         </div>
 
         {/* Direct Competitors */}
         {competitiveLandscape.direct_competitors && competitiveLandscape.direct_competitors.length > 0 && (
           <div>
-            <h3 style={{ 
+            <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -182,7 +182,7 @@ const StrategicAnalysis = ({
               Direct Competitors
             </h3>
 
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px', marginBottom:'20px' }}>
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px', marginBottom: '20px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -260,7 +260,7 @@ const StrategicAnalysis = ({
         {/* Indirect Competitors */}
         {competitiveLandscape.indirect_competitors && competitiveLandscape.indirect_competitors.length > 0 && (
           <div>
-            <h3 style={{ 
+            <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -272,7 +272,7 @@ const StrategicAnalysis = ({
               Indirect Competitors
             </h3>
 
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px', marginBottom:'20px'  }}>
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px', marginBottom: '20px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -319,20 +319,20 @@ const StrategicAnalysis = ({
         {/* Potential Entrants */}
         {competitiveLandscape.potential_entrants && competitiveLandscape.potential_entrants.length > 0 && (
           <div>
-            <h3 style={{ 
+            <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               color: '#1f2937',
-              marginBottom:'20px'
+              marginBottom: '20px'
             }}>
               <TrendingUp size={20} />
               Potential Market Entrants
             </h3>
 
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px'}}>
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -388,59 +388,61 @@ const StrategicAnalysis = ({
   };
 
   const renderKeyImprovementsTable = (data) => {
-  const improvements = data?.key_improvements;
-  if (!improvements || !Array.isArray(improvements) || improvements.length === 0) return null;
+    const improvements = data?.key_improvements;
+    if (!improvements || !Array.isArray(improvements) || improvements.length === 0) return null;
 
-  return (
-    <section className="strategic-page-section">
-      <div className="section-headers" style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        borderBottom: 'none', 
-        gap: '8px',
-        background: '#fff'
-      }}>
-        <TrendingUp size={24} style={{ color: 'blue' }} />
-        <h4>Key Improvements</h4>
-      </div>
+    return (
+      <section className="strategic-page-section">
+        <div className="section-headers" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderBottom: 'none',
+          gap: '8px',
+          background: '#fff'
+        }}>
+          <TrendingUp size={24} style={{ color: 'blue' }} />
+          <h4>Key Improvements</h4>
+        </div>
 
-      <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px'}}>
-        <table className="data-table">
-          <tbody>
+        <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px' }}>
+
+          <ul style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0
+          }}>
             {improvements.map((improvement, index) => (
-              <tr key={index}>
-                <td className="table-value">
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                    padding: '8px 0'
-                  }}> 
-                    <div style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}> 
-                      <span style={{
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        lineHeight: '1.4',
-                        color: '#1f2937'
-                      }}>
-                        {improvement}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-              </tr>
+              <li key={index} style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                padding: '8px 0',
+                borderBottom: index < improvements.length - 1 ? '1px dotted #d1d5db' : 'none'
+              }}>
+                <div style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6',
+                  marginTop: '8px',
+                  flexShrink: 0
+                }} />
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  lineHeight: '1.4',
+                  color: '#1f2937',
+                  flex: 1
+                }}>
+                  {improvement}
+                </span>
+              </li>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-};
+          </ul>
+        </div>
+      </section>
+    );
+  };
 
   const renderStrategicPillarsTable = (data) => {
     const pillars = data?.strategic_pillars_analysis;
@@ -457,7 +459,7 @@ const StrategicAnalysis = ({
           background: '#fff'
         }}>
           <BarChart3 size={24} style={{ color: 'blue' }} />
-          <h4 style={{marginTop:'5px' }}>Strategic Pillars Analysis</h4>
+          <h4 style={{ marginTop: '5px' }}>Strategic Pillars Analysis</h4>
         </div>
 
         {/* Add the Strategic Wheel */}
@@ -516,7 +518,7 @@ const StrategicAnalysis = ({
           background: '#fff'
         }}>
           <Target size={24} style={{ color: 'blue' }} />
-          <h4 style={{ marginTop:'5px' }}>Strategic Goals ({goals.year})</h4>
+          <h4 style={{ marginTop: '5px' }}>Strategic Goals ({goals.year})</h4>
         </div>
 
         {/* Overall Progress Summary */}
@@ -582,7 +584,7 @@ const StrategicAnalysis = ({
         </div>
 
         {/* Objectives Table */}
-        <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px' }}>
+        <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '25px' }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -691,82 +693,6 @@ const StrategicAnalysis = ({
             </tbody>
           </table>
         </div>
-
-        {/* Quarterly Milestones */}
-        {goals.quarterly_milestones && goals.quarterly_milestones.length > 0 && (
-          <div style={{ marginTop: '30px' }}>
-            <h3 style={{
-              margin: '0 0 15px 0',
-              fontSize: '16px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <Calendar size={20} />
-              Quarterly Milestones
-            </h3>
-
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'15px'}}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Quarter</th>
-                    <th>Milestone</th>
-                    <th>Success Criteria</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {goals.quarterly_milestones.map((milestone, index) => (
-                    <tr key={index}>
-                      <td className="table-value text-center">
-                        <div style={{
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          padding: '6px 12px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          display: 'inline-block'
-                        }}>
-                          {milestone.quarter}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        <div style={{ fontWeight: '600' }}>
-                          {milestone.milestone}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        <div style={{ fontSize: '13px', color: '#374151' }}>
-                          {milestone.success_criteria}
-                        </div>
-                      </td>
-                      <td className="table-value text-center">
-                        <div style={{
-                          backgroundColor: milestone.status ?
-                            (milestone.status.toLowerCase() === 'completed' ? '#10b981' :
-                              milestone.status.toLowerCase() === 'in progress' ? '#f59e0b' :
-                                milestone.status.toLowerCase() === 'pending' ? '#6b7280' : '#3b82f6') : '#3b82f6',
-                          color: 'white',
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          textTransform: 'capitalize',
-                          display: 'inline-block'
-                        }}>
-                          {milestone.status || 'Planned'}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </section>
     );
   };
@@ -774,8 +700,6 @@ const StrategicAnalysis = ({
   const renderImplementationRoadmapTable = (data) => {
     const roadmap = data?.implementation_roadmap;
     if (!roadmap) return null;
-
-    // Extract duration in months for Gantt visualization
     const parseDuration = (duration) => {
       if (!duration) return 1;
       const match = duration.toLowerCase().match(/(\d+)\s*(month|week|day)/);
@@ -870,69 +794,143 @@ const StrategicAnalysis = ({
           display: 'inline-flex',
           alignItems: 'center', borderBottom: 'none',
           gap: '8px',
-          marginBottom:'10px',
+          marginBottom: '10px',
           background: '#fff'
         }}>
           <Calendar size={24} style={{ color: 'blue' }} />
-          <h4 style={{ marginTop:'5px' }} >Implementation Roadmap</h4>
+          <h4 style={{ marginTop: '5px' }} >Implementation Roadmap</h4>
         </div>
 
         {/* Gantt Chart Visualization */}
         <div style={{
-  backgroundColor: '#f9fafb',
-  padding: '20px',
-  borderRadius: '8px',
-  marginBottom: '20px',
-  border: '1px solid #e5e7eb',
-}}>
-  <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
-    Timeline Overview ({Math.ceil(totalTimeline)} months)
-  </h3>
+          backgroundColor: '#f9fafb',
+          padding: '20px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #e5e7eb',
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
+            Timeline Overview ({Math.ceil(totalTimeline)} months)
+          </h3>
 
-  <div style={{ overflowX: 'auto' }}>
-    <div style={{ minWidth: '700px' }}>
-      {renderTimelineHeader()}
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: '700px' }}>
+              {renderTimelineHeader()}
 
-      <div style={{ position: 'relative', minHeight: `${phasesWithTimeline.length * 35}px` }}>
-        {phasesWithTimeline.map(({ key, phase, startMonth, duration }, index) => (
-          <div key={key} style={{
-            position: 'relative',
-            height: '30px',
-            marginBottom: '5px',
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <div style={{
-              width: '120px',
-              fontSize: '12px',
-              fontWeight: '500',
-              marginRight: '10px',
-              textAlign: 'right'
-            }}>
-              {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </div>
-            <div style={{
-              flex: 1,
-              position: 'relative',
-              height: '25px',
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '4px',
-              minWidth: '600px' 
-            }}>
-              {renderGanttBar(startMonth, duration, index)}
+              <div style={{ position: 'relative', minHeight: `${phasesWithTimeline.length * 35}px` }}>
+                {phasesWithTimeline.map(({ key, phase, startMonth, duration }, index) => (
+                  <div key={key} style={{
+                    position: 'relative',
+                    height: '30px',
+                    marginBottom: '5px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <div style={{
+                      width: '120px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      marginRight: '10px',
+                      textAlign: 'right'
+                    }}>
+                      {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </div>
+                    <div style={{
+                      flex: 1,
+                      position: 'relative',
+                      height: '25px',
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '4px',
+                      minWidth: '600px'
+                    }}>
+                      {renderGanttBar(startMonth, duration, index)}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</div>
 
+          {/* Quarterly Milestones - Moved inside Timeline Overview */}
+          {data?.strategic_goals?.quarterly_milestones && data.strategic_goals.quarterly_milestones.length > 0 && (
+            <div style={{ marginTop: '30px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+              <h3 style={{
+                margin: '0 0 15px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <Calendar size={20} />
+                Quarterly Milestones
+              </h3>
 
+              <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Quarter</th>
+                      <th>Milestone</th>
+                      <th>Success Criteria</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.strategic_goals.quarterly_milestones.map((milestone, index) => (
+                      <tr key={index}>
+                        <td className="table-value text-center">
+                          <div style={{
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            padding: '6px 12px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            display: 'inline-block'
+                          }}>
+                            {milestone.quarter}
+                          </div>
+                        </td>
+                        <td className="table-value">
+                          <div style={{ fontWeight: '600' }}>
+                            {milestone.milestone}
+                          </div>
+                        </td>
+                        <td className="table-value">
+                          <div style={{ fontSize: '13px', color: '#374151' }}>
+                            {milestone.success_criteria}
+                          </div>
+                        </td>
+                        <td className="table-value text-center">
+                          <div style={{
+                            backgroundColor: milestone.status ?
+                              (milestone.status.toLowerCase() === 'completed' ? '#10b981' :
+                                milestone.status.toLowerCase() === 'in progress' ? '#f59e0b' :
+                                  milestone.status.toLowerCase() === 'pending' ? '#6b7280' : '#3b82f6') : '#3b82f6',
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            textTransform: 'capitalize',
+                            display: 'inline-block'
+                          }}>
+                            {milestone.status || 'Planned'}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Detailed Table */}
-        <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px' }}>
+        <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '25px' }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -1029,7 +1027,7 @@ const StrategicAnalysis = ({
             marginBottom: '20px',
             border: '1px solid #bae6fd'
           }}>
-            <h3 style={{ 
+            <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -1064,7 +1062,7 @@ const StrategicAnalysis = ({
         {/* Review Cycles Table */}
         {monitoring.review_cycles && (
           <div>
-            <h3 style={{ 
+            <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -1075,7 +1073,7 @@ const StrategicAnalysis = ({
               Review Cycles
             </h3>
 
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px', marginBottom:'20px' }}>
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '25px', marginBottom: '20px' }}>
               <table className="data-table">
                 <thead>
                   <tr>
@@ -1103,7 +1101,7 @@ const StrategicAnalysis = ({
         {/* Feedback Loops Table */}
         {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
           <div>
-            <h3 style={{ 
+            <h3 style={{
               fontSize: '16px',
               fontWeight: '600',
               display: 'flex',
@@ -1114,7 +1112,7 @@ const StrategicAnalysis = ({
               Feedback Loops
             </h3>
 
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop:'25px' }}>
+            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '25px' }}>
               <table className="data-table">
                 <thead>
                   <tr>

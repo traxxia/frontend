@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 
-const PDFExportButton = ({ 
-  businessName, 
+const PDFExportButton = ({
+  businessName,
   onToastMessage,
   currentPhase,
   disabled = false,
@@ -38,7 +38,7 @@ const PDFExportButton = ({
   // Fast preparation function - minimal DOM changes (from old version)
   const prepareForCapture = () => {
     const changes = [];
-    
+
     // 1. Expand all cards instantly (no animation)
     const cards = document.querySelectorAll('.modern-card-content.collapsed');
     cards.forEach(card => {
@@ -111,14 +111,14 @@ const PDFExportButton = ({
     if (unlockedFeatures.goodPhase && hasGoodPhaseData) {
       return 'good';
     }
-    
-    const hasEssentialPhaseData = !!(fullSwotData || customerSegmentationData || competitiveAdvantageData || 
-                                     channelEffectivenessData || expandedCapabilityData || strategicGoalsData || 
-                                     strategicRadarData || cultureProfileData || productivityData || maturityData);
+
+    const hasEssentialPhaseData = !!(fullSwotData || customerSegmentationData || competitiveAdvantageData ||
+      channelEffectivenessData || expandedCapabilityData || strategicGoalsData ||
+      strategicRadarData || cultureProfileData || productivityData || maturityData);
     if (unlockedFeatures.fullSwot && hasEssentialPhaseData) {
       return 'essential';
     }
-    
+
     return 'initial';
   };
 
@@ -132,7 +132,7 @@ const PDFExportButton = ({
     try {
       // Dynamic import for better performance
       const html2canvas = (await import('html2canvas')).default;
-      
+
       const canvas = await html2canvas(component, {
         scale: 1.2, // Good quality but not too slow
         useCORS: true,
@@ -197,11 +197,11 @@ const PDFExportButton = ({
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(59, 130, 246);
       pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
-      
+
       pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
       pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-      
+
       pdf.setFontSize(12);
       pdf.setTextColor(128, 128, 128);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
@@ -209,24 +209,24 @@ const PDFExportButton = ({
       // Define strategic components to capture
       const strategicSelectors = [
         '.strategic-content',
-        '.strategic-section', 
+        '.strategic-section',
         '.strategic-analysis-container',
         '.strategic-page-section'
       ];
-      
+
       let capturedCount = 0;
-      
+
       // Try each selector to find strategic content
       for (const selector of strategicSelectors) {
         const elements = document.querySelectorAll(selector);
-        
+
         for (const element of elements) {
           if (element && element.offsetHeight > 50) {
             const result = await captureComponent(selector, 'Strategic Analysis');
-            
+
             if (result) {
               pdf.addPage();
-              
+
               // Add section title
               pdf.setFontSize(16);
               pdf.setFont('helvetica', 'bold');
@@ -238,14 +238,14 @@ const PDFExportButton = ({
               const canvas = result.canvas;
               const imgHeight = (canvas.height * imgWidth) / canvas.width;
               const maxHeight = pageHeight - 60;
-              
+
               if (imgHeight > maxHeight) {
                 const scale = maxHeight / imgHeight;
                 pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
               } else {
                 pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
               }
-              
+
               capturedCount++;
             }
             break; // Only capture once per selector type
@@ -280,7 +280,7 @@ const PDFExportButton = ({
   // Main analysis export function (enhanced with phase-by-phase content)
   const handleDownloadPhaseAnalysis = async () => {
     const exportPhase = getExportPhase();
-    
+
     if (!exportPhase) {
       onToastMessage?.('Unable to determine export phase', 'error');
       return;
@@ -310,11 +310,11 @@ const PDFExportButton = ({
       pdf.setTextColor(59, 130, 246);
       const phaseTitle = 'Analysis Result';
       pdf.text(phaseTitle, pageWidth / 2, 30, { align: 'center' });
-      
+
       pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
       pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-      
+
       pdf.setFontSize(12);
       pdf.setTextColor(128, 128, 128);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
@@ -389,10 +389,10 @@ const PDFExportButton = ({
       // Filter to only visible components with content
       const visibleComponents = components.filter(({ selector }) => {
         const element = document.querySelector(selector);
-        return element && 
-               element.offsetHeight > 50 && 
-               element.offsetWidth > 50 &&
-               !element.closest('.collapsed');
+        return element &&
+          element.offsetHeight > 50 &&
+          element.offsetWidth > 50 &&
+          !element.closest('.collapsed');
       });
 
       if (visibleComponents.length === 0) {
@@ -402,13 +402,13 @@ const PDFExportButton = ({
 
       // Capture components sequentially with minimal delay
       let capturedCount = 0;
-      
+
       for (const { selector, name } of visibleComponents) {
         const result = await captureComponent(selector, name);
-        
+
         if (result) {
           pdf.addPage();
-          
+
           // Add section title
           pdf.setFontSize(16);
           pdf.setFont('helvetica', 'bold');
@@ -420,17 +420,17 @@ const PDFExportButton = ({
           const canvas = result.canvas;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
           const maxHeight = pageHeight - 60;
-          
+
           if (imgHeight > maxHeight) {
             const scale = maxHeight / imgHeight;
             pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
           } else {
             pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
           }
-          
+
           capturedCount++;
         }
-        
+
         // Small delay between captures to prevent memory issues
         if (visibleComponents.length > 3) {
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -445,8 +445,8 @@ const PDFExportButton = ({
       // Save PDF
       const timestamp = new Date().toISOString().split('T')[0];
       const phaseLabel = exportPhase === 'good' ? 'Good_Phase' :
-                        exportPhase === 'essential' ? 'Essential_Phase' : 'Initial_Phase';
-      
+        exportPhase === 'essential' ? 'Essential_Phase' : 'Initial_Phase';
+
       const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_${timestamp}.pdf`;
       pdf.save(filename);
 
@@ -466,12 +466,12 @@ const PDFExportButton = ({
 
   // Determine button text and action based on export type
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
-  
+
   // Get the actual export phase for display (only for analysis type)
   const exportPhase = exportType === "analysis" ? getExportPhase() : null;
   const phaseLabel = exportType === "strategic" ? "Strategic" :
-                     exportPhase === 'initial' ? 'Initial' : 
-                     exportPhase === 'essential' ? 'Essential' : 'Good';
+    exportPhase === 'initial' ? 'Initial' :
+      exportPhase === 'essential' ? 'Essential' : 'Good';
 
   return (
     <>
@@ -494,8 +494,8 @@ const PDFExportButton = ({
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
             minWidth: '280px'
           }}>
-            <Loader size={32} style={{ 
-              color: '#1a73e8', 
+            <Loader size={32} style={{
+              color: '#1a73e8',
               animation: 'spin 1s linear infinite',
               marginBottom: '12px'
             }} />
@@ -508,14 +508,14 @@ const PDFExportButton = ({
           </div>
         </div>
       )}
-      
+
       <button
         onClick={handleDownload}
         disabled={disabled || isExportingPDF}
         className={className}
         style={{
-          backgroundColor: isExportingPDF ? "#f3f4f6" : "#1a73e8",
-          color: isExportingPDF ? "#6b7280" : "#fff",
+          backgroundColor: "#1a73e8",
+          color: "#fff",
           border: "none",
           borderRadius: "10px",
           padding: "10px 18px",
@@ -524,7 +524,7 @@ const PDFExportButton = ({
           display: "flex",
           alignItems: "center",
           cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
-          gap: "8px",
+          gap: "0px",
           transition: "all 0.2s ease",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           ...style

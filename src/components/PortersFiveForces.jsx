@@ -224,7 +224,7 @@ const PortersFiveForces = ({
                 <tbody>
                   {parsedData.executive_summary.industry_attractiveness && (
                     <tr>
-                      <td><strong>Industry Attractiveness</strong></td>
+                      <td><div className="force-name">Industry Attractiveness</div></td>
                       <td>{parsedData.executive_summary.industry_attractiveness}</td>
                       <td>
                         <span className={`status-badge ${getIntensityColor(parsedData.executive_summary.industry_attractiveness)}`}>
@@ -235,7 +235,7 @@ const PortersFiveForces = ({
                   )}
                   {parsedData.executive_summary.overall_competitive_intensity && (
                     <tr>
-                      <td><strong>Competitive Intensity</strong></td>
+                      <td><div className="force-name">Competitive Intensity</div></td>
                       <td>{parsedData.executive_summary.overall_competitive_intensity}</td>
                       <td>
                         <span className={`status-badge ${getIntensityColor(parsedData.executive_summary.overall_competitive_intensity)}`}>
@@ -246,7 +246,7 @@ const PortersFiveForces = ({
                   )}
                   {parsedData.executive_summary.competitive_position && (
                     <tr>
-                      <td><strong>Competitive Position</strong></td>
+                      <td><div className="force-name">Competitive Position</div></td>
                       <td>{parsedData.executive_summary.competitive_position}</td>
                       <td>-</td>
                     </tr>
@@ -371,7 +371,7 @@ const PortersFiveForces = ({
         </div>
       )}
 
-      {/* Key Improvements Section */} 
+      {/* Key Improvements Section */}
       {parsedData.key_improvements && Array.isArray(parsedData.key_improvements) && parsedData.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
@@ -388,7 +388,7 @@ const PortersFiveForces = ({
                       <td>
                         <div className="force-name">
                           <TrendingUp size={16} />
-                          <span>{improvement}</span>
+                          {improvement}
                         </div>
                       </td>
                     </tr>

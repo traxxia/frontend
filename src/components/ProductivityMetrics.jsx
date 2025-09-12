@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'; 
+import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import "../styles/EssentialPhase.css"; 
+import "../styles/EssentialPhase.css";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ProductivityMetrics = ({
@@ -26,10 +26,10 @@ const ProductivityMetrics = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.productivityMetrics; 
-    
+    const analysisConfig = ANALYSIS_TYPES.productivityMetrics;
+
     await checkMissingQuestionsAndRedirect(
-      'productivityMetrics', 
+      'productivityMetrics',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -48,7 +48,7 @@ const ProductivityMetrics = ({
   // Simplified validation - EXACTLY like other components
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
-    
+
     // Handle both wrapped and direct API response formats
     let normalizedData;
     if (data.productivityMetrics) {
@@ -58,12 +58,12 @@ const ProductivityMetrics = ({
     } else {
       return true;
     }
-    
+
     // Check if productivityMetrics exists
     if (!normalizedData.productivityMetrics) {
       return true;
     }
-    
+
     const metrics = normalizedData.productivityMetrics;
     const hasEmployeeData = metrics.employeeProductivity && Object.keys(metrics.employeeProductivity).length > 0;
     const hasCostData = metrics.costStructure && Object.keys(metrics.costStructure).length > 0;
@@ -97,7 +97,7 @@ const ProductivityMetrics = ({
       } else {
         normalizedData = null;
       }
-      
+
       if (normalizedData) {
         setData(normalizedData);
         setHasGenerated(true);
@@ -122,29 +122,29 @@ const ProductivityMetrics = ({
   // Helper function to format values for display
   const formatValue = (value, key) => {
     if (value === null || value === undefined) return 'N/A';
-    
+
     // Format percentage fields
     if (key.toLowerCase().includes('percentage') || key.toLowerCase().includes('costs')) {
       return `${value}`;
     }
-    
+
     // Format currency fields
     if (key.toLowerCase().includes('value') && typeof value === 'number' && value > 1000) {
       return `${value.toLocaleString()}`;
     }
-    
+
     // Format numbers
     if (typeof value === 'number' && value > 1000) {
       return value.toLocaleString();
     }
-    
+
     return value;
   };
 
   // Helper function to render dynamic table for objects
   const renderObjectTable = (obj, sectionKey, sectionTitle) => {
     if (!obj || typeof obj !== 'object') return null;
-    
+
     const keys = Object.keys(obj);
     if (keys.length === 0) return null;
 
@@ -154,7 +154,7 @@ const ProductivityMetrics = ({
           <h3>{sectionTitle}</h3>
           {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        
+
         {expandedSections[sectionKey] !== false && (
           <div className="table-container">
             <table className="data-table">
@@ -167,7 +167,7 @@ const ProductivityMetrics = ({
               <tbody>
                 {keys.map((key, index) => (
                   <tr key={index}>
-                    <td><strong>{formatFieldName(key)}</strong></td>
+                    <td><div className="force-name"> {formatFieldName(key)}</div></td>
                     <td>{formatValue(obj[key], key)}</td>
                   </tr>
                 ))}
@@ -191,7 +191,7 @@ const ProductivityMetrics = ({
             <h3>{sectionTitle}</h3>
             {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections[sectionKey] !== false && (
             <div className="table-container">
               <table className="data-table">
@@ -217,14 +217,14 @@ const ProductivityMetrics = ({
     // Handle array of objects (like valueDrivers)
     if (typeof array[0] === 'object' && array[0] !== null) {
       const keys = Object.keys(array[0]);
-      
+
       return (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection(sectionKey)}>
             <h3>{sectionTitle}</h3>
             {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections[sectionKey] !== false && (
             <div className="table-container">
               <table className="data-table">
@@ -276,7 +276,7 @@ const ProductivityMetrics = ({
   // Error state
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
-      <div className="porters-container productivity-container"> 
+      <div className="porters-container productivity-container">
         <div className="error-state">
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
@@ -296,7 +296,7 @@ const ProductivityMetrics = ({
   // Check if data is incomplete and show missing questions checker
   if (!productivityData || isProductivityDataIncomplete(productivityData)) {
     return (
-      <div className="porters-container productivity-container"> 
+      <div className="porters-container productivity-container">
         <AnalysisEmptyState
           analysisType="productivityMetrics"
           analysisDisplayName="Productivity and Efficiency Metrics Analysis"
@@ -307,7 +307,7 @@ const ProductivityMetrics = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       </div>
     );
   }
@@ -337,25 +337,25 @@ const ProductivityMetrics = ({
 
   return (
     <div className="porters-container productivity-container"
-         data-analysis-type="productivityMetrics"
-         data-analysis-name="Productivity Metrics"
-         data-analysis-order="14"> 
+      data-analysis-type="productivityMetrics"
+      data-analysis-name="Productivity Metrics"
+      data-analysis-order="14">
 
       {/* Dynamically render all sections from API response */}
       {Object.keys(productivityMetrics).map((sectionKey) => {
         const sectionData = productivityMetrics[sectionKey];
         const sectionTitle = formatFieldName(sectionKey);
-        
+
         // Handle objects
         if (sectionData && typeof sectionData === 'object' && !Array.isArray(sectionData)) {
           return renderObjectTable(sectionData, sectionKey, sectionTitle);
         }
-        
+
         // Handle arrays
         if (Array.isArray(sectionData) && sectionData.length > 0) {
           return renderArrayTable(sectionData, sectionKey, sectionTitle);
         }
-        
+
         return null;
       })}
 

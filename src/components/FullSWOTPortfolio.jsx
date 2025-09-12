@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap, 
+import {
+    Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap,
     ChevronDown, ChevronRight, Shield, Users, BarChart3, Lightbulb, PieChart,
     DollarSign, Activity, Map, CheckCircle, XCircle
 } from 'lucide-react';
-import '../styles/EssentialPhase.css'; 
+import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -38,10 +38,10 @@ const FullSWOTPortfolio = ({
     };
 
     const handleMissingQuestionsCheck = async () => {
-        const analysisConfig = ANALYSIS_TYPES.fullSwot; 
-        
+        const analysisConfig = ANALYSIS_TYPES.fullSwot;
+
         await checkMissingQuestionsAndRedirect(
-            'fullSwot', 
+            'fullSwot',
             selectedBusinessId,
             handleRedirectToBrief,
             {
@@ -60,7 +60,7 @@ const FullSWOTPortfolio = ({
     // Check if the full swot data is empty/incomplete
     const isFullSwotDataIncomplete = (data) => {
         if (!data) return true;
-        
+
         // Handle both wrapped and direct API response formats
         let normalizedData;
         if (data.swotPortfolio) {
@@ -70,12 +70,12 @@ const FullSWOTPortfolio = ({
         } else {
             return true;
         }
-        
+
         // Check if swotPortfolio exists
         if (!normalizedData.swotPortfolio) {
             return true;
         }
-        
+
         const portfolio = normalizedData.swotPortfolio;
         const hasStrengths = portfolio.strengths && portfolio.strengths.length > 0;
         const hasWeaknesses = portfolio.weaknesses && portfolio.weaknesses.length > 0;
@@ -106,7 +106,7 @@ const FullSWOTPortfolio = ({
             } else {
                 normalizedData = null;
             }
-            
+
             if (normalizedData) {
                 setData(normalizedData);
                 setHasGenerated(true);
@@ -161,7 +161,7 @@ const FullSWOTPortfolio = ({
     // Error state for when we have answers but no generated data
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="porters-container"> 
+            <div className="porters-container">
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
@@ -181,7 +181,7 @@ const FullSWOTPortfolio = ({
     // Check if data is incomplete and show missing questions checker
     if (!fullSwotData || isFullSwotDataIncomplete(fullSwotData)) {
         return (
-            <div className="porters-container"> 
+            <div className="porters-container">
                 <AnalysisEmptyState
                     analysisType="fullSwot"
                     analysisDisplayName="Full SWOT Portfolio"
@@ -192,7 +192,7 @@ const FullSWOTPortfolio = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                /> 
+                />
             </div>
         );
     }
@@ -220,275 +220,247 @@ const FullSWOTPortfolio = ({
     const portfolio = data.swotPortfolio;
 
     return (
-        <div className="porters-container full-swot-container" 
-             data-analysis-type="fullSwot"
-             data-analysis-name="Full SWOT Portfolio"
-             data-analysis-order="8">
+        <div className="porters-container full-swot-container"
+            data-analysis-type="fullSwot"
+            data-analysis-name="Full SWOT Portfolio"
+            data-analysis-order="8">
 
             {/* Overall Strategic Score */}
             {portfolio.overallStrategicScore && (
                 <div className="">
                     <h4>
-                            <BarChart3 size={24} />
-                            Overall Strategic Score: {portfolio.overallStrategicScore} 
-                            
-                        </h4>
+                        <BarChart3 size={24} />
+                        Overall Strategic Score: {portfolio.overallStrategicScore}
+
+                    </h4>
                 </div>
             )}
 
-            {/* Strengths Table */}
-            {portfolio.strengths && portfolio.strengths.length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('strengths')}>
-                        <h5> 
-                            Strengths 
-                        </h5>
-                        {expandedSections.strengths ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.strengths && (
-                        <div className="table-container">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Strength</th>
-                                        <th>Score</th>
-                                        <th>Category</th>  
-                                        <th>Competitive Advantage</th>
-                                        <th>Customer Validated</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {portfolio.strengths.map((item, index) => (
-                                        <tr key={index}>
-                                            <td><strong>{item.item}</strong></td>
-                                            <td>
-                                                {item.score && (
-                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
-                                                        {item.score}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="force-tag">
-                                                    {item.category?.replace(/_/g, ' ') || 'N/A'}
-                                                </span>
-                                            </td> 
-                                            <td>
-                                                {item.competitiveAdvantage ? (
-                                                    <span className="status-badge high-intensity"> 
-                                                        Yes
-                                                    </span>
-                                                ) : (
-                                                    <span className="status-badge low-intensity"> 
-                                                        No
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                {item.customerValidated ? (
-                                                    <span className="status-badge high-intensity"> 
-                                                        Yes
-                                                    </span>
-                                                ) : (
-                                                    <span className="status-badge low-intensity"> 
-                                                        No
-                                                    </span>
-                                                )}
-                                            </td>
+            <div className="section-container">
+                <div className="section-header" onClick={() => toggleSection('threats')}>
+                    <h5>
+                        Full SWOT
+                    </h5>
+                    {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                </div>
+                <div className='table-container'>
+                    {portfolio.strengths && portfolio.strengths.length > 0 && (
+                        <>
+                            {expandedSections.strengths && (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Strength</th>
+                                            <th>Score</th>
+                                            <th>Category</th>
+                                            <th>Competitive Advantage</th>
+                                            <th>Customer Validated</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {portfolio.strengths.map((item, index) => (
+                                            <tr key={index}>
+                                                <td>{item.item}</td>
+                                                <td>
+                                                    {item.score && (
+                                                        <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                            {item.score}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <span className="force-tag">
+                                                        {item.category?.replace(/_/g, ' ') || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {item.competitiveAdvantage ? (
+                                                        <span className="status-badge high-intensity">
+                                                            Yes
+                                                        </span>
+                                                    ) : (
+                                                        <span className="status-badge low-intensity">
+                                                            No
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    {item.customerValidated ? (
+                                                        <span className="status-badge high-intensity">
+                                                            Yes
+                                                        </span>
+                                                    ) : (
+                                                        <span className="status-badge low-intensity">
+                                                            No
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </>
                     )}
-                </div>
-            )}
 
-            {/* Weaknesses Table */}
-            {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('weaknesses')}>
-                        <h5> 
-                            Weaknesses 
-                        </h5>
-                        {expandedSections.weaknesses ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.weaknesses && (
-                        <div className="table-container">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Weakness</th>
-                                        <th>Score</th>
-                                        <th>Category</th> 
-                                        <th>Improvement Priority</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {portfolio.weaknesses.map((item, index) => (
-                                        <tr key={index}>
-                                            <td><strong>{item.item}</strong></td>
-                                            <td>
-                                                {item.score && (
-                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
-                                                        {item.score}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="force-tag">
-                                                    {item.category?.replace(/_/g, ' ') || 'N/A'}
-                                                </span>
-                                            </td> 
-                                            <td>
-                                                {item.improvementPriority && (
-                                                    <span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>
-                                                        {item.improvementPriority}
-                                                    </span>
-                                                )}
-                                            </td>
+                    {/* Weaknesses Table */}
+                    {portfolio.weaknesses && portfolio.weaknesses.length > 0 && (
+                        <>
+                            {expandedSections.weaknesses && (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Weakness</th>
+                                            <th>Score</th>
+                                            <th>Category</th>
+                                            <th>Improvement Priority</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {portfolio.weaknesses.map((item, index) => (
+                                            <tr key={index}>
+                                                <td>{item.item}</td>
+                                                <td>
+                                                    {item.score && (
+                                                        <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                            {item.score}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <span className="force-tag">
+                                                        {item.category?.replace(/_/g, ' ') || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {item.improvementPriority && (
+                                                        <span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>
+                                                            {item.improvementPriority}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </>
                     )}
-                </div>
-            )}
 
-            {/* Opportunities Table */}
-            {portfolio.opportunities && portfolio.opportunities.length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('opportunities')}>
-                        <h5> 
-                            Opportunities 
-                        </h5>
-                        {expandedSections.opportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.opportunities && (
-                        <div className="table-container">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Opportunity</th>
-                                        <th>Score</th>
-                                        <th>Category</th> 
-                                        <th>Market Trend</th>
-                                        <th>Timeframe</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {portfolio.opportunities.map((item, index) => (
-                                        <tr key={index}>
-                                            <td><strong>{item.item}</strong></td>
-                                            <td>
-                                                {item.score && (
-                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
-                                                        {item.score}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="force-tag">
-                                                    {item.category?.replace(/_/g, ' ') || 'N/A'}
-                                                </span>
-                                            </td> 
-                                            <td>
-                                                {item.marketTrend ? (
-                                                    <span className="status-badge high-intensity"> 
-                                                        Yes
-                                                    </span>
-                                                ) : (
-                                                    <span className="status-badge low-intensity"> 
-                                                        No
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                {item.timeframe && (
-                                                    <span className="timeline-badge"> 
-                                                        {item.timeframe}
-                                                    </span>
-                                                )}
-                                            </td>
+                    {/* Opportunities Table */}
+                    {portfolio.opportunities && portfolio.opportunities.length > 0 && (
+                        <>
+                            {expandedSections.opportunities && (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Opportunity</th>
+                                            <th>Score</th>
+                                            <th>Category</th>
+                                            <th>Market Trend</th>
+                                            <th>Timeframe</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {portfolio.opportunities.map((item, index) => (
+                                            <tr key={index}>
+                                                <td>{item.item}</td>
+                                                <td>
+                                                    {item.score && (
+                                                        <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                            {item.score}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <span className="force-tag">
+                                                        {item.category?.replace(/_/g, ' ') || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {item.marketTrend ? (
+                                                        <span className="status-badge high-intensity">
+                                                            Yes
+                                                        </span>
+                                                    ) : (
+                                                        <span className="status-badge low-intensity">
+                                                            No
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    {item.timeframe && (
+                                                        <span className="timeline-badge">
+                                                            {item.timeframe}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </>
                     )}
-                </div>
-            )}
+                    {portfolio.threats && portfolio.threats.length > 0 && (
+                        <>
 
-            {/* Threats Table */}
-            {portfolio.threats && portfolio.threats.length > 0 && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('threats')}>
-                        <h5> 
-                            Threats 
-                        </h5>
-                        {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
 
-                    {expandedSections.threats && (
-                        <div className="table-container">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Threat</th>
-                                        <th>Score</th>
-                                        <th>Category</th> 
-                                        <th>Likelihood</th>
-                                        <th>Impact</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {portfolio.threats.map((item, index) => (
-                                        <tr key={index}>
-                                            <td><strong>{item.item}</strong></td>
-                                            <td>
-                                                {item.score && (
-                                                    <span className={`status-badge ${getScoreColor(item.score)}`}>
-                                                        {item.score}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className="force-tag">
-                                                    {item.category?.replace(/_/g, ' ') || 'N/A'}
-                                                </span>
-                                            </td> 
-                                            <td>
-                                                {item.likelihood && (
-                                                    <span className={`status-badge ${getPriorityColor(item.likelihood)}`}>
-                                                        {item.likelihood}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                {item.impact && (
-                                                    <span className={`status-badge ${getPriorityColor(item.impact)}`}>
-                                                        {item.impact}
-                                                    </span>
-                                                )}
-                                            </td>
+                            {expandedSections.threats && (
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Threat</th>
+                                            <th>Score</th>
+                                            <th>Category</th>
+                                            <th>Likelihood</th>
+                                            <th>Impact</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            )}
+                                    </thead>
+                                    <tbody>
+                                        {portfolio.threats.map((item, index) => (
+                                            <tr key={index}>
+                                                <td>{item.item}</td>
+                                                <td>
+                                                    {item.score && (
+                                                        <span className={`status-badge ${getScoreColor(item.score)}`}>
+                                                            {item.score}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <span className="force-tag">
+                                                        {item.category?.replace(/_/g, ' ') || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {item.likelihood && (
+                                                        <span className={`status-badge ${getPriorityColor(item.likelihood)}`}>
+                                                            {item.likelihood}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    {item.impact && (
+                                                        <span className={`status-badge ${getPriorityColor(item.impact)}`}>
+                                                            {item.impact}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </>
+                    )}</div>
+            </div>
 
             {/* Strategic Options Table */}
             {portfolio.strategicOptions && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('strategicOptions')}>
-                        <h5> 
+                        <h5>
                             Cross Dimensional Action Items
                         </h5>
                         {expandedSections.strategicOptions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -500,7 +472,7 @@ const FullSWOTPortfolio = ({
                                 <thead>
                                     <tr>
                                         <th>Strategy Type</th>
-                                        <th>Strategy</th> 
+                                        <th>Strategy</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -511,7 +483,7 @@ const FullSWOTPortfolio = ({
                                                     SO - Strengths-Opportunities
                                                 </span>
                                             </td>
-                                            <td>{strategy}</td> 
+                                            <td>{strategy}</td>
                                         </tr>
                                     ))}
                                     {portfolio.strategicOptions.WO_strategies && portfolio.strategicOptions.WO_strategies.map((strategy, index) => (
@@ -521,7 +493,7 @@ const FullSWOTPortfolio = ({
                                                     WO - Weaknesses-Opportunities
                                                 </span>
                                             </td>
-                                            <td>{strategy}</td> 
+                                            <td>{strategy}</td>
                                         </tr>
                                     ))}
                                     {portfolio.strategicOptions.ST_strategies && portfolio.strategicOptions.ST_strategies.map((strategy, index) => (
@@ -531,7 +503,7 @@ const FullSWOTPortfolio = ({
                                                     ST - Strengths-Threats
                                                 </span>
                                             </td>
-                                            <td>{strategy}</td> 
+                                            <td>{strategy}</td>
                                         </tr>
                                     ))}
                                     {portfolio.strategicOptions.WT_strategies && portfolio.strategicOptions.WT_strategies.map((strategy, index) => (
@@ -541,7 +513,7 @@ const FullSWOTPortfolio = ({
                                                     WT - Weaknesses-Threats
                                                 </span>
                                             </td>
-                                            <td>{strategy}</td> 
+                                            <td>{strategy}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -555,7 +527,7 @@ const FullSWOTPortfolio = ({
             {portfolio.riskAssessment && (
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('riskAssessment')}>
-                        <h3> 
+                        <h3>
                             Risk Assessment
                         </h3>
                         {expandedSections.riskAssessment ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -577,18 +549,18 @@ const FullSWOTPortfolio = ({
                                     {portfolio.riskAssessment.operationalRisks && portfolio.riskAssessment.operationalRisks.map((risk, index) => (
                                         <tr key={`operational-${index}`}>
                                             <td>
-                                                <span className="force-tag" > 
+                                                <span className="force-tag" >
                                                     Operational
                                                 </span>
                                             </td>
-                                            <td><strong>{risk.risk}</strong></td>
+                                            <td>{risk.risk}</td>
                                             <td>
                                                 <span className={`status-badge ${getLikelihoodColor(risk.likelihood)}`}>
                                                     {risk.likelihood}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className="status-badge medium-intensity"> 
+                                                <span className="status-badge medium-intensity">
                                                     {risk.potentialFinancialImpact}
                                                 </span>
                                             </td>
@@ -598,103 +570,24 @@ const FullSWOTPortfolio = ({
                                     {portfolio.riskAssessment.strategicRisks && portfolio.riskAssessment.strategicRisks.map((risk, index) => (
                                         <tr key={`strategic-${index}`}>
                                             <td>
-                                                <span className="force-tag"> 
+                                                <span className="force-tag">
                                                     Strategic
                                                 </span>
                                             </td>
-                                            <td><strong>{risk.risk}</strong></td>
+                                            <td>{risk.risk}</td>
                                             <td>
                                                 <span className={`status-badge ${getLikelihoodColor(risk.likelihood)}`}>
                                                     {risk.likelihood}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className="status-badge medium-intensity"> 
+                                                <span className="status-badge medium-intensity">
                                                     {risk.potentialFinancialImpact}
                                                 </span>
                                             </td>
                                             <td>{risk.mitigationMeasures}</td>
                                         </tr>
                                     ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Competitive Positioning Table */}
-            {portfolio.competitivePositioning && (
-                <div className="section-container">
-                    <div className="section-header" onClick={() => toggleSection('competitivePositioning')}>
-                        <h3> 
-                            Competitive Positioning
-                        </h3>
-                        {expandedSections.competitivePositioning ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                    </div>
-
-                    {expandedSections.competitivePositioning && (
-                        <div className="table-container">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Positioning Aspect</th>
-                                        <th>Details</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {portfolio.competitivePositioning.marketShare && (
-                                        <tr>
-                                            <td>
-                                                <strong> 
-                                                    Market Share
-                                                </strong>
-                                            </td>
-                                            <td>{portfolio.competitivePositioning.marketShare}</td>
-                                            <td>
-                                                <span className="status-badge medium-intensity">
-                                                    Active
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {portfolio.competitivePositioning.competitiveAdvantage && (
-                                        <tr>
-                                            <td>
-                                                <strong> 
-                                                    Competitive Advantage
-                                                </strong>
-                                            </td>
-                                            <td>{portfolio.competitivePositioning.competitiveAdvantage}</td>
-                                            <td>
-                                                <span className="status-badge high-intensity">
-                                                    Strong
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {portfolio.competitivePositioning.customerSegments && portfolio.competitivePositioning.customerSegments.length > 0 && (
-                                        <tr>
-                                            <td>
-                                                <strong> 
-                                                    Customer Segments
-                                                </strong>
-                                            </td>
-                                            <td>
-                                                {portfolio.competitivePositioning.customerSegments.map((segment, index) => (
-                                                    <span key={index} className="force-tag" style={{marginRight: '4px'}}>
-                                                        {segment}
-                                                    </span>
-                                                ))}
-                                            </td>
-                                            <td>
-                                                <span className="status-badge medium-intensity">
-                                                    {portfolio.competitivePositioning.customerSegments.length} Segments
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    )}
                                 </tbody>
                             </table>
                         </div>

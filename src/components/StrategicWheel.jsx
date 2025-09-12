@@ -125,7 +125,6 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                     <thead>
                         <tr>
                             <th>Pillar</th>
-                            <th>Assessment Score</th>
                             <th>Recommendations</th>
                         </tr>
                     </thead>
@@ -140,14 +139,6 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                             <IconComponent size={16} />
                                             {formatPillarName(pillarKey)}
                                         </div>
-                                    </td>
-                                    <td className="table-value text-center">
-                                        <span
-                                            className="score-badge"
-                                            style={{ color: getScoreColor(pillar.current_state?.assessment_score || 0) }}
-                                        >
-                                            {pillar.current_state?.assessment_score || 0}/10
-                                        </span>
                                     </td>
                                     <td className="table-value">
                                         {pillar.recommendations && pillar.recommendations.length > 0 && (
@@ -211,7 +202,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
             <div style={{
                 display: 'flex',
                 gap: '10px',
-                marginBottom: '20px',
+                marginBottom: '0px',
                 padding: '4px',
                 backgroundColor: '#f1f5f9',
                 borderRadius: '8px'
@@ -261,7 +252,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
             {viewMode === 'wheel' ? (
                 <>
                     <div style={{ position: "relative", width: "100%", maxWidth: "440px" }}>
-                        <svg viewBox="0 0 440 440" style={{ width: "100%", height: "auto"}}>
+                        <svg viewBox="0 0 440 440" style={{ width: "100%", height: "auto" }}>
                             {/* Render segments */}
                             {pillarsArray.map(([pillarKey, pillarData], index) => {
                                 const IconComponent = getPillarIcon(pillarKey);
@@ -355,7 +346,7 @@ const StrategicWheel = ({ pillarsData, className = '' }) => {
                                 PILLARS
                             </text>
                         </svg>
-                    </div> 
+                    </div>
                 </>
             ) : (
                 renderTableView()

@@ -48,7 +48,7 @@ const CompetitiveAdvantageMatrix = ({
     // Check if the competitive advantage data is empty/incomplete
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
-        
+
         // Handle both wrapped and direct API response formats
         let normalizedData;
         if (data.competitiveAdvantage) {
@@ -58,7 +58,7 @@ const CompetitiveAdvantageMatrix = ({
         } else {
             return true;
         }
-        
+
         // Check if competitiveAdvantage exists
         if (!normalizedData.competitiveAdvantage) {
             return true;
@@ -98,7 +98,7 @@ const CompetitiveAdvantageMatrix = ({
             } else {
                 normalizedData = null;
             }
-            
+
             if (normalizedData) {
                 setData(normalizedData);
                 setHasGenerated(true);
@@ -367,7 +367,7 @@ const CompetitiveAdvantageMatrix = ({
     // Error state for when we have answers but no generated data
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="competitive-advantage-container"> 
+            <div className="competitive-advantage-container">
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
@@ -457,7 +457,7 @@ const CompetitiveAdvantageMatrix = ({
             {/* Content */}
             <div className="competitive-advantage-content">
                 {activeTab === 'overview' && (
-                    <div className="overview-content"> 
+                    <div className="overview-content">
                         {/* Market Position Section */}
                         {advantage.competitivePosition && (
                             <div className="section-container">
@@ -477,19 +477,19 @@ const CompetitiveAdvantageMatrix = ({
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td><strong>Overall Score</strong></td>
+                                                    <td><div className="force-name">Overall Score</div></td>
                                                     <td>{advantage.competitivePosition.overallScore}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td><strong>Market Position</strong></td>
+                                                    <td><div className="force-name"> Market Position</div></td>
                                                     <td>{advantage.competitivePosition.marketPosition}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td><strong>Sustainable Advantages</strong></td>
+                                                    <td><div className="force-name"> Sustainable Advantages</div></td>
                                                     <td>{advantage.competitivePosition.sustainableAdvantages}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td><strong>Vulnerable Advantages</strong></td>
+                                                    <td><div className="force-name"> Vulnerable Advantages</div></td>
                                                     <td>{advantage.competitivePosition.vulnerableAdvantages}</td>
                                                 </tr>
                                                 {/* Add Key Improvements row */}
@@ -535,7 +535,7 @@ const CompetitiveAdvantageMatrix = ({
                                                     .sort((a, b) => (b.frequency || 0) - (a.frequency || 0))
                                                     .map((reason, index) => (
                                                         <tr key={index}>
-                                                            <td><strong>{reason.reason}</strong></td>
+                                                            <td><div className="force-name"> {reason.reason}</div></td>
                                                             <td>
                                                                 <span className="frequency-badge">{reason.frequency || 0}</span>
                                                             </td>
@@ -595,7 +595,7 @@ const CompetitiveAdvantageMatrix = ({
                                             <tbody>
                                                 {advantage.differentiators.map((diff, index) => (
                                                     <tr key={index}>
-                                                        <td><strong>{diff.type}</strong></td>
+                                                        <td><div className="force-name"> {diff.type}</div></td>
                                                         <td>{diff.description}</td>
                                                         <td>
                                                             <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>

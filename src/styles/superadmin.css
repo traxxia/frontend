@@ -59,9 +59,9 @@
   display: flex;
   gap: 2rem;
 }
- 
- 
-  
+
+
+
 
 .nav-tab {
   display: flex;
@@ -111,8 +111,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Section Header */
@@ -173,7 +178,9 @@
   border-color: #9ca3af;
 }
 
-.edit-btn, .save-btn, .cancel-btn {
+.edit-btn,
+.save-btn,
+.cancel-btn {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -252,6 +259,7 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -331,7 +339,8 @@
   color: #9ca3af;
 }
 
-.company-breakdown, .engagement-overview {
+.company-breakdown,
+.engagement-overview {
   background: white;
   padding: 1.5rem;
   border-radius: 0.75rem;
@@ -339,7 +348,8 @@
   margin-bottom: 2rem;
 }
 
-.company-breakdown h3, .engagement-overview h3 {
+.company-breakdown h3,
+.engagement-overview h3 {
   margin: 0 0 1rem 0;
   font-size: 1.125rem;
   font-weight: 600;
@@ -407,7 +417,7 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
 }
-  
+
 
 /* Company Management Styles */
 .companies-grid {
@@ -448,19 +458,6 @@
   justify-content: center;
 }
 
-.status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.status-badge.active {
-  background: #d1fae5;
-  color: #065f46;
-}
-
 .company-info h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
@@ -491,7 +488,7 @@
   background: #f9fafb;
   border-radius: 0.5rem;
 }
- 
+
 .company-admin {
   margin: 1rem 0;
   padding-top: 1rem;
@@ -570,7 +567,8 @@
 }
 
 /* Form Styles */
-.company-form, .question-form {
+.company-form,
+.question-form {
   padding: 1.5rem;
 }
 
@@ -652,7 +650,7 @@
   padding: 1.5rem;
   margin-bottom: 1rem;
 }
- 
+
 .question-meta {
   display: flex;
   align-items: center;
@@ -668,7 +666,8 @@
   font-weight: 600;
 }
 
-.phase-badge, .severity-badge {
+.phase-badge,
+.severity-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
@@ -721,11 +720,11 @@
 }
 
 .question-text {
-    color: #000;
-    line-height: 1.5;
-    margin-bottom: 10px;
-    font-size: 15px;
-    font-weight: 500;
+  color: #000;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .question-details {
@@ -737,11 +736,11 @@
   border-radius: 0.5rem;
   font-size: 0.875rem;
 }
-  
+
 .edit-form {
   space: 1rem;
-} 
- 
+}
+
 
 .search-box {
   position: relative;
@@ -916,7 +915,7 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
- 
+
 
 .activity-stats {
   display: flex;
@@ -945,11 +944,13 @@
   margin-top: 0.25rem;
 }
 
-.sessions-list, .answers-preview {
+.sessions-list,
+.answers-preview {
   space: 1rem;
 }
 
-.session-item, .answer-item {
+.session-item,
+.answer-item {
   padding: 1rem;
   background: #f9fafb;
   border-radius: 0.5rem;
@@ -992,7 +993,7 @@
   font-size: 0.75rem;
   color: #6b7280;
 }
- 
+
 
 .answer-meta {
   display: flex;
@@ -1029,68 +1030,69 @@
   .admin-content {
     padding: 1rem;
   }
-  
+
   .admin-header-content {
     padding: 0 1rem;
   }
-  
+
   .header-stats {
     display: none;
   }
-   
-  
+
+
   .nav-tab {
     padding: 0.75rem 1rem;
   }
-  
+
   .section-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .filters-section {
     flex-direction: column;
   }
-  
+
   .search-box {
     max-width: none;
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .companies-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .users-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-content {
     width: 95%;
     margin: 1rem;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .activity-stats {
     flex-direction: column;
   }
-  
+
   .session-details {
     flex-direction: column;
     gap: 0.25rem;
   }
 }
+
 /* User History Styles - Add to superadmin.css */
 
 /* User History Component */
@@ -1331,13 +1333,13 @@
 .attempts {
   color: #f59e0b;
 }
-  
+
 
 .answer-text {
   color: #000;
   background: white;
   padding: 2px;
-  border-radius: 0.375rem; 
+  border-radius: 0.375rem;
 }
 
 .confidence-score {
@@ -1560,57 +1562,63 @@
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .user-info-section {
     width: 100%;
   }
-  
+
   .user-stats-section {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .quick-stats {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
-  .answer-header, .result-header, .session-header {
+
+  .answer-header,
+  .result-header,
+  .session-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
-  .question-info, .answer-meta, .result-meta {
+
+  .question-info,
+  .answer-meta,
+  .result-meta {
     flex-wrap: wrap;
   }
-  
+
   .history-nav {
     flex-direction: column;
     border-bottom: none;
   }
-  
+
   .history-tab {
     border-bottom: 1px solid #e5e7eb;
     border-radius: 0;
   }
-  
+
   .history-tab.active {
     background: #f3f4f6;
     border-bottom-color: #e5e7eb;
   }
-  
+
   .export-btn {
     width: 100%;
     justify-content: center;
   }
-}/* styles/superadmin.css */
+}
+
+/* styles/superadmin.css */
 .super-admin-container {
   min-height: 100vh;
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
- 
+
 
 .admin-header-content {
   display: flex;
@@ -1619,8 +1627,9 @@
   max-width: 1400px;
   margin: 0 auto;
 }
-.header-left{
-  width:auto;
+
+.header-left {
+  width: auto;
 }
 
 .header-title {
@@ -1664,14 +1673,14 @@
 
 .stat-item {
   text-align: center;
-} 
+}
 
 /* Navigation Styles */
 .admin-nav {
   background: white;
-  border-bottom: 1px solid #e5e7eb; 
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
-  gap: 0; 
+  gap: 0;
 }
 
 .nav-tab {
@@ -1723,8 +1732,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Section Header */
@@ -1785,7 +1799,9 @@
   border-color: #9ca3af;
 }
 
-.edit-btn, .save-btn, .cancel-btn {
+.edit-btn,
+.save-btn,
+.cancel-btn {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -1864,6 +1880,7 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1943,7 +1960,8 @@
   color: #9ca3af;
 }
 
-.company-breakdown, .engagement-overview {
+.company-breakdown,
+.engagement-overview {
   background: white;
   padding: 1.5rem;
   border-radius: 0.75rem;
@@ -1951,7 +1969,8 @@
   margin-bottom: 2rem;
 }
 
-.company-breakdown h3, .engagement-overview h3 {
+.company-breakdown h3,
+.engagement-overview h3 {
   margin: 0 0 1rem 0;
   font-size: 1.125rem;
   font-weight: 600;
@@ -2035,7 +2054,7 @@
   gap: 8px;
   text-align: center;
 }
- 
+
 /* Company Management Styles */
 .companies-grid {
   display: grid;
@@ -2076,7 +2095,7 @@
 }
 
 .status-badge {
-  padding: 0.25rem 0.5rem;
+  padding: 3px 7px;
   border-radius: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -2118,7 +2137,7 @@
   background: #f9fafb;
   border-radius: 0.5rem;
 }
- 
+
 .company-admin {
   margin: 1rem 0;
   padding-top: 1rem;
@@ -2197,7 +2216,8 @@
 }
 
 /* Form Styles */
-.company-form, .question-form {
+.company-form,
+.question-form {
   padding: 10px 20px;
 }
 
@@ -2302,7 +2322,8 @@
   font-weight: 600;
 }
 
-.phase-badge, .severity-badge {
+.phase-badge,
+.severity-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
@@ -2353,7 +2374,7 @@
 .question-content {
   margin-top: 1rem;
 }
-  
+
 
 .question-details {
   display: flex;
@@ -2363,7 +2384,8 @@
   background: #f9fafb;
   border-radius: 0.5rem;
   font-size: 0.875rem;
-} 
+}
+
 .edit-form {
   space: 1rem;
 }
@@ -2554,7 +2576,7 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
-  
+
 .activity-stats {
   display: flex;
   gap: 1.5rem;
@@ -2582,11 +2604,13 @@
   margin-top: 0.25rem;
 }
 
-.sessions-list, .answers-preview {
+.sessions-list,
+.answers-preview {
   space: 1rem;
 }
 
-.session-item, .answer-item {
+.session-item,
+.answer-item {
   padding: 1rem;
   background: #f9fafb;
   border-radius: 0.5rem;
@@ -2630,12 +2654,13 @@
   color: #6b7280;
 }
 
-.answer-question, .answer-text {
+.answer-question,
+.answer-text {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.4;
 }
-  
+
 
 .answer-meta {
   display: flex;
@@ -2643,7 +2668,7 @@
   font-size: 0.75rem;
   color: #9ca3af;
 }
- 
+
 
 .empty-state svg {
   margin-bottom: 1rem;
@@ -2666,66 +2691,66 @@
   .admin-content {
     padding: 1rem;
   }
-  
+
   .admin-header-content {
     padding: 0 1rem;
   }
-  
+
   .header-stats {
     display: none;
   }
-  
+
   .admin-nav {
     padding: 0 1rem;
   }
-  
+
   .nav-tab {
     padding: 0.75rem 1rem;
   }
-  
+
   .section-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .filters-section {
     flex-direction: column;
   }
-  
+
   .search-box {
     max-width: none;
   }
-  
+
   .metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .companies-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .users-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-content {
     width: 95%;
     margin: 1rem;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .activity-stats {
     flex-direction: column;
   }
-  
+
   .session-details {
     flex-direction: column;
     gap: 0.25rem;
@@ -2736,65 +2761,80 @@
   background: var(--color-modal-bg);
   border: 1px solid var(--color-modal-border);
 }
- 
+
 [data-theme="dark"] .form-control {
   background-color: var(--color-form-control) !important;
   color: var(--color-text-dark) !important;
 }
+
 [data-theme="dark"] .form-control::placeholder {
 
   color: rgba(255, 255, 255, 0.564) !important;
 }
+
 [data-theme="dark"] .form-control:focus {
   background-color: var(--color-form-control) !important;
   color: var(--color-text-dark) !important;
 }
+
 [data-theme="dark"] .form-control:active {
   background-color: var(--color-form-control) !important;
   color: var(--color-text-dark) !important;
 }
+
 [data-theme="dark"] .btn-close {
- 
+
   color: var(--color-text-dark) !important;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
 }
+
 [data-theme="dark"] input.form-control {
   background-color: var(--color-form-control);
   color: var(--color-text-dark);
 }
+
 [data-theme="dark"] .admin-header {
-   background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-primary);
 }
+
 [data-theme="dark"] .header-title h1 {
   color: var(--color-text-dark);
 }
+
 [data-theme="dark"] .admin-nav {
   background-color: var(--color-bg-primary);
 }
+
 [data-theme="dark"] .nav-tab.active {
   background-color: var(--color-bg-primary);
 }
+
 [data-theme="dark"] .nav-tab.nav-tab:hover {
   background-color: var(--color-bg-primary);
 }
+
 [data-theme="dark"] .admin-content {
   background-color: var(--color-bg-primary);
 }
+
 [data-theme="dark"] .company-management {
   background-color: var(--color-bg-primary);
 }
+
 [data-theme="dark"] .header-actions input {
   background-color: var(--color-bg-primary);
   color: var(--color-text-dark);
 }
-[data-theme="dark"] .section-header h2{
- 
+
+[data-theme="dark"] .section-header h2 {
+
   color: var(--color-text-dark);
 }
+
 [data-theme="dark"] .table-container {
   background-color: var(--color-bg-secondary);
 }
- 
+
 
 
 
@@ -2802,19 +2842,19 @@
 
 .admin-header-content {
   display: flex;
-  align-items: center; 
+  align-items: center;
   justify-content: space-between;
 }
 
 .header-left {
   display: flex;
-  align-items: center; 
+  align-items: center;
   gap: 0.75rem;
 }
 
 .back-button {
   display: flex;
-  align-items: center; 
+  align-items: center;
   justify-content: center;
   background: none;
   border: none;
@@ -2825,22 +2865,11 @@
 
 .header-title {
   display: flex;
-  align-items: center; 
-  gap: 0.5rem; 
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .header-title h1 {
   font-size: 1.25rem;
   font-weight: 600;
 }
-
-
-
-
-
-
-
-
-
-
-
