@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import AnalysisDataModal from './AnalysisDataModal';
 import "../styles/audittrail.css";
+import Pagination from '../components/Pagination';
 
 const AuditTrail = ({ onToast }) => {
   const [auditEntries, setAuditEntries] = useState([]);
@@ -54,7 +55,7 @@ const AuditTrail = ({ onToast }) => {
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
   const [analysisStats, setAnalysisStats] = useState([]);
   const [currentUserRole, setCurrentUserRole] = useState('user'); // Track current user role
-  
+
   // Modal state
   const [modalData, setModalData] = useState({
     isOpen: false,
@@ -64,7 +65,7 @@ const AuditTrail = ({ onToast }) => {
     businessName: '',
     auditId: ''
   });
-  
+
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   // Quick filter presets - Updated for admin roles
@@ -131,7 +132,7 @@ const AuditTrail = ({ onToast }) => {
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-      
+
       if (!token || token === 'undefined' || token === 'null') {
         onToast('Session expired. Please login again.', 'error');
         return;
@@ -158,7 +159,7 @@ const AuditTrail = ({ onToast }) => {
         setAnalysisStats(data.analysis_statistics || []);
       } else {
         const errorData = await response.json();
-        
+
         if (response.status === 401 || response.status === 403) {
           onToast('Session expired. Please login again.', 'error');
         } else {
@@ -176,7 +177,7 @@ const AuditTrail = ({ onToast }) => {
     try {
       setLoadingAnalysisData(prev => ({ ...prev, [auditId]: true }));
       const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-      
+
       const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${auditId}/analysis-data`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -201,10 +202,10 @@ const AuditTrail = ({ onToast }) => {
 
   const openAnalysisModal = async (entry) => {
     const analysisData = entry.event_data?.analysis_result || await fetchAnalysisData(entry._id);
-    
+
     if (analysisData) {
       const eventData = entry.event_data_summary || entry.event_data || {};
-      
+
       setModalData({
         isOpen: true,
         analysisType: eventData.analysis_type || 'analysis',
@@ -230,7 +231,7 @@ const AuditTrail = ({ onToast }) => {
   const fetchUsers = async () => {
     try {
       const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-      
+
       if (!token || token === 'undefined' || token === 'null') {
         return;
       }
@@ -250,11 +251,11 @@ const AuditTrail = ({ onToast }) => {
       // Silent fail
     }
   };
-  
+
   const fetchEventTypes = async () => {
     try {
       const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-      
+
       if (!token || token === 'undefined' || token === 'null') {
         return;
       }
@@ -304,7 +305,7 @@ const AuditTrail = ({ onToast }) => {
   const getDateRange = (range) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     switch (range) {
       case 'today':
         return {
@@ -332,7 +333,7 @@ const AuditTrail = ({ onToast }) => {
 
   const updateActiveFilters = () => {
     const active = [];
-    
+
     // Only show user filter for admin roles
     if (filters.user_id && ['super_admin', 'company_admin'].includes(currentUserRole)) {
       const user = users.find(u => u._id === filters.user_id);
@@ -342,7 +343,7 @@ const AuditTrail = ({ onToast }) => {
         value: filters.user_id
       });
     }
-    
+
     if (filters.event_type) {
       active.push({
         key: 'event_type',
@@ -350,7 +351,7 @@ const AuditTrail = ({ onToast }) => {
         value: filters.event_type
       });
     }
-    
+
     if (filters.search_term) {
       active.push({
         key: 'search_term',
@@ -358,7 +359,7 @@ const AuditTrail = ({ onToast }) => {
         value: filters.search_term
       });
     }
-    
+
     if (filters.start_date) {
       active.push({
         key: 'start_date',
@@ -366,7 +367,7 @@ const AuditTrail = ({ onToast }) => {
         value: filters.start_date
       });
     }
-    
+
     if (filters.end_date) {
       active.push({
         key: 'end_date',
@@ -374,7 +375,7 @@ const AuditTrail = ({ onToast }) => {
         value: filters.end_date
       });
     }
-    
+
     if (filters.include_analysis_data) {
       active.push({
         key: 'include_analysis_data',
@@ -382,7 +383,7 @@ const AuditTrail = ({ onToast }) => {
         value: filters.include_analysis_data
       });
     }
-    
+
     setActiveFilters(active);
   };
 
@@ -446,7 +447,7 @@ const AuditTrail = ({ onToast }) => {
   const formatEventData = (eventType, eventData, eventDataSummary) => {
     // Use summary for analysis_generated if available
     const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : eventData;
-    
+
     const formatMap = {
       login_success: `Successful login as ${data.role}${data.company ? ` at ${data.company}` : ''}`,
       login_failed: `Failed login attempt for ${data.email}`,
@@ -568,11 +569,10 @@ const AuditTrail = ({ onToast }) => {
         {quickFilters.map((filter, index) => (
           <button
             key={index}
-            className={`quick-filter-btn ${
-              (filter.key === 'event_type' && filters.event_type === filter.value) ||
+            className={`quick-filter-btn ${(filter.key === 'event_type' && filters.event_type === filter.value) ||
               (filter.key === 'quick_date' && getDateRange(filter.value).start === filters.start_date)
-                ? 'active' : ''
-            }`}
+              ? 'active' : ''
+              }`}
             onClick={() => handleQuickFilter(filter)}
           >
             {filter.label}
@@ -722,7 +722,7 @@ const AuditTrail = ({ onToast }) => {
                 </thead>
                 <tbody>
                   {auditEntries.map((entry, index) => (
-                    <tr key={`${entry._id}-${index}`} className={getEventColor(entry.event_type)}> 
+                    <tr key={`${entry._id}-${index}`} className={getEventColor(entry.event_type)}>
                       <td>
                         <div className="event-type">
                           {getEventIcon(entry.event_type)}
@@ -730,7 +730,7 @@ const AuditTrail = ({ onToast }) => {
                         </div>
                       </td>
                       <td>
-                        <div className="timestamp"> 
+                        <div className="timestamp">
                           <span className="timestamp-text">{formatTimestamp(entry.timestamp)}</span>
                         </div>
                       </td>
@@ -746,7 +746,7 @@ const AuditTrail = ({ onToast }) => {
                         </div>
                       </td>
                       <td className="description-cell">
-                        {formatEventData(entry.event_type, entry.event_data, entry.event_data_summary)} 
+                        {formatEventData(entry.event_type, entry.event_data, entry.event_data_summary)}
                       </td>
                       <td>
                         <div className="details-cell">
@@ -757,7 +757,7 @@ const AuditTrail = ({ onToast }) => {
                               <pre>{JSON.stringify(entry.event_data, null, 2)}</pre>
                             </details>
                           )}
-                          
+
                           {/* Analysis-specific details */}
                           {entry.event_type === 'analysis_generated' && (
                             <div className="analysis-details">
@@ -803,59 +803,15 @@ const AuditTrail = ({ onToast }) => {
                   ))}
                 </tbody>
               </table>
-
-              
-          {pagination.total_pages > 1 && (
-                <div className="pagination">
-                  {/* Previous button */}
-                  <button
-                    disabled={pagination.page <= 1}
-                    onClick={() => setFilters(prev => ({ ...prev, page: prev.page - 1 }))}
-                  >
-                    <ChevronLeft size={16} />
-                    Previous
-                  </button>
-
-                  {/* Numbered pages with max 5 visible */}
-                  {(() => {
-                    const totalPages = pagination.total_pages;
-                    const currentPage = pagination.page;
-                    const maxVisible = 5;
-
-                    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-                    let endPage = startPage + maxVisible - 1;
-
-                    if (endPage > totalPages) {
-                      endPage = totalPages;
-                      startPage = Math.max(1, endPage - maxVisible + 1);
-                    }
-
-                    return [...Array(endPage - startPage + 1)].map((_, idx) => {
-                      const pageNum = startPage + idx;
-                      return (
-                        <button
-                          key={pageNum}
-                          className={currentPage === pageNum ? "active" : ""}
-                          onClick={() => setFilters(prev => ({ ...prev, page: pageNum }))}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    });
-                  })()}
-
-                  {/* Next button */}
-                  <button
-                    disabled={pagination.page >= pagination.total_pages}
-                    onClick={() => setFilters(prev => ({ ...prev, page: prev.page + 1 }))}
-                  >
-                    Next
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
-
-
+              <Pagination
+                currentPage={pagination.page || 1}
+                totalPages={pagination.total_pages || 1}
+                onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+                variant="default"
+                showPageNumbers={true}
+                totalItems={pagination.total || 0}
+                itemsPerPage={filters.limit || 10}
+              />
             </>
           )}
         </div>

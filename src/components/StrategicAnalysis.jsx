@@ -1152,7 +1152,7 @@ const StrategicAnalysis = ({
         {/* {renderRiskAssessmentTable(analysisData)}
         {renderSuccessBenchmarksTable(analysisData)} */}
         {renderImplementationRoadmapTable(analysisData)}
-        {renderCompetitiveLandscapeTable(analysisData)}
+        {/* {renderCompetitiveLandscapeTable(analysisData)} */}
         {renderKeyImprovementsTable(analysisData)}
         {renderMonitoringDashboardTable(analysisData)}
       </div>

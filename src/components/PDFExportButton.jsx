@@ -524,7 +524,7 @@ const PDFExportButton = ({
           display: "flex",
           alignItems: "center",
           cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
-          gap: "0px",
+          gap: "5px",
           transition: "all 0.2s ease",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           ...style

@@ -306,37 +306,64 @@ body {
   background: rgba(239, 68, 68, 0.1);
   color: var(--error-color);
 }
+/* Simple Pagination CSS */
+.pagination-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
 
-/* -------------------------
-   Pagination
--------------------------- */
 .pagination {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 8px;
 }
 
 .pagination button {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
   background: white;
-  border: 1px solid #d1d5db;
-  padding: 6px 12px;
-  border-radius: var(--radius);
+  color: #333;
+  border-radius: 6px;
   cursor: pointer;
-  transition: 0.3s;
-  color:#000;
+  font-size: 14px;
+  min-width: 36px;
 }
 
 .pagination button:hover:not(:disabled) {
-  background: var(--secondary-color);
+  background: #007bff;
+}
+
+.pagination button.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
 }
 
 .pagination button:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+.pagination-info {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+/* Simple pagination variant */
+.pagination.simple-pagination {
+  flex-direction: column;
+  gap: 0;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 /* -------------------------
    Company Details Styles
 -------------------------- */

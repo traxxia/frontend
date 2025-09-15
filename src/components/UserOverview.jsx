@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const UserOverview = ({ onToast }) => {
   const [users, setUsers] = useState([]);
@@ -23,61 +24,59 @@ const UserOverview = ({ onToast }) => {
     password: ''
   });
   const [currentPage, setCurrentPage] = useState(1);
-const rowsPerPage = 10;
-
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
 
   // Validation function for individual fields
   const validateField = (fieldName, value) => {
-  switch (fieldName) {
-    case 'name':
-      if (!value || !value.trim()) {
-        return 'Name is required';
-      }
-      // Only allow letters and spaces
-      if (!/^[A-Za-z\s]+$/.test(value)) {
-        return 'Name can only contain letters and spaces';
-      }
-      // No consecutive spaces allowed
-      if (/\s{2,}/.test(value)) {
-        return 'Name cannot contain consecutive spaces';
-      }
-      if (value.trim().length < 2) {
-        return 'Name must be at least 2 characters long';
-      }
-      return '';
+    switch (fieldName) {
+      case 'name':
+        if (!value || !value.trim()) {
+          return 'Name is required';
+        }
+        // Only allow letters and spaces
+        if (!/^[A-Za-z\s]+$/.test(value)) {
+          return 'Name can only contain letters and spaces';
+        }
+        // No consecutive spaces allowed
+        if (/\s{2,}/.test(value)) {
+          return 'Name cannot contain consecutive spaces';
+        }
+        if (value.trim().length < 2) {
+          return 'Name must be at least 2 characters long';
+        }
+        return '';
 
-    case 'email':
-      if (!value || !value.trim()) {
-        return 'Email is required';
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value.trim())) {
-        return 'Please enter a valid email address';
-      }
-      return '';
+      case 'email':
+        if (!value || !value.trim()) {
+          return 'Email is required';
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value.trim())) {
+          return 'Please enter a valid email address';
+        }
+        return '';
 
-    case 'password':
-      if (!value || !value.trim()) {
-        return 'Password is required';
-      }
-      if (value.trim().length < 8) {
-        return 'Password must be at least 8 characters long';
-      }
-      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-        return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
-      }
-      return '';
+      case 'password':
+        if (!value || !value.trim()) {
+          return 'Password is required';
+        }
+        if (value.trim().length < 8) {
+          return 'Password must be at least 8 characters long';
+        }
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+          return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+        }
+        return '';
 
-    default:
-      return '';
-  }
-};
+      default:
+        return '';
+    }
+  };
 
 
-   const validateUserForm = (user) => {
+  const validateUserForm = (user) => {
     const errors = {};
     errors.name = validateField('name', user.name);
     errors.email = validateField('email', user.email);
@@ -86,7 +85,7 @@ const rowsPerPage = 10;
   };
 
   // Check if form is valid
- 
+
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -130,10 +129,11 @@ const rowsPerPage = 10;
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
-   // Pagination logic
-const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
-const startIndex = (currentPage - 1) * rowsPerPage;
-const paginatedUsers = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
+  // Pagination logic
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const loadUsers = async () => {
     try {
@@ -146,7 +146,7 @@ const paginatedUsers = filteredUsers.slice(startIndex, startIndex + rowsPerPage)
       if (selectedCompany) {
         params.append('company_id', selectedCompany);
       }
-      
+
       // Append query string if there are parameters
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -164,7 +164,7 @@ const paginatedUsers = filteredUsers.slice(startIndex, startIndex + rowsPerPage)
       if (response.ok) {
         const data = await response.json();
         console.log('Users data received:', data); // Debug log
-        
+
         // Map the backend response to match frontend expectations
         const mappedUsers = data.users.map(user => ({
           id: user._id,
@@ -189,74 +189,74 @@ const paginatedUsers = filteredUsers.slice(startIndex, startIndex + rowsPerPage)
     }
   };
 
-  
+
 
   const handleChange = (field, value) => {
     setNewUser(prev => ({ ...prev, [field]: value }));
-    
+
     // Real-time validation - validate field as user types
-   
+
   };
   const addUser = async () => {
-  // Validate the form before making the API call
-  const validationErrors = validateUserForm(newUser);
+    // Validate the form before making the API call
+    const validationErrors = validateUserForm(newUser);
 
-  // Update error state to show messages
-  setFormErrors(validationErrors);
+    // Update error state to show messages
+    setFormErrors(validationErrors);
 
-  // Check if there are any errors
-  const hasErrors = Object.values(validationErrors).some(error => error);
-  if (hasErrors) {
-    onToast('Please fix the highlighted errors', 'warning');
-    return;
-  }
-
-  try {
-    setIsCreating(true);
-    const token = getAuthToken();
-
-    const payload = {
-      name: newUser.name.trim(),
-      email: newUser.email.trim(),
-      password: newUser.password.trim()
-    };
-
-    if (newUser.company_id) {
-      payload.company_id = newUser.company_id;
+    // Check if there are any errors
+    const hasErrors = Object.values(validationErrors).some(error => error);
+    if (hasErrors) {
+      onToast('Please fix the highlighted errors', 'warning');
+      return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    try {
+      setIsCreating(true);
+      const token = getAuthToken();
 
-    const data = await response.json();
+      const payload = {
+        name: newUser.name.trim(),
+        email: newUser.email.trim(),
+        password: newUser.password.trim()
+      };
 
-    if (response.ok) {
-      onToast('User created successfully', 'success');
-      setShowAddUser(false);
-      setNewUser({ name: '', email: '', password: '', company_id: '', job_title: '' });
-      setFormErrors({ name: '', email: '', password: '' });
-      await loadUsers();
-    } else {
-      onToast(data.error || data.message || 'User creation failed', 'error');
+      if (newUser.company_id) {
+        payload.company_id = newUser.company_id;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        onToast('User created successfully', 'success');
+        setShowAddUser(false);
+        setNewUser({ name: '', email: '', password: '', company_id: '', job_title: '' });
+        setFormErrors({ name: '', email: '', password: '' });
+        await loadUsers();
+      } else {
+        onToast(data.error || data.message || 'User creation failed', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      onToast('Error creating user', 'error');
+    } finally {
+      setIsCreating(false);
     }
-  } catch (error) {
-    console.error('Error creating user:', error);
-    onToast('Error creating user', 'error');
-  } finally {
-    setIsCreating(false);
-  }
-};
+  };
 
-const handleSubmit = (e) => {
-  e.preventDefault();
-  addUser();
-};
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addUser();
+  };
 
   // Helper function to render form fields with validation
   const renderFormField = (label, field, type = 'text', placeholder = '', required = false) => (
@@ -276,8 +276,6 @@ const handleSubmit = (e) => {
     </div>
   );
 
-  
-
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -286,22 +284,6 @@ const handleSubmit = (e) => {
       </div>
     );
   }
-  const getPageNumbers = () => {
-  let startPage = Math.max(currentPage - 1, 1);
-  let endPage = startPage + 2;
-
-  if (endPage > totalPages) {
-    endPage = totalPages;
-    startPage = Math.max(endPage - 2, 1);
-  }
-
-  let pages = [];
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
-  return pages;
-};
-
 
   return (
     <>
@@ -322,7 +304,7 @@ const handleSubmit = (e) => {
           margin-bottom: 1rem;
         }
       `}</style>
-      
+
       <div className="user-overview">
         <div className="section-header">
           <h2>All Users Overview</h2>
@@ -362,80 +344,62 @@ const handleSubmit = (e) => {
             ))}
           </select>
         </div>
-{/* Users Table */}
-{filteredUsers.length > 0 ? (
-  <>
-    <div className="table-container">
-      <table className="company-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Company</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedUsers.map(user => (
-            <tr key={user.id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.company_name || 'N/A'}</td>
-              <td>
-                <span className="role-badge">
-                  {user.role === 'user' ? 'User' :
-                    user.role === 'company_admin' ? 'Company Admin' :
-                      user.role === 'super_admin' ? 'Super Admin' : user.role}
-                </span>
-              </td>
-              <td>
-                <span className={`status-badge ${user.status}`}>{user.status}</span>
-              </td>
-              <td>
-                {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    <div className="pagination">
-        <button
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-         <ChevronLeft size={16} />
-          Previous
-        </button>
-
-        {getPageNumbers().map(page => (
-          <button
-            key={page}
-            className={page === currentPage ? 'active' : ''}
-            onClick={() => setCurrentPage(page)}
-          >
-            {page}
-          </button>
-        ))}
-
-        <button
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-          <ChevronRight size={16} />
-        </button>
-      </div>
-  </>
-) : (
-  <div className="empty-state">
-    <Users size={48} />
-    <h3>No Users Found</h3>
-    <p>Try adjusting your search or filter criteria</p>
-  </div>
-)}
+        {/* Users Table */}
+        {filteredUsers.length > 0 ? (
+          <>
+            <div className="table-container">
+              <table className="company-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedUsers.map(user => (
+                    <tr key={user.id}>
+                      <td>{user.name}</td>
+                      <td>{user.email}</td>
+                      <td>{user.company_name || 'N/A'}</td>
+                      <td>
+                        <span className="role-badge">
+                          {user.role === 'user' ? 'User' :
+                            user.role === 'company_admin' ? 'Company Admin' :
+                              user.role === 'super_admin' ? 'Super Admin' : user.role}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${user.status}`}>{user.status}</span>
+                      </td>
+                      <td>
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              variant="default"
+              showPageNumbers={true}
+              totalItems={filteredUsers.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+            />
+          </>
+        ) : (
+          <div className="empty-state">
+            <Users size={48} />
+            <h3>No Users Found</h3>
+            <p>Try adjusting your search or filter criteria</p>
+          </div>
+        )}
 
         {/* Add User Modal */}
         {showAddUser && (
@@ -464,7 +428,7 @@ const handleSubmit = (e) => {
                             {company.company_name}
                           </option>
                         ))}
-                      </select> 
+                      </select>
                     </div>
 
                     <div className="form-field">

@@ -53,6 +53,7 @@ const RegenerateButton = ({
         fontSize: currentSize.fontSize,
         fontWeight: 500,
         display: "flex",
+        gap:"5px",
         alignItems: "center",
         cursor: "pointer",
         transition: "all 0.2s ease",

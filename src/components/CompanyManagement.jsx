@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Building2, Loader, Eye, Upload, X, Image, Edit,Search,ChevronRight,ChevronLeft } from 'lucide-react';
+import { Plus, Building2, Loader, Eye, Upload, X, Image, Edit, Search, ChevronRight, ChevronLeft } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils'; // Import the utility function
 import '../styles/CompanyManagement.css';
 import { useTranslation } from '../hooks/useTranslation';
+import Pagination from '../components/Pagination';
 
 // ------------------ CreateCompanyForm ------------------
 const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
@@ -16,53 +17,53 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
   });
   const { t } = useTranslation();
   const validateForm = () => {
-  const errors = {};
-  
+    const errors = {};
 
-  // Regex for letters + single spaces
-  const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
-  // Company name validation
-  if (!formData.company_name.trim()) {
-    errors.company_name = 'Company name is required';
-  } else if (!nameRegex.test(formData.company_name.trim())) {
-    errors.company_name = 'Company name can only contain letters and single spaces';
-  } else if (formData.company_name.trim().length < 2) {
-    errors.company_name = 'Company name must be at least 2 characters long';
-  }
+    // Regex for letters + single spaces
+    const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 
-  if (!formData.industry) {
-    errors.industry = 'Industry is required';
-  }
+    // Company name validation
+    if (!formData.company_name.trim()) {
+      errors.company_name = 'Company name is required';
+    } else if (!nameRegex.test(formData.company_name.trim())) {
+      errors.company_name = 'Company name can only contain letters and single spaces';
+    } else if (formData.company_name.trim().length < 2) {
+      errors.company_name = 'Company name must be at least 2 characters long';
+    }
 
-  // Admin name validation
-  if (!formData.admin_name.trim()) {
-    errors.admin_name = 'Admin name is required';
-  } else if (!nameRegex.test(formData.admin_name.trim())) {
-    errors.admin_name = 'Admin name can only contain letters and single spaces';
-  } else if (formData.admin_name.trim().length < 2) {
-    errors.admin_name = 'Admin name must be at least 2 characters long';
-  }
+    if (!formData.industry) {
+      errors.industry = 'Industry is required';
+    }
 
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!formData.admin_email.trim()) {
-    errors.admin_email = 'Admin email is required';
-  } else if (!emailRegex.test(formData.admin_email.trim())) {
-    errors.admin_email = 'Invalid email format';
-  }
+    // Admin name validation
+    if (!formData.admin_name.trim()) {
+      errors.admin_name = 'Admin name is required';
+    } else if (!nameRegex.test(formData.admin_name.trim())) {
+      errors.admin_name = 'Admin name can only contain letters and single spaces';
+    } else if (formData.admin_name.trim().length < 2) {
+      errors.admin_name = 'Admin name must be at least 2 characters long';
+    }
 
-  // Password validation
-   if (!formData.admin_password) {
-    errors.admin_password = t('password_required') || 'Password is required';
-} else if (formData.admin_password.length < 8) {
-    errors.admin_password = t('password_min_length_8') || 'Password must be at least 8 characters long';
-} else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.admin_password)) {
-    errors.admin_password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
-}
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.admin_email.trim()) {
+      errors.admin_email = 'Admin email is required';
+    } else if (!emailRegex.test(formData.admin_email.trim())) {
+      errors.admin_email = 'Invalid email format';
+    }
 
-  return errors;
-};
+    // Password validation
+    if (!formData.admin_password) {
+      errors.admin_password = t('password_required') || 'Password is required';
+    } else if (formData.admin_password.length < 8) {
+      errors.admin_password = t('password_min_length_8') || 'Password must be at least 8 characters long';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.admin_password)) {
+      errors.admin_password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+    }
+
+    return errors;
+  };
 
 
   const [logoFile, setLogoFile] = useState(null);
@@ -94,7 +95,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
-    
+
     if (file) {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -110,7 +111,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
       }
 
       setLogoFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => setLogoPreview(e.target.result);
@@ -130,7 +131,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
 
         <form onSubmit={handleSubmit} className="company-form">
           {/* Existing form fields */}
-          <div className="form-section"> 
+          <div className="form-section">
             <div className="form-grid">
               <div className="form-field">
                 <label>Company Name *</label>
@@ -186,9 +187,9 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
               />
               {logoPreview && (
                 <div style={{ marginTop: '10px' }}>
-                  <img 
-                    src={logoPreview} 
-                    alt="Logo preview" 
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
                     style={{ maxWidth: '150px', maxHeight: '80px', objectFit: 'contain' }}
                   />
                 </div>
@@ -290,8 +291,8 @@ const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
             <div className="logo-section">
               <h4>Company Logo</h4>
               <div className="company-logo-display-container">
-                <img 
-                  src={company.logo} 
+                <img
+                  src={company.logo}
                   alt={`${company.company_name} logo`}
                   className="company-logo-display"
                 />
@@ -398,7 +399,7 @@ const CompanyManagement = ({ onToast }) => {
 
       // Different endpoint based on user role
       let endpoint = `${API_BASE_URL}/api/admin/companies`;
-      
+
       // For company admin, we'll filter on backend to show only their company
       if (isCompanyAdmin) {
         // The backend should handle filtering based on the user's company_id from the token
@@ -431,7 +432,7 @@ const CompanyManagement = ({ onToast }) => {
       setIsLoading(false);
     }
   };
- 
+
   const handleCreateCompany = async (formData) => {
     try {
       setIsCreating(true);
@@ -507,21 +508,21 @@ const CompanyManagement = ({ onToast }) => {
           {/* Only show search for super admin or if there are multiple companies */}
           {(isSuperAdmin || companies.length > 1) && (
             <div className="search-box">
-            <Search size={16} />
-            <input
-              type="text"
-              placeholder="Search companies..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
           )}
           {/* Only super admin can create companies */}
           {isSuperAdmin && (
-            <button 
+            <button
               className="primary-btn"
               onClick={() => setShowCreateForm(true)}
             >
@@ -565,8 +566,8 @@ const CompanyManagement = ({ onToast }) => {
                   <tr key={company._id}>
                     <td>
                       {company.logo ? (
-                        <img 
-                          src={company.logo} 
+                        <img
+                          src={company.logo}
                           alt={`${company.company_name} logo`}
                           className="table-logo"
                           style={{ width: '30px', height: '30px', objectFit: 'contain' }}
@@ -604,50 +605,24 @@ const CompanyManagement = ({ onToast }) => {
               </tbody>
             </table>
           </div>
-
-          {/* Only show pagination for super admin if there are multiple pages */}
-          {totalPages > 1 && isSuperAdmin && (
-            <div className="pagination">
-  <button
-    disabled={currentPage === 1}
-    onClick={() => setCurrentPage(prev => prev - 1)}
-  >
-    <ChevronLeft size={16} />
-    Previous
-  </button>
-
-  {[...Array(totalPages)].map((_, index) => {
-    const page = index + 1;
-    return (
-      <button
-        key={page}
-        className={page === currentPage ? "active-page" : ""}
-        onClick={() => setCurrentPage(page)}
-      >
-        {page}
-      </button>
-    );
-  })}
-
-  <button
-    disabled={currentPage === totalPages}
-    onClick={() => setCurrentPage(prev => prev + 1)}
-  >
-    Next
-    <ChevronRight size={16} />
-  </button>
-</div>
-
-          )}
+          {isSuperAdmin && (<Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            variant="default"
+            showPageNumbers={true}
+            totalItems={filteredCompanies.length}
+            itemsPerPage={pageSize}
+          />)}
         </>
       ) : (
         <div className="empty-state">
           <Building2 size={48} />
           <h3>{isSuperAdmin ? 'No Companies Found' : 'Company Information Not Available'}</h3>
           <p>
-            {searchTerm 
-              ? 'No companies match your search criteria' 
-              : isSuperAdmin 
+            {searchTerm
+              ? 'No companies match your search criteria'
+              : isSuperAdmin
                 ? 'Create your first company to get started'
                 : 'Please contact your administrator for more information'
             }

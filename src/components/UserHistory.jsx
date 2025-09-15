@@ -19,7 +19,7 @@ import StrategicAnalysis from '../components/StrategicAnalysis';
 import AnalysisContentManager from '../components/AnalysisContentManager';
 import HistoryPDFDownload from './HistoryPDFDownload';
 import DownloadStrategicPDF from './DownloadStrategicPDF';
-
+import Pagination from '../components/Pagination';
 import '../styles/UserHistory.css';
 
 // Constants
@@ -604,14 +604,14 @@ const UserHistory = ({ onToast }) => {
         </table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        variant="default"
+        totalItems={sortedUsers.length}
+        itemsPerPage={ITEMS_PER_PAGE}
+      />
 
       {/* User Details Modal */}
       {selectedUser && (
@@ -630,12 +630,31 @@ const UserHistory = ({ onToast }) => {
 };
 
 // Sub-components
-const SortableHeader = ({ title, sortKey, sortConfig, onSort }) => (
-  <th onClick={() => onSort(sortKey)}>
-    <div className="header-content">
-      {title}
+// Updated SortableHeader component
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, style, className }) => (
+  <th
+    onClick={() => onSort(sortKey)}
+    style={{
+      cursor: 'pointer',
+      ...style
+    }}
+    className={className}
+  >
+    <div
+      className="header-content"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        flexDirection: 'row',
+        justifyContent: 'flex-start'
+      }}
+    >
+      <span>{title}</span>
       {sortConfig.key === sortKey && (
-        <span className="sort-arrow">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+        <span className="sort-arrow">
+          {sortConfig.direction === 'asc' ? '↑' : '↓'}
+        </span>
       )}
     </div>
   </th>
@@ -1444,75 +1463,5 @@ const StrategicTab = ({
   );
 };
 
-// Pagination Component
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const getPageNumbers = () => {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
-
-    for (
-      let i = Math.max(2, currentPage - delta);
-      i <= Math.min(totalPages - 1, currentPage + delta);
-      i++
-    ) {
-      range.push(i);
-    }
-
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...');
-    } else {
-      rangeWithDots.push(1);
-    }
-
-    rangeWithDots.push(...range);
-
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages);
-    } else {
-      rangeWithDots.push(totalPages);
-    }
-
-    return rangeWithDots;
-  };
-
-  return (
-    <div className="pagination-container">
-      <div className="pagination">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="pagination-btn pagination-prev"
-        >
-          <ChevronLeft size={16} />
-          Previous
-        </button>
-
-        <div className="pagination-numbers">
-          {getPageNumbers().map((number, index) => (
-            <button
-              style={{ margin: '0 2px' }}
-              key={index}
-              onClick={() => typeof number === 'number' && onPageChange(number)}
-              className={`pagination-number ${number === currentPage ? 'active' : ''} ${typeof number !== 'number' ? 'dots' : ''}`}
-              disabled={typeof number !== 'number'}
-            >
-              {number}
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="pagination-btn pagination-next"
-        >
-          Next
-          <ChevronRight size={16} />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 export default UserHistory;

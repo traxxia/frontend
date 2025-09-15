@@ -2561,31 +2561,7 @@
 .view-details-button:hover {
   background-color: #e5e7eb;
 }
-
-/* Pagination */
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 24px;
-}
-
-.pagination-button {
-  background: white;
-  border: 1px solid var(--color-border);
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--color-text);
-}
-
-.pagination-button.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
+ 
 /* =====================
    Modal
    ===================== */
@@ -2803,34 +2779,7 @@
 .view-button:hover {
   background-color: #e2e8f0;
 }
-
-/* Pagination buttons (bottom center) */
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin: 20px auto 0;
-  font-size: 14px;
-}
-
-.pagination-button {
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  padding: 6px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #374151;
-}
-
-.pagination-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-
-
+ 
 .user-table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -4452,31 +4401,5 @@
     max-width: 300px;
   }
 
-    .pagination {
-    flex-wrap: wrap;
-    justify-content: center; 
-    gap: 4px; 
-  }
-
-  .pagination-numbers {
-    display: flex;
-    flex-wrap: wrap; 
-    justify-content: center;
-    gap: 4px;
-    margin: 4px 0;
-  }
-
-  .pagination-btn {
-    flex: 1 1 auto; 
-    min-width: 80px; 
-    font-size: 14px; 
-    padding: 4px 8px;
-  }
-
-  .pagination-number {
-    min-width: 32px; 
-    font-size: 14px;
-    padding: 4px 6px;
-  }
 }
 

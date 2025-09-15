@@ -18,7 +18,7 @@ const QuestionManagement = ({ onToast }) => {
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
 
-  const phases = ['initial', 'essential', 'good', 'advanced'];
+  const phases = ['initial', 'essential', 'advanced'];
 
   useEffect(() => {
     loadQuestions();
@@ -692,8 +692,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
                 required
               >
                 <option value="initial">Initial</option>
-                <option value="essential">Essential</option>
-                <option value="good">Good</option>
+                <option value="essential">Essential</option> 
                 <option value="advanced">Advanced</option>
               </select>
             </div>
