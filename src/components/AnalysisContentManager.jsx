@@ -105,8 +105,10 @@ const AnalysisContentManager = ({
   onRedirectToChat,
   isMobile,
   setActiveTab,
-  hasUploadedDocument
+  hasUploadedDocument,
+  readOnly = false,
 }) => {
+ 
   const API_TO_ANALYSIS_MAP = {
     'find': 'swot',
     'purchase-criteria': 'purchaseCriteria',
@@ -385,6 +387,7 @@ const AnalysisContentManager = ({
               hasUploadedDocument={hasUploadedDocument}
               onRedirectToBrief={handleRedirectToBrief}
               uploadedFile={uploadedFileForAnalysis}
+              readOnly={readOnly} 
             />
           </div>
         </ModernAnalysisCard>,
@@ -417,6 +420,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
+              readOnly={readOnly} 
             />
           </div>
         </ModernAnalysisCard>,
@@ -449,6 +453,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
+              readOnly={readOnly} 
             />
           </div>
         </ModernAnalysisCard>,
@@ -481,6 +486,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
+              readOnly={readOnly} 
             />
           </div>
         </ModernAnalysisCard>,
@@ -513,6 +519,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
+              readOnly={readOnly} 
             />
           </div>
         </ModernAnalysisCard>

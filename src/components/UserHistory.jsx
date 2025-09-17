@@ -217,7 +217,6 @@ const useSortedFilteredUsers = (users, searchTerm) => {
   return { sortedUsers, sortConfig, requestSort };
 };
 
-// Complete analysis data parser with ALL analysis types
 const parseAnalysisData = (userDetails, user) => {
   if (!userDetails) return null;
 
@@ -244,17 +243,23 @@ const parseAnalysisData = (userDetails, user) => {
     productivityMetrics: null,
     maturityScore: null,
 
-    // Good Phase Components
+    // Good Phase Components - Financial analyses
     costEfficiency: null,
     financialPerformance: null,
     financialBalance: null,
     operationalEfficiency: null,
+    profitabilityData: null,
+    growthTrackerData: null,
+    liquidityEfficiencyData: null,
+    investmentPerformanceData: null,
+    leverageRiskData: null,
 
     businessName: user?.name || 'Business',
     userAnswers: {},
     questions: []
   };
 
+  // Process conversation data
   if (userDetails.conversation?.length > 0) {
     userDetails.conversation.forEach(phase => {
       phase.questions?.forEach(qa => {
@@ -271,16 +276,18 @@ const parseAnalysisData = (userDetails, user) => {
     });
   }
 
-  // Process ALL analysis types from system data
+  // Process ALL analysis types from system data - SIMPLIFIED LOGIC
   userDetails.system?.forEach(result => {
     try {
       const analysisResult = typeof result.analysis_result === 'string'
         ? JSON.parse(result.analysis_result)
         : result.analysis_result;
 
-      const analysisType = result.analysis_type?.toLowerCase() || result.name?.toLowerCase() || '';
+      const analysisType = result.analysis_type?.toLowerCase() ||
+        result.name?.toLowerCase() ||
+        result.normalized_type?.toLowerCase() || '';
 
-      // Map ALL analysis types to data properties
+      // Enhanced analysis type mapping - Same as AnalysisContentManager
       switch (analysisType) {
         // Initial Phase Analysis Types
         case 'swot':
@@ -366,31 +373,98 @@ const parseAnalysisData = (userDetails, user) => {
           analysisData.maturityScore = analysisResult;
           break;
 
-        // Good Phase Analysis Types
+        // Financial Analysis Types - SIMPLIFIED: Just check if data exists
+        case 'profitabilityanalysis':
+        case 'profitability_analysis':
+        case 'profitability':
+          analysisData.profitabilityData = analysisResult;
+          console.log('✓ Profitability Analysis loaded:', !!analysisResult);
+          break;
+        case 'growthtracker':
+        case 'growth_tracker':
+        case 'growth':
+          analysisData.growthTrackerData = analysisResult;
+          console.log('✓ Growth Tracker loaded:', !!analysisResult);
+          break;
+        case 'liquidityefficiency':
+        case 'liquidity_efficiency':
+        case 'liquidity':
+          analysisData.liquidityEfficiencyData = analysisResult;
+          console.log('✓ Liquidity Efficiency loaded:', !!analysisResult);
+          break;
+        case 'investmentperformance':
+        case 'investment_performance':
+        case 'investment':
+          analysisData.investmentPerformanceData = analysisResult;
+          console.log('✓ Investment Performance loaded:', !!analysisResult);
+          break;
+        case 'leveragerisk':
+        case 'leverage_risk':
+        case 'leverage':
+          analysisData.leverageRiskData = analysisResult;
+          console.log('✓ Leverage Risk loaded:', !!analysisResult);
+          break;
         case 'costefficiency':
         case 'cost_efficiency':
           analysisData.costEfficiency = analysisResult;
+          console.log('✓ Cost Efficiency loaded:', !!analysisResult);
           break;
         case 'financialperformance':
         case 'financial_performance':
           analysisData.financialPerformance = analysisResult;
+          console.log('✓ Financial Performance loaded:', !!analysisResult);
           break;
         case 'financialbalance':
         case 'financial_balance':
         case 'financial_health':
           analysisData.financialBalance = analysisResult;
+          console.log('✓ Financial Balance loaded:', !!analysisResult);
           break;
         case 'operationalefficiency':
         case 'operational_efficiency':
           analysisData.operationalEfficiency = analysisResult;
+          console.log('✓ Operational Efficiency loaded:', !!analysisResult);
           break;
 
         default:
+          // Fallback detection for financial analyses based on is_financial_analysis flag
+          if (result.is_financial_analysis) {
+            console.log('Processing fallback financial analysis:', analysisType);
+
+            if (analysisType.includes('profitab')) {
+              analysisData.profitabilityData = analysisResult;
+            } else if (analysisType.includes('growth')) {
+              analysisData.growthTrackerData = analysisResult;
+            } else if (analysisType.includes('liquidity')) {
+              analysisData.liquidityEfficiencyData = analysisResult;
+            } else if (analysisType.includes('investment')) {
+              analysisData.investmentPerformanceData = analysisResult;
+            } else if (analysisType.includes('leverage')) {
+              analysisData.leverageRiskData = analysisResult;
+            }
+          }
           break;
       }
     } catch (error) {
       console.error('Error parsing analysis result:', error, result);
     }
+  });
+
+  // Enhanced logging for debugging
+  const financialAnalysesFound = [
+    analysisData.profitabilityData ? 'profitability' : null,
+    analysisData.growthTrackerData ? 'growth' : null,
+    analysisData.liquidityEfficiencyData ? 'liquidity' : null,
+    analysisData.investmentPerformanceData ? 'investment' : null,
+    analysisData.leverageRiskData ? 'leverage' : null
+  ].filter(Boolean);
+
+  console.log('Final Analysis Data Summary:', {
+    totalAnalyses: userDetails.system?.length || 0,
+    financialAnalysesFound: financialAnalysesFound.length,
+    financialTypes: financialAnalysesFound,
+    hasDocument: userDetails?.document_info?.has_document || false,
+    documentExists: userDetails?.document_info?.file_exists || false
   });
 
   return analysisData;
@@ -415,15 +489,31 @@ const hasAnalysisData = (analysisData) => {
     analysisData.financialBalance || analysisData.operationalEfficiency
   );
 };
+const createSimplePhaseManager = (analysisData, userDetails) => {
+  // Simplified logic - similar to AnalysisContentManager
+  const hasFullSwot = !!analysisData?.fullSwot;
+  const hasEssentialAnalyses = !!(
+    analysisData?.competitiveAdvantage ||
+    analysisData?.expandedCapability ||
+    analysisData?.strategicRadar ||
+    analysisData?.productivityMetrics ||
+    analysisData?.maturityScore
+  );
 
-// Create a simple phase manager for analysis viewing (read-only)
-const createSimplePhaseManager = (analysisData) => {
+  // Financial analyses show if we have any financial data (similar to AnalysisContentManager)
+  const hasAnyFinancialData = !!(
+    analysisData?.profitabilityData ||
+    analysisData?.growthTrackerData ||
+    analysisData?.liquidityEfficiencyData ||
+    analysisData?.investmentPerformanceData ||
+    analysisData?.leverageRiskData
+  );
+
   return {
     getUnlockedFeatures: () => ({
-      analysis: hasAnalysisData(analysisData),
-      fullSwot: true, // Always allow viewing if data exists
-      goodPhase: true, // Always allow viewing if data exists
-      advancedPhase: false // Not implemented yet
+      analysis: true,
+      fullSwot: hasFullSwot && hasEssentialAnalyses,
+      goodPhase: hasAnyFinancialData // Simple: show if we have any financial data
     })
   };
 };
@@ -1178,7 +1268,6 @@ const QuestionItem = ({ question, questionNumber }) => (
   </div>
 );
 
-// Enhanced AnalysisTab Component - Show all analysis data together
 const AnalysisTab = ({
   analysisData,
   selectedBusiness = 'Select a Business',
@@ -1192,6 +1281,7 @@ const AnalysisTab = ({
   userDetails = {},
   phaseManager
 }) => {
+  const [expandedCards, setExpandedCards] = useState(new Set());
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
   const stats = {
@@ -1236,19 +1326,13 @@ const AnalysisTab = ({
         selectedBusiness={selectedBusiness}
       />
 
-      {/* Show All Analysis Components */}
       <div className="analysis-components">
         <AnalysisContentManager
-          // Phase Manager - use the safe fallback
           phaseManager={safePhaseManager}
-
-          // Business Data
           businessData={{ name: analysisData.businessName }}
           questions={analysisData.questions}
           userAnswers={analysisData.userAnswers}
           selectedBusinessId={selectedBusinessId}
-
-          // Analysis Data States
           swotAnalysisResult={analysisData.swot}
           customerSegmentationData={analysisData.customerSegmentation}
           purchaseCriteriaData={analysisData.purchaseCriteria}
@@ -1271,8 +1355,11 @@ const AnalysisTab = ({
           financialPerformanceData={analysisData.financialPerformance}
           financialBalanceData={analysisData.financialBalance}
           operationalEfficiencyData={analysisData.operationalEfficiency}
-
-          // Data Setters (read-only mode)
+          profitabilityData={analysisData.profitabilityData}
+          growthTrackerData={analysisData.growthTrackerData}
+          liquidityEfficiencyData={analysisData.liquidityEfficiencyData}
+          investmentPerformanceData={analysisData.investmentPerformanceData}
+          leverageRiskData={analysisData.leverageRiskData}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
           setPurchaseCriteriaData={() => { }}
@@ -1294,8 +1381,11 @@ const AnalysisTab = ({
           setFinancialPerformanceData={() => { }}
           setFinancialBalanceData={() => { }}
           setOperationalEfficiencyData={() => { }}
-
-          // Regenerating States (all false for read-only)
+          setProfitabilityData={() => { }}
+          setGrowthTrackerData={() => { }}
+          setLiquidityEfficiencyData={() => { }}
+          setInvestmentPerformanceData={() => { }}
+          setLeverageRiskData={() => { }}
           isSwotAnalysisRegenerating={false}
           isCustomerSegmentationRegenerating={false}
           isPurchaseCriteriaRegenerating={false}
@@ -1317,15 +1407,17 @@ const AnalysisTab = ({
           isFinancialPerformanceRegenerating={false}
           isFinancialBalanceRegenerating={false}
           isOperationalEfficiencyRegenerating={false}
-
-          // Other States
+          isProfitabilityRegenerating={false}
+          isGrowthTrackerRegenerating={false}
+          isLiquidityEfficiencyRegenerating={false}
+          isInvestmentPerformanceRegenerating={false}
+          isLeverageRiskRegenerating={false}
           isAnalysisRegenerating={false}
           isChannelHeatmapReady={true}
           setIsChannelHeatmapReady={() => { }}
           isCapabilityHeatmapReady={true}
           setIsCapabilityHeatmapReady={() => { }}
-
-          // Refs (create empty refs)
+          apiLoadingStates={{}}
           swotRef={{ current: null }}
           customerSegmentationRef={{ current: null }}
           purchaseCriteriaRef={{ current: null }}
@@ -1347,15 +1439,25 @@ const AnalysisTab = ({
           financialPerformanceRef={{ current: null }}
           financialBalanceRef={{ current: null }}
           operationalEfficiencyRef={{ current: null }}
-
-          // Handlers (disabled for read-only)
+          profitabilityRef={{ current: null }}
+          growthTrackerRef={{ current: null }}
+          liquidityEfficiencyRef={{ current: null }}
+          investmentPerformanceRef={{ current: null }}
+          leverageRiskRef={{ current: null }}
           handleRedirectToBrief={() => { }}
           showToastMessage={() => { }}
           apiService={null}
-          createSimpleRegenerationHandler={() => () => { }} // Return empty function
-
-          // Hide regenerate buttons in user history
+          createSimpleRegenerationHandler={() => () => { }}
+          uploadedFileForAnalysis={null}
+          highlightedCard={null}
+          expandedCards={expandedCards}
+          setExpandedCards={setExpandedCards}
+          onRedirectToChat={() => { }}
+          isMobile={false}
+          setActiveTab={() => { }}
+          hasUploadedDocument={false}
           hideRegenerateButtons={true}
+          readOnly={true}
         />
       </div>
     </div>

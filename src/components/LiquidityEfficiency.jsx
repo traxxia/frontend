@@ -21,7 +21,8 @@ const LiquidityEfficiency = ({
   onRedirectToChat,
   isMobile,
   setActiveTab,
-  hasUploadedDocument = false
+  hasUploadedDocument = false,
+  readOnly = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(liquidityData);
   const [error, setError] = useState(null);
@@ -490,6 +491,7 @@ const LiquidityEfficiency = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
+          readOnly ={readOnly}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
@@ -519,6 +521,7 @@ const LiquidityEfficiency = ({
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
+          readOnly ={readOnly}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}

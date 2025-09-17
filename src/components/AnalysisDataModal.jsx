@@ -18,6 +18,11 @@ import StrategicPositioningRadar from './StrategicPositioningRadar';
 import OrganizationalCultureProfile from './OrganizationalCultureProfile';
 import ProductivityMetrics from './ProductivityMetrics';
 import MaturityScoreLight from './MaturityScoreLight';
+import ProfitabilityAnalysis from './ProfitabilityAnalysis';
+import GrowthTracker from './GrowthTracker';
+import LiquidityEfficiency from './LiquidityEfficiency';
+import InvestmentPerformance from './InvestmentPerformance';
+import LeverageRisk from './LeverageRisk';
 
 const AnalysisDataModal = ({ 
   isOpen, 
@@ -55,6 +60,11 @@ const AnalysisDataModal = ({
       canRegenerate: false,
       selectedBusinessId: null,
       onRedirectToBrief: () => {},
+      onRedirectToChat: () => {},
+      isMobile: false,
+      setActiveTab: () => {},
+      hasUploadedDocument: false,
+      uploadedFile: null,
       // Disable all interactive features
       readOnly: true,
       hideControls: true
@@ -206,6 +216,47 @@ const AnalysisDataModal = ({
           />
         );
 
+      // Added missing financial analysis components
+      case 'profitabilityAnalysis':
+        return (
+          <ProfitabilityAnalysis
+            {...mockProps}
+            profitabilityData={analysisData}
+          />
+        );
+
+      case 'growthTracker':
+        return (
+          <GrowthTracker
+            {...mockProps}
+            growthData={analysisData}
+          />
+        );
+
+      case 'liquidityEfficiency':
+        return (
+          <LiquidityEfficiency
+            {...mockProps}
+            liquidityData={analysisData}
+          />
+        );
+
+      case 'investmentPerformance':
+        return (
+          <InvestmentPerformance
+            {...mockProps}
+            investmentData={analysisData}
+          />
+        );
+
+      case 'leverageRisk':
+        return (
+          <LeverageRisk
+            {...mockProps}
+            leverageData={analysisData}
+          />
+        );
+
       default:
         // Fallback for unknown analysis types - show raw JSON
         return (
@@ -247,17 +298,7 @@ const AnalysisDataModal = ({
             <p className="analysis-modal-subtitle">
               Business: {businessName}
             </p>
-          </div>
-          
-          {/* <div className="analysis-modal-actions">
-            <button
-              className="analysis-modal-download"
-              onClick={downloadAnalysisData}
-            >
-              <Download size={16} />
-              Download JSON
-            </button>
-          </div> */}
+          </div> 
         </div>
 
         {/* Modal Body */}

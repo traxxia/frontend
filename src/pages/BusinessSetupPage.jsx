@@ -760,7 +760,8 @@ const BusinessSetupPage = () => {
     setExpandedCards,
     handleRedirectToChat,
     isMobile,
-    setActiveTab
+    setActiveTab,
+    readOnly: false, 
   });
 
   useEffect(() => {

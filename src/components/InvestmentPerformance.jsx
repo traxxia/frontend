@@ -22,6 +22,7 @@ const InvestmentPerformance = ({
   isMobile,
   setActiveTab,
   hasUploadedDocument = false,
+  readOnly = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(investmentData);
   const [error, setError] = useState(null);
@@ -464,6 +465,7 @@ const InvestmentPerformance = ({
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
+          readOnly ={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No investment performance analysis results found. The uploaded financial document doesn't contain the required investment metrics (Total Assets, Shareholder Equity, Net Income, Operating Income) or proper values for analysis."
@@ -490,6 +492,7 @@ const InvestmentPerformance = ({
           onRedirectToChat={onRedirectToChat}
           isMobile={isMobile}
           setActiveTab={setActiveTab}
+          readOnly ={readOnly}
           hasUploadedDocument={hasUploadedDocument}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}

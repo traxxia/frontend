@@ -22,6 +22,7 @@ const LeverageRisk = ({
   isMobile,
   setActiveTab,
   hasUploadedDocument = false,
+  readOnly = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(leverageData);
   const [error, setError] = useState(null);
@@ -450,6 +451,7 @@ const LeverageRisk = ({
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
+          readOnly ={readOnly}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
@@ -481,6 +483,7 @@ const LeverageRisk = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
+          readOnly ={readOnly}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}

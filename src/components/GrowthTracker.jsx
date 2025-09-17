@@ -23,6 +23,7 @@ const GrowthTracker = ({
   isMobile,
   setActiveTab,
   hasUploadedDocument = false,
+  readOnly = false,
 }) => {
   const [analysisData, setAnalysisData] = useState(growthData);
   const [error, setError] = useState(null);
@@ -248,6 +249,7 @@ const GrowthTracker = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
+          readOnly ={readOnly}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
@@ -280,6 +282,7 @@ const GrowthTracker = ({
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
+          readOnly ={readOnly}
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
