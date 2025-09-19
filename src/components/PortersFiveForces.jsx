@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const PortersFiveForces = ({
@@ -78,6 +79,7 @@ const PortersFiveForces = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
+      setError(null); // Clear any existing errors
       onRegenerate();
     } else {
       setPortersAnalysisData(null);
@@ -85,10 +87,19 @@ const PortersFiveForces = ({
     }
   };
 
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
+
   // Update data when prop changes
   useEffect(() => {
     if (portersData && portersData !== portersAnalysisData) {
       setPortersAnalysisData(portersData);
+      setError(null); // Clear errors when new data comes in
       if (onDataGenerated) {
         onDataGenerated(portersData);
       }
@@ -104,6 +115,7 @@ const PortersFiveForces = ({
 
     if (portersData) {
       setPortersAnalysisData(portersData);
+      setError(null);
     }
 
     return () => {
@@ -160,17 +172,15 @@ const PortersFiveForces = ({
     );
   }
 
+  // Error state - UPDATED: Using AnalysisError component
   if (error) {
     return (
       <div className="porters-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Porter's Five Forces Analysis Error"
+        />
       </div>
     );
   }

@@ -4,6 +4,7 @@ import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
+import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ProfitabilityAnalysis = ({
@@ -71,7 +72,7 @@ const ProfitabilityAnalysis = ({
     }
 
     const hasValidMetric = Object.entries(profitabilityMetrics).some(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
+      if (key.includes('_threshold') || key.includes('threshold') || key === 'citations') {
         return false;
       }
       const isValid = value !== null &&
@@ -126,21 +127,44 @@ const ProfitabilityAnalysis = ({
   // Helper function to parse percentage values
   const parsePercentageValue = (value) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
-    
+
     if (typeof value === 'string') {
       const numValue = parseFloat(value.replace(/[,$%]/g, ''));
       return isNaN(numValue) ? 0 : numValue;
     }
-    
+
     if (typeof value === 'number') {
       return value;
     }
-    
+
     return 0;
   };
 
+  // Helper function to get citation URL for a metric
+  const getCitationUrl = (metricKey, citations) => {
+    if (!citations) return null;
+
+    // Check for exact match first
+    if (citations[metricKey]) return citations[metricKey];
+
+    // Check for alternative keys
+    const alternativeKeys = {
+      'gross_margin': ['gross_margin'],
+      'operating_margin': ['operating_margin'],
+      'ebitda_margin': ['ebitda_margin', 'ebitda'],
+      'net_margin': ['net_margin']
+    };
+
+    const possibleKeys = alternativeKeys[metricKey] || [metricKey];
+    for (const key of possibleKeys) {
+      if (citations[key]) return citations[key];
+    }
+
+    return null;
+  };
+
   // Paired Bar Chart Component
-  const PairedBarChart = ({ metrics, thresholds }) => {
+  const PairedBarChart = ({ metrics, thresholds, citations }) => {
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef(null);
 
@@ -151,14 +175,15 @@ const ProfitabilityAnalysis = ({
         actualValue: parsePercentageValue(value),
         benchmarkValue: parsePercentageValue(thresholds[key]),
         color: getTrafficLightColor(value, thresholds[key], true),
-        hasData: value !== null && value !== undefined && value !== ''
+        hasData: value !== null && value !== undefined && value !== '',
+        citationUrl: getCitationUrl(key.toLowerCase().replace(' ', '_'), citations)
       }));
 
     useEffect(() => {
       const updateWidth = () => {
         if (containerRef.current) {
-          const width = containerRef.current.offsetWidth - 40; // Account for padding
-          setContainerWidth(Math.max(width, 500)); // Minimum width of 500px
+          const width = containerRef.current.offsetWidth - 40;
+          setContainerWidth(Math.max(width, 500));
         }
       };
 
@@ -175,134 +200,141 @@ const ProfitabilityAnalysis = ({
       ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
       10
     );
-    const chartHeight = chartData.length * 80 + 40; // 80px per metric + padding
+    const chartHeight = chartData.length * 120 + 60; // Increased height for citations
     const chartWidth = containerWidth;
     const leftMargin = 120;
     const rightMargin = 60;
     const barHeight = 25;
-    const groupSpacing = 80;
+    const groupSpacing = 120; // Increased spacing for citations
 
     return (
-      <div 
+      <div
         ref={containerRef}
-        style={{ 
-          width: '99%',
+        style={{
+          width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
           border: '1px solid #e5e7eb'
         }}>
-        <h3 style={{ 
-          marginBottom: '20px', 
+        <h3 style={{
+          marginBottom: '20px',
           color: '#1f2937',
           fontSize: '18px',
           fontWeight: '600'
         }}>
           Profitability Metrics vs Industry Benchmarks
         </h3>
-        
+
         <div style={{ overflowX: 'auto' }}>
-          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '99%' }}>
-          {/* Chart background */}
-          <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
-          
-          {/* Y-axis labels and bars */}
-          {chartData.map((data, index) => {
-            const y = index * groupSpacing + 30;
-            const barWidth = (chartWidth - leftMargin - rightMargin);
-            
-            // Calculate bar lengths as percentages of max value
-            const actualBarLength = (data.actualValue / maxValue) * barWidth;
-            const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
-            
-            return (
-              <g key={data.metric}>
-                {/* Metric label */}
-                <text
-                  x={leftMargin - 10}
-                  y={y + 15}
-                  textAnchor="end"
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    fill: '#374151'
-                  }}
-                >
-                  {data.metric}
-                </text>
-                
-                {/* Actual value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y}
-                  width={actualBarLength}
-                  height={barHeight}
-                  fill={data.color}
-                  opacity={0.8}
-                />
-                
-                {/* Benchmark value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y + barHeight + 5}
-                  width={benchmarkBarLength}
-                  height={barHeight}
-                  fill="#94a3b8"
-                  opacity={0.6}
-                />
-                
-                {/* Value labels */}
-                <text
-                  x={leftMargin + actualBarLength + 5}
-                  y={y + 17}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    fill: data.color
-                  }}
-                >
-                  {data.actualValue.toFixed(1)}%
-                </text>
-                
-                <text
-                  x={leftMargin + benchmarkBarLength + 5}
-                  y={y + barHeight + 22}
-                  style={{
-                    fontSize: '12px',
-                    fill: '#64748b'
-                  }}
-                >
-                  {data.benchmarkValue.toFixed(1)}%
-                </text>
-                
-                {/* Grid lines */}
-                <line
-                  x1={leftMargin}
-                  y1={y + barHeight * 2 + 15}
-                  x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 15}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                  opacity={0.3}
-                />
-              </g>
-            );
-          })}
-          
-          {/* Legend */}
-          <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
-            <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
-            <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Your Business
-            </text>
-            
-            <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
-            <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Industry Average
-            </text>
-          </g>
+          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
+            {/* Chart background */}
+            <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
+
+            {/* Y-axis labels and bars */}
+            {chartData.map((data, index) => {
+              const y = index * groupSpacing + 30;
+              const barWidth = (chartWidth - leftMargin - rightMargin);
+
+              // Calculate bar lengths as percentages of max value
+              const actualBarLength = (data.actualValue / maxValue) * barWidth;
+              const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
+
+              return (
+                <g key={data.metric}>
+                  {/* Metric label */}
+                  <text
+                    x={leftMargin - 10}
+                    y={y + 15}
+                    textAnchor="end"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      fill: '#374151'
+                    }}
+                  >
+                    {data.metric}
+                  </text>
+
+                  {/* Actual value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y}
+                    width={actualBarLength}
+                    height={barHeight}
+                    fill={data.color}
+                    opacity={0.8}
+                  />
+
+                  {/* Benchmark value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y + barHeight + 5}
+                    width={benchmarkBarLength}
+                    height={barHeight}
+                    fill="#94a3b8"
+                    opacity={0.6}
+                  />
+
+                  {/* Value labels */}
+                  <text
+                    x={leftMargin + actualBarLength + 5}
+                    y={y + 17}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      fill: data.color
+                    }}
+                  >
+                    {data.actualValue.toFixed(1)}%
+                  </text>
+
+                  <text
+                    x={leftMargin + benchmarkBarLength + 5}
+                    y={y + barHeight + 22}
+                    style={{
+                      fontSize: '12px',
+                      fill: '#64748b'
+                    }}
+                  >
+                    {data.benchmarkValue.toFixed(1)}%
+                  </text>
+
+                  {/* Citation using CitationSource component */}
+                  <CitationSource
+                    url={data.citationUrl}
+                    x={leftMargin}
+                    y={y + barHeight * 2 + 20}
+                  />
+
+                  {/* Grid lines */}
+                  <line
+                    x1={leftMargin}
+                    y1={y + barHeight * 2 + 40}
+                    x2={chartWidth - rightMargin}
+                    y2={y + barHeight * 2 + 40}
+                    stroke="#e5e7eb"
+                    strokeWidth="1"
+                    opacity={0.3}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Legend */}
+            <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
+              <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
+              <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Your Business
+              </text>
+
+              <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
+              <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Industry Average
+              </text>
+            </g>
           </svg>
-        </div> 
+        </div>
       </div>
     );
   };
@@ -394,7 +426,7 @@ const ProfitabilityAnalysis = ({
       'gross_margin': 'Gross Margin',
       'operating_margin': 'Operating Margin',
       'ebitda_margin': 'EBITDA Margin',
-      'ebitda': 'EBITDA Margin', // Handle ebitda_threshold -> ebitda -> EBITDA Margin
+      'ebitda': 'EBITDA Margin',
       'net_margin': 'Net Margin'
     };
     return displayNames[key] || key.replace('_', ' ').toUpperCase();
@@ -402,15 +434,18 @@ const ProfitabilityAnalysis = ({
 
   const extractProfitabilityMetrics = (data) => {
     if (!data || !data.profitability) {
-      return { metrics: {}, thresholds: {} };
+      return { metrics: {}, thresholds: {}, citations: {} };
     }
 
     const profitabilityData = data.profitability;
     const metrics = {};
     const thresholds = {};
+    const citations = profitabilityData.citations || {};
 
     Object.entries(profitabilityData).forEach(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
+      if (key === 'citations') {
+        return; // Skip citations object in this loop
+      } else if (key.includes('_threshold') || key.includes('threshold')) {
         const baseKey = key.replace('_threshold', '').replace('threshold', '');
         const displayKey = getDisplayName(baseKey);
         thresholds[displayKey] = value;
@@ -420,7 +455,7 @@ const ProfitabilityAnalysis = ({
       }
     });
 
-    return { metrics, thresholds };
+    return { metrics, thresholds, citations };
   };
 
   // Show loading state
@@ -470,8 +505,8 @@ const ProfitabilityAnalysis = ({
           isMobile={isMobile}
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
-          isUploading={false}          
-          readOnly ={readOnly}
+          isUploading={false}
+          readOnly={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
           customMessage="No profitability analysis results found. The uploaded financial document doesn't contain the required profitability ratios(Revenue, Cost of Goods Sold, EBITDA, Net Income, Operating Income, Operating Expenses, Gross Profit) or proper values for analysis."
@@ -479,7 +514,7 @@ const ProfitabilityAnalysis = ({
       );
     }
 
-    const { metrics, thresholds } = extractProfitabilityMetrics(analysisData);
+    const { metrics, thresholds, citations } = extractProfitabilityMetrics(analysisData);
 
     if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
       return (
@@ -494,7 +529,7 @@ const ProfitabilityAnalysis = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           onFileUpload={handleFileUpload}
           onRedirectToChat={onRedirectToChat}
           isMobile={isMobile}
@@ -508,7 +543,7 @@ const ProfitabilityAnalysis = ({
       );
     }
 
-    // Show normal analysis content with paired bar chart
+    // Show normal analysis content with paired bar chart and citations
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
@@ -527,7 +562,7 @@ const ProfitabilityAnalysis = ({
             </div>
           )}
 
-          <PairedBarChart metrics={metrics} thresholds={thresholds} />
+          <PairedBarChart metrics={metrics} thresholds={thresholds} citations={citations} />
 
         </div>
       </div>

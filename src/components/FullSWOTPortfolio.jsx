@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const FullSWOTPortfolio = ({
@@ -21,6 +22,7 @@ const FullSWOTPortfolio = ({
 }) => {
     const [data, setData] = useState(fullSwotData);
     const [hasGenerated, setHasGenerated] = useState(false);
+    const [error, setError] = useState(null);
     const [expandedSections, setExpandedSections] = useState({
         strengths: true,
         weaknesses: true,
@@ -52,6 +54,14 @@ const FullSWOTPortfolio = ({
     };
 
     const handleRegenerate = async () => {
+        if (onRegenerate) {
+            onRegenerate();
+        }
+    };
+
+    // Handle retry for error state
+    const handleRetry = () => {
+        setError(null);
         if (onRegenerate) {
             onRegenerate();
         }
@@ -110,6 +120,7 @@ const FullSWOTPortfolio = ({
             if (normalizedData) {
                 setData(normalizedData);
                 setHasGenerated(true);
+                setError(null);
             } else {
                 setData(null);
                 setHasGenerated(false);
@@ -158,22 +169,27 @@ const FullSWOTPortfolio = ({
         );
     }
 
-    // Error state for when we have answers but no generated data
-    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+    // Consolidated error state for all error conditions
+    if (error || 
+        (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
+        (data && !data?.swotPortfolio)) {
+        
+        let errorMessage = error;
+        if (!errorMessage) {
+            if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+                errorMessage = "Unable to generate Full SWOT Portfolio analysis. Please try regenerating or check your inputs.";
+            } else if (data && !data?.swotPortfolio) {
+                errorMessage = "The Full SWOT Portfolio data received is not in the expected format. Please regenerate the analysis.";
+            }
+        }
+
         return (
             <div className="porters-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>Unable to generate Full SWOT Portfolio analysis. Please try regenerating or check your inputs.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+                <AnalysisError 
+                    error={errorMessage}
+                    onRetry={handleRetry}
+                    title="Full SWOT Portfolio Analysis Error"
+                />
             </div>
         );
     }
@@ -193,26 +209,6 @@ const FullSWOTPortfolio = ({
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
                 />
-            </div>
-        );
-    }
-
-    // Check if data structure is valid
-    if (!data?.swotPortfolio) {
-        return (
-            <div className="porters-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Invalid Data Structure</h3>
-                    <p>The Full SWOT Portfolio data received is not in the expected format. Please regenerate the analysis.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
             </div>
         );
     }
@@ -404,8 +400,6 @@ const FullSWOTPortfolio = ({
                     )}
                     {portfolio.threats && portfolio.threats.length > 0 && (
                         <>
-
-
                             {expandedSections.threats && (
                                 <table className="data-table">
                                     <thead>

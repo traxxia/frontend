@@ -15,6 +15,7 @@ import {
   ChevronRight
 } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const MaturityScore = ({ 
@@ -31,6 +32,7 @@ const MaturityScore = ({
   const [data, setData] = useState(maturityData);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
+  const [error, setError] = useState(null);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -53,6 +55,15 @@ const MaturityScore = ({
   };
 
   const handleRegenerate = async () => {
+    if (onRegenerate) {
+      setError(null); // Clear any existing errors
+      onRegenerate();
+    }
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
     if (onRegenerate) {
       onRegenerate();
     }
@@ -117,9 +128,11 @@ const MaturityScore = ({
       if (normalizedData) {
         setData(normalizedData);
         setHasGenerated(true);
+        setError(null); // Clear any existing errors
       } else {
         setData(null);
         setHasGenerated(false);
+        setError('Invalid maturity score data received');
       }
     } else {
       setData(null);
@@ -575,22 +588,28 @@ const MaturityScore = ({
     );
   }
 
-  // Error state
+  // Error state - NEW: Using AnalysisError component
+  if (error) {
+    return (
+      <div className="maturity-container"> 
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Business Maturity Score Analysis Error"
+        />
+      </div>
+    );
+  }
+
+  // Error state for generation failure with user answers
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="maturity-container"> 
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>Unable to generate business maturity score analysis. Please try regenerating or check your inputs.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="Unable to generate business maturity score analysis. Please try regenerating or check your inputs."
+          onRetry={handleRetry}
+          title="Analysis Generation Error"
+        />
       </div>
     );
   }
@@ -618,18 +637,11 @@ const MaturityScore = ({
   if (!data?.maturityScore) {
     return (
       <div className="maturity-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Invalid Data Structure</h3>
-          <p>The maturity score data received is not in the expected format. Please regenerate the analysis.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="The maturity score data received is not in the expected format. Please regenerate the analysis."
+          onRetry={handleRetry}
+          title="Invalid Data Structure"
+        />
       </div>
     );
   }
@@ -640,18 +652,11 @@ const MaturityScore = ({
   if (!transformedData) {
     return (
       <div className="maturity-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>Unable to process maturity score data. Please try regenerating.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="Unable to process maturity score data. Please try regenerating."
+          onRetry={handleRetry}
+          title="Data Processing Error"
+        />
       </div>
     );
   }

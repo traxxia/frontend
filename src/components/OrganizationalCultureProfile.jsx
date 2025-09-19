@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Users, TrendingUp, Target, BarChart3, ChevronDown, ChevronRight } from 'lucide-react'; 
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import "../styles/EssentialPhase.css";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -104,10 +105,26 @@ const OrganizationalCultureProfile = ({
 
   // Handle regeneration - same pattern as CustomerSegmentation
   const handleRegenerate = async () => { 
-    if (onRegenerate) { 
+    if (onRegenerate) {
+      setError(null); // Clear any existing errors
       onRegenerate(); 
     }
   };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
+
+  // Clear errors when new data comes in
+  useEffect(() => {
+    if (cultureProfileData) {
+      setError(null);
+    }
+  }, [cultureProfileData]);
 
   // Word Cloud Component
   const WordCloud = ({ values = [], behaviors = [] }) => {
@@ -230,21 +247,15 @@ const OrganizationalCultureProfile = ({
     );
   }
 
-  // Error state
+  // Error state - UPDATED: Using AnalysisError component
   if (error) {
     return (
       <div className="culture-profile"> 
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            handleRegenerate();
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Organizational Culture Profile Analysis Error"
+        />
       </div>
     );
   }

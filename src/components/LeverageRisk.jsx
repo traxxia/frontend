@@ -4,6 +4,7 @@ import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
+import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LeverageRisk = ({
@@ -67,7 +68,7 @@ const LeverageRisk = ({
     }
 
     const hasValidMetric = Object.entries(leverageMetrics).some(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
+      if (key.includes('_threshold') || key.includes('threshold') || key === 'citations') {
         return false;
       }
       const isValid = value !== null &&
@@ -121,6 +122,111 @@ const LeverageRisk = ({
     }
   };
 
+  // Helper function to get citation URL for a metric
+  const getCitationUrl = (metricKey, citations) => {
+    if (!citations) return null;
+
+    // Check for exact match first
+    if (citations[metricKey]) return citations[metricKey];
+
+    // Check for alternative keys for leverage metrics
+    const alternativeKeys = {
+      'debt-to-equity': ['debt_to_equity', 'debt-to-equity'],
+      'interest coverage': ['interest_coverage', 'interest-coverage'],
+      'debt_to_equity': ['debt_to_equity', 'debt-to-equity'],
+      'interest_coverage': ['interest_coverage', 'interest-coverage']
+    };
+
+    const possibleKeys = alternativeKeys[metricKey.toLowerCase()] || [metricKey];
+    for (const key of possibleKeys) {
+      if (citations[key]) return citations[key];
+    }
+
+    return null;
+  };
+
+  const handleFileUpload = (file) => {
+    if (file) {
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+
+      if (allowedTypes.includes(file.type)) {
+        setError(null);
+      } else {
+        setError('Please upload an Excel or CSV file.');
+      }
+    }
+  };
+
+  const removeFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const formatRatio = (value, type) => {
+    if (value === null || value === undefined || value === '') return null;
+
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+
+    if (isNaN(numValue)) return null;
+
+    return numValue.toFixed(3);
+  };
+
+  const formatThreshold = (threshold) => {
+    if (!threshold || threshold === 'NA') return 'NA';
+
+    if (typeof threshold === 'string') {
+      const numValue = parseFloat(threshold);
+      if (isNaN(numValue)) return 'NA';
+      return numValue.toFixed(1);
+    }
+
+    if (typeof threshold === 'number') {
+      return threshold.toFixed(1);
+    }
+
+    return 'NA';
+  };
+
+  const getDisplayName = (key) => {
+    const displayNames = {
+      'debt_to_equity': 'Debt-to-Equity',
+      'interest_coverage': 'Interest Coverage'
+    };
+    return displayNames[key] || key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const extractLeverageMetrics = (data) => {
+    if (!data || !data.leverage) {
+      return { metrics: {}, thresholds: {}, citations: {} };
+    }
+
+    const leverageData = data.leverage;
+    const metrics = {};
+    const thresholds = {};
+    const citations = leverageData.citations || {};
+
+    Object.entries(leverageData).forEach(([key, value]) => {
+      if (key === 'citations') {
+        return; // Skip citations object in this loop
+      } else if (key.includes('_threshold') || key.includes('threshold')) {
+        const baseKey = key.replace('_threshold', '').replace('threshold', '');
+        const displayKey = getDisplayName(baseKey);
+        thresholds[displayKey] = value;
+      } else {
+        const displayKey = getDisplayName(key);
+        metrics[displayKey] = value;
+      }
+    });
+
+    return { metrics, thresholds, citations };
+  };
+
   // Helper function to parse ratio values
   const parseRatioValue = (value, type) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
@@ -138,7 +244,7 @@ const LeverageRisk = ({
   };
 
   // Paired Bar Chart Component
-  const PairedBarChart = ({ metrics, thresholds }) => {
+  const PairedBarChart = ({ metrics, thresholds, citations }) => {
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef(null);
 
@@ -150,7 +256,8 @@ const LeverageRisk = ({
         benchmarkValue: parseRatioValue(thresholds[key], key),
         color: getTrafficLightColor(value, thresholds[key], key),
         hasData: value !== null && value !== undefined && value !== '',
-        type: key
+        type: key,
+        citationUrl: getCitationUrl(key, citations)
       }));
 
     useEffect(() => {
@@ -174,12 +281,12 @@ const LeverageRisk = ({
       ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
       10
     );
-    const chartHeight = chartData.length * 80 + 40; // 80px per metric + padding
+    const chartHeight = chartData.length * 120 + 60; // Increased height for citations
     const chartWidth = containerWidth;
     const leftMargin = 120;
     const rightMargin = 60;
     const barHeight = 25;
-    const groupSpacing = 80;
+    const groupSpacing = 120; // Increased spacing for citations
 
     const formatDisplayValue = (value, type) => {
       return value.toFixed(3);
@@ -189,7 +296,7 @@ const LeverageRisk = ({
       <div 
         ref={containerRef}
         style={{ 
-          width: '99%',
+          width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
@@ -205,7 +312,7 @@ const LeverageRisk = ({
         </h3>
         
         <div style={{ overflowX: 'auto' }}>
-          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '99%' }}>
+          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
           {/* Chart background */}
           <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
           
@@ -278,12 +385,19 @@ const LeverageRisk = ({
                   {formatDisplayValue(data.benchmarkValue, data.type)}
                 </text>
                 
+                {/* Citation using CitationSource component */}
+                <CitationSource
+                  url={data.citationUrl}
+                  x={leftMargin}
+                  y={y + barHeight * 2 + 20}
+                />
+                
                 {/* Grid lines */}
                 <line
                   x1={leftMargin}
-                  y1={y + barHeight * 2 + 15}
+                  y1={y + barHeight * 2 + 40}
                   x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 15}
+                  y2={y + barHeight * 2 + 40}
                   stroke="#e5e7eb"
                   strokeWidth="1"
                   opacity={0.3}
@@ -336,85 +450,6 @@ const LeverageRisk = ({
     };
   }, [leverageData]);
 
-  const handleFileUpload = (file) => {
-    if (file) {
-      const allowedTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',
-        'text/csv'
-      ];
-
-      if (allowedTypes.includes(file.type)) {
-        setError(null);
-      } else {
-        setError('Please upload an Excel or CSV file.');
-      }
-    }
-  };
-
-  const removeFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const formatRatio = (value, type) => {
-    if (value === null || value === undefined || value === '') return null;
-
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-
-    if (isNaN(numValue)) return null;
-
-    return numValue.toFixed(3);
-  };
-
-  const formatThreshold = (threshold) => {
-    if (!threshold || threshold === 'NA') return 'NA';
-
-    if (typeof threshold === 'string') {
-      const numValue = parseFloat(threshold);
-      if (isNaN(numValue)) return 'NA';
-      return numValue.toFixed(1);
-    }
-
-    if (typeof threshold === 'number') {
-      return threshold.toFixed(1);
-    }
-
-    return 'NA';
-  };
-
-  const getDisplayName = (key) => {
-    const displayNames = {
-      'debt_to_equity': 'Debt-to-Equity',
-      'interest_coverage': 'Interest Coverage'
-    };
-    return displayNames[key] || key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const extractLeverageMetrics = (data) => {
-    if (!data || !data.leverage) {
-      return { metrics: {}, thresholds: {} };
-    }
-
-    const leverageData = data.leverage;
-    const metrics = {};
-    const thresholds = {};
-
-    Object.entries(leverageData).forEach(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
-        const baseKey = key.replace('_threshold', '').replace('threshold', '');
-        const displayKey = getDisplayName(baseKey);
-        thresholds[displayKey] = value;
-      } else {
-        const displayKey = getDisplayName(key);
-        metrics[displayKey] = value;
-      }
-    });
-
-    return { metrics, thresholds };
-  };
-
   // Show loading state
   if (isRegenerating) {
     return (
@@ -425,7 +460,7 @@ const LeverageRisk = ({
         </div>
       </div>
     );
-  }
+  };
 
   const renderContent = () => {
     // Show error message within the normal structure if there's an error
@@ -471,7 +506,7 @@ const LeverageRisk = ({
       );
     }
 
-    const { metrics, thresholds } = extractLeverageMetrics(analysisData);
+    const { metrics, thresholds, citations } = extractLeverageMetrics(analysisData);
 
     if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
       return (
@@ -502,7 +537,7 @@ const LeverageRisk = ({
 
     const allMetricsNull = Object.values(metrics).every(value => value === null);
 
-    // Show normal analysis content with paired bar chart
+    // Show normal analysis content with paired bar chart and citations
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
@@ -521,7 +556,7 @@ const LeverageRisk = ({
             </div>
           )}
 
-          <PairedBarChart metrics={metrics} thresholds={thresholds} />
+          <PairedBarChart metrics={metrics} thresholds={thresholds} citations={citations} />
 
         </div>
       </div>

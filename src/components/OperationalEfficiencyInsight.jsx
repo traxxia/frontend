@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Zap, TrendingUp, Users, Target, Loader, X, Activity } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 // Utility function to handle empty values
@@ -217,6 +218,7 @@ const OperationalEfficiencyInsight = ({
     
     if (onRegenerate) {
       try {
+        setError(null); // Clear any existing errors
         await onRegenerate();
       } catch (error) {
         console.error('Error in OperationalEfficiency regeneration:', error);
@@ -227,6 +229,14 @@ const OperationalEfficiencyInsight = ({
       setAnalysisData(null);
       setHasGenerated(false);
       setError(null);
+    }
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
     }
   };
 
@@ -276,7 +286,7 @@ const OperationalEfficiencyInsight = ({
     if (operationalEfficiencyData) {
       setAnalysisData(operationalEfficiencyData);
       setHasGenerated(true);
-      setError(null);
+      setError(null); // Clear errors when new data comes in
     } else if (operationalEfficiencyData === null) {
       // Only reset if explicitly set to null (during regeneration)
       setAnalysisData(null);
@@ -405,37 +415,15 @@ const OperationalEfficiencyInsight = ({
     );
   }
 
-  // Error state
+  // Error state - UPDATED: Using AnalysisError component
   if (error) {
     return (
       <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <div style={{ 
-          padding: '20px', 
-          textAlign: 'center'
-        }}>
-          <div style={{ color: '#ef4444', marginBottom: '16px' }}>
-            <X size={48} style={{ margin: '0 auto 8px' }} />
-            <div>{error}</div>
-          </div>
-          <button 
-            onClick={() => {
-              setError(null);
-              if (onRegenerate) {
-                onRegenerate();
-              }
-            }}
-            style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Operational Efficiency Analysis Error"
+        />
       </div>
     );
   }

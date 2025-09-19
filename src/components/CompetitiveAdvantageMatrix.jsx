@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const CompetitiveAdvantageMatrix = ({
@@ -16,6 +17,7 @@ const CompetitiveAdvantageMatrix = ({
 }) => {
     const [data, setData] = useState(competitiveAdvantageData);
     const [hasGenerated, setHasGenerated] = useState(false);
+    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [expandedSections, setExpandedSections] = useState({});
 
@@ -41,15 +43,28 @@ const CompetitiveAdvantageMatrix = ({
 
     const handleRegenerate = async () => {
         if (onRegenerate) {
-            onRegenerate();
+            try {
+                await onRegenerate();
+            } catch (error) {
+                console.error('Error in CompetitiveAdvantage regeneration:', error);
+                setError(error.message || 'Failed to regenerate analysis');
+            }
+        } else {
+            console.warn('No onRegenerate prop provided to CompetitiveAdvantageMatrix');
+            setError('Regeneration not available');
         }
     };
 
-    // Check if the competitive advantage data is empty/incomplete
+    const handleRetry = () => {
+        setError(null);
+        if (onRegenerate) {
+            handleRegenerate();
+        }
+    };
+
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
 
-        // Handle both wrapped and direct API response formats
         let normalizedData;
         if (data.competitiveAdvantage) {
             normalizedData = data;
@@ -58,26 +73,19 @@ const CompetitiveAdvantageMatrix = ({
         } else {
             return true;
         }
-
-        // Check if competitiveAdvantage exists
         if (!normalizedData.competitiveAdvantage) {
             return true;
         }
 
         const advantage = normalizedData.competitiveAdvantage;
-
-        // Check if key sections are missing
         const hasDifferentiators = advantage.differentiators && advantage.differentiators.length > 0;
         const hasCompetitivePosition = advantage.competitivePosition && advantage.competitivePosition.overallScore;
         const hasCustomerChoiceReasons = advantage.customerChoiceReasons && advantage.customerChoiceReasons.length > 0;
-
-        // At least 2 out of 3 key sections should have data for meaningful analysis
         const sectionsWithData = [hasDifferentiators, hasCompetitivePosition, hasCustomerChoiceReasons].filter(Boolean).length;
 
         return sectionsWithData < 2;
     };
 
-    // Toggle section expansion
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({
             ...prev,
@@ -87,13 +95,10 @@ const CompetitiveAdvantageMatrix = ({
 
     useEffect(() => {
         if (competitiveAdvantageData) {
-            // Handle both wrapped and direct API response formats
             let normalizedData;
             if (competitiveAdvantageData.competitiveAdvantage) {
-                // Data is already wrapped
                 normalizedData = competitiveAdvantageData;
             } else if (competitiveAdvantageData.differentiators || competitiveAdvantageData.competitivePosition) {
-                // Data is direct from API, needs wrapping
                 normalizedData = { competitiveAdvantage: competitiveAdvantageData };
             } else {
                 normalizedData = null;
@@ -102,6 +107,7 @@ const CompetitiveAdvantageMatrix = ({
             if (normalizedData) {
                 setData(normalizedData);
                 setHasGenerated(true);
+                setError(null);
             } else {
                 setData(null);
                 setHasGenerated(false);
@@ -112,14 +118,12 @@ const CompetitiveAdvantageMatrix = ({
         }
     }, [competitiveAdvantageData]);
 
-    // Get intensity color class
     const getIntensityColor = (score) => {
         if (score >= 8) return 'high-intensity';
         if (score >= 6) return 'medium-intensity';
         return 'low-intensity';
     };
 
-    // Render Scatter Plot
     const renderScatterPlot = (differentiators) => {
         if (!differentiators || differentiators.length === 0) return null;
 
@@ -134,7 +138,6 @@ const CompetitiveAdvantageMatrix = ({
 
                 <div className="plot-wrapper">
                     <svg width={plotSize} height={plotSize} className="scatter-plot">
-                        {/* Grid lines */}
                         {[0, 2, 4, 6, 8, 10].map(value => {
                             const pos = padding + (value / maxValue) * plotArea;
                             return (
@@ -157,7 +160,6 @@ const CompetitiveAdvantageMatrix = ({
                             );
                         })}
 
-                        {/* Axes */}
                         <line
                             x1={padding}
                             y1={plotSize - padding}
@@ -173,7 +175,6 @@ const CompetitiveAdvantageMatrix = ({
                             className="axis-line"
                         />
 
-                        {/* Quadrant backgrounds */}
                         <rect
                             x={padding + plotArea * 0.5}
                             y={padding}
@@ -182,7 +183,6 @@ const CompetitiveAdvantageMatrix = ({
                             className="quadrant sweet-spot"
                         />
 
-                        {/* Data points */}
                         {differentiators.map((diff, index) => {
                             const x = padding + (diff.uniqueness / maxValue) * plotArea;
                             const y = plotSize - padding - (diff.customerValue / maxValue) * plotArea;
@@ -209,7 +209,6 @@ const CompetitiveAdvantageMatrix = ({
                             );
                         })}
 
-                        {/* Axis labels */}
                         <text
                             x={plotSize / 2}
                             y={plotSize - 10}
@@ -227,7 +226,6 @@ const CompetitiveAdvantageMatrix = ({
                         </text>
                     </svg>
 
-                    {/* Legend */}
                     <div className="plot-legend">
                         <div className="legend-item">
                             <div className="legend-dot sweet-spot"></div>
@@ -251,7 +249,6 @@ const CompetitiveAdvantageMatrix = ({
         );
     };
 
-    // Render Spider Chart (Radar Chart)
     const renderSpiderChart = (differentiators) => {
         if (!differentiators || differentiators.length === 0) return null;
 
@@ -260,7 +257,6 @@ const CompetitiveAdvantageMatrix = ({
         const radius = size / 2 - 40;
         const numSides = differentiators.length;
 
-        // Calculate points for the spider web
         const getPoint = (index, value, maxValue = 10) => {
             const angle = (index * 2 * Math.PI / numSides) - Math.PI / 2;
             const distance = (value / maxValue) * radius;
@@ -276,7 +272,6 @@ const CompetitiveAdvantageMatrix = ({
 
                 <div className="chart-wrapper">
                     <svg width={size} height={size} className="spider-chart">
-                        {/* Background web */}
                         {[2, 4, 6, 8, 10].map(value => (
                             <polygon
                                 key={value}
@@ -288,7 +283,6 @@ const CompetitiveAdvantageMatrix = ({
                             />
                         ))}
 
-                        {/* Radial lines */}
                         {differentiators.map((_, index) => {
                             const point = getPoint(index, 10);
                             return (
@@ -303,7 +297,6 @@ const CompetitiveAdvantageMatrix = ({
                             );
                         })}
 
-                        {/* Company performance polygon */}
                         <polygon
                             points={differentiators.map((diff, index) => {
                                 const point = getPoint(index, diff.customerValue);
@@ -311,8 +304,6 @@ const CompetitiveAdvantageMatrix = ({
                             }).join(' ')}
                             className="performance-polygon"
                         />
-
-                        {/* Data points */}
                         {differentiators.map((diff, index) => {
                             const point = getPoint(index, diff.customerValue);
                             return (
@@ -326,7 +317,6 @@ const CompetitiveAdvantageMatrix = ({
                             );
                         })}
 
-                        {/* Labels */}
                         {differentiators.map((diff, index) => {
                             const labelPoint = getPoint(index, 11);
                             return (
@@ -347,45 +337,30 @@ const CompetitiveAdvantageMatrix = ({
         );
     };
 
-    // Loading state
     if (isRegenerating) {
         return (
             <div className="competitive-advantage-container">
                 <div className="loading-state">
                     <Loader className="loading-spinner" />
-                    <span>
-                        {isRegenerating
-                            ? "Regenerating Competitive Advantage Analysis..."
-                            : "Generating Competitive Advantage Analysis..."
-                        }
-                    </span>
+                    <span>Regenerating Competitive Advantage Analysis...</span>
                 </div>
             </div>
         );
     }
 
-    // Error state for when we have answers but no generated data
-    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+    if (error) {
         return (
             <div className="competitive-advantage-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>Unable to generate Competitive Advantage analysis. Please try regenerating or check your inputs.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+                <AnalysisError 
+                    error={error}
+                    onRetry={handleRetry}
+                    title="Competitive Advantage Analysis Error"
+                />
             </div>
         );
     }
 
-    // Check if data is incomplete and show missing questions checker
-    if (!competitiveAdvantageData || isCompetitiveAdvantageDataIncomplete(competitiveAdvantageData)) {
+    if (!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) {
         return (
             <div className="competitive-advantage-container">
                 <AnalysisEmptyState
@@ -393,33 +368,13 @@ const CompetitiveAdvantageMatrix = ({
                     analysisDisplayName="Competitive Advantage Matrix"
                     icon={Shield}
                     onImproveAnswers={handleMissingQuestionsCheck}
-                    onRegenerate={handleRegenerate}
+                    onRegenerate={canRegenerate && onRegenerate ? handleRegenerate : null}
                     isRegenerating={isRegenerating}
-                    canRegenerate={canRegenerate}
+                    canRegenerate={canRegenerate && !!onRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
                     customMessage="Complete essential phase questions to unlock competitive advantage analysis."
                 />
-            </div>
-        );
-    }
-
-    // Check if data structure is valid
-    if (!data?.competitiveAdvantage) {
-        return (
-            <div className="competitive-advantage-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Invalid Data Structure</h3>
-                    <p>The Competitive Advantage data received is not in the expected format. Please regenerate the analysis.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
             </div>
         );
     }
@@ -431,8 +386,6 @@ const CompetitiveAdvantageMatrix = ({
             data-analysis-type="competitiveAdvantage"
             data-analysis-name="Competitive Advantage Matrix"
             data-analysis-order="9">
-
-            {/* Navigation Tabs */}
             <div className="competitive-advantage-tabs">
                 {[
                     { id: 'overview', label: 'Overview', icon: Target },
@@ -454,11 +407,9 @@ const CompetitiveAdvantageMatrix = ({
                 })}
             </div>
 
-            {/* Content */}
             <div className="competitive-advantage-content">
                 {activeTab === 'overview' && (
                     <div className="overview-content">
-                        {/* Market Position Section */}
                         {advantage.competitivePosition && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('position')}>
@@ -492,7 +443,6 @@ const CompetitiveAdvantageMatrix = ({
                                                     <td><div className="force-name"> Vulnerable Advantages</div></td>
                                                     <td>{advantage.competitivePosition.vulnerableAdvantages}</td>
                                                 </tr>
-                                                {/* Add Key Improvements row */}
                                                 {advantage.competitivePosition.key_improvements && Array.isArray(advantage.competitivePosition.key_improvements) && advantage.competitivePosition.key_improvements.length > 0 && (
                                                     <tr>
                                                         <td><strong>Key Improvements</strong></td>
@@ -512,7 +462,6 @@ const CompetitiveAdvantageMatrix = ({
                             </div>
                         )}
 
-                        {/* Customer Choice Drivers Section */}
                         {advantage.customerChoiceReasons && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('choice')}>
@@ -571,7 +520,6 @@ const CompetitiveAdvantageMatrix = ({
 
                 {activeTab === 'details' && (
                     <div className="details-content">
-                        {/* Differentiators Section */}
                         {advantage.differentiators && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('differentiators')}>

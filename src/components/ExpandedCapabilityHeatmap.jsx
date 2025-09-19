@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react'; 
+import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target, Info } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ExpandedCapabilityHeatmap = ({
@@ -16,6 +17,7 @@ const ExpandedCapabilityHeatmap = ({
 }) => {
     const [data, setData] = useState(expandedCapabilityData);
     const [hasGenerated, setHasGenerated] = useState(false);
+    const [error, setError] = useState(null);
     const [hoveredCell, setHoveredCell] = useState(null);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -25,15 +27,15 @@ const ExpandedCapabilityHeatmap = ({
     };
 
     const handleMissingQuestionsCheck = async () => {
-        const analysisConfig = ANALYSIS_TYPES.expandedCapability; 
-        
+        const analysisConfig = ANALYSIS_TYPES.expandedCapability;
+
         await checkMissingQuestionsAndRedirect(
-            'expandedCapability', 
+            'expandedCapability',
             selectedBusinessId,
             handleRedirectToBrief,
             {
-            displayName: analysisConfig.displayName,
-            customMessage: analysisConfig.customMessage
+                displayName: analysisConfig.displayName,
+                customMessage: analysisConfig.customMessage
             }
         );
     };
@@ -44,11 +46,16 @@ const ExpandedCapabilityHeatmap = ({
         }
     };
 
-    // Simplified validation - EXACTLY like other components
+    // Handle retry for error state
+    const handleRetry = () => {
+        setError(null);
+        if (onRegenerate) {
+            onRegenerate();
+        }
+    };
+
     const isExpandedCapabilityDataIncomplete = (data) => {
         if (!data) return true;
-        
-        // Handle both wrapped and direct API response formats
         let normalizedData;
         if (data.expandedCapabilityHeatmap) {
             normalizedData = data;
@@ -59,40 +66,33 @@ const ExpandedCapabilityHeatmap = ({
         } else {
             return true;
         }
-        
-        // Check if expandedCapabilityHeatmap exists
+
         if (!normalizedData.expandedCapabilityHeatmap) {
             return true;
         }
-        
+
         const heatmap = normalizedData.expandedCapabilityHeatmap;
         const hasCapabilities = heatmap.capabilities && heatmap.capabilities.length > 0;
-
-        // Need at least capabilities to show something meaningful
         return !hasCapabilities;
     };
 
-    // EXACTLY the same useEffect pattern as other components
     useEffect(() => {
         if (expandedCapabilityData) {
-            // Handle both wrapped and direct API response formats
             let normalizedData;
             if (expandedCapabilityData.expandedCapabilityHeatmap) {
-                // Data is already wrapped
                 normalizedData = expandedCapabilityData;
             } else if (expandedCapabilityData.expanded_capability_heatmap) {
-                // Alternative API response structure
                 normalizedData = { expandedCapabilityHeatmap: expandedCapabilityData.expanded_capability_heatmap };
             } else if (expandedCapabilityData.capabilities) {
-                // Direct capability data structure
                 normalizedData = { expandedCapabilityHeatmap: expandedCapabilityData };
             } else {
                 normalizedData = null;
             }
-            
+
             if (normalizedData) {
                 setData(normalizedData);
                 setHasGenerated(true);
+                setError(null);
             } else {
                 setData(null);
                 setHasGenerated(false);
@@ -103,10 +103,9 @@ const ExpandedCapabilityHeatmap = ({
         }
     }, [expandedCapabilityData]);
 
-    // Vibrant color scheme for maturity levels
     const maturityLevels = [1, 2, 3, 4, 5];
     const maturityLabels = ['Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
-    
+
     const getMaturityColor = (maturityLevel, intensity = 1) => {
         const colors = {
             1: `rgba(239, 68, 68, ${intensity})`,    // Vibrant Red
@@ -134,11 +133,7 @@ const ExpandedCapabilityHeatmap = ({
         }
 
         const capabilities = data.expandedCapabilityHeatmap.capabilities;
-        
-        // Extract unique business functions (categories) and sort them
         const businessFunctions = [...new Set(capabilities.map(cap => cap.category))].sort();
-
-        // Create matrix structure: businessFunction -> maturityLevel -> capabilities[]
         const heatmapMatrix = {};
         businessFunctions.forEach(func => {
             heatmapMatrix[func] = {};
@@ -146,12 +141,10 @@ const ExpandedCapabilityHeatmap = ({
                 heatmapMatrix[func][level] = [];
             });
         });
-
-        // Populate matrix with capabilities
         capabilities.forEach(capability => {
             const category = capability.category;
             const level = capability.maturityLevel;
-            
+
             if (heatmapMatrix[category] && heatmapMatrix[category][level]) {
                 heatmapMatrix[category][level].push(capability);
             }
@@ -163,9 +156,6 @@ const ExpandedCapabilityHeatmap = ({
     const renderHeatmapCell = (businessFunction, maturityLevel, capabilities) => {
         const cellKey = `${businessFunction}-${maturityLevel}`;
         const isEmpty = capabilities.length === 0;
-        
-        // Calculate intensity based on number of capabilities in this cell
-        // Find the maximum number of capabilities in any single cell for normalization
         const allCellCounts = [];
         if (data?.expandedCapabilityHeatmap?.capabilities) {
             const heatmapData = getHeatmapData();
@@ -177,7 +167,7 @@ const ExpandedCapabilityHeatmap = ({
                 });
             }
         }
-        
+
         const maxCapabilitiesInAnyCell = allCellCounts.length > 0 ? Math.max(...allCellCounts) : 1;
         const intensity = isEmpty ? 0.1 : Math.min((capabilities.length / maxCapabilitiesInAnyCell) * 0.8 + 0.2, 1);
 
@@ -246,7 +236,6 @@ const ExpandedCapabilityHeatmap = ({
         </div>
     );
 
-    // Loading state
     if (isRegenerating) {
         return (
             <div className="expanded-capability-heatmap">
@@ -263,30 +252,37 @@ const ExpandedCapabilityHeatmap = ({
         );
     }
 
-    // Error state
-    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+    // Single consolidated error state for all error conditions
+    if (error || 
+        (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
+        (data && !data?.expandedCapabilityHeatmap) ||
+        (data && !getHeatmapData())) {
+        
+        let errorMessage = error;
+        if (!errorMessage) {
+            if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
+                errorMessage = "Unable to generate expanded capability analysis. Please try regenerating or check your inputs.";
+            } else if (data && !data?.expandedCapabilityHeatmap) {
+                errorMessage = "The expanded capability data received is not in the expected format. Please regenerate the analysis.";
+            } else if (data && !getHeatmapData()) {
+                errorMessage = "Unable to generate capability heatmap. Please try regenerating.";
+            }
+        }
+
         return (
-            <div className="expanded-capability-heatmap"> 
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>Unable to generate expanded capability analysis. Please try regenerating or check your inputs.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+            <div className="expanded-capability-heatmap">
+                <AnalysisError 
+                    error={errorMessage}
+                    onRetry={handleRetry}
+                    title="Expanded Capability Analysis Error"
+                />
             </div>
         );
     }
 
-    // Check if data is incomplete and show missing questions checker
     if (!expandedCapabilityData || isExpandedCapabilityDataIncomplete(expandedCapabilityData)) {
         return (
-            <div className="expanded-capability-heatmap"> 
+            <div className="expanded-capability-heatmap">
                 <AnalysisEmptyState
                     analysisType="expandedCapability"
                     analysisDisplayName="Expanded Capability Analysis"
@@ -297,58 +293,18 @@ const ExpandedCapabilityHeatmap = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                /> 
-            </div>
-        );
-    }
-
-    // Check if data structure is valid
-    if (!data?.expandedCapabilityHeatmap) {
-        return (
-            <div className="expanded-capability-heatmap">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Invalid Data Structure</h3>
-                    <p>The expanded capability data received is not in the expected format. Please regenerate the analysis.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+                />
             </div>
         );
     }
 
     const heatmapData = getHeatmapData();
-    if (!heatmapData) {
-        return (
-            <div className="expanded-capability-heatmap">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>Unable to generate capability heatmap. Please try regenerating.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     const { businessFunctions, heatmapMatrix } = heatmapData;
     const capabilities = data?.expandedCapabilityHeatmap?.capabilities || [];
     const capabilityGaps = data?.expandedCapabilityHeatmap?.capabilityGaps || [];
 
     return (
-        <div className="expanded-capability-heatmap"> 
-
+        <div className="expanded-capability-heatmap">
             {/* Legend */}
             <div className="heatmap-legend">
                 <div className="legend-info">
@@ -368,12 +324,10 @@ const ExpandedCapabilityHeatmap = ({
                 ))}
             </div>
 
-            {/* Heatmap Grid */}
             <div
                 className="heatmap-grid"
                 style={{ gridTemplateColumns: `200px repeat(${maturityLevels.length}, 1fr)` }}
             >
-                {/* Header Row */}
                 <div className="heatmap-header-cell">Business Function</div>
                 {maturityLevels.map((level, index) => (
                     <div key={level} className="heatmap-header-maturity">
@@ -381,8 +335,6 @@ const ExpandedCapabilityHeatmap = ({
                         <div className="maturity-level-name">{maturityLabels[index]}</div>
                     </div>
                 ))}
-
-                {/* Data Rows */}
                 {businessFunctions.map(businessFunction => (
                     <React.Fragment key={businessFunction}>
                         <div className="heatmap-row-header">{businessFunction}</div>
@@ -397,7 +349,6 @@ const ExpandedCapabilityHeatmap = ({
                 ))}
             </div>
 
-            {/* Capability Gaps Section */}
             {capabilityGaps.length > 0 && renderCapabilityGaps(capabilityGaps)}
         </div>
     );

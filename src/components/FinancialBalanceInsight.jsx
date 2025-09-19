@@ -4,6 +4,7 @@ import { DollarSign, TrendingUp, Target, Users, Loader, Upload, X, AlertTriangle
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const FinancialBalanceInsight = ({
@@ -127,6 +128,14 @@ const FinancialBalanceInsight = ({
     } else {
       setAnalysisData(null);
       setError(null);
+    }
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
     }
   };
 
@@ -431,19 +440,11 @@ const FinancialBalanceInsight = ({
   if (error) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Financial Balance Analysis Error"
+        />
       </div>
     );
   }
@@ -483,14 +484,11 @@ const FinancialBalanceInsight = ({
   if (!financialData) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Invalid Data Structure</h3>
-          <p>The financial data structure is not recognized.</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="The financial data structure is not recognized."
+          onRetry={handleRetry}
+          title="Invalid Data Structure"
+        />
       </div>
     );
   }

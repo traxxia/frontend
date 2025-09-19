@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, Layers, Calendar, Loader, Zap, Grid3x3 } from 'l
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const ChannelHeatmap = ({
@@ -20,9 +21,7 @@ const ChannelHeatmap = ({
   const [heatmapData, setHeatmapData] = useState(channelHeatmapData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedCell, setSelectedCell] = useState(null);
-
-  // Add refs to track component mount
+  const [selectedCell, setSelectedCell] = useState(null); 
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
@@ -34,9 +33,7 @@ const ChannelHeatmap = ({
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
-
-  // Function to check missing questions and redirect
+  }; 
   const handleMissingQuestionsCheck  = async () => {
     const analysisConfig = ANALYSIS_TYPES.channelHeatmap; 
   
@@ -50,56 +47,18 @@ const ChannelHeatmap = ({
       }
     );
   };
-
-  // Check if the heatmap data is empty/incomplete
+ 
   const isHeatmapDataIncomplete = (data) => {
-    if (!data) return true;
-
-    // Check if essential arrays are empty or null
+    if (!data) return true; 
     if (!data.products || data.products.length === 0) return true;
     if (!data.channels || data.channels.length === 0) return true;
-    if (!data.matrix || data.matrix.length === 0) return true;
-
-    // Check if any critical fields are null/undefined
+    if (!data.matrix || data.matrix.length === 0) return true; 
     const criticalFields = ['legend'];
     const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
 
     return hasNullFields;
-  };
-
-  // Check if analysis failed (all required questions answered but data is incomplete)
-  const isAnalysisFailed = async () => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/questions/missing-for-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysis_type: 'channelHeatmap',
-            business_id: selectedBusinessId
-          })
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        // If no missing questions but data is incomplete, it's an analysis failure
-        return result.missing_count === 0 && isHeatmapDataIncomplete(heatmapData);
-      }
-      return false;
-    } catch (error) {
-      console.error('Error checking analysis status:', error);
-      return false;
-    }
-  };
-
-  // Handle regeneration
+  }; 
+   
   const handleRegenerate = async () => {
     if (onRegenerate) {
       onRegenerate();
@@ -108,8 +67,14 @@ const ChannelHeatmap = ({
       setError(null);
     }
   };
-
-  // Update heatmap data when prop changes
+ 
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
+ 
   useEffect(() => {
     if (channelHeatmapData && channelHeatmapData !== heatmapData) {
       setHeatmapData(channelHeatmapData);
@@ -118,8 +83,7 @@ const ChannelHeatmap = ({
       }
     }
   }, [channelHeatmapData]);
-
-  // Initialize component - only run once
+ 
   useEffect(() => {
     if (hasInitialized.current) return;
 
@@ -140,23 +104,19 @@ const ChannelHeatmap = ({
       onDataGenerated(heatmapData);
     }
   }, [heatmapData]);
-
-  // Get matrix value for a specific product-channel combination
+ 
   const getMatrixValue = (product, channel) => {
     if (!heatmapData?.matrix) return null;
     return heatmapData.matrix.find(item =>
       item.product === product && item.channel === channel
     );
   };
-
-  // Get color intensity based on value
+ 
   const getHeatmapColor = (value) => {
     if (!value || !heatmapData?.legend) return '#f3f4f6';
 
-    const intensity = value / 100; // Assuming 0-100 scale
-    const { colorRange } = heatmapData.legend;
-
-    // Convert hex to RGB for interpolation
+    const intensity = value / 100; 
+    const { colorRange } = heatmapData.legend; 
     const hexToRgb = (hex) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result ? {
@@ -169,33 +129,27 @@ const ChannelHeatmap = ({
     const lowColor = hexToRgb(colorRange.low);
     const highColor = hexToRgb(colorRange.high);
 
-    if (!lowColor || !highColor) return colorRange.low;
-
-    // Interpolate between low and high colors
+    if (!lowColor || !highColor) return colorRange.low; 
     const r = Math.round(lowColor.r + (highColor.r - lowColor.r) * intensity);
     const g = Math.round(lowColor.g + (highColor.g - lowColor.g) * intensity);
     const b = Math.round(lowColor.b + (highColor.b - lowColor.b) * intensity);
-
     return `rgb(${r}, ${g}, ${b})`;
   };
-
-  // Calculate channel totals
+ 
   const getChannelTotal = (channel) => {
     if (!heatmapData?.matrix) return 0;
     return heatmapData.matrix
       .filter(item => item.channel === channel)
       .reduce((sum, item) => sum + item.value, 0);
   };
-
-  // Calculate product totals
+ 
   const getProductTotal = (product) => {
     if (!heatmapData?.matrix) return 0;
     return heatmapData.matrix
       .filter(item => item.product === product)
       .reduce((sum, item) => sum + item.value, 0);
   };
-
-  // Get top performing combinations
+ 
   const getTopPerformers = () => {
     if (!heatmapData?.matrix) return [];
     return [...heatmapData.matrix]
@@ -222,29 +176,17 @@ const ChannelHeatmap = ({
   if (error) {
     return (
       <div className="channel-heatmap  channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Channel Heatmap Analysis Error"
+        />
       </div>
     );
-  }
-
-  // Check if data is incomplete and show missing questions checker
+  } 
   if (!heatmapData || isHeatmapDataIncomplete(heatmapData)) {
     return (
-      <div className="channel-heatmap  channel-heatmap-container"> 
-
-        {/* Replace the entire empty-state div with the common component */}
+      <div className="channel-heatmap  channel-heatmap-container">  
         <AnalysisEmptyState
           analysisType="channelHeatmap"
           analysisDisplayName="Channel Heatmap Analysis"
@@ -265,9 +207,7 @@ const ChannelHeatmap = ({
   return (
     <div className="channel-heatmap channel-heatmap-container" data-analysis-type="channel-heatmap"
       data-analysis-name="Channel Heatmap"
-      data-analysis-order="3"> 
-
-      {/* Key Metrics */}
+      data-analysis-order="3">  
       <div className="ch-metrics">
         <div className="ch-metric-card ch-metric-blue">
           <div className="ch-metric-header">
@@ -294,14 +234,11 @@ const ChannelHeatmap = ({
             {topPerformers.length > 0 ? `${topPerformers[0].value}%` : 'N/A'}
           </p>
         </div>
-      </div>
-
-      {/* Heatmap */}
+      </div> 
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
           <div className="ch-heatmap-header-section">
-            <h3 className="ch-section-title">Performance Heatmap</h3>
-            {/* Legend moved to top right */}
+            <h3 className="ch-section-title">Performance Heatmap</h3> 
             {heatmapData.legend && (
               <div className="ch-legend-gradient">
                 <div
@@ -319,8 +256,7 @@ const ChannelHeatmap = ({
           </div>
 
           <div className="ch-heatmap-wrapper">
-            <div className="ch-heatmap">
-              {/* Header row with channels */}
+            <div className="ch-heatmap"> 
               <div className="ch-heatmap-header">
                 <div className="ch-cell ch-cell-corner"></div>
                 {heatmapData.channels?.map((channel, index) => (
@@ -332,8 +268,7 @@ const ChannelHeatmap = ({
                   </div>
                 ))}
               </div>
-
-              {/* Data rows */}
+ 
               {heatmapData.products?.map((product, productIndex) => (
                 <div key={productIndex} className="ch-heatmap-row">
                   <div className="ch-cell ch-cell-header ch-product-header">
@@ -361,9 +296,7 @@ const ChannelHeatmap = ({
                           {cellData?.volume && (
                             <span className="ch-cell-volume">Vol: {cellData.volume}</span>
                           )}
-                        </div>
-
-                        {/* Tooltip */}
+                        </div> 
                         {selectedCell === `${productIndex}-${channelIndex}` && (
                           <div className="ch-tooltip">
                             <div className="ch-tooltip-header">

@@ -78,11 +78,11 @@ const ExcelAnalysisManager = ({
     if (!data) return true;
     
     // Check if we have data for at least one analysis component
-    return !data.Profitability && 
-           !data['Growth Tracker'] && 
-           !data['Liquidity & Efficiency'] && 
-           !data['Investment Performance'] && 
-           !data['Leverage & Risk'];
+    return !data.profitability && 
+           !data.growth_trends && 
+           !data.liquidity && 
+           !data.investment && 
+           !data.leverage;
   };
 
   const handleRegenerate = async () => {
@@ -160,19 +160,20 @@ const ExcelAnalysisManager = ({
     setError(null);
 
     try {
+      // Get all metrics at once (no metric_type parameter)
       const result = await excelAnalysisService.generateExcelAnalysis(
         localUploadedFile,
         questions,
         userAnswers
       );
 
-      // Transform the response to match our component structure
+      // The API now returns the structured data directly
       const transformedData = {
-        profitability: result.Profitability,
-        growthTracker: result['Growth Tracker'],
-        liquidityEfficiency: result['Liquidity & Efficiency'],
-        investmentPerformance: result['Investment Performance'],
-        leverageRisk: result['Leverage & Risk']
+        profitability: result.profitability,
+        growth_trends: result.growth_trends,
+        liquidity: result.liquidity,
+        investment: result.investment,
+        leverage: result.leverage
       };
 
       setAnalysisData(transformedData);
@@ -187,6 +188,33 @@ const ExcelAnalysisManager = ({
     } catch (error) {
       console.error('Error generating excel analysis:', error);
       setError(`Failed to generate analysis: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to generate specific metric types
+  const generateSpecificAnalysis = async (metricType) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await excelAnalysisService.generateExcelAnalysis(
+        localUploadedFile,
+        questions,
+        userAnswers,
+        metricType
+      );
+
+      // Update only the specific metric in analysisData
+      setAnalysisData(prevData => ({
+        ...prevData,
+        ...result
+      }));
+
+    } catch (error) {
+      console.error(`Error generating ${metricType} analysis:`, error);
+      setError(`Failed to generate ${metricType} analysis: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -327,7 +355,7 @@ const ExcelAnalysisManager = ({
             profitabilityData={{ profitability: analysisData.profitability }}
             selectedBusinessId={selectedBusinessId}
             onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateExcelAnalysis()}
+            onRegenerate={() => generateSpecificAnalysis('profitability')}
             isRegenerating={isLoading}
             canRegenerate={canRegenerate}
           />
@@ -335,16 +363,16 @@ const ExcelAnalysisManager = ({
       )}
 
       {/* Growth Tracker */}
-      {analysisData.growthTracker && (
+      {analysisData.growth_trends && (
         <div style={{ marginBottom: '40px' }}>
           <GrowthTracker
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessName}
-            growthData={{ growthTracker: analysisData.growthTracker }}
+            growthData={{ growth_trends: analysisData.growth_trends }}
             selectedBusinessId={selectedBusinessId}
             onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateExcelAnalysis()}
+            onRegenerate={() => generateSpecificAnalysis('growth_trends')}
             isRegenerating={isLoading}
             canRegenerate={canRegenerate}
           />
@@ -352,16 +380,16 @@ const ExcelAnalysisManager = ({
       )}
 
       {/* Liquidity & Efficiency */}
-      {analysisData.liquidityEfficiency && (
+      {analysisData.liquidity && (
         <div style={{ marginBottom: '40px' }}>
           <LiquidityEfficiency
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessName}
-            liquidityData={{ liquidityEfficiency: analysisData.liquidityEfficiency }}
+            liquidityData={{ liquidity: analysisData.liquidity }}
             selectedBusinessId={selectedBusinessId}
             onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateExcelAnalysis()}
+            onRegenerate={() => generateSpecificAnalysis('liquidity')}
             isRegenerating={isLoading}
             canRegenerate={canRegenerate}
           />
@@ -369,16 +397,16 @@ const ExcelAnalysisManager = ({
       )}
 
       {/* Investment Performance */}
-      {analysisData.investmentPerformance && (
+      {analysisData.investment && (
         <div style={{ marginBottom: '40px' }}>
           <InvestmentPerformance
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessName}
-            investmentData={{ investmentPerformance: analysisData.investmentPerformance }}
+            investmentData={{ investment: analysisData.investment }}
             selectedBusinessId={selectedBusinessId}
             onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateExcelAnalysis()}
+            onRegenerate={() => generateSpecificAnalysis('investment')}
             isRegenerating={isLoading}
             canRegenerate={canRegenerate}
           />
@@ -386,16 +414,16 @@ const ExcelAnalysisManager = ({
       )}
 
       {/* Leverage & Risk */}
-      {analysisData.leverageRisk && (
+      {analysisData.leverage && (
         <div style={{ marginBottom: '40px' }}>
           <LeverageRisk
             questions={questions}
             userAnswers={userAnswers}
             businessName={businessName}
-            leverageData={{ leverageRisk: analysisData.leverageRisk }}
+            leverageData={{ leverage: analysisData.leverage }}
             selectedBusinessId={selectedBusinessId}
             onRedirectToBrief={handleRedirectToBrief}
-            onRegenerate={() => generateExcelAnalysis()}
+            onRegenerate={() => generateSpecificAnalysis('leverage')}
             isRegenerating={isLoading}
             canRegenerate={canRegenerate}
           />

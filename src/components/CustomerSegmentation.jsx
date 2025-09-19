@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, TrendingUp, Star, Calendar, Filter, Loader, ChevronDown, ChevronRight } from 'lucide-react'; 
+import { Users, TrendingUp, Star, Calendar, Filter, Loader, ChevronDown, ChevronRight } from 'lucide-react';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
-import AnalysisEmptyState from './AnalysisEmptyState'; 
+import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import AnalysisError from './AnalysisError';
 
 const CustomerSegmentation = ({
   questions = [],
@@ -21,7 +22,7 @@ const CustomerSegmentation = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
-  
+
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ const CustomerSegmentation = ({
   const getAuthToken = () => sessionStorage.getItem('token');
 
   const SEGMENT_COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-  
+
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
@@ -38,10 +39,10 @@ const CustomerSegmentation = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.customerSegmentation; 
-    
+    const analysisConfig = ANALYSIS_TYPES.customerSegmentation;
+
     await checkMissingQuestionsAndRedirect(
-      'customerSegmentation', 
+      'customerSegmentation',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -51,50 +52,14 @@ const CustomerSegmentation = ({
     );
   };
 
-  // Check if the segmentation data is empty/incomplete
   const isSegmentationDataIncomplete = (data) => {
     if (!data) return true;
-    
-    // Check if segments array is empty or null
+
     if (!data.segments || data.segments.length === 0) return true;
-    
-    // Check if any critical fields are null/undefined
     const criticalFields = ['totalCustomers', 'segmentationCriteria'];
     const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
-    
+
     return hasNullFields;
-  };
-
-  // Check if analysis failed (all required questions answered but data is incomplete)
-  const isAnalysisFailed = async () => {
-    try {
-      const token = getAuthToken();
-      
-      const response = await fetch(
-        `${API_BASE_URL}/api/questions/missing-for-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysis_type: 'customerSegmentation',
-            business_id: selectedBusinessId
-          })
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        // If no missing questions but data is incomplete, it's an analysis failure
-        return result.missing_count === 0 && isSegmentationDataIncomplete(segmentationData);
-      }
-      return false;
-    } catch (error) {
-      console.error('Error checking analysis status:', error);
-      return false;
-    }
   };
 
   const toggleSection = (sectionKey) => {
@@ -114,7 +79,7 @@ const CustomerSegmentation = ({
   };
 
   useEffect(() => {
-    if (customerSegmentationData && customerSegmentationData !== segmentationData) { 
+    if (customerSegmentationData && customerSegmentationData !== segmentationData) {
       setSegmentationData(customerSegmentationData);
       if (onDataGenerated) {
         onDataGenerated(customerSegmentationData);
@@ -124,11 +89,11 @@ const CustomerSegmentation = ({
 
   useEffect(() => {
     if (hasInitialized.current) return;
-    
+
     isMounted.current = true;
     hasInitialized.current = true;
-    
-    if (customerSegmentationData) { 
+
+    if (customerSegmentationData) {
       setSegmentationData(customerSegmentationData);
     }
 
@@ -147,7 +112,7 @@ const CustomerSegmentation = ({
 
       const midAngle = ((startAngle + runningTotal) / 2 / 100) * 360;
       const labelRadius = 55;
-      
+
       const labelX = 100 + labelRadius * Math.cos((midAngle - 90) * Math.PI / 180);
       const labelY = 100 + labelRadius * Math.sin((midAngle - 90) * Math.PI / 180);
 
@@ -166,6 +131,13 @@ const CustomerSegmentation = ({
     return { segments: processedSegments, total: runningTotal };
   };
 
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
+
   const preparePurchaseCriteriaData = () => {
     if (!segmentationData?.purchaseCriteriaRatings) return [];
 
@@ -180,9 +152,9 @@ const CustomerSegmentation = ({
     const r = parseInt(hexColor.slice(1, 3), 16);
     const g = parseInt(hexColor.slice(3, 5), 16);
     const b = parseInt(hexColor.slice(5, 7), 16);
-    
+
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
+
     return luminance > 0.5 ? '#000000' : '#ffffff';
   };
 
@@ -204,11 +176,11 @@ const CustomerSegmentation = ({
         }
       }
     }
-    
+
     if (currentLine) {
       lines.push(currentLine);
     }
-    
+
     return lines;
   };
 
@@ -230,30 +202,19 @@ const CustomerSegmentation = ({
 
   if (error) {
     return (
-      <div className="customer-segmentation">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+      <div className="channel-heatmap channel-heatmap-container">
+        <AnalysisError
+          error={error}
+          onRetry={handleRetry}
+          title="Customer Segmentation Analysis Error"
+        />
       </div>
     );
   }
 
-  // Check if data is incomplete and show missing questions checker
   if (!segmentationData || isSegmentationDataIncomplete(segmentationData)) {
     return (
-      <div className="customer-segmentation"> 
-
-        {/* Replace the entire empty-state div with the common component */}
+      <div className="customer-segmentation">
         <AnalysisEmptyState
           analysisType="customerSegmentation"
           analysisDisplayName="Customer Segmentation Analysis"
@@ -264,7 +225,7 @@ const CustomerSegmentation = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-        /> 
+        />
       </div>
     );
   }
@@ -274,16 +235,14 @@ const CustomerSegmentation = ({
 
   return (
     <div className="customer-segmentation" data-analysis-type="customerSegmentation"
-  data-analysis-name="Customer Segmentation"
-  data-analysis-order="9"> 
-
-      {/* Executive Summary */}
+      data-analysis-name="Customer Segmentation"
+      data-analysis-order="9">
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('summary')}>
           <h3>Segmentation Overview</h3>
           {expandedSections.summary ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        
+
         {expandedSections.summary !== false && (
           <div className="table-container">
             <table className="data-table">
@@ -332,14 +291,12 @@ const CustomerSegmentation = ({
           </div>
         )}
       </div>
-
-      {/* Customer Distribution Chart */}
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('distribution')}>
           <h3>Customer Distribution</h3>
           {expandedSections.distribution ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        
+
         {expandedSections.distribution !== false && (
           <div className="cs-chart-container">
             <div className="pie-chart-wrapper enhanced">
@@ -374,7 +331,7 @@ const CustomerSegmentation = ({
                           strokeWidth="2"
                           className="pie-segment"
                         />
-                        
+
                         {shouldShowLabel && (
                           <g>
                             {(() => {
@@ -382,7 +339,7 @@ const CustomerSegmentation = ({
                               const totalLines = nameLines.length;
                               const lineHeight = 10;
                               const startY = segment.labelY - (totalLines * lineHeight / 2) - 2;
-                              
+
                               return (
                                 <>
                                   {nameLines.map((line, lineIndex) => (
@@ -399,7 +356,7 @@ const CustomerSegmentation = ({
                                       {line}
                                     </text>
                                   ))}
-                                  
+
                                   <text
                                     x={segment.labelX}
                                     y={startY + (totalLines * lineHeight) + 6}
@@ -429,23 +386,21 @@ const CustomerSegmentation = ({
           </div>
         )}
       </div>
-
-      {/* Segment Details Table */}
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('segments')}>
           <h3>Segment Details</h3>
           {expandedSections.segments ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-        
+
         {expandedSections.segments !== false && (
           <div className="table-container">
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Segment</th>
-                  <th>Percentage</th> 
+                  <th>Percentage</th>
                   <th>Primary Need</th>
-                  <th>Behavior</th> 
+                  <th>Behavior</th>
                 </tr>
               </thead>
               <tbody>
@@ -464,13 +419,13 @@ const CustomerSegmentation = ({
                       <span className="status-badge medium-intensity">
                         {segment.percentage}%
                       </span>
-                    </td> 
+                    </td>
                     <td>
                       {segment.characteristics?.primaryNeed || 'N/A'}
                     </td>
                     <td>
                       {segment.characteristics?.behavior || 'N/A'}
-                    </td>  
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -479,14 +434,13 @@ const CustomerSegmentation = ({
         )}
       </div>
 
-      {/* Purchase Criteria Analysis */}
       {purchaseCriteriaData.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('criteria')}>
             <h3>Purchase Criteria Ratings</h3>
             {expandedSections.criteria ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSections.criteria !== false && (
             <div className="table-container">
               <table className="data-table">
@@ -506,11 +460,10 @@ const CustomerSegmentation = ({
                         <span className="score-badge">{item.rating}/10</span>
                       </td>
                       <td>
-                        <span className={`status-badge ${
-                          item.rating >= 8 ? 'high-intensity' : 
-                          item.rating >= 6 ? 'medium-intensity' : 
-                          'low-intensity'
-                        }`}>
+                        <span className={`status-badge ${item.rating >= 8 ? 'high-intensity' :
+                            item.rating >= 6 ? 'medium-intensity' :
+                              'low-intensity'
+                          }`}>
                           {item.rating >= 8 ? 'High' : item.rating >= 6 ? 'Medium' : 'Low'}
                         </span>
                       </td>
@@ -518,7 +471,7 @@ const CustomerSegmentation = ({
                         <div className="bar-container" style={{ width: '100px', height: '20px' }}>
                           <div
                             className="bar-fill"
-                            style={{ 
+                            style={{
                               width: `${item.percentage}%`,
                               height: '100%',
                               backgroundColor: item.rating >= 8 ? '#10B981' : item.rating >= 6 ? '#F59E0B' : '#EF4444'

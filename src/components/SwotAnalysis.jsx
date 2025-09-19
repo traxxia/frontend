@@ -5,6 +5,7 @@ import '../styles/EssentialPhase.css';
 import { Target, Loader, TrendingUp, TrendingDown, AlertTriangle, Zap, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const SwotAnalysis = ({
@@ -75,6 +76,16 @@ const SwotAnalysis = ({
       // Fallback to internal generation if no external handler
       console.log('Using internal SWOT generation');
       await generateSwotAnalysis();
+    }
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setErrorMessage('');
+    if (onRegenerate) {
+      onRegenerate();
+    } else {
+      generateSwotAnalysis();
     }
   };
 
@@ -376,18 +387,15 @@ const SwotAnalysis = ({
     );
   }
 
-  // Error state
+  // Error state - using AnalysisError component
   if (errorMessage) {
     return (
       <div className="porters-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{errorMessage}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={errorMessage}
+          onRetry={handleRetry}
+          title="SWOT Analysis Error"
+        />
       </div>
     );
   }

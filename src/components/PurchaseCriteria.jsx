@@ -3,6 +3,7 @@ import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw }
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const PurchaseCriteria = ({
@@ -84,7 +85,15 @@ const PurchaseCriteria = ({
         setCriteriaData(null);
         setError(null);
     }
-};
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
 
   // Update criteria data when prop changes
   useEffect(() => {
@@ -252,19 +261,11 @@ const PurchaseCriteria = ({
   if (error) {
     return (
       <div className="purchase-criteria">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Purchase Criteria Analysis Error"
+        />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import "../styles/EssentialPhase.css";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
@@ -17,6 +18,7 @@ const ProductivityMetrics = ({
 }) => {
   const [data, setData] = useState(productivityData);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -40,6 +42,15 @@ const ProductivityMetrics = ({
   };
 
   const handleRegenerate = async () => {
+    if (onRegenerate) {
+      setError(null); // Clear any existing errors
+      onRegenerate();
+    }
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
+    setError(null);
     if (onRegenerate) {
       onRegenerate();
     }
@@ -101,9 +112,11 @@ const ProductivityMetrics = ({
       if (normalizedData) {
         setData(normalizedData);
         setHasGenerated(true);
+        setError(null); // Clear errors when new data comes in
       } else {
         setData(null);
         setHasGenerated(false);
+        setError('Invalid productivity metrics data received');
       }
     } else {
       setData(null);
@@ -273,22 +286,28 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Error state
+  // Error state - UPDATED: Using AnalysisError component
+  if (error) {
+    return (
+      <div className="porters-container productivity-container">
+        <AnalysisError 
+          error={error}
+          onRetry={handleRetry}
+          title="Productivity Metrics Analysis Error"
+        />
+      </div>
+    );
+  }
+
+  // Error state for generation failure with user answers - UPDATED: Using AnalysisError component
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="porters-container productivity-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>Unable to generate productivity metrics analysis. Please try regenerating or check your inputs.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="Unable to generate productivity metrics analysis. Please try regenerating or check your inputs."
+          onRetry={handleRetry}
+          title="Analysis Generation Error"
+        />
       </div>
     );
   }
@@ -312,22 +331,15 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Check if data structure is valid
+  // Check if data structure is valid - UPDATED: Using AnalysisError component
   if (!data?.productivityMetrics) {
     return (
       <div className="porters-container productivity-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Invalid Data Structure</h3>
-          <p>The productivity metrics data received is not in the expected format. Please regenerate the analysis.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="The productivity metrics data received is not in the expected format. Please regenerate the analysis."
+          onRetry={handleRetry}
+          title="Invalid Data Structure"
+        />
       </div>
     );
   }

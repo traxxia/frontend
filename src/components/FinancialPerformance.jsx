@@ -4,6 +4,7 @@ import { TrendingUp, DollarSign, TrendingDown, Target, Loader, Upload, X } from 
 import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const FinancialPerformance = ({
@@ -114,6 +115,14 @@ const FinancialPerformance = ({
         } else {
             setAnalysisData(null);
             setError(null);
+        }
+    };
+
+    // Handle retry for error state
+    const handleRetry = () => {
+        setError(null);
+        if (onRegenerate) {
+            onRegenerate();
         }
     };
 
@@ -386,19 +395,11 @@ const FinancialPerformance = ({
     if (error) {
         return (
             <div className="channel-heatmap channel-heatmap-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>{error}</p>
-                    <button onClick={() => {
-                        setError(null);
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+                <AnalysisError 
+                    error={error}
+                    onRetry={handleRetry}
+                    title="Financial Performance Analysis Error"
+                />
             </div>
         );
     }

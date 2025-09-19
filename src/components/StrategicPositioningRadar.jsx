@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const StrategicPositioningRadar = ({
@@ -18,6 +19,7 @@ const StrategicPositioningRadar = ({
     const [activeTab, setActiveTab] = useState('overview');
     const [hasGenerated, setHasGenerated] = useState(false);
     const [expandedSections, setExpandedSections] = useState({});
+    const [error, setError] = useState(null);
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
     const getAuthToken = () => sessionStorage.getItem('token');
@@ -85,6 +87,19 @@ const StrategicPositioningRadar = ({
 
     // Handle regeneration - same pattern as other components in business page
     const handleRegenerate = async () => {
+        if (onRegenerate) {
+            try {
+                await onRegenerate();
+            } catch (error) {
+                console.error('Error in StrategicPositioningRadar regeneration:', error);
+                setError(error.message || 'Failed to regenerate analysis');
+            }
+        }
+    };
+
+    // Handle retry for error state
+    const handleRetry = () => {
+        setError(null);
         if (onRegenerate) {
             onRegenerate();
         }
@@ -514,22 +529,28 @@ const StrategicPositioningRadar = ({
         );
     }
 
-    // Error state
+    // Error state - using AnalysisError component
+    if (error) {
+        return (
+            <div className="strategic-radar-container">
+                <AnalysisError 
+                    error={error}
+                    onRetry={handleRetry}
+                    title="Strategic Positioning Radar Analysis Error"
+                />
+            </div>
+        );
+    }
+
+    // Error state for when analysis fails but no explicit error is set
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
             <div className="strategic-radar-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>Unable to generate strategic positioning analysis. Please try regenerating or check your inputs.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+                <AnalysisError 
+                    error="Unable to generate strategic positioning analysis. Please try regenerating or check your inputs."
+                    onRetry={handleRetry}
+                    title="Strategic Positioning Radar Analysis Error"
+                />
             </div>
         );
     }
@@ -559,24 +580,11 @@ const StrategicPositioningRadar = ({
     if (!data.strategicRadar || !data.strategicRadar.dimensions) {
         return (
             <div className="strategic-radar-container">
-                <div className="cs-header">
-                    <div className="cs-title-section">
-                        <Target size={24} />
-                        <h3 className='cs-title'>Strategic Positioning Radar</h3>
-                    </div>
-                </div>
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Invalid Data Structure</h3>
-                    <p>The strategic positioning data received is not in the expected format. Please regenerate the analysis.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
-                </div>
+                <AnalysisError 
+                    error="The strategic positioning data received is not in the expected format. Please regenerate the analysis."
+                    onRetry={handleRetry}
+                    title="Invalid Data Structure"
+                />
             </div>
         );
     }

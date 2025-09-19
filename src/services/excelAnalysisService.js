@@ -5,7 +5,7 @@ export class ExcelAnalysisService {
     this.setApiLoading = setApiLoading;
   }
 
-  async generateExcelAnalysis(uploadedFile, questions, userAnswers) {
+  async generateExcelAnalysis(uploadedFile, questions, userAnswers, metricType = null) {
     this.setApiLoading('excel-analysis', true);
     
     try {
@@ -31,7 +31,19 @@ export class ExcelAnalysisService {
         formData.append('file', dummyFile, 'business_data.txt');
       }
 
-      const response = await fetch(`${this.ML_API_BASE_URL}/excel-analysis`, {
+      // Build URL with query parameters
+      let url = `${this.ML_API_BASE_URL}/excel-analysis`;
+      const params = new URLSearchParams();
+      
+      if (metricType) {
+        params.append('metric_type', metricType);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'accept': 'application/json',

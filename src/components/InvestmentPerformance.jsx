@@ -4,6 +4,7 @@ import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
+import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const InvestmentPerformance = ({
@@ -67,7 +68,7 @@ const InvestmentPerformance = ({
     }
 
     const hasValidMetric = Object.entries(investmentMetrics).some(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
+      if (key.includes('_threshold') || key.includes('threshold') || key === 'citations') {
         return false;
       }
       const isValid = value !== null &&
@@ -117,6 +118,28 @@ const InvestmentPerformance = ({
       if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
       return '#ef4444'; // Red - above threshold
     }
+  };
+
+  // Helper function to get citation URL for a metric
+  const getCitationUrl = (metricKey, citations) => {
+    if (!citations) return null;
+
+    // Check for exact match first
+    if (citations[metricKey]) return citations[metricKey];
+
+    // Check for alternative keys for investment metrics
+    const alternativeKeys = {
+      'roa': ['roa'],
+      'roe': ['roe'],
+      'roic': ['roic']
+    };
+
+    const possibleKeys = alternativeKeys[metricKey] || [metricKey];
+    for (const key of possibleKeys) {
+      if (citations[key]) return citations[key];
+    }
+
+    return null;
   };
 
   const handleFileUpload = (file) => {
@@ -186,15 +209,18 @@ const InvestmentPerformance = ({
 
   const extractInvestmentMetrics = (data) => {
     if (!data || !data.investment) {
-      return { metrics: {}, thresholds: {} };
+      return { metrics: {}, thresholds: {}, citations: {} };
     }
 
     const investmentData = data.investment;
     const metrics = {};
     const thresholds = {};
+    const citations = investmentData.citations || {};
 
     Object.entries(investmentData).forEach(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
+      if (key === 'citations') {
+        return; // Skip citations object in this loop
+      } else if (key.includes('_threshold') || key.includes('threshold')) {
         const baseKey = key.replace('_threshold', '').replace('threshold', '');
         const displayKey = getDisplayName(baseKey);
         thresholds[displayKey] = value;
@@ -204,7 +230,7 @@ const InvestmentPerformance = ({
       }
     });
 
-    return { metrics, thresholds };
+    return { metrics, thresholds, citations };
   };
 
   // Helper function to parse percentage values
@@ -224,7 +250,7 @@ const InvestmentPerformance = ({
   };
 
   // Paired Bar Chart Component
-  const PairedBarChart = ({ metrics, thresholds }) => {
+  const PairedBarChart = ({ metrics, thresholds, citations }) => {
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef(null);
 
@@ -235,7 +261,8 @@ const InvestmentPerformance = ({
         actualValue: parsePercentageValue(value),
         benchmarkValue: parsePercentageValue(thresholds[key]),
         color: getTrafficLightColor(value, thresholds[key], true),
-        hasData: value !== null && value !== undefined && value !== ''
+        hasData: value !== null && value !== undefined && value !== '',
+        citationUrl: getCitationUrl(key.toLowerCase().replace(/\s*\(.*\)/, '').replace(' ', '_'), citations)
       }));
 
     useEffect(() => {
@@ -259,18 +286,18 @@ const InvestmentPerformance = ({
       ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
       10
     );
-    const chartHeight = chartData.length * 80 + 40; // 80px per metric + padding
+    const chartHeight = chartData.length * 120 + 60; // Increased height for citations
     const chartWidth = containerWidth;
     const leftMargin = 120;
     const rightMargin = 60;
     const barHeight = 25;
-    const groupSpacing = 80;
+    const groupSpacing = 120; // Increased spacing for citations
 
     return (
       <div 
         ref={containerRef}
         style={{ 
-          width: '99%',
+          width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
@@ -286,7 +313,7 @@ const InvestmentPerformance = ({
         </h3>
         
         <div style={{ overflowX: 'auto' }}>
-          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '99%' }}>
+          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
           {/* Chart background */}
           <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
           
@@ -359,12 +386,19 @@ const InvestmentPerformance = ({
                   {data.benchmarkValue.toFixed(1)}%
                 </text>
                 
+                {/* Citation using CitationSource component */}
+                <CitationSource
+                  url={data.citationUrl}
+                  x={leftMargin}
+                  y={y + barHeight * 2 + 20}
+                />
+                
                 {/* Grid lines */}
                 <line
                   x1={leftMargin}
-                  y1={y + barHeight * 2 + 15}
+                  y1={y + barHeight * 2 + 40}
                   x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 15}
+                  y2={y + barHeight * 2 + 40}
                   stroke="#e5e7eb"
                   strokeWidth="1"
                   opacity={0.3}
@@ -473,7 +507,7 @@ const InvestmentPerformance = ({
       );
     }
 
-    const { metrics, thresholds } = extractInvestmentMetrics(analysisData);
+    const { metrics, thresholds, citations } = extractInvestmentMetrics(analysisData);
 
     if (!metrics || typeof metrics !== 'object' || Object.keys(metrics).length === 0) {
       return (
@@ -502,7 +536,7 @@ const InvestmentPerformance = ({
       );
     }
 
-    // Show normal analysis content - paired bar chart instead of table
+    // Show normal analysis content - paired bar chart with citations
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
@@ -521,7 +555,7 @@ const InvestmentPerformance = ({
             </div>
           )}
 
-          <PairedBarChart metrics={metrics} thresholds={thresholds} />
+          <PairedBarChart metrics={metrics} thresholds={thresholds} citations={citations} />
 
         </div>
       </div>

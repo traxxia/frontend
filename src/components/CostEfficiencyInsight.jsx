@@ -5,6 +5,7 @@ import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import AnalysisError from './AnalysisError';
 
 const CostEfficiencyInsight = ({
   questions = [],
@@ -23,8 +24,6 @@ const CostEfficiencyInsight = ({
   const [error, setError] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-
-  // Add refs to track component mount
   const isMounted = useRef(false);
   const hasInitialized = useRef(false);
   const fileInputRef = useRef(null);
@@ -40,7 +39,6 @@ const CostEfficiencyInsight = ({
     }
   };
 
-  // Function to check missing questions and redirect
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.costEfficiency || {
       displayName: 'Cost Efficiency Insight',
@@ -58,11 +56,15 @@ const CostEfficiencyInsight = ({
     );
   };
 
-  // Check if the cost efficiency data is empty/incomplete
+  const handleRetry = () => {
+    setError(null);
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
   const isCostEfficiencyDataIncomplete = (data) => {
     if (!data) return true;
 
-    // Check if essential data is empty or null
     if (!data.costEfficiencyInsight) return true;
     if (!data.costEfficiencyInsight.unitEconomics) return true;
     if (!data.costEfficiencyInsight.costBreakdown) return true;
@@ -71,39 +73,6 @@ const CostEfficiencyInsight = ({
     return false;
   };
 
-  // Check if analysis failed (all required questions answered but data is incomplete)
-  const isAnalysisFailed = async () => {
-    try {
-      const token = getAuthToken();
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/questions/missing-for-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysis_type: 'costEfficiency',
-            business_id: selectedBusinessId
-          })
-        }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        // If no missing questions but data is incomplete, it's an analysis failure
-        return result.missing_count === 0 && isCostEfficiencyDataIncomplete(analysisData);
-      }
-      return false;
-    } catch (error) {
-      console.error('Error checking analysis status:', error);
-      return false;
-    }
-  };
-
-  // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
       onRegenerate();
@@ -113,7 +82,6 @@ const CostEfficiencyInsight = ({
     }
   };
 
-  // Update analysis data when prop changes
   useEffect(() => {
     if (costEfficiencyData && costEfficiencyData !== analysisData) {
       setAnalysisData(costEfficiencyData);
@@ -123,7 +91,6 @@ const CostEfficiencyInsight = ({
     }
   }, [costEfficiencyData]);
 
-  // Initialize component - only run once
   useEffect(() => {
     if (hasInitialized.current) return;
 
@@ -145,10 +112,8 @@ const CostEfficiencyInsight = ({
     }
   }, [analysisData]);
 
-  // File upload handlers
   const handleFileUpload = (file) => {
     if (file) {
-      // Validate file type (PDF, images, Excel, etc.)
       const allowedTypes = [
         'application/pdf',
         'image/jpeg',
@@ -180,7 +145,6 @@ const CostEfficiencyInsight = ({
     setError(null);
 
     try {
-      // Prepare questions and answers
       const questionsArray = [];
       const answersArray = [];
 
@@ -195,15 +159,10 @@ const CostEfficiencyInsight = ({
       if (questionsArray.length === 0) {
         throw new Error('Please answer some questions first to generate cost efficiency analysis.');
       }
-
-      // Create FormData
       const formData = new FormData();
-
-      // Add file if provided and withFile is true
       if (withFile && uploadedFile) {
         formData.append('file', uploadedFile);
       } else {
-        // Create a dummy text file with business information
         const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
         const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
         formData.append('file', dummyFile, 'business_data.txt');
@@ -226,8 +185,6 @@ const CostEfficiencyInsight = ({
       }
 
       const result = await response.json();
-
-      // Process the result
       let costEfficiencyContent = null;
       if (result.costEfficiencyInsight) {
         costEfficiencyContent = result;
@@ -238,8 +195,6 @@ const CostEfficiencyInsight = ({
       }
 
       setAnalysisData(costEfficiencyContent);
-
-      // Save to backend
       await saveAnalysisToBackend(costEfficiencyContent);
 
       if (onDataGenerated) {
@@ -253,8 +208,6 @@ const CostEfficiencyInsight = ({
       setIsLoading(false);
     }
   };
-
-  // Save analysis to backend using the API endpoint
   const saveAnalysisToBackend = async (analysisData) => {
     try {
       const token = getAuthToken();
@@ -291,8 +244,6 @@ const CostEfficiencyInsight = ({
       throw error;
     }
   };
-
-  // Prepare waterfall chart data
   const prepareWaterfallData = (data) => {
     if (!data?.costEfficiencyInsight?.unitEconomics?.historicalCosts) return [];
 
@@ -323,7 +274,6 @@ const CostEfficiencyInsight = ({
     return waterfallData;
   };
 
-  // Prepare benchmark comparison data
   const prepareBenchmarkData = (data) => {
     if (!data?.costEfficiencyInsight?.unitEconomics) return [];
 
@@ -342,8 +292,6 @@ const CostEfficiencyInsight = ({
       }
     ];
   };
-
-  // Custom tooltip for waterfall chart
   const WaterfallTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -365,8 +313,6 @@ const CostEfficiencyInsight = ({
     }
     return null;
   };
-
-  // Custom tooltip for benchmark chart
   const BenchmarkTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
@@ -401,24 +347,14 @@ const CostEfficiencyInsight = ({
   if (error) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError
+          error={error}
+          onRetry={handleRetry}
+          title="Cost Efficiency Analysis Error"
+        />
       </div>
     );
   }
-
-  // Check if data is incomplete and show missing questions checker or file upload
   if (!analysisData || isCostEfficiencyDataIncomplete(analysisData)) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -432,8 +368,6 @@ const CostEfficiencyInsight = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          
-          // File upload props
           showFileUpload={true}
           onFileUpload={handleFileUpload}
           onGenerateWithFile={() => generateCostEfficiencyAnalysis(true)}
@@ -459,8 +393,6 @@ const CostEfficiencyInsight = ({
     <div className="channel-heatmap channel-heatmap-container" data-analysis-type="cost-efficiency"
       data-analysis-name="Cost Efficiency Insight"
       data-analysis-order="1">
-
-      {/* Key Metrics */}
       <div className="ch-metrics">
         <div className="ch-metric-card ch-metric-blue">
           <div className="ch-metric-header">
@@ -496,8 +428,6 @@ const CostEfficiencyInsight = ({
           <p className="ch-metric-value">{employeeProductivity.valuePerEmployee?.toLocaleString()}</p>
         </div>
       </div>
-
-      {/* Charts Section */}
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
           <div className="ch-heatmap-header-section">
@@ -505,7 +435,6 @@ const CostEfficiencyInsight = ({
           </div>
 
           <div className="ch-charts-grid">
-            {/* Historical Cost Trend - Waterfall Chart */}
             <div className="ch-chart-section">
               <h4>Historical Cost Trend</h4>
               <div className="ch-chart-wrapper">
@@ -531,7 +460,6 @@ const CostEfficiencyInsight = ({
               </div>
             </div>
 
-            {/* Benchmark Comparison */}
             <div className="ch-chart-section">
               <h4>Cost Benchmark Comparison</h4>
               <div className="ch-chart-wrapper">
@@ -558,7 +486,6 @@ const CostEfficiencyInsight = ({
         </div>
       </div>
 
-      {/* Cost Breakdown Details */}
       <div className="ch-breakdown-section">
         <h3 className="ch-section-title">Cost Structure Analysis</h3>
         <div className="ch-breakdown-grid">

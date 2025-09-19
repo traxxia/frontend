@@ -127,17 +127,23 @@ const AnalysisContentManager = ({
     'excel-analysis-investment': 'investmentPerformance',
     'excel-analysis-leverage': 'leverageRisk'
   };
-
-  // Category collapse state
+ 
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
-
+ 
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
     if (excelAnalysisTypes.includes(analysisType)) {
-      return apiLoadingStates['excel-analysis'];
-    }
+      const regenerationStateMap = {
+        'profitabilityAnalysis': isProfitabilityRegenerating,
+        'growthTracker': isGrowthTrackerRegenerating,
+        'liquidityEfficiency': isLiquidityEfficiencyRegenerating,
+        'investmentPerformance': isInvestmentPerformanceRegenerating,
+        'leverageRisk': isLeverageRiskRegenerating
+      };
 
+      return regenerationStateMap[analysisType] || false;
+    } 
     const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
       .filter(([endpoint, analysis]) => analysis === analysisType)
       .map(([endpoint]) => endpoint);
@@ -203,7 +209,7 @@ const AnalysisContentManager = ({
       }
     };
 
-    const getActualStatus = () => {
+    const getActualStatus = () => { 
       if (isRegenerating || isLoading) return 'loading';
       if (hasData) return 'completed';
       return 'error';

@@ -4,6 +4,7 @@ import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
+import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LiquidityEfficiency = ({
@@ -79,7 +80,7 @@ const LiquidityEfficiency = ({
     }
 
     const hasValidRatio = Object.entries(liquidityMetrics).some(([key, value]) => {
-      if (key.includes('_threshold') || key.includes('threshold')) {
+      if (key.includes('_threshold') || key.includes('threshold') || key === 'citations') {
         return false;
       }
       return value !== null &&
@@ -146,8 +147,30 @@ const LiquidityEfficiency = ({
     return 0;
   };
 
+  // Helper function to get citation URL for a metric
+  const getCitationUrl = (metricKey, citations) => {
+    if (!citations) return null;
+
+    // Check for exact match first
+    if (citations[metricKey]) return citations[metricKey];
+
+    // Check for alternative keys
+    const alternativeKeys = {
+      'current_ratio': ['current_ratio'],
+      'quick_ratio': ['quick_ratio'],
+      'cash_conversion_cycle': ['cash_conversion_cycle', 'ccc']
+    };
+
+    const possibleKeys = alternativeKeys[metricKey] || [metricKey];
+    for (const key of possibleKeys) {
+      if (citations[key]) return citations[key];
+    }
+
+    return null;
+  };
+
   // Paired Bar Chart Component
-  const PairedBarChart = ({ metrics, thresholds }) => {
+  const PairedBarChart = ({ metrics, thresholds, citations }) => {
     const [containerWidth, setContainerWidth] = useState(600);
     const containerRef = useRef(null);
 
@@ -159,7 +182,8 @@ const LiquidityEfficiency = ({
         benchmarkValue: parseRatioValue(thresholds[key], key),
         color: getTrafficLightColor(value, thresholds[key], key),
         hasData: value !== null && value !== undefined && value !== '',
-        type: key
+        type: key,
+        citationUrl: getCitationUrl(key.toLowerCase().replace(' ', '_'), citations)
       }));
 
     useEffect(() => {
@@ -183,12 +207,12 @@ const LiquidityEfficiency = ({
       ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
       10
     );
-    const chartHeight = chartData.length * 80 + 40; // 80px per metric + padding
+    const chartHeight = chartData.length * 120 + 60; // Increased height for citations
     const chartWidth = containerWidth;
     const leftMargin = 120;
     const rightMargin = 60;
     const barHeight = 25;
-    const groupSpacing = 80;
+    const groupSpacing = 120; // Increased spacing for citations
 
     const formatDisplayValue = (value, type) => {
       if (type === 'Cash Conversion Cycle') {
@@ -201,7 +225,7 @@ const LiquidityEfficiency = ({
       <div 
         ref={containerRef}
         style={{ 
-          width: '99%',
+          width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
@@ -217,7 +241,7 @@ const LiquidityEfficiency = ({
         </h3>
         
         <div style={{ overflowX: 'auto' }}>
-          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '99%' }}>
+          <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
           {/* Chart background */}
           <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
           
@@ -289,13 +313,20 @@ const LiquidityEfficiency = ({
                 >
                   {formatDisplayValue(data.benchmarkValue, data.type)}
                 </text>
+
+                {/* Citation using CitationSource component */}
+                <CitationSource
+                  url={data.citationUrl}
+                  x={leftMargin}
+                  y={y + barHeight * 2 + 20}
+                />
                 
                 {/* Grid lines */}
                 <line
                   x1={leftMargin}
-                  y1={y + barHeight * 2 + 15}
+                  y1={y + barHeight * 2 + 40}
                   x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 15}
+                  y2={y + barHeight * 2 + 40}
                   stroke="#e5e7eb"
                   strokeWidth="1"
                   opacity={0.3}
@@ -427,6 +458,7 @@ const LiquidityEfficiency = ({
     if (liquidityMetrics) {
       const transformedMetrics = {};
       const thresholds = {};
+      const citations = liquidityMetrics.citations || {};
 
       const keyMappings = {
         'current_ratio': 'Current Ratio',
@@ -438,7 +470,9 @@ const LiquidityEfficiency = ({
       };
 
       Object.entries(liquidityMetrics).forEach(([key, value]) => {
-        if (key.includes('_threshold') || key.includes('threshold')) {
+        if (key === 'citations') {
+          return; // Skip citations object in this loop
+        } else if (key.includes('_threshold') || key.includes('threshold')) {
           const baseKey = key.replace('_threshold', '').replace('threshold', '');
           const displayKey = keyMappings[baseKey] || baseKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
           thresholds[displayKey] = value;
@@ -448,10 +482,10 @@ const LiquidityEfficiency = ({
         }
       });
 
-      return { metrics: transformedMetrics, thresholds };
+      return { metrics: transformedMetrics, thresholds, citations };
     }
 
-    return { metrics: liquidityMetrics, thresholds: {} };
+    return { metrics: liquidityMetrics, thresholds: {}, citations: {} };
   };
 
   // Show loading state
@@ -510,7 +544,7 @@ const LiquidityEfficiency = ({
       );
     }
 
-    const { metrics: liquidityMetrics, thresholds } = extractLiquidityMetrics(analysisData);
+    const { metrics: liquidityMetrics, thresholds, citations } = extractLiquidityMetrics(analysisData);
 
     if (!liquidityMetrics || typeof liquidityMetrics !== 'object' || Object.keys(liquidityMetrics).length === 0) {
       return (
@@ -541,7 +575,7 @@ const LiquidityEfficiency = ({
 
     const allMetricsNull = Object.values(liquidityMetrics).every(value => value === null);
 
-    // Show normal analysis content with paired bar chart
+    // Show normal analysis content with paired bar chart and citations
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
@@ -560,7 +594,7 @@ const LiquidityEfficiency = ({
             </div>
           )}
 
-          <PairedBarChart metrics={liquidityMetrics} thresholds={thresholds} />
+          <PairedBarChart metrics={liquidityMetrics} thresholds={thresholds} citations={citations} />
 
         </div>
       </div>

@@ -72,13 +72,21 @@ export const API_ENDPOINTS = {
   strategicRadar: 'strategic-positioning-radar',
   productivityMetrics: 'productivity-metrics',
   maturityScore: 'maturity-scoring',
-
-  // All 5 financial analyses use the same endpoint
+ 
   profitabilityAnalysis: 'excel-analysis',
   growthTracker: 'excel-analysis',
   liquidityEfficiency: 'excel-analysis',
   investmentPerformance: 'excel-analysis',
   leverageRisk: 'excel-analysis'
+};
+
+// Metric type mapping for excel-analysis
+const EXCEL_ANALYSIS_METRIC_TYPES = {
+  profitabilityAnalysis: 'profitability',
+  growthTracker: 'growth_trends',
+  liquidityEfficiency: 'liquidity',
+  investmentPerformance: 'investment',
+  leverageRisk: 'leverage'
 };
 
 const DEEP_SEARCH_ENDPOINTS = ['find', 'pestel-analysis', 'full-swot-portfolio', 'porter-analysis'];
@@ -221,7 +229,7 @@ export class AnalysisApiService {
     return { questionsArray, answersArray };
   }
 
-  async makeAPICall(endpoint, questionsArray, answersArray, selectedBusinessId = null, uploadedFile = null) {
+  async makeAPICall(endpoint, questionsArray, answersArray, selectedBusinessId = null, uploadedFile = null, metricType = null) {
     if (questionsArray.length === 0 && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
@@ -282,7 +290,13 @@ export class AnalysisApiService {
           formData.append('source', documentInfo?.template_type || 'simple');
         }
 
-        response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}`, {
+        // Build URL with metric_type parameter for excel-analysis
+        let url = `${this.ML_API_BASE_URL}/${endpoint}`;
+        if (endpoint === 'excel-analysis' && metricType) {
+          url += `?metric_type=${metricType}`;
+        }
+
+        response = await fetch(url, {
           method: 'POST',
           headers: headers,
           body: formData
@@ -326,77 +340,26 @@ export class AnalysisApiService {
       throw new Error(`Unknown analysis type: ${analysisType}`);
     }
 
-    // For excel-analysis types, use cached result or make single API call
+    // For excel-analysis types, call with specific metric_type
     if (this.isExcelAnalysisType(analysisType)) {
-      if (!this.excelAnalysisCache) {
-        const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-          payload.questions,
-          payload.userAnswers
-        );
+      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+        payload.questions,
+        payload.userAnswers
+      );
 
-        this.excelAnalysisCache = await this.makeAPICall(
-          'excel-analysis',
-          questionsArray,
-          answersArray,
-          payload.selectedBusinessId,
-          payload.stateSetters?.uploadedFile || null
-        );
-      }
+      const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
+      
+      const result = await this.makeAPICall(
+        'excel-analysis',
+        questionsArray,
+        answersArray,
+        payload.selectedBusinessId,
+        payload.stateSetters?.uploadedFile || null,
+        metricType
+      );
 
-      // Extract specific data for each analysis type
-      let processedData = null;
-      switch (analysisType) {
-        case 'profitabilityAnalysis':
-          if (this.excelAnalysisCache.profitability) {
-            processedData = { profitability: this.excelAnalysisCache.profitability };
-          } else if (this.excelAnalysisCache.Profitability) {
-            processedData = { profitability: this.excelAnalysisCache.Profitability };
-          } else {
-            processedData = this.excelAnalysisCache;
-          }
-          break;
-        case 'growthTracker':
-          if (this.excelAnalysisCache.growth_trends) {
-            processedData = { growth_trends: this.excelAnalysisCache.growth_trends };
-          } else if (this.excelAnalysisCache['Growth Tracker']) {
-            processedData = { growthTracker: this.excelAnalysisCache['Growth Tracker'] };
-          } else {
-            processedData = this.excelAnalysisCache;
-          }
-          break;
-
-        case 'liquidityEfficiency':
-          if (this.excelAnalysisCache.liquidity) {
-            processedData = { liquidity: this.excelAnalysisCache.liquidity };
-          } else if (this.excelAnalysisCache['Liquidity & Efficiency']) {
-            processedData = { liquidityEfficiency: this.excelAnalysisCache['Liquidity & Efficiency'] };
-          } else {
-            processedData = this.excelAnalysisCache;
-          }
-          break;
-
-        case 'investmentPerformance':
-          if (this.excelAnalysisCache.investment) {
-            processedData = { investment: this.excelAnalysisCache.investment };
-          } else if (this.excelAnalysisCache['Investment Performance']) {
-            processedData = { investmentPerformance: this.excelAnalysisCache['Investment Performance'] };
-          } else {
-            processedData = this.excelAnalysisCache;
-          }
-          break;
-
-        case 'leverageRisk':
-          if (this.excelAnalysisCache.leverage) {
-            processedData = { leverage: this.excelAnalysisCache.leverage };
-          } else if (this.excelAnalysisCache['Leverage & Risk']) {
-            processedData = { leverageRisk: this.excelAnalysisCache['Leverage & Risk'] };
-          } else {
-            processedData = this.excelAnalysisCache;
-          }
-          break;
-      }
-
-      return { data: processedData };
+      // The API now returns the specific metric data directly
+      return { data: result };
     }
 
     // For other analysis types, use existing logic
@@ -527,11 +490,6 @@ async handlePhaseCompletion(
       showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
     }
  
-    if (phase === "good" && this.excelAnalysisCache) {
-      console.log("Returning excel analysis result for good phase:", this.excelAnalysisCache);
-      return this.excelAnalysisCache;
-    }
- 
     return { success: true, phase };
   } catch (error) {
     console.error(`Error generating ${phase} phase analysis:`, error);
@@ -546,8 +504,6 @@ async handlePhaseCompletion(
   }
 }
  
-
-
 getDisplayName(analysisType) {
   const displayNames = {
     profitabilityAnalysis: "Profitability Analysis",
@@ -558,7 +514,7 @@ getDisplayName(analysisType) {
     swot: "SWOT Analysis",
     purchaseCriteria: "Purchase Criteria",
     loyaltyNPS: "Loyalty & NPS",
-    porters: "Porter’s Five Forces",
+    porters: "Porter's Five Forces",
     pestel: "PESTEL Analysis",
     fullSwot: "Full SWOT Portfolio",
     competitiveAdvantage: "Competitive Advantage",
@@ -570,8 +526,6 @@ getDisplayName(analysisType) {
 
   return displayNames[analysisType] || analysisType;
 }
-
-
 
   async callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId) {
     try {
@@ -1011,15 +965,14 @@ getDisplayName(analysisType) {
     }
   }
 
-  // Financial analysis methods with automatic document fetching
+  // Financial analysis methods with metric_type support
   async generateProfitabilityAnalysis(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'profitability');
 
-      const profitabilityData = { profitability: result.profitability };
-      await this.saveAnalysisToBackend(profitabilityData, 'profitabilityAnalysis', selectedBusinessId);
-      return profitabilityData;
+      await this.saveAnalysisToBackend(result, 'profitabilityAnalysis', selectedBusinessId);
+      return result;
     } catch (error) {
       console.error('Error generating Profitability Analysis:', error);
       throw error;
@@ -1029,11 +982,10 @@ getDisplayName(analysisType) {
   async generateGrowthTracker(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'growth_trends');
 
-      const growthData = { growth_trends: result.growth_trends };
-      await this.saveAnalysisToBackend(growthData, 'growthTracker', selectedBusinessId);
-      return growthData;
+      await this.saveAnalysisToBackend(result, 'growthTracker', selectedBusinessId);
+      return result;
     } catch (error) {
       console.error('Error generating Growth Tracker:', error);
       throw error;
@@ -1043,11 +995,10 @@ getDisplayName(analysisType) {
   async generateLiquidityEfficiency(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'liquidity');
 
-      const liquidityData = { liquidity: result.liquidity };
-      await this.saveAnalysisToBackend(liquidityData, 'liquidityEfficiency', selectedBusinessId);
-      return liquidityData;
+      await this.saveAnalysisToBackend(result, 'liquidityEfficiency', selectedBusinessId);
+      return result;
     } catch (error) {
       console.error('Error generating Liquidity & Efficiency:', error);
       throw error;
@@ -1057,11 +1008,10 @@ getDisplayName(analysisType) {
   async generateInvestmentPerformance(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'investment');
 
-      const investmentData = { investment: result.investment};
-      await this.saveAnalysisToBackend(investmentData, 'investmentPerformance', selectedBusinessId);
-      return investmentData;
+      await this.saveAnalysisToBackend(result, 'investmentPerformance', selectedBusinessId);
+      return result;
     } catch (error) {
       console.error('Error generating Investment Performance:', error);
       throw error;
@@ -1071,11 +1021,10 @@ getDisplayName(analysisType) {
   async generateLeverageRisk(questions, answers, selectedBusinessId, uploadedFile = null) {
     try {
       const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile);
+      const result = await this.makeAPICall('excel-analysis', questionsArray, answersArray, selectedBusinessId, uploadedFile, 'leverage');
 
-      const leverageData = { leverage: result.leverage};
-      await this.saveAnalysisToBackend(leverageData, 'leverageRisk', selectedBusinessId);
-      return leverageData;
+      await this.saveAnalysisToBackend(result, 'leverageRisk', selectedBusinessId);
+      return result;
     } catch (error) {
       console.error('Error generating Leverage & Risk:', error);
       throw error;

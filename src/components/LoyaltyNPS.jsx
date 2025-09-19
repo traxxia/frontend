@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react'; 
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const LoyaltyNPS = ({
@@ -43,6 +44,13 @@ const LoyaltyNPS = ({
   };
 
   const handleRegenerate = async () => {
+    if (onRegenerate) {
+      onRegenerate();
+    }
+  };
+
+  // Handle retry for error state
+  const handleRetry = () => {
     if (onRegenerate) {
       onRegenerate();
     }
@@ -303,18 +311,11 @@ const LoyaltyNPS = ({
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="loyalty-nps">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
-          <p>Unable to generate loyalty & NPS analysis. Please try regenerating or check your inputs.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="Unable to generate loyalty & NPS analysis. Please try regenerating or check your inputs."
+          onRetry={handleRetry}
+          title="Loyalty & NPS Analysis Error"
+        />
       </div>
     );
   }
@@ -342,18 +343,11 @@ const LoyaltyNPS = ({
   if (!data?.loyaltyMetrics) {
     return (
       <div className="loyalty-nps">
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Invalid Data Structure</h3>
-          <p>The loyalty NPS data received is not in the expected format. Please regenerate the analysis.</p>
-          <button onClick={() => {
-            if (onRegenerate) {
-              onRegenerate();
-            }
-          }} className="retry-button">
-            Retry Analysis
-          </button>
-        </div>
+        <AnalysisError 
+          error="The loyalty NPS data received is not in the expected format. Please regenerate the analysis."
+          onRetry={handleRetry}
+          title="Invalid Data Structure"
+        />
       </div>
     );
   }
