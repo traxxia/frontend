@@ -55,7 +55,7 @@ const CitationSource = ({
       >
         Source: {formatUrlForDisplay(url)}
       </text>
-      <circle
+      {/* <circle
         cy={y - 4}
         r={circleRadius}
         style={circleStyle}
@@ -69,7 +69,7 @@ const CitationSource = ({
         style={arrowStyle}
       >
         ↗
-      </text>
+      </text> */}
     </g>
   );
 };
