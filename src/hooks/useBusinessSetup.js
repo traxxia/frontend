@@ -38,6 +38,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [strategicRadarData, setStrategicRadarData] = useState(null);
   const [productivityData, setProductivityData] = useState(null);
   const [maturityData, setMaturityData] = useState(null);
+  const [competitiveLandscapeData, setCompetitiveLandscapeData] = useState(null); // ADD THIS LINE
 
   // Financial analysis states (Good Phase)
   const [profitabilityData, setProfitabilityData] = useState(null);
@@ -58,6 +59,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [isStrategicRadarRegenerating, setIsStrategicRadarRegenerating] = useState(false);
   const [isProductivityRegenerating, setIsProductivityRegenerating] = useState(false);
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
+  const [isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating] = useState(false); // ADD THIS LINE
 
   // Financial analysis regenerating states
   const [isProfitabilityRegenerating, setIsProfitabilityRegenerating] = useState(false);
@@ -96,6 +98,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const maturityScoreRef = useRef(null);
   const strategicRadarRef = useRef(null);
   const expandedCapabilityRef = useRef(null);
+  const competitiveLandscapeRef = useRef(null); // ADD THIS LINE
 
   // Financial analysis refs
   const profitabilityRef = useRef(null);
@@ -132,6 +135,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     strategicRadarData, setStrategicRadarData,
     productivityData, setProductivityData,
     maturityData, setMaturityData,
+    competitiveLandscapeData, setCompetitiveLandscapeData, // ADD THIS LINE
 
     // Financial analysis states
     profitabilityData, setProfitabilityData,
@@ -152,6 +156,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     isStrategicRadarRegenerating, setIsStrategicRadarRegenerating,
     isProductivityRegenerating, setIsProductivityRegenerating,
     isMaturityRegenerating, setIsMaturityRegenerating,
+    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating, // ADD THIS LINE
     isStrategicRegenerating, setIsStrategicRegenerating,
     // Financial analysis regenerating states
     isProfitabilityRegenerating, setIsProfitabilityRegenerating,
@@ -185,6 +190,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     maturityScoreRef,
     strategicRadarRef,
     expandedCapabilityRef,
+    competitiveLandscapeRef, // ADD THIS LINE
 
     // Financial analysis refs
     profitabilityRef,

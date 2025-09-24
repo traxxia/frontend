@@ -20,6 +20,7 @@ import GrowthTracker from "./GrowthTracker";
 import LiquidityEfficiency from "./LiquidityEfficiency";
 import InvestmentPerformance from "./InvestmentPerformance";
 import LeverageRisk from "./LeverageRisk";
+import CompetitiveLandscape from "./CompetitiveLandscape";
 
 const AnalysisContentManager = ({
   phaseManager,
@@ -46,6 +47,10 @@ const AnalysisContentManager = ({
   setSwotAnalysisResult,
   setPurchaseCriteriaData,
   setLoyaltyNPSData,
+  competitiveLandscapeData,
+  setCompetitiveLandscapeData,
+  isCompetitiveLandscapeRegenerating,
+  competitiveLandscapeRef,
   setPortersData,
   setPestelData,
   setFullSwotData,
@@ -108,7 +113,7 @@ const AnalysisContentManager = ({
   hasUploadedDocument,
   readOnly = false,
 }) => {
- 
+
   const API_TO_ANALYSIS_MAP = {
     'find': 'swot',
     'purchase-criteria': 'purchaseCriteria',
@@ -121,15 +126,16 @@ const AnalysisContentManager = ({
     'strategic-positioning-radar': 'strategicRadar',
     'productivity-metrics': 'productivityMetrics',
     'maturity-scoring': 'maturityScore',
+    'simple-swot-portfolio': 'competitiveLandscape',
     'excel-analysis': 'profitabilityAnalysis',
     'excel-analysis-growth': 'growthTracker',
     'excel-analysis-liquidity': 'liquidityEfficiency',
     'excel-analysis-investment': 'investmentPerformance',
     'excel-analysis-leverage': 'leverageRisk'
   };
- 
+
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
- 
+
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
@@ -143,7 +149,7 @@ const AnalysisContentManager = ({
       };
 
       return regenerationStateMap[analysisType] || false;
-    } 
+    }
     const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
       .filter(([endpoint, analysis]) => analysis === analysisType)
       .map(([endpoint]) => endpoint);
@@ -209,7 +215,7 @@ const AnalysisContentManager = ({
       }
     };
 
-    const getActualStatus = () => { 
+    const getActualStatus = () => {
       if (isRegenerating || isLoading) return 'loading';
       if (hasData) return 'completed';
       return 'error';
@@ -361,8 +367,6 @@ const AnalysisContentManager = ({
       }
     ];
 
-    // In the renderModernAnalysisContent function, replace the existing logic with this:
-
     if (unlockedFeatures.goodPhase) {
       categories[0].analyses.push(
         <ModernAnalysisCard
@@ -393,7 +397,7 @@ const AnalysisContentManager = ({
               hasUploadedDocument={hasUploadedDocument}
               onRedirectToBrief={handleRedirectToBrief}
               uploadedFile={uploadedFileForAnalysis}
-              readOnly={readOnly} 
+              readOnly={readOnly}
             />
           </div>
         </ModernAnalysisCard>,
@@ -426,7 +430,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly} 
+              readOnly={readOnly}
             />
           </div>
         </ModernAnalysisCard>,
@@ -459,7 +463,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly} 
+              readOnly={readOnly}
             />
           </div>
         </ModernAnalysisCard>,
@@ -492,7 +496,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly} 
+              readOnly={readOnly}
             />
           </div>
         </ModernAnalysisCard>,
@@ -525,7 +529,7 @@ const AnalysisContentManager = ({
               isMobile={isMobile}
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly} 
+              readOnly={readOnly}
             />
           </div>
         </ModernAnalysisCard>
@@ -854,6 +858,37 @@ const AnalysisContentManager = ({
           </div>
         </ModernAnalysisCard>
       );
+
+      if (unlockedFeatures.fullSwot) {
+        categories[4].analyses.push(
+          <ModernAnalysisCard
+            key="competitive-landscape"
+            id="competitive-landscape"
+            title="Competitive Landscape"
+            description="Comprehensive analysis of key competitors using SWOT framework"
+            icon={Award}
+            hasData={!!competitiveLandscapeData}
+            onRegenerate={createSimpleRegenerationHandler('competitiveLandscape')}
+            isRegenerating={isCompetitiveLandscapeRegenerating}
+            isLoading={isAnalysisLoading('competitiveLandscape')}
+            category="essential"
+          >
+            <div ref={competitiveLandscapeRef} data-component="competitive-landscape">
+              <CompetitiveLandscape
+                questions={questions}
+                userAnswers={userAnswers}
+                businessName={businessData.name}
+                onRegenerate={createSimpleRegenerationHandler('competitiveLandscape')}
+                isRegenerating={isCompetitiveLandscapeRegenerating || isAnalysisLoading('competitiveLandscape')}
+                canRegenerate={!isAnalysisRegenerating}
+                competitiveLandscapeData={competitiveLandscapeData}
+                selectedBusinessId={selectedBusinessId}
+                onRedirectToBrief={handleRedirectToBrief}
+              />
+            </div>
+          </ModernAnalysisCard>
+        );
+      };
     }
 
     return (

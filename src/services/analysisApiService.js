@@ -17,7 +17,8 @@ export const PHASE_API_CONFIG = {
     'expandedCapability',
     'strategicRadar',
     'productivityMetrics',
-    'maturityScore'
+    'maturityScore',
+    'competitiveLandscape' // Add this line
   ],
 
   good: [
@@ -31,6 +32,7 @@ export const PHASE_API_CONFIG = {
     'strategicRadar',
     'productivityMetrics',
     'maturityScore',
+    'competitiveLandscape', // Add this line
     // 5 financial analyses
     'profitabilityAnalysis',
     'growthTracker',
@@ -50,6 +52,7 @@ export const PHASE_API_CONFIG = {
     'strategicRadar',
     'productivityMetrics',
     'maturityScore',
+    'competitiveLandscape', // Add this line
     // 5 financial analyses
     'profitabilityAnalysis',
     'growthTracker',
@@ -72,7 +75,8 @@ export const API_ENDPOINTS = {
   strategicRadar: 'strategic-positioning-radar',
   productivityMetrics: 'productivity-metrics',
   maturityScore: 'maturity-scoring',
- 
+  competitiveLandscape: 'simple-swot-portfolio',
+
   profitabilityAnalysis: 'excel-analysis',
   growthTracker: 'excel-analysis',
   liquidityEfficiency: 'excel-analysis',
@@ -301,12 +305,12 @@ export class AnalysisApiService {
           headers: headers,
           body: formData
         });
-      } else { 
+      } else {
         const headers = {
           'accept': 'application/json',
           'Content-Type': 'application/json'
         };
- 
+
         if (this.requiresDeepSearch(endpoint)) {
           headers['deep_search'] = 'true';
         }
@@ -348,7 +352,7 @@ export class AnalysisApiService {
       );
 
       const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
-      
+
       const result = await this.makeAPICall(
         'excel-analysis',
         questionsArray,
@@ -403,6 +407,9 @@ export class AnalysisApiService {
       case 'maturityScore':
         processedData = result.maturityScore || result.maturity_score ? result : { maturityScore: result };
         break;
+      case 'competitiveLandscape':
+        processedData = result.competitive_landscape || result.competitiveLandscape || result;
+        break;
       default:
         processedData = result;
     }
@@ -410,122 +417,123 @@ export class AnalysisApiService {
     return { data: processedData };
   }
 
-async handlePhaseCompletion(
-  phase,
-  questions,
-  userAnswers,
-  selectedBusinessId,
-  stateSetters,
-  showToastMessage
-) {
-  const analysisTypes = PHASE_API_CONFIG[phase];
- 
-  if (!analysisTypes) {
-    console.error(`Unknown phase: ${phase}`);
-    return;
-  }
- 
-  this.clearPhaseData(phase, stateSetters);
- 
-  try {
-    const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
- 
-    const payload = {
-      questions,
-      userAnswers: { ...userAnswers, ...freshAnswers },
-      selectedBusinessId,
-      phase,
-      stateSetters,
-    };
- 
-    this.excelAnalysisCache = null;
- 
-    let completed = 0;
-    const total = analysisTypes.length;
-    let successes = 0;
-    let failures = 0;
- 
-    const wrappedPromises = analysisTypes.map((analysisType) => {
-      const displayName =
-        typeof this.getDisplayName === "function"
-          ? this.getDisplayName(analysisType)
-          : analysisType;
- 
-      return this
-        .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
-        .then((res) => {
-          successes++;
-          completed++; 
-          showToastMessage(
-            `${completed}/${total}  analyses — "${displayName}" completed successfully`,
-            "info",
-            { duration: 0 }
-          );
- 
-          return { status: "fulfilled", analysisType, value: res };
-        })
-        .catch((err) => {
-          failures++;
-          completed++;
- 
-          console.error(`Error with ${analysisType} analysis:`, err);
-          showToastMessage(
-            `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
-            "warning",
-            { duration: 0 }
-          );
- 
-          throw { status: "rejected", analysisType, reason: err };
-        });
-    });
- 
-    const results = await Promise.allSettled(wrappedPromises);
- 
-    if (failures > 0) {
-      showToastMessage(
-        `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
-        failures < successes ? "warning" : "error"
-      );
-    } else {
-      showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
-    }
- 
-    return { success: true, phase };
-  } catch (error) {
-    console.error(`Error generating ${phase} phase analysis:`, error);
- 
-    showToastMessage(
-      `Failed to generate ${phase} phase analyses. Please try again.`,
-      "error",
-      { duration: 4000 }
-    );
- 
-    throw error;
-  }
-}
- 
-getDisplayName(analysisType) {
-  const displayNames = {
-    profitabilityAnalysis: "Profitability Analysis",
-    growthTracker: "Growth Tracker",
-    liquidityEfficiency: "Liquidity & Efficiency",
-    investmentPerformance: "Investment Performance",
-    leverageRisk: "Leverage & Risk",
-    swot: "SWOT Analysis",
-    purchaseCriteria: "Purchase Criteria",
-    loyaltyNPS: "Loyalty & NPS",
-    porters: "Porter's Five Forces",
-    pestel: "PESTEL Analysis",
-    fullSwot: "Full SWOT Portfolio",
-    competitiveAdvantage: "Competitive Advantage",
-    expandedCapability: "Capability Heatmap",
-    strategicRadar: "Strategic Positioning Radar",
-    productivityMetrics: "Productivity Metrics",
-    maturityScore: "Maturity Score",
-  };
+  async handlePhaseCompletion(
+    phase,
+    questions,
+    userAnswers,
+    selectedBusinessId,
+    stateSetters,
+    showToastMessage
+  ) {
+    const analysisTypes = PHASE_API_CONFIG[phase];
 
-  return displayNames[analysisType] || analysisType;
-}
+    if (!analysisTypes) {
+      console.error(`Unknown phase: ${phase}`);
+      return;
+    }
+
+    this.clearPhaseData(phase, stateSetters);
+
+    try {
+      const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+
+      const payload = {
+        questions,
+        userAnswers: { ...userAnswers, ...freshAnswers },
+        selectedBusinessId,
+        phase,
+        stateSetters,
+      };
+
+      this.excelAnalysisCache = null;
+
+      let completed = 0;
+      const total = analysisTypes.length;
+      let successes = 0;
+      let failures = 0;
+
+      const wrappedPromises = analysisTypes.map((analysisType) => {
+        const displayName =
+          typeof this.getDisplayName === "function"
+            ? this.getDisplayName(analysisType)
+            : analysisType;
+
+        return this
+          .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
+          .then((res) => {
+            successes++;
+            completed++;
+            showToastMessage(
+              `${completed}/${total}  analyses — "${displayName}" completed successfully`,
+              "info",
+              { duration: 0 }
+            );
+
+            return { status: "fulfilled", analysisType, value: res };
+          })
+          .catch((err) => {
+            failures++;
+            completed++;
+
+            console.error(`Error with ${analysisType} analysis:`, err);
+            showToastMessage(
+              `${completed}/${total} ${phase} phase analyses — "${displayName}" failed`,
+              "warning",
+              { duration: 0 }
+            );
+
+            throw { status: "rejected", analysisType, reason: err };
+          });
+      });
+
+      const results = await Promise.allSettled(wrappedPromises);
+
+      if (failures > 0) {
+        showToastMessage(
+          `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
+          failures < successes ? "warning" : "error"
+        );
+      } else {
+        showToastMessage(`All ${phase} phase analyses generated successfully!`, "success");
+      }
+
+      return { success: true, phase };
+    } catch (error) {
+      console.error(`Error generating ${phase} phase analysis:`, error);
+
+      showToastMessage(
+        `Failed to generate ${phase} phase analyses. Please try again.`,
+        "error",
+        { duration: 4000 }
+      );
+
+      throw error;
+    }
+  }
+
+  getDisplayName(analysisType) {
+    const displayNames = {
+      profitabilityAnalysis: "Profitability Analysis",
+      growthTracker: "Growth Tracker",
+      liquidityEfficiency: "Liquidity & Efficiency",
+      investmentPerformance: "Investment Performance",
+      leverageRisk: "Leverage & Risk",
+      swot: "SWOT Analysis",
+      purchaseCriteria: "Purchase Criteria",
+      loyaltyNPS: "Loyalty & NPS",
+      porters: "Porter's Five Forces",
+      pestel: "PESTEL Analysis",
+      fullSwot: "Full SWOT Portfolio",
+      competitiveAdvantage: "Competitive Advantage",
+      expandedCapability: "Capability Heatmap",
+      strategicRadar: "Strategic Positioning Radar",
+      productivityMetrics: "Productivity Metrics",
+      maturityScore: "Maturity Score",
+      competitiveLandscape: "Competitive Landscape",
+    };
+
+    return displayNames[analysisType] || analysisType;
+  }
 
   async callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId) {
     try {
@@ -567,6 +575,7 @@ getDisplayName(analysisType) {
       strategicRadar: 'setStrategicRadarData',
       productivityMetrics: 'setProductivityData',
       maturityScore: 'setMaturityData',
+      competitiveLandscape: 'setCompetitiveLandscapeData',
 
       // 5 financial analysis setters
       profitabilityAnalysis: 'setProfitabilityData',
@@ -606,7 +615,7 @@ getDisplayName(analysisType) {
         'strategicRadar': 'essential',
         'productivityMetrics': 'essential',
         'maturityScore': 'essential',
-
+        'competitiveLandscape': 'essential',
         // 5 financial analysis types
         'profitabilityAnalysis': 'good',
         'growthTracker': 'good',
@@ -631,7 +640,8 @@ getDisplayName(analysisType) {
         'expandedCapability': 'Capability Heatmap',
         'strategicRadar': 'Strategic Positioning Radar',
         'productivityMetrics': 'Productivity Metrics',
-        'maturityScore': 'Maturity Score'
+        'maturityScore': 'Maturity Score',
+        'competitiveLandscape': 'Competitive Landscape'
       };
 
       const phase = analysisPhaseMap[analysisType] || 'initial';
@@ -719,6 +729,18 @@ getDisplayName(analysisType) {
       return strategicContent;
     } catch (error) {
       console.error('Error generating strategic analysis:', error);
+      throw error;
+    }
+  }
+
+  async generateCompetitiveLandscape(questions, answers, selectedBusinessId) {
+    try {
+      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
+      const result = await this.makeAPICall('simple-swot-portfolio', questionsArray, answersArray);
+      await this.saveAnalysisToBackend(result, 'competitiveLandscape', selectedBusinessId);
+      return result;
+    } catch (error) {
+      console.error('Error generating Competitive Landscape analysis:', error);
       throw error;
     }
   }
