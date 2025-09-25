@@ -24,6 +24,7 @@ const GrowthTracker = ({
   setActiveTab,
   hasUploadedDocument = false,
   readOnly = false,
+  documentInfo = null,
 }) => {
   const [analysisData, setAnalysisData] = useState(growthData);
   const [error, setError] = useState(null);
@@ -262,9 +263,9 @@ const GrowthTracker = ({
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No growth tracker analysis results found. The uploaded financial document doesn't contain the required growth ratios (Revenue (by time period), Historical Revenue data, Monthly/Quarterly Revenue trends) or proper values for analysis."
-        />
+          acceptedFileTypes=".xlsx,.xls,.csv"          
+          documentInfo={documentInfo} 
+         />
       );
     }
 
@@ -292,6 +293,7 @@ const GrowthTracker = ({
           isMobile={isMobile}
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
+          documentInfo={documentInfo} 
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
         />

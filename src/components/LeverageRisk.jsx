@@ -24,6 +24,7 @@ const LeverageRisk = ({
   setActiveTab,
   hasUploadedDocument = false,
   readOnly = false,
+  documentInfo = null,  
 }) => {
   const [analysisData, setAnalysisData] = useState(leverageData);
   const [error, setError] = useState(null);
@@ -501,8 +502,7 @@ const LeverageRisk = ({
           hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No leverage & risk analysis results found. The uploaded financial document doesn't contain the required leverage ratios (Total Debt, Shareholder Equity, Interest Expense, Operating Income) or proper values for analysis."
-        />
+          documentInfo={documentInfo}  />
       );
     }
 
@@ -530,7 +530,8 @@ const LeverageRisk = ({
           hasUploadedDocument={hasUploadedDocument}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
+          acceptedFileTypes=".xlsx,.xls,.csv"         
+          documentInfo={documentInfo} 
         />
       );
     }

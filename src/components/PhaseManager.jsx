@@ -15,6 +15,7 @@ const PhaseManager = ({
     onAdvancedPhaseGeneration,
     setHasUploadedDocument,
     hasUploadedDocument,
+    onDocumentInfoLoad,
     onAnalysisDataLoad,
     API_BASE_URL,
     getAuthToken,
@@ -119,13 +120,15 @@ const PhaseManager = ({
             });
 
             if (response.ok) {
-                const data = await response.json();
-
+                const data = await response.json(); 
                 // Check document status from API response and update parent state
                 if (data.document_info) {
                     const hasDocument = data.document_info.has_document;  
                     if (setHasUploadedDocument) {
                         setHasUploadedDocument(hasDocument);
+                    }
+                    if (onDocumentInfoLoad) {
+                        onDocumentInfoLoad(data.document_info);
                     }
                 }
 
@@ -174,7 +177,7 @@ const PhaseManager = ({
                         }
                     });
 
-                    if (onAnalysisDataLoad && analysisArray.length > 0) {
+                    if (onAnalysisDataLoad && analysisArray.length > 0) { 
                         onAnalysisDataLoad(analysisArray);
                     }
                 }

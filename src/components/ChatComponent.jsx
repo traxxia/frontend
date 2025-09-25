@@ -734,14 +734,17 @@ const ChatComponent = ({
         throw new Error(result.error || 'Failed to save file to database');
       }
 
-      setHasUploadedDocument(true);
-      setShowSuccessAlert(true);
-
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-      }, 5000);
-
-      return result;
+       return {
+        ...result,
+        documentInfo: {
+          has_document: true,
+          filename: file.name,
+          file_size: file.size,
+          upload_date: new Date().toISOString(),
+          template_name: validationResult.templateName,
+          template_type: validationResult.templateType
+        }
+      };
     } catch (error) {
       console.error('Database save error:', error);
       throw error;
@@ -1146,15 +1149,35 @@ const ChatComponent = ({
           uploadMode: 'auto-detect'
         };
       }
+
       setIsValidating(false);
       const dbResult = await saveFileToDatabase(file, validationResult);
       setUploadedFileForAnalysis(file);
       setShowTemplatesPopup(false);
 
+      // **KEY FIX**: Immediately update document info after successful upload
+      setHasUploadedDocument(true);
+      setUploadedFileInfo({
+        name: file.name,
+        size: file.size,
+        uploadDate: new Date().toLocaleDateString(),
+        template_name: validationResult.templateName,
+        template_type: validationResult.templateType
+      });
+
       if (onFileUploaded) {
         onFileUploaded(file, {
           ...validationResult,
-          dbResult: dbResult
+          dbResult: dbResult,
+          // Pass document info to parent component
+          documentInfo: {
+            has_document: true,
+            filename: file.name,
+            file_size: file.size,
+            upload_date: new Date().toISOString(),
+            template_name: validationResult.templateName,
+            template_type: validationResult.templateType
+          }
         });
       }
 

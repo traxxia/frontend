@@ -24,6 +24,7 @@ const LiquidityEfficiency = ({
   setActiveTab,
   hasUploadedDocument = false,
   readOnly = false,
+  documentInfo = null,
 }) => {
   const [analysisData, setAnalysisData] = useState(liquidityData);
   const [error, setError] = useState(null);
@@ -538,9 +539,9 @@ const LiquidityEfficiency = ({
           hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No liquidity & efficiency analysis results found. The uploaded financial document doesn't contain the required liquidity ratios (Current Assets, Current Liabilities, Cash, Inventory) or proper values for analysis."
-        />
+          acceptedFileTypes=".xlsx,.xls,.csv"           
+          documentInfo={documentInfo} 
+          />
       );
     }
 
@@ -569,6 +570,7 @@ const LiquidityEfficiency = ({
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo} 
         />
       );
     }

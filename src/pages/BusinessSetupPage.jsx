@@ -45,7 +45,7 @@ const createAnalysisContentManagerProps = (state, props) => {
     phaseManager, businessData, questions, userAnswers, selectedBusinessId,
     handleRedirectToBrief, showToastMessage, apiService, createSimpleRegenerationHandler,
     apiLoadingStates, uploadedFileForAnalysis,
-    highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument
+    highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo  
   } = props;
 
   return {
@@ -136,7 +136,8 @@ const createAnalysisContentManagerProps = (state, props) => {
     setCompetitiveLandscapeData,
     isCompetitiveLandscapeRegenerating,
     competitiveLandscapeRef,
-    hasUploadedDocument
+    hasUploadedDocument,
+    documentInfo 
   };
 };
 
@@ -150,11 +151,16 @@ const BusinessSetupPage = () => {
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
   const [apiLoadingStates, setApiLoadingStates] = useState({});
+  const [documentInfo, setDocumentInfo] = useState(null);
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({
       ...prev,
       [apiEndpoint]: isLoading
     }));
+  };
+
+   const handleDocumentInfoLoad = (docInfo) => {
+    setDocumentInfo(docInfo);
   };
   const apiService = new AnalysisApiService(
     ML_API_BASE_URL,
@@ -363,6 +369,7 @@ const BusinessSetupPage = () => {
     userAnswers,
     selectedBusinessId,
     hasUploadedDocument, setHasUploadedDocument,
+    onDocumentInfoLoad: handleDocumentInfoLoad,
     onCompletedQuestionsUpdate: (completedSet, answersMap) => {
       setCompletedQuestions(completedSet);
       setUserAnswers(prev => ({ ...prev, ...answersMap }));
@@ -784,6 +791,7 @@ const BusinessSetupPage = () => {
     isMobile,
     setActiveTab,
     readOnly: false,
+    documentInfo
   });
 
   useEffect(() => {

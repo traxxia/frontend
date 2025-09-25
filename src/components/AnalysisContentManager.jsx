@@ -112,8 +112,8 @@ const AnalysisContentManager = ({
   setActiveTab,
   hasUploadedDocument,
   readOnly = false,
-}) => {
-
+   documentInfo,
+}) => { 
   const API_TO_ANALYSIS_MAP = {
     'find': 'swot',
     'purchase-criteria': 'purchaseCriteria',
@@ -137,25 +137,26 @@ const AnalysisContentManager = ({
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
 
   const isAnalysisLoading = (analysisType) => {
-    const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
+  const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
-    if (excelAnalysisTypes.includes(analysisType)) {
-      const regenerationStateMap = {
-        'profitabilityAnalysis': isProfitabilityRegenerating,
-        'growthTracker': isGrowthTrackerRegenerating,
-        'liquidityEfficiency': isLiquidityEfficiencyRegenerating,
-        'investmentPerformance': isInvestmentPerformanceRegenerating,
-        'leverageRisk': isLeverageRiskRegenerating
-      };
+  if (excelAnalysisTypes.includes(analysisType)) {
+    const regenerationStateMap = {
+      'profitabilityAnalysis': isProfitabilityRegenerating,
+      'growthTracker': isGrowthTrackerRegenerating,
+      'liquidityEfficiency': isLiquidityEfficiencyRegenerating,
+      'investmentPerformance': isInvestmentPerformanceRegenerating,
+      'leverageRisk': isLeverageRiskRegenerating
+    };
 
-      return regenerationStateMap[analysisType] || false;
-    }
-    const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
-      .filter(([endpoint, analysis]) => analysis === analysisType)
-      .map(([endpoint]) => endpoint);
+     return regenerationStateMap[analysisType] || apiLoadingStates['excel-analysis'] || false;
+  }
 
-    return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
-  };
+   const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
+    .filter(([endpoint, analysis]) => analysis === analysisType)
+    .map(([endpoint]) => endpoint);
+
+  return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
+};
 
   const toggleCard = (cardId) => {
     setExpandedCards(prev => {
@@ -229,10 +230,7 @@ const AnalysisContentManager = ({
           className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
           onClick={() => toggleCard(id)}
         >
-          <div className="modern-card-header-left">
-            {/* <div className="modern-card-icon">
-              <IconComponent size={20} />
-            </div> */}
+          <div className="modern-card-header-left"> 
             <div className="modern-card-text">
               <h3>{title}</h3>
               <p>{description}</p>
@@ -398,6 +396,7 @@ const AnalysisContentManager = ({
               onRedirectToBrief={handleRedirectToBrief}
               uploadedFile={uploadedFileForAnalysis}
               readOnly={readOnly}
+              documentInfo = {documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -431,6 +430,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
+              documentInfo = {documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -464,6 +464,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
+              documentInfo = {documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -497,6 +498,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
+              documentInfo = {documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -530,6 +532,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
+              documentInfo = {documentInfo}
             />
           </div>
         </ModernAnalysisCard>

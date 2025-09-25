@@ -24,7 +24,8 @@ const ProfitabilityAnalysis = ({
   hasUploadedDocument = false,
   uploadedFile = null,
   readOnly = false,
-}) => {
+  documentInfo = null,
+}) => { 
   const [analysisData, setAnalysisData] = useState(profitabilityData);
   const [error, setError] = useState(null);
 
@@ -506,10 +507,11 @@ const ProfitabilityAnalysis = ({
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
+          documentInfo={documentInfo} 
           readOnly={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No profitability analysis results found. The uploaded financial document doesn't contain the required profitability ratios(Revenue, Cost of Goods Sold, EBITDA, Net Income, Operating Income, Operating Expenses, Gross Profit) or proper values for analysis."
+          customMessage=" ."
         />
       );
     }
@@ -539,6 +541,7 @@ const ProfitabilityAnalysis = ({
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo} 
         />
       );
     }

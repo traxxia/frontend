@@ -553,3 +553,132 @@
   color: #374151;
   z-index: 10;
 }
+.missing-metrics-display {
+  background-color: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: 12px;
+  padding: 10px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.missing-metrics-display .header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.missing-metrics-display .message-box {
+  margin-bottom: 10px;
+}
+
+.missing-metrics-display .main-message {
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.missing-metrics-display .sub-message {
+  color: #7f1d1d;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.missing-metrics-display .template-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background-color: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  color: #1d4ed8;
+}
+
+.missing-metrics-display .template-details {
+  flex: 1;
+}
+
+.missing-metrics-display .template-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.missing-metrics-display .template-desc {
+  font-size: 12px;
+  color: #3730a3;
+  opacity: 0.8;
+}
+
+.missing-metrics-display .section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.missing-metrics-display .metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: start;
+  margin-bottom: 0px;
+}
+
+.missing-metrics-display .metric {
+  display: flex;
+  align-items: center;
+  gap: 0px;
+  padding: 0px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.missing-metrics-display .required-metric {
+  color: #dc2626;
+  background-color: #fef2f2;
+  font-weight: 500;
+}
+
+.missing-metrics-display .optional-metric {
+  color: #059669;
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.missing-metrics-display .action-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.missing-metrics-display .action-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.missing-metrics-display .action-text {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { FileX, Upload, AlertCircle, TrendingUp, MessageCircle, Edit } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
+import MissingMetricsDisplay from './MissingMetricsDisplay';
+
 const FinancialEmptyState = ({
   analysisType = "financial",
   analysisDisplayName = "Financial Analysis",
@@ -24,8 +26,9 @@ const FinancialEmptyState = ({
   isMobile = false,
   setActiveTab,
   hasUploadedDocument = false,
-  readOnly = false // Add this prop
-}) => { 
+  readOnly = false,
+  documentInfo = null // New prop for document information
+}) => {
   const { t } = useTranslation();
 
   const answeredCount = Object.keys(userAnswers || {}).length;
@@ -36,14 +39,14 @@ const FinancialEmptyState = ({
   const handleRedirectToFileManagement = () => {
     // Don't redirect in read-only mode
     if (readOnly) return;
-    
+
     if (isMobile && setActiveTab) {
       setActiveTab('chat');
     }
 
     if (onRedirectToChat) {
-      onRedirectToChat({ scrollToUploadCard: true }); 
-    } else { 
+      onRedirectToChat({ scrollToUploadCard: true });
+    } else {
       const chatSection = document.querySelector('.chat-section');
       if (chatSection) {
         chatSection.scrollIntoView({ behavior: 'smooth' });
@@ -51,29 +54,36 @@ const FinancialEmptyState = ({
     }
   };
 
+  // Enhanced document detection - check multiple sources
+  const hasDocumentUploaded = uploadedFile || hasUploadedDocument || (documentInfo && documentInfo.has_document);
+  
+  // Create documentInfo object if it doesn't exist but we know a document is uploaded
+  const effectiveDocumentInfo = documentInfo || (hasDocumentUploaded ? {
+    has_document: true,
+    filename: uploadedFile?.name || 'Financial Document',
+    template_name: 'Standard', // Default template type
+    upload_date: new Date().toISOString()
+  } : null);
+
   return (
     <div className="financial-empty-state">
       <div className="financial-empty-content">
-        {/* Icon */}
-        <div className="financial-empty-icon">
-          <FileX size={48} color="#6b7280" />
-        </div>
+        {/* Icon */} 
 
-        {/* Title */}
-        <h3 className="financial-empty-title">
-          No Data Available
-        </h3>
-
-        {/* Message */}
-        <p className="financial-empty-message">
-          {customMessage || defaultMessage}
-        </p>
+        {/* Missing Metrics Display - Show when ANY document exists */}
+        {hasDocumentUploaded && (
+          <MissingMetricsDisplay
+            documentInfo={effectiveDocumentInfo}
+            analysisType={analysisType}
+            className="missing-metrics-section"
+          />
+        )}
 
         {/* Only show upload/change buttons if not in read-only mode */}
         {!readOnly && (
           <>
             {/* File Management Redirect Button - Show if document exists */}
-            {(uploadedFile || hasUploadedDocument) && (
+            {hasDocumentUploaded && (
               <div style={{ marginTop: '16px' }}>
                 <button
                   onClick={handleRedirectToFileManagement}
@@ -97,12 +107,12 @@ const FinancialEmptyState = ({
                   <Edit size={16} />
                   Change Financial Document
                 </button>
-                <br></br>
+                <br />
               </div>
             )}
 
             {/* Show file upload option if no document exists */}
-            {!uploadedFile && !hasUploadedDocument && showFileUpload && (
+            {!hasDocumentUploaded && showFileUpload && (
               <div style={{ marginTop: '16px' }}>
                 <button
                   onClick={handleRedirectToFileManagement}
@@ -126,12 +136,12 @@ const FinancialEmptyState = ({
                   <Upload size={16} />
                   Upload Financial Document
                 </button>
-                <br></br>
+                <br />
               </div>
             )}
           </>
         )}
- 
+
       </div>
     </div>
   );

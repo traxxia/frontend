@@ -24,6 +24,7 @@ const InvestmentPerformance = ({
   setActiveTab,
   hasUploadedDocument = false,
   readOnly = false,
+  documentInfo = null,
 }) => {
   const [analysisData, setAnalysisData] = useState(investmentData);
   const [error, setError] = useState(null);
@@ -501,8 +502,8 @@ const InvestmentPerformance = ({
           isUploading={false}
           readOnly ={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-          customMessage="No investment performance analysis results found. The uploaded financial document doesn't contain the required investment metrics (Total Assets, Shareholder Equity, Net Income, Operating Income) or proper values for analysis."
+          acceptedFileTypes=".xlsx,.xls,.csv" 
+          documentInfo={documentInfo} 
         />
       );
     }
@@ -532,6 +533,7 @@ const InvestmentPerformance = ({
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo} 
         />
       );
     }

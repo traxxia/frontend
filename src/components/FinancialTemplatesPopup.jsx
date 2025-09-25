@@ -1,15 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { X, Download, Upload, FileText } from 'lucide-react';
+import { X, Download, Upload, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
 
-const FinancialTemplatesPopup = ({ 
-  isOpen, 
-  onClose, 
+const FinancialTemplatesPopup = ({
+  isOpen,
+  onClose,
   onFileUploaded,
   isFileUploading = false,
   readOnly = false // Add this prop to control upload functionality
 }) => {
   const fileInputRef = useRef(null);
   const [selectedTemplateType, setSelectedTemplateType] = useState(null);
+  const [showComparison, setShowComparison] = useState(false);
 
   const templates = [
     {
@@ -29,12 +30,61 @@ const FinancialTemplatesPopup = ({
     },
     {
       id: 'detailed',
-      name: 'Detailed Template', 
+      name: 'Detailed Template',
       description: 'Full breakdowns for board-level reporting and investor analysis',
       fileName: 'traxxia_detailed_template.xlsx',
       icon: '📈'
     }
   ];
+
+  const TEMPLATE_METRICS = {
+    simplified: {
+      name: "Simplified",
+      metrics: [
+        { key: "revenue", name: "Revenue", required: true },
+        { key: "net_income", name: "Net Income", required: true },
+        { key: "operating_expenses", name: "Operating Expenses", required: true },
+        { key: "gross_profit", name: "Gross Profit", required: true },
+        { key: "revenue_trends", name: "Revenue Trends", required: true }
+      ]
+    },
+    standard: {
+      name: "Standard",
+      metrics: [
+        { key: "revenue", name: "Revenue", required: true },
+        { key: "cogs", name: "Cost Of Goods", required: true },
+        { key: "ebitda", name: "EBITDA", required: true },
+        { key: "net_income", name: "Net Income", required: true },
+        { key: "operating_income", name: "Operating Income", required: true },
+        { key: "operating_expenses", name: "Operating Expenses", required: true },
+        { key: "gross_profit", name: "Gross Profit", required: true },
+        { key: "revenue_trends", name: "Revenue Trends", required: true },
+        { key: "total_assets", name: "Total Assets", required: true },
+        { key: "shareholder_equity", name: "Shareholder Equity", required: true },
+        { key: "total_debt", name: "Total Debt", required: true }
+      ]
+    },
+    detailed: {
+      name: "Detailed",
+      metrics: [
+        { key: "revenue", name: "Revenue", required: true },
+        { key: "cogs", name: "Cost Of Goods", required: true },
+        { key: "ebitda", name: "EBITDA", required: true },
+        { key: "net_income", name: "Net Income", required: true },
+        { key: "operating_income", name: "Operating Income", required: true },
+        { key: "operating_expenses", name: "Operating Expenses", required: true },
+        { key: "gross_profit", name: "Gross Profit", required: true },
+        { key: "revenue_trends", name: "Revenue Trends", required: true },
+        { key: "current_assets", name: "Current Assets", required: true },
+        { key: "current_liabilities", name: "Current Liabilities", required: true },
+        { key: "cash", name: "Cash", required: true },
+        { key: "inventory", name: "Inventory", required: true },
+        { key: "total_assets", name: "Total Assets", required: true },
+        { key: "shareholder_equity", name: "Shareholder Equity", required: true },
+        { key: "total_debt", name: "Total Debt", required: true }
+      ]
+    }
+  };
 
   const handleDownload = (template) => {
     const link = document.createElement('a');
@@ -78,9 +128,9 @@ const FinancialTemplatesPopup = ({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      style={{ 
+      style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -94,12 +144,12 @@ const FinancialTemplatesPopup = ({
         padding: '16px'
       }}
     >
-      <div 
-        className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+      <div
+        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         style={{
           backgroundColor: 'white',
           borderRadius: '8px',
-          maxWidth: '672px',
+          maxWidth: '896px',
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
@@ -107,7 +157,7 @@ const FinancialTemplatesPopup = ({
         }}
       >
         {/* Header */}
-        <div 
+        <div
           className="flex items-center justify-between p-6 border-b border-gray-200"
           style={{
             display: 'flex',
@@ -118,13 +168,13 @@ const FinancialTemplatesPopup = ({
           }}
         >
           <div>
-            <h2 
+            <h2
               className="text-xl font-bold text-gray-900"
               style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}
             >
               {readOnly ? 'Financial Data Templates' : 'Financial Data Upload'}
             </h2>
-            <p 
+            <p
               className="text-gray-600 text-sm mt-1"
               style={{ color: '#4b5563', fontSize: '14px', marginTop: '4px', margin: 0 }}
             >
@@ -164,12 +214,12 @@ const FinancialTemplatesPopup = ({
 
         <div style={{ padding: '24px' }}>
           {/* Download Templates Section */}
-          <div style={{ marginBottom: readOnly ? '32px' : '32px' }}>
-            <h3 
-              style={{ 
-                fontSize: '18px', 
-                fontWeight: '600', 
-                color: '#111827', 
+          <div style={{ marginBottom: '32px' }}>
+            <h3
+              style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#111827',
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
@@ -179,7 +229,7 @@ const FinancialTemplatesPopup = ({
               <Download size={20} />
               Download Sample Templates
             </h3>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {templates.map((template) => (
                 <div
@@ -204,7 +254,7 @@ const FinancialTemplatesPopup = ({
                           {template.name}
                         </h4>
                         {template.recommended && (
-                          <span 
+                          <span
                             style={{
                               backgroundColor: '#dbeafe',
                               color: '#1e40af',
@@ -222,7 +272,7 @@ const FinancialTemplatesPopup = ({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => handleDownload(template)}
@@ -245,11 +295,142 @@ const FinancialTemplatesPopup = ({
                     >
                       <Download size={14} />
                       <span>Download</span>
-                    </button> 
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Template Comparison Section */}
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                📋 All Template Comparison
+              </h3>
+              <button
+                onClick={() => setShowComparison(!showComparison)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 12px',
+                  backgroundColor: 'transparent',
+                  color: '#2563eb',
+                  border: '1px solid #2563eb',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {showComparison ? (
+                  <>
+                    <span>Hide Comparison</span>
+                    <ChevronUp size={16} />
+                  </>
+                ) : (
+                  <>
+                    <span>View Comparison</span>
+                    <ChevronDown size={16} />
+                  </>
+                )}
+              </button>
+            </div>
+
+            {showComparison && (
+
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                overflow: 'hidden'
+              }}>
+                <table style={{ width: '100%', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc' }}>
+                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#374151' }}>
+                        Metric
+                      </th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
+                        Simplified
+                      </th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
+                        Standard
+                      </th>
+                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
+                        Detailed
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      // Get all unique metrics
+                      const allMetrics = [];
+                      const metricSet = new Set();
+
+                      Object.values(TEMPLATE_METRICS).forEach(template => {
+                        template.metrics.forEach(metric => {
+                          if (!metricSet.has(metric.key)) {
+                            metricSet.add(metric.key);
+                            allMetrics.push(metric);
+                          }
+                        });
+                      });
+
+                      // Check if a metric is required for a specific template
+                      const isMetricRequired = (metricKey, templateKey) => {
+                        const template = TEMPLATE_METRICS[templateKey];
+                        return template.metrics.some(m => m.key === metricKey && m.required);
+                      };
+
+                      return allMetrics.map((metric, index) => (
+                        <tr key={metric.key} style={{
+                          borderTop: index > 0 ? '1px solid #e5e7eb' : 'none',
+                          backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb'
+                        }}>
+                          <td style={{ padding: '10px 12px', fontWeight: '500', color: '#374151' }}>
+                            {metric.name}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {isMetricRequired(metric.key, 'simplified') ? (
+                              <Check size={16} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
+                            ) : (
+                              <X size={16} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
+                            )}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {isMetricRequired(metric.key, 'standard') ? (
+                              <Check size={16} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
+                            ) : (
+                              <X size={16} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
+                            )}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {isMetricRequired(metric.key, 'detailed') ? (
+                              <Check size={16} style={{ color: '#059669', margin: '0 auto', display: 'block' }} />
+                            ) : (
+                              <X size={16} style={{ color: '#d1d5db', margin: '0 auto', display: 'block' }} />
+                            )}
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Only show upload section if not readOnly */}
@@ -267,11 +448,11 @@ const FinancialTemplatesPopup = ({
 
               {/* General Upload Section */}
               <div>
-                <h3 
-                  style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '600', 
-                    color: '#111827', 
+                <h3
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#111827',
                     marginBottom: '16px',
                     display: 'flex',
                     alignItems: 'center',
@@ -281,8 +462,8 @@ const FinancialTemplatesPopup = ({
                   <Upload size={20} />
                   Upload Any Template File
                 </h3>
-                
-                <div 
+
+                <div
                   style={{
                     border: '2px dashed #d1d5db',
                     borderRadius: '8px',
@@ -293,13 +474,13 @@ const FinancialTemplatesPopup = ({
                   onMouseEnter={(e) => e.target.style.borderColor = '#9ca3af'}
                   onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}
                 >
-                  <FileText 
-                    size={48} 
-                    style={{ 
-                      margin: '0 auto 16px auto', 
+                  <FileText
+                    size={48}
+                    style={{
+                      margin: '0 auto 16px auto',
                       color: '#9ca3af',
                       display: 'block'
-                    }} 
+                    }}
                   />
                   <h4 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>
                     Auto-Detect Template Type
@@ -307,7 +488,7 @@ const FinancialTemplatesPopup = ({
                   <p style={{ color: '#4b5563', marginBottom: '24px' }}>
                     Upload any template and we'll detect the type automatically
                   </p>
-                  
+
                   <button
                     onClick={() => triggerFileUpload()}
                     disabled={isFileUploading}
@@ -335,7 +516,7 @@ const FinancialTemplatesPopup = ({
                   >
                     {isFileUploading ? (
                       <>
-                        <div 
+                        <div
                           style={{
                             width: '20px',
                             height: '20px',
@@ -354,7 +535,7 @@ const FinancialTemplatesPopup = ({
                       </>
                     )}
                   </button>
-                  
+
                   <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '12px' }}>
                     Supported formats: Excel (.xlsx, .xls) and CSV files
                   </p>
@@ -364,7 +545,7 @@ const FinancialTemplatesPopup = ({
           )}
 
           {/* Instructions */}
-          <div 
+          <div
             style={{
               marginTop: '32px',
               backgroundColor: '#eff6ff',
@@ -404,5 +585,4 @@ const FinancialTemplatesPopup = ({
     </div>
   );
 };
-
 export default FinancialTemplatesPopup;
