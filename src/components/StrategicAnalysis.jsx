@@ -696,6 +696,62 @@ const StrategicAnalysis = ({
       </section>
     );
   };
+  const renderStrategicRecommendationsTable = (data) => {
+    const recommendations = data?.strategic_recommendations;
+    if (!recommendations || !Array.isArray(recommendations) || recommendations.length === 0) return null;
+
+    return (
+      <section className="strategic-page-section">
+        <div className="section-headers" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          borderBottom: 'none',
+          gap: '8px',
+          background: '#fff'
+        }}>
+          <Zap size={24} style={{ color: 'blue' }} />
+          <h4>Strategic Recommendations</h4>
+        </div>
+
+        <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px' }}>
+          <ul style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0
+          }}>
+            {recommendations.map((recommendation, index) => (
+              <li key={index} style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                padding: '8px 0',
+                borderBottom: index < recommendations.length - 1 ? '1px dotted #d1d5db' : 'none'
+              }}>
+                <div style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3b82f6',
+                  marginTop: '8px',
+                  flexShrink: 0
+                }} />
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  lineHeight: '1.4',
+                  color: '#1f2937',
+                  flex: 1
+                }}>
+                  {/* Remove double braces if they exist */}
+                  {recommendation.replace(/^\{\{|\}\}$/g, '')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    );
+  };
 
   const renderImplementationRoadmapTable = (data) => {
     const roadmap = data?.implementation_roadmap;
@@ -1147,6 +1203,7 @@ const StrategicAnalysis = ({
       <div className="strategic-content">
         {renderStrategicPillarsTable(analysisData)}
         {renderStrategicGoalsTable(analysisData)}
+        {renderStrategicRecommendationsTable(analysisData)}
         {/* {renderCrossPillarSynthesisTable(analysisData)} */}
         {/* {renderAgileFrameworksTable(analysisData)} */}
         {/* {renderRiskAssessmentTable(analysisData)}
