@@ -32,18 +32,15 @@ const StrategicAnalysis = ({
   saveAnalysisToBackend,
   selectedBusinessId,
   hideDownload = false,
-  onRedirectToBrief
+  onRedirectToBrief,
+  phaseAnalysisArray = []
 }) => {
   const [localStrategicData, setLocalStrategicData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Prevent multiple initializations and API calls
   const hasInitialized = useRef(false);
-  const isGenerating = useRef(false);
-
-  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'https://traxxia-backend-ml.onrender.com';
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -66,8 +63,6 @@ const StrategicAnalysis = ({
   };
 
   const handleRegenerate = async () => {
-    console.log('Strategic handleRegenerate called', { onRegenerate: !!onRegenerate });
-
     if (onRegenerate) {
       try {
         await onRegenerate();
@@ -81,15 +76,10 @@ const StrategicAnalysis = ({
     }
   };
 
-  // Check if the strategic data is empty/incomplete
   const isStrategicDataIncomplete = (data) => {
     if (!data) return true;
-
-    // Check if strategic_analysis exists
     const analysisData = data.strategic_analysis || data;
     if (!analysisData) return true;
-
-    // Check for key sections
     const hasStrategicPillars = analysisData.strategic_pillars_analysis &&
       Object.keys(analysisData.strategic_pillars_analysis).length > 0;
 
@@ -100,13 +90,10 @@ const StrategicAnalysis = ({
       (analysisData.risk_assessment.strategic_risks?.length > 0 ||
         analysisData.risk_assessment.contingency_plans?.length > 0);
 
-    // At least 2 main sections should have data for meaningful analysis
     const sectionsWithData = [hasStrategicPillars, hasRoadmap, hasRiskAssessment].filter(Boolean).length;
-
     return sectionsWithData < 2;
   };
 
-  // Initialize component
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
@@ -118,40 +105,312 @@ const StrategicAnalysis = ({
     }
   }, [strategicData]);
 
-  // Update data when prop changes
   useEffect(() => {
     if (strategicData) {
       setLocalStrategicData(strategicData);
       setHasGenerated(true);
       setErrorMessage('');
     } else if (strategicData === null) {
-      // Only reset if explicitly set to null (during regeneration)
       setLocalStrategicData(null);
       setHasGenerated(false);
     }
   }, [strategicData]);
-  // Add this function to your StrategicAnalysis component
-  const renderCompetitiveLandscapeTable = (data) => {
-    const competitiveLandscape = data?.competitive_landscape;
-    if (!competitiveLandscape) return null;
 
-    const getThreatLevelColor = (level) => {
-      switch (level?.toLowerCase()) {
-        case 'high': return '#ef4444';
-        case 'medium': return '#f59e0b';
-        case 'low': return '#10b981';
-        default: return '#6b7280';
-      }
+  const renderStrategicRecommendationsFromAnalyses = () => {
+    const pestelAnalysis = phaseAnalysisArray.find(analysis =>
+      analysis.analysis_type === 'pestel'
+    );
+
+    const portersAnalysis = phaseAnalysisArray.find(analysis =>
+      analysis.analysis_type === 'porters'
+    );
+
+    const pestelRecommendations = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
+    const portersRecommendations = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
+
+    const hasPestelRecommendations = pestelRecommendations && (
+      (pestelRecommendations.immediate_actions && pestelRecommendations.immediate_actions.length > 0) ||
+      (pestelRecommendations.short_term_initiatives && pestelRecommendations.short_term_initiatives.length > 0) ||
+      (pestelRecommendations.long_term_strategic_shifts && pestelRecommendations.long_term_strategic_shifts.length > 0)
+    );
+
+    const hasPortersRecommendations = portersRecommendations && (
+      (portersRecommendations.immediate_actions && portersRecommendations.immediate_actions.length > 0) ||
+      (portersRecommendations.short_term_initiatives && portersRecommendations.short_term_initiatives.length > 0) ||
+      (portersRecommendations.long_term_strategic_shifts && portersRecommendations.long_term_strategic_shifts.length > 0)
+    );
+
+    if (!hasPestelRecommendations && !hasPortersRecommendations) {
+      return null;
+    }
+
+    const renderRecommendationActions = (actions, title, icon) => {
+      if (!actions || actions.length === 0) return null;
+
+      return (
+        <div style={{ marginBottom: '25px' }}>
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#1f2937',
+            marginBottom: '15px'
+          }}>
+            {icon}
+            {title}
+          </h3>
+
+          <div className="table-container" style={{ margin: 0, padding: 0 }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Rationale</th>
+                  <th>Timeline</th>
+                  <th>Resources Required</th>
+                  <th>Success Metrics</th>
+                </tr>
+              </thead>
+              <tbody>
+                {actions.map((action, index) => (
+                  <tr key={index}>
+                    <td className="table-value">
+                      <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                        {action.action}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{ fontSize: '13px', color: '#374151' }}>
+                        {action.rationale}
+                      </div>
+                    </td>
+                    <td className="table-value text-center">
+                      <div style={{
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '500',
+                        display: 'inline-block'
+                      }}>
+                        {action.timeline}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      {action.resources_required && (
+                        <ul className="table-list">
+                          {(Array.isArray(action.resources_required) ? action.resources_required : [action.resources_required]).map((resource, idx) => (
+                            <li key={idx} style={{
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}>
+                              <div style={{
+                                width: '4px',
+                                height: '4px',
+                                borderRadius: '50%',
+                                backgroundColor: '#3b82f6'
+                              }} />
+                              {resource}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </td>
+                    <td className="table-value">
+                      {action.success_metrics && action.success_metrics.length > 0 && (
+                        <ul className="table-list">
+                          {action.success_metrics.map((metric, idx) => (
+                            <li key={idx} style={{
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontWeight: '600',
+                              color: '#059669'
+                            }}>
+                              <Target size={10} />
+                              {metric}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {action.expected_impact && (
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#059669',
+                          display: 'flex',
+                          fontWeight: '600',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Target size={10} />
+                          {action.expected_impact}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
     };
 
-    const getLikelihoodColor = (likelihood) => {
-      switch (likelihood?.toLowerCase()) {
-        case 'high': return '#ef4444';
-        case 'medium': return '#f59e0b';
-        case 'low': return '#10b981';
-        default: return '#6b7280';
-      }
+    const renderInitiatives = (initiatives, title, icon) => {
+      if (!initiatives || initiatives.length === 0) return null;
+
+      return (
+        <div style={{ marginBottom: '25px' }}>
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#1f2937',
+            marginBottom: '15px'
+          }}>
+            {icon}
+            {title}
+          </h3>
+
+          <div className="table-container" style={{ margin: 0, padding: 0 }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Initiative</th>
+                  <th>Strategic Pillar</th>
+                  <th>Expected Outcome</th>
+                  <th>Risk Mitigation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {initiatives.map((initiative, index) => (
+                  <tr key={index}>
+                    <td className="table-value">
+                      <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                        {initiative.initiative}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{
+                        backgroundColor: '#8b5cf6',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '500',
+                        display: 'inline-block'
+                      }}>
+                        {initiative.strategic_pillar}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{ fontSize: '13px', color: '#374151' }}>
+                        {initiative.expected_outcome}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{ fontSize: '13px', color: '#dc2626' }}>
+                        {initiative.risk_mitigation}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
     };
+
+    const renderLongTermShifts = (shifts, title, icon) => {
+      if (!shifts || shifts.length === 0) return null;
+
+      return (
+        <div style={{ marginBottom: '25px' }}>
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#1f2937',
+            marginBottom: '15px'
+          }}>
+            {icon}
+            {title}
+          </h3>
+
+          <div className="table-container" style={{ margin: 0, padding: 0 }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Strategic Shift</th>
+                  <th>Transformation Required</th>
+                  <th>Competitive Advantage</th>
+                  <th>Sustainability</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shifts.map((shift, index) => (
+                  <tr key={index}>
+                    <td className="table-value">
+                      <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                        {shift.shift}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{ fontSize: '13px', color: '#374151' }}>
+                        {shift.transformation_required}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{
+                        fontSize: '13px',
+                        color: '#059669',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <TrendingUp size={12} />
+                        {shift.competitive_advantage}
+                      </div>
+                    </td>
+                    <td className="table-value">
+                      <div style={{ fontSize: '13px', color: '#374151' }}>
+                        {shift.sustainability}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    };
+
+    const combinedImmediateActions = [
+      ...(pestelRecommendations?.immediate_actions || []),
+      ...(portersRecommendations?.immediate_actions || [])
+    ];
+
+    const combinedShortTermInitiatives = [
+      ...(pestelRecommendations?.short_term_initiatives || []),
+      ...(portersRecommendations?.short_term_initiatives || [])
+    ];
+
+    const combinedLongTermShifts = [
+      ...(pestelRecommendations?.long_term_strategic_shifts || []),
+      ...(portersRecommendations?.long_term_strategic_shifts || [])
+    ];
 
     return (
       <section className="strategic-page-section">
@@ -160,233 +419,32 @@ const StrategicAnalysis = ({
           alignItems: 'center',
           borderBottom: 'none',
           gap: '8px',
-          marginBottom: '10px',
+          marginBottom: '20px',
           background: '#fff'
         }}>
-          <Target size={24} style={{ color: 'blue' }} />
-          <h4 style={{ marginTop: '5px' }} >Competitive Landscape Analysis</h4>
+          <Settings size={24} style={{ color: 'blue' }} />
+          <h4 style={{ marginTop: '5px' }}>Strategic Recommendations</h4>
         </div>
-
-        {/* Direct Competitors */}
-        {competitiveLandscape.direct_competitors && competitiveLandscape.direct_competitors.length > 0 && (
-          <div>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#1f2937'
-            }}>
-              <Users size={20} />
-              Direct Competitors
-            </h3>
-
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px', marginBottom: '20px' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Company</th>
-                    <th>Market Share</th>
-                    <th>Strengths</th>
-                    <th>Weaknesses</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competitiveLandscape.direct_competitors.map((competitor, index) => (
-                    <tr key={index}>
-                      <td className="table-value">
-                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                          {competitor.name}
-                        </div>
-                      </td>
-                      <td className="table-value text-center">
-                        <div style={{
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          display: 'inline-block'
-                        }}>
-                          {competitor.market_share}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        {competitor.strengths && competitor.strengths.length > 0 && (
-                          <ul className="table-list">
-                            {competitor.strengths.map((strength, idx) => (
-                              <li key={idx} style={{
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                color: '#059669'
-                              }}>
-                                <CheckCircle size={12} />
-                                {strength}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                      <td className="table-value">
-                        {competitor.weaknesses && competitor.weaknesses.length > 0 && (
-                          <ul className="table-list">
-                            {competitor.weaknesses.map((weakness, idx) => (
-                              <li key={idx} style={{
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                color: '#dc2626'
-                              }}>
-                                <Target size={12} />
-                                {weakness}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {renderRecommendationActions(
+          combinedImmediateActions,
+          'Immediate Actions',
+          <Zap size={20} style={{ color: '#ef4444' }} />
         )}
 
-        {/* Indirect Competitors */}
-        {competitiveLandscape.indirect_competitors && competitiveLandscape.indirect_competitors.length > 0 && (
-          <div>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#1f2937'
-            }}>
-              <Eye size={20} />
-              Indirect Competitors
-            </h3>
-
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px', marginBottom: '20px' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Threat Level</th>
-                    <th>Competitive Advantage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competitiveLandscape.indirect_competitors.map((competitor, index) => (
-                    <tr key={index}>
-                      <td className="table-value">
-                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                          {competitor.name}
-                        </div>
-                      </td>
-                      <td className="table-value text-center">
-                        <div style={{
-                          backgroundColor: getThreatLevelColor(competitor.threat_level),
-                          color: 'white',
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          display: 'inline-block',
-                          textTransform: 'capitalize'
-                        }}>
-                          {competitor.threat_level}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        <div style={{ fontSize: '13px', color: '#374151' }}>
-                          {competitor.competitive_advantage}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {renderInitiatives(
+          combinedShortTermInitiatives,
+          'Short-term Initiatives',
+          <Activity size={20} style={{ color: '#f59e0b' }} />
         )}
 
-        {/* Potential Entrants */}
-        {competitiveLandscape.potential_entrants && competitiveLandscape.potential_entrants.length > 0 && (
-          <div>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#1f2937',
-              marginBottom: '20px'
-            }}>
-              <TrendingUp size={20} />
-              Potential Market Entrants
-            </h3>
-
-            <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Entry Likelihood</th>
-                    <th>Market Barriers</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competitiveLandscape.potential_entrants.map((entrant, index) => (
-                    <tr key={index}>
-                      <td className="table-value">
-                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                          {entrant.category}
-                        </div>
-                      </td>
-                      <td className="table-value text-center">
-                        <div style={{
-                          backgroundColor: getLikelihoodColor(entrant.likelihood),
-                          color: 'white',
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          display: 'inline-block',
-                          textTransform: 'capitalize'
-                        }}>
-                          {entrant.likelihood}
-                        </div>
-                      </td>
-                      <td className="table-value">
-                        <div style={{
-                          fontSize: '13px',
-                          color: '#374151',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <Shield size={14} />
-                          {entrant.barriers}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {renderLongTermShifts(
+          combinedLongTermShifts,
+          'Long-term Strategic Shifts',
+          <TrendingUp size={20} style={{ color: '#10b981' }} />
         )}
-
       </section>
     );
   };
-
   const renderKeyImprovementsTable = (data) => {
     const improvements = data?.key_improvements;
     if (!improvements || !Array.isArray(improvements) || improvements.length === 0) return null;
@@ -461,8 +519,6 @@ const StrategicAnalysis = ({
           <BarChart3 size={24} style={{ color: 'blue' }} />
           <h4 style={{ marginTop: '5px' }}>Strategic Pillars Analysis</h4>
         </div>
-
-        {/* Add the Strategic Wheel */}
         <StrategicWheel
           pillarsData={pillars}
           className="strategic-wheel-section"
@@ -521,7 +577,6 @@ const StrategicAnalysis = ({
           <h4 style={{ marginTop: '5px' }}>Strategic Goals ({goals.year})</h4>
         </div>
 
-        {/* Overall Progress Summary */}
         <div style={{
           backgroundColor: '#f9fafb',
           padding: '20px',
@@ -542,7 +597,6 @@ const StrategicAnalysis = ({
             </div>
           </div>
 
-          {/* Progress Bar */}
           <div style={{
             width: '100%',
             height: '10px',
@@ -559,7 +613,6 @@ const StrategicAnalysis = ({
             }} />
           </div>
 
-          {/* Strategic Themes */}
           {goals.strategic_themes && goals.strategic_themes.length > 0 && (
             <div>
               <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600' }}>
@@ -583,7 +636,6 @@ const StrategicAnalysis = ({
           )}
         </div>
 
-        {/* Objectives Table */}
         <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '25px' }}>
           <table className="data-table">
             <thead>
@@ -696,62 +748,6 @@ const StrategicAnalysis = ({
       </section>
     );
   };
-  const renderStrategicRecommendationsTable = (data) => {
-    const recommendations = data?.strategic_recommendations;
-    if (!recommendations || !Array.isArray(recommendations) || recommendations.length === 0) return null;
-
-    return (
-      <section className="strategic-page-section">
-        <div className="section-headers" style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          borderBottom: 'none',
-          gap: '8px',
-          background: '#fff'
-        }}>
-          <Zap size={24} style={{ color: 'blue' }} />
-          <h4>Strategic Recommendations</h4>
-        </div>
-
-        <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '15px' }}>
-          <ul style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0
-          }}>
-            {recommendations.map((recommendation, index) => (
-              <li key={index} style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                padding: '8px 0',
-                borderBottom: index < recommendations.length - 1 ? '1px dotted #d1d5db' : 'none'
-              }}>
-                <div style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3b82f6',
-                  marginTop: '8px',
-                  flexShrink: 0
-                }} />
-                <span style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  lineHeight: '1.4',
-                  color: '#1f2937',
-                  flex: 1
-                }}>
-                  {/* Remove double braces if they exist */}
-                  {recommendation.replace(/^\{\{|\}\}$/g, '')}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    );
-  };
 
   const renderImplementationRoadmapTable = (data) => {
     const roadmap = data?.implementation_roadmap;
@@ -775,7 +771,6 @@ const StrategicAnalysis = ({
     const phases = Object.entries(roadmap);
     const maxDuration = Math.max(...phases.map(([_, phase]) => parseDuration(phase.duration)));
 
-    // Calculate cumulative timeline for Gantt
     let cumulativeMonths = 0;
     const phasesWithTimeline = phases.map(([phaseKey, phase]) => {
       const duration = parseDuration(phase.duration);
@@ -857,7 +852,6 @@ const StrategicAnalysis = ({
           <h4 style={{ marginTop: '5px' }} >Implementation Roadmap</h4>
         </div>
 
-        {/* Gantt Chart Visualization */}
         <div style={{
           backgroundColor: '#f9fafb',
           padding: '20px',
@@ -868,11 +862,9 @@ const StrategicAnalysis = ({
           <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
             Timeline Overview ({Math.ceil(totalTimeline)} months)
           </h3>
-
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: '700px' }}>
               {renderTimelineHeader()}
-
               <div style={{ position: 'relative', minHeight: `${phasesWithTimeline.length * 35}px` }}>
                 {phasesWithTimeline.map(({ key, phase, startMonth, duration }, index) => (
                   <div key={key} style={{
@@ -907,8 +899,6 @@ const StrategicAnalysis = ({
               </div>
             </div>
           </div>
-
-          {/* Quarterly Milestones - Moved inside Timeline Overview */}
           {data?.strategic_goals?.quarterly_milestones && data.strategic_goals.quarterly_milestones.length > 0 && (
             <div style={{ marginTop: '30px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
               <h3 style={{
@@ -984,8 +974,6 @@ const StrategicAnalysis = ({
             </div>
           )}
         </div>
-
-        {/* Detailed Table */}
         <div className="table-container" style={{ margin: 0, padding: 0, marginTop: '25px' }}>
           <table className="data-table">
             <thead>
@@ -1074,7 +1062,6 @@ const StrategicAnalysis = ({
           <h4>Monitoring & Performance Dashboard</h4>
         </div>
 
-        {/* Dashboard Requirements */}
         {monitoring.dashboard_requirements && monitoring.dashboard_requirements.length > 0 && (
           <div style={{
             backgroundColor: '#f0f9ff',
@@ -1115,7 +1102,6 @@ const StrategicAnalysis = ({
           </div>
         )}
 
-        {/* Review Cycles Table */}
         {monitoring.review_cycles && (
           <div>
             <h3 style={{
@@ -1153,8 +1139,6 @@ const StrategicAnalysis = ({
             </div>
           </div>
         )}
-
-        {/* Feedback Loops Table */}
         {monitoring.feedback_loops && monitoring.feedback_loops.length > 0 && (
           <div>
             <h3 style={{
@@ -1194,29 +1178,20 @@ const StrategicAnalysis = ({
     );
   };
 
-
   const renderStrategicContent = () => {
-    // Extract strategic_analysis from the response
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
-
     return (
       <div className="strategic-content">
         {renderStrategicPillarsTable(analysisData)}
         {renderStrategicGoalsTable(analysisData)}
-        {renderStrategicRecommendationsTable(analysisData)}
-        {/* {renderCrossPillarSynthesisTable(analysisData)} */}
-        {/* {renderAgileFrameworksTable(analysisData)} */}
-        {/* {renderRiskAssessmentTable(analysisData)}
-        {renderSuccessBenchmarksTable(analysisData)} */}
+        {renderStrategicRecommendationsFromAnalyses()}
         {renderImplementationRoadmapTable(analysisData)}
-        {/* {renderCompetitiveLandscapeTable(analysisData)} */}
         {renderKeyImprovementsTable(analysisData)}
         {renderMonitoringDashboardTable(analysisData)}
       </div>
     );
   };
 
-  // Loading state
   if (isRegenerating || isLoading) {
     return (
       <div className="strategic-analysis-container">
@@ -1227,9 +1202,7 @@ const StrategicAnalysis = ({
         </div>
       </div>
     );
-  }
-
-  // Error state
+  } 
   if (errorMessage) {
     return (
       <div className="strategic-analysis-container">
@@ -1244,8 +1217,6 @@ const StrategicAnalysis = ({
       </div>
     );
   }
-
-  // Check if data is incomplete and show missing questions checker
   if (!hasGenerated || !localStrategicData || isStrategicDataIncomplete(localStrategicData)) {
     return (
       <div className="strategic-analysis-container"

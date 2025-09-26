@@ -152,6 +152,8 @@ const BusinessSetupPage = () => {
   const getAuthToken = () => sessionStorage.getItem('token');
   const [apiLoadingStates, setApiLoadingStates] = useState({});
   const [documentInfo, setDocumentInfo] = useState(null);
+  const [phaseAnalysisArray, setPhaseAnalysisArray] = useState([]);
+
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({
       ...prev,
@@ -310,7 +312,8 @@ const BusinessSetupPage = () => {
   };
 
   const loadExistingAnalysisData = (phaseAnalysisArray) => {
-    try {
+     try {
+      setPhaseAnalysisArray(phaseAnalysisArray);
       const latestAnalysisByType = {};
 
       phaseAnalysisArray
@@ -1290,6 +1293,7 @@ const BusinessSetupPage = () => {
                             phaseManager={phaseManager}
                             saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                             hideDownload={false}
+                            phaseAnalysisArray={phaseAnalysisArray}
                           />
                         </div>
                       )}
@@ -1413,6 +1417,7 @@ const BusinessSetupPage = () => {
                       phaseManager={phaseManager}
                       saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                       hideDownload={false}
+                      phaseAnalysisArray={phaseAnalysisArray}
                     />
                   </div>
                 )}
