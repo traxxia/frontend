@@ -541,41 +541,22 @@ const BusinessSetupPage = () => {
     if (cardId) {
       setHighlightedCard(cardId);
       setExpandedCards(prev => new Set([...prev, cardId]));
+
       setTimeout(() => {
         setHighlightedCard(null);
       }, 3000);
     }
 
     setTimeout(() => {
-      const refMap = {
-        "SWOT": swotRef,
-        "Purchase Criteria": purchaseCriteriaRef,
-        "Loyalty/NPS": loyaltyNpsRef,
-        "Porter's Five Forces": portersRef,
-        "PESTEL Analysis": pestelRef,
-        "Full SWOT Portfolio": fullSwotRef,
-        "Competitive Advantage": competitiveAdvantageRef,
-        "Capability Heatmap": expandedCapabilityRef,
-        "Strategic Positioning Radar": strategicRadarRef,
-        "Productivity Metrics": productivityRef,
-        "Maturity Score": maturityScoreRef,
-        "Profitability Analysis": profitabilityRef,
-        "Growth Tracker": growthTrackerRef,
-        "Liquidity & Efficiency": liquidityEfficiencyRef,
-        "Investment Performance": investmentPerformanceRef,
-        "Leverage & Risk": leverageRiskRef,
-        "Competitive Landscape": competitiveLandscapeRef,
-        "Core vs. Adjacency": coreAdjacencyRef,
-      };
-
-      const targetRef = refMap[option];
-      if (targetRef?.current) {
-        targetRef.current.scrollIntoView({
+      // Scroll to the card element directly by ID
+      const cardElement = document.getElementById(cardId);
+      if (cardElement) {
+        cardElement.scrollIntoView({
           behavior: "smooth",
           block: "start"
         });
       }
-    }, 100);
+    }, 600); // Increased to 600ms for cards at the bottom
   };
 
   const createSimpleRegenerationHandler = (analysisType) => {

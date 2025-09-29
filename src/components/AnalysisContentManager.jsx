@@ -231,7 +231,7 @@ const AnalysisContentManager = ({
     const actualStatus = getActualStatus();
 
     return (
-      <div className={`modern-analysis-card ${actualStatus} ${isHighlighted ? 'highlighted' : ''}`}>
+      <div  id={id}  className={`modern-analysis-card ${actualStatus} ${isHighlighted ? 'highlighted' : ''}`}>
         <div
           className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
           onClick={() => toggleCard(id)}
