@@ -21,31 +21,34 @@ const createAnalysisContentManagerProps = (state, props) => {
     portersData, pestelData, fullSwotData, competitiveAdvantageData,
     expandedCapabilityData, strategicRadarData, productivityData, maturityData,
     profitabilityData, growthTrackerData, liquidityEfficiencyData,
-    investmentPerformanceData, leverageRiskData, competitiveLandscapeData, 
+    investmentPerformanceData, leverageRiskData, competitiveLandscapeData,
     setSwotAnalysisResult, setPurchaseCriteriaData, setLoyaltyNPSData,
     setPortersData, setPestelData, setFullSwotData, setCompetitiveAdvantageData,
     setExpandedCapabilityData, setStrategicRadarData, setProductivityData,
     setMaturityData, setProfitabilityData, setGrowthTrackerData,
     setLiquidityEfficiencyData, setInvestmentPerformanceData, setLeverageRiskData,
-    setCompetitiveLandscapeData,  
+    setCompetitiveLandscapeData,
     isSwotAnalysisRegenerating, isPurchaseCriteriaRegenerating, isLoyaltyNPSRegenerating,
     isPortersRegenerating, isPestelRegenerating, isFullSwotRegenerating,
     isCompetitiveAdvantageRegenerating, isExpandedCapabilityRegenerating,
     isStrategicRadarRegenerating, isProductivityRegenerating, isMaturityRegenerating,
     isProfitabilityRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
-    isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating, isCompetitiveLandscapeRegenerating, 
+    isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating, isCompetitiveLandscapeRegenerating,
     isAnalysisRegenerating,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
     competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
     maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
-    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef  
+    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef,
+    coreAdjacencyData, setCoreAdjacencyData,
+    isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating, coreAdjacencyRef
+
   } = state;
 
   const {
     phaseManager, businessData, questions, userAnswers, selectedBusinessId,
     handleRedirectToBrief, showToastMessage, apiService, createSimpleRegenerationHandler,
     apiLoadingStates, uploadedFileForAnalysis,
-    highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo  
+    highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo
   } = props;
 
   return {
@@ -136,8 +139,12 @@ const createAnalysisContentManagerProps = (state, props) => {
     setCompetitiveLandscapeData,
     isCompetitiveLandscapeRegenerating,
     competitiveLandscapeRef,
+    coreAdjacencyData,
+    setCoreAdjacencyData,
+    isCoreAdjacencyRegenerating,
+    setCoreAdjacencyData,
     hasUploadedDocument,
-    documentInfo 
+    documentInfo
   };
 };
 
@@ -161,7 +168,7 @@ const BusinessSetupPage = () => {
     }));
   };
 
-   const handleDocumentInfoLoad = (docInfo) => {
+  const handleDocumentInfoLoad = (docInfo) => {
     setDocumentInfo(docInfo);
   };
   const apiService = new AnalysisApiService(
@@ -199,7 +206,8 @@ const BusinessSetupPage = () => {
     liquidityEfficiencyData, setLiquidityEfficiencyData,
     investmentPerformanceData, setInvestmentPerformanceData,
     leverageRiskData, setLeverageRiskData,
-    competitiveLandscapeData, setCompetitiveLandscapeData,  
+    competitiveLandscapeData, setCompetitiveLandscapeData,
+    coreAdjacencyData, setCoreAdjacencyData,
     isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
     isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating,
     isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating,
@@ -217,13 +225,14 @@ const BusinessSetupPage = () => {
     isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
     isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
     isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
-    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating, 
+    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating,
+    isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
     highlightedMissingQuestions, setHighlightedMissingQuestions,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, dropdownRef, isRegeneratingRef,
     portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef,
     productivityRef, maturityScoreRef, strategicRadarRef, expandedCapabilityRef,
     profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
-    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef  
+    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef
   } = state;
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
@@ -255,6 +264,7 @@ const BusinessSetupPage = () => {
     setInvestmentPerformanceData,
     setLeverageRiskData,
     setCompetitiveLandscapeData,
+    setCoreAdjacencyData,
     uploadedFile: uploadedFileForAnalysis,
   };
 
@@ -312,7 +322,7 @@ const BusinessSetupPage = () => {
   };
 
   const loadExistingAnalysisData = (phaseAnalysisArray) => {
-     try {
+    try {
       setPhaseAnalysisArray(phaseAnalysisArray);
       const latestAnalysisByType = {};
 
@@ -350,6 +360,7 @@ const BusinessSetupPage = () => {
           'investmentPerformance': () => setInvestmentPerformanceData(analysis_data),
           'leverageRisk': () => setLeverageRiskData(analysis_data),
           'competitiveLandscape': () => setCompetitiveLandscapeData(analysis_data),
+          'coreAdjacency': () => setCoreAdjacencyData(analysis_data),
         };
 
         const setter = setterMap[analysis_type];
@@ -523,6 +534,7 @@ const BusinessSetupPage = () => {
       "Investment Performance": "investment-performance",
       "Leverage & Risk": "leverage-risk",
       "Competitive Landscape": "competitive-landscape",
+      "Core vs. Adjacency": "core-adjacency",
     };
 
     const cardId = cardIdMap[option];
@@ -553,6 +565,7 @@ const BusinessSetupPage = () => {
         "Investment Performance": investmentPerformanceRef,
         "Leverage & Risk": leverageRiskRef,
         "Competitive Landscape": competitiveLandscapeRef,
+        "Core vs. Adjacency": coreAdjacencyRef,
       };
 
       const targetRef = refMap[option];
@@ -583,8 +596,9 @@ const BusinessSetupPage = () => {
         'growthTracker': setIsGrowthTrackerRegenerating,
         'liquidityEfficiency': setIsLiquidityEfficiencyRegenerating,
         'investmentPerformance': setIsInvestmentPerformanceRegenerating,
-        'leverageRisk': setIsLeverageRiskRegenerating, 
+        'leverageRisk': setIsLeverageRiskRegenerating,
         'competitiveLandscape': setIsCompetitiveLandscapeRegenerating,
+        'coreAdjacency': setIsCoreAdjacencyRegenerating,
       };
 
       const dataStateMap = {
@@ -605,6 +619,7 @@ const BusinessSetupPage = () => {
         'investmentPerformance': setInvestmentPerformanceData,
         'leverageRisk': setLeverageRiskData,
         'competitiveLandscape': setCompetitiveLandscapeData,
+        'coreAdjacency': setCoreAdjacencyData,
       };
 
       const displayNameMap = {
@@ -624,7 +639,8 @@ const BusinessSetupPage = () => {
         'liquidityEfficiency': 'Liquidity & Efficiency',
         'investmentPerformance': 'Investment Performance',
         'leverageRisk': 'Leverage & Risk',
-        'competitiveLandscape': 'Competitive Landscape'
+        'competitiveLandscape': 'Competitive Landscape',
+        'coreAdjacency': 'Core vs. Adjacency'
       };
 
       const setIsRegenerating = regeneratingStateMap[analysisType];
@@ -726,7 +742,9 @@ const BusinessSetupPage = () => {
               result = await apiService.generateCompetitiveLandscape(questions, userAnswers, selectedBusinessId);
               break;
 
-
+            case 'coreAdjacency':  // ADD THIS CASE
+              result = await apiService.generateCoreAdjacency(questions, userAnswers, selectedBusinessId);
+              break;
             default:
               throw new Error(`Unknown analysis type: ${analysisType}`);
           }
@@ -839,6 +857,9 @@ const BusinessSetupPage = () => {
         "Competition": [
           "Competitive Landscape"
         ],
+        "Current Strategy": [  // ADD THIS SECTION
+          "Core vs. Adjacency"
+        ]
       },
       good: {
         "Costs/Financial": [
@@ -869,6 +890,9 @@ const BusinessSetupPage = () => {
         "Competition": [
           "Competitive Landscape"
         ],
+        "Current Strategy": [  // ADD THIS SECTION
+          "Core vs. Adjacency"
+        ]
       },
       advanced: {
         "Costs/Financial": [
@@ -891,7 +915,7 @@ const BusinessSetupPage = () => {
           "Competitive Advantage",
           "Purchase Criteria",
           "Loyalty/NPS"
-        ], 
+        ],
         "Capabilities": [
           "Capability Heatmap",
           "Maturity Score"
@@ -899,6 +923,9 @@ const BusinessSetupPage = () => {
         "Competition": [
           "Competitive Landscape"
         ],
+        "Current Strategy": [  // ADD THIS SECTION
+          "Core vs. Adjacency"
+        ]
       }
     };
 

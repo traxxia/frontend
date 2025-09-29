@@ -55,6 +55,7 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
       setFullSwotData,
       setCustomerSegmentationData,
       setCompetitiveAdvantageData,
+      setCoreAdjacencyData,
       setChannelEffectivenessData,
       setExpandedCapabilityData,
       setStrategicGoalsData,
@@ -96,6 +97,8 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
       apiService.generateMaturityScore(questions, answers, selectedBusinessId)
         .then(result => setMaturityData(result)),
 
+      apiService.generateCoreAdjacency(questions, answers, selectedBusinessId)  // ADD THIS
+        .then(result => setCoreAdjacencyData(result)),
       // Overwrite strategic analysis for essential phase
       apiService.generateStrategicAnalysis(questions, answers, selectedBusinessId)
         .then(result => setStrategicData(result))
@@ -165,7 +168,10 @@ export const useAnalysisService = (ML_API_BASE_URL, API_BASE_URL, getAuthToken) 
           result = await apiService.generateFullSwotPortfolio(questions, userAnswers, selectedBusinessId);
         } else if (analysisType === 'competitiveAdvantage') {
           result = await apiService.generateCompetitiveAdvantage(questions, userAnswers, selectedBusinessId);
-        } else if (analysisType === 'channelEffectiveness') {
+        } else if (analysisType === 'costEfficiency') {
+          result = await apiService.generateCostEfficiency(questions, userAnswers, selectedBusinessId, file || null);
+        }
+        else if (analysisType === 'channelEffectiveness') {
           result = await apiService.generateChannelEffectiveness(questions, userAnswers, selectedBusinessId);
         } else if (analysisType === 'expandedCapability') {
           result = await apiService.generateExpandedCapability(questions, userAnswers, selectedBusinessId);

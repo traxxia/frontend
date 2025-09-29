@@ -18,7 +18,8 @@ export const PHASE_API_CONFIG = {
     'strategicRadar',
     'productivityMetrics',
     'maturityScore',
-    'competitiveLandscape' // Add this line
+    'competitiveLandscape',
+    'coreAdjacency' // Add this line
   ],
 
   good: [
@@ -32,7 +33,8 @@ export const PHASE_API_CONFIG = {
     'strategicRadar',
     'productivityMetrics',
     'maturityScore',
-    'competitiveLandscape', // Add this line
+    'competitiveLandscape',
+    'coreAdjacency',
     // 5 financial analyses
     'profitabilityAnalysis',
     'growthTracker',
@@ -52,7 +54,8 @@ export const PHASE_API_CONFIG = {
     'strategicRadar',
     'productivityMetrics',
     'maturityScore',
-    'competitiveLandscape', // Add this line
+    'competitiveLandscape',
+    'coreAdjacency',
     // 5 financial analyses
     'profitabilityAnalysis',
     'growthTracker',
@@ -76,6 +79,7 @@ export const API_ENDPOINTS = {
   productivityMetrics: 'productivity-metrics',
   maturityScore: 'maturity-scoring',
   competitiveLandscape: 'simple-swot-portfolio',
+  coreAdjacency: 'core-adjacency-matrix',
 
   profitabilityAnalysis: 'excel-analysis',
   growthTracker: 'excel-analysis',
@@ -410,6 +414,9 @@ export class AnalysisApiService {
       case 'competitiveLandscape':
         processedData = result.competitive_landscape || result.competitiveLandscape || result;
         break;
+      case 'coreAdjacency': // ADD THIS CASE
+        processedData = result.core_adjacency || result.coreAdjacency || result;
+        break;
       default:
         processedData = result;
     }
@@ -530,6 +537,7 @@ export class AnalysisApiService {
       productivityMetrics: "Productivity Metrics",
       maturityScore: "Maturity Score",
       competitiveLandscape: "Competitive Landscape",
+      coreAdjacency: "Core vs. Adjacency",
     };
 
     return displayNames[analysisType] || analysisType;
@@ -576,7 +584,7 @@ export class AnalysisApiService {
       productivityMetrics: 'setProductivityData',
       maturityScore: 'setMaturityData',
       competitiveLandscape: 'setCompetitiveLandscapeData',
-
+      coreAdjacency: 'setCoreAdjacencyData',
       // 5 financial analysis setters
       profitabilityAnalysis: 'setProfitabilityData',
       growthTracker: 'setGrowthTrackerData',
@@ -616,6 +624,7 @@ export class AnalysisApiService {
         'productivityMetrics': 'essential',
         'maturityScore': 'essential',
         'competitiveLandscape': 'essential',
+        'coreAdjacency': 'essential',
         // 5 financial analysis types
         'profitabilityAnalysis': 'good',
         'growthTracker': 'good',
@@ -641,7 +650,8 @@ export class AnalysisApiService {
         'strategicRadar': 'Strategic Positioning Radar',
         'productivityMetrics': 'Productivity Metrics',
         'maturityScore': 'Maturity Score',
-        'competitiveLandscape': 'Competitive Landscape'
+        'competitiveLandscape': 'Competitive Landscape',
+        'coreAdjacency': 'Core vs. Adjacency'
       };
 
       const phase = analysisPhaseMap[analysisType] || 'initial';
@@ -962,6 +972,45 @@ export class AnalysisApiService {
     } catch (error) {
       console.error('Error generating Productivity Metrics:', error);
       throw error;
+    }
+  }
+
+  async generateCoreAdjacency(questions, answers, selectedBusinessId) {
+    try {
+      if (this.setApiLoading) {
+        this.setApiLoading('core-adjacency-matrix', true);
+      }
+
+      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
+
+      const response = await fetch(`${this.ML_API_BASE_URL}/core-adjacency-matrix`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questions: questionsArray,
+          answers: answersArray
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Save to backend
+      await this.saveAnalysisToBackend(result, 'coreAdjacency', selectedBusinessId);
+
+      return result;
+    } catch (error) {
+      console.error('Error generating Core vs. Adjacency analysis:', error);
+      throw error;
+    } finally {
+      if (this.setApiLoading) {
+        this.setApiLoading('core-adjacency-matrix', false);
+      }
     }
   }
 

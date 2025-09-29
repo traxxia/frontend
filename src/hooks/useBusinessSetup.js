@@ -68,7 +68,9 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating] = useState(false);
   const [isLeverageRiskRegenerating, setIsLeverageRiskRegenerating] = useState(false);
   const [isStrategicRegenerating, setIsStrategicRegenerating] = useState(false);
-
+  const [coreAdjacencyData, setCoreAdjacencyData] = useState(null);
+  const [isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating] = useState(false);
+  const coreAdjacencyRef = useRef(null);
   // Other states
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
   const [selectedPhase, setSelectedPhase] = useState('initial');
@@ -135,7 +137,8 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     strategicRadarData, setStrategicRadarData,
     productivityData, setProductivityData,
     maturityData, setMaturityData,
-    competitiveLandscapeData, setCompetitiveLandscapeData, // ADD THIS LINE
+    competitiveLandscapeData, setCompetitiveLandscapeData,
+    coreAdjacencyData, setCoreAdjacencyData,
 
     // Financial analysis states
     profitabilityData, setProfitabilityData,
@@ -156,7 +159,8 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     isStrategicRadarRegenerating, setIsStrategicRadarRegenerating,
     isProductivityRegenerating, setIsProductivityRegenerating,
     isMaturityRegenerating, setIsMaturityRegenerating,
-    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating, // ADD THIS LINE
+    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating,
+    isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
     isStrategicRegenerating, setIsStrategicRegenerating,
     // Financial analysis regenerating states
     isProfitabilityRegenerating, setIsProfitabilityRegenerating,
@@ -190,7 +194,8 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     maturityScoreRef,
     strategicRadarRef,
     expandedCapabilityRef,
-    competitiveLandscapeRef, // ADD THIS LINE
+    competitiveLandscapeRef,
+    coreAdjacencyRef,
 
     // Financial analysis refs
     profitabilityRef,

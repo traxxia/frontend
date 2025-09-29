@@ -21,6 +21,7 @@ import LiquidityEfficiency from "./LiquidityEfficiency";
 import InvestmentPerformance from "./InvestmentPerformance";
 import LeverageRisk from "./LeverageRisk";
 import CompetitiveLandscape from "./CompetitiveLandscape";
+import CoreAdjacency from "./CoreAdjacency";
 
 const AnalysisContentManager = ({
   phaseManager,
@@ -51,6 +52,10 @@ const AnalysisContentManager = ({
   setCompetitiveLandscapeData,
   isCompetitiveLandscapeRegenerating,
   competitiveLandscapeRef,
+  coreAdjacencyData,
+  setCoreAdjacencyData,
+  isCoreAdjacencyRegenerating,
+  coreAdjacencyRef,
   setPortersData,
   setPestelData,
   setFullSwotData,
@@ -112,8 +117,8 @@ const AnalysisContentManager = ({
   setActiveTab,
   hasUploadedDocument,
   readOnly = false,
-   documentInfo,
-}) => { 
+  documentInfo,
+}) => {
   const API_TO_ANALYSIS_MAP = {
     'find': 'swot',
     'purchase-criteria': 'purchaseCriteria',
@@ -127,6 +132,7 @@ const AnalysisContentManager = ({
     'productivity-metrics': 'productivityMetrics',
     'maturity-scoring': 'maturityScore',
     'simple-swot-portfolio': 'competitiveLandscape',
+    'core-adjacency': 'coreAdjacency',
     'excel-analysis': 'profitabilityAnalysis',
     'excel-analysis-growth': 'growthTracker',
     'excel-analysis-liquidity': 'liquidityEfficiency',
@@ -137,26 +143,26 @@ const AnalysisContentManager = ({
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
 
   const isAnalysisLoading = (analysisType) => {
-  const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
+    const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
-  if (excelAnalysisTypes.includes(analysisType)) {
-    const regenerationStateMap = {
-      'profitabilityAnalysis': isProfitabilityRegenerating,
-      'growthTracker': isGrowthTrackerRegenerating,
-      'liquidityEfficiency': isLiquidityEfficiencyRegenerating,
-      'investmentPerformance': isInvestmentPerformanceRegenerating,
-      'leverageRisk': isLeverageRiskRegenerating
-    };
+    if (excelAnalysisTypes.includes(analysisType)) {
+      const regenerationStateMap = {
+        'profitabilityAnalysis': isProfitabilityRegenerating,
+        'growthTracker': isGrowthTrackerRegenerating,
+        'liquidityEfficiency': isLiquidityEfficiencyRegenerating,
+        'investmentPerformance': isInvestmentPerformanceRegenerating,
+        'leverageRisk': isLeverageRiskRegenerating
+      };
 
-     return regenerationStateMap[analysisType] || apiLoadingStates['excel-analysis'] || false;
-  }
+      return regenerationStateMap[analysisType] || apiLoadingStates['excel-analysis'] || false;
+    }
 
-   const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
-    .filter(([endpoint, analysis]) => analysis === analysisType)
-    .map(([endpoint]) => endpoint);
+    const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
+      .filter(([endpoint, analysis]) => analysis === analysisType)
+      .map(([endpoint]) => endpoint);
 
-  return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
-};
+    return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
+  };
 
   const toggleCard = (cardId) => {
     setExpandedCards(prev => {
@@ -230,7 +236,7 @@ const AnalysisContentManager = ({
           className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
           onClick={() => toggleCard(id)}
         >
-          <div className="modern-card-header-left"> 
+          <div className="modern-card-header-left">
             <div className="modern-card-text">
               <h3>{title}</h3>
               <p>{description}</p>
@@ -396,7 +402,7 @@ const AnalysisContentManager = ({
               onRedirectToBrief={handleRedirectToBrief}
               uploadedFile={uploadedFileForAnalysis}
               readOnly={readOnly}
-              documentInfo = {documentInfo}
+              documentInfo={documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -430,7 +436,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
-              documentInfo = {documentInfo}
+              documentInfo={documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -464,7 +470,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
-              documentInfo = {documentInfo}
+              documentInfo={documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -498,7 +504,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
-              documentInfo = {documentInfo}
+              documentInfo={documentInfo}
             />
           </div>
         </ModernAnalysisCard>,
@@ -532,7 +538,7 @@ const AnalysisContentManager = ({
               setActiveTab={setActiveTab}
               hasUploadedDocument={hasUploadedDocument}
               readOnly={readOnly}
-              documentInfo = {documentInfo}
+              documentInfo={documentInfo}
             />
           </div>
         </ModernAnalysisCard>
@@ -892,6 +898,36 @@ const AnalysisContentManager = ({
           </ModernAnalysisCard>
         );
       };
+      if (unlockedFeatures.fullSwot) {
+        categories[5].analyses.push(
+          <ModernAnalysisCard
+            key="core-adjacency"
+            id="core-adjacency"
+            title="Core vs. Adjacency"
+            description="Strategic analysis of core business areas and adjacent growth opportunities"
+            icon={Target}
+            hasData={!!coreAdjacencyData}
+            onRegenerate={createSimpleRegenerationHandler('coreAdjacency')}
+            isRegenerating={isCoreAdjacencyRegenerating}
+            isLoading={isAnalysisLoading('coreAdjacency')}
+            category="essential"
+          >
+            <div ref={coreAdjacencyRef} data-component="core-adjacency">
+              <CoreAdjacency
+                questions={questions}
+                userAnswers={userAnswers}
+                businessName={businessData.name}
+                onRegenerate={createSimpleRegenerationHandler('coreAdjacency')}
+                isRegenerating={isCoreAdjacencyRegenerating || isAnalysisLoading('coreAdjacency')}
+                canRegenerate={!isAnalysisRegenerating}
+                coreAdjacencyData={coreAdjacencyData}
+                selectedBusinessId={selectedBusinessId}
+                onRedirectToBrief={handleRedirectToBrief}
+              />
+            </div>
+          </ModernAnalysisCard>
+        );
+      }
     }
 
     return (

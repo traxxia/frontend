@@ -15,27 +15,25 @@ const PDFExportButton = ({
   strategicData = null,
   // Analysis data state indicators
   unlockedFeatures = {},
-  hasEssentialData = false,
-  hasGoodData = false,
   fullSwotData = null,
-  customerSegmentationData = null,
   competitiveAdvantageData = null,
-  channelEffectivenessData = null,
   expandedCapabilityData = null,
-  strategicGoalsData = null,
   strategicRadarData = null,
-  cultureProfileData = null,
   productivityData = null,
   maturityData = null,
-  costEfficiencyData = null,
-  financialPerformanceData = null,
-  financialBalanceData = null,
-  operationalEfficiencyData = null
+  competitiveLandscapeData = null,
+  coreAdjacencyData = null,
+  // Financial analysis data (Good Phase)
+  profitabilityData = null,
+  growthTrackerData = null,
+  liquidityEfficiencyData = null,
+  investmentPerformanceData = null,
+  leverageRiskData = null
 }) => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const { t } = useTranslation();
 
-  // Fast preparation function - minimal DOM changes (from old version)
+  // Fast preparation function - minimal DOM changes
   const prepareForCapture = () => {
     const changes = [];
 
@@ -94,7 +92,7 @@ const PDFExportButton = ({
     return changes;
   };
 
-  // Fast restore function (from old version)
+  // Fast restore function
   const restoreChanges = (changes) => {
     changes.forEach(({ element, property, oldValue }) => {
       if (property === 'className') {
@@ -105,24 +103,34 @@ const PDFExportButton = ({
     });
   };
 
-  // Function to determine actual export phase based on available content
+  // Function to determine actual export phase based on unlocked features
   const getExportPhase = () => {
-    const hasGoodPhaseData = !!(costEfficiencyData || financialPerformanceData || financialBalanceData || operationalEfficiencyData);
-    if (unlockedFeatures.goodPhase && hasGoodPhaseData) {
+    // Priority order: advanced > good > essential > initial
+    
+    // Check if user has unlocked advanced phase
+    if (unlockedFeatures.advancedPhase) {
+      return 'advanced';
+    }
+
+    // Check for good phase
+    if (unlockedFeatures.goodPhase) {
       return 'good';
     }
 
-    const hasEssentialPhaseData = !!(fullSwotData || customerSegmentationData || competitiveAdvantageData ||
-      channelEffectivenessData || expandedCapabilityData || strategicGoalsData ||
-      strategicRadarData || cultureProfileData || productivityData || maturityData);
-    if (unlockedFeatures.fullSwot && hasEssentialPhaseData) {
+    // Check for essential phase
+    if (unlockedFeatures.fullSwot) {
       return 'essential';
+    }
+
+    // Check for initial phase
+    if (unlockedFeatures.analysis) {
+      return 'initial';
     }
 
     return 'initial';
   };
 
-  // Optimized single-page capture for each component (enhanced from old version)
+  // Optimized single-page capture for each component
   const captureComponent = async (selector, name) => {
     const component = document.querySelector(selector);
     if (!component || component.offsetHeight === 0) {
@@ -134,13 +142,13 @@ const PDFExportButton = ({
       const html2canvas = (await import('html2canvas')).default;
 
       const canvas = await html2canvas(component, {
-        scale: 1.2, // Good quality but not too slow
+        scale: 1.2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         removeContainer: true,
-        imageTimeout: 3000, // Faster timeout
+        imageTimeout: 3000,
         windowWidth: component.scrollWidth,
         windowHeight: component.scrollHeight,
         onclone: (clonedDoc) => {
@@ -159,7 +167,7 @@ const PDFExportButton = ({
       return {
         canvas,
         name,
-        imgData: canvas.toDataURL('image/png', 0.85) // Good quality
+        imgData: canvas.toDataURL('image/png', 0.85)
       };
     } catch (error) {
       console.error(`Failed to capture ${name}:`, error);
@@ -308,7 +316,7 @@ const PDFExportButton = ({
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(59, 130, 246);
-      const phaseTitle = 'Analysis Result';
+      const phaseTitle = exportPhase.charAt(0).toUpperCase() + exportPhase.slice(1) + ' Phase Analysis';
       pdf.text(phaseTitle, pageWidth / 2, 30, { align: 'center' });
 
       pdf.setFontSize(16);
@@ -319,57 +327,66 @@ const PDFExportButton = ({
       pdf.setTextColor(128, 128, 128);
       pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
 
-      // Define components for each phase (comprehensive list)
+      // Define components for each phase - aligned with PHASE_API_CONFIG
       const phaseComponents = {
         initial: [
           { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
           { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-          { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
           { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-          { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
           { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
           { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' }
         ],
         essential: [
-          // Include all initial phase components
-          { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+          // Include purchase criteria and loyalty from initial
           { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-          { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
           { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-          { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
           { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
           { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
           // Essential phase specific components
           { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-          { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
           { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-          { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
           { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
-          { selector: '[data-component="strategic-goals"]', name: 'Strategic Goals' },
           { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-          { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
           { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
-          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' }
+          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
+          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core vs. Adjacency' }
         ],
         good: [
-          // Include all previous phase components
-          { selector: '[data-component="swot-analysis"]', name: 'SWOT Analysis' },
+          // Include all essential phase components
           { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-          { selector: '[data-component="channel-heatmap"]', name: 'Channel Heatmap' },
           { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-          { selector: '[data-component="capability-heatmap"]', name: 'Capability Heatmap' },
           { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
           { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
           { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-          { selector: '[data-component="customer-segmentation"]', name: 'Customer Segmentation' },
           { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-          { selector: '[data-component="channel-effectiveness"]', name: 'Channel Effectiveness Map' },
           { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
           { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-          { selector: '[data-component="culture-profile"]', name: 'Organizational Culture Profile' },
           { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
           { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-          // Good phase specific components - Updated to match new components
+          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core vs. Adjacency' },
+          // Good phase specific components - 5 financial analyses
+          { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
+          { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
+          { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
+          { selector: '[data-component="investment-performance"]', name: 'Investment Performance' },
+          { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' }
+        ],
+        advanced: [
+          // Advanced phase has same components as good phase
+          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
+          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
+          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+          { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
+          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
+          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
+          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core vs. Adjacency' },
           { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
           { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
           { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
@@ -444,8 +461,9 @@ const PDFExportButton = ({
 
       // Save PDF
       const timestamp = new Date().toISOString().split('T')[0];
-      const phaseLabel = exportPhase === 'good' ? 'Good_Phase' :
-        exportPhase === 'essential' ? 'Essential_Phase' : 'Initial_Phase';
+      const phaseLabel = exportPhase === 'advanced' ? 'Advanced_Phase' :
+        exportPhase === 'good' ? 'Good_Phase' :
+          exportPhase === 'essential' ? 'Essential_Phase' : 'Initial_Phase';
 
       const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_${timestamp}.pdf`;
       pdf.save(filename);
@@ -471,7 +489,8 @@ const PDFExportButton = ({
   const exportPhase = exportType === "analysis" ? getExportPhase() : null;
   const phaseLabel = exportType === "strategic" ? "Strategic" :
     exportPhase === 'initial' ? 'Initial' :
-      exportPhase === 'essential' ? 'Essential' : 'Good';
+      exportPhase === 'essential' ? 'Essential' :
+        exportPhase === 'good' ? 'Good' : 'Advanced';
 
   return (
     <>
