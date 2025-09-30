@@ -537,7 +537,7 @@ export class AnalysisApiService {
       productivityMetrics: "Productivity Metrics",
       maturityScore: "Maturity Score",
       competitiveLandscape: "Competitive Landscape",
-      coreAdjacency: "Core vs. Adjacency",
+      coreAdjacency: "Core",
     };
 
     return displayNames[analysisType] || analysisType;
@@ -651,7 +651,7 @@ export class AnalysisApiService {
         'productivityMetrics': 'Productivity Metrics',
         'maturityScore': 'Maturity Score',
         'competitiveLandscape': 'Competitive Landscape',
-        'coreAdjacency': 'Core vs. Adjacency'
+        'coreAdjacency': 'Core'
       };
 
       const phase = analysisPhaseMap[analysisType] || 'initial';

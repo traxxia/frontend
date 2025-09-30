@@ -350,7 +350,7 @@ const PDFExportButton = ({
           { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
           { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
           { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-          { selector: '[data-component="core-adjacency"]', name: 'Core vs. Adjacency' }
+          { selector: '[data-component="core-adjacency"]', name: 'Core' }
         ],
         good: [
           // Include all essential phase components
@@ -365,7 +365,7 @@ const PDFExportButton = ({
           { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
           { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
           { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-          { selector: '[data-component="core-adjacency"]', name: 'Core vs. Adjacency' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core' },
           // Good phase specific components - 5 financial analyses
           { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
           { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
@@ -386,7 +386,7 @@ const PDFExportButton = ({
           { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
           { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
           { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-          { selector: '[data-component="core-adjacency"]', name: 'Core vs. Adjacency' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core' },
           { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
           { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
           { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },

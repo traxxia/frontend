@@ -903,7 +903,7 @@ const AnalysisContentManager = ({
           <ModernAnalysisCard
             key="core-adjacency"
             id="core-adjacency"
-            title="Core vs. Adjacency"
+            title="Core"
             description="Strategic analysis of core business areas and adjacent growth opportunities"
             icon={Target}
             hasData={!!coreAdjacencyData}

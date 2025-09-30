@@ -534,7 +534,7 @@ const BusinessSetupPage = () => {
       "Investment Performance": "investment-performance",
       "Leverage & Risk": "leverage-risk",
       "Competitive Landscape": "competitive-landscape",
-      "Core vs. Adjacency": "core-adjacency",
+      "Core": "core-adjacency",
     };
 
     const cardId = cardIdMap[option];
@@ -621,7 +621,7 @@ const BusinessSetupPage = () => {
         'investmentPerformance': 'Investment Performance',
         'leverageRisk': 'Leverage & Risk',
         'competitiveLandscape': 'Competitive Landscape',
-        'coreAdjacency': 'Core vs. Adjacency'
+        'coreAdjacency': 'Core'
       };
 
       const setIsRegenerating = regeneratingStateMap[analysisType];
@@ -839,7 +839,7 @@ const BusinessSetupPage = () => {
           "Competitive Landscape"
         ],
         "Current Strategy": [  // ADD THIS SECTION
-          "Core vs. Adjacency"
+          "Core"
         ]
       },
       good: {
@@ -872,7 +872,7 @@ const BusinessSetupPage = () => {
           "Competitive Landscape"
         ],
         "Current Strategy": [  // ADD THIS SECTION
-          "Core vs. Adjacency"
+          "Core"
         ]
       },
       advanced: {
@@ -905,7 +905,7 @@ const BusinessSetupPage = () => {
           "Competitive Landscape"
         ],
         "Current Strategy": [  // ADD THIS SECTION
-          "Core vs. Adjacency"
+          "Core"
         ]
       }
     };
