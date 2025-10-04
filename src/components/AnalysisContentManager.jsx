@@ -140,7 +140,9 @@ const AnalysisContentManager = ({
     'excel-analysis-leverage': 'leverageRisk'
   };
 
-  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
+   const [collapsedCategories, setCollapsedCategories] = useState(
+    new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
+  );
 
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
