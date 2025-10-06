@@ -292,8 +292,8 @@ const StrategicAnalysis = ({
           </div>
 
           <DiagnosticBox diagnostic={tactics.diagnostic} />
-
-          {horizons.map((horizon, idx) => {
+{renderStrategicRecommendationsFromAnalyses()}
+          {/* {horizons.map((horizon, idx) => {
             const items = tactics[horizon.key];
             if (!items || items.length === 0 || items[0] === 'N/A') return null;
 
@@ -321,7 +321,7 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             );
-          })}
+          })} */}
         </div>
       </div>
     );
@@ -1002,7 +1002,8 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-headers">
           <Link2 size={24} style={{ color: 'blue' }} />
-          <h4>Strategic Linkages</h4>
+          <div><h2 className="category-title">Strategic Linkages</h2></div>
+           
         </div>
 
         <div className="strategic-linkages-container"> 
@@ -1271,7 +1272,7 @@ const StrategicAnalysis = ({
       if (!shifts || shifts.length === 0) return null;
 
       return (
-        <div style={{ marginBottom: '25px' }}>
+        <div style={{ marginBottom: '5px' }}>
           <h3 style={{
             fontSize: '16px',
             fontWeight: '600',
@@ -1351,7 +1352,7 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        <div className="section-headers" style={{
+        {/* <div className="section-headers" style={{
           display: 'inline-flex',
           alignItems: 'center',
           borderBottom: 'none',
@@ -1361,7 +1362,7 @@ const StrategicAnalysis = ({
         }}>
           <Settings size={24} style={{ color: 'blue' }} />
           <h4 style={{ marginTop: '5px' }}>Strategic Recommendations</h4>
-        </div>
+        </div> */}
         {renderRecommendationActions(
           combinedImmediateActions,
           'Immediate Actions',
@@ -1428,7 +1429,7 @@ const StrategicAnalysis = ({
         )}
 
         {renderStrategicLinkages(analysisData?.strategic_linkages)}
-        {renderStrategicRecommendationsFromAnalyses()}
+        {/* {renderStrategicRecommendationsFromAnalyses()} */}
 
       </div>
     );
