@@ -184,7 +184,7 @@ const StrategicAnalysis = ({
     return (
       <div style={{
         padding: '12px 16px',
-        backgroundColor: '#f0f9ff', 
+        backgroundColor: '#f0f9ff',
         marginBottom: '5px',
         borderRadius: '4px',
         display: 'flex',
@@ -496,473 +496,473 @@ const StrategicAnalysis = ({
   };
 
   const renderExecutionPillar = (execution) => {
-  if (!execution) return null;
+    if (!execution) return null;
 
-  const parseDuration = (duration) => {
-    if (!duration) return 1;
-    const match = duration?.toString().toLowerCase().match(/(\d+)\s*(month|week|day)/);
-    if (!match) return 1;
+    const parseDuration = (duration) => {
+      if (!duration) return 1;
+      const match = duration?.toString().toLowerCase().match(/(\d+)\s*(month|week|day)/);
+      if (!match) return 1;
 
-    const value = parseInt(match[1]);
-    const unit = match[2];
+      const value = parseInt(match[1]);
+      const unit = match[2];
 
-    switch (unit) {
-      case 'week': return Math.max(0.25, value / 4);
-      case 'day': return Math.max(0.1, value / 30);
-      case 'month':
-      default: return Math.max(1, value);
-    }
-  };
-
-  const renderGanttChart = (roadmap) => {
-    if (!roadmap || roadmap.length === 0) return null;
-
-    // Calculate cumulative timeline
-    let cumulativeMonths = 0;
-    const initiativesWithTimeline = roadmap.map((item, index) => {
-      const duration = parseDuration(item.milestone || '1 month');
-      const startMonth = cumulativeMonths;
-      cumulativeMonths += duration;
-
-      return {
-        ...item,
-        duration,
-        startMonth,
-        endMonth: cumulativeMonths,
-        index
-      };
-    });
-
-    const totalTimeline = cumulativeMonths;
-    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-
-    const renderGanttBar = (startMonth, duration, index) => {
-      const color = colors[index % colors.length];
-      const leftPercent = (startMonth / totalTimeline) * 100;
-      const widthPercent = (duration / totalTimeline) * 100;
-
-      return (
-        <div
-          style={{
-            position: 'absolute',
-            left: `${leftPercent}%`,
-            width: `${widthPercent}%`,
-            height: '20px',
-            backgroundColor: color,
-            borderRadius: '4px',
-            opacity: 0.85,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: '600',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}
-        >
-          {Math.round(duration)}m
-        </div>
-      );
+      switch (unit) {
+        case 'week': return Math.max(0.25, value / 4);
+        case 'day': return Math.max(0.1, value / 30);
+        case 'month':
+        default: return Math.max(1, value);
+      }
     };
 
-    const renderTimelineHeader = () => {
-      const months = Math.ceil(totalTimeline);
+    const renderGanttChart = (roadmap) => {
+      if (!roadmap || roadmap.length === 0) return null;
+
+      // Calculate cumulative timeline
+      let cumulativeMonths = 0;
+      const initiativesWithTimeline = roadmap.map((item, index) => {
+        const duration = parseDuration(item.milestone || '1 month');
+        const startMonth = cumulativeMonths;
+        cumulativeMonths += duration;
+
+        return {
+          ...item,
+          duration,
+          startMonth,
+          endMonth: cumulativeMonths,
+          index
+        };
+      });
+
+      const totalTimeline = cumulativeMonths;
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+      const renderGanttBar = (startMonth, duration, index) => {
+        const color = colors[index % colors.length];
+        const leftPercent = (startMonth / totalTimeline) * 100;
+        const widthPercent = (duration / totalTimeline) * 100;
+
+        return (
+          <div
+            style={{
+              position: 'absolute',
+              left: `${leftPercent}%`,
+              width: `${widthPercent}%`,
+              height: '20px',
+              backgroundColor: color,
+              borderRadius: '4px',
+              opacity: 0.85,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: '600',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}
+          >
+            {Math.round(duration)}m
+          </div>
+        );
+      };
+
+      const renderTimelineHeader = () => {
+        const months = Math.ceil(totalTimeline);
+        return (
+          <div style={{
+            display: 'flex',
+            marginBottom: '15px',
+            fontSize: '12px',
+            color: '#4b5563',
+            fontWeight: '600',
+            borderBottom: '2px solid #d1d5db',
+            paddingBottom: '8px'
+          }}>
+            {Array.from({ length: months }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  borderLeft: i > 0 ? '1px solid #e5e7eb' : 'none',
+                  padding: '4px 2px',
+                  minWidth: '40px'
+                }}
+              >
+                M{i + 1}
+              </div>
+            ))}
+          </div>
+        );
+      };
+
       return (
-        <div style={{
-          display: 'flex',
-          marginBottom: '15px',
-          fontSize: '12px',
-          color: '#4b5563',
-          fontWeight: '600',
-          borderBottom: '2px solid #d1d5db',
-          paddingBottom: '8px'
-        }}>
-          {Array.from({ length: months }, (_, i) => (
-            <div
-              key={i}
-              style={{
-                flex: 1,
-                textAlign: 'center',
-                borderLeft: i > 0 ? '1px solid #e5e7eb' : 'none',
-                padding: '4px 2px',
-                minWidth: '40px'
-              }}
-            >
-              M{i + 1}
+        <div style={{ marginTop: '20px', marginBottom: '30px' }}>
+          <h4 className="subsection-title" style={{ marginBottom: '20px' }}>
+            <BarChart3 size={18} className="execution-icon" />
+            Initiative Timeline
+          </h4>
+
+          <div style={{
+            backgroundColor: '#f9fafb',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
+              Timeline Overview ({Math.ceil(totalTimeline)} months)
+            </h3>
+
+            <div style={{ overflowX: 'auto' }}>
+              <div style={{ minWidth: '700px' }}>
+                {renderTimelineHeader()}
+
+                <div style={{ position: 'relative' }}>
+                  {initiativesWithTimeline.map(({ initiative, startMonth, duration, index }) => (
+                    <div key={index} style={{
+                      position: 'relative',
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        marginRight: '12px',
+                        color: '#1f2937',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: colors[index % colors.length],
+                          flexShrink: 0
+                        }} />
+                        {initiative}
+                      </div>
+                      <div style={{
+                        flex: 1,
+                        position: 'relative',
+                        height: '28px',
+                        backgroundColor: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        minWidth: '520px'
+                      }}>
+                        {renderGanttBar(startMonth, duration, index)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       );
     };
 
     return (
-      <div style={{ marginTop: '20px', marginBottom: '30px' }}>
-        <h4 className="subsection-title" style={{ marginBottom: '20px' }}>
-          <BarChart3 size={18} className="execution-icon" />
-          Initiative Timeline
-        </h4>
-
-        <div style={{
-          backgroundColor: '#f9fafb',
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          padding: '24px', 
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-        }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>
-            Timeline Overview ({Math.ceil(totalTimeline)} months)
-          </h3>
-
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: '700px' }}>
-              {renderTimelineHeader()}
-
-              <div style={{ position: 'relative' }}>
-                {initiativesWithTimeline.map(({ initiative, startMonth, duration, index }) => (
-                  <div key={index} style={{
-                    position: 'relative',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <div style={{ 
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      marginRight: '12px',
-                      color: '#1f2937',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: colors[index % colors.length],
-                        flexShrink: 0
-                      }} />
-                      {initiative}
-                    </div>
-                    <div style={{
-                      flex: 1,
-                      position: 'relative',
-                      height: '28px',
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                      minWidth: '520px'
-                    }}>
-                      {renderGanttBar(startMonth, duration, index)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      <div className="pillar-container">
+        <div className="pillar-card execution-card">
+          <div className="pillar-header execution-header">
+            <CheckCircle size={22} className="execution-icon" />
+            <h3 className="pillar-title">
+              E – Execution: Roadmap & Monitoring
+            </h3>
           </div>
+
+          <DiagnosticBox diagnostic={execution.diagnostic} />
+
+          {execution.implementation_roadmap && execution.implementation_roadmap.length > 0 && (
+            <>
+              {renderGanttChart(execution.implementation_roadmap)}
+
+              <div className="subsection">
+                <h4 className="subsection-title">
+                  <Calendar size={18} className="execution-icon" />
+                  Implementation Roadmap Details
+                </h4>
+
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Initiative</th>
+                        <th>Milestone</th>
+                        <th>Target Date</th>
+                        <th>Owner</th>
+                        <th>Success Metrics</th>
+                        <th>Resources Required</th>
+                        <th>Dependencies</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {execution.implementation_roadmap.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="table-value">
+                            <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                              {item.initiative}
+                            </div>
+                          </td>
+                          <td className="table-value">
+                            {item.milestone}
+                          </td>
+                          <td className="table-value text-center">
+                            <div className="flex-center" style={{ justifyContent: 'center' }}>
+                              <Calendar size={12} />
+                              <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                                {item.target_date}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="table-value">
+                            <div className="flex-center">
+                              <Users size={12} />
+                              {item.owner}
+                            </div>
+                          </td>
+                          <td className="table-value">
+                            {item.success_metrics && item.success_metrics.length > 0 && (
+                              <ul className="table-list">
+                                {item.success_metrics.map((metric, metricIdx) => (
+                                  <li key={metricIdx} className="flex-center" style={{
+                                    fontSize: '12px',
+                                    color: '#059669',
+                                    fontWeight: '600'
+                                  }}>
+                                    <Target size={10} />
+                                    {metric}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                          <td className="table-value">
+                            {item.resources_required && (
+                              <div style={{ fontSize: '12px' }}>
+                                {item.resources_required.budget && (
+                                  <div style={{ marginBottom: '4px' }}>
+                                    <strong>Budget:</strong> {item.resources_required.budget}
+                                  </div>
+                                )}
+                                {item.resources_required.headcount && (
+                                  <div style={{ marginBottom: '4px' }}>
+                                    <strong>Headcount:</strong> {item.resources_required.headcount}
+                                  </div>
+                                )}
+                                {item.resources_required.technology && item.resources_required.technology.length > 0 && (
+                                  <div>
+                                    <strong>Technology:</strong>
+                                    <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
+                                      {item.resources_required.technology.map((tech, techIdx) => (
+                                        <li key={techIdx}>{tech}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="table-value">
+                            {item.dependencies && item.dependencies.length > 0 && (
+                              <ul className="table-list">
+                                {item.dependencies.map((dep, depIdx) => (
+                                  <li key={depIdx} className="flex-center" style={{ fontSize: '12px' }}>
+                                    <Link2 size={10} />
+                                    {dep}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
+          {execution.kpi_dashboard && (
+            <div className="subsection">
+              <h4 className="subsection-title">
+                <BarChart3 size={18} className="execution-icon" />
+                KPI Dashboard
+              </h4>
+
+              {execution.kpi_dashboard.review_cadence && (
+                <div className="info-box execution">
+                  <Clock size={16} className="execution-icon" />
+                  <span className="info-box-text execution">
+                    Review Cadence: {execution.kpi_dashboard.review_cadence}
+                  </span>
+                </div>
+              )}
+
+              {execution.kpi_dashboard.adoption_metrics && execution.kpi_dashboard.adoption_metrics.length > 0 && (
+                <div className="subsection">
+                  <h5 className="subsection-title">
+                    <TrendingUp size={14} style={{ color: '#3b82f6' }} />
+                    Adoption Metrics
+                  </h5>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Metric</th>
+                          <th>Target</th>
+                          <th>Owner</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => (
+                          <tr key={idx}>
+                            <td className="table-value">{metric.metric}</td>
+                            <td className="table-value">
+                              <span className="badge adoption">
+                                {metric.target}
+                              </span>
+                            </td>
+                            <td className="table-value">
+                              <div className="flex-center">
+                                <Users size={12} />
+                                {metric.owner}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {execution.kpi_dashboard.network_metrics && execution.kpi_dashboard.network_metrics.length > 0 && (
+                <div className="subsection">
+                  <h5 className="subsection-title">
+                    <Link2 size={14} style={{ color: '#8b5cf6' }} />
+                    Network Metrics
+                  </h5>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Metric</th>
+                          <th>Target</th>
+                          <th>Owner</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {execution.kpi_dashboard.network_metrics.map((metric, idx) => (
+                          <tr key={idx}>
+                            <td className="table-value">{metric.metric}</td>
+                            <td className="table-value">
+                              <span className="badge network">
+                                {metric.target}
+                              </span>
+                            </td>
+                            <td className="table-value">
+                              <div className="flex-center">
+                                <Users size={12} />
+                                {metric.owner}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {execution.kpi_dashboard.operational_metrics && execution.kpi_dashboard.operational_metrics.length > 0 && (
+                <div className="subsection">
+                  <h5 className="subsection-title">
+                    <Activity size={14} style={{ color: '#f59e0b' }} />
+                    Operational Metrics
+                  </h5>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Metric</th>
+                          <th>Target</th>
+                          <th>Owner</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {execution.kpi_dashboard.operational_metrics.map((metric, idx) => (
+                          <tr key={idx}>
+                            <td className="table-value">{metric.metric}</td>
+                            <td className="table-value">
+                              <span className="badge operational">
+                                {metric.target}
+                              </span>
+                            </td>
+                            <td className="table-value">
+                              <div className="flex-center">
+                                <Users size={12} />
+                                {metric.owner}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {execution.kpi_dashboard.financial_metrics && execution.kpi_dashboard.financial_metrics.length > 0 && (
+                <div className="subsection">
+                  <h5 className="subsection-title">
+                    <DollarSign size={14} style={{ color: '#10b981' }} />
+                    Financial Metrics
+                  </h5>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Metric</th>
+                          <th>Target</th>
+                          <th>Owner</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {execution.kpi_dashboard.financial_metrics.map((metric, idx) => (
+                          <tr key={idx}>
+                            <td className="table-value">{metric.metric}</td>
+                            <td className="table-value">
+                              <span className="badge financial">
+                                {metric.target}
+                              </span>
+                            </td>
+                            <td className="table-value">
+                              <div className="flex-center">
+                                <Users size={12} />
+                                {metric.owner}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
   };
-
-  return (
-    <div className="pillar-container">
-      <div className="pillar-card execution-card">
-        <div className="pillar-header execution-header">
-          <CheckCircle size={22} className="execution-icon" />
-          <h3 className="pillar-title">
-            E – Execution: Roadmap & Monitoring
-          </h3>
-        </div>
-
-        <DiagnosticBox diagnostic={execution.diagnostic} />
-
-        {execution.implementation_roadmap && execution.implementation_roadmap.length > 0 && (
-          <>
-            {renderGanttChart(execution.implementation_roadmap)}
-            
-            <div className="subsection">
-              <h4 className="subsection-title">
-                <Calendar size={18} className="execution-icon" />
-                Implementation Roadmap Details
-              </h4>
-
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Initiative</th>
-                      <th>Milestone</th>
-                      <th>Target Date</th>
-                      <th>Owner</th>
-                      <th>Success Metrics</th>
-                      <th>Resources Required</th>
-                      <th>Dependencies</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {execution.implementation_roadmap.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="table-value">
-                          <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                            {item.initiative}
-                          </div>
-                        </td>
-                        <td className="table-value">
-                          {item.milestone}
-                        </td>
-                        <td className="table-value text-center">
-                          <div className="flex-center" style={{ justifyContent: 'center' }}>
-                            <Calendar size={12} />
-                            <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                              {item.target_date}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="table-value">
-                          <div className="flex-center">
-                            <Users size={12} />
-                            {item.owner}
-                          </div>
-                        </td>
-                        <td className="table-value">
-                          {item.success_metrics && item.success_metrics.length > 0 && (
-                            <ul className="table-list">
-                              {item.success_metrics.map((metric, metricIdx) => (
-                                <li key={metricIdx} className="flex-center" style={{
-                                  fontSize: '12px',
-                                  color: '#059669',
-                                  fontWeight: '600'
-                                }}>
-                                  <Target size={10} />
-                                  {metric}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </td>
-                        <td className="table-value">
-                          {item.resources_required && (
-                            <div style={{ fontSize: '12px' }}>
-                              {item.resources_required.budget && (
-                                <div style={{ marginBottom: '4px' }}>
-                                  <strong>Budget:</strong> {item.resources_required.budget}
-                                </div>
-                              )}
-                              {item.resources_required.headcount && (
-                                <div style={{ marginBottom: '4px' }}>
-                                  <strong>Headcount:</strong> {item.resources_required.headcount}
-                                </div>
-                              )}
-                              {item.resources_required.technology && item.resources_required.technology.length > 0 && (
-                                <div>
-                                  <strong>Technology:</strong>
-                                  <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
-                                    {item.resources_required.technology.map((tech, techIdx) => (
-                                      <li key={techIdx}>{tech}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                        <td className="table-value">
-                          {item.dependencies && item.dependencies.length > 0 && (
-                            <ul className="table-list">
-                              {item.dependencies.map((dep, depIdx) => (
-                                <li key={depIdx} className="flex-center" style={{ fontSize: '12px' }}>
-                                  <Link2 size={10} />
-                                  {dep}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )}
-
-        {execution.kpi_dashboard && (
-          <div className="subsection">
-            <h4 className="subsection-title">
-              <BarChart3 size={18} className="execution-icon" />
-              KPI Dashboard
-            </h4>
-
-            {execution.kpi_dashboard.review_cadence && (
-              <div className="info-box execution">
-                <Clock size={16} className="execution-icon" />
-                <span className="info-box-text execution">
-                  Review Cadence: {execution.kpi_dashboard.review_cadence}
-                </span>
-              </div>
-            )}
-
-            {execution.kpi_dashboard.adoption_metrics && execution.kpi_dashboard.adoption_metrics.length > 0 && (
-              <div className="subsection">
-                <h5 className="subsection-title">
-                  <TrendingUp size={14} style={{ color: '#3b82f6' }} />
-                  Adoption Metrics
-                </h5>
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Metric</th>
-                        <th>Target</th>
-                        <th>Owner</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => (
-                        <tr key={idx}>
-                          <td className="table-value">{metric.metric}</td>
-                          <td className="table-value">
-                            <span className="badge adoption">
-                              {metric.target}
-                            </span>
-                          </td>
-                          <td className="table-value">
-                            <div className="flex-center">
-                              <Users size={12} />
-                              {metric.owner}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {execution.kpi_dashboard.network_metrics && execution.kpi_dashboard.network_metrics.length > 0 && (
-              <div className="subsection">
-                <h5 className="subsection-title">
-                  <Link2 size={14} style={{ color: '#8b5cf6' }} />
-                  Network Metrics
-                </h5>
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Metric</th>
-                        <th>Target</th>
-                        <th>Owner</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {execution.kpi_dashboard.network_metrics.map((metric, idx) => (
-                        <tr key={idx}>
-                          <td className="table-value">{metric.metric}</td>
-                          <td className="table-value">
-                            <span className="badge network">
-                              {metric.target}
-                            </span>
-                          </td>
-                          <td className="table-value">
-                            <div className="flex-center">
-                              <Users size={12} />
-                              {metric.owner}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {execution.kpi_dashboard.operational_metrics && execution.kpi_dashboard.operational_metrics.length > 0 && (
-              <div className="subsection">
-                <h5 className="subsection-title">
-                  <Activity size={14} style={{ color: '#f59e0b' }} />
-                  Operational Metrics
-                </h5>
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Metric</th>
-                        <th>Target</th>
-                        <th>Owner</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {execution.kpi_dashboard.operational_metrics.map((metric, idx) => (
-                        <tr key={idx}>
-                          <td className="table-value">{metric.metric}</td>
-                          <td className="table-value">
-                            <span className="badge operational">
-                              {metric.target}
-                            </span>
-                          </td>
-                          <td className="table-value">
-                            <div className="flex-center">
-                              <Users size={12} />
-                              {metric.owner}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {execution.kpi_dashboard.financial_metrics && execution.kpi_dashboard.financial_metrics.length > 0 && (
-              <div className="subsection">
-                <h5 className="subsection-title">
-                  <DollarSign size={14} style={{ color: '#10b981' }} />
-                  Financial Metrics
-                </h5>
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Metric</th>
-                        <th>Target</th>
-                        <th>Owner</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {execution.kpi_dashboard.financial_metrics.map((metric, idx) => (
-                        <tr key={idx}>
-                          <td className="table-value">{metric.metric}</td>
-                          <td className="table-value">
-                            <span className="badge financial">
-                              {metric.target}
-                            </span>
-                          </td>
-                          <td className="table-value">
-                            <div className="flex-center">
-                              <Users size={12} />
-                              {metric.owner}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
   const renderGovernancePillar = (governance) => {
     if (!governance) return null;
@@ -1177,10 +1177,10 @@ const StrategicAnalysis = ({
         <div className="section-headers">
           <Link2 size={24} style={{ color: 'blue' }} />
           <div><h2 className="category-title">Strategic Objective</h2></div>
-           
+
         </div>
 
-        <div className="strategic-linkages-container"> 
+        <div className="strategic-linkages-container">
 
           <div className="table-container">
             <table className="data-table">
