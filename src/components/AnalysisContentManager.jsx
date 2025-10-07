@@ -117,7 +117,8 @@ const AnalysisContentManager = ({
   setActiveTab,
   hasUploadedDocument,
   readOnly = false,
-  documentInfo,
+  documentInfo, collapsedCategories,      // ADD THIS to props
+  setCollapsedCategories,  
 }) => {
   const API_TO_ANALYSIS_MAP = {
     'find': 'swot',
@@ -140,9 +141,9 @@ const AnalysisContentManager = ({
     'excel-analysis-leverage': 'leverageRisk'
   };
 
-   const [collapsedCategories, setCollapsedCategories] = useState(
-    new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
-  );
+  //  const [collapsedCategories, setCollapsedCategories] = useState(
+  //   new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
+  // );
 
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];

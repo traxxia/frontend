@@ -47,7 +47,8 @@ const createAnalysisContentManagerProps = (state, props) => {
   const {
     phaseManager, businessData, questions, userAnswers, selectedBusinessId,
     handleRedirectToBrief, showToastMessage, apiService, createSimpleRegenerationHandler,
-    apiLoadingStates, uploadedFileForAnalysis,
+    apiLoadingStates, uploadedFileForAnalysis,collapsedCategories,      // ADD THIS
+  setCollapsedCategories,
     highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo
   } = props;
 
@@ -144,7 +145,8 @@ const createAnalysisContentManagerProps = (state, props) => {
     isCoreAdjacencyRegenerating,
     setCoreAdjacencyData,
     hasUploadedDocument,
-    documentInfo
+    documentInfo,collapsedCategories,      // ADD THIS
+  setCollapsedCategories,
   };
 };
 
@@ -160,7 +162,9 @@ const BusinessSetupPage = () => {
   const [apiLoadingStates, setApiLoadingStates] = useState({});
   const [documentInfo, setDocumentInfo] = useState(null);
   const [phaseAnalysisArray, setPhaseAnalysisArray] = useState([]);
-
+const [collapsedCategories, setCollapsedCategories] = useState(
+  new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
+);
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({
       ...prev,
@@ -515,49 +519,80 @@ const BusinessSetupPage = () => {
   const handleBack = () => window.history.back();
 
   const handleOptionClick = (option) => {
-    setShowDropdown(false);
-    const cardIdMap = {
-      "SWOT": "swot",
-      "Purchase Criteria": "purchase-criteria",
-      "Loyalty/NPS": "loyalty-nps",
-      "Porter's Five Forces": "porters",
-      "PESTEL Analysis": "pestel",
-      "Full SWOT Portfolio": "full-swot",
-      "Competitive Advantage": "competitive-advantage",
-      "Capability Heatmap": "expanded-capability",
-      "Strategic Positioning Radar": "strategic-radar",
-      "Productivity Metrics": "productivity",
-      "Maturity Score": "maturity",
-      "Profitability Analysis": "profitability-analysis",
-      "Growth Tracker": "growth-tracker",
-      "Liquidity & Efficiency": "liquidity-efficiency",
-      "Investment Performance": "investment-performance",
-      "Leverage & Risk": "leverage-risk",
-      "Competitive Landscape": "competitive-landscape",
-      "Core": "core-adjacency",
-    };
+  setShowDropdown(false);
+  const cardIdMap = {
+    "SWOT": "swot",
+    "Purchase Criteria": "purchase-criteria",
+    "Loyalty/NPS": "loyalty-nps",
+    "Porter's Five Forces": "porters",
+    "PESTEL Analysis": "pestel",
+    "Full SWOT Portfolio": "full-swot",
+    "Competitive Advantage": "competitive-advantage",
+    "Capability Heatmap": "expanded-capability",
+    "Strategic Positioning Radar": "strategic-radar",
+    "Productivity Metrics": "productivity",
+    "Maturity Score": "maturity",
+    "Profitability Analysis": "profitability-analysis",
+    "Growth Tracker": "growth-tracker",
+    "Liquidity & Efficiency": "liquidity-efficiency",
+    "Investment Performance": "investment-performance",
+    "Leverage & Risk": "leverage-risk",
+    "Competitive Landscape": "competitive-landscape",
+    "Core": "core-adjacency",
+  };
 
-    const cardId = cardIdMap[option];
-    if (cardId) {
-      setHighlightedCard(cardId);
-      setExpandedCards(prev => new Set([...prev, cardId]));
+  // Map cards to their categories - ADD THIS
+  const cardToCategoryMap = {
+    "profitability-analysis": "costs-financial",
+    "growth-tracker": "costs-financial",
+    "liquidity-efficiency": "costs-financial",
+    "investment-performance": "costs-financial",
+    "leverage-risk": "costs-financial",
+    "productivity": "costs-financial",
+    "swot": "context-industry",
+    "full-swot": "context-industry",
+    "strategic-radar": "context-industry",
+    "porters": "context-industry",
+    "pestel": "context-industry",
+    "competitive-advantage": "customer",
+    "purchase-criteria": "customer",
+    "loyalty-nps": "customer",
+    "expanded-capability": "capabilities",
+    "maturity": "capabilities",
+    "competitive-landscape": "competition",
+    "core-adjacency": "current-strategy",
+  };
 
-      setTimeout(() => {
-        setHighlightedCard(null);
-      }, 3000);
+  const cardId = cardIdMap[option];
+  if (cardId) {
+    // Find and expand the category - ADD THIS BLOCK
+    const categoryId = cardToCategoryMap[cardId];
+    if (categoryId) {
+      setCollapsedCategories(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(categoryId); // Remove from collapsed set to expand it
+        return newSet;
+      });
     }
 
+    setHighlightedCard(cardId);
+    setExpandedCards(prev => new Set([...prev, cardId]));
+
     setTimeout(() => {
-      // Scroll to the card element directly by ID
-      const cardElement = document.getElementById(cardId);
-      if (cardElement) {
-        cardElement.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-      }
-    }, 600); // Increased to 600ms for cards at the bottom
-  };
+      setHighlightedCard(null);
+    }, 3000);
+  }
+
+  setTimeout(() => {
+    const cardElement = document.getElementById(cardId);
+    if (cardElement) {
+      cardElement.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  }, 600);
+};
 
   const createSimpleRegenerationHandler = (analysisType) => {
     return async () => {
@@ -793,7 +828,8 @@ const BusinessSetupPage = () => {
     isMobile,
     setActiveTab,
     readOnly: false,
-    documentInfo
+    documentInfo,collapsedCategories,      // ADD THIS
+  setCollapsedCategories,
   });
 
   useEffect(() => {

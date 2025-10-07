@@ -658,8 +658,8 @@
 
   /* Enhanced Indicators */
   .carousel-indicators {
-    bottom: 20px;
-    margin-bottom: 0;
+    /* bottom: 20px; */
+    margin-bottom: 3px;
   }
 
   .carousel-indicators [data-bs-target] {

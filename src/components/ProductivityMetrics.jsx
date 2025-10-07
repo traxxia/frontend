@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import "../styles/EssentialPhase.css";
@@ -43,12 +44,11 @@ const ProductivityMetrics = ({
 
   const handleRegenerate = async () => {
     if (onRegenerate) {
-      setError(null); // Clear any existing errors
+      setError(null);
       onRegenerate();
     }
   };
 
-  // Handle retry for error state
   const handleRetry = () => {
     setError(null);
     if (onRegenerate) {
@@ -56,11 +56,9 @@ const ProductivityMetrics = ({
     }
   };
 
-  // Simplified validation - EXACTLY like other components
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
 
-    // Handle both wrapped and direct API response formats
     let normalizedData;
     if (data.productivityMetrics) {
       normalizedData = data;
@@ -70,7 +68,6 @@ const ProductivityMetrics = ({
       return true;
     }
 
-    // Check if productivityMetrics exists
     if (!normalizedData.productivityMetrics) {
       return true;
     }
@@ -81,12 +78,10 @@ const ProductivityMetrics = ({
     const hasValueDrivers = metrics.valueDrivers && metrics.valueDrivers.length > 0;
     const hasImprovements = metrics.improvementOpportunities && metrics.improvementOpportunities.length > 0;
 
-    // Need at least some data to show something meaningful
     const sectionsWithData = [hasEmployeeData, hasCostData, hasValueDrivers, hasImprovements].filter(Boolean).length;
     return sectionsWithData === 0;
   };
 
-  // Toggle section expansion
   const toggleSection = (sectionKey) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -94,16 +89,12 @@ const ProductivityMetrics = ({
     }));
   };
 
-  // EXACTLY the same useEffect pattern as other components
   useEffect(() => {
     if (productivityData) {
-      // Handle both wrapped and direct API response formats
       let normalizedData;
       if (productivityData.productivityMetrics) {
-        // Data is already wrapped
         normalizedData = productivityData;
       } else if (productivityData.employeeProductivity || productivityData.costStructure) {
-        // Data is direct from API, needs wrapping
         normalizedData = { productivityMetrics: productivityData };
       } else {
         normalizedData = null;
@@ -112,7 +103,7 @@ const ProductivityMetrics = ({
       if (normalizedData) {
         setData(normalizedData);
         setHasGenerated(true);
-        setError(null); // Clear errors when new data comes in
+        setError(null);
       } else {
         setData(null);
         setHasGenerated(false);
@@ -124,29 +115,24 @@ const ProductivityMetrics = ({
     }
   }, [productivityData]);
 
-  // Helper function to format field names for display
   const formatFieldName = (fieldName) => {
     return fieldName
-      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-      .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase())
       .trim();
   };
 
-  // Helper function to format values for display
   const formatValue = (value, key) => {
     if (value === null || value === undefined) return 'N/A';
 
-    // Format percentage fields
     if (key.toLowerCase().includes('percentage') || key.toLowerCase().includes('costs')) {
       return `${value}`;
     }
 
-    // Format currency fields
     if (key.toLowerCase().includes('value') && typeof value === 'number' && value > 1000) {
       return `${value.toLocaleString()}`;
     }
 
-    // Format numbers
     if (typeof value === 'number' && value > 1000) {
       return value.toLocaleString();
     }
@@ -154,52 +140,92 @@ const ProductivityMetrics = ({
     return value;
   };
 
-  // Helper function to render dynamic table for objects
-  const renderObjectTable = (obj, sectionKey, sectionTitle) => {
+  // Convert object to chart data
+  const convertObjectToChartData = (obj) => {
+    if (!obj || typeof obj !== 'object') return [];
+    
+    return Object.keys(obj).map(key => ({
+      name: formatFieldName(key),
+      value: typeof obj[key] === 'number' ? obj[key] : parseFloat(obj[key]) || 0
+    }));
+  };
+
+  // Convert array to chart data
+  const convertArrayToChartData = (array) => {
+    if (!array || !Array.isArray(array) || array.length === 0) return [];
+
+    if (typeof array[0] === 'string') {
+      return array.map((item, index) => ({
+        name: `Item ${index + 1}`,
+        value: 1
+      }));
+    }
+
+    if (typeof array[0] === 'object' && array[0] !== null) {
+      const keys = Object.keys(array[0]);
+      const nameKey = keys[0];
+      const valueKey = keys.find(k => typeof array[0][k] === 'number') || keys[1];
+
+      return array.map(item => ({
+        name: String(item[nameKey] || ''),
+        value: typeof item[valueKey] === 'number' ? item[valueKey] : parseFloat(item[valueKey]) || 0
+      }));
+    }
+
+    return [];
+  };
+
+  // Render bar chart for objects
+  const renderObjectChart = (obj, sectionKey, sectionTitle) => {
     if (!obj || typeof obj !== 'object') return null;
 
     const keys = Object.keys(obj);
     if (keys.length === 0) return null;
 
+    const chartData = convertObjectToChartData(obj);
+
     return (
-      <div className="section-container">
+      <div className="section-container" key={sectionKey}>
         <div className="section-header" onClick={() => toggleSection(sectionKey)}>
           <h3>{sectionTitle}</h3>
           {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
 
         {expandedSections[sectionKey] !== false && (
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Property</th>
-                  <th>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {keys.map((key, index) => (
-                  <tr key={index}>
-                    <td><div className="force-name"> {formatFieldName(key)}</div></td>
-                    <td>{formatValue(obj[key], key)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ width: '100%', marginTop: '20px', marginBottom: '20px' }}>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart 
+                data={chartData}
+                margin={{ top: 10, right: 20, left: 10, bottom: 25 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  height={100}
+                  interval={0}
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         )}
       </div>
     );
   };
 
-  // Helper function to render dynamic table for arrays
-  const renderArrayTable = (array, sectionKey, sectionTitle) => {
+  // Render bar chart for arrays
+  const renderArrayChart = (array, sectionKey, sectionTitle) => {
     if (!array || !Array.isArray(array) || array.length === 0) return null;
 
-    // Handle array of strings (like improvementOpportunities)
+    // For string arrays, show as table with same styling
     if (typeof array[0] === 'string') {
       return (
-        <div className="section-container">
+        <div className="section-container" key={sectionKey}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)}>
             <h3>{sectionTitle}</h3>
             {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
@@ -227,49 +253,42 @@ const ProductivityMetrics = ({
       );
     }
 
-    // Handle array of objects (like valueDrivers)
-    if (typeof array[0] === 'object' && array[0] !== null) {
-      const keys = Object.keys(array[0]);
+    const chartData = convertArrayToChartData(array);
 
-      return (
-        <div className="section-container">
-          <div className="section-header" onClick={() => toggleSection(sectionKey)}>
-            <h3>{sectionTitle}</h3>
-            {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-          </div>
-
-          {expandedSections[sectionKey] !== false && (
-            <div className="table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    {keys.map((key, index) => (
-                      <th key={index}>{formatFieldName(key)}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {array.map((item, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {keys.map((key, colIndex) => (
-                        <td key={colIndex}>
-                          {colIndex === 0 ? <strong>{formatValue(item[key], key)}</strong> : formatValue(item[key], key)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+    return (
+      <div className="section-container" key={sectionKey}>
+        <div className="section-header" onClick={() => toggleSection(sectionKey)}>
+          <h3>{sectionTitle}</h3>
+          {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
-      );
-    }
 
-    return null;
+        {expandedSections[sectionKey] !== false && (
+          <div style={{ width: '100%', marginTop: '20px', marginBottom: '20px' }}>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart 
+                data={chartData}
+                margin={{ top: 10, right: 20, left: 10, bottom: 25 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  height={100}
+                  interval={0}
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    );
   };
 
-  // Loading state
   if (isRegenerating) {
     return (
       <div className="porters-container productivity-container">
@@ -286,7 +305,6 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Error state - UPDATED: Using AnalysisError component
   if (error) {
     return (
       <div className="porters-container productivity-container">
@@ -299,7 +317,6 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Error state for generation failure with user answers - UPDATED: Using AnalysisError component
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="porters-container productivity-container">
@@ -312,7 +329,6 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Check if data is incomplete and show missing questions checker
   if (!productivityData || isProductivityDataIncomplete(productivityData)) {
     return (
       <div className="porters-container productivity-container">
@@ -331,7 +347,6 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Check if data structure is valid - UPDATED: Using AnalysisError component
   if (!data?.productivityMetrics) {
     return (
       <div className="porters-container productivity-container">
@@ -344,7 +359,6 @@ const ProductivityMetrics = ({
     );
   }
 
-  // Handle both wrapped and direct response structures
   const productivityMetrics = data.productivityMetrics;
 
   return (
@@ -353,19 +367,16 @@ const ProductivityMetrics = ({
       data-analysis-name="Productivity Metrics"
       data-analysis-order="14">
 
-      {/* Dynamically render all sections from API response */}
       {Object.keys(productivityMetrics).map((sectionKey) => {
         const sectionData = productivityMetrics[sectionKey];
         const sectionTitle = formatFieldName(sectionKey);
 
-        // Handle objects
         if (sectionData && typeof sectionData === 'object' && !Array.isArray(sectionData)) {
-          return renderObjectTable(sectionData, sectionKey, sectionTitle);
+          return renderObjectChart(sectionData, sectionKey, sectionTitle);
         }
 
-        // Handle arrays
         if (Array.isArray(sectionData) && sectionData.length > 0) {
-          return renderArrayTable(sectionData, sectionKey, sectionTitle);
+          return renderArrayChart(sectionData, sectionKey, sectionTitle);
         }
 
         return null;

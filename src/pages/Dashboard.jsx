@@ -693,6 +693,12 @@ const Dashboard = () => {
                   data-bs-slide-to="3"
                   aria-label="Slide 4"
                 ></button>
+                <button
+                  type="button"
+                  data-bs-target="#howItWorksCarousel"
+                  data-bs-slide-to="4"
+                  aria-label="Slide 5"
+                ></button>
               </div>
 
               <div className="carousel-inner">
@@ -700,44 +706,55 @@ const Dashboard = () => {
                   <img
                     src="/slides/slide1.jpeg"
                     className="d-block w-100"
-                    alt="Step 1: Create your business profile"
+                    alt="Step 1: Login to your account"
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 1: Create Your Business</h5>
-                    <p>Start by setting up your business profile with basic information.</p>
+                    <h5>Step 1: Login</h5>
+                    <p>Sign in to access your personalized business dashboard.</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
                     src="/slides/slide2.jpeg"
                     className="d-block w-100"
-                    alt="Step 2: Answer assessment questions"
+                    alt="Step 2: Create your business profile"
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 2: Complete Assessment</h5>
-                    <p>Answer questions about your business to get personalized insights.</p>
+                    <h5>Step 2: Create Your Business</h5>
+                    <p>Start by setting up your business profile with basic information.</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
                     src="/slides/slide3.jpeg"
                     className="d-block w-100"
-                    alt="Step 3: Get insights and recommendations"
+                    alt="Step 3: Answer assessment questions"
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 3: Get Insights</h5>
+                    <h5>Step 3: Complete Assessment</h5>
+                    <p>Answer questions about your business to get personalized insights.</p>
+                  </div>
+                </div>
+                <div className="carousel-item">
+                  <img
+                    src="/slides/slide4.jpeg"
+                    className="d-block w-100"
+                    alt="Step 4: Get insights and recommendations"
+                  />
+                  <div className="carousel-caption d-none d-md-block">
+                    <h5>Step 4: Get Insights</h5>
                     <p>Receive detailed analysis and actionable recommendations.</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
-                    src="/slides/slide4.PNG"
+                    src="/slides/slide5.jpeg"
                     className="d-block w-100"
-                    alt="Step 4: Track progress and optimize"
+                    alt="Step 5: View strategic recommendations"
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 4: Track & Optimize</h5>
-                    <p>Monitor your progress and continuously improve your business performance.</p>
+                    <h5>Step 5: Strategic Recommendations</h5>
+                    <p>Access personalized strategic recommendations tailored to your business goals and growth opportunities.</p>
                   </div>
                 </div>
               </div>
