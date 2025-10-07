@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
-import "../styles/EssentialPhase.css";
-import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+
+const AnalysisEmptyState = ({ analysisDisplayName, icon: Icon, onImproveAnswers, onRegenerate, isRegenerating, canRegenerate, userAnswers, minimumAnswersRequired }) => (
+  <div style={{ textAlign: 'center', padding: '40px' }}>
+    <Icon size={48} color="#999" />
+    <h3>No {analysisDisplayName} Available</h3>
+    <p>Please provide more answers or regenerate the analysis.</p>
+    {onImproveAnswers && <button onClick={onImproveAnswers}>Improve Answers</button>}
+    {canRegenerate && <button onClick={onRegenerate} disabled={isRegenerating}>Regenerate</button>}
+  </div>
+);
+
+const AnalysisError = ({ error, onRetry, title }) => (
+  <div style={{ textAlign: 'center', padding: '40px', color: '#d9534f' }}>
+    <h3>{title}</h3>
+    <p>{error}</p>
+    <button onClick={onRetry}>Retry</button>
+  </div>
+);
 
 const ProductivityMetrics = ({
   questions = [],
@@ -26,20 +40,6 @@ const ProductivityMetrics = ({
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
-  };
-
-  const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.productivityMetrics;
-
-    await checkMissingQuestionsAndRedirect(
-      'productivityMetrics',
-      selectedBusinessId,
-      handleRedirectToBrief,
-      {
-        displayName: analysisConfig.displayName,
-        customMessage: analysisConfig.customMessage
-      }
-    );
   };
 
   const handleRegenerate = async () => {
@@ -140,42 +140,15 @@ const ProductivityMetrics = ({
     return value;
   };
 
-  // Convert object to chart data
   const convertObjectToChartData = (obj) => {
     if (!obj || typeof obj !== 'object') return [];
-    
+
     return Object.keys(obj).map(key => ({
       name: formatFieldName(key),
       value: typeof obj[key] === 'number' ? obj[key] : parseFloat(obj[key]) || 0
     }));
   };
 
-  // Convert array to chart data
-  const convertArrayToChartData = (array) => {
-    if (!array || !Array.isArray(array) || array.length === 0) return [];
-
-    if (typeof array[0] === 'string') {
-      return array.map((item, index) => ({
-        name: `Item ${index + 1}`,
-        value: 1
-      }));
-    }
-
-    if (typeof array[0] === 'object' && array[0] !== null) {
-      const keys = Object.keys(array[0]);
-      const nameKey = keys[0];
-      const valueKey = keys.find(k => typeof array[0][k] === 'number') || keys[1];
-
-      return array.map(item => ({
-        name: String(item[nameKey] || ''),
-        value: typeof item[valueKey] === 'number' ? item[valueKey] : parseFloat(item[valueKey]) || 0
-      }));
-    }
-
-    return [];
-  };
-
-  // Render bar chart for objects
   const renderObjectChart = (obj, sectionKey, sectionTitle) => {
     if (!obj || typeof obj !== 'object') return null;
 
@@ -185,24 +158,36 @@ const ProductivityMetrics = ({
     const chartData = convertObjectToChartData(obj);
 
     return (
-      <div className="section-container" key={sectionKey}>
-        <div className="section-header" onClick={() => toggleSection(sectionKey)}>
-          <h3>{sectionTitle}</h3>
+      <div className="section-container" key={sectionKey} style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '20px',
+        marginBottom: '20px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          cursor: 'pointer',
+          marginBottom: '10px'
+        }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{sectionTitle}</h3>
           {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
 
         {expandedSections[sectionKey] !== false && (
           <div style={{ width: '100%', marginTop: '20px', marginBottom: '20px' }}>
             <ResponsiveContainer width="100%" height={350}>
-              <BarChart 
+              <BarChart
                 data={chartData}
                 margin={{ top: 10, right: 20, left: 10, bottom: 25 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45} 
-                  textAnchor="end" 
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
                   height={100}
                   interval={0}
                   tick={{ fontSize: 11 }}
@@ -218,31 +203,53 @@ const ProductivityMetrics = ({
     );
   };
 
-  // Render bar chart for arrays
-  const renderArrayChart = (array, sectionKey, sectionTitle) => {
+  const renderArrayTable = (array, sectionKey, sectionTitle) => {
     if (!array || !Array.isArray(array) || array.length === 0) return null;
 
-    // For string arrays, show as table with same styling
     if (typeof array[0] === 'string') {
       return (
-        <div className="section-container" key={sectionKey}>
-          <div className="section-header" onClick={() => toggleSection(sectionKey)}>
-            <h3>{sectionTitle}</h3>
+        <div className="section-container" key={sectionKey} style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '20px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+            marginBottom: '10px'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{sectionTitle}</h3>
             {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
           {expandedSections[sectionKey] !== false && (
-            <div className="table-container">
-              <table className="data-table">
+            <div className="table-container" style={{ overflowX: 'auto' }}>
+              <table className="data-table" style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '14px'
+              }}>
                 <thead>
-                  <tr>
-                    <th>Item</th>
+                  <tr style={{ backgroundColor: '#f8f9fa' }}>
+                    <th style={{
+                      padding: '12px',
+                      textAlign: 'left',
+                      borderBottom: '2px solid #dee2e6',
+                      fontWeight: '600'
+                    }}>Item</th>
                   </tr>
                 </thead>
                 <tbody>
                   {array.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item}</td>
+                    <tr key={index} style={{
+                      borderBottom: '1px solid #dee2e6',
+                      transition: 'background-color 0.2s'
+                    }}>
+                      <td style={{ padding: '12px' }}>{item}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -253,46 +260,73 @@ const ProductivityMetrics = ({
       );
     }
 
-    const chartData = convertArrayToChartData(array);
+    if (typeof array[0] === 'object' && array[0] !== null) {
+      const keys = Object.keys(array[0]);
 
-    return (
-      <div className="section-container" key={sectionKey}>
-        <div className="section-header" onClick={() => toggleSection(sectionKey)}>
-          <h3>{sectionTitle}</h3>
-          {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-        </div>
-
-        {expandedSections[sectionKey] !== false && (
-          <div style={{ width: '100%', marginTop: '20px', marginBottom: '20px' }}>
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart 
-                data={chartData}
-                margin={{ top: 10, right: 20, left: 10, bottom: 25 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  height={100}
-                  interval={0}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
+      return (
+        <div className="section-container" key={sectionKey} style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '20px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+            marginBottom: '10px'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{sectionTitle}</h3>
+            {expandedSections[sectionKey] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-        )}
-      </div>
-    );
+
+          {expandedSections[sectionKey] !== false && (
+            <div className="table-container" style={{ overflowX: 'auto' }}>
+              <table className="data-table" style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '14px'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8f9fa' }}>
+                    {keys.map(key => (
+                      <th key={key} style={{
+                        padding: '12px',
+                        textAlign: 'left',
+                        borderBottom: '2px solid #dee2e6',
+                        fontWeight: '600'
+                      }}>{formatFieldName(key)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {array.map((item, index) => (
+                    <tr key={index} style={{
+                      borderBottom: '1px solid #dee2e6',
+                      transition: 'background-color 0.2s'
+                    }}>
+                      {keys.map(key => (
+                        <td key={key} style={{ padding: '12px' }}>{formatValue(item[key], key)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   if (isRegenerating) {
     return (
-      <div className="porters-container productivity-container">
-        <div className="loading-state">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        <div className="loading-state" style={{ textAlign: 'center', padding: '40px' }}>
           <Loader size={24} className="loading-spinner" />
           <span>
             {isRegenerating
@@ -307,8 +341,8 @@ const ProductivityMetrics = ({
 
   if (error) {
     return (
-      <div className="porters-container productivity-container">
-        <AnalysisError 
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        <AnalysisError
           error={error}
           onRetry={handleRetry}
           title="Productivity Metrics Analysis Error"
@@ -319,8 +353,8 @@ const ProductivityMetrics = ({
 
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
-      <div className="porters-container productivity-container">
-        <AnalysisError 
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        <AnalysisError
           error="Unable to generate productivity metrics analysis. Please try regenerating or check your inputs."
           onRetry={handleRetry}
           title="Analysis Generation Error"
@@ -331,12 +365,12 @@ const ProductivityMetrics = ({
 
   if (!productivityData || isProductivityDataIncomplete(productivityData)) {
     return (
-      <div className="porters-container productivity-container">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         <AnalysisEmptyState
           analysisType="productivityMetrics"
           analysisDisplayName="Productivity and Efficiency Metrics Analysis"
           icon={Activity}
-          onImproveAnswers={handleMissingQuestionsCheck}
+          onImproveAnswers={() => { }}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
@@ -349,8 +383,8 @@ const ProductivityMetrics = ({
 
   if (!data?.productivityMetrics) {
     return (
-      <div className="porters-container productivity-container">
-        <AnalysisError 
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        <AnalysisError
           error="The productivity metrics data received is not in the expected format. Please regenerate the analysis."
           onRetry={handleRetry}
           title="Invalid Data Structure"
@@ -362,7 +396,7 @@ const ProductivityMetrics = ({
   const productivityMetrics = data.productivityMetrics;
 
   return (
-    <div className="porters-container productivity-container"
+    <div
       data-analysis-type="productivityMetrics"
       data-analysis-name="Productivity Metrics"
       data-analysis-order="14">
@@ -376,12 +410,11 @@ const ProductivityMetrics = ({
         }
 
         if (Array.isArray(sectionData) && sectionData.length > 0) {
-          return renderArrayChart(sectionData, sectionKey, sectionTitle);
+          return renderArrayTable(sectionData, sectionKey, sectionTitle);
         }
 
         return null;
       })}
-
     </div>
   );
 };
