@@ -1559,47 +1559,55 @@ const StrategicAnalysis = ({
   };
   const renderStrategicContent = () => {
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
-    const recommendations = analysisData?.strategic_recommendations; if (!recommendations) return null;
+    const recommendations = analysisData?.strategic_recommendations;
+
+    if (!recommendations) return null;
 
     return (
       <div className="strategic-content">
         {recommendations.strategy_block && (
-          <CategorySection
-            id="strategy-block"
-            title="Strategy Block: Direction & Positioning"
-            icon={Target}
-            description="Forward-looking recommendations for where and how to compete, tactical initiatives, and resource allocation."
-          >
-            {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
-            {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
-            {renderResourcesPillar(recommendations.strategy_block.R_resources)}
-          </CategorySection>
+          <div className="block-wrapper">
+            <CategorySection
+              id="strategy-block"
+              title="Strategy Block: Direction & Positioning  (S.T.R.)"
+              icon={Target}
+              description="Forward-looking recommendations for where and how to compete, tactical initiatives, and resource allocation."
+            >
+              {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
+              {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
+              {renderResourcesPillar(recommendations.strategy_block.R_resources)}
+            </CategorySection>
+          </div>
         )}
 
         {recommendations.execution_block && (
-          <CategorySection
-            id="execution-block"
-            title="Execution Block: Implementation & Monitoring"
-            icon={CheckCircle}
-            description="Data strategy, technology priorities, implementation roadmap, and KPI dashboard for tracking progress."
-          >
-            {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
-            {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
-            {renderExecutionPillar(recommendations.execution_block.E_execution)}
-          </CategorySection>
+          <div className="block-wrapper">
+            <CategorySection
+              id="execution-block"
+              title="Execution Block: Implementation & Monitoring (A.T.E.)"
+              icon={CheckCircle}
+              description="Data strategy, technology priorities, implementation roadmap, and KPI dashboard for tracking progress."
+            >
+              {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
+              {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
+              {renderExecutionPillar(recommendations.execution_block.E_execution)}
+            </CategorySection>
+          </div>
         )}
 
         {recommendations.sustainability_block && (
-          <CategorySection
-            id="sustainability-block"
-            title="Sustainability Block: Long-term Reinforcement"
-            icon={Shield}
-            description="Governance frameworks, innovation pipeline, and cultural alignment to sustain strategic momentum."
-          >
-            {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
-            {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
-            {renderCulturePillar(recommendations.sustainability_block.C_culture)}
-          </CategorySection>
+          <div className="block-wrapper">
+            <CategorySection
+              id="sustainability-block"
+              title="Sustainability Block: Long-term Reinforcement (G.I.C)"
+              icon={Shield}
+              description="Governance frameworks, innovation pipeline, and cultural alignment to sustain strategic momentum."
+            >
+              {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
+              {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
+              {renderCulturePillar(recommendations.sustainability_block.C_culture)}
+            </CategorySection>
+          </div>
         )}
 
         {/* {renderStrategicLinkages(analysisData?.strategic_linkages)} */}

@@ -785,8 +785,7 @@
   background: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
-  user-select: none;
-  border-bottom: 1px solid #e1e5e9;
+  user-select: none; 
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 

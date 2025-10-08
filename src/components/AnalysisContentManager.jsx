@@ -141,10 +141,6 @@ const AnalysisContentManager = ({
     'excel-analysis-leverage': 'leverageRisk'
   };
 
-  //  const [collapsedCategories, setCollapsedCategories] = useState(
-  //   new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
-  // );
-
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
@@ -295,7 +291,7 @@ const AnalysisContentManager = ({
     );
   };
 
-  const CategorySection = ({ id, title, icon: IconComponent, children, count = 0 }) => {
+  const CategorySection = ({ id, title, subtitle, icon: IconComponent, children, count = 0 }) => {
     const isCollapsed = collapsedCategories.has(id);
 
     return (
@@ -306,7 +302,19 @@ const AnalysisContentManager = ({
         >
           <div className="category-header-left">
             <IconComponent size={24} className="category-icon" />
-            <h2 className="category-title">{title}</h2>
+            <div className="category-title-group">
+              <h2 className="category-title">{title}</h2>
+              {subtitle && (
+                <p style={{
+                  fontSize: '13px',
+                  color: '#6b7280',
+                  margin: '4px 0 0 0',
+                  fontWeight: '500'
+                }}>
+                  {subtitle}
+                </p>
+              )} 
+            </div>
           </div>
           <div className="category-toggle">
             {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
@@ -336,43 +344,49 @@ const AnalysisContentManager = ({
     }
 
     const categories = [
-      {
-        id: 'costs-financial',
-        title: 'Costs/Financial',
-        icon: TrendingUp,
-        analyses: []
-      },
-      {
-        id: 'context-industry',
-        title: 'Context/Industry',
-        icon: Building,
-        analyses: []
-      },
-      {
-        id: 'customer',
-        title: 'Customer',
-        icon: Users,
-        analyses: []
-      },
-      {
-        id: 'capabilities',
-        title: 'Capabilities',
-        icon: Zap,
-        analyses: []
-      },
-      {
-        id: 'competition',
-        title: 'Competition',
-        icon: Award,
-        analyses: []
-      },
-      {
-        id: 'current-strategy',
-        title: 'Current Strategy',
-        icon: Target,
-        analyses: []
-      }
-    ];
+  {
+    id: 'costs-financial',
+    title: 'Costs/Financial',
+    subtitle: 'Financial performance, profitability, and resource efficiency metrics',
+    icon: TrendingUp,
+    analyses: []
+  },
+  {
+    id: 'context-industry',
+    title: 'Context/Industry',
+    subtitle: 'External environment, market forces, and industry dynamics',
+    icon: Building,
+    analyses: []
+  },
+  {
+    id: 'customer',
+    title: 'Customer',
+    subtitle: 'Customer behavior, loyalty, and purchase decision factors',
+    icon: Users,
+    analyses: []
+  },
+  {
+    id: 'capabilities',
+    title: 'Capabilities',
+    subtitle: 'Organizational strengths, maturity, and operational capabilities',
+    icon: Zap,
+    analyses: []
+  },
+  {
+    id: 'competition',
+    title: 'Competition',
+    subtitle: 'Competitive landscape and market positioning analysis',
+    icon: Award,
+    analyses: []
+  },
+  {
+    id: 'current-strategy',
+    title: 'Current Strategy',
+    subtitle: 'Strategic focus areas and growth opportunities',
+    icon: Target,
+    analyses: []
+  }
+];
 
     if (unlockedFeatures.goodPhase) {
       categories[0].analyses.push(
@@ -948,6 +962,7 @@ const AnalysisContentManager = ({
                   title={category.title}
                   icon={category.icon}
                   count={analysisCount}
+                  subtitle={category.subtitle}
                 >
                   {category.analyses}
                 </CategorySection>

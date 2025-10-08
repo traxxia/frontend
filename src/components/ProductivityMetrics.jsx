@@ -160,9 +160,7 @@ const ProductivityMetrics = ({
     return (
       <div className="section-container" key={sectionKey} style={{
         backgroundColor: 'white',
-        borderRadius: '8px',
-        padding: '20px',
-        marginBottom: '20px',
+        borderRadius: '8px',  
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -177,7 +175,7 @@ const ProductivityMetrics = ({
         </div>
 
         {expandedSections[sectionKey] !== false && (
-          <div style={{ width: '100%', marginTop: '20px', marginBottom: '20px' }}>
+          <div style={{ width: '100%'}}>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart
                 data={chartData}
@@ -210,9 +208,7 @@ const ProductivityMetrics = ({
       return (
         <div className="section-container" key={sectionKey} style={{
           backgroundColor: 'white',
-          borderRadius: '8px',
-          padding: '20px',
-          marginBottom: '20px',
+          borderRadius: '8px',  
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -266,9 +262,7 @@ const ProductivityMetrics = ({
       return (
         <div className="section-container" key={sectionKey} style={{
           backgroundColor: 'white',
-          borderRadius: '8px',
-          padding: '20px',
-          marginBottom: '20px',
+          borderRadius: '8px',  
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -325,7 +319,7 @@ const ProductivityMetrics = ({
 
   if (isRegenerating) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div className="loading-state" style={{ textAlign: 'center', padding: '40px' }}>
           <Loader size={24} className="loading-spinner" />
           <span>
@@ -341,7 +335,7 @@ const ProductivityMetrics = ({
 
   if (error) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
         <AnalysisError
           error={error}
           onRetry={handleRetry}
@@ -353,7 +347,7 @@ const ProductivityMetrics = ({
 
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <AnalysisError
           error="Unable to generate productivity metrics analysis. Please try regenerating or check your inputs."
           onRetry={handleRetry}
@@ -365,7 +359,7 @@ const ProductivityMetrics = ({
 
   if (!productivityData || isProductivityDataIncomplete(productivityData)) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <AnalysisEmptyState
           analysisType="productivityMetrics"
           analysisDisplayName="Productivity and Efficiency Metrics Analysis"
@@ -383,7 +377,7 @@ const ProductivityMetrics = ({
 
   if (!data?.productivityMetrics) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto'}}>
         <AnalysisError
           error="The productivity metrics data received is not in the expected format. Please regenerate the analysis."
           onRetry={handleRetry}

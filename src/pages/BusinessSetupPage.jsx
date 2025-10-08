@@ -1055,7 +1055,7 @@ const [collapsedCategories, setCollapsedCategories] = useState(
 
       {isMobile && questionsLoaded && (
         <>
-          {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (
+          {/* {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (
             <div className="progress-area">
               <div className="progress-track">
                 <div
@@ -1064,7 +1064,7 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                 ></div>
               </div>
             </div>
-          )}
+          )} */}
 
           <div className="mobile-tabs">
             <button
@@ -1095,7 +1095,7 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                 className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
                 onClick={handleStrategicTabClick}
               >
-                Strategic
+                {t("strategic")}
               </button>
             )}
           </div>

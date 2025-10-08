@@ -306,7 +306,8 @@ body {
   /* position: fixed; */
   z-index: 10;
   width: 100%;
-  position: fixed;
+  top: 0;
+  position: sticky;
 }
 
 .desktop-tab {
@@ -1368,7 +1369,7 @@ body {
   border: 1px solid #ffeaa7;
   border-radius: 8px;
   padding: 10px;
-  margin-top: 60px;
+  margin-bottom: 10px;
 }
 
 .unlock-hint h4 {
@@ -1589,10 +1590,6 @@ body {
     flex: 1;
     padding: 0;
     display: none;
-  }
-
-  .info-panel-content {
-    padding: 16px;
   }
 
   .welcome-area {
@@ -2398,8 +2395,7 @@ body {
   width: 100%;
   box-sizing: border-box;
   scroll-behavior: auto !important;
-  position: relative;
-  margin-top: 50px;
+  position: relative; 
 }
 
 .phase-tabs-nav {
@@ -2832,6 +2828,6 @@ body {
 
 /* Analysis section mobile controls */
 .analysis-section-mobile-controls {
-  padding: 1rem;
+  padding: 0rem;
   background: #ffffffff;
 }
