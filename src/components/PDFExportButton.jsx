@@ -33,11 +33,24 @@ const PDFExportButton = ({
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const { t } = useTranslation();
 
-  // Fast preparation function - minimal DOM changes
   const prepareForCapture = () => {
     const changes = [];
 
-    // 1. Expand all cards instantly (no animation)
+    // 1. Expand all collapsed categories first
+    const categories = document.querySelectorAll('.category-content.collapsed');
+    categories.forEach(category => {
+      changes.push({
+        element: category,
+        property: 'className',
+        oldValue: category.className,
+        newValue: category.className.replace('collapsed', 'expanded')
+      });
+      category.className = category.className.replace('collapsed', 'expanded');
+      category.style.maxHeight = 'none';
+      category.style.overflow = 'visible';
+    });
+
+    // 2. Expand all cards
     const cards = document.querySelectorAll('.modern-card-content.collapsed');
     cards.forEach(card => {
       changes.push({
@@ -51,21 +64,7 @@ const PDFExportButton = ({
       card.style.overflow = 'visible';
     });
 
-    // 2. Expand all phase sections
-    const phaseSections = document.querySelectorAll('.modern-phase-content.collapsed');
-    phaseSections.forEach(section => {
-      changes.push({
-        element: section,
-        property: 'className',
-        oldValue: section.className,
-        newValue: section.className.replace('collapsed', 'expanded')
-      });
-      section.className = section.className.replace('collapsed', 'expanded');
-      section.style.maxHeight = 'none';
-      section.style.overflow = 'visible';
-    });
-
-    // 3. Hide buttons and interactive elements
+    // 3. Hide buttons
     const buttons = document.querySelectorAll('button, .regenerate-button, .dropdown-button');
     buttons.forEach(btn => {
       changes.push({
@@ -77,7 +76,7 @@ const PDFExportButton = ({
       btn.style.display = 'none';
     });
 
-    // 4. Fix any overflow issues for better capture
+    // 4. Fix overflow issues
     const scrollContainers = document.querySelectorAll('.ch-heatmap-scroll, .scroll-container');
     scrollContainers.forEach(container => {
       changes.push({
@@ -106,7 +105,7 @@ const PDFExportButton = ({
   // Function to determine actual export phase based on unlocked features
   const getExportPhase = () => {
     // Priority order: advanced > good > essential > initial
-    
+
     // Check if user has unlocked advanced phase
     if (unlockedFeatures.advancedPhase) {
       return 'advanced';

@@ -78,10 +78,13 @@ const StrategicAnalysis = ({
   const handleRegenerate = async () => {
     if (onRegenerate) {
       try {
+        setIsLoading(true); // Add this line
         await onRegenerate();
       } catch (error) {
         console.error('Error in Strategic regeneration:', error);
         setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
+      } finally {
+        setIsLoading(false); // Add this line
       }
     } else {
       console.warn('No onRegenerate prop provided to StrategicAnalysis');
@@ -136,6 +139,7 @@ const StrategicAnalysis = ({
       setLocalStrategicData(strategicData);
       setHasGenerated(true);
       setErrorMessage('');
+      setIsLoading(false);
     } else if (strategicData === null) {
       setLocalStrategicData(null);
       setHasGenerated(false);

@@ -234,12 +234,12 @@
 
 /* Analysis Data Pillar */
 .analysis-data-card {
-  border: 1px solid #06b6d4;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.1);
+  border: 1px solid #a5f3fc;
+  box-shadow: 0 2px 8px rgba(165, 243, 252, 0.15);
 }
 
 .analysis-data-header {
-  border-bottom: 1px solid #06b6d4;
+  border-bottom: 1px solid #a5f3fc;
 }
 
 .analysis-data-icon {
@@ -248,12 +248,12 @@
 
 /* Technology Pillar */
 .technology-card {
-  border: 1px solid #0ea5e9;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
+  border: 1px solid #bae6fd;
+  box-shadow: 0 2px 8px rgba(186, 230, 253, 0.15);
 }
 
 .technology-header {
-  border-bottom: 1px solid #0ea5e9;
+  border-bottom: 1px solid #bae6fd;
 }
 
 .technology-icon {
@@ -262,12 +262,12 @@
 
 /* Execution Pillar */
 .execution-card {
-  border: 1px solid #10b981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 2px 8px rgba(167, 243, 208, 0.15);
 }
 
 .execution-header {
-  border-bottom: 1px solid #10b981;
+  border-bottom: 1px solid #a7f3d0;
 }
 
 .execution-icon {
@@ -276,12 +276,12 @@
 
 /* Governance Pillar */
 .governance-card {
-  border: 1px solid #6366f1;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 2px 8px rgba(199, 210, 254, 0.15);
 }
 
 .governance-header {
-  border-bottom: 1px solid #6366f1;
+  border-bottom: 1px solid #c7d2fe;
 }
 
 .governance-icon {
@@ -290,12 +290,12 @@
 
 /* Innovation Pillar */
 .innovation-card {
-  border: 1px solid #ec4899;
-  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.1);
+  border: 1px solid #f9a8d4;
+  box-shadow: 0 2px 8px rgba(249, 168, 212, 0.15);
 }
 
 .innovation-header {
-  border-bottom: 1px solid #ec4899;
+  border-bottom: 1px solid #f9a8d4;
 }
 
 .innovation-icon {
@@ -304,18 +304,17 @@
 
 /* Culture Pillar */
 .culture-card {
-  border: 1px solid #f59e0b;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+  border: 1px solid #fcd34d;
+  box-shadow: 0 2px 8px rgba(252, 211, 77, 0.15);
 }
 
 .culture-header {
-  border-bottom: 1px solid #f59e0b;
+  border-bottom: 1px solid #fcd34d;
 }
 
 .culture-icon {
   color: #f59e0b;
 }
-
 /* Subsections */
 .subsection {
   margin-bottom: 20px;

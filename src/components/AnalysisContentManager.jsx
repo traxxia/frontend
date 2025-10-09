@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Target, Award, TrendingUp, Users, Building, Zap,
-  CheckCircle, Loader, Lock, ChevronDown, ChevronUp,
+  Loader, Lock, ChevronDown, ChevronUp,
 } from "lucide-react";
 import SwotAnalysis from "./SwotAnalysis";
 import PurchaseCriteria from "./PurchaseCriteria";
@@ -23,141 +23,263 @@ import LeverageRisk from "./LeverageRisk";
 import CompetitiveLandscape from "./CompetitiveLandscape";
 import CoreAdjacency from "./CoreAdjacency";
 
-const AnalysisContentManager = ({
-  phaseManager,
-  businessData,
-  questions,
-  userAnswers,
-  selectedBusinessId,
-  swotAnalysisResult,
-  purchaseCriteriaData,
-  loyaltyNPSData,
-  portersData,
-  pestelData,
-  fullSwotData,
-  competitiveAdvantageData,
-  expandedCapabilityData,
-  strategicRadarData,
-  productivityData,
-  maturityData,
-  profitabilityData,
-  growthTrackerData,
-  liquidityEfficiencyData,
-  investmentPerformanceData,
-  leverageRiskData,
-  setSwotAnalysisResult,
-  setPurchaseCriteriaData,
-  setLoyaltyNPSData,
-  competitiveLandscapeData,
-  setCompetitiveLandscapeData,
-  isCompetitiveLandscapeRegenerating,
-  competitiveLandscapeRef,
-  coreAdjacencyData,
-  setCoreAdjacencyData,
-  isCoreAdjacencyRegenerating,
-  coreAdjacencyRef,
-  setPortersData,
-  setPestelData,
-  setFullSwotData,
-  setCompetitiveAdvantageData,
-  setExpandedCapabilityData,
-  setStrategicRadarData,
-  setProductivityData,
-  setMaturityData,
-  setProfitabilityData,
-  setGrowthTrackerData,
-  setLiquidityEfficiencyData,
-  setInvestmentPerformanceData,
-  setLeverageRiskData,
-  isSwotAnalysisRegenerating,
-  isPurchaseCriteriaRegenerating,
-  isLoyaltyNPSRegenerating,
-  isPortersRegenerating,
-  isPestelRegenerating,
-  isFullSwotRegenerating,
-  isCompetitiveAdvantageRegenerating,
-  isExpandedCapabilityRegenerating,
-  isStrategicRadarRegenerating,
-  isProductivityRegenerating,
-  isMaturityRegenerating,
-  isProfitabilityRegenerating,
-  isGrowthTrackerRegenerating,
-  isLiquidityEfficiencyRegenerating,
-  isInvestmentPerformanceRegenerating,
-  isLeverageRiskRegenerating,
-  isAnalysisRegenerating,
-  apiLoadingStates = {},
-  swotRef,
-  purchaseCriteriaRef,
-  loyaltyNpsRef,
-  portersRef,
-  pestelRef,
-  fullSwotRef,
-  competitiveAdvantageRef,
-  expandedCapabilityRef,
-  strategicRadarRef,
-  productivityRef,
-  maturityScoreRef,
-  profitabilityRef,
-  growthTrackerRef,
-  liquidityEfficiencyRef,
-  investmentPerformanceRef,
-  leverageRiskRef,
-  uploadedFileForAnalysis,
-  handleRedirectToBrief,
-  showToastMessage,
-  apiService,
-  createSimpleRegenerationHandler,
-  hideRegenerateButtons = false,
-  highlightedCard,
-  expandedCards,
-  setExpandedCards,
-  onRedirectToChat,
-  isMobile,
-  setActiveTab,
-  hasUploadedDocument,
-  readOnly = false,
-  documentInfo, collapsedCategories,      // ADD THIS to props
-  setCollapsedCategories,  
-}) => {
-  const API_TO_ANALYSIS_MAP = {
-    'find': 'swot',
-    'purchase-criteria': 'purchaseCriteria',
-    'loyalty-metrics': 'loyaltyNPS',
-    'porter-analysis': 'porters',
-    'pestel-analysis': 'pestel',
-    'full-swot-portfolio': 'fullSwot',
-    'competitive-advantage': 'competitiveAdvantage',
-    'expanded-capability-heatmap': 'expandedCapability',
-    'strategic-positioning-radar': 'strategicRadar',
-    'productivity-metrics': 'productivityMetrics',
-    'maturity-scoring': 'maturityScore',
-    'simple-swot-portfolio': 'competitiveLandscape',
-    'core-adjacency': 'coreAdjacency',
-    'excel-analysis': 'profitabilityAnalysis',
-    'excel-analysis-growth': 'growthTracker',
-    'excel-analysis-liquidity': 'liquidityEfficiency',
-    'excel-analysis-investment': 'investmentPerformance',
-    'excel-analysis-leverage': 'leverageRisk'
-  };
+const ANALYSIS_CONFIG = {
+  swot: {
+    component: SwotAnalysis,
+    title: "SWOT Analysis",
+    description: "Comprehensive strengths, weaknesses, opportunities, and threats analysis",
+    category: "context-industry",
+    dataKey: "swotAnalysisResult",
+    refKey: "swotRef",
+    pdfComponent: "swot-analysis"
+  },
+  profitabilityAnalysis: {
+    component: ProfitabilityAnalysis,
+    title: "Profitability Analysis",
+    description: "Detailed profitability margins with industry benchmark comparisons",
+    category: "costs-financial",
+    dataKey: "profitabilityData",
+    refKey: "profitabilityRef",
+    pdfComponent: "profitability-analysis"
+  },
+  growthTracker: {
+    component: GrowthTracker,
+    title: "Growth Tracker",
+    description: "Revenue and net income trends with growth pattern analysis",
+    category: "costs-financial",
+    dataKey: "growthTrackerData",
+    refKey: "growthTrackerRef",
+    pdfComponent: "growth-tracker"
+  },
+  liquidityEfficiency: {
+    component: LiquidityEfficiency,
+    title: "Liquidity & Efficiency",
+    description: "Financial ratios with gauges and color-coded risk indicators",
+    category: "costs-financial",
+    dataKey: "liquidityEfficiencyData",
+    refKey: "liquidityEfficiencyRef",
+    pdfComponent: "liquidity-efficiency"
+  },
+  investmentPerformance: {
+    component: InvestmentPerformance,
+    title: "Investment Performance",
+    description: "ROA, ROE, ROIC analysis with benchmark comparisons and trend charts",
+    category: "costs-financial",
+    dataKey: "investmentPerformanceData",
+    refKey: "investmentPerformanceRef",
+    pdfComponent: "investment-performance"
+  },
+  leverageRisk: {
+    component: LeverageRisk,
+    title: "Leverage & Risk",
+    description: "Financial risk assessment with traffic light risk indicators",
+    category: "costs-financial",
+    dataKey: "leverageRiskData",
+    refKey: "leverageRiskRef",
+    pdfComponent: "leverage-risk"
+  },
+  productivity: {
+    component: ProductivityMetrics,
+    title: "Productivity Metrics",
+    description: "Analysis of organizational productivity and efficiency metrics",
+    category: "costs-financial",
+    dataKey: "productivityData",
+    refKey: "productivityRef",
+    pdfComponent: "productivity"
+  },
+  fullSwot: {
+    component: FullSWOTPortfolio,
+    title: "Full SWOT Portfolio",
+    description: "Comprehensive SWOT analysis with strategic recommendations",
+    category: "context-industry",
+    dataKey: "fullSwotData",
+    refKey: "fullSwotRef",
+    pdfComponent: "full-swot"
+  },
+  strategicRadar: {
+    component: StrategicPositioningRadar,
+    title: "Strategic Positioning Radar",
+    description: "Visual representation of strategic positioning across key dimensions",
+    category: "context-industry",
+    dataKey: "strategicRadarData",
+    refKey: "strategicRadarRef",
+    pdfComponent: "strategic-radar"
+  },
+  porters: {
+    component: PortersFiveForces,
+    title: "Porter's Five Forces",
+    description: "Competitive analysis using Porter's strategic framework",
+    category: "context-industry",
+    dataKey: "portersData",
+    refKey: "portersRef",
+    pdfComponent: "porters-analysis"
+  },
+  pestel: {
+    component: PestelAnalysis,
+    title: "PESTEL Analysis",
+    description: "External environment analysis covering political, economic, social, technological, environmental, and legal factors",
+    category: "context-industry",
+    dataKey: "pestelData",
+    refKey: "pestelRef",
+    pdfComponent: "pestel-analysis"
+  },
+  competitiveAdvantage: {
+    component: CompetitiveAdvantageMatrix,
+    title: "Competitive Advantage Matrix",
+    description: "Analysis of competitive positioning and advantages",
+    category: "customer",
+    dataKey: "competitiveAdvantageData",
+    refKey: "competitiveAdvantageRef",
+    pdfComponent: "competitive-advantage"
+  },
+  purchaseCriteria: {
+    component: PurchaseCriteria,
+    title: "Purchase Criteria",
+    description: "Key factors influencing customer buying decisions",
+    category: "customer",
+    dataKey: "purchaseCriteriaData",
+    refKey: "purchaseCriteriaRef",
+    pdfComponent: "purchase-criteria"
+  },
+  loyaltyNPS: {
+    component: LoyaltyNPS,
+    title: "Loyalty & NPS",
+    description: "Customer loyalty metrics and Net Promoter Score analysis",
+    category: "customer",
+    dataKey: "loyaltyNPSData",
+    refKey: "loyaltyNpsRef",
+    pdfComponent: "loyalty-nps"
+  },
+  expandedCapability: {
+    component: ExpandedCapabilityHeatmap,
+    title: "Capability Heatmap",
+    description: "Advanced organizational capability analysis",
+    category: "capabilities",
+    dataKey: "expandedCapabilityData",
+    refKey: "expandedCapabilityRef",
+    pdfComponent: "expanded-capability"
+  },
+  maturity: {
+    component: MaturityScoreLight,
+    title: "Maturity Score",
+    description: "Business maturity assessment and scoring",
+    category: "capabilities",
+    dataKey: "maturityData",
+    refKey: "maturityScoreRef",
+    pdfComponent: "maturity"
+  },
+  competitiveLandscape: {
+    component: CompetitiveLandscape,
+    title: "Competitive Landscape",
+    description: "Comprehensive analysis of key competitors using SWOT framework",
+    category: "competition",
+    dataKey: "competitiveLandscapeData",
+    refKey: "competitiveLandscapeRef",
+    pdfComponent: "competitive-landscape"
+  },
+  coreAdjacency: {
+    component: CoreAdjacency,
+    title: "Core",
+    description: "Strategic analysis of core business areas and adjacent growth opportunities",
+    category: "current-strategy",
+    dataKey: "coreAdjacencyData",
+    refKey: "coreAdjacencyRef",
+    pdfComponent: "core-adjacency"
+  }
+};
+
+const CATEGORIES = [
+  {
+    id: 'costs-financial',
+    title: 'Costs/Financial',
+    subtitle: 'Financial performance, profitability, and resource efficiency metrics',
+    icon: TrendingUp
+  },
+  {
+    id: 'context-industry',
+    title: 'Context/Industry',
+    subtitle: 'External environment, market forces, and industry dynamics',
+    icon: Building
+  },
+  {
+    id: 'customer',
+    title: 'Customer',
+    subtitle: 'Customer behavior, loyalty, and purchase decision factors',
+    icon: Users
+  },
+  {
+    id: 'capabilities',
+    title: 'Capabilities',
+    subtitle: 'Organizational strengths, maturity, and operational capabilities',
+    icon: Zap
+  },
+  {
+    id: 'competition',
+    title: 'Competition',
+    subtitle: 'Competitive landscape and market positioning analysis',
+    icon: Award
+  },
+  {
+    id: 'current-strategy',
+    title: 'Current Strategy',
+    subtitle: 'Strategic focus areas and growth opportunities',
+    icon: Target
+  }
+];
+
+const API_TO_ANALYSIS_MAP = {
+  'find': 'swot',
+  'purchase-criteria': 'purchaseCriteria',
+  'loyalty-metrics': 'loyaltyNPS',
+  'porter-analysis': 'porters',
+  'pestel-analysis': 'pestel',
+  'full-swot-portfolio': 'fullSwot',
+  'competitive-advantage': 'competitiveAdvantage',
+  'expanded-capability-heatmap': 'expandedCapability',
+  'strategic-positioning-radar': 'strategicRadar',
+  'productivity-metrics': 'productivity',
+  'maturity-scoring': 'maturity',
+  'simple-swot-portfolio': 'competitiveLandscape',
+  'core-adjacency': 'coreAdjacency',
+  'excel-analysis': 'profitabilityAnalysis',
+  'excel-analysis-growth': 'growthTracker',
+  'excel-analysis-liquidity': 'liquidityEfficiency',
+  'excel-analysis-investment': 'investmentPerformance',
+  'excel-analysis-leverage': 'leverageRisk'
+};
+
+const AnalysisContentManager = (props) => {
+  const {
+    phaseManager,
+    apiLoadingStates = {},
+    expandedCards,
+    setExpandedCards,
+    collapsedCategories,
+    setCollapsedCategories,
+    highlightedCard,
+    hideRegenerateButtons = false
+  } = props;
 
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
     if (excelAnalysisTypes.includes(analysisType)) {
-      const regenerationStateMap = {
-        'profitabilityAnalysis': isProfitabilityRegenerating,
-        'growthTracker': isGrowthTrackerRegenerating,
-        'liquidityEfficiency': isLiquidityEfficiencyRegenerating,
-        'investmentPerformance': isInvestmentPerformanceRegenerating,
-        'leverageRisk': isLeverageRiskRegenerating
+      const apiKeyMap = {
+        'profitabilityAnalysis': 'excel-analysis',
+        'growthTracker': 'excel-analysis-growth',
+        'liquidityEfficiency': 'excel-analysis-liquidity',
+        'investmentPerformance': 'excel-analysis-investment',
+        'leverageRisk': 'excel-analysis-leverage'
       };
 
-      return regenerationStateMap[analysisType] || apiLoadingStates['excel-analysis'] || false;
+      const regeneratingKey = `is${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}Regenerating`;
+      const apiKey = apiKeyMap[analysisType];
+
+      return props[regeneratingKey] || apiLoadingStates[apiKey] || false;
     }
 
     const relevantEndpoints = Object.entries(API_TO_ANALYSIS_MAP)
-      .filter(([endpoint, analysis]) => analysis === analysisType)
+      .filter(([_, analysis]) => analysis === analysisType)
       .map(([endpoint]) => endpoint);
 
     return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
@@ -191,34 +313,20 @@ const AnalysisContentManager = ({
     id,
     title,
     description,
-    icon: IconComponent,
     children,
     onRegenerate,
     isRegenerating = false,
     hasData = false,
-    category = 'initial',
-    status = 'completed',
     isLoading = false,
   }) => {
     const isExpanded = expandedCards.has(id);
     const isHighlighted = highlightedCard === id;
+
     const getStatusIcon = () => {
       if (isRegenerating || isLoading) {
         return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
       }
-
-      switch (status) {
-        case 'completed':
-          return;
-        case 'loading':
-          return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
-        case 'locked':
-          return <Lock className="modern-status-icon locked" size={16} />;
-        case 'error':
-          return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
-        default:
-          return null;
-      }
+      return null;
     };
 
     const getActualStatus = () => {
@@ -227,14 +335,12 @@ const AnalysisContentManager = ({
       return 'error';
     };
 
-    const actualStatus = getActualStatus();
-
     return (
-      <div  id={id}  className={`modern-analysis-card ${actualStatus} ${isHighlighted ? 'highlighted' : ''}`}>
-        <div
-          className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
-          onClick={() => toggleCard(id)}
-        >
+      <div
+        id={id}
+        className={`modern-analysis-card ${getActualStatus()} ${isHighlighted ? 'highlighted' : ''}`}
+      >
+        <div className={`modern-card-header ${isExpanded ? 'expanded' : ''}`} onClick={() => toggleCard(id)}>
           <div className="modern-card-header-left">
             <div className="modern-card-text">
               <h3>{title}</h3>
@@ -244,22 +350,7 @@ const AnalysisContentManager = ({
 
           <div className="modern-card-header-right">
             {getStatusIcon()}
-
-            <div
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.nativeEvent?.stopImmediatePropagation?.();
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onMouseUp={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
+            <div onClick={(e) => e.stopPropagation()}>
               <RegenerateButton
                 onRegenerate={onRegenerate}
                 isRegenerating={isRegenerating || isLoading}
@@ -291,29 +382,21 @@ const AnalysisContentManager = ({
     );
   };
 
-  const CategorySection = ({ id, title, subtitle, icon: IconComponent, children, count = 0 }) => {
+  const CategorySection = ({ id, title, subtitle, icon: IconComponent, children }) => {
     const isCollapsed = collapsedCategories.has(id);
 
     return (
       <div className="analysis-category">
-        <div
-          className="category-header"
-          onClick={() => toggleCategory(id)}
-        >
+        <div className="category-header" onClick={() => toggleCategory(id)}>
           <div className="category-header-left">
             <IconComponent size={24} className="category-icon" />
             <div className="category-title-group">
               <h2 className="category-title">{title}</h2>
               {subtitle && (
-                <p style={{
-                  fontSize: '13px',
-                  color: '#6b7280',
-                  margin: '4px 0 0 0',
-                  fontWeight: '500'
-                }}>
+                <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
                   {subtitle}
                 </p>
-              )} 
+              )}
             </div>
           </div>
           <div className="category-toggle">
@@ -322,11 +405,68 @@ const AnalysisContentManager = ({
         </div>
 
         <div className={`category-content ${isCollapsed ? 'collapsed' : 'expanded'}`}>
-          <div className="category-grid">
-            {children}
-          </div>
+          <div className="category-grid">{children}</div>
         </div>
       </div>
+    );
+  };
+
+  const renderAnalysisCard = (analysisKey, config) => {
+    const Component = config.component;
+    const dataKey = config.dataKey;
+    const refKey = config.refKey;
+    const pdfComponent = config.pdfComponent;
+    const regeneratingKey = `is${analysisKey.charAt(0).toUpperCase() + analysisKey.slice(1)}Regenerating`;
+
+    const data = props[dataKey];
+    const ref = props[refKey];
+    const isRegenerating = props[regeneratingKey];
+
+    return (
+      <ModernAnalysisCard
+        key={analysisKey}
+        id={analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase()}
+        title={config.title}
+        description={config.description}
+        hasData={!!data}
+        onRegenerate={props.createSimpleRegenerationHandler(analysisKey)}
+        isRegenerating={isRegenerating}
+        isLoading={isAnalysisLoading(analysisKey)}
+      >
+        <div ref={ref} data-component={pdfComponent}>
+          <Component
+            questions={props.questions}
+            userAnswers={props.userAnswers}
+            businessName={props.businessData.name}
+            onRegenerate={props.createSimpleRegenerationHandler(analysisKey)}
+            isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
+            canRegenerate={!props.isAnalysisRegenerating}
+            {...{ [dataKey]: data }}
+            selectedBusinessId={props.selectedBusinessId}
+            onRedirectToBrief={props.handleRedirectToBrief}
+            {...(analysisKey === 'swot' && {
+              analysisResult: data,
+              onDataGenerated: props.setSwotAnalysisResult,
+              saveAnalysisToBackend: (d, type) => props.apiService.saveAnalysisToBackend(d, type, props.selectedBusinessId)
+            })}
+            {...(analysisKey === 'purchaseCriteria' && {
+              onDataGenerated: props.setPurchaseCriteriaData
+            })}
+            {...(analysisKey === 'loyaltyNPS' && {
+              onDataGenerated: props.setLoyaltyNPSData
+            })}
+            {...(config.category === 'costs-financial' && {
+              uploadedFile: props.uploadedFileForAnalysis,
+              onRedirectToChat: props.onRedirectToChat,
+              isMobile: props.isMobile,
+              setActiveTab: props.setActiveTab,
+              hasUploadedDocument: props.hasUploadedDocument,
+              readOnly: props.readOnly,
+              documentInfo: props.documentInfo
+            })}
+          />
+        </div>
+      </ModernAnalysisCard>
     );
   };
 
@@ -343,628 +483,48 @@ const AnalysisContentManager = ({
       );
     }
 
-    const categories = [
-  {
-    id: 'costs-financial',
-    title: 'Costs/Financial',
-    subtitle: 'Financial performance, profitability, and resource efficiency metrics',
-    icon: TrendingUp,
-    analyses: []
-  },
-  {
-    id: 'context-industry',
-    title: 'Context/Industry',
-    subtitle: 'External environment, market forces, and industry dynamics',
-    icon: Building,
-    analyses: []
-  },
-  {
-    id: 'customer',
-    title: 'Customer',
-    subtitle: 'Customer behavior, loyalty, and purchase decision factors',
-    icon: Users,
-    analyses: []
-  },
-  {
-    id: 'capabilities',
-    title: 'Capabilities',
-    subtitle: 'Organizational strengths, maturity, and operational capabilities',
-    icon: Zap,
-    analyses: []
-  },
-  {
-    id: 'competition',
-    title: 'Competition',
-    subtitle: 'Competitive landscape and market positioning analysis',
-    icon: Award,
-    analyses: []
-  },
-  {
-    id: 'current-strategy',
-    title: 'Current Strategy',
-    subtitle: 'Strategic focus areas and growth opportunities',
-    icon: Target,
-    analyses: []
-  }
-];
+    const visibleAnalyses = {
+      initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
+      essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency', 'productivity'],
+      good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivity', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency']
+    };
 
+    let currentAnalyses = visibleAnalyses.initial;
     if (unlockedFeatures.goodPhase) {
-      categories[0].analyses.push(
-        <ModernAnalysisCard
-          key="profitability-analysis"
-          id="profitability-analysis"
-          title="Profitability Analysis"
-          description="Detailed profitability margins with industry benchmark comparisons"
-          icon={TrendingUp}
-          hasData={!!profitabilityData}
-          onRegenerate={createSimpleRegenerationHandler('profitabilityAnalysis')}
-          isRegenerating={isProfitabilityRegenerating}
-          isLoading={isAnalysisLoading('profitabilityAnalysis')}
-          category="good"
-        >
-          <div ref={profitabilityRef} data-component="profitability-analysis">
-            <ProfitabilityAnalysis
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('profitabilityAnalysis')}
-              isRegenerating={isProfitabilityRegenerating || isAnalysisLoading('profitabilityAnalysis')}
-              canRegenerate={!isAnalysisRegenerating}
-              profitabilityData={profitabilityData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToChat={onRedirectToChat}
-              isMobile={isMobile}
-              setActiveTab={setActiveTab}
-              hasUploadedDocument={hasUploadedDocument}
-              onRedirectToBrief={handleRedirectToBrief}
-              uploadedFile={uploadedFileForAnalysis}
-              readOnly={readOnly}
-              documentInfo={documentInfo}
-            />
-          </div>
-        </ModernAnalysisCard>,
-
-        <ModernAnalysisCard
-          key="growth-tracker"
-          id="growth-tracker"
-          title="Growth Tracker"
-          description="Revenue and net income trends with growth pattern analysis"
-          icon={TrendingUp}
-          hasData={!!growthTrackerData}
-          onRegenerate={createSimpleRegenerationHandler('growthTracker')}
-          isRegenerating={isGrowthTrackerRegenerating}
-          isLoading={isAnalysisLoading('growthTracker')}
-          category="good"
-        >
-          <div ref={growthTrackerRef} data-component="growth-tracker">
-            <GrowthTracker
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('growthTracker')}
-              isRegenerating={isGrowthTrackerRegenerating || isAnalysisLoading('growthTracker')}
-              canRegenerate={!isAnalysisRegenerating}
-              growthData={growthTrackerData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              uploadedFile={uploadedFileForAnalysis}
-              onRedirectToChat={onRedirectToChat}
-              isMobile={isMobile}
-              setActiveTab={setActiveTab}
-              hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly}
-              documentInfo={documentInfo}
-            />
-          </div>
-        </ModernAnalysisCard>,
-
-        <ModernAnalysisCard
-          key="liquidity-efficiency"
-          id="liquidity-efficiency"
-          title="Liquidity & Efficiency"
-          description="Financial ratios with gauges and color-coded risk indicators"
-          icon={TrendingUp}
-          hasData={!!liquidityEfficiencyData}
-          onRegenerate={createSimpleRegenerationHandler('liquidityEfficiency')}
-          isRegenerating={isLiquidityEfficiencyRegenerating}
-          isLoading={isAnalysisLoading('liquidityEfficiency')}
-          category="good"
-        >
-          <div ref={liquidityEfficiencyRef} data-component="liquidity-efficiency">
-            <LiquidityEfficiency
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('liquidityEfficiency')}
-              isRegenerating={isLiquidityEfficiencyRegenerating || isAnalysisLoading('liquidityEfficiency')}
-              canRegenerate={!isAnalysisRegenerating}
-              liquidityData={liquidityEfficiencyData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              uploadedFile={uploadedFileForAnalysis}
-              onRedirectToChat={onRedirectToChat}
-              isMobile={isMobile}
-              setActiveTab={setActiveTab}
-              hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly}
-              documentInfo={documentInfo}
-            />
-          </div>
-        </ModernAnalysisCard>,
-
-        <ModernAnalysisCard
-          key="investment-performance"
-          id="investment-performance"
-          title="Investment Performance"
-          description="ROA, ROE, ROIC analysis with benchmark comparisons and trend charts"
-          icon={TrendingUp}
-          hasData={!!investmentPerformanceData}
-          onRegenerate={createSimpleRegenerationHandler('investmentPerformance')}
-          isRegenerating={isInvestmentPerformanceRegenerating}
-          isLoading={isAnalysisLoading('investmentPerformance')}
-          category="good"
-        >
-          <div ref={investmentPerformanceRef} data-component="investment-performance">
-            <InvestmentPerformance
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('investmentPerformance')}
-              isRegenerating={isInvestmentPerformanceRegenerating || isAnalysisLoading('investmentPerformance')}
-              canRegenerate={!isAnalysisRegenerating}
-              investmentData={investmentPerformanceData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              uploadedFile={uploadedFileForAnalysis}
-              onRedirectToChat={onRedirectToChat}
-              isMobile={isMobile}
-              setActiveTab={setActiveTab}
-              hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly}
-              documentInfo={documentInfo}
-            />
-          </div>
-        </ModernAnalysisCard>,
-
-        <ModernAnalysisCard
-          key="leverage-risk"
-          id="leverage-risk"
-          title="Leverage & Risk"
-          description="Financial risk assessment with traffic light risk indicators"
-          icon={TrendingUp}
-          hasData={!!leverageRiskData}
-          onRegenerate={createSimpleRegenerationHandler('leverageRisk')}
-          isRegenerating={isLeverageRiskRegenerating}
-          isLoading={isAnalysisLoading('leverageRisk')}
-          category="good"
-        >
-          <div ref={leverageRiskRef} data-component="leverage-risk">
-            <LeverageRisk
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('leverageRisk')}
-              isRegenerating={isLeverageRiskRegenerating || isAnalysisLoading('leverageRisk')}
-              canRegenerate={!isAnalysisRegenerating}
-              leverageData={leverageRiskData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              uploadedFile={uploadedFileForAnalysis}
-              onRedirectToChat={onRedirectToChat}
-              isMobile={isMobile}
-              setActiveTab={setActiveTab}
-              hasUploadedDocument={hasUploadedDocument}
-              readOnly={readOnly}
-              documentInfo={documentInfo}
-            />
-          </div>
-        </ModernAnalysisCard>
-      );
+      currentAnalyses = visibleAnalyses.good;
+    } else if (unlockedFeatures.fullSwot) {
+      currentAnalyses = visibleAnalyses.essential;
     }
 
-    if (unlockedFeatures.fullSwot) {
-      categories[0].analyses.push(
-        <ModernAnalysisCard
-          key="productivity"
-          id="productivity"
-          title="Productivity Metrics"
-          description="Analysis of organizational productivity and efficiency metrics"
-          icon={TrendingUp}
-          hasData={!!productivityData}
-          onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-          isRegenerating={isProductivityRegenerating}
-          isLoading={isAnalysisLoading('productivityMetrics')}
-          category="essential"
-        >
-          <div ref={productivityRef} data-component="productivity">
-            <ProductivityMetrics
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('productivityMetrics')}
-              isRegenerating={isProductivityRegenerating || isAnalysisLoading('productivityMetrics')}
-              canRegenerate={!isAnalysisRegenerating}
-              productivityData={productivityData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-            />
-          </div>
-        </ModernAnalysisCard>
-      );
-    }
+    const categorizedAnalyses = {};
+    CATEGORIES.forEach(cat => {
+      categorizedAnalyses[cat.id] = [];
+    });
 
-    if (unlockedFeatures.fullSwot) {
-      categories[1].analyses.push(
-        <ModernAnalysisCard
-          key="full-swot"
-          id="full-swot"
-          title="Full SWOT Portfolio"
-          description="Comprehensive SWOT analysis with strategic recommendations"
-          icon={Building}
-          hasData={!!fullSwotData}
-          onRegenerate={createSimpleRegenerationHandler('fullSwot')}
-          isRegenerating={isFullSwotRegenerating}
-          isLoading={isAnalysisLoading('fullSwot')}
-          category="essential"
-        >
-          <div ref={fullSwotRef} data-component="full-swot">
-            <FullSWOTPortfolio
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              isRegenerating={isFullSwotRegenerating || isAnalysisLoading('fullSwot')}
-              canRegenerate={!isAnalysisRegenerating}
-              fullSwotData={fullSwotData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              onRegenerate={createSimpleRegenerationHandler('fullSwot')}
-            />
-          </div>
-        </ModernAnalysisCard>,
-
-        <ModernAnalysisCard
-          key="strategic-radar"
-          id="strategic-radar"
-          title="Strategic Positioning Radar"
-          description="Visual representation of strategic positioning across key dimensions"
-          icon={Building}
-          hasData={!!strategicRadarData}
-          onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-          isRegenerating={isStrategicRadarRegenerating}
-          isLoading={isAnalysisLoading('strategicRadar')}
-          category="essential"
-        >
-          <div ref={strategicRadarRef} data-component="strategic-radar">
-            <StrategicPositioningRadar
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('strategicRadar')}
-              isRegenerating={isStrategicRadarRegenerating || isAnalysisLoading('strategicRadar')}
-              canRegenerate={!isAnalysisRegenerating}
-              strategicRadarData={strategicRadarData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-            />
-          </div>
-        </ModernAnalysisCard>
-      );
-    }
-
-    if (!unlockedFeatures.fullSwot) {
-      categories[1].analyses.push(
-        <ModernAnalysisCard
-          key="swot"
-          id="swot"
-          title="SWOT Analysis"
-          description="Comprehensive strengths, weaknesses, opportunities, and threats analysis"
-          icon={Building}
-          hasData={!!swotAnalysisResult}
-          onRegenerate={createSimpleRegenerationHandler('swot')}
-          isRegenerating={isSwotAnalysisRegenerating}
-          isLoading={isAnalysisLoading('swot')}
-          category="initial"
-        >
-          <div ref={swotRef} data-component="swot-analysis">
-            <SwotAnalysis
-              analysisResult={swotAnalysisResult}
-              businessName={businessData.name}
-              questions={questions}
-              userAnswers={userAnswers}
-              saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              onDataGenerated={setSwotAnalysisResult}
-              onRegenerate={createSimpleRegenerationHandler('swot')}
-              isRegenerating={isSwotAnalysisRegenerating || isAnalysisLoading('swot')}
-              canRegenerate={!isAnalysisRegenerating}
-            />
-          </div>
-        </ModernAnalysisCard>
-      );
-    }
-
-    categories[1].analyses.push(
-      <ModernAnalysisCard
-        key="porters"
-        id="porters"
-        title="Porter's Five Forces"
-        description="Competitive analysis using Porter's strategic framework"
-        icon={Building}
-        hasData={!!portersData}
-        onRegenerate={createSimpleRegenerationHandler('porters')}
-        isRegenerating={isPortersRegenerating}
-        isLoading={isAnalysisLoading('porters')}
-        category="initial"
-      >
-        <div ref={portersRef} data-component="porters-analysis">
-          <PortersFiveForces
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessData.name}
-            onRegenerate={createSimpleRegenerationHandler('porters')}
-            isRegenerating={isPortersRegenerating || isAnalysisLoading('porters')}
-            canRegenerate={!isAnalysisRegenerating}
-            portersData={portersData}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-          />
-        </div>
-      </ModernAnalysisCard>,
-
-      <ModernAnalysisCard
-        key="pestel"
-        id="pestel"
-        title="PESTEL Analysis"
-        description="External environment analysis covering political, economic, social, technological, environmental, and legal factors"
-        icon={Building}
-        hasData={!!pestelData}
-        onRegenerate={createSimpleRegenerationHandler('pestel')}
-        isRegenerating={isPestelRegenerating}
-        isLoading={isAnalysisLoading('pestel')}
-        category="initial"
-      >
-        <div ref={pestelRef} data-component="pestel-analysis">
-          <PestelAnalysis
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessData.name}
-            onRegenerate={createSimpleRegenerationHandler('pestel')}
-            isRegenerating={isPestelRegenerating || isAnalysisLoading('pestel')}
-            canRegenerate={!isAnalysisRegenerating}
-            pestelData={pestelData}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-          />
-        </div>
-      </ModernAnalysisCard>
-    );
-    if (unlockedFeatures.fullSwot) {
-      categories[2].analyses.push(
-        <ModernAnalysisCard
-          key="competitive-advantage"
-          id="competitive-advantage"
-          title="Competitive Advantage Matrix"
-          description="Analysis of competitive positioning and advantages"
-          icon={Users}
-          hasData={!!competitiveAdvantageData}
-          onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
-          isRegenerating={isCompetitiveAdvantageRegenerating}
-          isLoading={isAnalysisLoading('competitiveAdvantage')}
-          category="essential"
-        >
-          <div ref={competitiveAdvantageRef} data-component="competitive-advantage">
-            <CompetitiveAdvantageMatrix
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              isRegenerating={isCompetitiveAdvantageRegenerating || isAnalysisLoading('competitiveAdvantage')}
-              canRegenerate={!isAnalysisRegenerating}
-              competitiveAdvantageData={competitiveAdvantageData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-              onRegenerate={createSimpleRegenerationHandler('competitiveAdvantage')}
-            />
-          </div>
-        </ModernAnalysisCard>
-      );
-    }
-
-    categories[2].analyses.push(
-      <ModernAnalysisCard
-        key="purchase-criteria"
-        id="purchase-criteria"
-        title="Purchase Criteria"
-        description="Key factors influencing customer buying decisions"
-        icon={Users}
-        hasData={!!purchaseCriteriaData}
-        onRegenerate={createSimpleRegenerationHandler('purchaseCriteria')}
-        isRegenerating={isPurchaseCriteriaRegenerating}
-        isLoading={isAnalysisLoading('purchaseCriteria')}
-        category="initial"
-      >
-        <div ref={purchaseCriteriaRef} data-component="purchase-criteria">
-          <PurchaseCriteria
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessData.name}
-            onDataGenerated={setPurchaseCriteriaData}
-            onRegenerate={createSimpleRegenerationHandler('purchaseCriteria')}
-            isRegenerating={isPurchaseCriteriaRegenerating || isAnalysisLoading('purchaseCriteria')}
-            canRegenerate={!isAnalysisRegenerating}
-            purchaseCriteriaData={purchaseCriteriaData}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-          />
-        </div>
-      </ModernAnalysisCard>,
-
-      <ModernAnalysisCard
-        key="loyalty-nps"
-        id="loyalty-nps"
-        title="Loyalty & NPS"
-        description="Customer loyalty metrics and Net Promoter Score analysis"
-        icon={Users}
-        hasData={!!loyaltyNPSData}
-        onRegenerate={createSimpleRegenerationHandler('loyaltyNPS')}
-        isRegenerating={isLoyaltyNPSRegenerating}
-        isLoading={isAnalysisLoading('loyaltyNPS')}
-        category="initial"
-      >
-        <div ref={loyaltyNpsRef} data-component="loyalty-nps">
-          <LoyaltyNPS
-            questions={questions}
-            userAnswers={userAnswers}
-            businessName={businessData.name}
-            onDataGenerated={setLoyaltyNPSData}
-            onRegenerate={createSimpleRegenerationHandler('loyaltyNPS')}
-            isRegenerating={isLoyaltyNPSRegenerating || isAnalysisLoading('loyaltyNPS')}
-            canRegenerate={!isAnalysisRegenerating}
-            loyaltyNPSData={loyaltyNPSData}
-            selectedBusinessId={selectedBusinessId}
-            onRedirectToBrief={handleRedirectToBrief}
-          />
-        </div>
-      </ModernAnalysisCard>
-    );
-
-    if (unlockedFeatures.fullSwot) {
-      categories[3].analyses.push(
-        <ModernAnalysisCard
-          key="expanded-capability"
-          id="expanded-capability"
-          title="Capability Heatmap"
-          description="Advanced organizational capability analysis"
-          icon={Zap}
-          hasData={!!expandedCapabilityData}
-          onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-          isRegenerating={isExpandedCapabilityRegenerating}
-          isLoading={isAnalysisLoading('expandedCapability')}
-          category="essential"
-        >
-          <div ref={expandedCapabilityRef} data-component="expanded-capability">
-            <ExpandedCapabilityHeatmap
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('expandedCapability')}
-              isRegenerating={isExpandedCapabilityRegenerating || isAnalysisLoading('expandedCapability')}
-              canRegenerate={!isAnalysisRegenerating}
-              expandedCapabilityData={expandedCapabilityData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-            />
-          </div>
-        </ModernAnalysisCard>,
-
-        <ModernAnalysisCard
-          key="maturity"
-          id="maturity"
-          title="Maturity Score"
-          description="Business maturity assessment and scoring"
-          icon={Zap}
-          hasData={!!maturityData}
-          onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-          isRegenerating={isMaturityRegenerating}
-          isLoading={isAnalysisLoading('maturityScore')}
-          category="essential"
-        >
-          <div ref={maturityScoreRef} data-component="maturity">
-            <MaturityScoreLight
-              questions={questions}
-              userAnswers={userAnswers}
-              businessName={businessData.name}
-              onRegenerate={createSimpleRegenerationHandler('maturityScore')}
-              isRegenerating={isMaturityRegenerating || isAnalysisLoading('maturityScore')}
-              canRegenerate={!isAnalysisRegenerating}
-              maturityData={maturityData}
-              selectedBusinessId={selectedBusinessId}
-              onRedirectToBrief={handleRedirectToBrief}
-            />
-          </div>
-        </ModernAnalysisCard>
-      );
-
-      if (unlockedFeatures.fullSwot) {
-        categories[4].analyses.push(
-          <ModernAnalysisCard
-            key="competitive-landscape"
-            id="competitive-landscape"
-            title="Competitive Landscape"
-            description="Comprehensive analysis of key competitors using SWOT framework"
-            icon={Award}
-            hasData={!!competitiveLandscapeData}
-            onRegenerate={createSimpleRegenerationHandler('competitiveLandscape')}
-            isRegenerating={isCompetitiveLandscapeRegenerating}
-            isLoading={isAnalysisLoading('competitiveLandscape')}
-            category="essential"
-          >
-            <div ref={competitiveLandscapeRef} data-component="competitive-landscape">
-              <CompetitiveLandscape
-                questions={questions}
-                userAnswers={userAnswers}
-                businessName={businessData.name}
-                onRegenerate={createSimpleRegenerationHandler('competitiveLandscape')}
-                isRegenerating={isCompetitiveLandscapeRegenerating || isAnalysisLoading('competitiveLandscape')}
-                canRegenerate={!isAnalysisRegenerating}
-                competitiveLandscapeData={competitiveLandscapeData}
-                selectedBusinessId={selectedBusinessId}
-                onRedirectToBrief={handleRedirectToBrief}
-              />
-            </div>
-          </ModernAnalysisCard>
-        );
-      };
-      if (unlockedFeatures.fullSwot) {
-        categories[5].analyses.push(
-          <ModernAnalysisCard
-            key="core-adjacency"
-            id="core-adjacency"
-            title="Core"
-            description="Strategic analysis of core business areas and adjacent growth opportunities"
-            icon={Target}
-            hasData={!!coreAdjacencyData}
-            onRegenerate={createSimpleRegenerationHandler('coreAdjacency')}
-            isRegenerating={isCoreAdjacencyRegenerating}
-            isLoading={isAnalysisLoading('coreAdjacency')}
-            category="essential"
-          >
-            <div ref={coreAdjacencyRef} data-component="core-adjacency">
-              <CoreAdjacency
-                questions={questions}
-                userAnswers={userAnswers}
-                businessName={businessData.name}
-                onRegenerate={createSimpleRegenerationHandler('coreAdjacency')}
-                isRegenerating={isCoreAdjacencyRegenerating || isAnalysisLoading('coreAdjacency')}
-                canRegenerate={!isAnalysisRegenerating}
-                coreAdjacencyData={coreAdjacencyData}
-                selectedBusinessId={selectedBusinessId}
-                onRedirectToBrief={handleRedirectToBrief}
-              />
-            </div>
-          </ModernAnalysisCard>
-        );
+    currentAnalyses.forEach(analysisKey => {
+      const config = ANALYSIS_CONFIG[analysisKey];
+      if (config) {
+        categorizedAnalyses[config.category].push(renderAnalysisCard(analysisKey, config));
       }
-    }
+    });
 
     return (
       <div className="modern-analysis-container">
         <div className="modern-analysis-content">
           <div className="categorized-analysis">
-            {categories.map(category => {
-              const analysisCount = category.analyses.length;
-              if (analysisCount === 0) return null;
+            {CATEGORIES.map(category => {
+              const analyses = categorizedAnalyses[category.id];
+              if (analyses.length === 0) return null;
 
               return (
                 <CategorySection
                   key={category.id}
                   id={category.id}
                   title={category.title}
-                  icon={category.icon}
-                  count={analysisCount}
                   subtitle={category.subtitle}
+                  icon={category.icon}
                 >
-                  {category.analyses}
+                  {analyses}
                 </CategorySection>
               );
             })}

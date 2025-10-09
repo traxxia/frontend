@@ -10,144 +10,51 @@ import PhaseManager from "../components/PhaseManager";
 import AnalysisContentManager from "../components/AnalysisContentManager";
 import { useBusinessSetup } from '../hooks/useBusinessSetup';
 import { extractBusinessName, showToastMessage as createToastMessage } from '../utils/businessHelpers';
-import "../styles/businesspage.css";
-import "../styles/business.css";
 import PDFExportButton from "../components/PDFExportButton";
 import { AnalysisApiService } from '../services/analysisApiService';
+import "../styles/businesspage.css";
+import "../styles/business.css";
 
-const createAnalysisContentManagerProps = (state, props) => {
-  const {
-    swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, strategicData,
-    portersData, pestelData, fullSwotData, competitiveAdvantageData,
-    expandedCapabilityData, strategicRadarData, productivityData, maturityData,
-    profitabilityData, growthTrackerData, liquidityEfficiencyData,
-    investmentPerformanceData, leverageRiskData, competitiveLandscapeData,
-    setSwotAnalysisResult, setPurchaseCriteriaData, setLoyaltyNPSData,
-    setPortersData, setPestelData, setFullSwotData, setCompetitiveAdvantageData,
-    setExpandedCapabilityData, setStrategicRadarData, setProductivityData,
-    setMaturityData, setProfitabilityData, setGrowthTrackerData,
-    setLiquidityEfficiencyData, setInvestmentPerformanceData, setLeverageRiskData,
-    setCompetitiveLandscapeData,
-    isSwotAnalysisRegenerating, isPurchaseCriteriaRegenerating, isLoyaltyNPSRegenerating,
-    isPortersRegenerating, isPestelRegenerating, isFullSwotRegenerating,
-    isCompetitiveAdvantageRegenerating, isExpandedCapabilityRegenerating,
-    isStrategicRadarRegenerating, isProductivityRegenerating, isMaturityRegenerating,
-    isProfitabilityRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
-    isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating, isCompetitiveLandscapeRegenerating,
-    isAnalysisRegenerating,
-    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
-    competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
-    maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
-    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef,
-    coreAdjacencyData, setCoreAdjacencyData,
-    isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating, coreAdjacencyRef
+const CARD_TO_CATEGORY_MAP = {
+  "profitability-analysis": "costs-financial",
+  "growth-tracker": "costs-financial",
+  "liquidity-efficiency": "costs-financial",
+  "investment-performance": "costs-financial",
+  "leverage-risk": "costs-financial",
+  "productivity": "costs-financial",
+  "swot": "context-industry",
+  "full-swot": "context-industry",
+  "strategic-radar": "context-industry",
+  "porters": "context-industry",
+  "pestel": "context-industry",
+  "competitive-advantage": "customer",
+  "purchase-criteria": "customer",
+  "loyalty-nps": "customer",
+  "expanded-capability": "capabilities",
+  "maturity": "capabilities",
+  "competitive-landscape": "competition",
+  "core-adjacency": "current-strategy",
+};
 
-  } = state;
-
-  const {
-    phaseManager, businessData, questions, userAnswers, selectedBusinessId,
-    handleRedirectToBrief, showToastMessage, apiService, createSimpleRegenerationHandler,
-    apiLoadingStates, uploadedFileForAnalysis,collapsedCategories,      // ADD THIS
-  setCollapsedCategories,
-    highlightedCard, expandedCards, setExpandedCards, handleRedirectToChat, isMobile, setActiveTab, hasUploadedDocument, documentInfo
-  } = props;
-
-  return {
-    phaseManager,
-    apiLoadingStates,
-    businessData,
-    questions,
-    userAnswers,
-    selectedBusinessId,
-    swotAnalysisResult,
-    purchaseCriteriaData,
-    loyaltyNPSData,
-    strategicData,
-    portersData,
-    pestelData,
-    fullSwotData,
-    competitiveAdvantageData,
-    expandedCapabilityData,
-    strategicRadarData,
-    productivityData,
-    maturityData,
-    profitabilityData,
-    growthTrackerData,
-    liquidityEfficiencyData,
-    investmentPerformanceData,
-    leverageRiskData,
-    setSwotAnalysisResult,
-    setPurchaseCriteriaData,
-    setLoyaltyNPSData,
-    setPortersData,
-    setPestelData,
-    setFullSwotData,
-    setCompetitiveAdvantageData,
-    setExpandedCapabilityData,
-    setStrategicRadarData,
-    setProductivityData,
-    setMaturityData,
-    setProfitabilityData,
-    setGrowthTrackerData,
-    setLiquidityEfficiencyData,
-    setInvestmentPerformanceData,
-    setLeverageRiskData,
-    isSwotAnalysisRegenerating,
-    isPurchaseCriteriaRegenerating,
-    isLoyaltyNPSRegenerating,
-    isPortersRegenerating,
-    isPestelRegenerating,
-    isFullSwotRegenerating,
-    isCompetitiveAdvantageRegenerating,
-    isExpandedCapabilityRegenerating,
-    isStrategicRadarRegenerating,
-    isProductivityRegenerating,
-    isMaturityRegenerating,
-    isProfitabilityRegenerating,
-    isGrowthTrackerRegenerating,
-    isLeverageRiskRegenerating,
-    isLiquidityEfficiencyRegenerating,
-    isInvestmentPerformanceRegenerating,
-    isAnalysisRegenerating,
-    swotRef,
-    purchaseCriteriaRef,
-    loyaltyNpsRef,
-    portersRef,
-    pestelRef,
-    fullSwotRef,
-    competitiveAdvantageRef,
-    expandedCapabilityRef,
-    strategicRadarRef,
-    productivityRef,
-    maturityScoreRef,
-    profitabilityRef,
-    growthTrackerRef,
-    liquidityEfficiencyRef,
-    investmentPerformanceRef,
-    leverageRiskRef,
-    uploadedFileForAnalysis,
-    handleRedirectToBrief,
-    showToastMessage,
-    apiService,
-    createSimpleRegenerationHandler,
-    highlightedCard,
-    expandedCards,
-    setExpandedCards,
-    onRedirectToChat: handleRedirectToChat,
-    isMobile,
-    setActiveTab,
-    competitiveLandscapeData,
-    setCompetitiveLandscapeData,
-    isCompetitiveLandscapeRegenerating,
-    competitiveLandscapeRef,
-    coreAdjacencyData,
-    setCoreAdjacencyData,
-    isCoreAdjacencyRegenerating,
-    setCoreAdjacencyData,
-    hasUploadedDocument,
-    documentInfo,collapsedCategories,      // ADD THIS
-  setCollapsedCategories,
-  };
+const CARD_ID_MAP = {
+  "SWOT": "swot",
+  "Purchase Criteria": "purchase-criteria",
+  "Loyalty/NPS": "loyalty-nps",
+  "Porter's Five Forces": "porters",
+  "PESTEL Analysis": "pestel",
+  "Full SWOT Portfolio": "full-swot",
+  "Competitive Advantage": "competitive-advantage",
+  "Capability Heatmap": "expanded-capability",
+  "Strategic Positioning Radar": "strategic-radar",
+  "Productivity Metrics": "productivity",
+  "Maturity Score": "maturity",
+  "Profitability Analysis": "profitability-analysis",
+  "Growth Tracker": "growth-tracker",
+  "Liquidity & Efficiency": "liquidity-efficiency",
+  "Investment Performance": "investment-performance",
+  "Leverage & Risk": "leverage-risk",
+  "Competitive Landscape": "competitive-landscape",
+  "Core": "core-adjacency",
 };
 
 const BusinessSetupPage = () => {
@@ -156,119 +63,86 @@ const BusinessSetupPage = () => {
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
   const { t } = useTranslation();
+
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
+
   const [apiLoadingStates, setApiLoadingStates] = useState({});
   const [documentInfo, setDocumentInfo] = useState(null);
   const [phaseAnalysisArray, setPhaseAnalysisArray] = useState([]);
-const [collapsedCategories, setCollapsedCategories] = useState(
-  new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
-);
+  const [collapsedCategories, setCollapsedCategories] = useState(
+    new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
+  );
+  const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
+  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
+  const [highlightedCard, setHighlightedCard] = useState(null);
+  const [expandedCards, setExpandedCards] = useState(new Set());
+  const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
+  const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
+  const hasLoadedAnalysis = useRef(false);
+
   const setApiLoading = (apiEndpoint, isLoading) => {
-    setApiLoadingStates(prev => ({
-      ...prev,
-      [apiEndpoint]: isLoading
-    }));
+    setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
   };
 
-  const handleDocumentInfoLoad = (docInfo) => {
-    setDocumentInfo(docInfo);
-  };
   const apiService = new AnalysisApiService(
     ML_API_BASE_URL,
     API_BASE_URL,
     getAuthToken,
     setApiLoading
   );
-  const state = useBusinessSetup(business, selectedBusinessId);
-  const [currentPhase, setCurrentPhase] = useState('initial');
-  const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
-  // In your BusinessSetupPage.js, add this line to your state destructuring:
 
-  const { activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,
-    isSliding, setIsSliding,
-    questions, setQuestions, questionsLoaded, setQuestionsLoaded,
+  const state = useBusinessSetup(business, selectedBusinessId);
+  const {
+    activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,
+    isSliding, setIsSliding, questions, setQuestions, questionsLoaded, setQuestionsLoaded,
     userAnswers, setUserAnswers, completedQuestions, setCompletedQuestions,
     businessData, setBusinessData, hasAnalysisData, setHasAnalysisData,
-    isAnalysisRegenerating, setIsAnalysisRegenerating, selectedPhase, setSelectedPhase,
-    showDropdown, setShowDropdown, showToast, setShowToast,
-    swotAnalysisResult, setSwotAnalysisResult,
-    purchaseCriteriaData, setPurchaseCriteriaData,
-    loyaltyNPSData, setLoyaltyNPSData,
-    strategicData, setStrategicData,
-    portersData, setPortersData,
-    pestelData, setPestelData,
-    fullSwotData, setFullSwotData,
-    competitiveAdvantageData, setCompetitiveAdvantageData,
-    expandedCapabilityData, setExpandedCapabilityData,
-    strategicRadarData, setStrategicRadarData,
-    productivityData, setProductivityData,
-    maturityData, setMaturityData,
-    profitabilityData, setProfitabilityData,
-    growthTrackerData, setGrowthTrackerData,
+    isAnalysisRegenerating, setIsAnalysisRegenerating, showToast, setShowToast,
+    swotAnalysisResult, setSwotAnalysisResult, purchaseCriteriaData, setPurchaseCriteriaData,
+    loyaltyNPSData, setLoyaltyNPSData, strategicData, setStrategicData,
+    portersData, setPortersData, pestelData, setPestelData,
+    fullSwotData, setFullSwotData, competitiveAdvantageData, setCompetitiveAdvantageData,
+    expandedCapabilityData, setExpandedCapabilityData, strategicRadarData, setStrategicRadarData,
+    productivityData, setProductivityData, maturityData, setMaturityData,
+    profitabilityData, setProfitabilityData, growthTrackerData, setGrowthTrackerData,
     liquidityEfficiencyData, setLiquidityEfficiencyData,
     investmentPerformanceData, setInvestmentPerformanceData,
     leverageRiskData, setLeverageRiskData,
     competitiveLandscapeData, setCompetitiveLandscapeData,
     coreAdjacencyData, setCoreAdjacencyData,
-    isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
-    isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating,
-    isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating,
-    isStrategicRegenerating, setIsStrategicRegenerating,
-    isPortersRegenerating, setIsPortersRegenerating,
-    isPestelRegenerating, setIsPestelRegenerating,
-    isFullSwotRegenerating, setIsFullSwotRegenerating,
-    isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating,
-    isExpandedCapabilityRegenerating, setIsExpandedCapabilityRegenerating,
-    isStrategicRadarRegenerating, setIsStrategicRadarRegenerating,
-    isProductivityRegenerating, setIsProductivityRegenerating,
-    isMaturityRegenerating, setIsMaturityRegenerating,
-    isProfitabilityRegenerating, setIsProfitabilityRegenerating,
-    isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
-    isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
-    isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
-    isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
-    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating,
-    isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
-    highlightedMissingQuestions, setHighlightedMissingQuestions,
+    isSwotAnalysisRegenerating, isPurchaseCriteriaRegenerating,
+    isLoyaltyNPSRegenerating, isStrategicRegenerating, setIsStrategicRegenerating,
+    isPortersRegenerating, isPestelRegenerating,
+    isFullSwotRegenerating, isCompetitiveAdvantageRegenerating,
+    isExpandedCapabilityRegenerating, isStrategicRadarRegenerating,
+    isProductivityRegenerating, isMaturityRegenerating,
+    isProfitabilityRegenerating, isGrowthTrackerRegenerating,
+    isLiquidityEfficiencyRegenerating, isInvestmentPerformanceRegenerating,
+    isLeverageRiskRegenerating, isCompetitiveLandscapeRegenerating,
+    isCoreAdjacencyRegenerating, highlightedMissingQuestions, setHighlightedMissingQuestions,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, dropdownRef, isRegeneratingRef,
     portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef,
     productivityRef, maturityScoreRef, strategicRadarRef, expandedCapabilityRef,
     profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
-    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef
+    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
+    showDropdown, setShowDropdown
   } = state;
-  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
-  const [highlightedCard, setHighlightedCard] = useState(null);
-  const [expandedCards, setExpandedCards] = useState(new Set());
-  const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
 
-  const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
-  const hasLoadedAnalysis = useRef(false);
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
   }, [uploadedFileForAnalysis]);
+
   const showToastMessage = createToastMessage(setShowToast);
 
   const stateSetters = {
-    setSwotAnalysisResult,
-    setPurchaseCriteriaData,
-    setLoyaltyNPSData,
-    setPortersData,
-    setPestelData,
-    setFullSwotData,
-    setCompetitiveAdvantageData,
-    setExpandedCapabilityData,
-    setStrategicRadarData,
-    setProductivityData,
-    setMaturityData,
-    setProfitabilityData,
-    setGrowthTrackerData,
-    setLiquidityEfficiencyData,
-    setInvestmentPerformanceData,
-    setLeverageRiskData,
-    setCompetitiveLandscapeData,
-    setCoreAdjacencyData,
+    setSwotAnalysisResult, setPurchaseCriteriaData, setLoyaltyNPSData,
+    setPortersData, setPestelData, setFullSwotData, setCompetitiveAdvantageData,
+    setExpandedCapabilityData, setStrategicRadarData, setProductivityData,
+    setMaturityData, setProfitabilityData, setGrowthTrackerData,
+    setLiquidityEfficiencyData, setInvestmentPerformanceData, setLeverageRiskData,
+    setCompetitiveLandscapeData, setCoreAdjacencyData,
     uploadedFile: uploadedFileForAnalysis,
   };
 
@@ -291,13 +165,19 @@ const [collapsedCategories, setCollapsedCategories] = useState(
         setActiveTab("brief");
       }
     }
-
     showToastMessage(
       `Please answer ${missingQuestionsData.missing_count} more question${missingQuestionsData.missing_count > 1 ? 's' : ''} to generate this analysis.`,
       "warning"
     );
-
     setTimeout(() => setHighlightedMissingQuestions(null), 30000);
+  };
+
+  const getCurrentPhase = () => {
+    const unlockedFeatures = phaseManager.getUnlockedFeatures();
+    if (unlockedFeatures.advancedPhase) return 'advanced';
+    if (unlockedFeatures.goodPhase) return 'good';
+    if (unlockedFeatures.fullSwot) return 'essential';
+    return 'initial';
   };
 
   const handleRegeneratePhase = async (phaseOverride = null) => {
@@ -339,39 +219,38 @@ const [collapsedCategories, setCollapsedCategories] = useState(
           }
         });
 
-      let hasAnyAnalysis = false;
+      const setterMap = {
+        'swot': setSwotAnalysisResult,
+        'strategic': setStrategicData,
+        'fullSwot': setFullSwotData,
+        'competitiveAdvantage': setCompetitiveAdvantageData,
+        'expandedCapability': setExpandedCapabilityData,
+        'strategicRadar': setStrategicRadarData,
+        'productivityMetrics': setProductivityData,
+        'maturityScore': setMaturityData,
+        'purchaseCriteria': setPurchaseCriteriaData,
+        'loyaltyNPS': setLoyaltyNPSData,
+        'porters': setPortersData,
+        'pestel': setPestelData,
+        'profitabilityAnalysis': setProfitabilityData,
+        'growthTracker': setGrowthTrackerData,
+        'liquidityEfficiency': setLiquidityEfficiencyData,
+        'investmentPerformance': setInvestmentPerformanceData,
+        'leverageRisk': setLeverageRiskData,
+        'competitiveLandscape': setCompetitiveLandscapeData,
+        'coreAdjacency': setCoreAdjacencyData,
+      };
 
+      let hasAnyAnalysis = false;
       Object.values(latestAnalysisByType).forEach(analysis => {
         const { analysis_type, analysis_data } = analysis;
         hasAnyAnalysis = true;
-
-        const setterMap = {
-          'swot': () => setSwotAnalysisResult(typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data)),
-          'strategic': () => setStrategicData(analysis_data),
-          'fullSwot': () => setFullSwotData(analysis_data),
-          'competitiveAdvantage': () => setCompetitiveAdvantageData(analysis_data),
-          'expandedCapability': () => setExpandedCapabilityData(analysis_data),
-          'strategicRadar': () => setStrategicRadarData(analysis_data),
-          'productivityMetrics': () => setProductivityData(analysis_data),
-          'maturityScore': () => setMaturityData(analysis_data),
-          'purchaseCriteria': () => setPurchaseCriteriaData(analysis_data),
-          'loyaltyNPS': () => setLoyaltyNPSData(analysis_data),
-          'porters': () => setPortersData(analysis_data),
-          'pestel': () => setPestelData(analysis_data),
-          'profitabilityAnalysis': () => setProfitabilityData(analysis_data),
-          'growthTracker': () => setGrowthTrackerData(analysis_data),
-          'liquidityEfficiency': () => setLiquidityEfficiencyData(analysis_data),
-          'investmentPerformance': () => setInvestmentPerformanceData(analysis_data),
-          'leverageRisk': () => setLeverageRiskData(analysis_data),
-          'competitiveLandscape': () => setCompetitiveLandscapeData(analysis_data),
-          'coreAdjacency': () => setCoreAdjacencyData(analysis_data),
-        };
-
         const setter = setterMap[analysis_type];
         if (setter) {
-          setter();
-        } else {
-          console.warn(`No setter found for analysis type: ${analysis_type}`);
+          const data = analysis_type === 'swot'
+            ? (typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data))
+            : analysis_data;
+          setter(data);
         }
       });
 
@@ -380,40 +259,32 @@ const [collapsedCategories, setCollapsedCategories] = useState(
       console.error('Error loading existing analysis data:', error);
     }
   };
+
   const phaseManager = PhaseManager({
-    questions,
-    questionsLoaded,
-    completedQuestions,
-    userAnswers,
-    selectedBusinessId,
+    questions, questionsLoaded, completedQuestions, userAnswers, selectedBusinessId,
     hasUploadedDocument, setHasUploadedDocument,
-    onDocumentInfoLoad: handleDocumentInfoLoad,
+    onDocumentInfoLoad: (docInfo) => setDocumentInfo(docInfo),
     onCompletedQuestionsUpdate: (completedSet, answersMap) => {
       setCompletedQuestions(completedSet);
       setUserAnswers(prev => ({ ...prev, ...answersMap }));
     },
-    onCompletedPhasesUpdate: (phases) => { },
+    onCompletedPhasesUpdate: () => { },
     onAnalysisGeneration: () => handleRegeneratePhase('initial'),
     onFullSwotGeneration: () => handleRegeneratePhase('essential'),
     onGoodPhaseGeneration: () => handleRegeneratePhase('good'),
     onAdvancedPhaseGeneration: () => handleRegeneratePhase('advanced'),
     onAnalysisDataLoad: loadExistingAnalysisData,
-    API_BASE_URL,
-    getAuthToken,
-    apiService,
-    stateSetters,
-    showToastMessage
+    API_BASE_URL, getAuthToken, apiService, stateSetters, showToastMessage
   });
 
   const handleStrategicAnalysisRegenerate = async () => {
     if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
-
     try {
+      isRegeneratingRef.current = true;
       setIsStrategicRegenerating(true);
       showToastMessage("Regenerating Strategic Analysis...", "info");
       setStrategicData(null);
       await new Promise(resolve => setTimeout(resolve, 200));
-
       const result = await apiService.generateStrategicAnalysis(questions, userAnswers, selectedBusinessId);
       setStrategicData(result);
       showToastMessage("Strategic Analysis regenerated successfully!", "success");
@@ -421,13 +292,9 @@ const [collapsedCategories, setCollapsedCategories] = useState(
       console.error('Error regenerating Strategic Analysis:', error);
       showToastMessage("Failed to regenerate Strategic Analysis.", "error");
     } finally {
+      isRegeneratingRef.current = false;
       setIsStrategicRegenerating(false);
     }
-  };
-
-  const handleQuestionsLoaded = (loadedQuestions) => {
-    setQuestions(loadedQuestions);
-    setQuestionsLoaded(true);
   };
 
   const handleNewAnswer = async (questionId, answer) => {
@@ -442,7 +309,6 @@ const [collapsedCategories, setCollapsedCategories] = useState(
     } else if (questionId === 4) {
       updates.products = answer;
     }
-
     if (Object.keys(updates).length > 0) {
       setBusinessData(prev => ({ ...prev, ...updates }));
     }
@@ -478,7 +344,6 @@ const [collapsedCategories, setCollapsedCategories] = useState(
   const handleAnalysisTabClick = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     if (!unlockedFeatures.analysis) return;
-
     if (isMobile) {
       setActiveTab("analysis");
     } else {
@@ -492,7 +357,6 @@ const [collapsedCategories, setCollapsedCategories] = useState(
   const handleStrategicTabClick = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     if (!unlockedFeatures.analysis) return;
-
     if (isMobile) {
       setActiveTab("strategic");
     } else {
@@ -500,7 +364,7 @@ const [collapsedCategories, setCollapsedCategories] = useState(
         setIsSliding(true);
         setIsAnalysisExpanded(true);
         setActiveTab("strategic");
-        setIsSliding(false)
+        setIsSliding(false);
       } else {
         setActiveTab("strategic");
       }
@@ -512,283 +376,50 @@ const [collapsedCategories, setCollapsedCategories] = useState(
       setIsSliding(true);
       setIsAnalysisExpanded(false);
       setActiveTab("brief");
-      setIsSliding(false)
+      setIsSliding(false);
     }
   };
 
   const handleBack = () => window.history.back();
 
   const handleOptionClick = (option) => {
-  setShowDropdown(false);
-  const cardIdMap = {
-    "SWOT": "swot",
-    "Purchase Criteria": "purchase-criteria",
-    "Loyalty/NPS": "loyalty-nps",
-    "Porter's Five Forces": "porters",
-    "PESTEL Analysis": "pestel",
-    "Full SWOT Portfolio": "full-swot",
-    "Competitive Advantage": "competitive-advantage",
-    "Capability Heatmap": "expanded-capability",
-    "Strategic Positioning Radar": "strategic-radar",
-    "Productivity Metrics": "productivity",
-    "Maturity Score": "maturity",
-    "Profitability Analysis": "profitability-analysis",
-    "Growth Tracker": "growth-tracker",
-    "Liquidity & Efficiency": "liquidity-efficiency",
-    "Investment Performance": "investment-performance",
-    "Leverage & Risk": "leverage-risk",
-    "Competitive Landscape": "competitive-landscape",
-    "Core": "core-adjacency",
-  };
+    setShowDropdown(false);
+    const cardId = CARD_ID_MAP[option];
 
-  // Map cards to their categories - ADD THIS
-  const cardToCategoryMap = {
-    "profitability-analysis": "costs-financial",
-    "growth-tracker": "costs-financial",
-    "liquidity-efficiency": "costs-financial",
-    "investment-performance": "costs-financial",
-    "leverage-risk": "costs-financial",
-    "productivity": "costs-financial",
-    "swot": "context-industry",
-    "full-swot": "context-industry",
-    "strategic-radar": "context-industry",
-    "porters": "context-industry",
-    "pestel": "context-industry",
-    "competitive-advantage": "customer",
-    "purchase-criteria": "customer",
-    "loyalty-nps": "customer",
-    "expanded-capability": "capabilities",
-    "maturity": "capabilities",
-    "competitive-landscape": "competition",
-    "core-adjacency": "current-strategy",
-  };
+    if (cardId) {
+      const categoryId = CARD_TO_CATEGORY_MAP[cardId];
+      if (categoryId) {
+        setCollapsedCategories(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(categoryId);
+          return newSet;
+        });
+      }
 
-  const cardId = cardIdMap[option];
-  if (cardId) {
-    // Find and expand the category - ADD THIS BLOCK
-    const categoryId = cardToCategoryMap[cardId];
-    if (categoryId) {
-      setCollapsedCategories(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(categoryId); // Remove from collapsed set to expand it
-        return newSet;
-      });
+      setHighlightedCard(cardId);
+      setExpandedCards(prev => new Set([...prev, cardId]));
+      setTimeout(() => setHighlightedCard(null), 3000);
     }
-
-    setHighlightedCard(cardId);
-    setExpandedCards(prev => new Set([...prev, cardId]));
 
     setTimeout(() => {
-      setHighlightedCard(null);
-    }, 3000);
-  }
-
-  setTimeout(() => {
-    const cardElement = document.getElementById(cardId);
-    if (cardElement) {
-      cardElement.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }
-  }, 600);
-};
+      const cardElement = document.getElementById(cardId);
+      if (cardElement) {
+        cardElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 600);
+  };
 
   const createSimpleRegenerationHandler = (analysisType) => {
-    return async () => {
-      const regeneratingStateMap = {
-        'swot': setIsSwotAnalysisRegenerating,
-        'purchaseCriteria': setIsPurchaseCriteriaRegenerating,
-        'loyaltyNPS': setIsLoyaltyNPSRegenerating,
-        'porters': setIsPortersRegenerating,
-        'pestel': setIsPestelRegenerating,
-        'fullSwot': setIsFullSwotRegenerating,
-        'competitiveAdvantage': setIsCompetitiveAdvantageRegenerating,
-        'expandedCapability': setIsExpandedCapabilityRegenerating,
-        'strategicRadar': setIsStrategicRadarRegenerating,
-        'productivityMetrics': setIsProductivityRegenerating,
-        'maturityScore': setIsMaturityRegenerating,
-        'profitabilityAnalysis': setIsProfitabilityRegenerating,
-        'growthTracker': setIsGrowthTrackerRegenerating,
-        'liquidityEfficiency': setIsLiquidityEfficiencyRegenerating,
-        'investmentPerformance': setIsInvestmentPerformanceRegenerating,
-        'leverageRisk': setIsLeverageRiskRegenerating,
-        'competitiveLandscape': setIsCompetitiveLandscapeRegenerating,
-        'coreAdjacency': setIsCoreAdjacencyRegenerating,
-      };
-
-      const dataStateMap = {
-        'swot': setSwotAnalysisResult,
-        'purchaseCriteria': setPurchaseCriteriaData,
-        'loyaltyNPS': setLoyaltyNPSData,
-        'porters': setPortersData,
-        'pestel': setPestelData,
-        'fullSwot': setFullSwotData,
-        'competitiveAdvantage': setCompetitiveAdvantageData,
-        'expandedCapability': setExpandedCapabilityData,
-        'strategicRadar': setStrategicRadarData,
-        'productivityMetrics': setProductivityData,
-        'maturityScore': setMaturityData,
-        'profitabilityAnalysis': setProfitabilityData,
-        'growthTracker': setGrowthTrackerData,
-        'liquidityEfficiency': setLiquidityEfficiencyData,
-        'investmentPerformance': setInvestmentPerformanceData,
-        'leverageRisk': setLeverageRiskData,
-        'competitiveLandscape': setCompetitiveLandscapeData,
-        'coreAdjacency': setCoreAdjacencyData,
-      };
-
-      const displayNameMap = {
-        'swot': 'SWOT Analysis',
-        'purchaseCriteria': 'Purchase Criteria',
-        'loyaltyNPS': 'Loyalty & NPS',
-        'porters': "Porter's Five Forces",
-        'pestel': 'PESTEL Analysis',
-        'fullSwot': 'Full SWOT Portfolio',
-        'competitiveAdvantage': 'Competitive Advantage Matrix',
-        'expandedCapability': 'Capability Heatmap',
-        'strategicRadar': 'Strategic Positioning Radar',
-        'productivityMetrics': 'Productivity Metrics',
-        'maturityScore': 'Maturity Score',
-        'profitabilityAnalysis': 'Profitability Analysis',
-        'growthTracker': 'Growth Tracker',
-        'liquidityEfficiency': 'Liquidity & Efficiency',
-        'investmentPerformance': 'Investment Performance',
-        'leverageRisk': 'Leverage & Risk',
-        'competitiveLandscape': 'Competitive Landscape',
-        'coreAdjacency': 'Core'
-      };
-
-      const setIsRegenerating = regeneratingStateMap[analysisType];
-      const setData = dataStateMap[analysisType];
-      const displayName = displayNameMap[analysisType] || analysisType;
-
-      if (!setIsRegenerating) {
-        console.error(`No regenerating state setter found for analysis type: ${analysisType}`);
-        showToastMessage(`Cannot regenerate ${displayName} - missing regeneration handler`, "error");
-        return;
-      }
-
-      if (!setData) {
-        console.error(`No data state setter found for analysis type: ${analysisType}`);
-        showToastMessage(`Cannot regenerate ${displayName} - missing data handler`, "error");
-        return;
-      }
-
-      if (isRegeneratingRef.current) {
-        return;
-      }
-
-      try {
-        setIsRegenerating(true);
-        isRegeneratingRef.current = true;
-        showToastMessage(`Regenerating ${displayName}...`, "info");
-        setData(null);
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        let result;
-
-        try {
-          switch (analysisType) {
-            case 'swot':
-              result = await apiService.generateSWOTAnalysis(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'purchaseCriteria':
-              result = await apiService.generatePurchaseCriteria(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'loyaltyNPS':
-              result = await apiService.generateLoyaltyNPS(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'porters':
-              result = await apiService.generatePortersAnalysis(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'pestel':
-              result = await apiService.generatePestelAnalysis(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'fullSwot':
-              result = await apiService.generateFullSwotPortfolio(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'competitiveAdvantage':
-              result = await apiService.generateCompetitiveAdvantage(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'expandedCapability':
-              result = await apiService.generateExpandedCapability(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'strategicRadar':
-              result = await apiService.generateStrategicRadar(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'productivityMetrics':
-              result = await apiService.generateProductivityMetrics(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'maturityScore':
-              result = await apiService.generateMaturityScore(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'profitabilityAnalysis':
-              result = await apiService.generateProfitabilityAnalysis(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
-              break;
-
-            case 'growthTracker':
-              result = await apiService.generateGrowthTracker(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
-              break;
-
-            case 'liquidityEfficiency':
-              result = await apiService.generateLiquidityEfficiency(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
-              break;
-
-            case 'investmentPerformance':
-              result = await apiService.generateInvestmentPerformance(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
-              break;
-
-            case 'leverageRisk':
-              result = await apiService.generateLeverageRisk(questions, userAnswers, selectedBusinessId, uploadedFileForAnalysis);
-              break;
-
-            case 'competitiveLandscape':
-              result = await apiService.generateCompetitiveLandscape(questions, userAnswers, selectedBusinessId);
-              break;
-
-            case 'coreAdjacency':  // ADD THIS CASE
-              result = await apiService.generateCoreAdjacency(questions, userAnswers, selectedBusinessId);
-              break;
-            default:
-              throw new Error(`Unknown analysis type: ${analysisType}`);
-          }
-
-          if (result) {
-            setData(result);
-          } else {
-            console.warn(`No result returned for ${analysisType}`);
-          }
-
-          showToastMessage(`${displayName} regenerated successfully!`, "success");
-
-        } catch (apiError) {
-          console.error(`API error regenerating ${analysisType}:`, apiError);
-          throw apiError;
-        }
-
-      } catch (error) {
-        console.error(`Error regenerating ${analysisType}:`, error);
-        const errorMessage = error.message || `Failed to regenerate ${displayName}`;
-        showToastMessage(errorMessage, "error");
-
-      } finally {
-        setIsRegenerating(false);
-        isRegeneratingRef.current = false;
-      }
-    };
+    return apiService.createSimpleRegenerationHandler(
+      analysisType,
+      questions,
+      userAnswers,
+      selectedBusinessId,
+      stateSetters,
+      showToastMessage
+    );
   };
+
   const handleRedirectToChat = (params = {}) => {
     if (isMobile) {
       setActiveTab("chat");
@@ -802,213 +433,72 @@ const [collapsedCategories, setCollapsedCategories] = useState(
         setActiveTab("brief");
       }
     }
-
-    // Handle scroll request
     if (params.scrollToUploadCard) {
       setShouldScrollToUpload(true);
     }
   };
 
-  const analysisProps = createAnalysisContentManagerProps(state, {
-    phaseManager,
-    businessData,
-    questions,
-    userAnswers,
-    selectedBusinessId,
-    handleRedirectToBrief,
-    showToastMessage,
-    apiService,
-    createSimpleRegenerationHandler,
-    apiLoadingStates,
-    uploadedFileForAnalysis,
-    highlightedCard,
-    expandedCards,
-    setExpandedCards,
-    handleRedirectToChat,
-    isMobile,
-    setActiveTab,
-    readOnly: false,
-    documentInfo,collapsedCategories,      // ADD THIS
-  setCollapsedCategories,
-  });
-
-  useEffect(() => {
-    setSelectedDropdownValue("Go to Section");
-  }, [selectedPhase]);
-
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
-    // Return categorized options instead of flattened array
     const categoryOptions = {
       initial: {
-        "Context/Industry": [
-          ...(unlockedFeatures.fullSwot ? [] : ["SWOT"]),
-          "Porter's Five Forces",
-          "PESTEL Analysis"
-        ],
-        "Customer": [
-          "Purchase Criteria",
-          "Loyalty/NPS"
-        ]
+        "Context/Industry": ["Porter's Five Forces", "PESTEL Analysis"],
+        "Customer": ["Purchase Criteria", "Loyalty/NPS"]
       },
       essential: {
-        "Costs/Financial": [
-          "Productivity Metrics"
-        ],
-        "Context/Industry": [
-          "Full SWOT Portfolio",
-          "Strategic Positioning Radar",
-          "Porter's Five Forces",
-          "PESTEL Analysis"
-        ],
-        "Customer": [
-          "Competitive Advantage",
-          "Purchase Criteria",
-          "Loyalty/NPS"
-        ],
-        "Capabilities": [
-          "Capability Heatmap",
-          "Maturity Score"
-        ],
-        "Competition": [
-          "Competitive Landscape"
-        ],
-        "Current Strategy": [  // ADD THIS SECTION
-          "Core"
-        ]
+        "Costs/Financial": ["Productivity Metrics"],
+        "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
+        "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
+        "Capabilities": ["Capability Heatmap", "Maturity Score"],
+        "Competition": ["Competitive Landscape"],
+        "Current Strategy": ["Core"]
       },
       good: {
         "Costs/Financial": [
           ...(hasUploadedDocument ? [
-            "Profitability Analysis",
-            "Growth Tracker",
-            "Liquidity & Efficiency",
-            "Investment Performance",
-            "Leverage & Risk"
+            "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
+            "Investment Performance", "Leverage & Risk"
           ] : []),
           "Productivity Metrics"
         ],
-        "Context/Industry": [
-          "Full SWOT Portfolio",
-          "Strategic Positioning Radar",
-          "Porter's Five Forces",
-          "PESTEL Analysis"
-        ],
-        "Customer": [
-          "Competitive Advantage",
-          "Purchase Criteria",
-          "Loyalty/NPS"
-        ],
-        "Capabilities": [
-          "Capability Heatmap",
-          "Maturity Score"
-        ],
-        "Competition": [
-          "Competitive Landscape"
-        ],
-        "Current Strategy": [  // ADD THIS SECTION
-          "Core"
-        ]
+        "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
+        "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
+        "Capabilities": ["Capability Heatmap", "Maturity Score"],
+        "Competition": ["Competitive Landscape"],
+        "Current Strategy": ["Core"]
       },
       advanced: {
         "Costs/Financial": [
           ...(hasUploadedDocument ? [
-            "Profitability Analysis",
-            "Growth Tracker",
-            "Liquidity & Efficiency",
-            "Investment Performance",
-            "Leverage & Risk"
+            "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
+            "Investment Performance", "Leverage & Risk"
           ] : []),
           "Productivity Metrics"
         ],
-        "Context/Industry": [
-          "Full SWOT Portfolio",
-          "Strategic Positioning Radar",
-          "Porter's Five Forces",
-          "PESTEL Analysis"
-        ],
-        "Customer": [
-          "Competitive Advantage",
-          "Purchase Criteria",
-          "Loyalty/NPS"
-        ],
-        "Capabilities": [
-          "Capability Heatmap",
-          "Maturity Score"
-        ],
-        "Competition": [
-          "Competitive Landscape"
-        ],
-        "Current Strategy": [  // ADD THIS SECTION
-          "Core"
-        ]
+        "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
+        "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
+        "Capabilities": ["Capability Heatmap", "Maturity Score"],
+        "Competition": ["Competitive Landscape"],
+        "Current Strategy": ["Core"]
       }
     };
+
+    if (!unlockedFeatures.fullSwot && categoryOptions.initial && categoryOptions.initial["Context/Industry"]) {
+      categoryOptions.initial["Context/Industry"].unshift("SWOT");
+    }
 
     return categoryOptions[phase] || {};
   };
 
-  const getCurrentPhase = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-
-    if (unlockedFeatures.advancedPhase) {
-      return 'advanced';
-    } else if (unlockedFeatures.goodPhase) {
-      return 'good';
-    } else if (unlockedFeatures.fullSwot) {
-      return 'essential';
-    } else {
-      return 'initial';
-    }
-  };
-
   useEffect(() => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-    if (unlockedFeatures.advancedPhase) {
-      setCurrentPhase('advanced');
-    } else if (unlockedFeatures.goodPhase) {
-      setCurrentPhase('good');
-    } else if (unlockedFeatures.fullSwot) {
-      setCurrentPhase('essential');
-    } else {
-      setCurrentPhase('initial');
-    }
-  }, [phaseManager, hasAnalysisData, fullSwotData, profitabilityData]);
-
-  const AnalysisControls = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-    const currentPhase = getCurrentPhase();
-
-    return (
-      <div className="analysis-controls-wrapper">
-        <button
-          onClick={() => handleRegeneratePhase(getCurrentPhase())}
-          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
-          className={`regenerate-button ${(isAnalysisRegenerating) ? 'disabled' : ''}`}
-        >
-          {isAnalysisRegenerating ? (
-            <>
-              <Loader size={16} className="animate-spin" />
-              Regenerating {currentPhase}...
-            </>
-          ) : (
-            <>
-              <RefreshCw size={16} />
-              Regenerate All
-            </>
-          )}
-        </button>
-      </div>
-    );
-  };
+    setSelectedDropdownValue("Go to Section");
+  }, []);
 
   useEffect(() => {
     if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
       hasLoadedAnalysis.current = true;
-      setTimeout(() => {
-        phaseManager.loadExistingAnalysis();
-      }, 100);
+      setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
     }
   }, [selectedBusinessId, questionsLoaded, questions.length, phaseManager]);
 
@@ -1022,7 +512,6 @@ const [collapsedCategories, setCollapsedCategories] = useState(
         setActiveTab("brief");
       }
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [activeTab, setIsMobile, setActiveTab]);
@@ -1033,15 +522,41 @@ const [collapsedCategories, setCollapsedCategories] = useState(
         setShowDropdown(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownRef, setShowDropdown]);
+  }, [dropdownRef]);
 
   const totalQuestions = questions.length;
   const answeredQuestions = completedQuestions.size;
   const actualProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
   const unlockedFeatures = phaseManager.getUnlockedFeatures();
+  const currentPhase = getCurrentPhase();
+
+  const analysisProps = {
+    phaseManager, apiLoadingStates, businessData, questions, userAnswers, selectedBusinessId,
+    swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, portersData, pestelData,
+    fullSwotData, competitiveAdvantageData, expandedCapabilityData, strategicRadarData,
+    productivityData, maturityData, profitabilityData, growthTrackerData,
+    liquidityEfficiencyData, investmentPerformanceData, leverageRiskData,
+    competitiveLandscapeData, coreAdjacencyData,
+    isSwotAnalysisRegenerating, isPurchaseCriteriaRegenerating, isLoyaltyNPSRegenerating,
+    isPortersRegenerating, isPestelRegenerating, isFullSwotRegenerating,
+    isCompetitiveAdvantageRegenerating, isExpandedCapabilityRegenerating,
+    isStrategicRadarRegenerating, isProductivityRegenerating, isMaturityRegenerating,
+    isProfitabilityRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
+    isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating,
+    isCompetitiveLandscapeRegenerating, isCoreAdjacencyRegenerating,
+    isAnalysisRegenerating,
+    swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
+    competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
+    maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
+    investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
+    uploadedFileForAnalysis, handleRedirectToBrief, showToastMessage, apiService,
+    createSimpleRegenerationHandler, highlightedCard, expandedCards, setExpandedCards,
+    onRedirectToChat: handleRedirectToChat, isMobile, setActiveTab,
+    hasUploadedDocument, documentInfo, collapsedCategories, setCollapsedCategories,
+    readOnly: false
+  };
 
   return (
     <div className="business-setup-container">
@@ -1054,75 +569,36 @@ const [collapsedCategories, setCollapsedCategories] = useState(
       )}
 
       {isMobile && questionsLoaded && (
-        <>
-          {/* {["chat", "brief", "analysis", "strategic"].includes(activeTab) && (
-            <div className="progress-area">
-              <div className="progress-track">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${actualProgress}%` }}
-                ></div>
-              </div>
-            </div>
-          )} */}
-
-          <div className="mobile-tabs">
-            <button
-              className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`}
-              onClick={() => setActiveTab("chat")}
-            >
-              {t("assistant")}
+        <div className="mobile-tabs">
+          <button className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`} onClick={() => setActiveTab("chat")}>
+            {t("assistant")}
+          </button>
+          <button className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
+            {t("brief")}
+          </button>
+          {unlockedFeatures.analysis && (
+            <button className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+              {t("analysis")}
             </button>
-
-            <button
-              className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`}
-              onClick={() => setActiveTab("brief")}
-            >
-              {t("brief")}
+          )}
+          {unlockedFeatures.analysis && (
+            <button className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+              {t("strategic")}
             </button>
-
-            {unlockedFeatures.analysis && (
-              <button
-                className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`}
-                onClick={handleAnalysisTabClick}
-              >
-                {t("analysis")}
-              </button>
-            )}
-
-            {unlockedFeatures.analysis && (
-              <button
-                className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`}
-                onClick={handleStrategicTabClick}
-              >
-                {t("strategic")}
-              </button>
-            )}
-          </div>
-        </>
+          )}
+        </div>
       )}
 
-      <div
-        className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""} `}
-      >
-        <div
-          className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""} ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}
-        >
+      <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
+        <div className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""} ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}>
           <div className="welcome-area">
             <div className="header-section">
-              <button
-                className="back-button"
-                onClick={handleBack}
-                aria-label="Go Back"
-              >
+              <button className="back-button" onClick={handleBack} aria-label="Go Back">
                 <ArrowLeft size={18} />
               </button>
             </div>
-
             <h2 className="welcome-heading">{selectedBusinessName || 'Business Analysis'}</h2>
-            <p className="welcome-text">
-              {t("letsBegin")} {t("welcomeToTraxia")}
-            </p>
+            <p className="welcome-text">{t("letsBegin")} {t("welcomeToTraxia")}</p>
           </div>
 
           <ChatComponent
@@ -1130,20 +606,15 @@ const [collapsedCategories, setCollapsedCategories] = useState(
             userAnswers={userAnswers}
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
-            onQuestionsLoaded={handleQuestionsLoaded}
+            onQuestionsLoaded={(loadedQuestions) => {
+              setQuestions(loadedQuestions);
+              setQuestionsLoaded(true);
+            }}
             onQuestionCompleted={handleQuestionCompleted}
-            onPhaseCompleted={async (phase, completedSet) => {
+            onPhaseCompleted={async (phase) => {
               if (phase === 'good') {
                 try {
-                  await apiService.handlePhaseCompletion(
-                    'good',
-                    questions,
-                    userAnswers,
-                    selectedBusinessId,
-                    stateSetters,
-                    showToastMessage
-                  );
-
+                  await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage);
                 } catch (error) {
                   console.error('Error generating Good phase analysis:', error);
                   showToastMessage('File uploaded but analysis generation failed', 'error');
@@ -1155,43 +626,25 @@ const [collapsedCategories, setCollapsedCategories] = useState(
             onScrollCompleted={() => setShouldScrollToUpload(false)}
           />
         </div>
+
         {questionsLoaded && (
-          <div
-            className={`info-panel ${isMobile
-              ? activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic"
-                ? "active"
-                : ""
-              : ""
-              } ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}
-          >
+          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
                   <div className="desktop-tabs">
                     <div className="desktop-tabs-left">
-                      <button
-                        className="back-button"
-                        onClick={handleBackFromAnalysis}
-                        aria-label="Go Back"
-                      >
+                      <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
                         <ArrowLeft size={18} />
                         {t("backToOverview")}
                       </button>
-
                       {unlockedFeatures.analysis && (
-                        <button
-                          className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
-                          onClick={() => setActiveTab("analysis")}
-                        >
+                        <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
                           {t("analysis")}
                         </button>
                       )}
-
                       {unlockedFeatures.analysis && (
-                        <button
-                          className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`}
-                          onClick={() => setActiveTab("strategic")}
-                        >
+                        <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
                           {t("strategic")}
                         </button>
                       )}
@@ -1201,48 +654,32 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                       {activeTab === "analysis" && (
                         <>
                           <div ref={dropdownRef} className="dropdown-wrapper">
-                            <button
-                              className="dropdown-button"
-                              onClick={() => setShowDropdown(prev => !prev)}
-                            >
+                            <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
                               <span>{selectedDropdownValue}</span>
-                              <ChevronDown
-                                size={16}
-                                className={`chevron ${showDropdown ? 'open' : ''}`}
-                              />
+                              <ChevronDown size={16} className={`chevron ${showDropdown ? 'open' : ''}`} />
                             </button>
-
                             {showDropdown && (() => {
                               const categoryOptions = getPhaseSpecificOptions(currentPhase);
-
-
-                              return Object.keys(categoryOptions).length > 0 && (
-                                <div className="dropdown-menu-options">
-
-                                  {Object.entries(categoryOptions).map(([category, items]) =>
-                                    items.length > 0 && (
-                                      <div key={category}>
-                                        <div className="dropdown-category-header">{category}</div>
-                                        {items.map((item, index) => (
-                                          <div
-                                            key={item}
-                                            onClick={() => {
-                                              handleOptionClick(item);
-                                              setSelectedDropdownValue(item);
-                                            }}
-                                            className="dropdown-option dropdown-sub-option"
-                                          >
-                                            <span className="bullet"></span>
-                                            {item}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )
-                                  )}
-                                </div>
+                              return Object.keys(categoryOptions).length > 0 && (<div className="dropdown-menu-options">
+                                {Object.entries(categoryOptions).map(([category, items]) =>
+                                  items.length > 0 && (
+                                    <div key={category}>
+                                      <div className="dropdown-category-header">{category}</div>
+                                      {items.map((item) => (
+                                        <div key={item} onClick={() => {
+                                          handleOptionClick(item);
+                                          setSelectedDropdownValue(item);
+                                        }} className="dropdown-option dropdown-sub-option">
+                                          <span className="bullet"></span>
+                                          {item}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                )}
+                              </div>
                               );
                             })()}
-
                           </div>
 
                           <PDFExportButton
@@ -1266,9 +703,9 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                           />
 
                           <button
-                            onClick={() => handleRegeneratePhase(getCurrentPhase())}
+                            onClick={() => handleRegeneratePhase(currentPhase)}
                             disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
-                            className={`regenerate-button ${(isAnalysisRegenerating) ? 'disabled' : ''}`}
+                            className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                           >
                             {isAnalysisRegenerating ? (
                               <>
@@ -1295,15 +732,14 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                             exportType="strategic"
                             strategicData={strategicData}
                           />
-
                           <button
                             onClick={handleStrategicAnalysisRegenerate}
                             disabled={isStrategicRegenerating || isAnalysisRegenerating}
-                            className={`regenerate-button ${(isStrategicRegenerating || isAnalysisRegenerating) ? 'disabled' : ''}`}
+                            className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating ? 'disabled' : ''}`}
                           >
                             {isStrategicRegenerating ? (
                               <>
-                                <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                                <Loader size={16} className="animate-spin" />
                                 Regenerating...
                               </>
                             ) : (
@@ -1317,12 +753,10 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                       )}
                     </div>
                   </div>
+
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
-                      {activeTab === "analysis" && (
-                        <AnalysisContentManager {...analysisProps} />
-                      )}
-
+                      {activeTab === "analysis" && <AnalysisContentManager {...analysisProps} />}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -1348,69 +782,110 @@ const [collapsedCategories, setCollapsedCategories] = useState(
             )}
 
             {!isMobile && !isAnalysisExpanded && (
-              <div className="desktop-tabs">
-                <div className="desktop-tabs-controls">
-                  <button
-                    className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
-                    onClick={() => setActiveTab("brief")}
-                  >
-                    {t("brief")}
-                  </button>
-
-                  {unlockedFeatures.analysis && (
-                    <button
-                      className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`}
-                      onClick={handleAnalysisTabClick}
-                    >
-                      {t("analysis")}
+              <>
+                <div className="desktop-tabs">
+                  <div className="desktop-tabs-controls">
+                    <button className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
+                      {t("brief")}
                     </button>
-                  )}
+                    {unlockedFeatures.analysis && (
+                      <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                        {t("analysis")}
+                      </button>
+                    )}
+                    {unlockedFeatures.analysis && (
+                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+                        {t("strategic")}
+                      </button>
+                    )}
+                  </div>
 
-                  {unlockedFeatures.analysis && (
-                    <button
-                      className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`}
-                      onClick={handleStrategicTabClick}
-                    >
-                      {t("strategic")}
-                    </button>
+                  {activeTab === "analysis" && unlockedFeatures.analysis && (
+                    <div className="desktop-tabs-buttons">
+                      <button
+                        onClick={() => handleRegeneratePhase(currentPhase)}
+                        disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+                        className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                      >
+                        {isAnalysisRegenerating ? (
+                          <>
+                            <Loader size={16} className="animate-spin" />
+                            Regenerating...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw size={16} />
+                            {t('RegenerateAll') || 'Regenerate All'}
+                          </>
+                        )}
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                {activeTab === "analysis" && unlockedFeatures.analysis && (
-                  <div className="desktop-tabs-buttons">
-                    <button
-                      onClick={() => handleRegeneratePhase(getCurrentPhase())}
-                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
-                      className={`regenerate-button ${(isAnalysisRegenerating) ? 'disabled' : ''}`}
-                    >
-                      {isAnalysisRegenerating ? (
-                        <>
-                          <Loader size={16} className="animate-spin" />
-                          Regenerating...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw size={16} />
-                          {t('RegenerateAll') || 'Regenerate All'}
-                        </>
+                <div className="info-panel-content">
+                  {activeTab === "brief" && (
+                    <div className="brief-section">
+                      {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
+                        <div className="unlock-hint">
+                          <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
+                          <p>{t("completePhaseMessage")}</p>
+                        </div>
                       )}
-                    </button>
-                  </div>
-                )}
-              </div>
+                      <EditableBriefSection
+                        selectedBusinessId={selectedBusinessId}
+                        questions={questions}
+                        userAnswers={userAnswers}
+                        businessData={businessData}
+                        onBusinessDataUpdate={handleBusinessDataUpdate}
+                        onAnswerUpdate={handleAnswerUpdate}
+                        onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
+                        isAnalysisRegenerating={isAnalysisRegenerating}
+                        isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
+                        highlightedMissingQuestions={highlightedMissingQuestions}
+                        onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                      />
+                    </div>
+                  )}
+                  {activeTab === "analysis" && (
+                    <div className="analysis-section">
+                      <div className="analysis-content">
+                        <AnalysisContentManager {...analysisProps} />
+                      </div>
+                    </div>
+                  )}
+                  {activeTab === "strategic" && (
+                    <div className="strategic-section">
+                      <StrategicAnalysis
+                        questions={questions}
+                        userAnswers={userAnswers}
+                        businessName={businessData.name}
+                        onRegenerate={handleStrategicAnalysisRegenerate}
+                        isRegenerating={isStrategicRegenerating}
+                        canRegenerate={!isAnalysisRegenerating}
+                        strategicData={strategicData}
+                        selectedBusinessId={selectedBusinessId}
+                        phaseManager={phaseManager}
+                        saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
+                        hideDownload={false}
+                        phaseAnalysisArray={phaseAnalysisArray}
+                      />
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
-            {(!isAnalysisExpanded || isMobile) && (
+            {(!isAnalysisExpanded || isMobile) && isMobile && (
               <div className="info-panel-content">
                 {activeTab === "brief" && (
                   <div className="brief-section">
-                    {!unlockedFeatures.analysis && (
+                    {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
                       <div className="unlock-hint">
                         <h4>🔒 {t("unlockBusinessAnalysis")}</h4>
                         <p>{t("completePhaseMessage")}</p>
                       </div>
                     )}
-
                     <EditableBriefSection
                       selectedBusinessId={selectedBusinessId}
                       questions={questions}
@@ -1418,30 +893,37 @@ const [collapsedCategories, setCollapsedCategories] = useState(
                       businessData={businessData}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={handleAnswerUpdate}
-                      onAnalysisRegenerate={() => handleRegeneratePhase(selectedPhase)}
+                      onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
                       isAnalysisRegenerating={isAnalysisRegenerating}
-                      isEssentialPhaseGenerating={
-                        isFullSwotRegenerating ||
-                        isCompetitiveAdvantageRegenerating ||
-                        isExpandedCapabilityRegenerating ||
-                        isStrategicRadarRegenerating ||
-                        isProductivityRegenerating ||
-                        isMaturityRegenerating
-                      }
+                      isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                       highlightedMissingQuestions={highlightedMissingQuestions}
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}
                     />
                   </div>
                 )}
-
                 {activeTab === "analysis" && (
                   <div className="analysis-section">
-                    {isMobile && unlockedFeatures.analysis && (
+                    {unlockedFeatures.analysis && (
                       <div className="analysis-section-mobile-controls">
-                        <AnalysisControls />
+                        <button
+                          onClick={() => handleRegeneratePhase(currentPhase)}
+                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+                          className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                        >
+                          {isAnalysisRegenerating ? (
+                            <>
+                              <Loader size={16} className="animate-spin" />
+                              Regenerating...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={16} />
+                              {t('RegenerateAll') || 'Regenerate All'}
+                            </>
+                          )}
+                        </button>
                       </div>
                     )}
-
                     <div className="analysis-content">
                       <AnalysisContentManager {...analysisProps} />
                     </div>
