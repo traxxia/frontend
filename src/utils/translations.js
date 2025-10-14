@@ -1,317 +1,3 @@
-// src/utils/translations.js - Fixed Version with Separated Patterns
-
-// SEPARATE FILE FOR ANALYSIS PATTERNS - DON'T MIX WITH UI TRANSLATIONS
-export const analysisPatterns = {
-  en: {
-    swot: {
-      title: "SWOT Analysis",
-      conclusion: "Conclusion",
-      sections: {
-        strengths: "Strengths",
-        weaknesses: "Weaknesses",
-        opportunities: "Opportunities",
-        threats: "Threats"
-      },
-      patterns: {
-        analysisHeader: /\*\*\s*SWOT Analysis\s*:\*\*([\s\S]*?)(?=In conclusion|To address|By embracing|$)/i,
-        conclusion: /(In conclusion[\s\S]*?$|To address the weaknesses[\s\S]*?$|By embracing[\s\S]*?$)/i,
-        sections: /\*\*\s*(Strengths|Weaknesses|Opportunities|Threats)\s*:\*\*\s*([\s\S]*?)(?=(\*\*\s*(Strengths|Weaknesses|Opportunities|Threats)\s*:\*\*|In conclusion|To address|By embracing|$))/gi
-      }
-    },
-
-    valueChain: {
-      title: "Value Chain Analysis",
-      conclusion: "Conclusion",
-      primaryActivities: "Primary Activities",
-      supportActivities: "Support Activities",
-      margin: "Margin Analysis",
-      linkages: "Linkages Analysis",
-      noAnalysis: "No analysis available.",
-      sections: {
-        inboundLogistics: "Inbound Logistics",
-        operations: "Operations",
-        outboundLogistics: "Outbound Logistics",
-        marketingSales: "Marketing & Sales",
-        service: "Service",
-        firmInfrastructure: "Firm Infrastructure",
-        hrManagement: "Human Resource Management",
-        techDevelopment: "Technology Development",
-        procurement: "Procurement"
-      },
-      patterns: {
-        primaryActivities: /\*\*Primary Activities:\*\*([\s\S]*?)(?=\*\*Support Activities:|$)/i,
-        supportActivities: /\*\*Support Activities:\*\*([\s\S]*?)(?=\*\*Margin:|$)/i,
-        margin: /\*\*Margin:\*\*([\s\S]*?)(?=\*\*Linkages:|$)/i,
-        linkages: /\*\*Linkages:\*\*([\s\S]*?)(?=In conclusion|To apply these principles|By embracing|$)/i,
-        conclusion: /(In conclusion[\s\S]*?$|To apply these principles[\s\S]*?$|By embracing these recommendations[\s\S]*?$)/i,
-        inboundLogistics: /- Inbound Logistics:\*\*([\s\S]*?)(?=- Operations:|$)/i,
-        operations: /- Operations:\*\*([\s\S]*?)(?=- Outbound Logistics:|$)/i,
-        outboundLogistics: /- Outbound Logistics:\*\*([\s\S]*?)(?=- Marketing (?:\u0026|&) Sales:|$)/i,
-        marketingSales: /- Marketing (?:\u0026|&) Sales:\*\*([\s\S]*?)(?=- Service:|$)/i,
-        service: /- Service:\*\*([\s\S]*?)(?=$)/i,
-        firmInfrastructure: /- Firm Infrastructure:\*\*([\s\S]*?)(?=- Human Resource Management:|$)/i,
-        hrManagement: /- Human Resource Management:\*\*([\s\S]*?)(?=- Technology Development:|$)/i,
-        techDevelopment: /- Technology Development:\*\*([\s\S]*?)(?=- Procurement:|$)/i,
-        procurement: /- Procurement:\*\*([\s\S]*?)(?=$)/i
-      }
-    },
-
-    bcg: {
-      title: "BCG Matrix Analysis",
-      conclusion: "Conclusion",
-      recommendations: "Actionable Recommendations",
-      marketGrowthRate: "Market Growth Rate",
-      relativeMarketShare: "Relative Market Share",
-      high: "High",
-      low: "Low",
-      quadrants: {
-        agileLeaders: "Agile Leaders",
-        establishedPerformers: "Established Performers",
-        emergingInnovators: "Emerging Innovators",
-        strategicDrifters: "Strategic Drifters"
-      },
-      descriptions: {
-        agileLeaders: "(High Share / High Growth)",
-        establishedPerformers: "(High Share / Low Growth)",
-        emergingInnovators: "(Low Share / High Growth)",
-        strategicDrifters: "(Low Share / Low Growth)"
-      },
-      patterns: {
-        conclusion: [
-          /\*{2,}\s*Conclusion\s*\*{2,}\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /\*\*\s*Conclusion\s*:\s*\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /\*\*Conclusion:\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /Conclusion:\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /In conclusion[,:]\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /\*\*\s*Conclusion\s*\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /Given the incomplete[\s\S]*?(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /To drive success[\s\S]*?(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i
-        ],
-        recommendations: /\*\*Actionable Recommendations:\*\*([\s\S]*?)$/i,
-        cleanupPatterns: [
-          /\*{2,}\s*Conclusion\s*\*{2,}[\s\S]*$/i,
-          /\*\*\s*Conclusion\s*:\s*\*\*[\s\S]*$/i,
-          /\*\*Conclusion:\*\*[\s\S]*$/i,
-          /In conclusion[\s\S]*$/i,
-          /Given the incomplete[\s\S]*$/i,
-          /To drive success[\s\S]*$/i,
-          /\*\*Actionable Recommendations:\*\*[\s\S]*$/i
-        ]
-      }
-    },
-
-    porter: {
-      title: "Porter's Five Forces Analysis",
-      conclusion: "Conclusion",
-      recommendations: "Actionable Recommendations",
-      forces: {
-        supplierPower: "Supplier Power",
-        buyerPower: "Buyer Power",
-        competitiveRivalry: "Competitive Rivalry",
-        threatOfSubstitution: "Threat of Substitution",
-        threatOfNewEntry: "Threat of New Entry"
-      },
-      patterns: {
-        conclusion: [
-          /\*{2,}\s*Conclusion\s*\*{2,}\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /\*\*\s*Conclusion\s*:\s*\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /\*\*Conclusion:\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /Conclusion:\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /In conclusion[,:]\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i,
-          /\*\*\s*Conclusion\s*\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|Actionable Recommendations:|$)/i
-        ],
-        recommendations: /\*\*Actionable Recommendations:\*\*([\s\S]*?)$/i,
-        cleanupPatterns: [
-          /\*{2,}\s*Conclusion\s*\*{2,}[\s\S]*$/i,
-          /\*\*\s*Conclusion\s*:\s*\*\*[\s\S]*$/i,
-          /\*\*Conclusion:\*\*[\s\S]*$/i,
-          /In conclusion[\s\S]*$/i,
-          /To succeed in this environment[\s\S]*$/i,
-          /By following these recommendations[\s\S]*$/i,
-          /To stay competitive[\s\S]*$/i
-        ]
-      }
-    },
-
-    strategic: {
-      title: "STRATEGIC Analysis",
-      conclusion: "Conclusion",
-      noData: "No data available for",
-      keyActions: "Key actions:",
-      theory: "Theory:",
-      example: "Example:",
-      patterns: {
-        conclusion: [
-          /\*{2,}\s*Conclusion\s*\*{2,}\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|$)/i,
-          /\*\*\s*Conclusion\s*:\s*\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|$)/i,
-          /\*\*Conclusion:\*\*\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|$)/i,
-          /In conclusion[,:]\s*([\s\S]*?)(?=\*\*Actionable Recommendations:\*\*|$)/i
-        ],
-        letterPatterns: [
-          /\*\*([STRATEGIC])\s*=\s*([^*]+?)\*\*\s*([\s\S]*?)(?=\*\*[STRATEGIC]\s*=|\*\*Conclusion|In conclusion|$)/i,
-          /([STRATEGIC])\s*=\s*([^\n]+?)\n([\s\S]*?)(?=[STRATEGIC]\s*=|Conclusion|In conclusion|$)/i,
-          /\*\*([STRATEGIC])\*\*\s*=\s*([^\n]+?)\n([\s\S]*?)(?=\*\*[STRATEGIC]|[STRATEGIC]\s*=|Conclusion|In conclusion|$)/i,
-          /([STRATEGIC])\s*:\s*([^\n]+?)\n([\s\S]*?)(?=[STRATEGIC]\s*:|Conclusion|In conclusion|$)/i
-        ]
-      }
-    }
-  },
-
-  es: {
-    swot: {
-      title: "Análisis FODA",
-      conclusion: "Conclusión",
-      sections: {
-        strengths: "Fortalezas",
-        weaknesses: "Debilidades",
-        opportunities: "Oportunidades",
-        threats: "Amenazas"
-      },
-      patterns: {
-        analysisHeader: /\*\*\s*Análisis FODA\s*\*\*([\s\S]*?)(?=\*\*Conclusión|En conclusión|Para abordar|Al abordar|$)/i,
-        conclusion: /(\*\*Conclusión.*?\*\*[\s\S]*?$|En conclusión[\s\S]*?$|Para abordar[\s\S]*?$|Al abordar[\s\S]*?$)/i,
-        sections: /\*\*\s*(Fortalezas|Debilidades|Oportunidades|Amenazas)\s*:\*\*\s*([\s\S]*?)(?=(\*\*\s*(Fortalezas|Debilidades|Oportunidades|Amenazas)\s*:\*\*|\*\*Conclusión|En conclusión|Para abordar|Al abordar|$))/gi
-      }
-    },
-
-    valueChain: {
-      title: "Análisis de la Cadena de Valor",
-      conclusion: "Conclusión",
-      primaryActivities: "Actividades Primarias",
-      supportActivities: "Actividades de Apoyo",
-      margin: "Análisis de Margen",
-      linkages: "Análisis de Vínculos",
-      noAnalysis: "Sin análisis disponible.",
-      sections: {
-        inboundLogistics: "Logística de Entrada",
-        operations: "Operaciones",
-        outboundLogistics: "Logística de Salida",
-        marketingSales: "Marketing y Ventas",
-        service: "Servicio",
-        firmInfrastructure: "Infraestructura de la Empresa",
-        hrManagement: "Gestión de Recursos Humanos",
-        techDevelopment: "Desarrollo Tecnológico",
-        procurement: "Abastecimiento"
-      },
-      patterns: {
-        primaryActivities: /\*\*Actividades Primarias:\*\*([\s\S]*?)(?=\*\*Actividades de Apoyo:|$)/i,
-        supportActivities: /\*\*Actividades de Apoyo:\*\*([\s\S]*?)(?=\*\*Margen:|$)/i,
-        margin: /\*\*Margen:\*\*([\s\S]*?)(?=\*\*Vínculos:|$)/i,
-        linkages: /\*\*Vínculos:\*\*([\s\S]*?)(?=En conclusión|Para aplicar|Al adoptar|$)/i,
-        conclusion: /(En conclusión[\s\S]*?$|Para aplicar estos principios[\s\S]*?$|Al adoptar estas recomendaciones[\s\S]*?$)/i,
-        inboundLogistics: /- Logística de Entrada:\*\*([\s\S]*?)(?=- Operaciones:|$)/i,
-        operations: /- Operaciones:\*\*([\s\S]*?)(?=- Logística de Salida:|$)/i,
-        outboundLogistics: /- Logística de Salida:\*\*([\s\S]*?)(?=- Marketing (?:y|&) Ventas:|$)/i,
-        marketingSales: /- Marketing (?:y|&) Ventas:\*\*([\s\S]*?)(?=- Servicio:|$)/i,
-        service: /- Servicio:\*\*([\s\S]*?)(?=$)/i,
-        firmInfrastructure: /- Infraestructura de la Empresa:\*\*([\s\S]*?)(?=- Gestión de Recursos Humanos:|$)/i,
-        hrManagement: /- Gestión de Recursos Humanos:\*\*([\s\S]*?)(?=- Desarrollo Tecnológico:|$)/i,
-        techDevelopment: /- Desarrollo Tecnológico:\*\*([\s\S]*?)(?=- Abastecimiento:|$)/i,
-        procurement: /- Abastecimiento:\*\*([\s\S]*?)(?=$)/i
-      }
-    },
-
-    bcg: {
-      title: "Análisis de Matriz BCG",
-      conclusion: "Conclusión",
-      recommendations: "Recomendaciones Accionables",
-      marketGrowthRate: "Tasa de Crecimiento del Mercado",
-      relativeMarketShare: "Participación Relativa en el Mercado",
-      high: "Alta",
-      low: "Baja",
-      quadrants: {
-        agileLeaders: "Líderes Ágiles",
-        establishedPerformers: "Ejecutores Establecidos",
-        emergingInnovators: "Innovadores Emergentes",
-        strategicDrifters: "Divagadores Estratégicos"
-      },
-      descriptions: {
-        agileLeaders: "(Alta Participación / Alto Crecimiento)",
-        establishedPerformers: "(Alta Participación / Bajo Crecimiento)",
-        emergingInnovators: "(Baja Participación / Alto Crecimiento)",
-        strategicDrifters: "(Baja Participación / Bajo Crecimiento)"
-      },
-      patterns: {
-        conclusion: [
-          /\*{2,}\s*Conclusión\s*\*{2,}\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /\*\*\s*Conclusión\s*:\s*\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /\*\*Conclusión:\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /Conclusión:\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /En conclusión[,:]\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /\*\*\s*Conclusión\s*\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /Dado el incompleto[\s\S]*?(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /Para impulsar el éxito[\s\S]*?(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i
-        ],
-        recommendations: /\*\*Recomendaciones Accionables:\*\*([\s\S]*?)$/i,
-        cleanupPatterns: [
-          /\*{2,}\s*Conclusión\s*\*{2,}[\s\S]*$/i,
-          /\*\*\s*Conclusión\s*:\s*\*\*[\s\S]*$/i,
-          /\*\*Conclusión:\*\*[\s\S]*$/i,
-          /En conclusión[\s\S]*$/i,
-          /Dado el incompleto[\s\S]*$/i,
-          /Para impulsar el éxito[\s\S]*$/i,
-          /\*\*Recomendaciones Accionables:\*\*[\s\S]*$/i
-        ]
-      }
-    },
-
-    porter: {
-      title: "Análisis de las Cinco Fuerzas de Porter",
-      conclusion: "Conclusión",
-      recommendations: "Recomendaciones Accionables",
-      forces: {
-        supplierPower: "Poder de los Proveedores",
-        buyerPower: "Poder de los Compradores",
-        competitiveRivalry: "Rivalidad Competitiva",
-        threatOfSubstitution: "Amenaza de Sustitución",
-        threatOfNewEntry: "Amenaza de Nuevos Entrantes"
-      },
-      patterns: {
-        conclusion: [
-          /\*{2,}\s*Conclusión\s*\*{2,}\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /\*\*\s*Conclusión\s*:\s*\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /\*\*Conclusión:\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /Conclusión:\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /En conclusión[,:]\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i,
-          /\*\*\s*Conclusión\s*\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|Recomendaciones Accionables:|$)/i
-        ],
-        recommendations: /\*\*Recomendaciones Accionables:\*\*([\s\S]*?)$/i,
-        cleanupPatterns: [
-          /\*{2,}\s*Conclusión\s*\*{2,}[\s\S]*$/i,
-          /\*\*\s*Conclusión\s*:\s*\*\*[\s\S]*$/i,
-          /\*\*Conclusión:\*\*[\s\S]*$/i,
-          /En conclusión[\s\S]*$/i,
-          /Para tener éxito en este entorno[\s\S]*$/i,
-          /Al seguir estas recomendaciones[\s\S]*$/i,
-          /Para mantenerse competitivo[\s\S]*$/i
-        ]
-      }
-    },
-
-    strategic: {
-      title: "Análisis ESTRATÉGICO",
-      conclusion: "Conclusión",
-      noData: "Sin datos disponibles para",
-      keyActions: "Acciones clave:",
-      theory: "Teoría:",
-      example: "Ejemplo:",
-      patterns: {
-        conclusion: [
-          /\*{2,}\s*Conclusión\s*\*{2,}\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|$)/i,
-          /\*\*\s*Conclusión\s*:\s*\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|$)/i,
-          /\*\*Conclusión:\*\*\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|$)/i,
-          /En conclusión[,:]\s*([\s\S]*?)(?=\*\*Recomendaciones Accionables:\*\*|$)/i
-        ],
-        letterPatterns: [
-          /\*\*([ESTRATÉGICO])\s*=\s*([^*]+?)\*\*\s*([\s\S]*?)(?=\*\*[ESTRATÉGICO]\s*=|\*\*Conclusión|En conclusión|$)/i,
-          /([ESTRATÉGICO])\s*=\s*([^\n]+?)\n([\s\S]*?)(?=[ESTRATÉGICO]\s*=|Conclusión|En conclusión|$)/i,
-          /\*\*([ESTRATÉGICO])\*\*\s*=\s*([^\n]+?)\n([\s\S]*?)(?=\*\*[ESTRATÉGICO]|[ESTRATÉGICO]\s*=|Conclusión|En conclusión|$)/i,
-          /([ESTRATÉGICO])\s*:\s*([^\n]+?)\n([\s\S]*?)(?=[ESTRATÉGICO]\s*:|Conclusión|En conclusión|$)/i
-        ]
-      }
-    }
-  }
-};
 
 // CLEAN UI TRANSLATIONS ONLY - NO REGEX PATTERNS OR NESTED OBJECTS
 export const staticTranslations = {
@@ -330,7 +16,7 @@ export const staticTranslations = {
     'login_failed': 'Login failed',
 
     // Register page
-     "sign_up": "Sign Up",
+    "sign_up": "Sign Up",
     "create_account_subtitle": "Create your account to get started",
     "first_name": "First Name",
     "last_name": "Last Name",
@@ -353,7 +39,11 @@ export const staticTranslations = {
     "account_created": "Account Created!",
     "registration_failed_msg": "Registration Failed",
     "redirecting_login": "Redirecting to login...",
-    
+    "creating": "Creating...",
+
+    'business_purpose': 'Business Purpose',
+    'description': 'Description',
+
     "first_name_required": "First name is required",
     "last_name_required": "Last name is required",
     "email_required": "Email address is required",
@@ -364,12 +54,12 @@ export const staticTranslations = {
     "passwords_do_not_match": "Passwords do not match",
     "agree_terms_required": "You must agree to the terms and conditions",
     "password_requirements": "Password must be at least 8 characters long",
-    
+    "enter_user_name": "Enter User Name",
     "registration_successful": "Registration successful!",
     "registration_failed": "Registration failed. Please try again.",
     "email_already_exists": "An account with this email already exists",
     "user_account_notice": "All new accounts are created as regular users",
-
+    "enter_your_business_name": "Enter your business name",
     // Dashboard page
     'dashboard': 'Dashboard',
     'welcome_dashboard': 'Welcome!',
@@ -389,7 +79,7 @@ export const staticTranslations = {
     'error_loading_business': 'Error loading business data.',
     'no_businesses_found': 'No businesses found.',
     'enter_your_answer': 'Enter Your Answer',
-
+    'super_admin_panel': 'Super Admin Panel',
     // Business Detail page
     'questions': 'Questions',
     'analysis': 'ANALYSIS',
@@ -401,7 +91,7 @@ export const staticTranslations = {
     'no_business_data_found': 'No business data found.',
     'complete_all_questions': 'Complete All Questions',
     'complete_questions_to_unlock': 'Please answer all questions to unlock the analysis section',
-
+    'questions_completed': 'questions completed',
     // Progress and status
     'progress': 'Progress',
     'completed': 'Completed',
@@ -528,6 +218,7 @@ export const staticTranslations = {
     'technological_factors': 'Technological',
     'legal_factors': 'Legal',
     'environmental_factors': 'Environmental',
+    'create_new_business': 'Create New Business',
 
     'select_analysis_framework': 'Select an Analysis Framework',
     'choose_framework_instruction': 'Choose from the tabs above to begin your analysis',
@@ -579,7 +270,14 @@ export const staticTranslations = {
     'questions_remaining': 'Questions remaining',
     'of': 'of',
     'back_to_welcome': 'Back to Welcome',
-
+    'user_name': 'User Name',
+    'company': 'Company',
+    'select_a_company': 'Select a company',
+    'job_title': 'Job Title',
+    'optional': 'Optional',
+    'enter_job_title': 'Enter job title',
+    'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'Password must be at least 8 characters long and contain uppercase, lowercase, and numbers',
+    'business_name': 'Business Name',
     // Insights Section
     'business_insights': 'Business Insights',
     'generate_insights': 'Generate Insights',
@@ -609,7 +307,7 @@ export const staticTranslations = {
     'recommendation_complementary_products': 'Consider developing complementary products',
     'growth_projections': 'Growth Projections',
     'growth_projection_details': 'Based on current trends, a 25-30% growth rate is achievable within the next 12 months with proper execution of recommended strategies.',
-
+    'All_generated_analysis_reports_and_insights': 'All generated analysis reports and insights',
     'admin_panel.title': 'Admin Panel - Users Management',
     'admin_panel.all_users': 'All Users',
     'admin_panel.filter_placeholder': 'Filter by name or email...',
@@ -619,7 +317,7 @@ export const staticTranslations = {
     'admin_panel.download_csv_tooltip': 'Download CSV',
     'admin_panel.refresh_button_aria': 'Refresh users list',
     'admin_panel.loading': 'Loading...',
-
+    'All_question_responses_and_conversations': 'All question responses and conversations',
     'admin_panel_users_management': 'Admin Panel - Users Management',
     'all_users': 'All Users',
     'filter_by_name_or_email': 'Filter by name or email...',
@@ -635,19 +333,78 @@ export const staticTranslations = {
     'failed_to_fetch_users': 'Failed to fetch users',
     'failed_to_download_csv': 'Failed to download CSV',
     'register_now': 'Register Now',
-
+    'remaining': 'remaining',
+    'detailed_description_of_your_business': 'Detailed description of your business',
+    'how_it_works': 'How It works',
     'signed_in_as': 'Signed in as',
     'dashboard': 'Dashboard',
+    'This_action_cannot_be_undone!': 'This action cannot be undone!',
     'admin': 'Admin',
     'logout': 'Logout',
     'traxia_logo_alt': 'Traxia Logo',
     'manual_save': 'Manual Save',
     'regenerating': 'Regenerating...',
     'regenerate': 'Regenerate',
+    'delete_business': 'Delete Business',
+    'brief_description_of_what': 'Brief description of what your business does',
+    'how_this_application_works': 'How this application works',
+    'got_it': 'Got it!',
+    'are_you_sure_you_want_to_delete': 'Are you sure you want to delete',
+    'This_will_permanently_delete': 'This will permanently delete:',
+    // Business page
+    'unlockBusinessAnalysis': 'Unlock Business Analysis',
+    "completePhaseMessage": "Complete all initial phase questions to unlock business analysis and STRATEGIC insights!",
+    "progress": "Progress",
+    'All_progress_data_and_statistics': 'All progress data and statistics',
+    'the_business_profile_itself': 'The business profile itself',
+    "brief": "Brief",
+    "analysis": "Insights (6 Cs)",
+    "strategic": "S.T.R.A.T.E.G.I.C",
+    "letsBegin": "Let's begin!",
+    "welcomeToTraxia": "Welcome to Traxxia AI - Your Strategic Business Advisor!",
+    "typeYourAnswer": "Type your answer here...",
+    "question": "Question",
+    "of": "of",
+    "phase": "Phase",
+    "followUpRequired": "Follow-up required",
+    "validating": "Validating...",
+
+    "briefNote": "💡 Fields are automatically generated from your chat responses. Click any field to edit.",
+    "briefNoteRegenerate": "⚡ Analysis will regenerate automatically when you update answers.",
+    "yourBusiness": "Your Business",
+    "whatWeDo": "Business description will appear here after answering questions in the chat.",
+    "businessInfoMessage": "Your business information will appear here as you answer questions in the chat.",
+    "backToOverview": "Back to Overview",
+    "Download analysis": "Download analysis",  
+    "goToSection": "Go to Section",
+    "RegenerateAll": "Regenerate All",
+    "assistant": "Assistant",
+    "validatingYourAnswer": "Validating your answer...",
+    "Generating...": "Generating...",
+    "Generate Analysis Now": "Generate Analysis Now",
+    "Your business analysis will appear here once generated.": "Your business analysis will appear here once generated.",
+    "Continue the conversation to trigger analysis generation.": "Continue the conversation to trigger analysis generation.",
+    "SWOT Analysis": "SWOT Analysis",
+    "Customer Segmentation": "Customer Segmentation",
+    "Purchase Criteria Matrix": "Purchase Criteria Matrix",
+    "Channel Heatmap": "Channel Heatmap",
+    "Loyalty & NPS Score": "Loyalty & NPS Score",
+    "Capability Heatmap": "Capability Heatmap",
+    "Regenerating customer segmentation analysis...": "Regenerating customer segmentation analysis...",
+    "Generating customer segmentation analysis...": "Generating customer segmentation analysis...",
+    "Regenerating purchase criteria analysis...": "Regenerating purchase criteria analysis...",
+    "Generating purchase criteria analysis...": "Generating purchase criteria analysis...",
+    "Regenerating channel heatmap analysis...": "Regenerating channel heatmap analysis...",
+    "Generating channel heatmap analysis...": "Generating channel heatmap analysis...",
+    "Regenerating loyalty & NPS analysis...": "Regenerating loyalty & NPS analysis...",
+    "Generating loyalty & NPS analysis...": "Generating loyalty & NPS analysis...",
+    "Regenerating capability heatmap analysis...": "Regenerating capability heatmap analysis...",
+    "Generating capability heatmap analysis...": "Generating capability heatmap analysis..."
   },
 
   es: {
-     "sign_up": "Registrarse",
+    "super_admin_panel": "Panel de Super Administrador",
+    "sign_up": "Registrarse",
     "create_account_subtitle": "Crea tu cuenta para comenzar",
     "first_name": "Nombre",
     "last_name": "Apellido",
@@ -670,7 +427,8 @@ export const staticTranslations = {
     "account_created": "¡Cuenta Creada!",
     "registration_failed_msg": "Error en el Registro",
     "redirecting_login": "Redirigiendo al inicio de sesión...",
-    
+    'All_question_responses_and_conversations': 'Todas las respuestas y conversaciones de preguntas',
+    'All_generated_analysis_reports_and_insights': 'Todos los informes y análisis generados',
     "first_name_required": "El nombre es obligatorio",
     "last_name_required": "El apellido es obligatorio",
     "email_required": "El correo electrónico es obligatorio",
@@ -681,7 +439,7 @@ export const staticTranslations = {
     "passwords_do_not_match": "Las contraseñas no coinciden",
     "agree_terms_required": "Debes aceptar los términos y condiciones",
     "password_requirements": "La contraseña debe tener al menos 8 caracteres",
-    
+
     "registration_successful": "¡Registro exitoso! Bienvenido",
     "registration_failed": "Error en el registro. Por favor intenta de nuevo.",
     "email_already_exists": "Ya existe una cuenta con este correo electrónico",
@@ -709,7 +467,13 @@ export const staticTranslations = {
     'failed_to_fetch_users': 'Error al obtener usuarios',
     'failed_to_download_csv': 'Error al descargar CSV',
     'register_now': 'Regístrate ahora',
-
+    'delete_business': 'Eliminar negocio',
+    'creating': 'Creando...',
+    'create_new_business': 'Crear nuevo negocio',
+    'business_name': 'Nombre del negocio',
+    'business_purpose': 'Propósito del negocio',
+    'description': 'Descripción',
+    'enter_your_business_name': 'Ingresa el nombre de tu negocio',
     'admin_panel.title': 'Panel de Administración - Gestión de Usuarios',
     'admin_panel.all_users': 'Todos los usuarios',
     'admin_panel.filter_placeholder': 'Filtrar por nombre o correo...',
@@ -719,7 +483,7 @@ export const staticTranslations = {
     'admin_panel.download_csv_tooltip': 'Descargar CSV',
     'admin_panel.refresh_button_aria': 'Actualizar lista de usuarios',
     'admin_panel.loading': 'Cargando...',
-
+    'brief_description_of_what': 'Descripción breve de lo que hace tu negocio',
     'welcome': '¡Bienvenido!',
     'welcome_message': 'Crea planes de negocio paso a paso con el marco S.T.R.A.T.E.G.I.C. Activa capacidades de IA para análisis, predicción y toma de decisiones.',
     'my_businesses': 'Mis negocios',
@@ -730,7 +494,14 @@ export const staticTranslations = {
     'questions_remaining': 'Preguntas restantes',
     'of': 'de',
     'back_to_welcome': 'Volver a Bienvenida',
-
+    'user_name': 'Nombre de usuario',
+    'company': 'Empresa',
+    'select_a_company': 'Seleccionar una empresa',
+    'job_title': 'Título del trabajo',
+    'optional': 'Opcional',
+    'This_action_cannot_be_undone!': '¡Esta acción no se puede deshacer!',
+    'enter_job_title': 'Ingresa el título del trabajo',
+    'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'La contraseña debe tener al menos 8 caracteres y contener mayúsculas, minúsculas y números',
     // Insights Section
     'business_insights': 'Perspectivas de negocio',
     'generate_insights': 'Generar perspectivas',
@@ -739,7 +510,9 @@ export const staticTranslations = {
     'generate_insights_btn': 'Generar perspectivas',
     'analysis_results': 'Resultados del análisis',
     'clear_results': 'Borrar resultados',
-
+    'remaining': 'restantes',
+    'detailed_description_of_your_business': 'Descripción detallada de tu negocio',
+    'how_it_works': 'Cómo funciona',
     // Hardcoded Insights Content
     'business_analysis_results': 'Resultados del análisis de negocio',
     'market_position': 'Posición en el mercado',
@@ -760,7 +533,8 @@ export const staticTranslations = {
     'recommendation_complementary_products': 'Considera desarrollar productos complementarios',
     'growth_projections': 'Proyecciones de crecimiento',
     'growth_projection_details': 'Basado en tendencias actuales, una tasa de crecimiento del 25-30% es alcanzable dentro de los próximos 12 meses con la ejecución adecuada de las estrategias recomendadas.',
-
+    'how_this_application_works': 'Cómo funciona esta aplicación',
+    'All_progress_data_and_statistics': 'Todos los datos y estadísticas de progreso',
     // Save related
     'save_in_progress': 'Guardando en progreso',
     'auto_save_enabled': 'Guardado automático activado',
@@ -776,8 +550,9 @@ export const staticTranslations = {
     'continue_with': 'O continuar con',
     'hide_password': 'Ocultar contraseña',
     'show_password': 'Mostrar contraseña',
-    'login_failed': 'Error de inicio de sesión', 
-
+    'login_failed': 'Error de inicio de sesión',
+    "enter_user_name": "Ingresa el nombre de usuario",
+    'got_it': '¡Entendido!',
     // Dashboard page
     'dashboard': 'Panel de Control',
     'welcome_dashboard': '¡Bienvenido!',
@@ -797,7 +572,8 @@ export const staticTranslations = {
     'error_loading_business': 'Error al cargar datos del negocio.',
     'no_businesses_found': 'No se encontraron negocios.',
     'enter_your_answer': 'Ingresa Tu Respuesta',
-
+    'questions_completed': 'Preguntas completadas:',
+    'are_you_sure_you_want_to_delete': '¿Estás seguro de que deseas eliminar',
     // Business Detail page
     'questions': 'Preguntas',
     'analysis': 'ANÁLISIS',
@@ -809,7 +585,7 @@ export const staticTranslations = {
     'no_business_data_found': 'No se encontraron datos de negocio.',
     'complete_all_questions': 'Completa Todas las Preguntas',
     'complete_questions_to_unlock': 'Por favor responde todas las preguntas para desbloquear la sección de análisis',
-
+    'This_will_permanently_delete': 'Esto eliminará permanentemente:',
     // Progress Section
     'preview': 'Vista Previa',
     'response_summary': 'Resumen de Respuestas',
@@ -818,7 +594,7 @@ export const staticTranslations = {
     'questions_answered_label': 'preguntas respondidas',
     'complete_remaining_questions': 'Por favor completa las preguntas restantes para continuar. Mientras más preguntas respondas, más precisos y personalizados serán tus resultados.',
     'manual_save': 'Guardar Manual',
-
+    'the_business_profile_itself': 'El perfil del negocio en sí',
     // Preview Content
     'summary': 'Resumen',
     'total_questions': 'Total de Preguntas',
@@ -964,7 +740,6 @@ export const staticTranslations = {
     'please_try_again': 'Por favor intenta de nuevo',
     'analysis_loading_text': 'Cargando datos del análisis...',
     'analysis_unavailable': 'Análisis temporalmente no disponible',
-
     'unsaved_changes': 'Cambios sin guardar',
     'auto_save_in': 'Auto-guardado en',
     'auto_save_pending': 'Auto-guardado pendiente...',
@@ -975,7 +750,54 @@ export const staticTranslations = {
     'last_saved': 'Último guardado',
     'save_in_progress': 'Guardado en progreso',
     'auto_save_enabled': 'Auto-guardado habilitado',
-    'manual_save_now': 'Guardar ahora'
+    'manual_save_now': 'Guardar ahora', 
+    'unlockBusinessAnalysis': 'Desbloquear análisis de negocios',
+    "completePhaseMessage": "¡Completa todas las preguntas de la fase inicial para desbloquear el análisis FODA y conocimientos estratégicos!",
+    "progress": "Progreso",
+    "brief": "Breve",
+    "analysis": "Perspectivas (6 Cs)",
+    "strategic": "E.S.T.R.A.T.E.G.I.C.A",
+    "letsBegin": "¡Comencemos!",
+    "welcomeToTraxia": "¡Bienvenido a Traxxia AI: su asesor comercial estratégico!",
+    "typeYourAnswer": "Escribe tu respuesta aquí...",
+    "question": "Pregunta",
+    "of": "de",
+    "phase": "Fase",
+    "followUpRequired": "Se requiere seguimiento",
+    "validating": "Validando...",
+    "briefNote": "💡 Los campos se generan automáticamente a partir de tus respuestas en el chat. Haz clic en cualquier campo para editarlo.",
+    "briefNoteRegenerate": "⚡ El análisis se regenerará automáticamente cuando actualices las respuestas.",
+    "yourBusiness": "Tu Negocio",
+    "whatWeDo": "La descripción del negocio aparecerá aquí después de responder a las preguntas en el chat.",
+    "businessInfoMessage": "La información de tu negocio aparecerá aquí a medida que respondas preguntas en el chat.",
+    "backToOverview": "Atrás a Descripción general",
+    "download": "Descargar", 
+    "download": "Descargar", 
+    "goToSection": "Ir a la sección",
+    "RegenerateAll": "Regenerar todo",
+    "assistant": "Asistente",
+    "Download analysis": "Descargar Análisis",
+    "validatingYourAnswer": "Validando tu respuesta...",
+    "Generating...": "generando...",
+    "Generate Analysis Now": "Generar análisis ahora",
+    "Your business analysis will appear here once generated.": "Tu análisis de negocio aparecerá aquí una vez generado.",
+    "Continue the conversation to trigger analysis generation.": "Continúa la conversación para iniciar la generación del análisis.",
+    "SWOT Analysis": "Análisis FODA",
+    "Customer Segmentation": "Segmentación de clientes",
+    "Purchase Criteria Matrix": "Matriz de criterios de compra",
+    "Channel Heatmap": "Mapa de calor de canales",
+    "Loyalty & NPS Score": "Fidelidad & puntuación NPS",
+    "Capability Heatmap": "capacidades Mapa de calor",
+    "Regenerating customer segmentation analysis...": "Regenerando el análisis de segmentación de clientes...",
+    "Generating customer segmentation analysis...": "Generando el análisis de segmentación de clientes...",
+    "Regenerating purchase criteria analysis...": "Regenerando el análisis de criterios de compra...",
+    "Generating purchase criteria analysis...": "Generando el análisis de criterios de compra...",
+    "Regenerating channel heatmap analysis...": "Regenerando el análisis del mapa de calor de canales...",
+    "Generating channel heatmap analysis...": "Generando el análisis del mapa de calor de canales...",
+    "Regenerating loyalty & NPS analysis...": "Regenerando el análisis de lealtad y NPS...",
+    "Generating loyalty & NPS analysis...": "Generando el análisis de lealtad y NPS...",
+    "Regenerating capability heatmap analysis...": "Regenerando el análisis del mapa de calor de capacidades...",
+    "Generating capability heatmap analysis...": "Generando el análisis del mapa de calor de capacidades..."
   }
 };
 

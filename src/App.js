@@ -7,7 +7,10 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
+import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin Panel
 import ProtectedRoute from './components/ProtectedRoute';
+
+import BusinessSetupPage from './pages/BusinessSetupPage';
 
 const App = () => {
   useEffect(() => {
@@ -35,7 +38,7 @@ const App = () => {
       
       // Dispatch language change event for components
       window.dispatchEvent(new CustomEvent('languageChanged', { 
-        detail: { language: preferredLang } 
+        detail: { language: preferredLang }
       }));
     }
   }, []);
@@ -48,6 +51,9 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/businesspage" element={<BusinessSetupPage />} />
+          
+          {/* Regular Admin Route - kept for potential future use */}
           <Route
             path="/admin"
             element={
@@ -56,6 +62,17 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          
+          {/* Super Admin Route - accessible by both admins and super admins */}
+          <Route
+            path="/super-admin"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <SuperAdminPage />
+              </ProtectedRoute>
+            }
+          />
+          
         </Routes>
       </div>
     </Router>
