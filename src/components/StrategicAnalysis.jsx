@@ -217,7 +217,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header strategy-header">
             <Target size={22} className="strategy-icon" />
             <h3 className="pillar-title">
-              S – Strategy: Where & How to Compete
+              S – Strategy: Where to Compete
             </h3>
           </div>
 
@@ -233,29 +233,12 @@ const StrategicAnalysis = ({
                 <ul className="subsection-list">
                   {strategy.where_to_compete.map((item, idx) => (
                     <li key={idx} className="subsection-list-item">
-                      {item}
+                      <strong>{item.position}:</strong> {item.description}
                     </li>
-                  ))}
+                ))}
                 </ul>
               </div>
-            )}
-
-          {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
-            strategy.how_to_compete[0] !== 'N/A' && (
-              <div className="subsection">
-                <h4 className="subsection-title">
-                  <TrendingUp size={16} className="strategy-icon" />
-                  How to Compete
-                </h4>
-                <ul className="subsection-list">
-                  {strategy.how_to_compete.map((item, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            )} 
         </div>
       </div>
     );
