@@ -1,10 +1,10 @@
-/* CSS Variables - Common Styles */
-/* Import this file in both Dashboard and MenuBar CSS files */
+/* variables.css - Centralized CSS variables for light and dark themes */
 
 :root {
   /* Font Families */
   --font-primary: 'Manrope', 'Segoe UI', Roboto, sans-serif;
   --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  --font-register: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
 
   /* Font Sizes */
   --font-size-xs: 12px;
@@ -39,49 +39,68 @@
   --letter-spacing-widest: 2px;
 
   /* Colors */
-  --color-primary: #007bff;
-  --color-primary-dark: #0056b3;
-  --color-primary-light: #66b3ff;
-  --color-secondary: #6c757d;
-  --color-success: #28a745;
-  --color-danger: #dc3545;
+  --color-primary: #4864a1; /* From Login.css --primary */
+  --color-primary-dark: #3a56d4; /* From Login.css --primary-dark */
+  --color-primary-light: #9D96E8; /* From Login.css --primary-light */
+  --color-secondary: #7209b7; /* From Login.css --secondary */
+  --color-success: #06d6a0; /* From Login.css --success */
+  --color-danger: #ef476f; /* From Login.css --error */
   --color-warning: #ffc107;
   --color-info: #17a2b8;
-  
+  --color-accent: #4cc9f0; /* From Login.css --accent */
+  --color-star: #FFA000; /* From Login.css --star-color */
+  --color-question-success: #329c47; /* From Login.css --question-success */
+  --color-question-success-light: #96e3a5; /* From Login.css --question-success-light */
+  --color-transparent: transparent;
+  --color-register-primary: #6c63ff; /* From Register.css --primary */
+  --color-register-primary-light: #8a84ff; /* From Register.css --primary-light */
+  --color-register-primary-dark: #5046e5; /* From Register.css --primary-dark */
+  --color-register-secondary: #ff6584; /* From Register.css --secondary */
+  --color-register-error: #e53e3e; /* From Register.css --error */
+  --color-register-success: #38a169; /* From Register.css --success */
+  --color-register-text-dark: #2d3748; /* From Register.css --text-dark */
+  --color-register-text-light: #718096; /* From Register.css --text-light */
+  --color-register-bg-light: #f7fafc; /* From Register.css --bg-light */
+  --color-register-white: #ffffff; /* From Register.css --white */
+  --color-register-border: #C5C6CC; /* From Register.css --border */
+
   /* Brand Colors */
   --color-traxia-blue: #2c5aa0;
   --color-traxia-blue-light: #4a7bc8;
   --color-traxia-blue-dark: #1e3f73;
 
   /* Text Colors */
-  --color-text-primary: #212529;
-  --color-text-secondary: #495057;
+  --color-text-primary: #333333; /* From Login.css --text-dark */
+  --color-text-secondary: #6e7191; /* From Login.css --text-light */
   --color-text-muted: #6c757d;
   --color-text-light: #adb5bd;
   --color-text-white: #ffffff;
   --color-text-black: #000000;
-  
 
   /* Background Colors */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f8f9fa;
-  --color-bg-light: #f1f3f4;
+  --color-bg-primary: #ffffff; /* From Login.css --white */
+  --color-bg-secondary: #f8f9fa; /* From Login.css --body-bg */
+  --color-bg-light: #f0f3f5; /* From Login.css --light-blue */
   --color-bg-dark: #343a40;
   --color-bg-overlay: rgba(0, 0, 0, 0.5);
   --color-bg-item: #F8F9FE;
   --color-bg-card: #ffffff;
+  --color-bg-completed: rgba(220, 237, 255, 0.6); /* From Login.css --completed-bg */
 
   /* Border Colors */
   --color-border-light: #e9ecef;
   --color-border-medium: #dee2e6;
   --color-border-dark: #adb5bd;
+  --color-border: #1f9cf0; /* From Login.css --border */
+  --color-email-border: #C5C6CC; /* From Login.css --email-border */
+  --color-password-border: #C5C6CC; /* From Login.css --password-border */
 
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
   --spacing-lg: 16px;
-  --spacing-xl: 20px;
+  --spacing-xl: 10px;
   --spacing-2xl: 24px;
   --spacing-3xl: 32px;
   --spacing-4xl: 40px;
@@ -91,10 +110,11 @@
   --border-radius-xs: 4px;
   --border-radius-sm: 6px;
   --border-radius-md: 8px;
-  --border-radius-lg: 12px;
+  --border-radius-lg: 12px; /* From Login.css --border-radius */
   --border-radius-xl: 15px;
   --border-radius-2xl: 20px;
   --border-radius-round: 50%;
+  --border-radius-card: 24px; /* From Login.css --card-border-radius (using 24px as it appears first) */
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -104,11 +124,16 @@
   --shadow-xl: 0 10px 25px rgba(0, 0, 0, 0.1);
   --shadow-2xl: 0 10px 30px rgba(0, 0, 0, 0.1);
   --shadow-3xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+  --shadow-login: rgba(17, 12, 46, 0.1); /* From Login.css --shadow */
+  --shadow-email-border: 0 8px 20px rgba(0, 0, 0, 0.06); /* From Login.css --email-border (shadow) */
+  --shadow-register-card: 0 10px 25px rgba(0, 0, 0, 0.05); /* From Register.css --card-shadow */
 
+  --color-modal-bg: #ffffff;
+  --color-modal-border: transparent;
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
-  --transition-slow: 0.3s ease;
+  --transition-slow: 0.3s ease; /* From Login.css and Register.css --transition */
   --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   /* Z-Index */
@@ -136,8 +161,10 @@
   --business-card-max-width-desktop: 1000px;
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  --gradient-primary: linear-gradient(135deg, #4864a1, #3a56d4); /* From Login.css --gradient-primary (adjusted) */
+  --gradient-secondary: linear-gradient(135deg, #FF9800, #FF5722); /* From Login.css --gradient-secondary */
   --gradient-traxia: linear-gradient(135deg, var(--color-traxia-blue) 0%, var(--color-traxia-blue-dark) 100%);
+  --gradient-register: linear-gradient(to right, var(--color-register-primary), var(--color-register-secondary)); /* From Register.css circle-1 */
   
   /* Backdrop Blur */
   --backdrop-blur: blur(10px);
@@ -149,7 +176,7 @@
   --container-lg: 1140px;
   --container-xl: 1320px;
 
-  /* Breakpoints (for reference in media queries) */
+  /* Breakpoints */
   --breakpoint-xs: 0;
   --breakpoint-sm: 576px;
   --breakpoint-md: 768px;
@@ -158,23 +185,87 @@
   --breakpoint-xxl: 1400px;
 }
 
-/* Dark mode variables (optional for future use) 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-text-primary: #f8f9fa;
-    --color-text-secondary: #e9ecef;
-    --color-text-muted: #adb5bd;
-    --color-bg-primary: #212529;
-    --color-bg-secondary: #343a40;
-    --color-bg-light: #495057;
-    --color-border-light: #495057;
-    --color-border-medium: #6c757d;
-  }
-}*/
+/* Dark theme variables */
+[data-theme="dark"] {
 
-/* Base font settings for the entire application */
+  /* Colors */
+  --color-form-control:#212529;
+   --color-modal-bg: #1e1e1e;
+  --color-modal-border: #374151;
+   --color-text-dark: #ffffff;
+   --bs-btn-close-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+  --color-bg-primary: #1e1e1e; /* From Login.css --white */
+  --color-bg-secondary: #333333; /* From Login.css --bg-light */
+  --color-bg-light: #2d2d2d; /* From Login.css --light-blue */
+  --color-bg-card: #1f1f1f;
+  --color-bg-item: #2a2a2a;
+  --color-bg-overlay: rgba(255, 255, 255, 0.1);
+  --color-bg-completed: rgba(50, 50, 50, 0.6); /* From Login.css --completed-bg */
+  --color-text-primary: #f5eded; /* From Login.css --text-dark */
+  --color-text-secondary: #a0a0a0; /* From Login.css --text-light */
+  --color-text-muted: #aaa;
+  --color-text-light: #888;
+  --color-border-light: #444;
+  --color-border-medium: #555;
+  --color-border-dark: #666;
+  --color-border: #4a4a4a; /* From Login.css --border */
+  --color-email-border: #4a4a4a; /* From Login.css --email-border */
+  --color-password-border: #4a4a4a; /* From Login.css --password-border */
+  --color-primary: #5b7cd6; /* From Login.css --primary */
+  --color-primary-dark: #4a68c2; /* From Login.css --primary-dark */
+  --color-primary-light: #b3ade8; /* From Login.css --primary-light */
+  --color-secondary: #9b59b6; /* From Login.css --secondary */
+  --color-success: #27ae60; /* From Login.css --question-success */
+  --color-danger: #ef476f; /* From Login.css --error */
+  --color-warning: #ffca28;
+  --color-info: #26c6da;
+  --color-accent: #4cc9f0; /* From Login.css --accent */
+  --color-star: #f1c40f; /* From Login.css --star-color */
+  --color-question-success: #27ae60; /* From Login.css --question-success */
+  --color-question-success-light: #2ecc71; /* From Login.css --question-success-light */
+  --color-traxia-blue: #4a7bc8;
+  --color-traxia-blue-light: #6b9ad9;
+  --color-traxia-blue-dark: #2c5aa0;
+  --color-register-primary: #8a84ff; /* From Register.css --primary (lightened for dark mode) */
+  --color-register-primary-light: #a3a0ff; /* From Register.css --primary-light (lightened) */
+  --color-register-primary-dark: #6c63ff; /* From Register.css --primary-dark (lightened) */
+  --color-register-secondary: #ff8098; /* From Register.css --secondary (lightened) */
+  --color-register-error: #f56565; /* From Register.css --error (lightened) */
+  --color-register-success: #4ade80; /* From Register.css --success (lightened) */
+  --color-register-text-dark: #d1d5db; /* From Register.css --text-dark (lightened) */
+  --color-register-text-light: #9ca3af; /* From Register.css --text-light (lightened) */
+  --color-register-bg-light: #2d3748; /* From Register.css --bg-light (darkened) */
+  --color-register-white: #2d3748; /* From Register.css --white (darkened) */
+  --color-register-border: #4b5563; /* From Register.css --border (darkened) */
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 10px 25px rgba(0, 0, 0, 0.35);
+  --shadow-2xl: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-3xl: 0 25px 50px rgba(0, 0, 0, 0.5);
+  --shadow-login: rgba(0, 0, 0, 0.5); /* From Login.css --shadow */
+  --shadow-email-border: 0 8px 20px rgba(0, 0, 0, 0.3); /* Adjusted for dark mode */
+  --shadow-register-card: 0 10px 25px rgba(0, 0, 0, 0.2); /* From Register.css --card-shadow (adjusted) */
+
+  /* Button styles */
+  --button-bg: #333;
+  --button-text: #fff;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #5b7cd6, #9b59b6); /* From Login.css --gradient-primary */
+  --gradient-secondary: linear-gradient(135deg, #e67e22, #d35400); /* From Login.css --gradient-secondary */
+  --gradient-register: linear-gradient(to right, var(--color-register-primary), var(--color-register-secondary)); /* From Register.css circle-1 */
+}
+
+/* Base font settings */
 * {
   font-family: var(--font-primary);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -185,7 +276,7 @@ body {
   font-weight: var(--font-weight-normal);
 }
 
-/* Common utility classes using variables */
+/* Common utility classes */
 .text-xs { font-size: var(--font-size-xs); }
 .text-sm { font-size: var(--font-size-sm); }
 .text-base { font-size: var(--font-size-base); }
@@ -203,3 +294,13 @@ body {
 .transition-fast { transition: all var(--transition-fast); }
 .transition-normal { transition: all var(--transition-normal); }
 .transition-slow { transition: all var(--transition-slow); }
+
+button {
+  background-color: var(--button-bg, var(--color-primary));
+  color: var(--button-text, var(--color-text-white));
+  padding: var(--button-padding-y) var(--button-padding-x);
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
