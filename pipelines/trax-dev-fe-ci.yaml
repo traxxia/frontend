@@ -7,14 +7,19 @@ trigger:
       - develop
 
 variables:
-  MAJOR: 1        # Increment manually for major changes
-  MINOR: 0        # Increment manually for minor features
-  PATCH: $[counter(format('{0}.{1}', variables['MAJOR'], variables['MINOR']), 0)]
-
-  # SEMVER: $(MAJOR).$(MINOR).$(PATCH).$(Build.BuildId)
-  SEMVER: $(MAJOR).$(MINOR).$(PATCH)
-  IMAGE_VERSION: $(SEMVER)
-  IMAGE_NAME: trax_dev_frontend
+  - group: traxxia-frontend-dev
+  - name: MAJOR
+    value: 1
+  - name: MINOR
+    value: 0
+  - name: PATCH
+    value: $[counter(format('{0}.{1}', variables['MAJOR'], variables['MINOR']), 0)]
+  - name: SEMVER
+    value: $(MAJOR).$(MINOR).$(PATCH)
+  - name: IMAGE_VERSION
+    value: $(SEMVER)
+  - name: IMAGE_NAME
+    value: trax_dev_frontend
 
 stages:
   - stage: BuildAndPush
@@ -29,6 +34,11 @@ stages:
           - checkout: self
             clean: true
             fetchDepth: 1
+
+          - script: |
+              rm -f .env
+              echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
+              echo 'REACT_APP_ML_BACKEND_URL=$(REACT_APP_ML_BACKEND_URL)' >> .env
 
           # - task: npmAuthenticate@0
           #   inputs:
