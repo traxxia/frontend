@@ -39,6 +39,9 @@ stages:
               rm -f .env
               echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
               echo 'REACT_APP_ML_BACKEND_URL=$(REACT_APP_ML_BACKEND_URL)' >> .env
+              echo "Contents of .env file:"
+              cat .env
+            displayName: 'Generate .env file'
 
           # - task: npmAuthenticate@0
           #   inputs:
