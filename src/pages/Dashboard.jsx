@@ -12,13 +12,9 @@ import {
   Alert,
 } from "react-bootstrap";
 import {
-  ArrowRight, Info, X, MoreVertical, Trash2
+  Info, X, Trash2
 } from "lucide-react";
-
-// Components
 import MenuBar from "../components/MenuBar";
-
-// Styles
 import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
@@ -27,15 +23,14 @@ import { useTranslation } from '../hooks/useTranslation';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  // Business management state
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
     business_purpose: '',
-    description: '', city: '',
+    description: '',
+    city: '',
     country: ''
   });
   const [businessError, setBusinessError] = useState('');
@@ -71,7 +66,7 @@ const Dashboard = () => {
 
       if (!token) {
         console.error('No token found in sessionStorage');
-        setBusinessError('Authentication required. Please log in again.');
+        setBusinessError(t('authentication_required'));
         navigate('/login');
         return;
       }
@@ -95,12 +90,12 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else {
-          setBusinessError(errorData.error || 'Failed to load businesses');
+          setBusinessError(errorData.error || t('failed_to_load_businesses'));
         }
       }
     } catch (error) {
       console.error('Error fetching businesses:', error);
-      setBusinessError('Network error. Please check your connection and try again.');
+      setBusinessError(t('network_error'));
     }
   };
 
@@ -112,7 +107,7 @@ const Dashboard = () => {
       const token = sessionStorage.getItem('token');
 
       if (!token) {
-        setDeleteError('Authentication required. Please log in again.');
+        setDeleteError(t('authentication_required'));
         navigate('/login');
         return;
       }
@@ -132,7 +127,7 @@ const Dashboard = () => {
         setShowDeleteModal(false);
         setBusinessToDelete(null);
 
-        setSuccessMessage('Business and all associated data deleted successfully!');
+        setSuccessMessage(t('business_deleted_successfully'));
         setShowSuccessPopup(true);
 
         setTimeout(() => {
@@ -146,12 +141,12 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else {
-          setDeleteError(data.error || 'Failed to delete business');
+          setDeleteError(data.error || t('failed_to_delete_business'));
         }
       }
     } catch (error) {
       console.error('Error deleting business:', error);
-      setDeleteError('Network error. Please try again.');
+      setDeleteError(t('network_error_try_again'));
     } finally {
       setIsDeletingBusiness(false);
     }
@@ -165,7 +160,7 @@ const Dashboard = () => {
       const token = sessionStorage.getItem('token');
 
       if (!token) {
-        setBusinessError('Authentication required. Please log in again.');
+        setBusinessError(t('authentication_required'));
         navigate('/login');
         return;
       }
@@ -182,13 +177,15 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccessMessage('Business created successfully!');
+        setSuccessMessage(t('business_created_successfully'));
         setShowSuccessPopup(true);
 
         setBusinessFormData({
           business_name: '',
           business_purpose: '',
-          description: ''
+          description: '',
+          city: '',
+          country: ''
         });
 
         await fetchBusinesses();
@@ -205,11 +202,11 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else {
-          setBusinessError(data.error || 'Failed to create business');
+          setBusinessError(data.error || t('failed_to_create_business'));
         }
       }
     } catch (error) {
-      setBusinessError('Network error. Please try again.');
+      setBusinessError(t('network_error_try_again'));
       console.error('Error creating business:', error);
     } finally {
       setIsCreatingBusiness(false);
@@ -234,28 +231,67 @@ const Dashboard = () => {
     setBusinessError('');
   };
 
+  const isInvisibleOrEmpty = (str) => {
+    if (!str) return true; // Empty or null
+
+    const normalized = str
+      .replace(/\\u[0-9A-Fa-f]{4}/g, '')
+      .replace(/U\+[0-9A-Fa-f]{4}/g, '');
+
+    const cleaned = normalized
+      .replace(/\s+/g, '')
+
+    return cleaned.length === 0;
+  }
+
+  const startsWithSymbolOrNumber = (str) => {
+    if (!str) return false;
+    const trimmed = str.trim();
+    // Check if first visible character is NOT a letter
+    return /^[^A-Za-z]/.test(trimmed);
+  }
+
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setBusinessFormData(prev => ({
+
+    const sanitizedValue =
+      name === "business_name"
+        ? value
+          .replace(/\\u[0-9A-Fa-f]{4}/g, '')
+        : value;
+
+    setBusinessFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: sanitizedValue,
     }));
   };
 
   const handleSubmitBusiness = (e) => {
     e.preventDefault();
 
-    if (!businessFormData.business_name.trim() || !businessFormData.business_purpose.trim()) {
-      setBusinessError('Business name and purpose are required');
+
+    if (isInvisibleOrEmpty(businessFormData.business_name)) {
+      setBusinessError(t('business_name_cannot_be_empty'));
       return;
     }
+
+    if (startsWithSymbolOrNumber(businessFormData.business_name)) {
+      setBusinessError(t('business_name_invalid_start'));
+      return;
+    }
+
+    if (!businessFormData.business_purpose.trim()) {
+      setBusinessError(t('business_purpose_required'));
+      return;
+    }
+
     if (businessFormData.city && businessFormData.city.length < 2) {
-      setBusinessError('City must be at least 2 characters long');
+      setBusinessError(t('city_min_length'));
       return;
     }
 
     if (businessFormData.country && businessFormData.country.length < 2) {
-      setBusinessError('Country must be at least 2 characters long');
+      setBusinessError(t('country_min_length'));
       return;
     }
     createBusiness();
@@ -280,14 +316,6 @@ const Dashboard = () => {
     if (businessToDelete) {
       deleteBusiness(businessToDelete._id);
     }
-  };
-
-  // Custom menu functions
-  const toggleCustomMenu = (businessId) => {
-    setShowCustomMenu(prev => ({
-      ...prev,
-      [businessId]: !prev[businessId]
-    }));
   };
 
   // Close custom menu when clicking outside
@@ -316,78 +344,12 @@ const Dashboard = () => {
           e.stopPropagation();
           handleShowDeleteModal(business);
         }}
-        title="Delete Business"
+        title={t('delete_business')}
       >
         <Trash2 size={16} />
       </button>
     );
 
-    // Alternative 2: Delete Button on Hover
-    const HoverDeleteButton = () => (
-      <>
-        {hoveredItem === business._id && (
-          <button
-            className="btn btn-outline-danger btn-sm delete-btn-hover"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShowDeleteModal(business);
-            }}
-            title="Delete Business"
-          >
-            <Trash2 size={16} />
-          </button>
-        )}
-      </>
-    );
-
-    // Alternative 3: Custom Menu (No Bootstrap Dropdown)
-    const CustomMenuButton = () => (
-      <div className="custom-menu-container position-relative">
-        <button
-          className="btn btn-link p-1 menu-trigger"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleCustomMenu(business._id);
-          }}
-          style={{ color: '#6c757d' }}
-        >
-          <MoreVertical size={16} />
-        </button>
-
-        {showCustomMenu[business._id] && (
-          <div className="custom-dropdown-menu">
-            <button
-              className="custom-menu-item"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShowDeleteModal(business);
-                setShowCustomMenu(prev => ({ ...prev, [business._id]: false }));
-              }}
-            >
-              <Trash2 size={16} />
-              {t('delete_business')}
-            </button>
-          </div>
-        )}
-      </div>
-    );
-
-    // Alternative 4: Icon Button with Confirmation
-    const IconDeleteButton = () => (
-      <button
-        className="btn btn-link p-1 delete-icon-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (window.confirm(`Are you sure you want to delete "${business.business_name}"?`)) {
-            handleShowDeleteModal(business);
-          }
-        }}
-        style={{ color: '#dc3545' }}
-        title="Delete Business"
-      >
-        <Trash2 size={18} />
-      </button>
-    );
 
     return (
       <div
@@ -423,25 +385,12 @@ const Dashboard = () => {
             {completedQuestions}/{totalQuestions} {t('questions_completed')}
             {remainingQuestions > 0 && (
               <span className="text-warning ms-2">
-                • {remainingQuestions} {t('remaining')}
+                • {remainingQuestions} {t('questions_remaining')}
               </span>
             )}
           </small>
         </div>
-
-        {/* Choose one of these alternatives */}
-
-        {/* Option 1: Simple Delete Button - Always visible */}
         <SimpleDeleteButton />
-
-        {/* Option 2: Delete Button on Hover - Uncomment to use */}
-        {/* <HoverDeleteButton /> */}
-
-        {/* Option 3: Custom Menu - Uncomment to use */}
-        {/* <CustomMenuButton /> */}
-
-        {/* Option 4: Icon Delete Button - Uncomment to use */}
-        {/* <IconDeleteButton /> */}
       </div>
     );
   };
@@ -450,7 +399,8 @@ const Dashboard = () => {
     <div className={`business-list ${viewType}`}>
       {businesses.length === 0 && (
         <div className="text-center text-muted py-5">
-          {t('no_businesses_found')}
+          <p className="mb-2">{t('no_businesses_yet')}</p>
+          <small>{t('get_started_by_creating')}</small>
         </div>
       )}
       {businesses.length > 0 && businesses.map((business, index) => (
@@ -475,96 +425,6 @@ const Dashboard = () => {
   // Main render
   return (
     <div className="dashboard-layout">
-      <style jsx>{`
-        /* Custom Delete Button Styles */
-        .delete-btn-simple,
-        .delete-btn-hover {
-          transition: all 0.2s ease;
-        }
-
-        .delete-btn-hover {
-          animation: fadeIn 0.3s ease-in-out;
-        }
-
-        .delete-icon-btn:hover {
-          transform: scale(1.1);
-          color: #dc3545 !important;
-        }
-
-        /* Custom Menu Styles */
-        .custom-menu-container {
-          z-index: 10;
-        }
-
-        .menu-trigger {
-          border: none !important;
-          background: none !important;
-          box-shadow: none !important;
-        }
-
-        .menu-trigger:focus {
-          box-shadow: none !important;
-        }
-
-        .custom-dropdown-menu {
-          position: absolute;
-          top: 100%;
-          right: 0;
-          background: white;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          min-width: 150px;
-          z-index: 1000;
-          animation: slideDown 0.2s ease-out;
-        }
-
-        .custom-menu-item {
-          display: flex;
-          align-items: center;
-          width: 100%;
-          padding: 10px 12px;
-          border: none;
-          background: none;
-          color: #dc3545;
-          font-size: 14px;
-          cursor: pointer;
-          gap: 8px;
-          transition: background-color 0.2s ease;
-        }
-
-        .custom-menu-item:hover {
-          background-color: #f8f9fa;
-        }
-
-        /* Dark theme support */
-        [data-theme="dark"] .custom-dropdown-menu {
-          background: var(--color-bg-secondary);
-          border-color: var(--color-border-light);
-        }
-
-        [data-theme="dark"] .custom-menu-item:hover {
-          background-color: var(--color-bg-primary);
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes slideDown {
-          from { 
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-
       <MenuBar />
 
       <Container fluid className="p-0 main-content">
@@ -576,9 +436,9 @@ const Dashboard = () => {
                 <Card.Body className="p-0">
                   <div className="p-4">
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h5 className="mb-0">{t('welcome')}</h5>
+                      <h5 className="mb-0">{t('welcome_dashboard')}</h5>
                     </div>
-                    <p className="text-muted small mb-4">{t('welcome_message')}</p>
+                    <p className="text-muted small mb-4">{t('create_business_plans')}</p>
                   </div>
                   <div className="px-4 mb-4">
                     <h6 className="mb-3">{t('my_businesses')}</h6>
@@ -612,10 +472,10 @@ const Dashboard = () => {
                       <div>
                         <div className="d-flex justify-content-between align-items-start mb-4">
                           <div>
-                            <h5 className="mb-2">{t('welcome')}</h5>
+                            <h5 className="mb-2">{t('welcome_dashboard')}</h5>
                           </div>
                         </div>
-                        <p className="text-muted mb-4">{t('welcome_message')}</p>
+                        <p className="text-muted mb-4">{t('create_business_plans')}</p>
                         <div className="d-flex flex-wrap gap-2">
                           <Button
                             variant="primary"
@@ -664,7 +524,7 @@ const Dashboard = () => {
               <X size={20} />
             </button>
 
-            <h2 className="mb-4">{t('how_this_application_works')}</h2>
+            <h2 className="mb-4">{t('how_it_works')}</h2>
 
             <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
               <div className="carousel-indicators">
@@ -706,55 +566,55 @@ const Dashboard = () => {
                   <img
                     src="/slides/slide1.jpeg"
                     className="d-block w-100"
-                    alt="Step 1: Login to your account"
+                    alt={t('step_1_login_alt')}
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 1: Login</h5>
-                    <p>Sign in to access your personalized business dashboard.</p>
+                    <h5>{t('step_1_login')}</h5>
+                    <p>{t('step_1_login_description')}</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
                     src="/slides/slide2.jpeg"
                     className="d-block w-100"
-                    alt="Step 2: Create your business profile"
+                    alt={t('step_2_create_business_alt')}
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 2: Create Your Business</h5>
-                    <p>Start by setting up your business profile with basic information.</p>
+                    <h5>{t('step_2_create_business')}</h5>
+                    <p>{t('step_2_create_business_description')}</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
                     src="/slides/slide3.jpeg"
                     className="d-block w-100"
-                    alt="Step 3: Answer assessment questions"
+                    alt={t('step_3_complete_assessment_alt')}
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 3: Complete Assessment</h5>
-                    <p>Answer questions about your business to get personalized insights.</p>
+                    <h5>{t('step_3_complete_assessment')}</h5>
+                    <p>{t('step_3_complete_assessment_description')}</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
                     src="/slides/slide4.jpeg"
                     className="d-block w-100"
-                    alt="Step 4: Get insights and recommendations"
+                    alt={t('step_4_get_insights_alt')}
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 4: Get Insights</h5>
-                    <p>Receive detailed analysis and actionable recommendations.</p>
+                    <h5>{t('step_4_get_insights')}</h5>
+                    <p>{t('step_4_get_insights_description')}</p>
                   </div>
                 </div>
                 <div className="carousel-item">
                   <img
                     src="/slides/slide5.jpeg"
                     className="d-block w-100"
-                    alt="Step 5: View strategic recommendations"
+                    alt={t('step_5_strategic_recommendations_alt')}
                   />
                   <div className="carousel-caption d-none d-md-block">
-                    <h5>Step 5: Strategic Recommendations</h5>
-                    <p>Access personalized strategic recommendations tailored to your business goals and growth opportunities.</p>
+                    <h5>{t('step_5_strategic_recommendations')}</h5>
+                    <p>{t('step_5_strategic_recommendations_description')}</p>
                   </div>
                 </div>
               </div>
@@ -764,20 +624,20 @@ const Dashboard = () => {
                 type="button"
                 data-bs-target="#howItWorksCarousel"
                 data-bs-slide="prev"
-                aria-label="Previous slide"
+                aria-label={t('previous')}
               >
                 <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span className="visually-hidden">Previous</span>
+                <span className="visually-hidden">{t('previous')}</span>
               </button>
               <button
                 className="carousel-control-next"
                 type="button"
                 data-bs-target="#howItWorksCarousel"
                 data-bs-slide="next"
-                aria-label="Next slide"
+                aria-label={t('next')}
               >
                 <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                <span className="visually-hidden">Next</span>
+                <span className="visually-hidden">{t('next')}</span>
               </button>
             </div>
 
@@ -833,30 +693,30 @@ const Dashboard = () => {
               />
             </Form.Group>
 
-            {/* NEW: City and Country Fields Row */}
+            {/* City and Country Fields Row */}
             <Row className="mb-3">
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label>City ({t('optional')})</Form.Label>
+                  <Form.Label>{t('city')} ({t('optional')})</Form.Label>
                   <Form.Control
                     type="text"
                     name="city"
                     value={businessFormData.city}
                     onChange={handleFormChange}
-                    placeholder="Enter city"
+                    placeholder={t('enter_city')}
                     disabled={isCreatingBusiness}
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label>Country ({t('optional')})</Form.Label>
+                  <Form.Label>{t('country')} ({t('optional')})</Form.Label>
                   <Form.Control
                     type="text"
                     name="country"
                     value={businessFormData.country}
                     onChange={handleFormChange}
-                    placeholder="Enter country"
+                    placeholder={t('enter_country')}
                     disabled={isCreatingBusiness}
                   />
                 </Form.Group>
@@ -894,7 +754,7 @@ const Dashboard = () => {
               {isCreatingBusiness ? (
                 <>
                   <Spinner size="sm" className="me-2" />
-                  {t('creating')}
+                  {t('creating')}...
                 </>
               ) : (
                 t('create_business')
@@ -912,7 +772,7 @@ const Dashboard = () => {
               <div className="success-icon">
                 ✅
               </div>
-              <h5 className="mb-2">Success!</h5>
+              <h5 className="mb-2">{t('success')}</h5>
               <p className="mb-3">{successMessage}</p>
               <Button
                 variant="primary"
@@ -922,7 +782,7 @@ const Dashboard = () => {
                   setSuccessMessage('');
                 }}
               >
-                OK
+                {t('ok')}
               </Button>
             </div>
           </div>
@@ -946,7 +806,9 @@ const Dashboard = () => {
 
           {businessToDelete && (
             <div>
-              <p className="mb-3">{t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?</p>
+              <p className="mb-3">
+                {t('are_you_sure_you_want_to_delete')} <strong>"{businessToDelete.business_name}"</strong>?
+              </p>
 
               <div className="alert alert-danger mb-3">
                 <h6 className="alert-heading mb-2">⚠️ {t('This_will_permanently_delete')}</h6>
@@ -957,7 +819,7 @@ const Dashboard = () => {
                   <li><strong>{t('the_business_profile_itself')}</strong></li>
                 </ul>
                 <hr className="my-2" />
-                <p className="mb-0"><strong>{t('This_action_cannot_be_undone!')}</strong></p>
+                <p className="mb-0"><strong>{t('This_action_cannot_be_undone')}</strong></p>
               </div>
 
               <div className="bg-light p-3 rounded delete-popup-purpose">
@@ -983,7 +845,7 @@ const Dashboard = () => {
             {isDeletingBusiness ? (
               <>
                 <Spinner size="sm" className="me-2" />
-                Deleting...
+                {t('deleting')}...
               </>
             ) : (
               <>

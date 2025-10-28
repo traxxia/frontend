@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
 import Pagination from '../components/Pagination';
+import { formatDate } from '../utils/dateUtils';
+
+
 
 const UserOverview = ({ onToast }) => {
   const [users, setUsers] = useState([]);
@@ -303,6 +306,68 @@ const UserOverview = ({ onToast }) => {
         .form-field {
           margin-bottom: 1rem;
         }
+
+        /* Header layout fix */
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap; /* allow wrapping on smaller screens */
+          gap: 10px;
+          width: 100%;
+        }
+
+        .section-header h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #111827;
+        }
+
+        .header-stats {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          width: auto;
+        }
+
+        .primary-btn {
+          background-color: #2563eb;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          padding: 8px 16px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          white-space: nowrap; /* prevents text from wrapping */
+        }
+
+        .primary-btn:hover {
+          background-color: #1e40af;
+        }
+
+        /* Make responsive */
+         @media (max-width: 768px) {
+          .section-header {
+            flex-direction: column;
+            align-items: stretch; /* makes both elements full width */
+            gap: 12px;
+          }
+
+          .header-stats {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .primary-btn {
+            width: 100%;
+            justify-content: center;
+            font-size: 15px;
+            padding: 10px;
+          }
+        }
       `}</style>
 
       <div className="user-overview">
@@ -375,9 +440,7 @@ const UserOverview = ({ onToast }) => {
                       <td>
                         <span className={`status-badge ${user.status}`}>{user.status}</span>
                       </td>
-                      <td>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                      </td>
+                      <td>{formatDate(user.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>

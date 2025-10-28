@@ -114,7 +114,7 @@ const BusinessSetupPage = () => {
     coreAdjacencyData, setCoreAdjacencyData,
     isSwotAnalysisRegenerating, isPurchaseCriteriaRegenerating,
     isLoyaltyNPSRegenerating, isStrategicRegenerating, setIsStrategicRegenerating,
-    isPortersRegenerating, isPestelRegenerating,
+    isPortersRegenerating, setIsPortersRegenerating, isPestelRegenerating,
     isFullSwotRegenerating, isCompetitiveAdvantageRegenerating,
     isExpandedCapabilityRegenerating, isStrategicRadarRegenerating,
     isProductivityRegenerating, isMaturityRegenerating,
@@ -127,8 +127,11 @@ const BusinessSetupPage = () => {
     productivityRef, maturityScoreRef, strategicRadarRef, expandedCapabilityRef,
     profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
     investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
-    showDropdown, setShowDropdown
+    showDropdown, setShowDropdown,
   } = state;
+
+  const [portersStreamingText, setPortersStreamingText] = useState('');
+  const [isPortersStreaming, setIsPortersStreaming] = useState(false);
 
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
@@ -402,21 +405,71 @@ const BusinessSetupPage = () => {
     }
 
     setTimeout(() => {
+      // target element (your cards already have unique ids)
       const cardElement = document.getElementById(cardId);
-      if (cardElement) {
-        cardElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!cardElement) return;
+
+      // helper: find nearest scrollable ancestor (or window)
+      const getScrollParent = (el) => {
+        let cur = el.parentElement;
+        while (cur && cur !== document.body) {
+          const style = window.getComputedStyle(cur);
+          const overflowY = style.overflowY;
+          if (overflowY === 'auto' || overflowY === 'scroll' || cur === document.scrollingElement) return cur;
+          cur = cur.parentElement;
+        }
+        return window;
+      };
+
+      const scrollContainer = getScrollParent(cardElement);
+
+      // collect possible top bars that overlap
+      const headerEls = [
+        document.querySelector('.traxia-navbar'),
+        document.querySelector('.main-header'),
+        document.querySelector('.sub-header'),
+        document.querySelector('.desktop-tabs')
+      ].filter(Boolean);
+
+      const totalHeaderHeight = headerEls.reduce((sum, el) => {
+        const r = el.getBoundingClientRect();
+        return sum + (r.height > 0 && r.bottom > 0 ? r.height : 0);
+      }, 0);
+
+      const gap = 8;
+
+      if (scrollContainer === window) {
+        const top = cardElement.getBoundingClientRect().top + window.pageYOffset;
+        const target = Math.max(0, top - totalHeaderHeight - gap);
+        window.scrollTo({ top: target, behavior: 'smooth' });
+      } else {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elRect = cardElement.getBoundingClientRect();
+        const offsetWithin = elRect.top - containerRect.top + scrollContainer.scrollTop;
+        const target = Math.max(0, offsetWithin - totalHeaderHeight - gap);
+        scrollContainer.scrollTo({ top: target, behavior: 'smooth' });
       }
     }, 600);
   };
 
+
+
   const createSimpleRegenerationHandler = (analysisType) => {
+    // ✅ Prepare streaming callbacks ONLY for Porter's
+    const streamingCallbacks = (analysisType === 'porters') ? {
+      setIsStreaming: setIsPortersStreaming,
+      setStreamingText: setPortersStreamingText
+    } : {};
+
+    // Call API service with streaming callbacks
     return apiService.createSimpleRegenerationHandler(
       analysisType,
       questions,
       userAnswers,
       selectedBusinessId,
       stateSetters,
-      showToastMessage
+      showToastMessage,
+      streamingCallbacks  // ✅ Pass callbacks for Porter's streaming
     );
   };
 
@@ -555,7 +608,9 @@ const BusinessSetupPage = () => {
     createSimpleRegenerationHandler, highlightedCard, expandedCards, setExpandedCards,
     onRedirectToChat: handleRedirectToChat, isMobile, setActiveTab,
     hasUploadedDocument, documentInfo, collapsedCategories, setCollapsedCategories,
-    readOnly: false
+    readOnly: false,
+    portersStreamingText,
+    isPortersStreaming,
   };
 
   return (

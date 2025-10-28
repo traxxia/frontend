@@ -29,14 +29,21 @@ export const useAnalysisGeneration = (
     return { questionsArray, answersArray };
   }, [questions]);
 
-  // Enhanced API call function with better error handling
-  const makeAPICall = useCallback(async (endpoint, questionsArray, answersArray) => {
+  // ✅ NEW: Enhanced API call function WITH streaming support
+  const makeAPICall = useCallback(async (endpoint, questionsArray, answersArray, onStreamChunk = null) => {
     if (questionsArray.length === 0) {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
 
     try {
-      const response = await fetch(`${ML_API_BASE_URL}/${endpoint}`, {
+      // ✅ Add stream=true for streaming endpoints
+      const url = onStreamChunk 
+        ? `${ML_API_BASE_URL}/${endpoint}?stream=true`
+        : `${ML_API_BASE_URL}/${endpoint}`;
+
+      console.log(`🌐 [API] Calling ${endpoint}`, { streaming: !!onStreamChunk });
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -53,6 +60,47 @@ export const useAnalysisGeneration = (
         throw new Error(`${endpoint} API returned ${response.status}: ${errorText}`);
       }
 
+      // ✅ Handle streaming response
+      if (onStreamChunk && response.body) {
+        console.log('📡 [API] Streaming response detected');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let done = false;
+
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            
+            console.log('📥 [API] Stream chunk:', chunk.length, 'bytes');
+            
+            // ✅ Call the streaming callback with accumulated buffer
+            onStreamChunk(buffer);
+          }
+          done = readerDone;
+        }
+
+        console.log('✅ [API] Stream complete, parsing JSON');
+
+        // ✅ Parse final JSON from buffer
+        try {
+          const jsonStart = buffer.indexOf('{');
+          const jsonEnd = buffer.lastIndexOf('}');
+          if (jsonStart !== -1 && jsonEnd !== -1) {
+            const jsonString = buffer.slice(jsonStart, jsonEnd + 1);
+            return JSON.parse(jsonString);
+          }
+        } catch (err) {
+          console.warn('⚠️ [API] Error parsing JSON stream:', err);
+        }
+
+        // Return raw buffer if parsing fails
+        return { raw: buffer };
+      }
+
+      // ✅ Handle non-streaming response (regular JSON)
       const result = await response.json();
       
       // Check if the response contains an error detail
@@ -98,13 +146,21 @@ export const useAnalysisGeneration = (
     }
   }, [prepareQuestionsAndAnswers, makeAPICall, saveAnalysisToBackend]);
 
-  // Porter's Five Forces
-  const generatePortersAnalysis = useCallback(async (answers) => {
+  // ✅ UPDATED: Porter's Five Forces WITH streaming support
+  const generatePortersAnalysis = useCallback(async (answers, onStreamChunk = null) => {
     try {
+      console.log('🚀 [HOOK] Starting Porter analysis', { hasStreaming: !!onStreamChunk });
+      
       const { questionsArray, answersArray } = prepareQuestionsAndAnswers(answers);
-      const result = await makeAPICall('porter-analysis', questionsArray, answersArray);
+      
+      // ✅ Pass streaming callback to makeAPICall
+      const result = await makeAPICall('porter-analysis', questionsArray, answersArray, onStreamChunk);
+      
       const portersContent = result.porters_analysis || result.porters || result;
+      
       await saveAnalysisToBackend(portersContent, 'porters');
+      
+      console.log('✅ [HOOK] Porter analysis complete');
       return portersContent;
     } catch (error) {
       console.error('Error generating Porter\'s Five Forces analysis:', error);

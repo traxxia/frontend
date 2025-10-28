@@ -322,7 +322,7 @@ const EditableBriefSection = ({
             <textarea
               ref={el => inputRefs.current[field.key] = el}
               className="edit-textarea"
-              defaultValue={field.value}
+              defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
               disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
               style={{ minHeight: '100px', resize: 'vertical' }}
               placeholder={`Enter your answer for: ${field.label}`}

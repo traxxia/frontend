@@ -550,13 +550,13 @@ const CompanyManagement = ({ onToast }) => {
                 <tr>
                   <th>Logo</th>
                   <th>Company Name</th>
+                  {isSuperAdmin && <th>Admin Name</th>}
+                  {isSuperAdmin && <th>Admin Email</th>}
                   <th>Industry</th>
                   <th>Size</th>
                   <th>Status</th>
                   <th>Total Users</th>
                   <th>Active Users</th>
-                  {isSuperAdmin && <th>Admin Name</th>}
-                  {isSuperAdmin && <th>Admin Email</th>}
                   <th>Created Date</th>
                   {/* <th>Actions</th> */}
                 </tr>
@@ -579,6 +579,8 @@ const CompanyManagement = ({ onToast }) => {
                       )}
                     </td>
                     <td>{company.company_name}</td>
+                    {isSuperAdmin && <td>{company.admin_name}</td>}
+                    {isSuperAdmin && <td>{company.admin_email}</td>}
                     <td>{company.industry || '-'}</td>
                     <td>{company.size || '-'}</td>
                     <td>
@@ -588,8 +590,6 @@ const CompanyManagement = ({ onToast }) => {
                     </td>
                     <td>{company.total_users}</td>
                     <td>{company.active_users}</td>
-                    {isSuperAdmin && <td>{company.admin_name}</td>}
-                    {isSuperAdmin && <td>{company.admin_email}</td>}
                     <td>{formatDate(company.created_at)}</td>
                     {/* <td>
                       <button

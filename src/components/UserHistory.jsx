@@ -373,6 +373,23 @@ const parseAnalysisData = (userDetails, user) => {
           analysisData.maturityScore = analysisResult;
           break;
 
+        case 'competitivelandscape':
+        case 'competitive landscape':
+          analysisData.competitiveLandscapeData = analysisResult;
+          break;
+
+        case 'coreadjacency':
+        case 'core adjacency':
+          analysisData.coreAdjacencyData = analysisResult;
+          break;
+
+        case 'profitabilityanalysis':
+        case 'profitability_analysis':
+        case 'profitability':
+          analysisData.profitabilityData = analysisResult;
+          break;
+
+
         // Financial Analysis Types - SIMPLIFIED: Just check if data exists
         case 'profitabilityanalysis':
         case 'profitability_analysis':
@@ -639,38 +656,40 @@ const UserHistory = ({ onToast }) => {
 
   return (
     <div className="user-history-container">
-      <div className="user-history-header">
-        <h2 className="user-history-title">User History & Chat Records</h2>
-      </div>
-
-      <div className="search-container-row">
-        <div className="compact-search">
-          <Search size={18} className="compact-search-icon" />
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchTerm}
-            className="form-control"
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="section-header">
+        <div className="user-history-header">
+          <h2 className="user-history-title">User History & Chat Records</h2>
         </div>
 
-        {companies.length > 0 && (
-          <div className="company-filter-container">
-            <select
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-              className="company-filter-select"
-            >
-              <option value="">All Companies</option>
-              {companies.map(company => (
-                <option key={company._id} value={company._id}>
-                  {company.company_name}
-                </option>
-              ))}
-            </select>
+        <div className="search-container-row">
+          <div className="compact-search">
+            <Search size={18} className="compact-search-icon" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              className="form-control"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        )}
+
+          {companies.length > 0 && (
+            <div className="company-filter-container">
+              <select
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+                className="company-filter-select"
+              >
+                <option value="">All Companies</option>
+                {companies.map(company => (
+                  <option key={company._id} value={company._id}>
+                    {company.company_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Users Table */}
@@ -937,14 +956,14 @@ const TabNavigation = ({
         className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
       >
         <Target size={16} />
-        <span>Analysis</span>
+        <span>Insights(6 Cs)</span>
       </button>
       <button
         onClick={() => onTabChange('strategic')}
         className={`nav-tab ${activeTab === 'strategic' ? 'active' : ''}`}
       >
         <TrendingUp size={16} />
-        <span>Strategic</span>
+        <span>S.T.R.A.T.E.G.I.C</span>
       </button>
     </div>
   );
@@ -1282,6 +1301,7 @@ const AnalysisTab = ({
   phaseManager
 }) => {
   const [expandedCards, setExpandedCards] = useState(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState(new Set());
   const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
 
   const stats = {
@@ -1360,6 +1380,8 @@ const AnalysisTab = ({
           liquidityEfficiencyData={analysisData.liquidityEfficiencyData}
           investmentPerformanceData={analysisData.investmentPerformanceData}
           leverageRiskData={analysisData.leverageRiskData}
+          competitiveLandscapeData={analysisData.competitiveLandscapeData}
+          coreAdjacencyData={analysisData.coreAdjacencyData}
           setSwotAnalysisResult={() => { }}
           setCustomerSegmentationData={() => { }}
           setPurchaseCriteriaData={() => { }}
@@ -1449,6 +1471,8 @@ const AnalysisTab = ({
           apiService={null}
           createSimpleRegenerationHandler={() => () => { }}
           uploadedFileForAnalysis={null}
+          collapsedCategories={collapsedCategories}
+          setCollapsedCategories={setCollapsedCategories}
           highlightedCard={null}
           expandedCards={expandedCards}
           setExpandedCards={setExpandedCards}

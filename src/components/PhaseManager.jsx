@@ -1,4 +1,3 @@
-// Fixed PhaseManager.js - Prevents advanced phase from triggering essential phase
 import { useState, useEffect, useRef } from 'react';
 
 const PhaseManager = ({

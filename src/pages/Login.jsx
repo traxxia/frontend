@@ -1,5 +1,3 @@
-// Updated Login.jsx
-
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -21,11 +19,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useContext(ThemeContext);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-
-
-
-  // Use the translation hook
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL; 
   const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
@@ -37,28 +31,24 @@ const Login = () => {
         email,
         password,
       });
-
-      // Store user session data - Updated to match backend response structure
+ 
       sessionStorage.setItem("token", res.data.token);
       sessionStorage.setItem("userId", res.data.user.id);
       sessionStorage.setItem("userName", res.data.user.name);
       sessionStorage.setItem("userEmail", res.data.user.email);
       sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
-      
-      // Store company information for MenuBar
+      sessionStorage.setItem("userCompany", res.data.user.company?.name || ""); 
       if (res.data.user.company) {
         sessionStorage.setItem("companyName", res.data.user.company.name || "");
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
         sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
       }
-      
+
       sessionStorage.setItem(
         "isAdmin",
         ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"
       );
-
-      // IMPORTANT: Store the current language in session storage for the application
+ 
       const currentLang = window.getCurrentLanguage
         ? window.getCurrentLanguage()
         : "en";
@@ -66,8 +56,7 @@ const Login = () => {
 
       navigate("/dashboard");
     } catch (err) {
-      console.error(err.response?.data || err.message);
-      // Updated error handling to match backend error response
+      console.error(err.response?.data || err.message); 
       const errorMessage = err.response?.data?.error || t("login_failed");
       alert(errorMessage);
     } finally {
@@ -80,8 +69,7 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      {/* Language Translator - Only on login page */}
+    <div className="login-container"> 
       <LanguageTranslator isLoginPage={true} />
 
       <div className="login-left-section">
@@ -98,14 +86,14 @@ const Login = () => {
       </div>
 
       <div className="login-right-section">
-           <div className="theme-icon-toggle" >
-  <button onClick={toggleTheme} className="theme-toggle-button">
-    <FontAwesomeIcon
-      icon={theme === "dark" ? faSun : faMoon}
-      style={{ fontSize: "20px" }}
-    />
-  </button>
-</div>
+        <div className="theme-icon-toggle" >
+          <button onClick={toggleTheme} className="theme-toggle-button">
+            <FontAwesomeIcon
+              icon={theme === "dark" ? faSun : faMoon}
+              style={{ fontSize: "20px" }}
+            />
+          </button>
+        </div>
         <div className="login-box">
           <h2>{t("welcome")}</h2>
 
@@ -146,7 +134,7 @@ const Login = () => {
                   />
                 </button>
               </div>
-            </div> 
+            </div>
 
             <button
               type="submit"
