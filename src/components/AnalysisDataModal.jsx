@@ -23,6 +23,9 @@ import GrowthTracker from './GrowthTracker';
 import LiquidityEfficiency from './LiquidityEfficiency';
 import InvestmentPerformance from './InvestmentPerformance';
 import LeverageRisk from './LeverageRisk';
+import CoreAdjacency from './CoreAdjacency';
+import CompetitiveLandscape from './CompetitiveLandscape';
+
 
 const AnalysisDataModal = ({ 
   isOpen, 
@@ -124,7 +127,9 @@ const AnalysisDataModal = ({
           <StrategicAnalysis
             {...mockProps}
             strategicData={analysisData}
+            readOnly={false}
             hideDownload={true}
+      
           />
         );
 
@@ -160,6 +165,14 @@ const AnalysisDataModal = ({
           />
         );
 
+      case 'competitiveLandscape':
+        return (
+          <CompetitiveLandscape
+            {...mockProps}
+            competitiveLandscapeData={analysisData}
+          />
+        );
+
       case 'channelEffectiveness':
         return (
           <ChannelEffectivenessMap
@@ -173,6 +186,14 @@ const AnalysisDataModal = ({
           <ExpandedCapabilityHeatmap
             {...mockProps}
             expandedCapabilityData={analysisData}
+          />
+        );
+
+      case 'coreAdjacency':
+        return (
+          <CoreAdjacency
+            {...mockProps}
+            coreAdjacencyData={analysisData}
           />
         );
 

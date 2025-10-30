@@ -92,6 +92,7 @@
 
 /* Dashboard Container */
 .dashboard-container {
+  pointer-events: auto;
   width: 100%;
 }
 
