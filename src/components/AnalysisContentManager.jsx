@@ -78,7 +78,7 @@ const ANALYSIS_CONFIG = {
     refKey: "leverageRiskRef",
     pdfComponent: "leverage-risk"
   },
-  productivity: {
+  productivityMetrics: {
     component: ProductivityMetrics,
     title: "Productivity Metrics",
     description: "Analysis of organizational productivity and efficiency metrics",
@@ -159,7 +159,7 @@ const ANALYSIS_CONFIG = {
     refKey: "expandedCapabilityRef",
     pdfComponent: "expanded-capability"
   },
-  maturity: {
+  maturityScore: {
     component: MaturityScoreLight,
     title: "Maturity Score",
     description: "Business maturity assessment and scoring",
@@ -237,8 +237,8 @@ const API_TO_ANALYSIS_MAP = {
   'competitive-advantage': 'competitiveAdvantage',
   'expanded-capability-heatmap': 'expandedCapability',
   'strategic-positioning-radar': 'strategicRadar',
-  'productivity-metrics': 'productivity',
-  'maturity-scoring': 'maturity',
+  'productivity-metrics': 'productivityMetrics',
+  'maturity-scoring': 'maturityScore',
   'simple-swot-portfolio': 'competitiveLandscape',
   'core-adjacency': 'coreAdjacency',
   'excel-analysis': 'profitabilityAnalysis',
@@ -489,8 +489,8 @@ const AnalysisContentManager = (props) => {
 
     const visibleAnalyses = {
       initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
-      essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency', 'productivity'],
-      good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivity', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency']
+      essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics'],
+      good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivityMetrics', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency']
     };
 
     let currentAnalyses = visibleAnalyses.initial;

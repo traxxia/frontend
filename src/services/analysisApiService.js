@@ -769,19 +769,11 @@ export class AnalysisApiService {
         : null;
 
       // ✅ NEW: Use streaming-aware endpoint call
-      let response;
-        if (analysisType === "porters") {
-          response = await this.callAnalysisEndpointWithStreaming(
-            analysisType, 
-            payload, 
-            onStreamChunk
-          );
-        } else {
-          response = await this.callAnalysisEndpoint(
-            analysisType, 
-            payload
-          );
-        }
+      const response = await this.callAnalysisEndpointWithStreaming(
+  analysisType, 
+  payload, 
+  onStreamChunk
+);
 
 
       if (setter) {
