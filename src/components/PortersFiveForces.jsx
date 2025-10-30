@@ -18,7 +18,8 @@ const PortersFiveForces = ({
   onRedirectToBrief,
   streamingText = '',
   isStreamingActive = false,
-  onStreamingMount
+  onStreamingMount,
+  activeSection = null
 }) => {
   const [portersAnalysisData, setPortersAnalysisData] = useState(portersData);
   const [error, setError] = useState(null);
@@ -47,40 +48,20 @@ const PortersFiveForces = ({
   const streamTimeoutRef = useRef(null);
   const processedDataRef = useRef(null);
   const contentRef = useRef(null);
-
-  console.log('🔵 Porter Render:', {
-    portersData: !!portersData,
-    portersAnalysisData: !!portersAnalysisData,
-    isStreamingActive,
-    isStreamingContent,
-    displayProgress,
-    processedData: processedDataRef.current,
-    streamedDataKeys: {
-      executive: Object.keys(streamedData.executive_summary).length,
-      forces: Object.keys(streamedData.five_forces_analysis).length,
-      improvements: streamedData.key_improvements.length
-    }
-  });
+  const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (isStreamingContent && contentRef.current) {
-      const portersCard = document.getElementById('porters');
-      if (portersCard) {
-        portersCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [isStreamingContent]);
-
-  useEffect(() => {
-    if (Object.keys(streamedData.executive_summary).length > 0 && contentRef.current) {
-      const portersCard = document.getElementById('porters');
+  // Scroll only when Porter's Five Forces is the *currently active* section
+  // and its own data/streaming is updating
+  if (activeSection === 'porters' && (isStreamingContent || Object.keys(streamedData.executive_summary).length > 0)) {
+    const portersCard = document.getElementById('porters');
       if (portersCard) {
         setTimeout(() => {
           portersCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 200);
+        }, 150);
       }
     }
-  }, [streamedData.executive_summary]);
+  }, [activeSection, isStreamingContent, streamedData.executive_summary]);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
@@ -117,7 +98,6 @@ const PortersFiveForces = ({
   };
 
   const parsePortersData = (data) => {
-    console.log('🔍 Parsing porters data:', data);
     if (!data) return null;
     if (data.portersAnalysis) return data.portersAnalysis;
     if (data.porter_analysis) return data.porter_analysis;
@@ -126,11 +106,9 @@ const PortersFiveForces = ({
 
   const startTypingAnimation = useCallback(() => {
     if (intervalRef.current || hasStartedRef.current) {
-      console.log('⏭️ Animation already started');
       return;
     }
 
-    console.log('✅ Starting typing animation NOW');
     hasStartedRef.current = true;
     
     if (isMountedRef.current) {
@@ -150,8 +128,6 @@ const PortersFiveForces = ({
       if (displayIndexRef.current >= 100) {
         displayIndexRef.current = 100;
         setDisplayProgress(100);
-        
-        console.log('✅ Animation complete');
         clearInterval(intervalRef.current);
         intervalRef.current = null;
         hasStartedRef.current = false;
@@ -160,40 +136,44 @@ const PortersFiveForces = ({
       }
 
       if (displayIndexRef.current % 20 === 0) {
-        console.log(`⌨️ Typing progress: ${displayIndexRef.current}%`);
       }
     }, 100);
-
-    console.log('🎯 Interval created:', intervalRef.current);
   }, []);
+
+  const scrollToBottom = () => {
+    // Only perform scrolling when Porter's section is active
+    if (activeSection === 'porters' && scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
 
   const streamTableContent = useCallback(async (parsedData) => {
     if (!parsedData) {
-      console.log('❌ No parsed data to stream');
       return;
     }
 
     if (processedDataRef.current === parsedData) {
-      console.log('⏭️ Already processed this data, skipping');
       return;
     }
 
-    console.log('🎬 Starting table content streaming with data:', parsedData);
     processedDataRef.current = parsedData;
     setIsStreamingContent(true);
 
     setStreamedData({
       executive_summary: {},
       five_forces_analysis: {},
-      key_improvements: []
+      key_improvements: [],
     });
+    scrollToBottom();
 
     startTypingAnimation();
 
     if (parsedData.executive_summary) {
-      console.log('📊 Streaming executive summary...');
       const execKeys = Object.keys(parsedData.executive_summary);
-      console.log('Executive keys:', execKeys);
       
       for (let i = 0; i < execKeys.length; i++) {
         if (!isMountedRef.current) break;
@@ -201,7 +181,6 @@ const PortersFiveForces = ({
         await new Promise(resolve => {
           streamTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
-              console.log(`✅ Adding executive key: ${execKeys[i]}`);
               setStreamedData(prev => ({
                 ...prev,
                 executive_summary: {
@@ -209,19 +188,17 @@ const PortersFiveForces = ({
                   [execKeys[i]]: parsedData.executive_summary[execKeys[i]]
                 }
               }));
+              scrollToBottom();
             }
             resolve();
           }, 300);
         });
       }
     } else {
-      console.log('⚠️ No executive_summary found in parsed data');
     }
 
     if (parsedData.five_forces_analysis) {
-      console.log('📊 Streaming five forces analysis...');
       const forceKeys = Object.keys(parsedData.five_forces_analysis);
-      console.log('Force keys:', forceKeys);
       
       for (let i = 0; i < forceKeys.length; i++) {
         if (!isMountedRef.current) break;
@@ -229,7 +206,6 @@ const PortersFiveForces = ({
         await new Promise(resolve => {
           streamTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
-              console.log(`✅ Adding force: ${forceKeys[i]}`);
               setStreamedData(prev => ({
                 ...prev,
                 five_forces_analysis: {
@@ -237,18 +213,16 @@ const PortersFiveForces = ({
                   [forceKeys[i]]: parsedData.five_forces_analysis[forceKeys[i]]
                 }
               }));
+              scrollToBottom();
             }
             resolve();
           }, 500);
         });
       }
     } else {
-      console.log('⚠️ No five_forces_analysis found in parsed data');
     }
 
     if (parsedData.key_improvements && Array.isArray(parsedData.key_improvements)) {
-      console.log('📊 Streaming key improvements...');
-      console.log('Improvements:', parsedData.key_improvements);
       
       for (let i = 0; i < parsedData.key_improvements.length; i++) {
         if (!isMountedRef.current) break;
@@ -256,21 +230,19 @@ const PortersFiveForces = ({
         await new Promise(resolve => {
           streamTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
-              console.log(`✅ Adding improvement: ${parsedData.key_improvements[i]}`);
               setStreamedData(prev => ({
                 ...prev,
                 key_improvements: [...prev.key_improvements, parsedData.key_improvements[i]]
               }));
+              scrollToBottom();
             }
             resolve();
           }, 300);
         });
       }
     } else {
-      console.log('⚠️ No key_improvements found in parsed data');
     }
 
-    console.log('✅ Table streaming complete');
     setIsStreamingContent(false);
   }, [startTypingAnimation]);
 
@@ -278,39 +250,30 @@ const PortersFiveForces = ({
     isMountedRef.current = true;
     
     if (isStreamingActive && onStreamingMount) {
-      console.log('🎤 Setting up streaming mount handler');
       const handleChunk = (newChunk) => {
-        console.log('📥 Porter received chunk:', newChunk.length, newChunk.substring(0, 100));
         
         try {
           const parsed = JSON.parse(newChunk);
-          console.log('✅ Parsed chunk successfully:', parsed);
           const porterData = parsed.porter_analysis || parsed;
-          console.log('📦 Porter data extracted:', porterData);
           streamingDataRef.current = porterData;
           
-          console.log('🚀 Triggering streaming from chunk');
           requestAnimationFrame(() => {
             streamTableContent(porterData);
           });
         } catch (e) {
-          console.log('⚠️ Could not parse chunk as JSON yet:', e.message);
         }
       };
       
       onStreamingMount(handleChunk);
     } else {
-      console.log('⏸️ Streaming not active or no mount handler');
     }
     
     return () => {
-      console.log('🧹 Cleanup streaming mount');
     };
   }, [isStreamingActive, onStreamingMount, streamTableContent]);
 
   useEffect(() => {
     return () => {
-      console.log('🛑 Component unmounting');
       isMountedRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -326,7 +289,6 @@ const PortersFiveForces = ({
   }, []);
 
   const handleRegenerate = async () => {
-    console.log('🔄 Regenerate');
     
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -359,7 +321,6 @@ const PortersFiveForces = ({
   };
 
   const handleRetry = () => {
-    console.log('🔁 Retry');
     setError(null);
     if (onRegenerate) {
       onRegenerate();
@@ -367,20 +328,12 @@ const PortersFiveForces = ({
   };
 
   useEffect(() => {
-    console.log('🔄 portersData changed:', {
-      hasData: !!portersData,
-      isStreaming: isStreamingActive,
-      processedData: processedDataRef.current
-    });
     
     if (portersData) {
       const parsed = parsePortersData(portersData);
-      console.log('📦 Parsed new portersData:', parsed);
       
       if (parsed) {
         setPortersAnalysisData(parsed);
-        
-        console.log('🎬 Triggering streaming for new data');
         streamTableContent(parsed);
       }
     }
@@ -422,18 +375,7 @@ const PortersFiveForces = ({
   const showTypingEffect = isStreamingContent || displayProgress < 100;
   const hasAnalysisData = parsedData && !isPortersDataIncomplete(parsedData);
 
-  console.log('🎨 Render state:', {
-    showTypingEffect,
-    hasAnalysisData,
-    isStreamingActive,
-    isStreamingContent,
-    displayProgress,
-    hasStreamedExec: Object.keys(streamedData.executive_summary).length > 0,
-    hasStreamedForces: Object.keys(streamedData.five_forces_analysis).length > 0,
-    hasStreamedImprovements: streamedData.key_improvements.length > 0
-  });
-
-  if (!hasAnalysisData && !isStreamingActive && !isRegenerating && !isStreamingContent) {
+    if (!hasAnalysisData && !isStreamingActive && !isRegenerating && !isStreamingContent) {
     return (
       <AnalysisEmptyState
         analysisType="Porter's Five Forces"
@@ -489,207 +431,218 @@ const PortersFiveForces = ({
       </style> 
 
       <div ref={contentRef}>
-        {streamedData.executive_summary && Object.keys(streamedData.executive_summary).length > 0 && (
-          <div className="section-container" style={{ animation: 'slideIn 0.4s ease-out' }}>
-            <div className="section-header" onClick={() => toggleSection('executive')}>
-              <h3>Executive Summary</h3>
-              {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-            </div>
-
-            {expandedSections.executive !== false && (
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Value</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {streamedData.executive_summary.industry_attractiveness && (
-                      <tr style={{ animation: 'fadeInRow 0.5s ease-in forwards', opacity: 0 }}>
-                        <td><div className="force-name">Industry Attractiveness</div></td>
-                        <td>{streamedData.executive_summary.industry_attractiveness}</td>
-                        <td>
-                          <span className={`status-badge ${getIntensityColor(streamedData.executive_summary.industry_attractiveness)}`}>
-                            {streamedData.executive_summary.industry_attractiveness}
-                          </span>
-                        </td>
-                      </tr>
-                    )}
-                    {streamedData.executive_summary.overall_competitive_intensity && (
-                      <tr style={{ animation: 'fadeInRow 0.5s ease-in forwards', animationDelay: '0.1s', opacity: 0 }}>
-                        <td><div className="force-name">Competitive Intensity</div></td>
-                        <td>{streamedData.executive_summary.overall_competitive_intensity}</td>
-                        <td>
-                          <span className={`status-badge ${getIntensityColor(streamedData.executive_summary.overall_competitive_intensity)}`}>
-                            {streamedData.executive_summary.overall_competitive_intensity}
-                          </span>
-                        </td>
-                      </tr>
-                    )}
-                    {streamedData.executive_summary.competitive_position && (
-                      <tr style={{ animation: 'fadeInRow 0.5s ease-in forwards', animationDelay: '0.2s', opacity: 0 }}>
-                        <td><div className="force-name">Competitive Position</div></td>
-                        <td>{streamedData.executive_summary.competitive_position}</td>
-                        <td>-</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-
-                {streamedData.executive_summary.key_competitive_forces?.length > 0 && (
-                  <div className="subsection" style={{ animation: 'fadeInRow 0.5s ease-in forwards', animationDelay: '0.3s', opacity: 0 }}>
-                    <h4>Key Competitive Forces</h4>
-                    <div className="forces-tags">
-                      {streamedData.executive_summary.key_competitive_forces.map((force, index) => (
-                        <span key={index} className="force-tag" style={{ 
-                          animation: 'fadeInTag 0.3s ease-in forwards', 
-                          animationDelay: `${0.4 + index * 0.1}s`,
-                          opacity: 0 
-                        }}>{force}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+        <div 
+          ref={scrollRef} 
+          className="stream-scroll-container"
+          style={{ 
+            maxHeight: '70vh', 
+            overflowY: 'auto', 
+            scrollBehavior: 'smooth',
+            paddingRight: '8px'
+          }}
+        >
+          {streamedData.executive_summary && Object.keys(streamedData.executive_summary).length > 0 && (
+            <div className="section-container" style={{ animation: 'slideIn 0.4s ease-out' }}>
+              <div className="section-header" onClick={() => toggleSection('executive')}>
+                <h3>Executive Summary</h3>
+                {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
               </div>
-            )}
-          </div>
-        )}
 
-        {streamedData.five_forces_analysis && Object.keys(streamedData.five_forces_analysis).length > 0 && (
-          <div className="section-container" style={{ animation: 'slideIn 0.4s ease-out', animationDelay: '0.5s', opacity: 0, animationFillMode: 'forwards' }}>
-            <div className="section-header" onClick={() => toggleSection('forces')}>
-              <h3>Five Forces Analysis</h3>
-              {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-            </div>
-
-            {expandedSections.forces !== false && (
-              <div className="table-container">
-                <table className="data-table forces-table">
-                  <thead>
-                    <tr>
-                      <th>Force</th>
-                      <th>Intensity</th>
-                      <th>Key Factors</th>
-                      <th>Additional Details</th>
-                      <th>Strategic Implications</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(streamedData.five_forces_analysis).map(([forceKey, forceData], index) => (
-                      <tr key={forceKey} style={{ 
-                        animation: 'fadeInRow 0.6s ease-in forwards', 
-                        animationDelay: `${0.6 + index * 0.2}s`,
-                        opacity: 0 
-                      }}>
-                        <td>
-                          <div className="force-name">
-                            {getForceIcon(forceKey)}
-                            <span>{forceKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                          </div>
-                        </td>
-                        <td>
-                          {forceData.intensity && (
-                            <span className={`status-badge ${getIntensityColor(forceData.intensity)}`}>
-                              {forceData.intensity}
+              {expandedSections.executive !== false && (
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {streamedData.executive_summary.industry_attractiveness && (
+                        <tr style={{ animation: 'fadeInRow 0.5s ease-in forwards', opacity: 0 }}>
+                          <td><div className="force-name">Industry Attractiveness</div></td>
+                          <td>{streamedData.executive_summary.industry_attractiveness}</td>
+                          <td>
+                            <span className={`status-badge ${getIntensityColor(streamedData.executive_summary.industry_attractiveness)}`}>
+                              {streamedData.executive_summary.industry_attractiveness}
                             </span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="factors-cell">
-                            {forceData.key_factors?.map((factor, idx) => (
-                              <div key={idx} className="factor-item">
-                                <strong>{factor.factor}</strong>
-                                {factor.impact && (
-                                  <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>
-                                    Impact: {factor.impact}
-                                  </span>
-                                )}
-                                <span className="factor-desc">{factor.description}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="additional-details">
-                            {forceData.entry_barriers && forceData.entry_barriers.length > 0 && (
-                              <div>
-                                <strong>Entry Barriers:</strong>
-                                <ul>
-                                  {forceData.entry_barriers.map((barrier, idx) => (
-                                    <li key={idx}>{barrier}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {forceData.supplier_concentration && (
-                              <div><strong>Supplier Concentration:</strong> {forceData.supplier_concentration}</div>
-                            )}
-                            {forceData.switching_costs && (
-                              <div><strong>Switching Costs:</strong> {forceData.switching_costs}</div>
-                            )}
-                            {forceData.buyer_concentration && (
-                              <div><strong>Buyer Concentration:</strong> {forceData.buyer_concentration}</div>
-                            )}
-                            {forceData.product_differentiation && (
-                              <div><strong>Product Differentiation:</strong> {forceData.product_differentiation}</div>
-                            )}
-                            {forceData.substitute_availability && (
-                              <div><strong>Substitute Availability:</strong> {forceData.substitute_availability}</div>
-                            )}
-                            {forceData.competitor_concentration && (
-                              <div><strong>Competitor Concentration:</strong> {forceData.competitor_concentration}</div>
-                            )}
-                            {forceData.industry_growth && (
-                              <div><strong>Industry Growth:</strong> {forceData.industry_growth}</div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="implications-cell">
-                          {forceData.strategic_implications}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+                          </td>
+                        </tr>
+                      )}
+                      {streamedData.executive_summary.overall_competitive_intensity && (
+                        <tr style={{ animation: 'fadeInRow 0.5s ease-in forwards', animationDelay: '0.1s', opacity: 0 }}>
+                          <td><div className="force-name">Competitive Intensity</div></td>
+                          <td>{streamedData.executive_summary.overall_competitive_intensity}</td>
+                          <td>
+                            <span className={`status-badge ${getIntensityColor(streamedData.executive_summary.overall_competitive_intensity)}`}>
+                              {streamedData.executive_summary.overall_competitive_intensity}
+                            </span>
+                          </td>
+                        </tr>
+                      )}
+                      {streamedData.executive_summary.competitive_position && (
+                        <tr style={{ animation: 'fadeInRow 0.5s ease-in forwards', animationDelay: '0.2s', opacity: 0 }}>
+                          <td><div className="force-name">Competitive Position</div></td>
+                          <td>{streamedData.executive_summary.competitive_position}</td>
+                          <td>-</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
 
-        {streamedData.key_improvements && streamedData.key_improvements.length > 0 && (
-          <div className="section-container" style={{ animation: 'slideIn 0.4s ease-out', animationDelay: '1.5s', opacity: 0, animationFillMode: 'forwards' }}>
-            <div className="section-header" onClick={() => toggleSection('improvements')}>
-              <h3>Key Improvements</h3>
-              {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                  {streamedData.executive_summary.key_competitive_forces?.length > 0 && (
+                    <div className="subsection" style={{ animation: 'fadeInRow 0.5s ease-in forwards', animationDelay: '0.3s', opacity: 0 }}>
+                      <h4>Key Competitive Forces</h4>
+                      <div className="forces-tags">
+                        {streamedData.executive_summary.key_competitive_forces.map((force, index) => (
+                          <span key={index} className="force-tag" style={{ 
+                            animation: 'fadeInTag 0.3s ease-in forwards', 
+                            animationDelay: `${0.4 + index * 0.1}s`,
+                            opacity: 0 
+                          }}>{force}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+          )}
 
-            {expandedSections.improvements && (
-              <div className="table-container">
-                <table className="data-table">
-                  <tbody>
-                    {streamedData.key_improvements.map((improvement, index) => (
-                      <tr key={index} style={{ 
-                        animation: 'fadeInRow 0.5s ease-in forwards', 
-                        animationDelay: `${1.6 + index * 0.15}s`,
-                        opacity: 0 
-                      }}>
-                        <td>
-                          <div className="force-name">
-                            <TrendingUp size={16} />
-                            {improvement}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {streamedData.five_forces_analysis && Object.keys(streamedData.five_forces_analysis).length > 0 && (
+            <div className="section-container" style={{ animation: 'slideIn 0.4s ease-out', animationDelay: '0.5s', opacity: 0, animationFillMode: 'forwards' }}>
+              <div className="section-header" onClick={() => toggleSection('forces')}>
+                <h3>Five Forces Analysis</h3>
+                {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
               </div>
-            )}
-          </div>
-        )}
+
+              {expandedSections.forces !== false && (
+                <div className="table-container">
+                  <table className="data-table forces-table">
+                    <thead>
+                      <tr>
+                        <th>Force</th>
+                        <th>Intensity</th>
+                        <th>Key Factors</th>
+                        <th>Additional Details</th>
+                        <th>Strategic Implications</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(streamedData.five_forces_analysis).map(([forceKey, forceData], index) => (
+                        <tr key={forceKey} style={{ 
+                          animation: 'fadeInRow 0.6s ease-in forwards', 
+                          animationDelay: `${0.6 + index * 0.2}s`,
+                          opacity: 0 
+                        }}>
+                          <td>
+                            <div className="force-name">
+                              {getForceIcon(forceKey)}
+                              <span>{forceKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            </div>
+                          </td>
+                          <td>
+                            {forceData.intensity && (
+                              <span className={`status-badge ${getIntensityColor(forceData.intensity)}`}>
+                                {forceData.intensity}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="factors-cell">
+                              {forceData.key_factors?.map((factor, idx) => (
+                                <div key={idx} className="factor-item">
+                                  <strong>{factor.factor}</strong>
+                                  {factor.impact && (
+                                    <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>
+                                      Impact: {factor.impact}
+                                    </span>
+                                  )}
+                                  <span className="factor-desc">{factor.description}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="additional-details">
+                              {forceData.entry_barriers && forceData.entry_barriers.length > 0 && (
+                                <div>
+                                  <strong>Entry Barriers:</strong>
+                                  <ul>
+                                    {forceData.entry_barriers.map((barrier, idx) => (
+                                      <li key={idx}>{barrier}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {forceData.supplier_concentration && (
+                                <div><strong>Supplier Concentration:</strong> {forceData.supplier_concentration}</div>
+                              )}
+                              {forceData.switching_costs && (
+                                <div><strong>Switching Costs:</strong> {forceData.switching_costs}</div>
+                              )}
+                              {forceData.buyer_concentration && (
+                                <div><strong>Buyer Concentration:</strong> {forceData.buyer_concentration}</div>
+                              )}
+                              {forceData.product_differentiation && (
+                                <div><strong>Product Differentiation:</strong> {forceData.product_differentiation}</div>
+                              )}
+                              {forceData.substitute_availability && (
+                                <div><strong>Substitute Availability:</strong> {forceData.substitute_availability}</div>
+                              )}
+                              {forceData.competitor_concentration && (
+                                <div><strong>Competitor Concentration:</strong> {forceData.competitor_concentration}</div>
+                              )}
+                              {forceData.industry_growth && (
+                                <div><strong>Industry Growth:</strong> {forceData.industry_growth}</div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="implications-cell">
+                            {forceData.strategic_implications}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {streamedData.key_improvements && streamedData.key_improvements.length > 0 && (
+            <div className="section-container" style={{ animation: 'slideIn 0.4s ease-out', animationDelay: '1.5s', opacity: 0, animationFillMode: 'forwards' }}>
+              <div className="section-header" onClick={() => toggleSection('improvements')}>
+                <h3>Key Improvements</h3>
+                {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+              </div>
+
+              {expandedSections.improvements && (
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {streamedData.key_improvements.map((improvement, index) => (
+                        <tr key={index} style={{ 
+                          animation: 'fadeInRow 0.5s ease-in forwards', 
+                          animationDelay: `${1.6 + index * 0.15}s`,
+                          opacity: 0 
+                        }}>
+                          <td>
+                            <div className="force-name">
+                              <TrendingUp size={16} />
+                              {improvement}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+      </div>
       </div>
     </div>
   );
