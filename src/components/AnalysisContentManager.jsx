@@ -260,6 +260,7 @@ const AnalysisContentManager = (props) => {
     hideRegenerateButtons = false
   } = props;
 
+  const [activeSection, setActiveSection] = React.useState(null);
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
@@ -290,8 +291,10 @@ const AnalysisContentManager = (props) => {
       const newSet = new Set(prev);
       if (newSet.has(cardId)) {
         newSet.delete(cardId);
+        setActiveSection(null);
       } else {
         newSet.add(cardId);
+        setActiveSection(cardId.split('-')[0]);
       }
       return newSet;
     });
@@ -444,6 +447,7 @@ const AnalysisContentManager = (props) => {
             {...{ [dataKey]: data }}
             selectedBusinessId={props.selectedBusinessId}
             onRedirectToBrief={props.handleRedirectToBrief}
+            activeSection={activeSection}
             {...(analysisKey === 'swot' && {
               analysisResult: data,
               onDataGenerated: props.setSwotAnalysisResult,
