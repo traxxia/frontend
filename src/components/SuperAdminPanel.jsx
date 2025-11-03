@@ -17,10 +17,12 @@ import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
 import UserOverview from "./UserOverview";
 import UserHistory from "./UserHistory";
-import AuditTrail from "./AuditTrail";
+import AuditTrail from "./AuditTrail"
+import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
 const SuperAdminPanel = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("companies");
   const [showToast, setShowToast] = useState({
     show: false,
@@ -88,7 +90,7 @@ const SuperAdminPanel = () => {
   };
 
   // Determine title and icon based on user role
-  const panelTitle = isSuperAdmin ? "Super Admin Panel" : "Admin Panel";
+  const panelTitle = isSuperAdmin ? t("super_admin_panel") : t("Admin_Panel");
   const HeaderIcon = isSuperAdmin ? Shield : Settings;
 
   // If active tab is questions but user is not super admin, redirect to companies

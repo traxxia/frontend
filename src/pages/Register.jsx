@@ -114,7 +114,7 @@ const Register = () => {
     
     // Company validation
     if (!form.company_id) {
-      newErrors.company_id = 'Company selection is required';
+      newErrors.company_id = t('Company_selection_is_required');
     }
     
     // Password validation
@@ -135,7 +135,7 @@ const Register = () => {
     
     // Terms and conditions validation (MANDATORY)
     if (!form.terms) {
-      newErrors.terms = 'You must agree to the Terms & Conditions and Privacy Policy to proceed';
+      newErrors.terms = t('You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed');
     }
     
     setErrors(newErrors);
@@ -244,7 +244,7 @@ const Register = () => {
           if (!form.name.trim()) fieldErrors.name = 'Name is required';
           if (!form.email.trim()) fieldErrors.email = 'Email is required';
           if (!form.password) fieldErrors.password = 'Password is required';
-          if (!form.company_id) fieldErrors.company_id = 'Company selection is required';
+          if (!form.company_id) fieldErrors.company_id = t('Company_selection_is_required');
           if (!form.terms) fieldErrors.terms = 'You must agree to the terms and conditions';
           
           setErrors(fieldErrors);

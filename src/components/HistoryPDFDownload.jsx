@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const HistoryPDFDownload = ({ 
   analysisData, 
@@ -10,6 +11,7 @@ const HistoryPDFDownload = ({
   style = {}
 }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const { t } = useTranslation();
 
   // Function to determine actual export phase based on available analysis data
   const getExportPhase = () => {
@@ -463,7 +465,7 @@ const HistoryPDFDownload = ({
         ) : (
           <>
             <Download size={16} />
-            Export PDF
+            {t("Export_PDF")}
           </>
         )}
       </button>

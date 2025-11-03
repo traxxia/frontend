@@ -545,7 +545,7 @@ const BusinessSetupPage = () => {
   };
 
   useEffect(() => {
-    setSelectedDropdownValue("Go to Section");
+    setSelectedDropdownValue(t("Go_to_Section"));
   }, []);
 
   useEffect(() => {
@@ -800,7 +800,7 @@ const BusinessSetupPage = () => {
                             ) : (
                               <>
                                 <RefreshCw size={16} />
-                                Regenerate
+                                {t("regenerate")}
                               </>
                             )}
                           </button>

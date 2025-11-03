@@ -58,6 +58,14 @@ export const staticTranslations = {
     'super_admin_panel': 'Super Admin Panel',
      'signed_in_as' : 'Signed in as',
     'role' : 'Role',
+    'user_name': 'User Name',
+    'job_title': 'Job Title',
+    'enter_job_title': 'Enter your job title',
+    'company': 'Company',
+    'select_a_company': 'Select a company',
+    'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'Password must be at least 8 characters long and contain uppercase, lowercase, and numbers',
+    'Company_selection_is_required': 'Company selection is required',
+    'You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed':' You must agree to the Terms & Conditions and Privacy Policy to proceed',
 
     // ===========================
     // DASHBOARD
@@ -158,6 +166,8 @@ export const staticTranslations = {
     'complete_all_questions': 'Complete All Questions',
     'complete_questions_to_unlock': 'Please answer all questions to unlock the analysis section',
     'questions_completed': 'questions completed',
+    'All_questions_completed!': 'All questions completed!',
+    'Export_PDF': 'Export PDF',
 
     // ===========================
     // PROGRESS & STATUS
@@ -264,6 +274,7 @@ export const staticTranslations = {
     // ===========================
     // ANALYSIS SECTIONS
     // ===========================
+    'regenerate': 'Regenerate',
     'select_analysis_framework': 'Select Analysis Framework',
     'choose_framework_instruction': 'Choose from the tabs above to start your analysis',
     'regenerate_analysis': 'Regenerate Analysis',
@@ -354,6 +365,7 @@ export const staticTranslations = {
     'Generating loyalty & NPS analysis...': 'Generating loyalty & NPS analysis...',
     'Regenerating capability heatmap analysis...': 'Regenerating capability heatmap analysis...',
     'Generating capability heatmap analysis...': 'Generating capability heatmap analysis...',
+    'Go_to_Section': 'Go to Section',
 
     // ===========================
     // SWOT ANALYSIS SPECIFICS
@@ -445,6 +457,7 @@ export const staticTranslations = {
     'registration_failed_msg': 'Registro Fallido',
     'redirecting_login': 'Redirigiendo al inicio de sesión...',
     'creating': 'Creando...',
+    'You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed': 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para continuar',
 
     // Validación de Registro
     'first_name_required': 'El nombre es obligatorio',
@@ -462,6 +475,13 @@ export const staticTranslations = {
     'registration_failed': 'Registro fallido. Por favor intenta de nuevo.',
     'email_already_exists': 'Ya existe una cuenta con este correo electrónico',
     'user_account_notice': 'Todas las cuentas nuevas se crean como usuarios regulares',
+    'user_name': 'Nombre de Usuario',
+    'job_title': 'Título del Trabajo',
+    'enter_job_title': 'Ingresa tu título del trabajo',
+    'company': 'Compañía',
+    'select_a_company': 'Selecciona una compañía',
+    'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'La contraseña debe tener al menos 8 caracteres y contener mayúsculas, minúsculas y números',
+    'Company_selection_is_required': 'La selección de la compañía es obligatoria',
 
     // ===========================
     // PANEL DE CONTROL
@@ -560,6 +580,8 @@ export const staticTranslations = {
     'complete_all_questions': 'Completa Todas las Preguntas',
     'complete_questions_to_unlock': 'Por favor responde todas las preguntas para desbloquear la sección de análisis',
     'questions_completed': 'preguntas completadas',
+    'All_questions_completed!': '¡Todas las preguntas completadas!',
+    'Go_to_Section': 'Ir a la Sección',
 
     // ===========================
     // PROGRESO Y ESTADO
@@ -712,6 +734,7 @@ export const staticTranslations = {
     // ===========================
     // MARCO ESTRATÉGICO
     // ===========================
+    'regenerate': 'Regenerar',
     'unlockBusinessAnalysis': 'Desbloquear Análisis de Negocios',
     'completePhaseMessage': '¡Completa todas las preguntas de la fase inicial para desbloquear el análisis FODA y conocimientos estratégicos!',
     'brief': 'Breve',
@@ -737,7 +760,7 @@ export const staticTranslations = {
     'Generate Analysis Now': 'Generar Análisis Ahora',
     'Your business analysis will appear here once generated.': 'Tu análisis de negocio aparecerá aquí una vez generado.',
     'Continue the conversation to trigger analysis generation.': 'Continúa la conversación para iniciar la generación del análisis.',
-
+     
     // ===========================
     // TIPOS DE ANÁLISIS
     // ===========================
@@ -808,7 +831,8 @@ export const staticTranslations = {
     'social_factors': 'Social',
     'technological_factors': 'Tecnológico',
     'legal_factors': 'Legal',
-    'environmental_factors': 'Ambiental'
+    'environmental_factors': 'Ambiental',
+    'Export_PDF': 'Exportar PDF',
   }
 };
 

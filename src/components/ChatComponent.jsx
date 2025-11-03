@@ -1683,7 +1683,7 @@ const ChatComponent = ({
                 ? "Please provide more details..."
                 : nextQuestion
                   ? t("typeYourAnswer")
-                  : "All questions completed!"
+                  : t("All_questions_completed!")
             }
             disabled={isInputDisabled}
             className="message-input"
@@ -1720,7 +1720,7 @@ const ChatComponent = ({
               {isFileUploading && ` • Uploading...`}
             </span>
           ) : (
-            <span>All questions completed!</span>
+            <span>{t("All_questions_completed!")}</span>
           )}
         </div>
       </div>

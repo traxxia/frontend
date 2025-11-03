@@ -557,7 +557,7 @@ const PDFExportButton = ({
         ) : (
           <>
             <Download size={16} />
-            Export PDF
+            {t("Export_PDF")}
           </>
         )}
       </button>
