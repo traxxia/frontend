@@ -55,6 +55,9 @@ export const staticTranslations = {
     'registration_failed': 'Registration failed. Please try again.',
     'email_already_exists': 'An account with this email already exists',
     'user_account_notice': 'All new accounts are created as regular users',
+    'super_admin_panel': 'Super Admin Panel',
+     'signed_in_as' : 'Signed in as',
+    'role' : 'Role',
 
     // ===========================
     // DASHBOARD
@@ -127,7 +130,17 @@ export const staticTranslations = {
     "got_it": "Got It!",
     "business_name_cannot_be_empty": "Please enter a valid, visible business name.",
     "business_name_invalid_start": "Business name cannot start with a space.",
+    "business_name_max_length": "Business name cannot exceed 20 characters.",
+    "business_name_invalid_start": "Business name cannot start with a symbol or number.",
+    "city_min_length": "City name must be at least 2 characters long.",
+    "city_max_length": "City name cannot exceed 20 characters.",
+    "country_min_length": "Country name must be at least 2 characters long.",
+    "country_max_length": "Country name cannot exceed 20 characters.",
     "business_purpose_required": "Business purpose is required.",
+    "description_no_continuous_spaces": "Description cannot contain continuous spaces.",
+    "country_cannot_contain_only_spaces": "empty spaces not allowed",
+    "city_cannot_contain_only_spaces": "empty spaces not allowed",
+
 
     // ===========================
     // BUSINESS DETAIL PAGE
@@ -521,8 +534,16 @@ export const staticTranslations = {
     "got_it": "¡Entendido!",
     "business_name_cannot_be_empty": "Por favor ingresa un nombre de negocio válido y visible.",
     "business_name_invalid_start": "El nombre del negocio no puede comenzar con un espacio.",
+    "business_name_max_length": "El nombre del negocio no puede exceder los 20 caracteres.",
+    "business_name_invalid_start": "El nombre del negocio no puede comenzar con un símbolo o número.",
+    "city_min_length": "El nombre de la ciudad debe tener al menos 2 caracteres.",
+    "city_max_length": "El nombre de la ciudad no puede exceder los 20 caracteres.",
+    "country_min_length": "El nombre del país debe tener al menos 2 caracteres.",
+    "country_max_length": "El nombre del país no puede exceder los 20 caracteres.",
     "business_purpose_required": "El propósito del negocio es obligatorio.",
-
+    "description_no_continuous_spaces": "La descripción no puede contener espacios continuos.",
+    "city_cannot_contain_only_spaces" : "No se permiten espacios vacíos.",
+    "country_cannot_contain_only_spaces" : "No se permiten espacios vacíos.",
     // ===========================
     // PÁGINA DE DETALLE DEL NEGOCIO
     // ===========================
@@ -627,6 +648,9 @@ export const staticTranslations = {
     'value_chain_analysis': 'Cadena de Valor',
     'bcg_matrix': 'Matriz BCG',
     'strategic_framework': 'ESTRATÉGICO',
+    'super_admin_panel': 'Panel de Super Administrador',
+    'signed_in_as' : 'Iniciar sesión como',
+    'role' : 'Rol',
 
     // Subtítulos de Análisis
     'swot_subtitle': 'Fortalezas, debilidades, oportunidades y amenazas',

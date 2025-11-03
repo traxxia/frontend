@@ -30,6 +30,8 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
       errors.company_name = 'Company name can only contain letters and single spaces';
     } else if (formData.company_name.trim().length < 2) {
       errors.company_name = 'Company name must be at least 2 characters long';
+    } else if (formData.company_name.trim().length > 20) {
+      errors.company_name = 'Company name must be at most 20 characters long';
     }
 
     if (!formData.industry) {
@@ -43,6 +45,8 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
       errors.admin_name = 'Admin name can only contain letters and single spaces';
     } else if (formData.admin_name.trim().length < 2) {
       errors.admin_name = 'Admin name must be at least 2 characters long';
+    } else if (formData.admin_name.trim().length > 20) {
+      errors.admin_name = 'Admin name must be at most 20 characters long';
     }
 
     // Email validation

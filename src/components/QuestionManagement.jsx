@@ -14,6 +14,8 @@ const QuestionManagement = ({ onToast }) => {
   const [collapsedPhases, setCollapsedPhases] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [isReordering, setIsReordering] = useState(false);
+ 
+
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -619,36 +621,57 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
     required_info: ''
   });
 
+  
+  const [errors, setErrors] = useState({});
+
   const getSeverityForPhase = (phase) => {
     return phase === 'initial' ? 'mandatory' : 'optional';
   };
 
+ const validateForm = () => {
+  const newErrors = {};
+
+  if (!formData.question_text.trim()) {
+    newErrors.question_text = 'Question text is required';
+  } else if (formData.question_text.trim().length < 10) {
+    newErrors.question_text = 'Question must be at least 10 characters long';
+  } else if (formData.question_text.trim().length > 200) {
+    newErrors.question_text = 'Question cannot exceed 200 characters';
+  }
+
+  if (!formData.used_for.trim()) {
+    newErrors.used_for = 'Used For field is required';
+  } else if (!/^[A-Za-z,\s]+$/.test(formData.used_for.trim())) {
+    newErrors.used_for = 'Used For can only contain letters, commas, and spaces';
+  } else if (formData.used_for.trim().length >20) {
+    newErrors.used_for = 'Used For cannot exceed 20 characters';
+  }
+
+  if (!formData.objective.trim()) {
+    newErrors.objective = 'Objective is required';
+  } else if (formData.objective.trim().length < 15) {
+    newErrors.objective = 'Objective must be at least 15 characters long';
+  } else if (formData.objective.trim().length > 200) {
+    newErrors.objective = 'Objective cannot exceed 200 characters';
+  }
+
+  if (formData.required_info && formData.required_info.length > 200) {
+    newErrors.required_info = 'Required info cannot exceed 200 characters';
+  }
+
+ 
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+
   const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.question_text.trim()) {
-      alert('Question text is required');
-      return;
-    }
-    
-    if (!formData.used_for.trim()) {
-      alert('Used For field is required');
-      return;
-    }
-    
-    if (!formData.objective.trim()) {
-      alert('Objective field is required');
-      return;
-    }
-    
-    // Add the auto-determined severity to the form data
-    const submitData = {
-      ...formData,
-      severity: getSeverityForPhase(formData.phase)
-    };
-    onSubmit(submitData);
-  };
+  e.preventDefault();
+  if (!validateForm()) return;
+  const submitData = { ...formData, severity: getSeverityForPhase(formData.phase) };
+  onSubmit(submitData);
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -665,7 +688,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
       <div className="create-form">
         <h3>Create New Question</h3>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} >
           <div className="create-form__field">
             <label>
               Question Text *
@@ -678,6 +701,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               rows="4"
               placeholder="Enter your question here..."
             />
+            {errors.question_text && <span className="error-message">{errors.question_text}</span>}
           </div>
 
           <div className="create-form__grid">
@@ -709,6 +733,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
                 required
                 placeholder="SWOT, Customer Segmentation..."
               />
+              {errors.used_for && <span className="error-message">{errors.used_for}</span>}
             </div>
           </div>
 
@@ -724,6 +749,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               rows="3"
               placeholder="What this question aims to understand or analyze..."
             />
+            {errors.objective && <span className="error-message">{errors.objective}</span>}
           </div>
 
           <div className="create-form__field">

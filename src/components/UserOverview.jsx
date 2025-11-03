@@ -49,6 +49,9 @@ const UserOverview = ({ onToast }) => {
         if (value.trim().length < 2) {
           return 'Name must be at least 2 characters long';
         }
+        if (value.trim().length > 20) {
+          return 'Name must be at most 20 characters long';
+        }
         return '';
 
       case 'email':

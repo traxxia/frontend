@@ -374,6 +374,9 @@
   font-size: 14px;
   padding-bottom: 12px;
 }
+.analysis-modal-body h5{
+  margin-left: 20px;
+}
 
 /* Advanced Search Toggle */
 .advanced-search-toggle {

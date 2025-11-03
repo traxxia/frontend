@@ -12,7 +12,22 @@
     left: 0%;
 
   }
+.create-button {
+  background-color: #217aff !important;
+  border-radius: 8px !important;
+  /* padding: 10px 16px !important; */
+  font-weight: 600 !important;
+}
 
+.cancel-button {
+  background-color: #ff0000 !important;
+  color: #fffefe !important;
+  border-radius: 8px !important;
+   padding: 10px 16px !important; 
+  font-weight: 600 !important;
+
+
+}
   .main-content {
     flex: 1;
     overflow-x: hidden;

@@ -25,7 +25,7 @@ import InvestmentPerformance from './InvestmentPerformance';
 import LeverageRisk from './LeverageRisk';
 import CoreAdjacency from './CoreAdjacency';
 import CompetitiveLandscape from './CompetitiveLandscape';
-
+import MissingMetricsDisplay from './MissingMetricsDisplay'; // Added import for MissingMetricsDisplay
 
 const AnalysisDataModal = ({ 
   isOpen, 
@@ -34,7 +34,8 @@ const AnalysisDataModal = ({
   analysisData, 
   analysisName,
   businessName = "Business",
-  auditId 
+  auditId,
+  documentInfo = null // Added new prop for document information
 }) => {
   if (!isOpen) return null;
 
@@ -51,6 +52,29 @@ const AnalysisDataModal = ({
     URL.revokeObjectURL(url);
   };
 
+  // Determine if this is a financial analysis type
+  const financialAnalysisTypes = [
+    'profitabilityAnalysis',
+    'growthTracker',
+    'liquidityEfficiency',
+    'investmentPerformance',
+    'leverageRisk'
+  ];
+  const isFinancialAnalysis = financialAnalysisTypes.includes(analysisType);
+
+  // Determine if a document is uploaded based on documentInfo
+  const hasDocumentUploaded = documentInfo && documentInfo.has_document;
+
+  // Create effective document info if needed for financial analyses
+  const effectiveDocumentInfo = isFinancialAnalysis 
+    ? (documentInfo || {
+        has_document: hasDocumentUploaded || true, // Assume true for financial if not specified
+        filename: documentInfo?.filename || 'Financial Document',
+        template_name: documentInfo?.template_name || 'Standard',
+        upload_date: documentInfo?.upload_date || new Date().toISOString()
+      })
+    : documentInfo;
+
   const renderAnalysisComponent = () => {
     // Mock props for read-only display
     const mockProps = {
@@ -66,7 +90,7 @@ const AnalysisDataModal = ({
       onRedirectToChat: () => {},
       isMobile: false,
       setActiveTab: () => {},
-      hasUploadedDocument: false,
+      hasUploadedDocument: hasDocumentUploaded,
       uploadedFile: null,
       // Disable all interactive features
       readOnly: true,
@@ -325,6 +349,10 @@ const AnalysisDataModal = ({
         {/* Modal Body */}
         <div className="analysis-modal-body">
           <div className="analysis-modal-content-wrapper">
+            {/* Missing Metrics Display - Show for financial analyses */}
+            {isFinancialAnalysis && effectiveDocumentInfo && (
+              <h5>You answered the required questions, but the responses need more detail to generate meaningful analysis.</h5>
+            )}
             {renderAnalysisComponent()}
           </div>
         </div>

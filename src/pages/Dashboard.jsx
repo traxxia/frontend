@@ -34,6 +34,7 @@ const Dashboard = () => {
     country: ''
   });
   const [businessError, setBusinessError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
 
   // Delete business state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -213,10 +214,78 @@ const Dashboard = () => {
     }
   };
 
+  // Validation Functions
+  const validateForm = () => {
+    const errors = {};
+
+    // Business Name validation
+    const businessName = businessFormData.business_name.trim();
+    if (!businessName) {
+      errors.business_name = t('business_name_cannot_be_empty');
+    } else if (businessName.length > 20) {
+      errors.business_name = t('business_name_max_length');
+    } else if (startsWithSymbolOrNumber(businessName)) {
+      errors.business_name = t('business_name_invalid_start');
+    }
+
+    // Business Purpose validation
+    const businessPurpose = businessFormData.business_purpose.trim();
+    if (!businessPurpose) {
+      errors.business_purpose = t('business_purpose_required');
+    }
+
+    // City validation (optional but if provided, must be valid)
+    const cityTrimmed = businessFormData.city.trim();
+    if (businessFormData.city && cityTrimmed.length === 0) {
+      errors.city = t('city_cannot_contain_only_spaces');
+    } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
+      errors.city = t('city_min_length');
+    } else if (cityTrimmed.length > 20) {
+      errors.city = t('city_max_length');
+    }
+
+    // Country validation (optional but if provided, must be valid)
+   const countryTrimmed = businessFormData.country.trim();
+    if (businessFormData.country && countryTrimmed.length === 0) {
+      errors.country = t('country_cannot_contain_only_spaces');
+    } else if (countryTrimmed.length > 0 && countryTrimmed.length < 2) {
+      errors.country = t('country_min_length');
+    } else if (countryTrimmed.length > 20) {
+      errors.country = t('country_max_length');
+    }
+
+    if (businessFormData.description && /\s{3,}/.test(businessFormData.description)) {
+    errors.description = t('description_no_continuous_spaces');
+  }
+
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const isInvisibleOrEmpty = (str) => {
+    if (!str) return true; // Empty or null
+
+    const normalized = str
+      .replace(/\\u[0-9A-Fa-f]{4}/g, '')
+      .replace(/U\+[0-9A-Fa-f]{4}/g, '');
+
+    const cleaned = normalized.replace(/\s+/g, '');
+    return cleaned.length === 0;
+  }
+
+  const startsWithSymbolOrNumber = (str) => {
+    if (!str) return false;
+    const trimmed = str.trim();
+    // Check if first visible character is NOT a letter
+    return /^[^A-Za-z]/.test(trimmed);
+  }
+
   // Business Modal Functions
   const handleShowCreateModal = () => {
     setShowCreateModal(true);
     setBusinessError('');
+    setFormErrors({});
   };
 
   const handleCloseCreateModal = () => {
@@ -229,27 +298,8 @@ const Dashboard = () => {
       country: ''
     });
     setBusinessError('');
+    setFormErrors({});
   };
-
-  const isInvisibleOrEmpty = (str) => {
-    if (!str) return true; // Empty or null
-
-    const normalized = str
-      .replace(/\\u[0-9A-Fa-f]{4}/g, '')
-      .replace(/U\+[0-9A-Fa-f]{4}/g, '');
-
-    const cleaned = normalized
-      .replace(/\s+/g, '')
-
-    return cleaned.length === 0;
-  }
-
-  const startsWithSymbolOrNumber = (str) => {
-    if (!str) return false;
-    const trimmed = str.trim();
-    // Check if first visible character is NOT a letter
-    return /^[^A-Za-z]/.test(trimmed);
-  }
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -264,36 +314,38 @@ const Dashboard = () => {
       ...prev,
       [name]: sanitizedValue,
     }));
+
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
   const handleSubmitBusiness = (e) => {
     e.preventDefault();
 
-
-    if (isInvisibleOrEmpty(businessFormData.business_name)) {
-      setBusinessError(t('business_name_cannot_be_empty'));
+    if (!validateForm()) {
+      // Highlight the first error by scrolling to it and focusing
+      const firstErrorField = Object.keys(formErrors)[0];
+      if (firstErrorField) {
+        // Small delay to ensure form errors are rendered
+        setTimeout(() => {
+          const element = document.querySelector(`input[name="${firstErrorField}"], textarea[name="${firstErrorField}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.focus();
+            // Optional: Add a temporary shake class for visual highlight (add CSS for .shake)
+            element.classList.add('shake');
+            setTimeout(() => element.classList.remove('shake'), 500);
+          }
+        }, 100);
+      }
       return;
     }
 
-    if (startsWithSymbolOrNumber(businessFormData.business_name)) {
-      setBusinessError(t('business_name_invalid_start'));
-      return;
-    }
-
-    if (!businessFormData.business_purpose.trim()) {
-      setBusinessError(t('business_purpose_required'));
-      return;
-    }
-
-    if (businessFormData.city && businessFormData.city.length < 2) {
-      setBusinessError(t('city_min_length'));
-      return;
-    }
-
-    if (businessFormData.country && businessFormData.country.length < 2) {
-      setBusinessError(t('country_min_length'));
-      return;
-    }
     createBusiness();
   };
 
@@ -349,8 +401,6 @@ const Dashboard = () => {
         <Trash2 size={16} />
       </button>
     );
-
-
     return (
       <div
         className="business-item d-flex align-items-center p-3 border-bottom position-relative"
@@ -421,6 +471,9 @@ const Dashboard = () => {
   const handleCloseModal = () => {
     setShowHowModal(false);
   };
+
+  // Character counter for business name
+  const businessNameLength = businessFormData.business_name.length;
 
   // Main render
   return (
@@ -655,17 +708,13 @@ const Dashboard = () => {
       )}
 
       {/* Create Business Modal */}
-      <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered>
+      <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
         <Modal.Header closeButton>
           <Modal.Title>{t('create_new_business')}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmitBusiness}>
           <Modal.Body>
-            {businessError && (
-              <Alert variant="danger" className="mb-3">
-                {businessError}
-              </Alert>
-            )}
+           
 
             <Form.Group className="mb-3">
               <Form.Label>{t('business_name')} <span className="text-danger">*</span></Form.Label>
@@ -677,7 +726,21 @@ const Dashboard = () => {
                 placeholder={t('enter_your_business_name')}
                 required
                 disabled={isCreatingBusiness}
+                isInvalid={!!formErrors.business_name}
+                maxLength={20}
               />
+              <div className="d-flex justify-content-between align-items-center mt-1">
+                <div>
+                  {formErrors.business_name && (
+                    <Form.Text className="text-danger">
+                      {formErrors.business_name}
+                    </Form.Text>
+                  )}
+                </div>
+                <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>
+                  {businessNameLength}/20
+                </Form.Text>
+              </div>
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -690,7 +753,13 @@ const Dashboard = () => {
                 placeholder={t('brief_description_of_what')}
                 required
                 disabled={isCreatingBusiness}
+                isInvalid={!!formErrors.business_purpose}
               />
+              {formErrors.business_purpose && (
+                <Form.Text className="text-danger">
+                  {formErrors.business_purpose}
+                </Form.Text>
+              )}
             </Form.Group>
 
             {/* City and Country Fields Row */}
@@ -705,7 +774,13 @@ const Dashboard = () => {
                     onChange={handleFormChange}
                     placeholder={t('enter_city')}
                     disabled={isCreatingBusiness}
+                    isInvalid={!!formErrors.city}
                   />
+                  {formErrors.city && (
+                    <Form.Text className="text-danger">
+                      {formErrors.city}
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -718,7 +793,13 @@ const Dashboard = () => {
                     onChange={handleFormChange}
                     placeholder={t('enter_country')}
                     disabled={isCreatingBusiness}
+                    isInvalid={!!formErrors.country}
                   />
+                  {formErrors.country && (
+                    <Form.Text className="text-danger">
+                      {formErrors.country}
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -734,8 +815,20 @@ const Dashboard = () => {
                 onChange={handleFormChange}
                 placeholder={t('detailed_description_of_your_business')}
                 disabled={isCreatingBusiness}
+                isInvalid={!!formErrors.description}
               />
+              {formErrors.description && (
+                <Form.Text className="text-danger">
+                  {formErrors.description}
+                </Form.Text>
+              )}
+              
             </Form.Group>
+             {businessError && (
+              <Alert variant="danger" className="mb-3">
+                {businessError}
+              </Alert>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button
@@ -749,6 +842,7 @@ const Dashboard = () => {
             <Button
               variant="primary"
               type="submit"
+              className="create-button"
               disabled={isCreatingBusiness}
             >
               {isCreatingBusiness ? (
