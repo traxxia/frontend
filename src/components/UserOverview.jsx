@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Search, Loader, Plus, ChevronRight, ChevronLeft, } from 'lucide-react';
 import Pagination from '../components/Pagination';
 import { formatDate } from '../utils/dateUtils';
+import { useTranslation } from '../hooks/useTranslation';
 
 
 
@@ -14,6 +15,7 @@ const UserOverview = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const { t } = useTranslation();
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -36,43 +38,43 @@ const UserOverview = ({ onToast }) => {
     switch (fieldName) {
       case 'name':
         if (!value || !value.trim()) {
-          return 'Name is required';
+          return t('Name_is_required');
         }
         // Only allow letters and spaces
         if (!/^[A-Za-z\s]+$/.test(value)) {
-          return 'Name can only contain letters and spaces';
+          return t('Name_can_only_contain_letters_and_spaces');
         }
         // No consecutive spaces allowed
         if (/\s{2,}/.test(value)) {
-          return 'Name cannot contain consecutive spaces';
+          return t('Name_cannot_contain_consecutive_spaces');
         }
         if (value.trim().length < 2) {
-          return 'Name must be at least 2 characters long';
+          return t('Name_must_be_at_least_2_characters_long');
         }
         if (value.trim().length > 20) {
-          return 'Name must be at most 20 characters long';
+          return t('Name_must_be_at_most_20_characters_long');
         }
         return '';
 
       case 'email':
         if (!value || !value.trim()) {
-          return 'Email is required';
+          return t('Email_is_required');
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value.trim())) {
-          return 'Please enter a valid email address';
+          return t('Please_enter_a_valid_email_address');
         }
         return '';
 
       case 'password':
         if (!value || !value.trim()) {
-          return 'Password is required';
+          return t('Password_is_required');
         }
         if (value.trim().length < 8) {
-          return 'Password must be at least 8 characters long';
+          return t('Password_must_be_at_least_8_characters_long');
         }
         if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+          return t('Password_must_contain_at_least_one_uppercase_letter_one_lowercase_letter_and_one_number');
         }
         return '';
 
@@ -375,10 +377,10 @@ const UserOverview = ({ onToast }) => {
 
       <div className="user-overview">
         <div className="section-header">
-          <h2>All Users Overview</h2>
+          <h2>{t("All_Users_Overview")}</h2>
           <div className="header-stats">
             <button className="primary-btn" onClick={() => setShowAddUser(true)}>
-              <Plus size={16} /> Add User
+              <Plus size={16} /> {t("Add_User")}
             </button>
           </div>
         </div>
@@ -390,7 +392,7 @@ const UserOverview = ({ onToast }) => {
             <input
               type="text"
               className='form-control'
-              placeholder="Search users..."
+              placeholder={t('search_users')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -404,7 +406,7 @@ const UserOverview = ({ onToast }) => {
               setSelectedCompany(e.target.value);
             }}
           >
-            <option value="">All Companies</option>
+            <option value="">{t('all_companies')}</option>
             {companies.map((company) => (
               <option key={company._id} value={company._id}>
                 {company.company_name}
@@ -419,12 +421,12 @@ const UserOverview = ({ onToast }) => {
               <table className="company-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Company</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Created</th>
+                    <th>{t('name')}</th>
+                    <th>{t('email')}</th>
+                    <th>{t('company')}</th>
+                    <th>{t('role')}</th>
+                    <th>{t('status')}</th>
+                    <th>{t('created_date')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -472,23 +474,23 @@ const UserOverview = ({ onToast }) => {
           <div className="modal-overlay">
             <div className="modal-content centered">
               <div className="modal-header">
-                <h3>Create New User</h3>
+                <h3>{t('create_new_user')}</h3>
               </div>
 
               <div className="company-form">
                 <div className="form-section">
                   <div className="form-grid">
-                    {renderFormField('Name', 'name', 'text', 'John Doe', true)}
-                    {renderFormField('Email', 'email', 'email', 'john.doe@company.com', true)}
-                    {renderFormField('Password', 'password', 'password', 'Minimum 8 characters', true)}
+                    {renderFormField(t('name'), 'name', 'text', 'John Doe', true)}
+                    {renderFormField(t('email'), 'email', 'email', 'john.doe@company.com', true)}
+                    {renderFormField(t('password'), 'password', 'password', t('Minimum_8_characters'), true)}
 
                     <div className="form-field">
-                      <label>Company *</label>
+                      <label>{t('company')} *</label>
                       <select
                         value={newUser.company_id}
                         onChange={(e) => handleChange('company_id', e.target.value)}
                       >
-                        <option value="">Select Company</option>
+                        <option value="">{t('select_company')}</option>
                         {companies.map(company => (
                           <option key={company._id} value={company._id}>
                             {company.company_name}
@@ -498,7 +500,7 @@ const UserOverview = ({ onToast }) => {
                     </div>
 
                     <div className="form-field">
-                      <label>Job Title</label>
+                      <label>{t('job_title')}</label>
                       <input
                         type="text"
                         className='form-control'
@@ -539,7 +541,7 @@ const UserOverview = ({ onToast }) => {
                         Creating...
                       </>
                     ) : (
-                      'Create User'
+                      t('create_user')
                     )}
                   </button>
                 </div>

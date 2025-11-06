@@ -30,6 +30,7 @@ import {
 import AnalysisDataModal from './AnalysisDataModal';
 import "../styles/audittrail.css";
 import Pagination from '../components/Pagination';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const AuditTrail = ({ onToast }) => {
   const [auditEntries, setAuditEntries] = useState([]);
@@ -55,6 +56,7 @@ const AuditTrail = ({ onToast }) => {
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
   const [analysisStats, setAnalysisStats] = useState([]);
   const [currentUserRole, setCurrentUserRole] = useState('user'); // Track current user role
+  const { t } = useTranslation();
 
   // Modal state
   const [modalData, setModalData] = useState({
@@ -70,14 +72,14 @@ const AuditTrail = ({ onToast }) => {
 
   // Quick filter presets - Updated for admin roles
   const quickFilters = [
-    { label: 'Login Events', key: 'event_type', value: 'login_success' },
-    { label: 'Failed Logins', key: 'event_type', value: 'login_failed' },
-    { label: 'Analysis Generated', key: 'event_type', value: 'analysis_generated' },
-    { label: 'Business Created', key: 'event_type', value: 'business_created' },
-    { label: 'Business Deleted', key: 'event_type', value: 'business_deleted' },
-    { label: 'Today', key: 'quick_date', value: 'today' },
-    { label: 'This Week', key: 'quick_date', value: 'week' },
-    { label: 'This Month', key: 'quick_date', value: 'month' }
+    { label: t('Login_Events'), key: 'event_type', value: 'login_success' },
+    { label: t('Failed_Logins'), key: 'event_type', value: 'login_failed' },
+    { label: t('Analysis_Generated'), key: 'event_type', value: 'analysis_generated' },
+    { label: t('Business_Created'), key: 'event_type', value: 'business_created' },
+    { label: t('Business_Deleted'), key: 'event_type', value: 'business_deleted' },
+    { label: t('Today'), key: 'quick_date', value: 'today' },
+    { label: t('This_Week'), key: 'quick_date', value: 'week' },
+    { label: t('This_Month'), key: 'quick_date', value: 'month' }
   ];
 
   // Get current user role from session/token
@@ -490,11 +492,11 @@ const AuditTrail = ({ onToast }) => {
   const getPageTitle = () => {
     switch (currentUserRole) {
       case 'super_admin':
-        return 'System-wide Audit Trail';
+        return t('System_wide_Audit_Trail');
       case 'company_admin':
-        return 'Company Audit Trail';
+        return t('Company_Audit_Trail');
       default:
-        return 'Audit Trail';
+        return t('audit_trail');
     }
   };
 
@@ -502,11 +504,11 @@ const AuditTrail = ({ onToast }) => {
   const getPageDescription = () => {
     switch (currentUserRole) {
       case 'super_admin':
-        return 'View audit logs for all users across all companies';
+        return t('View_audit_logs_for_all_users_across_all_companies');
       case 'company_admin':
-        return 'View audit logs for all users in your company';
+        return t('View_audit_logs_for_all_users_in_your_company');
       default:
-        return 'View system audit logs';
+        return t('View_system_audit_logs');
     }
   };
 
@@ -527,7 +529,7 @@ const AuditTrail = ({ onToast }) => {
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter size={16} />
-            Filters
+            {t('Filters')}
             {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           <button
@@ -536,7 +538,7 @@ const AuditTrail = ({ onToast }) => {
             disabled={loading}
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh
+            {t('Refresh')}
           </button>
         </div>
       </div>
@@ -586,7 +588,7 @@ const AuditTrail = ({ onToast }) => {
           <div className="table-container">
             {/* Search Bar */}
             <div className="filter-group">
-              <label>Search Events</label>
+              <label>{t('search_events')}</label>
               <div className="search-container">
                 <Search className="search-icon" size={16} />
                 <input
@@ -610,12 +612,12 @@ const AuditTrail = ({ onToast }) => {
               {/* User Filter - Only show for admin roles */}
               {['super_admin', 'company_admin'].includes(currentUserRole) && (
                 <div className="filter-group">
-                  <label>User</label>
+                  <label>{t('user')}</label>
                   <select
                     value={filters.user_id}
                     onChange={(e) => handleFilterChange('user_id', e.target.value)}
                   >
-                    <option value="">All Users</option>
+                    <option value="">{t('all_users')}</option>
                     {users.map(user => (
                       <option key={user._id} value={user._id}>
                         {user.name} ({user.email})
@@ -626,12 +628,12 @@ const AuditTrail = ({ onToast }) => {
               )}
 
               <div className="filter-group">
-                <label>Event Type</label>
+                <label>{t('event_type')}</label>
                 <select
                   value={filters.event_type}
                   onChange={(e) => handleFilterChange('event_type', e.target.value)}
                 >
-                  <option value="">All Events</option>
+                  <option value="">{t('all_events')}</option>
                   {eventTypes.map(type => (
                     <option key={type} value={type}>
                       {type.replace('_', ' ').toUpperCase()}
@@ -642,7 +644,7 @@ const AuditTrail = ({ onToast }) => {
 
               <div className="date-range-group">
                 <div className="filter-group">
-                  <label>Start Date</label>
+                  <label>{t('start_date')}</label>
                   <input
                     type="datetime-local"
                     value={filters.start_date}
@@ -651,7 +653,7 @@ const AuditTrail = ({ onToast }) => {
                 </div>
                 <div className="date-separator">to</div>
                 <div className="filter-group">
-                  <label>End Date</label>
+                  <label>{t('end_date')}</label>
                   <input
                     type="datetime-local"
                     value={filters.end_date}
@@ -679,10 +681,10 @@ const AuditTrail = ({ onToast }) => {
             <div className="filter-actions">
               <button className="clear-filters-btn" onClick={clearAllFilters}>
                 <FilterX size={16} />
-                Clear All
+                {t('clear_all')}
               </button>
               <button className="apply-filters-btn" onClick={applyFilters}>
-                Apply Filters
+                {t('apply_filters')}
               </button>
             </div>
           </div>
@@ -713,11 +715,11 @@ const AuditTrail = ({ onToast }) => {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Event</th>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Description</th>
-                    <th>Details</th>
+                    <th>{t('event')}</th>
+                    <th>{t('timestamp')}</th>
+                    <th>{t('user')}</th>
+                    <th>{t('description')}</th>
+                    <th>{t('details')}</th>
                   </tr>
                 </thead>
                 <tbody>

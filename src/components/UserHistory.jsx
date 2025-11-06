@@ -21,6 +21,7 @@ import HistoryPDFDownload from './HistoryPDFDownload';
 import DownloadStrategicPDF from './DownloadStrategicPDF';
 import Pagination from '../components/Pagination';
 import '../styles/UserHistory.css';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Constants
 const ITEMS_PER_PAGE = 10;
@@ -617,6 +618,7 @@ const UserHistory = ({ onToast }) => {
   const { users, companies, isLoading, userRole, isInitialized, loadUsers, loadInitialData } = useUserData(onToast);
   const { userDetails, isLoadingDetails, loadUserHistory } = useUserDetails(onToast);
   const { sortedUsers, sortConfig, requestSort } = useSortedFilteredUsers(users, searchTerm);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isInitialized) loadInitialData();
@@ -658,7 +660,7 @@ const UserHistory = ({ onToast }) => {
     <div className="user-history-container">
       <div className="section-header">
         <div className="user-history-header">
-          <h2 className="user-history-title">User History & Chat Records</h2>
+          <h2 className="user-history-title">{t('user_history_and_chat_records')}</h2>
         </div>
 
         <div className="search-container-row">
@@ -666,7 +668,7 @@ const UserHistory = ({ onToast }) => {
             <Search size={18} className="compact-search-icon" />
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder={t('search_users')}
               value={searchTerm}
               className="form-control"
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -680,7 +682,7 @@ const UserHistory = ({ onToast }) => {
                 onChange={(e) => setSelectedCompany(e.target.value)}
                 className="company-filter-select"
               >
-                <option value="">All Companies</option>
+                <option value="">{t('all_companies')}</option>
                 {companies.map(company => (
                   <option key={company._id} value={company._id}>
                     {company.company_name}
@@ -697,17 +699,17 @@ const UserHistory = ({ onToast }) => {
         <table className="user-table">
           <thead>
             <tr>
-              <SortableHeader title="User" sortKey="name" sortConfig={sortConfig} onSort={requestSort} />
-              <th>Email</th>
-              <th>Role</th>
-              <th>Company</th>
-              <SortableHeader title="Joined" sortKey="created_at" sortConfig={sortConfig} onSort={requestSort} />
-              <th>Actions</th>
+              <SortableHeader title={t('user')} sortKey="name" sortConfig={sortConfig} onSort={requestSort} />
+              <th>{t('email')}</th>
+              <th>{t('role')}</th>
+              <th>{t('company')}</th>
+              <SortableHeader title={t('joined')} sortKey="created_at" sortConfig={sortConfig} onSort={requestSort} />
+              <th>{t('actions')}</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.map(user => (
-              <UserRow key={user._id} user={user} onUserSelect={handleUserSelect} />
+              <UserRow key={user._id} user={user} onUserSelect={handleUserSelect} t={t} />
             ))}
           </tbody>
         </table>
@@ -769,7 +771,7 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, style, className }
   </th>
 );
 
-const UserRow = ({ user, onUserSelect }) => (
+const UserRow = ({ user, onUserSelect, t }) => (
   <tr>
     <td className="cell-user">
       <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
@@ -783,7 +785,7 @@ const UserRow = ({ user, onUserSelect }) => (
     <td>{formatDate(user.created_at)}</td>
     <td className="cell-actions">
       <button className="secondary-btn small-btn" onClick={() => onUserSelect(user._id)}>
-        View
+        {t('view')}
       </button>
     </td>
   </tr>

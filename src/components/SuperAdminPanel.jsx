@@ -52,13 +52,13 @@ const SuperAdminPanel = () => {
 
   // Define tabs based on user role
   const allTabs = [
-    { id: "companies", label: "Companies", icon: Building2 },
-    { id: "users", label: "Users", icon: Users },
-    { id: "history", label: "User History", icon: History },
-    { id: "audit", label: "Audit Trail", icon: Activity },
+    { id: "companies", label: t('companies'), icon: Building2 },
+    { id: "users", label: t('users'), icon: Users },
+    { id: "history", label: t('user_history'), icon: History },
+    { id: "audit", label: t('audit_trail'), icon: Activity },
     {
       id: "questions",
-      label: "Questions",
+      label: t('questions'),
       icon: HelpCircle,
       superAdminOnly: true,
     },

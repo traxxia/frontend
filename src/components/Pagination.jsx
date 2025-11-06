@@ -13,7 +13,7 @@ const Pagination = ({
     showInfo = true
 }) => {
     // Don't render if there's only one page or no pages
-    if (totalPages <= 1) return null;
+    if (totalPages <= 1) return null; 
 
     // Calculate pagination info
     const startItem = ((currentPage - 1) * itemsPerPage) + 1;

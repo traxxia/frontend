@@ -25,28 +25,28 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
 
     // Company name validation
     if (!formData.company_name.trim()) {
-      errors.company_name = 'Company name is required';
+      errors.company_name = t('Company_name_is_required');
     } else if (!nameRegex.test(formData.company_name.trim())) {
-      errors.company_name = 'Company name can only contain letters and single spaces';
+      errors.company_name = t('Company_name_can_only_contain_letters_and_single_spaces');
     } else if (formData.company_name.trim().length < 2) {
-      errors.company_name = 'Company name must be at least 2 characters long';
+      errors.company_name = t('Company_name_must_be_at_least_2_characters_long');
     } else if (formData.company_name.trim().length > 20) {
-      errors.company_name = 'Company name must be at most 20 characters long';
+      errors.company_name = t('Company_name_must_be_at_most_20_characters_long');
     }
 
     if (!formData.industry) {
-      errors.industry = 'Industry is required';
+      errors.industry = t('Industry_is_required');
     }
 
     // Admin name validation
     if (!formData.admin_name.trim()) {
-      errors.admin_name = 'Admin name is required';
+      errors.admin_name = t('Admin_name_is_required');
     } else if (!nameRegex.test(formData.admin_name.trim())) {
-      errors.admin_name = 'Admin name can only contain letters and single spaces';
+      errors.admin_name = t('Admin_name_can_only_contain_letters_and_single_spaces');
     } else if (formData.admin_name.trim().length < 2) {
-      errors.admin_name = 'Admin name must be at least 2 characters long';
+      errors.admin_name = t('Admin_name_must_be_at_least_2_characters_long');
     } else if (formData.admin_name.trim().length > 20) {
-      errors.admin_name = 'Admin name must be at most 20 characters long';
+      errors.admin_name = t('Admin_name_must_be_at_most_20_characters_long');
     }
 
     // Email validation
@@ -63,7 +63,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     } else if (formData.admin_password.length < 8) {
       errors.admin_password = t('password_min_length_8') || 'Password must be at least 8 characters long';
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.admin_password)) {
-      errors.admin_password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+      errors.admin_password = t('Password_must_contain_at_least_one_uppercase_letter_one_lowercase_letter_and_one_number');
     }
 
     return errors;
@@ -130,7 +130,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     <div className="modal-overlay">
       <div className="modal-content centered">
         <div className="modal-header">
-          <h3>Create New Company</h3>
+          <h3>{t('create_new_company')}</h3>
         </div>
 
         <form onSubmit={handleSubmit} className="company-form">
@@ -138,7 +138,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
           <div className="form-section">
             <div className="form-grid">
               <div className="form-field">
-                <label>Company Name *</label>
+                <label>{t('company_name')} *</label>
                 <input
                   type="text"
                   name="company_name"
@@ -152,28 +152,28 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
               </div>
 
               <div className="form-field">
-                <label>Industry *</label>
+                <label>{t('industry')} *</label>
                 <select name="industry" value={formData.industry} onChange={handleChange} required>
-                  <option value="">Select Industry</option>
-                  <option value="Technology">Technology</option>
-                  <option value="Healthcare">Healthcare</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Retail">Retail</option>
-                  <option value="Education">Education</option>
-                  <option value="Other">Other</option>
+                  <option value="">{t('select_industry')}</option>
+                  <option value="Technology">{t('technology')}</option>
+                  <option value="Healthcare">{t('healthcare')}</option>
+                  <option value="Finance">{t('finance')}</option>
+                  <option value="Retail">{t('retail')}</option>
+                  <option value="Education">{t('education')}</option>
+                  <option value="Other">{t('other')}</option>
                 </select>
                 {errors.industry && <div className="error-message">{errors.industry}</div>}
               </div>
 
               <div className="form-field">
-                <label>Company Size</label>
+                <label>{t('company_size')}</label>
                 <select name="size" value={formData.size} onChange={handleChange}>
-                  <option value="">Select Size</option>
-                  <option value="startup">Startup (1-10)</option>
-                  <option value="small">Small (11-50)</option>
-                  <option value="medium">Medium (51-200)</option>
-                  <option value="large">Large (201-1000)</option>
-                  <option value="enterprise">Enterprise (1000+)</option>
+                  <option value="">{t('select_size')}</option>
+                  <option value="startup">{t('startup')} (1-10)</option>
+                  <option value="small">{t('small')} (11-50)</option>
+                  <option value="medium">{t('medium')} (51-200)</option>
+                  <option value="large">{t('large')} (201-1000)</option>
+                  <option value="enterprise">{t('enterprise')} (1000+)</option>
                 </select>
               </div>
             </div>
@@ -181,7 +181,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
 
           {/* Simple Logo Upload Section */}
           <div className="form-section">
-            <h4>Company Logo (Optional)</h4>
+            <h4>{t('company_logo')} (Optional)</h4>
             <div className="form-field">
               <input
                 type="file"
@@ -203,10 +203,10 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
 
           {/* Admin fields */}
           <div className="form-section">
-            <h4>Company Admin User</h4>
+            <h4>{t('company_admin_user')}</h4>
             <div className="form-grid">
               <div className="form-field">
-                <label>Admin Name *</label>
+                <label>{t('admin_name')} *</label>
                 <input
                   type="text"
                   name="admin_name"
@@ -220,7 +220,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
               </div>
 
               <div className="form-field">
-                <label>Admin Email *</label>
+                <label>{t('admin_email')} *</label>
                 <input
                   type="email"
                   name="admin_email"
@@ -234,7 +234,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
               </div>
 
               <div className="form-field full-width">
-                <label>Admin Password *</label>
+                <label>{t('admin_password')} *</label>
                 <input
                   type="password"
                   name="admin_password"
@@ -242,7 +242,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   value={formData.admin_password}
                   onChange={handleChange}
                   required
-                  placeholder="Minimum 8 characters"
+                  placeholder={t('Minimum_8_characters')}
                   minLength="8"
                 />
                 {errors.admin_password && <div className="error-message">{errors.admin_password}</div>}
@@ -261,7 +261,7 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
                   Creating...
                 </>
               ) : (
-                'Create Company'
+                t('create_company')
               )}
             </button>
           </div>
@@ -373,6 +373,7 @@ const CompanyManagement = ({ onToast }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [userRole, setUserRole] = useState('');
+  const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -503,11 +504,12 @@ const CompanyManagement = ({ onToast }) => {
       </div>
     );
   }
+  
 
   return (
     <div className="company-management">
       <div className="section-header">
-        <h2>{isSuperAdmin ? 'Company Management' : 'My Company'}</h2>
+        <h2>{isSuperAdmin ? t('company_management') : t('my_company')}</h2>
         <div className="header-actions">
           {/* Only show search for super admin or if there are multiple companies */}
           {(isSuperAdmin || companies.length > 1) && (
@@ -515,7 +517,7 @@ const CompanyManagement = ({ onToast }) => {
               <Search size={16} />
               <input
                 type="text"
-                placeholder="Search companies..."
+                placeholder={t('search_companies')}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -531,7 +533,7 @@ const CompanyManagement = ({ onToast }) => {
               onClick={() => setShowCreateForm(true)}
             >
               <Plus size={16} />
-              Create Company
+              {t('create_company')}
             </button>
           )}
         </div>
@@ -552,16 +554,16 @@ const CompanyManagement = ({ onToast }) => {
             <table className="company-table">
               <thead>
                 <tr>
-                  <th>Logo</th>
-                  <th>Company Name</th>
-                  {isSuperAdmin && <th>Admin Name</th>}
-                  {isSuperAdmin && <th>Admin Email</th>}
-                  <th>Industry</th>
-                  <th>Size</th>
-                  <th>Status</th>
-                  <th>Total Users</th>
-                  <th>Active Users</th>
-                  <th>Created Date</th>
+                  <th>{t('logo')}</th>
+                  <th>{t('company_name')}</th>
+                  {isSuperAdmin && <th>{t('admin_name')}</th>}
+                  {isSuperAdmin && <th>{t('admin_email')}</th>}
+                  <th>{t('industry')}</th>
+                  <th>{t('size')}</th>
+                  <th>{t('status')}</th>
+                  <th>{t('total_users')}</th>
+                  <th>{t('active_users')}</th>
+                  <th>{t('created_date')}</th>
                   {/* <th>Actions</th> */}
                 </tr>
               </thead>

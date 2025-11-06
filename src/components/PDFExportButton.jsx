@@ -141,32 +141,33 @@ const PDFExportButton = ({
       const html2canvas = (await import('html2canvas')).default;
 
       const canvas = await html2canvas(component, {
-        scale: 1.2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        removeContainer: true,
-        imageTimeout: 3000,
-        windowWidth: component.scrollWidth,
-        windowHeight: component.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Remove animations in cloned document for speed
-          const style = clonedDoc.createElement('style');
-          style.textContent = `
-            * { 
-              animation: none !important; 
-              transition: none !important; 
-            }
-          `;
-          clonedDoc.head.appendChild(style);
-        }
-      });
+  scale: 1.5, // ⚡ Faster, still sharp
+  useCORS: true,
+  allowTaint: true,
+  backgroundColor: '#ffffff',
+  logging: false,
+  removeContainer: true,
+  imageTimeout: 2000,
+  windowWidth: component.scrollWidth,
+  windowHeight: component.scrollHeight,
+  onclone: (clonedDoc) => {
+    const style = clonedDoc.createElement('style');
+    style.textContent = `
+      * { 
+        animation: none !important; 
+        transition: none !important; 
+        opacity: 1 !important;
+      }
+    `;
+    clonedDoc.head.appendChild(style);
+  }
+});
+
 
       return {
         canvas,
         name,
-        imgData: canvas.toDataURL('image/png', 0.85)
+        imgData: canvas.toDataURL('image/png', 0.7)
       };
     } catch (error) {
       console.error(`Failed to capture ${name}:`, error);
@@ -221,44 +222,48 @@ const PDFExportButton = ({
         '.strategic-page-section'
       ];
 
-      let capturedCount = 0;
+ // Only capture first valid strategic container
+let capturedCount = 0;
+let captured = false;
 
-      // Try each selector to find strategic content
-      for (const selector of strategicSelectors) {
-        const elements = document.querySelectorAll(selector);
+// Try each selector to find strategic content
+for (const selector of strategicSelectors) {
+  const element = document.querySelector(selector);
 
-        for (const element of elements) {
-          if (element && element.offsetHeight > 50) {
-            const result = await captureComponent(selector, 'Strategic Analysis');
+  if (element && element.offsetHeight > 50) {
+    const result = await captureComponent(selector, 'Strategic Analysis');
 
-            if (result) {
-              pdf.addPage();
+    if (result) {
+      pdf.addPage();
 
-              // Add section title
-              pdf.setFontSize(16);
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(59, 130, 246);
-              pdf.text(result.name, 20, 25);
+      const marginX = 20;
+      const marginTop = 20;
 
-              // Calculate image dimensions to fit page
-              const imgWidth = pageWidth - 40;
-              const canvas = result.canvas;
-              const imgHeight = (canvas.height * imgWidth) / canvas.width;
-              const maxHeight = pageHeight - 60;
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(59, 130, 246);
+      pdf.text(result.name, marginX, marginTop);
 
-              if (imgHeight > maxHeight) {
-                const scale = maxHeight / imgHeight;
-                pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
-              } else {
-                pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
-              }
+      const canvas = result.canvas;
+      const imgWidth = pageWidth - marginX * 2;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const maxHeight = pageHeight - 30;
+      const finalHeight = Math.min(imgHeight, maxHeight);
+      const yPos = marginTop + 8;
 
-              capturedCount++;
-            }
-            break; // Only capture once per selector type
-          }
-        }
-      }
+      pdf.addImage(result.imgData, "PNG", marginX, yPos, imgWidth, finalHeight);
+      capturedCount++;
+      captured = true;
+      break; // ✅ stop printing
+    }
+  }
+}
+
+if (!captured) {
+  onToastMessage?.('No strategic analysis components could be captured', 'error');
+  return;
+}
+
 
       if (capturedCount === 0) {
         onToastMessage?.('No strategic analysis components could be captured', 'error');
@@ -302,7 +307,7 @@ const PDFExportButton = ({
       changes = prepareForCapture();
 
       // Short wait for DOM to settle
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Dynamic imports
       const jsPDF = (await import('jspdf')).default;
@@ -352,45 +357,43 @@ const PDFExportButton = ({
           { selector: '[data-component="core-adjacency"]', name: 'Core' }
         ],
         good: [
-          // Include all essential phase components
-          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
-          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
-          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-          { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
-          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
-          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-          { selector: '[data-component="core-adjacency"]', name: 'Core' },
-          // Good phase specific components - 5 financial analyses
           { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
           { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
           { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
           { selector: '[data-component="investment-performance"]', name: 'Investment Performance' },
-          { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' }
+          { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' },
+          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
+          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
+          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
+          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+          { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
+          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
+          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core' }
         ],
         advanced: [
           // Advanced phase has same components as good phase
-          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
-          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
-          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
-          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
-          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
-          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
-          { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
-          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
-          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
-          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
-          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
-          { selector: '[data-component="core-adjacency"]', name: 'Core' },
           { selector: '[data-component="profitability-analysis"]', name: 'Profitability Analysis' },
           { selector: '[data-component="growth-tracker"]', name: 'Growth Tracker' },
           { selector: '[data-component="liquidity-efficiency"]', name: 'Liquidity & Efficiency' },
           { selector: '[data-component="investment-performance"]', name: 'Investment Performance' },
-          { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' }
+          { selector: '[data-component="leverage-risk"]', name: 'Leverage & Risk' },
+          { selector: '[data-component="productivity"]', name: 'Productivity and Efficiency Metrics' },
+          { selector: '[data-component="full-swot"]', name: 'Full SWOT Portfolio' },
+          { selector: '[data-component="strategic-radar"]', name: 'Strategic Positioning Radar' },
+          { selector: '[data-component="porters-analysis"]', name: "Porter's Five Forces" },
+          { selector: '[data-component="pestel-analysis"]', name: 'PESTEL Analysis' },
+          { selector: '[data-component="competitive-advantage"]', name: 'Competitive Advantage Matrix' },
+          { selector: '[data-component="purchase-criteria"]', name: 'Purchase Criteria Matrix' },
+          { selector: '[data-component="loyalty-nps"]', name: 'Loyalty & NPS Analysis' },
+          { selector: '[data-component="expanded-capability"]', name: 'Capability Heatmap' },
+          { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
+          { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
+          { selector: '[data-component="core-adjacency"]', name: 'Core' }
         ]
       };
 
@@ -406,9 +409,10 @@ const PDFExportButton = ({
       const visibleComponents = components.filter(({ selector }) => {
         const element = document.querySelector(selector);
         return element &&
-          element.offsetHeight > 50 &&
-          element.offsetWidth > 50 &&
-          !element.closest('.collapsed');
+  element.offsetHeight > 80 &&
+  element.offsetWidth > 80 &&
+  window.getComputedStyle(element).display !== 'none' &&
+  !element.closest('.collapsed');
       });
 
       if (visibleComponents.length === 0) {
@@ -480,7 +484,7 @@ const PDFExportButton = ({
       setIsExportingPDF(false);
     }
   };
-
+  
   // Determine button text and action based on export type
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
 

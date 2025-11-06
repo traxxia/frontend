@@ -424,7 +424,7 @@ const Register = () => {
               <label className="checkbox-container">
                 <input type="checkbox" name="terms" checked={form.terms} onChange={handleChange} />
                 <span className="checkbox-label">
-                  <span className="required-indicator">*</span> I agree to the <a href="#terms" onClick={openTermsModal}>{t('terms_conditions') || 'Terms & Conditions'}</a> {t('and') || 'and'} <a href="#privacy" onClick={openPrivacyModal}>{t('privacy_policy') || 'Privacy Policy'}</a>
+                  <span className="required-indicator">*</span> {t('agree_terms')} <a href="#terms" onClick={openTermsModal}>{t('terms_conditions') || 'Terms & Conditions'}</a> {t('and') || 'and'} <a href="#privacy" onClick={openPrivacyModal}>{t('privacy_policy') || 'Privacy Policy'}</a>
                 </span>
               </label>
               {errors.terms && <div className="error-message">{errors.terms}</div>}

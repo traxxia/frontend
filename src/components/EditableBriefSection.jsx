@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Check, X, Loader, AlertCircle } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
+import '../styles/CompanyManagement.css';
+ 
+ 
 
 const EditableBriefSection = ({
   questions = [],
@@ -22,6 +25,7 @@ const EditableBriefSection = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const inputRefs = useRef({});
+  const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
   const { t } = useTranslation();
 
@@ -41,6 +45,15 @@ const EditableBriefSection = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+  if (briefFields.length > 0 && fieldRefs.current[briefFields[briefFields.length - 1].key]) {
+    fieldRefs.current[briefFields[briefFields.length - 1].key].scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'end' 
+    });
+  }
+}, [briefFields.length]);
 
   const isQuestionHighlighted = (questionId) => {
     if (!highlightedMissingQuestions?.missing_questions) return false;
@@ -259,15 +272,19 @@ const EditableBriefSection = ({
     const isHighlighted = isQuestionHighlighted(field.questionId);
 
     return (
-      <div className={`brief-item ${isEdited ? 'edited' : ''}`} style={{
-        border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
-        backgroundColor: isHighlighted ? '#fef3c7' : 'white',
-        borderRadius: '8px',
-        padding: isHighlighted ? '12px' : '8px',
-        margin: '8px 0',
-        transition: 'all 0.3s ease',
-        position: 'relative'
-      }}>
+      <div 
+        ref={el => fieldRefs.current[field.key] = el}
+        className={`brief-item ${isEdited ? 'edited' : ''}`} 
+        style={{
+          border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+          backgroundColor: isHighlighted ? '#fef3c7' : 'white',
+          borderRadius: '8px',
+          padding: isHighlighted ? '12px' : '8px',
+          margin: '8px 0',
+          transition: 'all 0.3s ease',
+          position: 'relative'
+        }}
+      >
         {isHighlighted && (
           <div style={{
             position: 'absolute',
