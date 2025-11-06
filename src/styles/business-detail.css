@@ -923,7 +923,7 @@
   width: 100%; 
   min-height: 100vh; /* Ensure full viewport coverage */
   height: auto; /* Allow content expansion */
-  background: white;
+  background: rgb(54, 54, 54);
   display: flex;
   flex-direction: column;
   border-radius: 0.5rem;

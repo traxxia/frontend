@@ -888,3 +888,223 @@
     justify-content: flex-start;
   }
 }
+
+/*Dark Mode*/
+
+
+[data-theme="dark"] .data-table th,
+[data-theme="dark"] .data-table td,
+[data-theme="dark"] .user-table th,
+[data-theme="dark"] .user-table td {
+  border-bottom: 1px solid #EEEFF7 !important; /* soft white border */
+}
+
+[data-theme="dark"] .data-table,
+[data-theme="dark"] .user-table {
+  border: 1px solid #f4f4f7 !important; /* outer border, if needed */
+}
+
+[data-theme="dark"] .data-table thead,
+[data-theme="dark"] .user-table thead {
+  border-bottom: 1px solid #EEEFF7 !important;
+}
+
+[data-theme="dark"] .audit-trail-container,
+[data-theme="dark"] .porters-container {
+  background: #191b22 !important; /* deep dark bg */
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .data-table,
+[data-theme="dark"] .user-table {
+  background: #212432 !important; /* Table main bg */
+  color: #55565c !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="dark"] .data-table thead,
+[data-theme="dark"] .user-table thead {
+  background: #23263a !important; /* Table header */
+  color: #fff !important;
+}
+
+[data-theme="dark"] .data-table th,
+[data-theme="dark"] .user-table th {
+  color: #fff !important;
+  background: #23263a !important;
+  border-bottom: 1px solid #292c38 !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .data-table td,
+[data-theme="dark"] .user-table td {
+  color: #e6eafd !important;
+  background: #23263a !important;
+  border-bottom: 1px solid #282c3b !important;
+}
+
+[data-theme="dark"] .data-table tr:nth-child(even) td,
+[data-theme="dark"] .user-table tr:nth-child(even) td {
+  background: #202432 !important; /* row banding */
+}
+
+[data-theme="dark"] .data-table tr:hover td,
+[data-theme="dark"] .user-table tr:hover td {
+  background: #262b37 !important;
+}
+
+[data-theme="dark"] .status-badge.active {
+  background: #37d67a !important;
+  color: #101a1f !important;
+}
+
+[data-theme="dark"] .search-container input,
+[data-theme="dark"] .filter-group input,
+[data-theme="dark"] .filter-group select {
+  background: #222634 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #393f58 !important;
+}
+
+[data-theme="dark"] .search-container .search-icon {
+  color: #728091 !important;
+}
+
+[data-theme="dark"] .section-container,
+[data-theme="dark"] .table-container {
+  background: #1a1d27 !important;
+  border: 1px solid #232a3a !important;
+}
+
+[data-theme="dark"] .cs-header,
+[data-theme="dark"] .section-header {
+  background: #181c24 !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .cs-title,
+[data-theme="dark"] .cs-header h2,
+[data-theme="dark"] .section-header h2 {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .header-actions button,
+[data-theme="dark"] .filter-button,
+[data-theme="dark"] .refresh-button,
+[data-theme="dark"] .apply-filters-btn,
+[data-theme="dark"] .quick-filter-btn,
+[data-theme="dark"] .clear-filters-btn {
+  background: #23263a !important;
+  color: #c1c8dc !important;
+  border: 1px solid #374151 !important;
+}
+
+[data-theme="dark"] .quick-filter-btn.active,
+[data-theme="dark"] .quick-filter-btn:hover,
+[data-theme="dark"] .apply-filters-btn:hover {
+  background: #2563eb !important;
+  color: #fff !important;
+  border-color: #2563eb !important;
+}
+
+[data-theme="dark"] .clear-filters-btn {
+  color: #bccdea !important;
+}
+[data-theme="dark"] .clear-filters-btn:hover {
+  background: #202432 !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .loading-state {
+  background: transparent !important;
+  color: #6074a0 !important;
+}
+
+[data-theme="dark"] .porters-container,
+[data-theme="dark"] .maturity-container,
+[data-theme="dark"] .productivity-metrics,
+[data-theme="dark"] .maturity-score-analysis {
+  background: #1a1d27 !important;   /* or #181c24 for even darker look */
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .data-table,
+[data-theme="dark"] .user-table {
+  border: 1px solid #313654 !important;         /* consistent outer border */
+  border-collapse: collapse !important;         /* helps fix double borders */
+}
+
+[data-theme="dark"] .data-table th,
+[data-theme="dark"] .data-table td,
+[data-theme="dark"] .user-table th,
+[data-theme="dark"] .user-table td {
+  border: 1px solid #313654 !important;         /* thin, clear grid lines everywhere */
+}
+
+[data-theme="dark"] .data-table thead,
+[data-theme="dark"] .user-table thead {
+  border-bottom: 2px solid #384465 !important;  /* thicker header bottom border */
+}
+
+[data-theme="dark"] .data-table th,
+[data-theme="dark"] .user-table th {
+  background: #23263a !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .data-table td,
+[data-theme="dark"] .user-table td {
+  background: #23263a !important;
+  color: #e6eafd !important;
+}
+
+[data-theme="dark"] .data-table tr:nth-child(even) td,
+[data-theme="dark"] .user-table tr:nth-child(even) td {
+  background: #202432 !important;
+}
+
+[data-theme="dark"] .data-table tr:hover td,
+[data-theme="dark"] .user-table tr:hover td {
+  background: #272d3e !important;
+}
+
+[data-theme="dark"] .analysis-modal-header {
+  background-color: #23263a !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .analysis-modal-header .analysis-modal-title,
+[data-theme="dark"] .analysis-modal-header h2,
+[data-theme="dark"] .analysis-modal-header * {
+  color: #fff !important;
+}
+[data-theme="dark"] .analysis-modal-header .analysis-modal-subtitle {
+  color: #a6b1c4 !important; /* or #cbd5e1 for softer gray */
+}
+
+
+[data-theme="dark"] .analysis-modal-body {
+  max-height: calc(90vh - 80px);
+  overflow: auto;
+  padding: 0;
+  background: #1a1d27;                    /* dark body to match modal header */
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .analysis-modal-close {
+  color: #fff !important;        /* bright white for good contrast */
+}
+[data-theme="dark"] .analysis-modal-close:hover {
+  background-color: #23263a !important;
+  box-shadow: 0 0 0 2px #37415133;
+  color: #fff !important;        /* stays white on hover */
+}
+
+[data-theme="dark"] .analysis-actions {
+  background: #23263a !important;  /* deep dark panel background */
+  padding: 8px 12px;
+  border-bottom: 1px solid #EEEFF7 !important;  /* mild white border */
+  display: flex;
+  justify-content: flex-start;
+}

@@ -417,6 +417,11 @@
   min-height: 400px;
 }
 
+[data-theme="dark"] .tab-content {
+  background: #0f0f0f !important;    /* deep navy background */
+}
+
+
 /* Empty States */
 .empty-state {
   display: flex;
@@ -4432,4 +4437,78 @@
   }
 
 }
+
+[data-theme="dark"] .company-filter-select,
+[data-theme="dark"] .company-filter-container select {
+  background: #242b3a !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
+}
+
+[data-theme="dark"] .user-table-wrapper {
+  background: #171c24; /* table card background */
+  border: 1px solid #23304b;
+}
+
+[data-theme="dark"] .user-table {
+  background: #181c24;
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .user-table thead {
+  background-color: #212938;
+}
+
+[data-theme="dark"] .user-table th {
+  color: #fff;
+  border-bottom: 1px solid #262f3a;
+}
+
+[data-theme="dark"] .user-table td {
+  background: #181c24;
+  color: #e5e7eb;
+  border-bottom: 1px solid #222a33;
+}
+
+[data-theme="dark"] .user-table tr:nth-child(even) td {
+  background: #1e2231; /* subtle row banding */
+}
+
+[data-theme="dark"] .user-table tr:hover td {
+  background: #222742;
+}
+
+[data-theme="dark"] .view-button {
+  background: #262f40;
+  color: #d6e3fa;
+}
+
+[data-theme="dark"] .view-button:hover {
+  background: #2e466b;
+  color: #fff;
+}
+
+[data-theme="dark"] .user-history-stats-container {
+  background: #111113;
+}
+
+[data-theme="dark"] .user-details-panel{
+  background: #171717;
+}
+
+[data-theme="dark"] .popup-content.large {
+  background: #23263a !important;
+  color: #e5e7eb !important;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 8px 40px rgba(18,24,44,0.7); /* stronger, softer dark shadow */
+}
+
 

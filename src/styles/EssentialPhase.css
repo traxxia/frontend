@@ -5157,3 +5157,12 @@
     gap: 12px;
   }
 }
+
+/*Dark Mode*/
+[data-theme="dark"] .strategic-radar-container {
+  background: #23263a !important;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(16, 22, 42, 0.24);
+  color: #e5e7eb !important;
+}

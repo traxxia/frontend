@@ -9287,3 +9287,71 @@
   color: #667eea;
   font-weight: 500;
 }
+
+/*Dark Mode*/
+
+[data-theme="dark"] .gauge-score,
+[data-theme="dark"] .score-number {
+  color: #e5e7eb !important;        /* light gray/white for metrics */
+}
+[data-theme="dark"] .score-level,
+[data-theme="dark"] .maturity-profile {
+  color: #72e77c !important;        /* accent green or light blue for "MANAGED" or similar tags */
+}
+[data-theme="dark"] .gauge-label,
+[data-theme="dark"] .gauge-chartvalue,
+[data-theme="dark"] .maturity-profile {
+  color: #b2b8c5 !important;        /* softer light for sublabels and summary */
+}
+
+[data-theme="dark"] .competitive-advantage-tabs {
+  background: #23263a !important;
+  border-bottom: 1px solid #313654 !important;
+}
+
+[data-theme="dark"] .competitive-advantage-tabs .tab {
+  color: #c4cdf7 !important;
+  background: transparent !important;
+  border-bottom: 3px solid transparent !important;
+}
+
+[data-theme="dark"] .competitive-advantage-tabs .tab.active {
+  color: #fff !important;
+  background: #1e2130 !important;
+  border-bottom: 2.5px solid #4f8bfc !important;
+}
+
+[data-theme="dark"] .competitive-advantage-tabs .tab:hover:not(.active) {
+  background: #222634 !important;
+  color: #aee7fa !important;
+}
+
+[data-theme="dark"] .section-header h3 {
+  color: #e8eaf3 !important;
+}
+
+ [data-theme="dark"] .financial-empty-state {
+  background: #23263a !important;
+  color: #e5e7eb !important;
+  border-radius: 12px;
+  border: 1px solid #303341 !important;
+}
+
+[data-theme="dark"] .competitive-advantage-container {
+  background: #222435 !important;    /* deep navy background */
+  border-radius: 16px;
+  box-shadow: 0 4px 20px #13151f33;  /* soft, dark shadow */
+  overflow: hidden;
+  color: #e5e7eb !important;         /* readable text */
+  border: 1.5px solid #303343 !important; /* clear border matching card look */
+}
+
+ [data-theme="dark"] .modern-card-content-inner {
+  background: #23263a !important;
+  color: #e5e7eb !important;
+  border-radius: 0px;
+  box-shadow: none;
+  padding: 10px 20px 10px 10px;
+  transition: none;
+  overflow-x: hidden;
+}

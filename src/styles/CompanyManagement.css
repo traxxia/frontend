@@ -228,8 +228,6 @@ body {
   font-size: 14px;
 }
 
-
-
 .company-table th {
   color: var(--text-dark);
   font-weight: 600;
@@ -281,6 +279,10 @@ body {
 }
 [data-theme="dark"] option {
   color: var(--color-text-dark);
+}
+[data-theme="dark"] .company-table th {
+  color: #ffffff; 
+  border-bottom: 2px solid #374151; 
 }
 
 
@@ -955,10 +957,63 @@ body.modal-open {
   }
 }
 
+[data-theme="dark"] .brief-list .brief-item {
+  background: #3f3f3f  !important;        /* deep dark navy */
+  color: #eaf1fb !important;             /* soft cool white */
+  border: 1px solid #303346 !important;
+}
+
+[data-theme="dark"] .brief-item .item-label,
+[data-theme="dark"] .brief-item .item-text {
+  color: #eaf1fb !important;
+}
+
+[data-theme="dark"] .brief-item .edited-indicator {
+  color: #81cfff !important;             /* pale blue for edited/markers */
+}
+
+[data-theme="dark"] .brief-item .edit-button {
+  background: #232742 !important;
+  color: #eaf1fb !important;
+  border: none !important;
+}
+
+[data-theme="dark"] .brief-item[style*="background-color: #fef3c7"] {
+  background-color: #3d3507 !important;  /* gold highlight, muted for dark */
+  color: #ffe888 !important;
+  border-color: #d4b65e !important;
+}
+
+[data-theme="dark"] .brief-item[style*="background-color: #fef3c7"] .item-label,
+[data-theme="dark"] .brief-item[style*="background-color: #fef3c7"] .item-text {
+  color: #ffe888 !important;
+}
+
+/* Darkmode Pagination CSS */
+[data-theme="dark"] .pagination button {
+  background: #374151; /* dark button bg */
+  border: 1px solid #4b5563; /* muted border */
+  color: #e0e0e0; /* light text */
+}
 
 
 
+[data-theme="dark"] .pagination button.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
 
+[data-theme="dark"] .pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #374151;
+  color: #6b7280;
+}
+
+[data-theme="dark"] .pagination-info {
+  color: #94a3b8;
+}
 
 
 

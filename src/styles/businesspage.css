@@ -261,14 +261,17 @@ body {
   background-color: var(--color-bg-secondary) !important;
 }
 
-[data-theme="dark"] .purchase-criteria,
-[data-theme="dark"] .loyalty-nps,
+
 [data-theme="dark"] .capability-heatmap,
 [data-theme="dark"] .channel-heatmap,
 [data-theme="dark"] .swot-analysis-container,
 [data-theme="dark"] .customer-segmentation {
   background-color: var(--color-text-light);
+}
 
+[data-theme="dark"] .loyalty-nps,
+[data-theme="dark"] .purchase-criteria {
+  background-color: #222435;
 }
 
 [data-theme="dark"] .item-text:hover {
@@ -2831,3 +2834,34 @@ body {
   padding: 0rem;
   background: #ffffffff;
 } 
+
+/*Dark Mode*/
+
+[data-theme="dark"] .dropdown-option:hover {
+  background-color: #23263a !important;   /* deep navy highlight */
+  color: #90cdf4 !important;              /* light blue text */
+  padding-left: 20px;
+}
+
+[data-theme="dark"] .dropdown-menu-options {
+  background: #23263a !important;         /* card/navy background */
+  border: 2px solid #313654 !important;   /* thick, visible border */
+  box-shadow: 0 8px 32px #21253a88;       /* soft modal shadow */
+}
+
+[data-theme="dark"] .dropdown-option {
+  color: #e3eafd !important;
+  border-bottom: 1px solid #313654 !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] .dropdown-option:hover,
+[data-theme="dark"] .dropdown-option:focus {
+  background-color: #202535 !important;   /* muted darker highlight */
+  color: #8fc6ff !important;              /* blue-accent highlight */
+  padding-left: 20px;
+}
+
+[data-theme="dark"] .dropdown-option .bullet {
+  background-color: #60a5fa !important;   /* blue bullet for selected */
+}
