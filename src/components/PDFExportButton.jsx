@@ -177,117 +177,90 @@ const PDFExportButton = ({
 
   // Main strategic export function
   const handleDownloadStrategicAnalysis = async () => {
-    if (!strategicData) {
-      onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
+  if (!strategicData) {
+    onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
+    return;
+  }
+
+  let changes = [];
+
+  try {
+    setIsExportingPDF(true);
+    changes = prepareForCapture();
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const jsPDF = (await import('jspdf')).default;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    // 🧾 Title Page
+    pdf.setFontSize(24);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(59, 130, 246);
+    pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
+
+    pdf.setFontSize(16);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
+
+    pdf.setFontSize(12);
+    pdf.setTextColor(128, 128, 128);
+    pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
+
+    // 🧠 Define your 3 strategic blocks here
+    const strategicBlocks = [
+      { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
+      { selector: '[data-component="strategic-execution"]', name: 'Execution & Monitoring' },
+      { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Long-Term Reinforcement' },
+    ];
+
+    let capturedCount = 0;
+
+    for (const { selector, name } of strategicBlocks) {
+      const result = await captureComponent(selector, name);
+      if (result) {
+        pdf.addPage();
+        const marginX = 20;
+        const marginTop = 20;
+
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(59, 130, 246);
+        pdf.text(name, marginX, marginTop);
+
+        const canvas = result.canvas;
+        const imgWidth = pageWidth - marginX * 2;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const maxHeight = pageHeight - 40;
+        const finalHeight = Math.min(imgHeight, maxHeight);
+
+        pdf.addImage(result.imgData, 'PNG', marginX, marginTop + 10, imgWidth, finalHeight);
+        capturedCount++;
+      }
+    }
+
+    if (capturedCount === 0) {
+      onToastMessage?.('No strategic blocks could be captured.', 'error');
       return;
     }
 
-    let changes = [];
+    // 💾 Save the PDF
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${timestamp}.pdf`;
+    pdf.save(filename);
 
-    try {
-      setIsExportingPDF(true);
+    onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
 
-      // Fast preparation
-      changes = prepareForCapture();
-
-      // Short wait for DOM to settle
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Dynamic imports
-      const jsPDF = (await import('jspdf')).default;
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Title page
-      pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(59, 130, 246);
-      pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
-
-      pdf.setFontSize(16);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-
-      pdf.setFontSize(12);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
-
-      // Define strategic components to capture
-      const strategicSelectors = [
-        '.strategic-content',
-        '.strategic-section',
-        '.strategic-analysis-container',
-        '.strategic-page-section'
-      ];
-
- // Only capture first valid strategic container
-let capturedCount = 0;
-let captured = false;
-
-// Try each selector to find strategic content
-for (const selector of strategicSelectors) {
-  const element = document.querySelector(selector);
-
-  if (element && element.offsetHeight > 50) {
-    const result = await captureComponent(selector, 'Strategic Analysis');
-
-    if (result) {
-      pdf.addPage();
-
-      const marginX = 20;
-      const marginTop = 20;
-
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(59, 130, 246);
-      pdf.text(result.name, marginX, marginTop);
-
-      const canvas = result.canvas;
-      const imgWidth = pageWidth - marginX * 2;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const maxHeight = pageHeight - 30;
-      const finalHeight = Math.min(imgHeight, maxHeight);
-      const yPos = marginTop + 8;
-
-      pdf.addImage(result.imgData, "PNG", marginX, yPos, imgWidth, finalHeight);
-      capturedCount++;
-      captured = true;
-      break; // ✅ stop printing
-    }
+  } catch (error) {
+    console.error('Strategic PDF export error:', error);
+    onToastMessage?.('Failed to generate strategic PDF. Please try again.', 'error');
+  } finally {
+    if (changes.length > 0) restoreChanges(changes);
+    setIsExportingPDF(false);
   }
-}
+};
 
-if (!captured) {
-  onToastMessage?.('No strategic analysis components could be captured', 'error');
-  return;
-}
-
-
-      if (capturedCount === 0) {
-        onToastMessage?.('No strategic analysis components could be captured', 'error');
-        return;
-      }
-
-      // Save PDF
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${timestamp}.pdf`;
-      pdf.save(filename);
-
-      onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
-
-    } catch (error) {
-      console.error('Strategic PDF export error:', error);
-      onToastMessage?.('Failed to generate strategic PDF. Please try again.', 'error');
-    } finally {
-      // Always restore changes
-      if (changes.length > 0) {
-        restoreChanges(changes);
-      }
-      setIsExportingPDF(false);
-    }
-  };
 
   // Main analysis export function (enhanced with phase-by-phase content)
   const handleDownloadPhaseAnalysis = async () => {

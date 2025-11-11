@@ -46,25 +46,16 @@ const PortersFiveForces = ({
   const [isStreamingContent, setIsStreamingContent] = useState(false);
   const [displayProgress, setDisplayProgress] = useState(0);
 
-  // Keep inside PortersFiveForces
-const handleStreamUpdate = (data) => {
-  // Porter-specific structure handling
-  const parsed = {
-    executive_summary: data.executive_summary || {},
-    five_forces_analysis: data.five_forces_analysis || {},
-    key_improvements: data.key_improvements || []
+  const handleStreamUpdate = (data) => setStreamedData(data);
+  // ✅ This stays as a normal function
+  const handleStreamComplete = () => {
+    setIsStreamingContent(false);
+    setTimeout(() => {
+      if (activeSection === 'porters' && improvementsRef.current) {
+        improvementsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
   };
-  setStreamedData(parsed);
-};
-
-const handleStreamComplete = () => {
-  setIsStreamingContent(false);
-  setTimeout(() => {
-    if (activeSection === 'porters' && improvementsRef.current) {
-      improvementsRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 300);
-};
 
   // ✅ This should be OUTSIDE the function, after your other useEffects
   // 🔄 Smooth continuous slow scroll during Porter's streaming
@@ -237,29 +228,14 @@ const handleStreamComplete = () => {
 
   return (
     <>
-      {activeSection === 'porters' && (
-  <LiveStreamHandler
-    parsedData={parsePortersData(portersAnalysisData)}
-    isStreamingActive={isStreamingActive}
-    activeSection={activeSection}
-    onStreamingMount={(handleChunk) => {
-      const wrappedHandler = (chunk) => {
-        try {
-          const parsed = JSON.parse(chunk);
-          const data = parsed.porter_analysis || parsed.portersAnalysis || parsed;
-          handleChunk(JSON.stringify(data));
-        } catch (err) {
-          console.error('Error parsing Porter stream chunk:', err);
-        }
-      };
-      onStreamingMount(wrappedHandler);
-    }}
-    onStreamUpdate={handleStreamUpdate}
-    onStreamComplete={handleStreamComplete}
-  />
-)}
-
-
+      <LiveStreamHandler
+        parsedData={parsePortersData(portersAnalysisData)}
+        isStreamingActive={isStreamingActive}
+        activeSection={activeSection}
+        onStreamingMount={onStreamingMount}
+        onStreamUpdate={handleStreamUpdate}
+        onStreamComplete={handleStreamComplete}
+      />
     <div id="porters"  className={`porters-container ${isStreamingContent ? 'is-streaming' : ''}`} data-analysis-type="porters"
       data-analysis-name="Porter's Five Forces"
       data-analysis-order="6"

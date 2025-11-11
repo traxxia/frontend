@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader, SkipForward, Upload, FileText, Database, MessageCircle, Sparkles, Zap, Brain } from "lucide-react";
+import { Send, Loader, SkipForward, Upload, FileText, Database, BotMessageSquare, Sparkles, Zap, Brain } from "lucide-react";
 import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
@@ -1547,7 +1547,7 @@ const ChatComponent = ({
                 <div className={`message-wrapper ${message.type}`}>
                   {message.type === 'bot' && (
                     <div className="bot-avatar">
-                      <MessageCircle size={18} color="white" />
+                      <BotMessageSquare size={18} color="white" />
                     </div>
                   )}
 

@@ -236,23 +236,32 @@ const Dashboard = () => {
 
     // City validation (optional but if provided, must be valid)
     const cityTrimmed = businessFormData.city.trim();
+    const cityHasSpecialChars = /[^a-zA-Z\s]/.test(cityTrimmed);
+
     if (businessFormData.city && cityTrimmed.length === 0) {
       errors.city = t('city_cannot_contain_only_spaces');
     } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
       errors.city = t('city_min_length');
     } else if (cityTrimmed.length > 20) {
       errors.city = t('city_max_length');
+    } else if (cityHasSpecialChars) {
+      errors.city = t('city_cannot_contain_special_characters');
     }
 
     // Country validation (optional but if provided, must be valid)
-   const countryTrimmed = businessFormData.country.trim();
+    const countryTrimmed = businessFormData.country.trim();
+    const countryHasSpecialChars = /[^a-zA-Z\s]/.test(countryTrimmed);
+
     if (businessFormData.country && countryTrimmed.length === 0) {
       errors.country = t('country_cannot_contain_only_spaces');
     } else if (countryTrimmed.length > 0 && countryTrimmed.length < 2) {
       errors.country = t('country_min_length');
     } else if (countryTrimmed.length > 20) {
       errors.country = t('country_max_length');
+    } else if (countryHasSpecialChars) {
+      errors.country = t('country_cannot_contain_special_characters');
     }
+
 
     if (businessFormData.description && /\s{3,}/.test(businessFormData.description)) {
     errors.description = t('description_no_continuous_spaces');

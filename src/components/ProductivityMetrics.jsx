@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import LiveStreamHandler from "./LiveStreamHandler";
+import "../styles/streaming.css";
 
 const AnalysisEmptyState = ({ analysisDisplayName, icon: Icon, onImproveAnswers, onRegenerate, isRegenerating, canRegenerate, userAnswers, minimumAnswersRequired }) => (
   <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -35,19 +37,93 @@ const ProductivityMetrics = ({
   const [hasGenerated, setHasGenerated] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
+  
 
+  const [streamedData, setStreamedData] = useState({
+    employeeProductivity: {},
+    costStructure: {},
+    valueDrivers: [],
+    improvementOpportunities: []
+  });
+
+  const [highlightedSection, setHighlightedSection] = useState(null);
+
+  const handleStreamUpdate = (newData) => {
+    setStreamedData((prev) => {
+      const updated = { ...prev };
+
+      if (newData.valueDrivers) {
+        updated.valueDrivers = [...new Set([...prev.valueDrivers, ...newData.valueDrivers])];
+      }
+      if (newData.improvementOpportunities) {
+        updated.improvementOpportunities = [
+          ...new Set([...prev.improvementOpportunities, ...newData.improvementOpportunities]),
+        ];
+      }
+      if (newData.employeeProductivity) {
+        updated.employeeProductivity = { ...prev.employeeProductivity, ...newData.employeeProductivity };
+      }
+      if (newData.costStructure) {
+        updated.costStructure = { ...prev.costStructure, ...newData.costStructure };
+      }
+
+      return updated;
+    });
+  };
+
+  const handleStreamComplete = () => {
+    setIsStreamingActive(false);
+    console.log("✅ Productivity metrics streaming complete");
+  };
+
+  const [isStreamingActive, setIsStreamingActive] = useState(false);
+  const [displayProgress, setDisplayProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isStreamingActive) return;
+
+    let lastTime = 0;
+    const scrollSpeed = 0.4; // Adjust this for smoother or faster scrolling
+    let animationFrame;
+
+    const scrollSmoothly = (timestamp) => {
+      if (!lastTime) lastTime = timestamp;
+      const delta = timestamp - lastTime;
+
+      if (delta > 16) {
+        const metricsContainer = document.getElementById('productivityMetrics');
+        if (metricsContainer) {
+          metricsContainer.scrollBy({ top: scrollSpeed, behavior: 'smooth' });
+        }
+        lastTime = timestamp;
+      }
+
+      animationFrame = requestAnimationFrame(scrollSmoothly);
+    };
+
+    animationFrame = requestAnimationFrame(scrollSmoothly);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [isStreamingActive, streamedData]);
+
+  
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
   };
 
-  const handleRegenerate = async () => {
-    if (onRegenerate) {
-      setError(null);
-      onRegenerate();
-    }
+  const handleRegenerate = () => {
+    setDisplayProgress(0);
+    setStreamedData({
+      employeeProductivity: {},
+     costStructure: {},
+     valueDrivers: [],
+     improvementOpportunities: []
+ });
+    setIsStreamingActive(true);
+    if (onRegenerate) onRegenerate();
   };
+
 
   const handleRetry = () => {
     setError(null);
@@ -55,6 +131,8 @@ const ProductivityMetrics = ({
       onRegenerate();
     }
   };
+
+  
 
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
@@ -158,11 +236,18 @@ const ProductivityMetrics = ({
     const chartData = convertObjectToChartData(obj);
 
     return (
-      <div className="section-container" key={sectionKey} style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',  
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
+      <div
+        data-section={sectionKey}
+        className="section-container fade-in"
+        key={sectionKey}
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          transition: 'transform 0.3s ease, opacity 0.3s ease',
+        }}
+      >
+
         <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -206,11 +291,17 @@ const ProductivityMetrics = ({
 
     if (typeof array[0] === 'string') {
       return (
-        <div className="section-container" key={sectionKey} style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',  
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
+        <div
+          data-section={sectionKey}
+          className={`section-container fade-in ${highlightedSection === sectionKey ? 'streaming-highlight' : ''}`}
+          key={sectionKey}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -245,7 +336,9 @@ const ProductivityMetrics = ({
                       borderBottom: '1px solid #dee2e6',
                       transition: 'background-color 0.2s'
                     }}>
-                      <td style={{ padding: '12px' }}>{item}</td>
+                      <td style={{ padding: '12px' }}>
+                        <span className="stream-fade">{item}</span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -302,7 +395,9 @@ const ProductivityMetrics = ({
                       transition: 'background-color 0.2s'
                     }}>
                       {keys.map(key => (
-                        <td key={key} style={{ padding: '12px' }}>{formatValue(item[key], key)}</td>
+                        <td key={key} style={{ padding: '12px' }}>
+                          <span className="stream-fade">{formatValue(item[key], key)}</span>
+                        </td>
                       ))}
                     </tr>
                   ))}
@@ -389,14 +484,41 @@ const ProductivityMetrics = ({
 
   const productivityMetrics = data.productivityMetrics;
 
+  <style>
+{`
+  @keyframes fadeInRow {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .fade-in {
+    animation: fadeInRow 0.5s ease-in;
+  }
+`}
+</style>
+
   return (
     <div
+      id="productivityMetrics"
       data-analysis-type="productivityMetrics"
       data-analysis-name="Productivity Metrics"
       data-analysis-order="14">
 
-      {Object.keys(productivityMetrics).map((sectionKey) => {
-        const sectionData = productivityMetrics[sectionKey];
+      <LiveStreamHandler
+        parsedData={data?.productivityMetrics}
+        isStreamingActive={isStreamingActive}
+        onStreamingMount={() => setIsStreamingActive(true)}
+        onStreamUpdate={handleStreamUpdate}
+        onStreamComplete={handleStreamComplete}
+      />
+
+      {Object.keys(streamedData).map((sectionKey) => {
+        const sectionData = streamedData[sectionKey];
         const sectionTitle = formatFieldName(sectionKey);
 
         if (sectionData && typeof sectionData === 'object' && !Array.isArray(sectionData)) {
