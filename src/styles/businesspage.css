@@ -68,7 +68,7 @@ body {
   overflow: hidden;
   scroll-behavior: auto !important;
   position: relative;
-  transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
 }
 
 .main-container.analysis-expanded {
@@ -348,7 +348,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 0px;
-  transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
   transform-origin: left center;
   width: 50%;
   flex-shrink: 0;
@@ -563,7 +563,7 @@ body {
   flex-direction: column;
   scroll-behavior: auto !important;
   position: relative;
-  transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
   width: 50%;
   flex-basis: 50%;
   flex-shrink: 0;
@@ -647,7 +647,7 @@ body {
   border-bottom: 1px solid #ccc;
   border-radius: 0px;
   padding: 5px;
-  transition: all 0.2s ease;
+  /* transition: all 0.2s ease; */
   min-height: 60px;
   position: relative;
   scroll-margin: 0 !important;

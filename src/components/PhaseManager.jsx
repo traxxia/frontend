@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const PhaseManager = ({
     questions,
@@ -24,6 +24,10 @@ const PhaseManager = ({
 }) => { 
     const [completedPhases, setCompletedPhases] = useState(new Set());
     const isRegeneratingRef = useRef(false);
+    const [unlockedPhase, setUnlockedPhase] = useState(null); // The phase that was just unlocked (next phase)
+    const [showUnlockToast, setShowUnlockToast] = useState(false); // Controls PhaseUnlockToast visibility
+    const allPhasesCelebratedRef = useRef(false); // Prevent duplicate "all phases complete" celebration
+
 
     const PHASES = {
         INITIAL: "initial",
@@ -108,7 +112,7 @@ const PhaseManager = ({
         return { completedSet, answersMap };
     };
 
-    const loadExistingAnalysis = async () => {
+    const loadExistingAnalysis = useCallback(async () => {
         try {
             const token = getAuthToken();
             const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
@@ -135,13 +139,15 @@ const PhaseManager = ({
                     const { completedSet, answersMap } = loadCompletedQuestionsFromAPI(data.conversations);
                     onCompletedQuestionsUpdate(completedSet, answersMap);
 
-                    const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-                    const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL && q.severity === "mandatory");
-                    const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
-                    const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
+                    const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === "mandatory");
+                    const essentialQuestions = questions.filter(q => q.phase === 'essential' && q.severity === "mandatory");
+                    // Good phase governed by document upload; questions collection not needed here.
+                     const goodQuestions = questions.filter(q => q.phase === 'good');
+                    const advancedQuestions = questions.filter(q => q.phase === 'advanced');
 
                     const completedInitialQuestions = initialQuestions.filter(q => completedSet.has(q._id));
                     const completedEssentialQuestions = essentialQuestions.filter(q => completedSet.has(q._id));
+                    // Good phase questions currently not used for completion logic (document upload governs)
                     const completedGoodQuestions = goodQuestions.filter(q => completedSet.has(q._id));
                     const completedAdvancedQuestions = advancedQuestions.filter(q => completedSet.has(q._id));
 
@@ -184,7 +190,7 @@ const PhaseManager = ({
         } catch (error) {
             console.error('Error loading existing analysis:', error);
         }
-    };
+    }, [API_BASE_URL, getAuthToken, selectedBusinessId, setHasUploadedDocument, onDocumentInfoLoad, onCompletedQuestionsUpdate, onCompletedPhasesUpdate, questions, onAnalysisDataLoad]);
     // Simplified phase completion using API service
     const handleSimplifiedPhaseCompletion = async (phase, newCompletedSet) => {
         if (isRegeneratingRef.current) return;
@@ -284,16 +290,34 @@ const PhaseManager = ({
             const newPhases = new Set([...completedPhases, phaseToTrigger]);
             setCompletedPhases(newPhases);
             onCompletedPhasesUpdate(newPhases);
+             const nextPhaseMap = {
+                initial: "essential",
+                essential: "good",
+                good: "advanced",
+            };
+            const nextPhase = nextPhaseMap[phaseToTrigger];
+
+            if (nextPhase) {
+                setUnlockedPhase(nextPhase);
+                setShowUnlockToast(true);
+            } else {
+                showToastMessage?.("🎉 All phases completed!", "success");
+            }
             await handleSimplifiedPhaseCompletion(phaseToTrigger, newCompletedSet);
         }
 
         return newCompletedSet;
     };
 
-    // Handle phase completion (kept for backward compatibility)
-    const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
-        await handleSimplifiedPhaseCompletion(phase, updatedCompletedSet);
-    };
+    // All-phase completion watcher: whenever completedPhases updates, check if full set reached
+    useEffect(() => {
+        const phaseList = ['initial', 'essential', 'good', 'advanced'];
+        const allDone = phaseList.every(p => completedPhases.has(p));
+        if (allDone && !allPhasesCelebratedRef.current) {
+            allPhasesCelebratedRef.current = true;
+            showToastMessage?.('🎉 All phases completed! You have unlocked all analyses.', 'success');
+        }
+    }, [completedPhases, showToastMessage]);
 
     // Check if current phase allows analysis regeneration
     const canRegenerateAnalysis = () => {
@@ -370,8 +394,7 @@ const PhaseManager = ({
         if (selectedBusinessId && questionsLoaded && questions.length > 0) {
             loadExistingAnalysis();
         }
-    }, [selectedBusinessId, questionsLoaded, questions]);
-
+    }, [selectedBusinessId, questionsLoaded, questions, loadExistingAnalysis]);
     return {
         // State
         completedPhases,
@@ -392,7 +415,10 @@ const PhaseManager = ({
         createSimpleRegenerationHandler,
 
         // Refs
-        isRegeneratingRef
+        isRegeneratingRef,
+    unlockedPhase,
+    showUnlockToast,
+    setShowUnlockToast,
     };
 };
 

@@ -7,6 +7,7 @@ import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
 import StrategicAnalysis from "../components/StrategicAnalysis";
 import PhaseManager from "../components/PhaseManager";
+import PhaseUnlockToast from "../components/PhaseUnlockToast";
 import AnalysisContentManager from "../components/AnalysisContentManager";
 import { useBusinessSetup } from '../hooks/useBusinessSetup';
 import { extractBusinessName, showToastMessage as createToastMessage } from '../utils/businessHelpers';
@@ -617,6 +618,14 @@ const BusinessSetupPage = () => {
     <div className="business-setup-container">
       <MenuBar />
 
+      {/* Phase unlock popup (auto-closes after 2.5s) */}
+      <PhaseUnlockToast
+        phase={phaseManager.unlockedPhase}
+        show={phaseManager.showUnlockToast}
+        onClose={() => phaseManager.setShowUnlockToast(false)}
+        autoCloseMs={2500}
+      />
+
       {showToast.show && (
         <div className={`simple-toast ${showToast.type}`}>
           {showToast.message}
@@ -670,6 +679,8 @@ const BusinessSetupPage = () => {
               if (phase === 'good') {
                 try {
                   await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage);
+                  // Inform user about successful phase transition and what's next
+                  showToastMessage('Good Phase completed! Next: Advanced Phase.', 'success');
                 } catch (error) {
                   console.error('Error generating Good phase analysis:', error);
                   showToastMessage('File uploaded but analysis generation failed', 'error');
@@ -827,6 +838,8 @@ const BusinessSetupPage = () => {
                             saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                             hideDownload={false}
                             phaseAnalysisArray={phaseAnalysisArray}
+                            onRedirectToChat={handleRedirectToChat}
+                            onRedirectToBrief={handleRedirectToBrief}
                           />
                         </div>
                       )}
@@ -924,6 +937,7 @@ const BusinessSetupPage = () => {
                         saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                         hideDownload={false}
                         phaseAnalysisArray={phaseAnalysisArray}
+                        onRedirectToBrief={handleRedirectToBrief}
                       />
                     </div>
                   )}
@@ -999,6 +1013,7 @@ const BusinessSetupPage = () => {
                       saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                       hideDownload={false}
                       phaseAnalysisArray={phaseAnalysisArray}
+                      onRedirectToBrief={handleRedirectToBrief}
                     />
                   </div>
                 )}
