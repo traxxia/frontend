@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap,
     ChevronDown, ChevronRight, Shield, Users, BarChart3, Lightbulb, PieChart,
@@ -8,6 +8,9 @@ import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { StreamingRow } from './StreamingManager';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const CompetitiveLandscape = ({
     questions = [],
@@ -18,12 +21,21 @@ const CompetitiveLandscape = ({
     canRegenerate = true,
     competitiveLandscapeData = null,
     selectedBusinessId,
-    onRedirectToBrief
+    onRedirectToBrief,
+    isExpanded = true,
+    streamingManager,
+    cardId
 }) => {
     const [data, setData] = useState(competitiveLandscapeData);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [error, setError] = useState(null);
     const [expandedSections, setExpandedSections] = useState({});
+
+    const [visibleRows, setVisibleRows] = useState(0);
+    const [typingTexts, setTypingTexts] = useState({});
+    const streamingIntervalRef = useRef(null);
+
+    const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -47,26 +59,25 @@ const CompetitiveLandscape = ({
 
     const handleRegenerate = async () => {
         if (onRegenerate) {
+            streamingManager?.resetCard(cardId);
             onRegenerate();
         }
     };
 
-    // Handle retry for error state
     const handleRetry = () => {
         setError(null);
+        streamingManager?.resetCard(cardId);
         if (onRegenerate) {
             onRegenerate();
         }
     };
 
-    // Check if the competitive landscape data is empty/incomplete
     const isCompetitiveLandscapeDataIncomplete = (data) => {
         if (!data || typeof data !== 'object') return true;
 
         const competitors = Object.keys(data);
         if (competitors.length === 0) return true;
 
-        // Check if at least one competitor has meaningful data
         const hasValidCompetitor = competitors.some(competitor => {
             const competitorData = data[competitor];
             if (!competitorData || typeof competitorData !== 'object') return false;
@@ -83,6 +94,135 @@ const CompetitiveLandscape = ({
         return !hasValidCompetitor;
     };
 
+    const calculateTotalRows = (data) => {
+        if (!data || isCompetitiveLandscapeDataIncomplete(data)) {
+            return 0;
+        }
+
+        let total = 0;
+        const competitors = Object.keys(data);
+
+        competitors.forEach(competitor => {
+            const competitorData = data[competitor];
+            const categories = Object.keys(competitorData);
+
+            categories.forEach(category => {
+                const categoryData = competitorData[category];
+                if (Array.isArray(categoryData)) {
+                    total += categoryData.length;
+                } else {
+                    total += 1;
+                }
+            });
+        });
+
+        return total;
+    };
+
+    // ✅ Initialize visible rows when data is available
+    useEffect(() => {
+        const totalRows = calculateTotalRows(competitiveLandscapeData);
+
+        if (totalRows === 0) {
+            return;
+        }
+
+        if (!streamingManager?.shouldStream(cardId)) {
+            setVisibleRows(totalRows);
+        }
+    }, [competitiveLandscapeData, cardId, streamingManager]);
+
+    const typeText = (text, rowIndex, field, delay = 0) => {
+        if (!text) return;
+
+        setTimeout(() => {
+            let currentIndex = 0;
+            const key = `${rowIndex}-${field}`;
+
+            const interval = setInterval(() => {
+                if (currentIndex <= text.length) {
+                    setTypingTexts(prev => ({
+                        ...prev,
+                        [key]: text.substring(0, currentIndex)
+                    }));
+                    currentIndex++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, STREAMING_CONFIG.TYPING_SPEED);
+        }, delay);
+    };
+
+    useEffect(() => {
+        if (!streamingManager?.shouldStream(cardId)) {
+            return;
+        }
+
+        if (!competitiveLandscapeData || isRegenerating || isCompetitiveLandscapeDataIncomplete(competitiveLandscapeData)) {
+            return;
+        }
+
+        if (streamingIntervalRef.current) {
+            clearInterval(streamingIntervalRef.current);
+        }
+
+        setVisibleRows(0);
+        setTypingTexts({});
+        setUserHasScrolled(false);
+
+        const totalItems = calculateTotalRows(competitiveLandscapeData);
+        let currentRow = 0;
+
+        streamingIntervalRef.current = setInterval(() => {
+            if (currentRow < totalItems) {
+                setVisibleRows(currentRow + 1);
+
+                let rowCounter = 0;
+                const competitors = Object.keys(competitiveLandscapeData);
+
+                for (const competitor of competitors) {
+                    const competitorData = competitiveLandscapeData[competitor];
+                    const categories = Object.keys(competitorData);
+
+                    for (const category of categories) {
+                        const categoryData = competitorData[category];
+
+                        if (Array.isArray(categoryData)) {
+                            for (const item of categoryData) {
+                                if (rowCounter === currentRow) {
+                                    typeText(item, currentRow, 'item', 0);
+                                    currentRow++;
+                                    return;
+                                }
+                                rowCounter++;
+                            }
+                        } else {
+                            if (rowCounter === currentRow) {
+                                typeText(categoryData, currentRow, 'item', 0);
+                                currentRow++;
+                                return;
+                            }
+                            rowCounter++;
+                        }
+                    }
+                }
+
+                currentRow++;
+            } else {
+                clearInterval(streamingIntervalRef.current);
+                setVisibleRows(totalItems);
+                streamingManager.stopStreaming(cardId);
+                setUserHasScrolled(false);
+            }
+        }, STREAMING_CONFIG.ROW_INTERVAL);
+
+        return () => {
+            if (streamingIntervalRef.current) {
+                clearInterval(streamingIntervalRef.current);
+            }
+        };
+    }, [cardId, competitiveLandscapeData, isRegenerating, streamingManager, setUserHasScrolled]);
+
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({
             ...prev,
@@ -96,7 +236,6 @@ const CompetitiveLandscape = ({
             setHasGenerated(true);
             setError(null);
 
-            // Initialize expanded sections for all competitors
             const competitors = Object.keys(competitiveLandscapeData);
             const initialExpandedState = {};
             competitors.forEach(competitor => {
@@ -108,6 +247,14 @@ const CompetitiveLandscape = ({
             setHasGenerated(false);
         }
     }, [competitiveLandscapeData]);
+
+    useEffect(() => {
+        return () => {
+            if (streamingIntervalRef.current) {
+                clearInterval(streamingIntervalRef.current);
+            }
+        };
+    }, []);
 
     const getCategoryIcon = (category) => {
         const categoryLower = category.toLowerCase();
@@ -136,7 +283,6 @@ const CompetitiveLandscape = ({
         return category.charAt(0).toUpperCase() + category.slice(1);
     };
 
-    // Loading state
     if (isRegenerating) {
         return (
             <div className="porters-container">
@@ -153,7 +299,6 @@ const CompetitiveLandscape = ({
         );
     }
 
-    // Consolidated error state for all error conditions
     if (error ||
         (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
 
@@ -173,7 +318,6 @@ const CompetitiveLandscape = ({
         );
     }
 
-    // Check if data is incomplete and show missing questions checker
     if (!competitiveLandscapeData || isCompetitiveLandscapeDataIncomplete(competitiveLandscapeData)) {
         return (
             <div className="porters-container">
@@ -194,17 +338,41 @@ const CompetitiveLandscape = ({
 
     const competitors = Object.keys(data);
 
+    let currentRowIndex = 0;
+    const rowIndices = {};
+
+    competitors.forEach(competitor => {
+        const competitorData = data[competitor];
+        const categories = Object.keys(competitorData);
+
+        categories.forEach(category => {
+            const categoryData = competitorData[category];
+
+            if (Array.isArray(categoryData)) {
+                categoryData.forEach((item, itemIndex) => {
+                    const key = `${competitor}-${category}-${itemIndex}`;
+                    rowIndices[key] = currentRowIndex++;
+                });
+            } else {
+                const key = `${competitor}-${category}-single`;
+                rowIndices[key] = currentRowIndex++;
+            }
+        });
+    });
+
+    const isStreaming = streamingManager?.shouldStream(cardId);
+    const hasStreamed = streamingManager?.hasStreamed(cardId);
+
     return (
         <div className="porters-container full-swot-container"
             data-analysis-type="competitiveLandscape"
             data-analysis-name="Competitive Landscape"
             data-analysis-order="9">
 
-            <div className=" ">
+            <div className="">
                 {competitors.map((competitor, competitorIndex) => {
                     const competitorData = data[competitor];
                     const categories = Object.keys(competitorData);
-                    const IconComponent = getCategoryIcon('competitor');
 
                     return (
                         <div key={competitorIndex} className="section-container">
@@ -227,32 +395,61 @@ const CompetitiveLandscape = ({
                                         <tbody>
                                             {categories.map((category, categoryIndex) => {
                                                 const categoryData = competitorData[category];
-                                                const CategoryIcon = getCategoryIcon(category);
                                                 const categoryColor = getCategoryColor(category);
                                                 const categoryLabel = getCategoryLabel(category);
 
                                                 return Array.isArray(categoryData) ? (
-                                                    categoryData.map((item, itemIndex) => (
-                                                        <tr key={`${category}-${itemIndex}`}>
-                                                            {itemIndex === 0 && (
-                                                                <td rowSpan={categoryData.length}>
+                                                    categoryData.map((item, itemIndex) => {
+                                                        const key = `${competitor}-${category}-${itemIndex}`;
+                                                        const rowIndex = rowIndices[key];
+                                                        const isVisible = rowIndex < visibleRows;
+                                                        const isLast = rowIndex === visibleRows - 1;
+
+                                                        return (
+                                                            <StreamingRow
+                                                                key={key}
+                                                                isVisible={isVisible}
+                                                                isLast={isLast && isStreaming}
+                                                                lastRowRef={lastRowRef}
+                                                            >
+                                                                {itemIndex === 0 && (
+                                                                    <td rowSpan={categoryData.length}>
+                                                                        <span className={`status-badge ${categoryColor}`}>
+                                                                            {categoryLabel}
+                                                                        </span>
+                                                                    </td>
+                                                                )}
+                                                                <td>
+                                                                    {hasStreamed ? item : (typingTexts[`${rowIndex}-item`] || item)}
+                                                                </td>
+                                                            </StreamingRow>
+                                                        );
+                                                    })
+                                                ) : (
+                                                    (() => {
+                                                        const key = `${competitor}-${category}-single`;
+                                                        const rowIndex = rowIndices[key];
+                                                        const isVisible = rowIndex < visibleRows;
+                                                        const isLast = rowIndex === visibleRows - 1;
+
+                                                        return (
+                                                            <StreamingRow
+                                                                key={key}
+                                                                isVisible={isVisible}
+                                                                isLast={isLast && isStreaming}
+                                                                lastRowRef={lastRowRef}
+                                                            >
+                                                                <td>
                                                                     <span className={`status-badge ${categoryColor}`}>
                                                                         {categoryLabel}
                                                                     </span>
                                                                 </td>
-                                                            )}
-                                                            <td>{item}</td>
-                                                        </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr key={categoryIndex}>
-                                                        <td>
-                                                            <span className={`status-badge ${categoryColor}`}>
-                                                                {categoryLabel}
-                                                            </span>
-                                                        </td>
-                                                        <td>{categoryData}</td>
-                                                    </tr>
+                                                                <td>
+                                                                    {hasStreamed ? categoryData : (typingTexts[`${rowIndex}-item`] || categoryData)}
+                                                                </td>
+                                                            </StreamingRow>
+                                                        );
+                                                    })()
                                                 );
                                             })}
                                         </tbody>

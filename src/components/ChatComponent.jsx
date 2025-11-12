@@ -4,8 +4,7 @@ import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate, formatValidationResults } from '../utils/templateValidator';
-import { formatDate } from '../utils/dateUtils'; // adjust path if needed
-
+import { formatDate } from '../utils/dateUtils';
 
 const ChatComponent = ({
   selectedBusinessId,
@@ -53,6 +52,17 @@ const ChatComponent = ({
   const uploadedFileCardRef = useRef(null);
 
   useEffect(() => {
+    const handleConversationUpdate = async (event) => {
+      const { questionId, businessId } = event.detail;
+      await loadQuestionsAndConversations(businessId);
+    };
+    window.addEventListener("conversationUpdated", handleConversationUpdate);
+
+    return () => window.removeEventListener("conversationUpdated", handleConversationUpdate);
+  }, []);
+
+
+  useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
     loadQuestionsAndConversations();
@@ -67,81 +77,74 @@ const ChatComponent = ({
       });
     }
   }, [uploadedFileForAnalysis]);
-  /*
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);*/
-  
-  useEffect(() => {
-  if (questions.length === 0 || Object.keys(userAnswers).length === 0) return;
+    if (questions.length === 0 || Object.keys(userAnswers).length === 0) return;
 
-  let newMessages = [...messages];
-  let messageChanged = false;
+    let newMessages = [...messages];
+    let messageChanged = false;
 
-  questions.forEach((q) => {
-    const qId = q._id || q.question_id;
-    const newAnswerText = userAnswers[qId];
+    questions.forEach((q) => {
+      const qId = q._id || q.question_id;
+      const newAnswerText = userAnswers[qId];
 
-    if (newAnswerText && newAnswerText.trim() && newAnswerText.trim() !== '[Question Skipped]') {
-      const existingUserMessageIndex = newMessages.findIndex(
-        (msg) =>
-          msg.questionId === qId &&
-          msg.type === "user" &&
-          !msg.isFollowUp &&
-          !msg.isSkipped &&
-          !msg.isFileUpload
-      );
+      if (newAnswerText && newAnswerText.trim() && newAnswerText.trim() !== '[Question Skipped]') {
+        const existingUserMessageIndex = newMessages.findIndex(
+          (msg) =>
+            msg.questionId === qId &&
+            msg.type === "user" &&
+            !msg.isFollowUp &&
+            !msg.isSkipped &&
+            !msg.isFileUpload
+        );
 
-      if (existingUserMessageIndex !== -1) {
-        //  Update existing message
-        if (newMessages[existingUserMessageIndex].text !== newAnswerText) {
-          newMessages[existingUserMessageIndex].text = newAnswerText;
-          newMessages[existingUserMessageIndex].timestamp = new Date();
+        if (existingUserMessageIndex !== -1) {
+          if (newMessages[existingUserMessageIndex].text !== newAnswerText) {
+            newMessages[existingUserMessageIndex].text = newAnswerText;
+            newMessages[existingUserMessageIndex].timestamp = new Date();
+            messageChanged = true;
+          }
+        } else {
+          newMessages = newMessages.filter(
+            (msg) =>
+              !(
+                msg.questionId === qId &&
+                msg.type === "user" &&
+                msg.isSkipped === true
+              )
+          );
+
+          const relatedBotQuestion = newMessages.find(
+            (msg) => msg.questionId === qId && msg.type === "bot"
+          );
+
+          const newMsg = {
+            id: `${Date.now()}_${Math.random()}`,
+            type: "user",
+            text: newAnswerText,
+            timestamp: new Date(),
+            questionId: qId,
+            phase: q.phase,
+            isFollowUp: false,
+            isSkipped: false,
+          };
+
+          if (relatedBotQuestion) {
+            const botIndex = newMessages.indexOf(relatedBotQuestion);
+            newMessages.splice(botIndex + 1, 0, newMsg);
+          } else {
+            newMessages.push(newMsg);
+          }
+
           messageChanged = true;
         }
-      } else {
-        //  Remove any old "[Question Skipped]" message before inserting new one
-        newMessages = newMessages.filter(
-          (msg) =>
-            !(
-              msg.questionId === qId &&
-              msg.type === "user" &&
-              msg.isSkipped === true
-            )
-        );
-
-        // Find related bot message (for order)
-        const relatedBotQuestion = newMessages.find(
-          (msg) => msg.questionId === qId && msg.type === "bot"
-        );
-
-        const newMsg = {
-          id: `${Date.now()}_${Math.random()}`,
-          type: "user",
-          text: newAnswerText,
-          timestamp: new Date(),
-          questionId: qId,
-          phase: q.phase,
-          isFollowUp: false,
-          isSkipped: false,
-        };
-
-        if (relatedBotQuestion) {
-          const botIndex = newMessages.indexOf(relatedBotQuestion);
-          newMessages.splice(botIndex + 1, 0, newMsg);
-        } else {
-          newMessages.push(newMsg);
-        }
-
-        messageChanged = true;
       }
-    }
-  });
+    });
 
-  if (messageChanged) {
-    setMessages(newMessages);
-  }
-}, [userAnswers, questions]);
+    if (messageChanged) {
+      setMessages(newMessages);
+    }
+  }, [userAnswers, questions]);
 
 
   useEffect(() => {
@@ -153,7 +156,6 @@ const ChatComponent = ({
             block: 'center'
           });
 
-          // Optional: Add highlight effect
           uploadedFileCardRef.current.style.boxShadow = '0 0 0 3px rgba(14, 165, 233, 0.3)';
           setTimeout(() => {
             if (uploadedFileCardRef.current) {
@@ -161,12 +163,11 @@ const ChatComponent = ({
             }
           }, 2000);
 
-          // Notify completion
           if (onScrollCompleted) {
             onScrollCompleted();
           }
         }
-      }, 500); // Wait for tab change
+      }, 500);
     }
   }, [scrollToUploadCard, uploadedFileInfo, hasUploadedDocument]);
 
@@ -287,7 +288,6 @@ const ChatComponent = ({
       setIsLoading(true);
       const token = getAuthToken();
 
-      // Load questions first
       const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -302,8 +302,6 @@ const ChatComponent = ({
 
       setQuestions(availableQuestions);
       onQuestionsLoaded?.(availableQuestions);
-
-      // Single API call for conversations (which includes document info)
       const conversationUrl = `${API_BASE_URL}/api/conversations${selectedBusinessId ? `?business_id=${selectedBusinessId}` : ''}`;
 
       const conversationsResponse = await fetch(conversationUrl, {
@@ -315,8 +313,6 @@ const ChatComponent = ({
 
       if (conversationsResponse.ok) {
         const conversationsData = await conversationsResponse.json();
-
-        // Handle document info from the conversations API response
         const documentExists = conversationsData.document_info?.has_document === true;
         setHasUploadedDocument(documentExists);
 
@@ -331,8 +327,6 @@ const ChatComponent = ({
         } else {
           setUploadedFileInfo(null);
         }
-
-        // Handle business info
         const businessInfo = conversationsData.business_info;
         if (businessInfo) {
           const uploadDecisionMade = businessInfo.upload_decision_made === true;
@@ -352,7 +346,6 @@ const ChatComponent = ({
           startFreshConversation(availableQuestions);
         }
       } else {
-        // Reset states if API call fails
         setHasUploadedDocument(false);
         setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
         setUploadedFileInfo(null);
@@ -362,7 +355,6 @@ const ChatComponent = ({
     } catch (error) {
       console.error('Error loading data:', error);
       showToastMessage('Error loading data. Please refresh the page.', 'error');
-      // Reset states on error
       setHasUploadedDocument(false);
       setBusinessUploadDecision({ upload_decision_made: false, upload_decision: null });
       setUploadedFileInfo(null);
@@ -393,25 +385,26 @@ const ChatComponent = ({
       map[q._id] = q;
       return map;
     }, {});
-    conversationsData.conversations.forEach((conversation) => {
+
+    conversationsData.conversations.forEach((conversation, index) => {
       const questionId = conversation.question_id;
       const question = questionMap[questionId];
 
-      if (!question) return;
-
-      if (conversation.completion_status === 'complete' || conversation.completion_status === 'skipped') {
+      if (!question) {
+        return;
+      }
+      if (conversation.completion_status === "complete" || conversation.completion_status === "skipped") {
         completedQuestionIds.add(questionId);
-        if (conversation.completion_status === 'skipped') {
-          onNewAnswer?.(questionId, '[Question Skipped]');
+
+        if (conversation.completion_status === "skipped") {
+          onNewAnswer?.(questionId, "[Question Skipped]");
         } else {
           const allAnswers = conversation.conversation_flow
-            .filter(item => item.type === 'answer')
-            .map(a => a.text.trim())
-            .filter(text => text.length > 0 && text !== '[Question Skipped]');
-
+            .filter((item) => item.type === "answer")
+            .map((a) => a.text.trim())
+            .filter((text) => text.length > 0 && text !== "[Question Skipped]");
           if (allAnswers.length > 0) {
-            const concatenatedAnswer = allAnswers.join('. ');
-            onNewAnswer?.(questionId, concatenatedAnswer);
+            onNewAnswer?.(questionId, allAnswers.join(". "));
           }
         }
       }
@@ -430,80 +423,103 @@ const ChatComponent = ({
           messagesArray = advancedMessages;
       }
       if (conversation.conversation_flow.length > 0 || conversation.is_skipped) {
-        messagesArray.push({
+        const mainMsg = {
           id: `${questionId}_main_question`,
-          type: 'bot',
+          type: "bot",
           text: question.question_text,
-          timestamp: new Date(conversation.conversation_flow[0]?.timestamp || new Date()),
-          questionId: questionId,
+          timestamp: new Date(
+            conversation.conversation_flow[0]?.timestamp ||
+            conversation.last_updated ||
+            new Date()
+          ),
+          questionId,
           phase: question.phase,
           order: question.order,
-          isFollowUp: false
-        });
+          isFollowUp: false,
+        };
+        messagesArray.push(mainMsg);
         askedQuestions.add(questionId);
+      }
+      if (conversation.conversation_flow && conversation.conversation_flow.length > 0) {
 
-        if (conversation.is_skipped) {
-          messagesArray.push({
-            id: `${questionId}_skipped`,
-            type: 'user',
-            text: '[Question Skipped]',
-            timestamp: new Date(conversation.last_updated || new Date()),
-            questionId: questionId,
+        const sortedFlow = [...conversation.conversation_flow].sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        );
+
+        sortedFlow.forEach((interaction, idx) => {
+          const messageId = `${questionId}_${interaction.timestamp}_${idx}`;
+          const msg = {
+            id: messageId,
+            type: interaction.type === "question" ? "bot" : "user",
+            text: interaction.text,
+            timestamp: new Date(interaction.timestamp),
+            questionId,
             phase: question.phase,
-            order: question.order + 0.1,
+            isFollowUp: !!interaction.is_followup,
+            order: question.order + (idx + 1) * 0.0001,
+          };
+          messagesArray.push(msg);
+        });
+      }
+
+      if (conversation.is_skipped) {
+        const lastFlowItem =
+          conversation.conversation_flow?.[conversation.conversation_flow.length - 1] || null;
+        const lastIsSkipAnswer =
+          lastFlowItem &&
+          lastFlowItem.type === "answer" &&
+          lastFlowItem.text?.trim() === "[Question Skipped]";
+        if (!lastIsSkipAnswer) {
+          const skippedTs =
+            conversation.last_updated ||
+            lastFlowItem?.timestamp ||
+            new Date().toISOString();
+          const skipMsg = {
+            id: `${questionId}_skipped`,
+            type: "user",
+            text: "[Question Skipped]",
+            timestamp: new Date(skippedTs),
+            questionId,
+            phase: question.phase,
+            order: question.order + 0.0002,
             isFollowUp: false,
-            isSkipped: true
-          });
+            isSkipped: true,
+          };
+          messagesArray.push(skipMsg);
         }
       }
-      if (!conversation.is_skipped) {
-        let followupQuestionCount = 0;
 
-        conversation.conversation_flow.forEach((interaction, index) => {
-          const messageId = `${questionId}_${interaction.timestamp}_${index}`;
-
-          if (interaction.type === 'question') {
-            followupQuestionCount++;
-            messagesArray.push({
-              id: messageId,
-              type: 'bot',
-              text: interaction.text,
-              timestamp: new Date(interaction.timestamp),
-              questionId: questionId,
-              phase: question.phase,
-              order: question.order + 0.3 + (followupQuestionCount * 0.1),
-              isFollowUp: true
-            });
-          } else if (interaction.type === 'answer') {
-            const isFollowupAnswer = followupQuestionCount > 0;
-            messagesArray.push({
-              id: messageId,
-              type: 'user',
-              text: interaction.text,
-              timestamp: new Date(interaction.timestamp),
-              questionId: questionId,
-              phase: question.phase,
-              order: question.order + 0.2 + (followupQuestionCount * 0.1),
-              isFollowUp: isFollowupAnswer
-            });
-          }
-        });
-      }
     });
-    initialMessages.sort((a, b) => a.order - b.order);
-    essentialMessages.sort((a, b) => a.order - b.order);
-    advancedMessages.sort((a, b) => a.order - b.order);
-    const essentialQuestions = availableQuestions.filter(q => q.phase === 'essential');
-    const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestionIds.has(q._id));
-    const isEssentialComplete = essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+
+    const sortByOrderThenTime = (a, b) => {
+      if (a.order === undefined || b.order === undefined) {
+        return new Date(a.timestamp) - new Date(b.timestamp);
+      }
+      if (a.order === b.order) {
+        return new Date(a.timestamp) - new Date(b.timestamp);
+      }
+      return a.order - b.order;
+    };
+
+    initialMessages.sort(sortByOrderThenTime);
+    essentialMessages.sort(sortByOrderThenTime);
+    advancedMessages.sort(sortByOrderThenTime);
+    const essentialQuestions = availableQuestions.filter((q) => q.phase === "essential");
+    const completedEssentialQuestions = essentialQuestions.filter((q) =>
+      completedQuestionIds.has(q._id)
+    );
+    const isEssentialComplete =
+      essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
+
     const businessInfo = conversationsData.business_info;
     const uploadDecisionMade = businessInfo?.upload_decision_made === true;
     const uploadDecision = businessInfo?.upload_decision || null;
     const hasDocument = conversationsData.document_info?.has_document === true;
+
     if (businessInfo) {
       setBusinessUploadDecision({
         upload_decision_made: uploadDecisionMade,
-        upload_decision: uploadDecision
+        upload_decision: uploadDecision,
       });
     }
 
@@ -511,51 +527,49 @@ const ChatComponent = ({
       setHasUploadedDocument(true);
       if (conversationsData.document_info) {
         setUploadedFileInfo({
-          name: conversationsData.document_info.filename || 'Financial Document',
+          name: conversationsData.document_info.filename || "Financial Document",
           size: conversationsData.document_info.file_size || 0,
-          uploadDate: conversationsData.document_info.upload_date ?
-            new Date(conversationsData.document_info.upload_date).toLocaleDateString() :
-            'Previously uploaded'
+          uploadDate: conversationsData.document_info.upload_date
+            ? new Date(conversationsData.document_info.upload_date).toLocaleDateString()
+            : "Previously uploaded",
         });
       }
     } else {
       setHasUploadedDocument(false);
       setUploadedFileInfo(null);
     }
-    let finalMessages = [];
-    finalMessages = [...finalMessages, ...initialMessages];
-    finalMessages = [...finalMessages, ...essentialMessages];
+    let finalMessages = [...initialMessages, ...essentialMessages];
     const uploadDecisionMessages = [];
 
     if (isEssentialComplete) {
       if (!uploadDecisionMade && !hasDocument) {
         uploadDecisionMessages.push({
-          id: 'upload_decision_message',
-          type: 'bot',
-          text: 'Great! You\'ve completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?',
+          id: "upload_decision_message",
+          type: "bot",
+          text: "Great! You've completed the Essential phase. Would you like to upload financial data for enhanced analysis, or skip and continue with the remaining questions?",
           timestamp: new Date(),
-          questionId: 'upload_option',
-          phase: 'upload_decision',
+          questionId: "upload_option",
+          phase: "upload_decision",
           order: 1000,
-          severity: 'optional',
-          showUploadButtons: true
+          severity: "optional",
+          showUploadButtons: true,
         });
-      } else if (uploadDecision === 'skip' && !hasDocument) {
+      } else if (uploadDecision === "skip" && !hasDocument) {
         uploadDecisionMessages.push({
-          id: 'upload_skipped_message',
-          type: 'bot',
-          text: 'Financial data upload skipped. You can continue with the remaining questions. If you change your mind later, you can still upload your financial data using the button below.',
+          id: "upload_skipped_message",
+          type: "bot",
+          text: "Financial data upload skipped. You can continue with the remaining questions. If you change your mind later, you can still upload your financial data using the button below.",
           timestamp: new Date(),
-          questionId: 'upload_skipped',
-          phase: 'upload_decision',
+          questionId: "upload_skipped",
+          phase: "upload_decision",
           order: 1001,
-          severity: 'info',
-          showUploadButton: true
+          severity: "info",
+          showUploadButton: true,
         });
       }
     }
-    finalMessages = [...finalMessages, ...uploadDecisionMessages];
-    finalMessages = [...finalMessages, ...advancedMessages];
+
+    finalMessages = [...finalMessages, ...uploadDecisionMessages, ...advancedMessages];
     setMessages(finalMessages);
     setCompletedQuestions(completedQuestionIds);
     if (isEssentialComplete && !uploadDecisionMade && !hasDocument) {
@@ -564,26 +578,33 @@ const ChatComponent = ({
     }
 
     if (isEssentialComplete && uploadDecisionMade) {
-      const advancedQuestions = availableQuestions.filter(q => q.phase === 'advanced');
+      const advancedQuestions = availableQuestions.filter((q) => q.phase === "advanced");
       if (advancedQuestions.length > 0) {
-        const firstAdvancedQuestion = advancedQuestions.find(q => !completedQuestionIds.has(q._id));
+        const firstAdvancedQuestion = advancedQuestions.find((q) => !completedQuestionIds.has(q._id));
         if (firstAdvancedQuestion && !askedQuestions.has(firstAdvancedQuestion._id)) {
           setNextQuestion(firstAdvancedQuestion);
-          addMessageLocally('bot', firstAdvancedQuestion.question_text, {
+          addMessageLocally("bot", firstAdvancedQuestion.question_text, {
             questionId: firstAdvancedQuestion._id,
             phase: firstAdvancedQuestion.phase,
-            severity: firstAdvancedQuestion.severity
+            severity: firstAdvancedQuestion.severity,
           });
           return;
         }
       }
     }
     const lastConversation = conversationsData.conversations
-      .filter(conv => conv.conversation_flow.length > 0 || conv.is_skipped)
+      .filter((conv) => conv.conversation_flow.length > 0 || conv.is_skipped)
       .sort((a, b) => new Date(b.last_updated || b.created_at) - new Date(a.last_updated || a.created_at))[0];
 
-    if (lastConversation?.completion_status === 'incomplete' && !lastConversation.is_skipped) {
-      handleIncompleteConversation(lastConversation, questionMap, availableQuestions, completedQuestionIds, askedQuestions);
+
+    if (lastConversation?.completion_status === "incomplete" && !lastConversation.is_skipped) {
+      handleIncompleteConversation(
+        lastConversation,
+        questionMap,
+        availableQuestions,
+        completedQuestionIds,
+        askedQuestions
+      );
     } else {
       showNextQuestion(availableQuestions, completedQuestionIds, askedQuestions);
     }
@@ -635,15 +656,24 @@ const ChatComponent = ({
   };
 
   const addMessageLocally = (type, text, metadata = {}) => {
-    const isDuplicate = messages.some(msg =>
-      msg.type === type &&
-      msg.text === text &&
-      msg.questionId === metadata.questionId &&
-      msg.isFollowUp === (metadata.isFollowUp || false) &&
-      !metadata.isFileUpload
-    );
+    const isFileUpload = !!metadata.isFileUpload;
+    let isDuplicate = false;
 
-    if (isDuplicate && !metadata.isFileUpload) return null;
+    if (!isFileUpload) {
+      if (!metadata.isFollowUp) {
+        isDuplicate = messages.some(msg =>
+          msg.type === type &&
+          msg.text === text &&
+          msg.questionId === metadata.questionId &&
+          (msg.isFollowUp || false) === (metadata.isFollowUp || false)
+        );
+      } else {
+        isDuplicate = false;
+      }
+    }
+
+    if (isDuplicate) return null;
+
     const messageData = {
       id: `${Date.now()}_${Math.random()}`,
       type,
@@ -655,6 +685,7 @@ const ChatComponent = ({
     setMessages(prev => [...prev, messageData]);
     return messageData;
   };
+
 
   const validateAnswerWithML = async (questionText, answerText) => {
     try {
@@ -759,19 +790,72 @@ const ChatComponent = ({
       });
 
       const result = await response.json();
-      if (response.ok) {
-        onNewAnswer?.(questionId, '[Question Skipped]');
-        if (onQuestionCompleted) {
-          await onQuestionCompleted(questionId);
-        }
 
-        const newCompletedSet = new Set([...completedQuestions, questionId]);
-        setCompletedQuestions(newCompletedSet);
-        return { ...result, updatedCompleted: newCompletedSet, wasCompleted: true };
-      } else {
+      if (!response.ok) {
         throw new Error(result.error || 'Failed to skip question');
       }
+      let canonicalAnswer = '[Question Skipped]';
+      if (selectedBusinessId) {
+        try {
+          const convResp = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (convResp.ok) {
+            const convData = await convResp.json();
+            const questionConversation = (convData.conversations || []).find(conv => conv.question_id === questionId);
+
+            if (questionConversation) {
+              const allAnswers = (questionConversation.conversation_flow || [])
+                .filter(item => item.type === 'answer')
+                .map(a => (a.text || '').trim())
+                .filter(text => text.length > 0 && text !== '[Question Skipped]');
+
+              if (allAnswers.length > 0) {
+                canonicalAnswer = allAnswers.join('. ');
+              } else {
+                canonicalAnswer = '[Question Skipped]';
+              }
+            } else {
+              canonicalAnswer = '[Question Skipped]';
+            }
+          } else {
+            canonicalAnswer = '[Question Skipped]';
+          }
+        } catch (err) {
+          console.error('Failed to re-fetch conversations after skip:', err);
+          canonicalAnswer = '[Question Skipped]';
+        }
+      }
+
+      onNewAnswer?.(questionId, canonicalAnswer);
+
+      if (onQuestionCompleted) {
+        try {
+          await onQuestionCompleted(questionId);
+        } catch (qcErr) {
+          console.error('onQuestionCompleted handler failed:', qcErr);
+        }
+      }
+      const newCompletedSet = new Set([...completedQuestions, questionId]);
+      setCompletedQuestions(newCompletedSet);
+
+      try {
+        const question = questions.find(q => q._id === questionId);
+        const questionPhase = question ? question.phase : null;
+        if (onPhaseCompleted && questionPhase) {
+          await onPhaseCompleted(questionPhase, new Set(newCompletedSet));
+        }
+      } catch (phaseNotifyErr) {
+        console.error('Failed to notify phase completion (skip):', phaseNotifyErr);
+      }
+
+      return { ...result, updatedCompleted: newCompletedSet, wasCompleted: true };
     } catch (error) {
+      console.error('Error in saveSkippedQuestion:', error);
       throw error;
     }
   };
@@ -812,7 +896,7 @@ const ChatComponent = ({
         throw new Error(result.error || 'Failed to save file to database');
       }
 
-       return {
+      return {
         ...result,
         documentInfo: {
           has_document: true,
@@ -973,6 +1057,17 @@ const ChatComponent = ({
     }
   };
 
+  const removeUploadDecisionMessages = () => {
+    setMessages(prev =>
+      prev.filter(m =>
+        m.questionId !== 'upload_option' &&
+        m.questionId !== 'upload_skipped' &&
+        m.id !== 'upload_decision_message' &&
+        m.id !== 'upload_skipped_message'
+      )
+    );
+  };
+
   const handleUploadDecision = async (decision) => {
     if (decision === 'upload') {
       try {
@@ -1016,6 +1111,8 @@ const ChatComponent = ({
             upload_decision_made: true,
             upload_decision: 'skip'
           });
+          removeUploadDecisionMessages();
+
           addMessageLocally('bot',
             'Financial data upload skipped. You can continue with the remaining questions. If you change your mind later, you can still upload your financial data using the button below.',
             {
@@ -1232,8 +1329,6 @@ const ChatComponent = ({
       const dbResult = await saveFileToDatabase(file, validationResult);
       setUploadedFileForAnalysis(file);
       setShowTemplatesPopup(false);
-
-      // **KEY FIX**: Immediately update document info after successful upload
       setHasUploadedDocument(true);
       setUploadedFileInfo({
         name: file.name,
@@ -1247,7 +1342,6 @@ const ChatComponent = ({
         onFileUploaded(file, {
           ...validationResult,
           dbResult: dbResult,
-          // Pass document info to parent component
           documentInfo: {
             has_document: true,
             filename: file.name,
@@ -1531,12 +1625,10 @@ const ChatComponent = ({
               return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
             };
 
-            // Check if this is the last essential phase message or upload decision message
             const shouldShowFileCardAfter = (
               (message.phase === 'essential' || message.questionId === 'upload_option' || message.questionId === 'upload_skipped') &&
               isEssentialPhaseComplete() &&
               (uploadedFileInfo || hasUploadedDocument) &&
-              // Only show after the last essential/upload decision related message
               (index === messages.length - 1 ||
                 messages[index + 1]?.phase === 'advanced' ||
                 !messages.slice(index + 1).some(m => m.phase === 'essential' || m.questionId === 'upload_option' || m.questionId === 'upload_skipped'))
@@ -1632,7 +1724,7 @@ const ChatComponent = ({
                     )}
 
                     <div className="message-timestamp">
-                     {formatDate(message.timestamp)}
+                      {formatDate(message.timestamp)}
                       {message.type === 'bot' && message.phase && (
                         <span style={{ fontStyle: 'italic' }}>
                           - {message.phase} phase{message.isFollowUp && ' followup'}
@@ -1769,4 +1861,4 @@ const ChatComponent = ({
   );
 };
 
-export default ChatComponent;
+export default ChatComponent;  

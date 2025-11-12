@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { StreamingRow } from './StreamingManager';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const CompetitiveAdvantageMatrix = ({
     questions = [],
@@ -13,13 +16,26 @@ const CompetitiveAdvantageMatrix = ({
     canRegenerate = true,
     competitiveAdvantageData = null,
     selectedBusinessId,
-    onRedirectToBrief
+    onRedirectToBrief,
+    isExpanded = true,
+    streamingManager,
+    cardId
 }) => {
     const [data, setData] = useState(competitiveAdvantageData);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
-    const [expandedSections, setExpandedSections] = useState({});
+    const [expandedSections, setExpandedSections] = useState({
+        position: true,
+        choice: true,
+        differentiators: true
+    });
+
+    const [visibleRows, setVisibleRows] = useState(0);
+    const [typingTexts, setTypingTexts] = useState({});
+    const streamingIntervalRef = useRef(null);
+ 
+    const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -44,6 +60,7 @@ const CompetitiveAdvantageMatrix = ({
     const handleRegenerate = async () => {
         if (onRegenerate) {
             try {
+                streamingManager?.resetCard(cardId);
                 await onRegenerate();
             } catch (error) {
                 console.error('Error in CompetitiveAdvantage regeneration:', error);
@@ -93,6 +110,59 @@ const CompetitiveAdvantageMatrix = ({
         }));
     };
 
+    const calculateTotalRows = (data) => {
+        if (!data || isCompetitiveAdvantageDataIncomplete(data)) {
+            return 0;
+        }
+
+        let normalizedData;
+        if (data.competitiveAdvantage) {
+            normalizedData = data;
+        } else if (data.differentiators || data.competitivePosition) {
+            normalizedData = { competitiveAdvantage: data };
+        } else {
+            return 0;
+        }
+
+        const advantage = normalizedData.competitiveAdvantage;
+        let total = 0;
+ 
+        if (advantage.competitivePosition) {
+            total += 4; 
+        }
+ 
+        if (advantage.customerChoiceReasons && Array.isArray(advantage.customerChoiceReasons)) {
+            total += advantage.customerChoiceReasons.length;
+        }
+ 
+        if (advantage.differentiators && Array.isArray(advantage.differentiators)) {
+            total += advantage.differentiators.length;
+        }
+
+        return total;
+    };
+
+    const typeText = (text, rowIndex, field, delay = 0) => {
+        if (!text) return;
+
+        setTimeout(() => {
+            let currentIndex = 0;
+            const key = `${rowIndex}-${field}`;
+
+            const interval = setInterval(() => {
+                if (currentIndex <= text.length) {
+                    setTypingTexts(prev => ({
+                        ...prev,
+                        [key]: text.substring(0, currentIndex)
+                    }));
+                    currentIndex++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, STREAMING_CONFIG.TYPING_SPEED);
+        }, delay);
+    };
+
     useEffect(() => {
         if (competitiveAdvantageData) {
             let normalizedData;
@@ -117,6 +187,134 @@ const CompetitiveAdvantageMatrix = ({
             setHasGenerated(false);
         }
     }, [competitiveAdvantageData]);
+
+    useEffect(() => {
+        const totalRows = calculateTotalRows(data);
+
+        if (totalRows === 0) {
+            return;
+        }
+
+        if (!streamingManager?.shouldStream(cardId)) {
+            setVisibleRows(totalRows);
+        }
+    }, [data, cardId, streamingManager]);
+
+    useEffect(() => {
+        if (!streamingManager?.shouldStream(cardId)) {
+            return;
+        }
+
+        if (!data || isRegenerating || isCompetitiveAdvantageDataIncomplete(data)) {
+            return;
+        }
+
+        let normalizedData;
+        if (data.competitiveAdvantage) {
+            normalizedData = data;
+        } else if (data.differentiators || data.competitivePosition) {
+            normalizedData = { competitiveAdvantage: data };
+        } else {
+            return;
+        }
+
+        const advantage = normalizedData.competitiveAdvantage;
+
+        if (streamingIntervalRef.current) {
+            clearInterval(streamingIntervalRef.current);
+        }
+
+        setVisibleRows(0);
+        setTypingTexts({});
+        setUserHasScrolled(false);
+
+        const totalItems = calculateTotalRows(data);
+        let currentRow = 0;
+
+        streamingIntervalRef.current = setInterval(() => {
+            if (currentRow < totalItems) {
+                setVisibleRows(currentRow + 1);
+
+                let rowsProcessed = 0;
+ 
+                if (advantage.competitivePosition) {
+                    const positionIndex = currentRow - rowsProcessed;
+                    
+                    if (positionIndex === 0) {
+                        typeText('Overall Score', currentRow, 'metric', 0);
+                        typeText(String(advantage.competitivePosition.overallScore), currentRow, 'value', 200);
+                    } else if (positionIndex === 1) {
+                        typeText('Market Position', currentRow, 'metric', 0);
+                        typeText(advantage.competitivePosition.marketPosition, currentRow, 'value', 200);
+                    } else if (positionIndex === 2) {
+                        typeText('Sustainable Advantages', currentRow, 'metric', 0);
+                        typeText(String(advantage.competitivePosition.sustainableAdvantages), currentRow, 'value', 200);
+                    } else if (positionIndex === 3) {
+                        typeText('Vulnerable Advantages', currentRow, 'metric', 0);
+                        typeText(String(advantage.competitivePosition.vulnerableAdvantages), currentRow, 'value', 200);
+                    }
+
+                    if (positionIndex >= 0 && positionIndex < 4) {
+                        currentRow++;
+                        return;
+                    }
+
+                    rowsProcessed += 4;
+                }
+ 
+                if (advantage.customerChoiceReasons && Array.isArray(advantage.customerChoiceReasons)) {
+                    const choiceIndex = currentRow - rowsProcessed;
+                    
+                    if (choiceIndex >= 0 && choiceIndex < advantage.customerChoiceReasons.length) {
+                        const reason = advantage.customerChoiceReasons[choiceIndex];
+                        typeText(reason.reason, currentRow, 'reason', 0);
+                        typeText(String(reason.frequency || 0), currentRow, 'frequency', 200);
+                        if (reason.linkedDifferentiator) {
+                            typeText(reason.linkedDifferentiator, currentRow, 'linked', 400);
+                        }
+                        currentRow++;
+                        return;
+                    }
+
+                    rowsProcessed += advantage.customerChoiceReasons.length;
+                }
+ 
+                if (advantage.differentiators && Array.isArray(advantage.differentiators)) {
+                    const diffIndex = currentRow - rowsProcessed;
+                    
+                    if (diffIndex >= 0 && diffIndex < advantage.differentiators.length) {
+                        const diff = advantage.differentiators[diffIndex];
+                        typeText(diff.type, currentRow, 'type', 0);
+                        typeText(diff.description, currentRow, 'description', 200);
+                        typeText(`${diff.uniqueness}/10`, currentRow, 'uniqueness', 400);
+                        typeText(`${diff.customerValue}/10`, currentRow, 'customerValue', 500);
+                        typeText(`${diff.sustainability}/10`, currentRow, 'sustainability', 600);
+                    }
+                }
+
+                currentRow++;
+            } else {
+                clearInterval(streamingIntervalRef.current);
+                setVisibleRows(totalItems);
+                streamingManager.stopStreaming(cardId);
+                setUserHasScrolled(false);
+            }
+        }, STREAMING_CONFIG.ROW_INTERVAL);
+
+        return () => {
+            if (streamingIntervalRef.current) {
+                clearInterval(streamingIntervalRef.current);
+            }
+        };
+    }, [cardId, data, isRegenerating, streamingManager, setUserHasScrolled]);
+
+    useEffect(() => {
+        return () => {
+            if (streamingIntervalRef.current) {
+                clearInterval(streamingIntervalRef.current);
+            }
+        };
+    }, []);
 
     const getIntensityColor = (score) => {
         if (score >= 8) return 'high-intensity';
@@ -380,6 +578,31 @@ const CompetitiveAdvantageMatrix = ({
     }
 
     const advantage = data.competitiveAdvantage;
+    const isStreaming = streamingManager?.shouldStream(cardId);
+    const hasStreamed = streamingManager?.hasStreamed(cardId); 
+    let currentRowIndex = 0;
+    const positionIndices = {};
+    const choiceIndices = {};
+    const diffIndices = {};
+
+    if (advantage.competitivePosition) {
+        positionIndices.overallScore = currentRowIndex++;
+        positionIndices.marketPosition = currentRowIndex++;
+        positionIndices.sustainableAdvantages = currentRowIndex++;
+        positionIndices.vulnerableAdvantages = currentRowIndex++;
+    }
+
+    if (advantage.customerChoiceReasons && Array.isArray(advantage.customerChoiceReasons)) {
+        advantage.customerChoiceReasons.forEach((_, index) => {
+            choiceIndices[index] = currentRowIndex++;
+        });
+    }
+
+    if (advantage.differentiators && Array.isArray(advantage.differentiators)) {
+        advantage.differentiators.forEach((_, index) => {
+            diffIndices[index] = currentRowIndex++;
+        });
+    }
 
     return (
         <div className="competitive-advantage-container"
@@ -417,7 +640,7 @@ const CompetitiveAdvantageMatrix = ({
                                     {expandedSections.position ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
 
-                                {expandedSections.position !== false && (
+                                {expandedSections.position && (
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead>
@@ -427,76 +650,62 @@ const CompetitiveAdvantageMatrix = ({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <td><div className="force-name">Overall Score</div></td>
-                                                    <td>{advantage.competitivePosition.overallScore}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td><div className="force-name"> Market Position</div></td>
-                                                    <td>{advantage.competitivePosition.marketPosition}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td><div className="force-name"> Sustainable Advantages</div></td>
-                                                    <td>{advantage.competitivePosition.sustainableAdvantages}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td><div className="force-name"> Vulnerable Advantages</div></td>
-                                                    <td>{advantage.competitivePosition.vulnerableAdvantages}</td>
-                                                </tr>
-                                                {advantage.competitivePosition.key_improvements && Array.isArray(advantage.competitivePosition.key_improvements) && advantage.competitivePosition.key_improvements.length > 0 && (
-                                                    <tr>
-                                                        <td><strong>Key Improvements</strong></td>
-                                                        <td>
-                                                            <ul className="list-items">
-                                                                {advantage.competitivePosition.key_improvements.map((improvement, idx) => (
-                                                                    <li key={idx}>{improvement}</li>
-                                                                ))}
-                                                            </ul>
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {advantage.customerChoiceReasons && (
-                            <div className="section-container">
-                                <div className="section-header" onClick={() => toggleSection('choice')}>
-                                    <h3>Customer Choice Drivers</h3>
-                                    {expandedSections.choice ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                                </div>
-
-                                {expandedSections.choice !== false && (
-                                    <div className="table-container">
-                                        <table className="data-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Reason</th>
-                                                    <th>Frequency</th>
-                                                    <th>Linked Differentiator</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {advantage.customerChoiceReasons
-                                                    .sort((a, b) => (b.frequency || 0) - (a.frequency || 0))
-                                                    .map((reason, index) => (
-                                                        <tr key={index}>
-                                                            <td><div className="force-name"> {reason.reason}</div></td>
-                                                            <td>
-                                                                <span className="frequency-badge">{reason.frequency || 0}</span>
-                                                            </td>
-                                                            <td>
-                                                                {reason.linkedDifferentiator && (
-                                                                    <span className="linked-badge">
-                                                                        {reason.linkedDifferentiator}
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                <StreamingRow
+                                                    isVisible={positionIndices.overallScore < visibleRows}
+                                                    isLast={positionIndices.overallScore === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
+                                                    <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Overall Score' : (typingTexts[`${positionIndices.overallScore}-metric`] || 'Overall Score')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ? advantage.competitivePosition.overallScore : (typingTexts[`${positionIndices.overallScore}-value`] || advantage.competitivePosition.overallScore)}
+                                                    </td>
+                                                </StreamingRow>
+                                                <StreamingRow
+                                                    isVisible={positionIndices.marketPosition < visibleRows}
+                                                    isLast={positionIndices.marketPosition === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
+                                                    <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Market Position' : (typingTexts[`${positionIndices.marketPosition}-metric`] || 'Market Position')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ? advantage.competitivePosition.marketPosition : (typingTexts[`${positionIndices.marketPosition}-value`] || advantage.competitivePosition.marketPosition)}
+                                                    </td>
+                                                </StreamingRow>
+                                                <StreamingRow
+                                                    isVisible={positionIndices.sustainableAdvantages < visibleRows}
+                                                    isLast={positionIndices.sustainableAdvantages === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
+                                                    <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Sustainable Advantages' : (typingTexts[`${positionIndices.sustainableAdvantages}-metric`] || 'Sustainable Advantages')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ? advantage.competitivePosition.sustainableAdvantages : (typingTexts[`${positionIndices.sustainableAdvantages}-value`] || advantage.competitivePosition.sustainableAdvantages)}
+                                                    </td>
+                                                </StreamingRow>
+                                                <StreamingRow
+                                                    isVisible={positionIndices.vulnerableAdvantages < visibleRows}
+                                                    isLast={positionIndices.vulnerableAdvantages === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
+                                                    <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Vulnerable Advantages' : (typingTexts[`${positionIndices.vulnerableAdvantages}-metric`] || 'Vulnerable Advantages')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ? advantage.competitivePosition.vulnerableAdvantages : (typingTexts[`${positionIndices.vulnerableAdvantages}-value`] || advantage.competitivePosition.vulnerableAdvantages)}
+                                                    </td>
+                                                </StreamingRow>
                                             </tbody>
                                         </table>
                                     </div>
@@ -527,7 +736,7 @@ const CompetitiveAdvantageMatrix = ({
                                     {expandedSections.differentiators ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
 
-                                {expandedSections.differentiators !== false && (
+                                {expandedSections.differentiators && (
                                     <div className="table-container">
                                         <table className="data-table">
                                             <thead>
@@ -541,36 +750,53 @@ const CompetitiveAdvantageMatrix = ({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {advantage.differentiators.map((diff, index) => (
-                                                    <tr key={index}>
-                                                        <td><div className="force-name"> {diff.type}</div></td>
-                                                        <td>{diff.description}</td>
-                                                        <td>
-                                                            <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>
-                                                                {diff.uniqueness}/10
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>
-                                                                {diff.customerValue}/10
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>
-                                                                {diff.sustainability}/10
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            {diff.proofPoints && diff.proofPoints.length > 0 && (
-                                                                <ul className="list-items">
-                                                                    {diff.proofPoints.map((point, idx) => (
-                                                                        <li key={idx}>{point}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {advantage.differentiators.map((diff, index) => {
+                                                    const rowIndex = diffIndices[index];
+                                                    const isVisible = rowIndex < visibleRows;
+                                                    const isLast = rowIndex === visibleRows - 1;
+
+                                                    return (
+                                                        <StreamingRow
+                                                            key={index}
+                                                            isVisible={isVisible}
+                                                            isLast={isLast && isStreaming}
+                                                            lastRowRef={lastRowRef}
+                                                        >
+                                                            <td>
+                                                                <div className="force-name">
+                                                                    {hasStreamed ? diff.type : (typingTexts[`${rowIndex}-type`] || diff.type)}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                {hasStreamed ? diff.description : (typingTexts[`${rowIndex}-description`] || diff.description)}
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                                <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>
+                                                                    {hasStreamed ? `${diff.uniqueness}/10` : (typingTexts[`${rowIndex}-uniqueness`] || `${diff.uniqueness}/10`)}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                                                                <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>
+                                                                    {hasStreamed ? `${diff.customerValue}/10` : (typingTexts[`${rowIndex}-customerValue`] || `${diff.customerValue}/10`)}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                                                                <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>
+                                                                    {hasStreamed ? `${diff.sustainability}/10` : (typingTexts[`${rowIndex}-sustainability`] || `${diff.sustainability}/10`)}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.7s' }}>
+                                                                {diff.proofPoints && diff.proofPoints.length > 0 && (
+                                                                    <ul className="list-items">
+                                                                        {diff.proofPoints.map((point, idx) => (
+                                                                            <li key={idx}>{point}</li>
+                                                                        ))}
+                                                                    </ul>
+                                                                )}
+                                                            </td>
+                                                        </StreamingRow>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>
@@ -584,4 +810,4 @@ const CompetitiveAdvantageMatrix = ({
     );
 };
 
-export default CompetitiveAdvantageMatrix;
+export default CompetitiveAdvantageMatrix;     

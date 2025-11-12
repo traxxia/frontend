@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight, BarChart3, Loader, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Loader } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import LiveStreamHandler from "./LiveStreamHandler";
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { StreamingRow } from './StreamingManager';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const PestelAnalysis = ({
   pestelData,
@@ -13,7 +15,10 @@ const PestelAnalysis = ({
   questions = [],
   userAnswers = {},
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  isExpanded = true,
+  streamingManager,
+  cardId
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     executive: true,
@@ -23,18 +28,24 @@ const PestelAnalysis = ({
     improvements: true
   });
 
-  const [isStreamingActive, setIsStreamingActive] = useState(false);
-  const [activeSection, setActiveSection] = useState("factors");
-  const [streamedData, setStreamedData] = useState(null);
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [typingTexts, setTypingTexts] = useState({});
+  const streamingIntervalRef = useRef(null);
 
-  const isMounted = useRef(false);
+  const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
-    if (onRedirectToBrief) onRedirectToBrief(missingQuestionsData);
+    if (onRedirectToBrief) {
+      onRedirectToBrief(missingQuestionsData);
+    }
   };
 
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.pestel;
+
     await checkMissingQuestionsAndRedirect(
       'pestel',
       selectedBusinessId,
@@ -50,59 +61,145 @@ const PestelAnalysis = ({
     if (!data) return true;
     const analysis = data.pestel_analysis || data;
     if (!analysis.factor_summary || Object.keys(analysis.factor_summary).length === 0) return true;
-
     const criticalFields = ['executive_summary', 'strategic_recommendations'];
-    return criticalFields.some(field => analysis[field] == null);
+    const hasNullFields = criticalFields.some(field => analysis[field] === null || analysis[field] === undefined);
+    return hasNullFields;
   };
 
   const handleRegenerate = async () => {
-    if (onRegenerate) onRegenerate();
+    if (onRegenerate) {
+      streamingManager.resetCard(cardId);
+      onRegenerate();
+    }
   };
 
-  /** ✅ Receive streamed data updates progressively */
-  const handleStreamUpdate = (chunk) => {
-    setStreamedData((prev) => ({
-      ...prev,
-      factor_summary: {
-        ...(prev?.factor_summary || {}),
-        ...(chunk.factor_summary || {}),
-      },
-      key_improvements: chunk.key_improvements || prev?.key_improvements || [],
-    }));
+  const calculateTotalRows = (data) => {
+    if (!data || isPestelDataIncomplete(data)) {
+      return 0;
+    }
+
+    const analysis = data.pestel_analysis || data;
+    let total = 0;
+
+    if (analysis.factor_summary) {
+      total += Object.keys(analysis.factor_summary).length;
+    }
+
+    if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) {
+      total += analysis.key_improvements.length;
+    }
+
+    return total;
   };
 
-  /** ✅ Handle stream completion */
-  const handleStreamComplete = () => {
-    setIsStreamingActive(false);
-  };
-
-  /** ✅ Attach stream chunk handler */
-  const handleStreamingMount = (handleChunk) => {
-    // This will be connected to backend or real stream later
-    // You can directly call handleChunk(chunk) whenever new data arrives
-  };
-
-  /** ✅ Auto-start streaming when valid data is loaded */
   useEffect(() => {
-    if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) return;
-    setIsStreamingActive(true);
-  }, [pestelData]);
+    const totalRows = calculateTotalRows(pestelData);
 
-  /** ✅ Smooth auto-scroll while streaming */
+    if (totalRows === 0) {
+      return;
+    }
+
+    if (!streamingManager?.shouldStream(cardId)) {
+      setVisibleRows(totalRows);
+    }
+  }, [pestelData, cardId, streamingManager]);
+
+  const typeText = (text, rowIndex, field, delay = 0) => {
+    if (!text) return;
+
+    setTimeout(() => {
+      let currentIndex = 0;
+      const key = `${rowIndex}-${field}`;
+
+      const interval = setInterval(() => {
+        if (currentIndex <= text.length) {
+          setTypingTexts(prev => ({
+            ...prev,
+            [key]: text.substring(0, currentIndex)
+          }));
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+        }
+      }, STREAMING_CONFIG.TYPING_SPEED);
+    }, delay);
+  };
+
   useEffect(() => {
-    if (!isStreamingActive) return;
-    const pestelCard = document.querySelector('.pestel-container');
-    if (!pestelCard) return;
+    if (!streamingManager?.shouldStream(cardId)) {
+      return;
+    }
 
-    let animationFrame;
-    const scrollSmoothly = () => {
-      pestelCard.scrollBy({ top: 0.3, behavior: 'smooth' });
-      animationFrame = requestAnimationFrame(scrollSmoothly);
+    if (!pestelData || isRegenerating || isPestelDataIncomplete(pestelData)) {
+      return;
+    }
+
+    const analysis = pestelData.pestel_analysis || pestelData;
+
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current);
+    }
+
+    setVisibleRows(0);
+    setTypingTexts({});
+    setUserHasScrolled(false);
+
+    const totalItems = calculateTotalRows(pestelData);
+    let currentRow = 0;
+
+    streamingIntervalRef.current = setInterval(() => {
+      if (currentRow < totalItems) {
+        setVisibleRows(currentRow + 1);
+
+        let rowsProcessed = 0;
+
+        if (analysis.factor_summary) {
+          const factorEntries = Object.entries(analysis.factor_summary);
+          const factorIndex = currentRow - rowsProcessed;
+
+          if (factorIndex >= 0 && factorIndex < factorEntries.length) {
+            const [factor, data] = factorEntries[factorIndex];
+            typeText(factor.toUpperCase(), currentRow, 'factor', 0);
+            typeText(data?.strategic_priority || 'N/A', currentRow, 'priority', 200);
+            currentRow++;
+            return;
+          }
+
+          rowsProcessed += factorEntries.length;
+        }
+
+        if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) {
+          const improvementIndex = currentRow - rowsProcessed;
+
+          if (improvementIndex >= 0 && improvementIndex < analysis.key_improvements.length) {
+            const improvement = analysis.key_improvements[improvementIndex];
+            typeText(improvement, currentRow, 'improvement', 0);
+          }
+        }
+
+        currentRow++;
+      } else {
+        clearInterval(streamingIntervalRef.current);
+        setVisibleRows(totalItems);
+        streamingManager.stopStreaming(cardId);
+        setUserHasScrolled(false);
+      }
+    }, STREAMING_CONFIG.ROW_INTERVAL);
+
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+      }
     };
+  }, [cardId, pestelData, isRegenerating, streamingManager, setUserHasScrolled]);
 
-    animationFrame = requestAnimationFrame(scrollSmoothly);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [isStreamingActive]);
+  useEffect(() => {
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -111,7 +208,6 @@ const PestelAnalysis = ({
     }));
   };
 
-  /** ✅ Loading / Empty State */
   if (isRegenerating) {
     return (
       <div className="porters-container">
@@ -141,124 +237,141 @@ const PestelAnalysis = ({
     );
   }
 
-  /** ✅ Merge streamed data progressively */
   const analysis = pestelData.pestel_analysis || pestelData;
-  const displayData = {
-    ...analysis,
-    factor_summary: streamedData?.factor_summary || analysis.factor_summary,
-    key_improvements: streamedData?.key_improvements || analysis.key_improvements,
-  };
+  const factorEntries = analysis.factor_summary ? Object.entries(analysis.factor_summary) : [];
+
+  let currentRowIndex = 0;
+  const factorIndices = {};
+  const improvementsIndices = {};
+
+  if (analysis.factor_summary) {
+    Object.keys(analysis.factor_summary).forEach((factor) => {
+      factorIndices[factor] = currentRowIndex++;
+    });
+  }
+
+  if (analysis.key_improvements && Array.isArray(analysis.key_improvements)) {
+    analysis.key_improvements.forEach((_, index) => {
+      improvementsIndices[index] = currentRowIndex++;
+    });
+  }
+
+  const isStreaming = streamingManager?.shouldStream(cardId);
+  const hasStreamed = streamingManager?.hasStreamed(cardId);
 
   return (
-    <>
-      {/* ✅ Live Stream Handler Integration */}
-      <LiveStreamHandler
-        parsedData={pestelData?.pestel_analysis || pestelData}
-        isStreamingActive={isStreamingActive}
-        activeSection={activeSection}
-        onStreamingMount={handleStreamingMount}
-        onStreamUpdate={handleStreamUpdate}
-        onStreamComplete={handleStreamComplete}
-      />
+    <div
+      className="porters-container pestel-container"
+      data-analysis-type="pestel"
+      data-analysis-name="PESTEL Analysis"
+      data-analysis-order="7"
+    >
 
-      <div className="porters-container pestel-container" data-analysis-type="pestel">
-        {/* --- PESTEL FACTORS --- */}
-        {displayData.factor_summary && (
-          <div className="section-container">
-            <div className="section-header" onClick={() => toggleSection('factors')}>
-              <h3>PESTEL Factors Analysis</h3>
-              {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-            </div>
+      {analysis.factor_summary && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('factors')}>
+            <h3>PESTEL Factors Analysis</h3>
+            {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
 
-            {expandedSections.factors && (
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Factor</th>
-                      <th>Strategic Priority</th>
-                      <th>Total Mentions</th>
-                      <th>High Impact Count</th>
-                      <th>Key Themes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(displayData.factor_summary || {}).map(([factor, data], index) => (
-                      <tr
+          {expandedSections.factors && (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Strategic Priority</th>
+                    <th>Total Mentions</th>
+                    <th>High Impact Count</th>
+                    <th>Key Themes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {factorEntries.map(([factor, data]) => {
+                    const rowIndex = factorIndices[factor];
+                    const isVisible = rowIndex < visibleRows;
+                    const isLast = rowIndex === visibleRows - 1;
+
+                    return (
+                      <StreamingRow
                         key={factor}
-                        style={{
-                          opacity: 0,
-                          animation: `fadeInRow 0.5s ease-in forwards`,
-                          animationDelay: `${index * 0.4}s`
-                        }}
+                        isVisible={isVisible}
+                        isLast={isLast && isStreaming}
+                        lastRowRef={lastRowRef}
                       >
-                        <td><span>{factor.toUpperCase()}</span></td>
-                        <td>{data?.strategic_priority || 'N/A'}</td>
-                        <td>{data?.total_mentions || 0}</td>
-                        <td>{data?.high_impact_count || 0}</td>
                         <td>
+                          <div className="force-name">
+                            <span>{hasStreamed ? factor.toUpperCase() : (typingTexts[`${rowIndex}-factor`] || factor.toUpperCase())}</span>
+                          </div>
+                        </td>
+                        <td>
+                          {hasStreamed ? (data?.strategic_priority || 'N/A') : (typingTexts[`${rowIndex}-priority`] || (data?.strategic_priority || 'N/A'))}
+                        </td>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                          {data?.total_mentions || 0}
+                        </td>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                          {data?.high_impact_count || 0}
+                        </td>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
                           <div className="forces-tags">
-                            {(data?.key_themes || []).map((theme, i) => (
-                              <span
-                                key={i}
-                                className="force-tag"
-                                style={{
-                                  opacity: 0,
-                                  animation: `fadeInTag 0.3s ease-in forwards`,
-                                  animationDelay: `${0.6 + i * 0.2}s`
-                                }}
-                              >
-                                {theme}
-                              </span>
+                            {(data?.key_themes || []).map((theme, idx) => (
+                              <span key={idx} className="force-tag">{theme}</span>
                             ))}
                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- KEY IMPROVEMENTS --- */}
-        {displayData.key_improvements && Array.isArray(displayData.key_improvements) && (
-          <div className="section-container">
-            <div className="section-header" onClick={() => toggleSection('improvements')}>
-              <h3>Key Improvements</h3>
-              {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                      </StreamingRow>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+          )}
+        </div>
+      )}
 
-            {expandedSections.improvements && (
-              <div className="table-container">
-                <table className="data-table">
-                  <tbody>
-                    {displayData.key_improvements.map((improvement, index) => (
-                      <tr
+      {analysis.key_improvements && Array.isArray(analysis.key_improvements) && analysis.key_improvements.length > 0 && (
+        <div className="section-container">
+          <div className="section-header" onClick={() => toggleSection('improvements')}>
+            <h3>Key Improvements</h3>
+            {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+          </div>
+
+          {expandedSections.improvements && (
+            <div className="table-container">
+              <table className="data-table">
+                <tbody>
+                  {analysis.key_improvements.map((improvement, index) => {
+                    const rowIndex = improvementsIndices[index];
+                    const isVisible = rowIndex < visibleRows;
+                    const isLast = rowIndex === visibleRows - 1;
+
+                    return (
+                      <StreamingRow
                         key={index}
-                        style={{
-                          opacity: 0,
-                          animation: `fadeInRow 0.6s ease-in forwards`,
-                          animationDelay: `${index * 0.4}s`
-                        }}
+                        isVisible={isVisible}
+                        isLast={isLast && isStreaming}
+                        lastRowRef={lastRowRef}
                       >
                         <td>
                           <div className="force-name">
                             <TrendingUp size={16} />
-                            <span>{improvement}</span>
+                            <span>
+                              {hasStreamed ? improvement : (typingTexts[`${rowIndex}-improvement`] || improvement)}
+                            </span>
                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </>
+                      </StreamingRow>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+    </div>
   );
 };
 

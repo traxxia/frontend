@@ -18,7 +18,6 @@ import {
   Lightbulb,
   Heart,
   DollarSign,
-  Download,
   Link2,
   ChevronDown,
   ChevronUp,
@@ -26,6 +25,9 @@ import {
 } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { StreamingRow } from './StreamingManager';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import '../styles/StrategicAnalysis.css';
 
 const StrategicAnalysis = ({
@@ -41,16 +43,32 @@ const StrategicAnalysis = ({
   selectedBusinessId,
   hideDownload = false,
   onRedirectToBrief,
-  phaseAnalysisArray = []
+  phaseAnalysisArray = [],
+  streamingManager,
 }) => {
+  const cardId = 'strategic-analysis';
+  const isExpanded = true;
+
   const [localStrategicData, setLocalStrategicData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [selectedGovernanceModel, setSelectedGovernanceModel] = useState('RACI');
+  const [isFreshGeneration, setIsFreshGeneration] = useState(false);
 
   const [collapsedCategories, setCollapsedCategories] = useState(
     new Set(['strategy-block', 'execution-block', 'sustainability-block'])
+  );
+
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [typingTexts, setTypingTexts] = useState({});
+  const streamingIntervalRef = useRef(null);
+  const hasStartedStreaming = useRef(false);
+
+  const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(
+    streamingManager,
+    cardId,
+    isExpanded,
+    visibleRows
   );
 
   const hasInitialized = useRef(false);
@@ -78,16 +96,26 @@ const StrategicAnalysis = ({
   const handleRegenerate = async () => {
     if (onRegenerate) {
       try {
-        setIsLoading(true); // Add this line
+        // Reset streaming states
+        if (streamingManager) {
+          streamingManager.resetCard(cardId);
+          hasStartedStreaming.current = false;
+        }
+
+        setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
+        setLocalStrategicData(null);
+        setIsLoading(true);
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         await onRegenerate();
       } catch (error) {
-        console.error('Error in Strategic regeneration:', error);
+        console.error('❌ ERROR in regeneration:', error);
         setErrorMessage(error.message || 'Failed to regenerate strategic analysis');
       } finally {
-        setIsLoading(false); // Add this line
+        setIsLoading(false);
       }
     } else {
-      console.warn('No onRegenerate prop provided to StrategicAnalysis');
       setErrorMessage('Regeneration not available');
     }
   };
@@ -123,16 +151,179 @@ const StrategicAnalysis = ({
     return !hasStrategyBlock && !hasExecutionBlock && !hasSustainabilityBlock;
   };
 
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
-    if (strategicData) {
-      setLocalStrategicData(strategicData);
-      setHasGenerated(true);
-      setErrorMessage('');
+  const calculateTotalRows = (data) => {
+    if (!data || isStrategicDataIncomplete(data)) {
+      return 0;
     }
-  }, [strategicData]);
+
+    const analysisData = data.strategic_analysis || data;
+    const recommendations = analysisData?.strategic_recommendations;
+    let total = 0;
+
+    if (!recommendations) {
+      return 0;
+    }
+
+    if (recommendations.strategy_block?.S_strategy?.where_to_compete) {
+      total += recommendations.strategy_block.S_strategy.where_to_compete.length;
+    }
+
+    if (recommendations.strategy_block?.R_resources?.capital_priorities) {
+      total += recommendations.strategy_block.R_resources.capital_priorities.length;
+    }
+    if (recommendations.strategy_block?.R_resources?.talent_priorities) {
+      total += recommendations.strategy_block.R_resources.talent_priorities.length;
+    }
+    if (recommendations.strategy_block?.R_resources?.technology_investments) {
+      total += recommendations.strategy_block.R_resources.technology_investments.length;
+    }
+
+    if (recommendations.execution_block?.A_analysis_data?.recommendations) {
+      total += recommendations.execution_block.A_analysis_data.recommendations.length;
+    }
+
+    if (recommendations.execution_block?.T_technology_digitalization?.infrastructure_initiatives) {
+      total += recommendations.execution_block.T_technology_digitalization.infrastructure_initiatives.length;
+    }
+    if (recommendations.execution_block?.T_technology_digitalization?.platform_priorities) {
+      total += recommendations.execution_block.T_technology_digitalization.platform_priorities.length;
+    }
+
+    if (recommendations.execution_block?.E_execution?.implementation_roadmap) {
+      total += recommendations.execution_block.E_execution.implementation_roadmap.length;
+    }
+
+    const kpi = recommendations.execution_block?.E_execution?.kpi_dashboard;
+    if (kpi) {
+      if (kpi.adoption_metrics) total += kpi.adoption_metrics.length;
+      if (kpi.network_metrics) total += kpi.network_metrics.length;
+      if (kpi.operational_metrics) total += kpi.operational_metrics.length;
+      if (kpi.financial_metrics) total += kpi.financial_metrics.length;
+    }
+
+    if (recommendations.sustainability_block?.G_governance?.decision_delegation) {
+      total += recommendations.sustainability_block.G_governance.decision_delegation.length;
+    }
+    if (recommendations.sustainability_block?.G_governance?.accountability_framework) {
+      total += recommendations.sustainability_block.G_governance.accountability_framework.length;
+    }
+
+    if (recommendations.sustainability_block?.I_innovation?.priority_innovation_bets) {
+      total += recommendations.sustainability_block.I_innovation.priority_innovation_bets.length;
+    }
+
+    if (recommendations.sustainability_block?.C_culture?.cultural_shifts) {
+      total += recommendations.sustainability_block.C_culture.cultural_shifts.length;
+    }
+    if (recommendations.sustainability_block?.C_culture?.change_approach) {
+      total += recommendations.sustainability_block.C_culture.change_approach.length;
+    }
+
+    if (analysisData.strategic_linkages?.objective_to_initiative_map) {
+      total += analysisData.strategic_linkages.objective_to_initiative_map.length;
+    }
+
+    const pestelAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'pestel');
+    const portersAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'porters');
+
+    const pestelRec = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
+    const portersRec = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
+
+    if (pestelRec?.immediate_actions) total += pestelRec.immediate_actions.length;
+    if (pestelRec?.short_term_initiatives) total += pestelRec.short_term_initiatives.length;
+    if (pestelRec?.long_term_strategic_shifts) total += pestelRec.long_term_strategic_shifts.length;
+
+    if (portersRec?.immediate_actions) total += portersRec.immediate_actions.length;
+    if (portersRec?.short_term_initiatives) total += portersRec.short_term_initiatives.length;
+    if (portersRec?.long_term_strategic_shifts) total += portersRec.long_term_strategic_shifts.length;
+    return total;
+  };
+  useEffect(() => {
+    if (!isFreshGeneration || !strategicData || isStrategicDataIncomplete(strategicData)) {
+      return;
+    }
+
+    if (streamingManager && !hasStartedStreaming.current) {
+      hasStartedStreaming.current = true;
+      setCollapsedCategories(new Set([])); // Expand all
+
+      if (!streamingManager.hasStreamed(cardId)) {
+        setTimeout(() => {
+          streamingManager.startStreaming(cardId);
+        }, 100);
+      }
+    }
+  }, [strategicData, streamingManager, cardId, isFreshGeneration]);
+
+
+  useEffect(() => {
+    const totalRows = calculateTotalRows(strategicData);
+
+    if (totalRows === 0) {
+      return;
+    }
+
+    if (!streamingManager?.shouldStream(cardId)) {
+      setVisibleRows(totalRows);
+    }
+  }, [strategicData, cardId, streamingManager, phaseAnalysisArray]);
+
+  useEffect(() => {
+    if (!streamingManager?.shouldStream(cardId) || !isFreshGeneration) {
+      return;
+    }
+
+    if (!strategicData || isRegenerating || isStrategicDataIncomplete(strategicData)) {
+      return;
+    }
+
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current);
+      streamingIntervalRef.current = null;
+    }
+
+    setVisibleRows(0);
+    setTypingTexts({});
+
+    const totalItems = calculateTotalRows(strategicData);
+    let currentRow = 0;
+    let scrollEnabled = false;
+
+    streamingIntervalRef.current = setInterval(() => {
+      if (currentRow < totalItems) {
+        currentRow++;
+        setVisibleRows(currentRow);
+
+        if (currentRow === 5 && !scrollEnabled) {
+          scrollEnabled = true;
+          setUserHasScrolled(false);
+        }
+      } else {
+        clearInterval(streamingIntervalRef.current);
+        streamingIntervalRef.current = null;
+        if (streamingManager) {
+          streamingManager.stopStreaming(cardId);
+        }
+        setIsFreshGeneration(false); // Reset flag after streaming
+      }
+    }, STREAMING_CONFIG.ROW_INTERVAL);
+
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+        streamingIntervalRef.current = null;
+      }
+    };
+  }, [cardId, strategicData, isRegenerating, streamingManager, isFreshGeneration, setUserHasScrolled]);
+
+  useEffect(() => {
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+      }
+    };
+  }, []);
+
 
   useEffect(() => {
     if (strategicData) {
@@ -140,11 +331,227 @@ const StrategicAnalysis = ({
       setHasGenerated(true);
       setErrorMessage('');
       setIsLoading(false);
+
+      // Check if this is a fresh generation
+      const isFresh = strategicData._isFreshGeneration === true;
+
+      // Only expand on fresh generation
+      if (isFresh && !isStrategicDataIncomplete(strategicData)) {
+        setIsFreshGeneration(true); // SET THIS FIRST
+        setCollapsedCategories(new Set([]));
+      } else if (!hasInitialized.current) {
+        // First load - keep collapsed
+        hasInitialized.current = true;
+        setIsFreshGeneration(false);
+        setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
+      }
     } else if (strategicData === null) {
       setLocalStrategicData(null);
       setHasGenerated(false);
     }
   }, [strategicData]);
+
+  const getRowIndex = () => {
+    const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
+    const recommendations = analysisData?.strategic_recommendations;
+    let currentIndex = 0;
+    const indices = {};
+
+    if (!recommendations) return indices;
+
+    // ===== STRATEGY BLOCK (S.T.R) - These render together =====
+
+    // S - Strategy: Where to Compete
+    if (recommendations.strategy_block?.S_strategy?.where_to_compete) {
+      indices.whereToCompete = {};
+      recommendations.strategy_block.S_strategy.where_to_compete.forEach((_, idx) => {
+        indices.whereToCompete[idx] = currentIndex++;
+      });
+    }
+
+    // T - Tactics: Strategic Linkages (renders in Tactics pillar)
+    if (analysisData.strategic_linkages?.objective_to_initiative_map) {
+      indices.strategicLinkages = {};
+      analysisData.strategic_linkages.objective_to_initiative_map.forEach((_, idx) => {
+        indices.strategicLinkages[idx] = currentIndex++;
+      });
+    }
+
+    // T - Tactics: Strategic Recommendations from Analyses (renders in Tactics pillar)
+    const pestelAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'pestel');
+    const portersAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'porters');
+
+    const pestelRec = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
+    const portersRec = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
+
+    const combinedImmediateActions = [
+      ...(pestelRec?.immediate_actions || []),
+      ...(portersRec?.immediate_actions || [])
+    ];
+
+    const combinedShortTermInitiatives = [
+      ...(pestelRec?.short_term_initiatives || []),
+      ...(portersRec?.short_term_initiatives || [])
+    ];
+
+    const combinedLongTermShifts = [
+      ...(pestelRec?.long_term_strategic_shifts || []),
+      ...(portersRec?.long_term_strategic_shifts || [])
+    ];
+
+    if (combinedImmediateActions.length > 0) {
+      indices.immediateActions = {};
+      combinedImmediateActions.forEach((_, idx) => {
+        indices.immediateActions[idx] = currentIndex++;
+      });
+    }
+
+    if (combinedShortTermInitiatives.length > 0) {
+      indices.shortTermInitiatives = {};
+      combinedShortTermInitiatives.forEach((_, idx) => {
+        indices.shortTermInitiatives[idx] = currentIndex++;
+      });
+    }
+
+    if (combinedLongTermShifts.length > 0) {
+      indices.longTermShifts = {};
+      combinedLongTermShifts.forEach((_, idx) => {
+        indices.longTermShifts[idx] = currentIndex++;
+      });
+    }
+
+    // R - Resources Block
+    if (recommendations.strategy_block?.R_resources) {
+      if (recommendations.strategy_block.R_resources.capital_priorities) {
+        indices.capitalPriorities = {};
+        recommendations.strategy_block.R_resources.capital_priorities.forEach((_, idx) => {
+          indices.capitalPriorities[idx] = currentIndex++;
+        });
+      }
+      if (recommendations.strategy_block.R_resources.talent_priorities) {
+        indices.talentPriorities = {};
+        recommendations.strategy_block.R_resources.talent_priorities.forEach((_, idx) => {
+          indices.talentPriorities[idx] = currentIndex++;
+        });
+      }
+      if (recommendations.strategy_block.R_resources.technology_investments) {
+        indices.technologyInvestments = {};
+        recommendations.strategy_block.R_resources.technology_investments.forEach((_, idx) => {
+          indices.technologyInvestments[idx] = currentIndex++;
+        });
+      }
+    }
+
+    // ===== EXECUTION BLOCK (A.T.E) - These render together =====
+
+    // A - Analysis Data Block
+    if (recommendations.execution_block?.A_analysis_data?.recommendations) {
+      indices.analysisData = {};
+      recommendations.execution_block.A_analysis_data.recommendations.forEach((_, idx) => {
+        indices.analysisData[idx] = currentIndex++;
+      });
+    }
+
+    // T - Technology Block
+    if (recommendations.execution_block?.T_technology_digitalization) {
+      if (recommendations.execution_block.T_technology_digitalization.infrastructure_initiatives) {
+        indices.infrastructureInitiatives = {};
+        recommendations.execution_block.T_technology_digitalization.infrastructure_initiatives.forEach((_, idx) => {
+          indices.infrastructureInitiatives[idx] = currentIndex++;
+        });
+      }
+      if (recommendations.execution_block.T_technology_digitalization.platform_priorities) {
+        indices.platformPriorities = {};
+        recommendations.execution_block.T_technology_digitalization.platform_priorities.forEach((_, idx) => {
+          indices.platformPriorities[idx] = currentIndex++;
+        });
+      }
+    }
+
+    // E - Execution Block - Implementation Roadmap
+    if (recommendations.execution_block?.E_execution?.implementation_roadmap) {
+      indices.implementationRoadmap = {};
+      recommendations.execution_block.E_execution.implementation_roadmap.forEach((_, idx) => {
+        indices.implementationRoadmap[idx] = currentIndex++;
+      });
+    }
+
+    // E - Execution Block - KPI Dashboard
+    const kpi = recommendations.execution_block?.E_execution?.kpi_dashboard;
+    if (kpi) {
+      if (kpi.adoption_metrics) {
+        indices.adoptionMetrics = {};
+        kpi.adoption_metrics.forEach((_, idx) => {
+          indices.adoptionMetrics[idx] = currentIndex++;
+        });
+      }
+      if (kpi.network_metrics) {
+        indices.networkMetrics = {};
+        kpi.network_metrics.forEach((_, idx) => {
+          indices.networkMetrics[idx] = currentIndex++;
+        });
+      }
+      if (kpi.operational_metrics) {
+        indices.operationalMetrics = {};
+        kpi.operational_metrics.forEach((_, idx) => {
+          indices.operationalMetrics[idx] = currentIndex++;
+        });
+      }
+      if (kpi.financial_metrics) {
+        indices.financialMetrics = {};
+        kpi.financial_metrics.forEach((_, idx) => {
+          indices.financialMetrics[idx] = currentIndex++;
+        });
+      }
+    }
+
+    // ===== SUSTAINABILITY BLOCK (G.I.C) - These render together =====
+
+    // G - Governance Block
+    if (recommendations.sustainability_block?.G_governance) {
+      if (recommendations.sustainability_block.G_governance.decision_delegation) {
+        indices.decisionDelegation = {};
+        recommendations.sustainability_block.G_governance.decision_delegation.forEach((_, idx) => {
+          indices.decisionDelegation[idx] = currentIndex++;
+        });
+      }
+      if (recommendations.sustainability_block.G_governance.accountability_framework) {
+        indices.accountabilityFramework = {};
+        recommendations.sustainability_block.G_governance.accountability_framework.forEach((_, idx) => {
+          indices.accountabilityFramework[idx] = currentIndex++;
+        });
+      }
+    }
+
+    // I - Innovation Block
+    if (recommendations.sustainability_block?.I_innovation?.priority_innovation_bets) {
+      indices.innovationBets = {};
+      recommendations.sustainability_block.I_innovation.priority_innovation_bets.forEach((_, idx) => {
+        indices.innovationBets[idx] = currentIndex++;
+      });
+    }
+
+    // C - Culture Block
+    if (recommendations.sustainability_block?.C_culture) {
+      if (recommendations.sustainability_block.C_culture.cultural_shifts) {
+        indices.culturalShifts = {};
+        recommendations.sustainability_block.C_culture.cultural_shifts.forEach((_, idx) => {
+          indices.culturalShifts[idx] = currentIndex++;
+        });
+      }
+      if (recommendations.sustainability_block.C_culture.change_approach) {
+        indices.changeApproach = {};
+        recommendations.sustainability_block.C_culture.change_approach.forEach((_, idx) => {
+          indices.changeApproach[idx] = currentIndex++;
+        });
+      }
+    }
+    return indices;
+  };
+
+  const rowIndices = getRowIndex();
+  const isStreaming = streamingManager?.shouldStream(cardId);
+  const hasStreamed = streamingManager?.hasStreamed(cardId);
 
   const CategorySection = ({ id, title, icon: IconComponent, children, description }) => {
     const isCollapsed = collapsedCategories.has(id);
@@ -230,15 +637,33 @@ const StrategicAnalysis = ({
                   <ArrowRight size={16} className="strategy-icon" />
                   Where to Compete
                 </h4>
-                <ul className="subsection-list">
-                  {strategy.where_to_compete.map((item, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      <strong>{item.position}:</strong> {item.description}
-                    </li>
-                ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {strategy.where_to_compete.map((item, idx) => {
+                        const rowIndex = rowIndices.whereToCompete?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              <strong>{item.position}:</strong>{' '}
+                              {item.description}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            )} 
+            )}
         </div>
       </div>
     );
@@ -247,26 +672,6 @@ const StrategicAnalysis = ({
   const renderTacticsPillar = (tactics) => {
     if (!tactics) return null;
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
-    const horizons = [
-      {
-        key: 'immediate_90_days',
-        label: 'Immediate Actions',
-        subtitle: '90 Days',
-        className: 'immediate'
-      },
-      {
-        key: 'short_term_1_year',
-        label: 'Short-term Initiatives',
-        subtitle: '1 Year',
-        className: 'short-term'
-      },
-      {
-        key: 'long_term_3_5_years',
-        label: 'Long-term Strategic Shifts',
-        subtitle: '3-5 Years',
-        className: 'long-term'
-      }
-    ];
 
     return (
       <div className="pillar-container">
@@ -281,35 +686,6 @@ const StrategicAnalysis = ({
           <DiagnosticBox diagnostic={tactics.diagnostic} />
           {renderStrategicLinkages(analysisData?.strategic_linkages)}<br></br>
           {renderStrategicRecommendationsFromAnalyses()}
-          {/* {horizons.map((horizon, idx) => {
-            const items = tactics[horizon.key];
-            if (!items || items.length === 0 || items[0] === 'N/A') return null;
-
-            return (
-              <div key={horizon.key} className="horizon-container">
-                <div className={`horizon-card ${horizon.className}`}>
-                  <div className="horizon-header">
-                    <div className={`horizon-indicator ${horizon.className}`} />
-                    <div>
-                      <h4 className={`horizon-label ${horizon.className}`}>
-                        {horizon.label}
-                      </h4>
-                      <span className="horizon-subtitle">
-                        {horizon.subtitle}
-                      </span>
-                    </div>
-                  </div>
-                  <ul className="horizon-list">
-                    {items.map((item, itemIdx) => (
-                      <li key={itemIdx} className="horizon-list-item">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            );
-          })} */}
         </div>
       </div>
     );
@@ -349,13 +725,30 @@ const StrategicAnalysis = ({
                   <Star size={16} className="resources-icon" />
                   Capital Priorities
                 </h4>
-                <ul className="subsection-list">
-                  {resources.capital_priorities.map((priority, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {priority}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {resources.capital_priorities.map((priority, idx) => {
+                        const rowIndex = rowIndices.capitalPriorities?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {priority}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -366,13 +759,30 @@ const StrategicAnalysis = ({
                   <Users size={16} className="resources-icon" />
                   Talent Priorities
                 </h4>
-                <ul className="subsection-list">
-                  {resources.talent_priorities.map((talent, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {talent}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {resources.talent_priorities.map((talent, idx) => {
+                        const rowIndex = rowIndices.talentPriorities?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {talent}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -383,13 +793,30 @@ const StrategicAnalysis = ({
                   <Settings size={16} className="resources-icon" />
                   Technology Investments
                 </h4>
-                <ul className="subsection-list">
-                  {resources.technology_investments.map((tech, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {tech}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {resources.technology_investments.map((tech, idx) => {
+                        const rowIndex = rowIndices.technologyInvestments?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {tech}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
         </div>
@@ -415,13 +842,30 @@ const StrategicAnalysis = ({
           {analysisData.recommendations && analysisData.recommendations.length > 0 &&
             analysisData.recommendations[0] !== 'N/A' && (
               <div>
-                <ul className="subsection-list">
-                  {analysisData.recommendations.map((rec, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {analysisData.recommendations.map((rec, idx) => {
+                        const rowIndex = rowIndices.analysisData?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {rec}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
         </div>
@@ -451,13 +895,30 @@ const StrategicAnalysis = ({
                   <Activity size={16} className="technology-icon" />
                   Infrastructure Initiatives
                 </h4>
-                <ul className="subsection-list">
-                  {tech.infrastructure_initiatives.map((initiative, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {initiative}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {tech.infrastructure_initiatives.map((initiative, idx) => {
+                        const rowIndex = rowIndices.infrastructureInitiatives?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {initiative}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -468,13 +929,30 @@ const StrategicAnalysis = ({
                   <BarChart3 size={16} className="technology-icon" />
                   Platform Priorities
                 </h4>
-                <ul className="subsection-list">
-                  {tech.platform_priorities.map((priority, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {priority}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {tech.platform_priorities.map((priority, idx) => {
+                        const rowIndex = rowIndices.platformPriorities?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {priority}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
         </div>
@@ -504,7 +982,6 @@ const StrategicAnalysis = ({
     const renderGanttChart = (roadmap) => {
       if (!roadmap || roadmap.length === 0) return null;
 
-      // Calculate cumulative timeline
       let cumulativeMonths = 0;
       const initiativesWithTimeline = roadmap.map((item, index) => {
         const duration = parseDuration(item.milestone || '1 month');
@@ -690,86 +1167,97 @@ const StrategicAnalysis = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {execution.implementation_roadmap.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="table-value">
-                            <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                              {item.initiative}
-                            </div>
-                          </td>
-                          <td className="table-value">
-                            {item.milestone}
-                          </td>
-                          <td className="table-value text-center">
-                            <div className="flex-center" style={{ justifyContent: 'center' }}>
-                              <Calendar size={12} />
-                              <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                                {item.target_date}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="table-value">
-                            <div className="flex-center">
-                              <Users size={12} />
-                              {item.owner}
-                            </div>
-                          </td>
-                          <td className="table-value">
-                            {item.success_metrics && item.success_metrics.length > 0 && (
-                              <ul className="table-list">
-                                {item.success_metrics.map((metric, metricIdx) => (
-                                  <li key={metricIdx} className="flex-center" style={{
-                                    fontSize: '12px',
-                                    color: '#059669',
-                                    fontWeight: '600'
-                                  }}>
-                                    <Target size={10} />
-                                    {metric}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </td>
-                          <td className="table-value">
-                            {item.resources_required && (
-                              <div style={{ fontSize: '12px' }}>
-                                {item.resources_required.budget && (
-                                  <div style={{ marginBottom: '4px' }}>
-                                    <strong>Budget:</strong> {item.resources_required.budget}
-                                  </div>
-                                )}
-                                {item.resources_required.headcount && (
-                                  <div style={{ marginBottom: '4px' }}>
-                                    <strong>Headcount:</strong> {item.resources_required.headcount}
-                                  </div>
-                                )}
-                                {item.resources_required.technology && item.resources_required.technology.length > 0 && (
-                                  <div>
-                                    <strong>Technology:</strong>
-                                    <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
-                                      {item.resources_required.technology.map((tech, techIdx) => (
-                                        <li key={techIdx}>{tech}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                      {execution.implementation_roadmap.map((item, idx) => {
+                        const rowIndex = rowIndices.implementationRoadmap?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="table-value">
+                              <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                {item.initiative}
                               </div>
-                            )}
-                          </td>
-                          <td className="table-value">
-                            {item.dependencies && item.dependencies.length > 0 && (
-                              <ul className="table-list">
-                                {item.dependencies.map((dep, depIdx) => (
-                                  <li key={depIdx} className="flex-center" style={{ fontSize: '12px' }}>
-                                    <Link2 size={10} />
-                                    {dep}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                              {item.milestone}
+                            </td>
+                            <td className="table-value text-center" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                              <div className="flex-center" style={{ justifyContent: 'center' }}>
+                                <Calendar size={12} />
+                                <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                                  {item.target_date}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                              <div className="flex-center">
+                                <Users size={12} />
+                                {item.owner}
+                              </div>
+                            </td>
+                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                              {item.success_metrics && item.success_metrics.length > 0 && (
+                                <ul className="table-list">
+                                  {item.success_metrics.map((metric, metricIdx) => (
+                                    <li key={metricIdx} className="flex-center" style={{
+                                      fontSize: '12px',
+                                      color: '#059669',
+                                      fontWeight: '600'
+                                    }}>
+                                      <Target size={10} />
+                                      {metric}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </td>
+                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                              {item.resources_required && (
+                                <div style={{ fontSize: '12px' }}>
+                                  {item.resources_required.budget && (
+                                    <div style={{ marginBottom: '4px' }}>
+                                      <strong>Budget:</strong> {item.resources_required.budget}
+                                    </div>
+                                  )}
+                                  {item.resources_required.headcount && (
+                                    <div style={{ marginBottom: '4px' }}>
+                                      <strong>Headcount:</strong> {item.resources_required.headcount}
+                                    </div>
+                                  )}
+                                  {item.resources_required.technology && item.resources_required.technology.length > 0 && (
+                                    <div>
+                                      <strong>Technology:</strong>
+                                      <ul style={{ margin: '4px 0 0 0', paddingLeft: '16px' }}>
+                                        {item.resources_required.technology.map((tech, techIdx) => (
+                                          <li key={techIdx}>{tech}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.7s' }}>
+                              {item.dependencies && item.dependencies.length > 0 && (
+                                <ul className="table-list">
+                                  {item.dependencies.map((dep, depIdx) => (
+                                    <li key={depIdx} className="flex-center" style={{ fontSize: '12px' }}>
+                                      <Link2 size={10} />
+                                      {dep}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -809,22 +1297,35 @@ const StrategicAnalysis = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => (
-                          <tr key={idx}>
-                            <td className="table-value">{metric.metric}</td>
-                            <td className="table-value">
-                              <span className="badge adoption">
-                                {metric.target}
-                              </span>
-                            </td>
-                            <td className="table-value">
-                              <div className="flex-center">
-                                <Users size={12} />
-                                {metric.owner}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => {
+                          const rowIndex = rowIndices.adoptionMetrics?.[idx];
+                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                          const isLast = rowIndex === visibleRows - 1;
+
+                          return (
+                            <StreamingRow
+                              key={idx}
+                              isVisible={isVisible}
+                              isLast={isLast && isStreaming}
+                              lastRowRef={lastRowRef}
+                            >
+                              <td className="table-value">
+                                {metric.metric}
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                <span className="badge adoption">
+                                  {metric.target}
+                                </span>
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                <div className="flex-center">
+                                  <Users size={12} />
+                                  {metric.owner}
+                                </div>
+                              </td>
+                            </StreamingRow>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -847,22 +1348,35 @@ const StrategicAnalysis = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {execution.kpi_dashboard.network_metrics.map((metric, idx) => (
-                          <tr key={idx}>
-                            <td className="table-value">{metric.metric}</td>
-                            <td className="table-value">
-                              <span className="badge network">
-                                {metric.target}
-                              </span>
-                            </td>
-                            <td className="table-value">
-                              <div className="flex-center">
-                                <Users size={12} />
-                                {metric.owner}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {execution.kpi_dashboard.network_metrics.map((metric, idx) => {
+                          const rowIndex = rowIndices.networkMetrics?.[idx];
+                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                          const isLast = rowIndex === visibleRows - 1;
+
+                          return (
+                            <StreamingRow
+                              key={idx}
+                              isVisible={isVisible}
+                              isLast={isLast && isStreaming}
+                              lastRowRef={lastRowRef}
+                            >
+                              <td className="table-value">
+                                {metric.metric}
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                <span className="badge network">
+                                  {metric.target}
+                                </span>
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                <div className="flex-center">
+                                  <Users size={12} />
+                                  {metric.owner}
+                                </div>
+                              </td>
+                            </StreamingRow>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -885,22 +1399,35 @@ const StrategicAnalysis = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {execution.kpi_dashboard.operational_metrics.map((metric, idx) => (
-                          <tr key={idx}>
-                            <td className="table-value">{metric.metric}</td>
-                            <td className="table-value">
-                              <span className="badge operational">
-                                {metric.target}
-                              </span>
-                            </td>
-                            <td className="table-value">
-                              <div className="flex-center">
-                                <Users size={12} />
-                                {metric.owner}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {execution.kpi_dashboard.operational_metrics.map((metric, idx) => {
+                          const rowIndex = rowIndices.operationalMetrics?.[idx];
+                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                          const isLast = rowIndex === visibleRows - 1;
+
+                          return (
+                            <StreamingRow
+                              key={idx}
+                              isVisible={isVisible}
+                              isLast={isLast && isStreaming}
+                              lastRowRef={lastRowRef}
+                            >
+                              <td className="table-value">
+                                {metric.metric}
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                <span className="badge operational">
+                                  {metric.target}
+                                </span>
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                <div className="flex-center">
+                                  <Users size={12} />
+                                  {metric.owner}
+                                </div>
+                              </td>
+                            </StreamingRow>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -923,22 +1450,35 @@ const StrategicAnalysis = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {execution.kpi_dashboard.financial_metrics.map((metric, idx) => (
-                          <tr key={idx}>
-                            <td className="table-value">{metric.metric}</td>
-                            <td className="table-value">
-                              <span className="badge financial">
-                                {metric.target}
-                              </span>
-                            </td>
-                            <td className="table-value">
-                              <div className="flex-center">
-                                <Users size={12} />
-                                {metric.owner}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {execution.kpi_dashboard.financial_metrics.map((metric, idx) => {
+                          const rowIndex = rowIndices.financialMetrics?.[idx];
+                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                          const isLast = rowIndex === visibleRows - 1;
+
+                          return (
+                            <StreamingRow
+                              key={idx}
+                              isVisible={isVisible}
+                              isLast={isLast && isStreaming}
+                              lastRowRef={lastRowRef}
+                            >
+                              <td className="table-value">
+                                {metric.metric}
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                <span className="badge financial">
+                                  {metric.target}
+                                </span>
+                              </td>
+                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                <div className="flex-center">
+                                  <Users size={12} />
+                                  {metric.owner}
+                                </div>
+                              </td>
+                            </StreamingRow>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -982,19 +1522,32 @@ const StrategicAnalysis = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {governance.decision_delegation.map((delegation, idx) => (
-                        <tr key={idx}>
-                          <td className="table-value">
-                            <div style={{ fontWeight: '600' }}>{delegation.decision_type}</div>
-                          </td>
-                          <td className="table-value">
-                            <div className="flex-center">
-                              <Users size={12} />
-                              {delegation.delegate_to}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {governance.decision_delegation.map((delegation, idx) => {
+                        const rowIndex = rowIndices.decisionDelegation?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="table-value">
+                              <div style={{ fontWeight: '600' }}>
+                                {delegation.decision_type}
+                              </div>
+                            </td>
+                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                              <div className="flex-center">
+                                <Users size={12} />
+                                {delegation.delegate_to}
+                              </div>
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1008,13 +1561,30 @@ const StrategicAnalysis = ({
                   <CheckCircle size={16} className="governance-icon" />
                   Accountability Framework
                 </h4>
-                <ul className="subsection-list">
-                  {governance.accountability_framework.map((item, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {governance.accountability_framework.map((item, idx) => {
+                        const rowIndex = rowIndices.accountabilityFramework?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {item}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
         </div>
@@ -1076,28 +1646,50 @@ const StrategicAnalysis = ({
                 )}
               </div>
             </div>
-          )} {innovation.priority_innovation_bets && innovation.priority_innovation_bets.length > 0 &&
+          )}
+
+          {innovation.priority_innovation_bets && innovation.priority_innovation_bets.length > 0 &&
             innovation.priority_innovation_bets[0] !== 'N/A' && (
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Star size={16} className="innovation-icon" />
                   Priority Innovation Bets
                 </h4>
-                <ul className="subsection-list">
-                  {innovation.priority_innovation_bets.map((bet, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {bet}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {innovation.priority_innovation_bets.map((bet, idx) => {
+                        const rowIndex = rowIndices.innovationBets?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {bet}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
         </div>
       </div>
     );
   };
+
   const renderCulturePillar = (culture) => {
-    if (!culture) return null; return (
+    if (!culture) return null;
+
+    return (
       <div className="pillar-container">
         <div className="pillar-card culture-card">
           <div className="pillar-header culture-header">
@@ -1117,21 +1709,34 @@ const StrategicAnalysis = ({
                   Cultural Shifts
                 </h4>
                 <div className="cultural-shifts-container">
-                  {culture.cultural_shifts.map((shift, idx) => (
-                    <div key={idx} className="cultural-shift-card">
-                      <div className="cultural-shift-content">
-                        <div className="cultural-shift-from">
-                          <span className="cultural-shift-label">From: </span>
-                          <span className="cultural-shift-value">{shift.from}</span>
-                        </div>
-                        <ArrowRight size={16} className="cultural-shift-arrow" />
-                        <div className="cultural-shift-to">
-                          <span className="cultural-shift-label">To: </span>
-                          <span className="cultural-shift-value to">{shift.to}</span>
+                  {culture.cultural_shifts.map((shift, idx) => {
+                    const rowIndex = rowIndices.culturalShifts?.[idx];
+                    const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="cultural-shift-card"
+                        style={{
+                          opacity: isVisible ? 1 : 0,
+                          transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+                          transition: hasStreamed ? 'none' : 'opacity 0.3s, transform 0.3s'
+                        }}
+                      >
+                        <div className="cultural-shift-content">
+                          <div className="cultural-shift-from">
+                            <span className="cultural-shift-label">From: </span>
+                            <span className="cultural-shift-value">{shift.from}</span>
+                          </div>
+                          <ArrowRight size={16} className="cultural-shift-arrow" />
+                          <div className="cultural-shift-to">
+                            <span className="cultural-shift-label">To: </span>
+                            <span className="cultural-shift-value to">{shift.to}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1143,32 +1748,50 @@ const StrategicAnalysis = ({
                   <CheckCircle size={16} className="culture-icon" />
                   Change Approach
                 </h4>
-                <ul className="subsection-list">
-                  {culture.change_approach.map((approach, idx) => (
-                    <li key={idx} className="subsection-list-item">
-                      {approach}
-                    </li>
-                  ))}
-                </ul>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {culture.change_approach.map((approach, idx) => {
+                        const rowIndex = rowIndices.changeApproach?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              {approach}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
         </div>
       </div>
     );
   };
+
   const renderStrategicLinkages = (linkages) => {
     if (!linkages || !linkages.objective_to_initiative_map || linkages.objective_to_initiative_map.length === 0) {
       return null;
-    } return (
+    }
+
+    return (
       <section className="strategic-page-section">
         <div className="section-headers">
           <Link2 size={24} style={{ color: 'blue' }} />
           <div><h2 className="category-title">Strategic Objective</h2></div>
-
         </div>
 
         <div className="strategic-linkages-container">
-
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -1179,37 +1802,48 @@ const StrategicAnalysis = ({
                 </tr>
               </thead>
               <tbody>
-                {linkages.objective_to_initiative_map.map((link, idx) => (
-                  <tr key={idx}>
-                    <td className="table-value">
-                      <div style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>
-                        {link.strategic_objective}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      {link.linked_initiatives && link.linked_initiatives.length > 0 && (
-                        <ul className="table-list">
-                          {link.linked_initiatives.map((initiative, initIdx) => (
-                            <li key={initIdx} className="flex-center" style={{ fontSize: '13px' }}>
-                              <ArrowRight size={10} style={{ color: '#3b82f6' }} />
-                              {initiative}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                    <td className="table-value">
-                      <div className="flex-center" style={{
-                        fontSize: '13px',
-                        color: '#059669',
-                        fontWeight: '500'
-                      }}>
-                        <Target size={12} />
-                        {link.success_criteria}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {linkages.objective_to_initiative_map.map((link, idx) => {
+                  const rowIndex = rowIndices.strategicLinkages?.[idx];
+                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                  const isLast = rowIndex === visibleRows - 1;
+
+                  return (
+                    <StreamingRow
+                      key={idx}
+                      isVisible={isVisible}
+                      isLast={isLast && isStreaming}
+                      lastRowRef={lastRowRef}
+                    >
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>
+                          {link.strategic_objective}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                        {link.linked_initiatives && link.linked_initiatives.length > 0 && (
+                          <ul className="table-list">
+                            {link.linked_initiatives.map((initiative, initIdx) => (
+                              <li key={initIdx} className="flex-center" style={{ fontSize: '13px' }}>
+                                <ArrowRight size={10} style={{ color: '#3b82f6' }} />
+                                {initiative}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                        <div className="flex-center" style={{
+                          fontSize: '13px',
+                          color: '#059669',
+                          fontWeight: '500'
+                        }}>
+                          <Target size={12} />
+                          {link.success_criteria}
+                        </div>
+                      </td>
+                    </StreamingRow>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1217,10 +1851,12 @@ const StrategicAnalysis = ({
       </section>
     );
   };
+
   const renderStrategicRecommendationsFromAnalyses = () => {
     const pestelAnalysis = phaseAnalysisArray.find(analysis =>
       analysis.analysis_type === 'pestel'
-    ); const portersAnalysis = phaseAnalysisArray.find(analysis =>
+    );
+    const portersAnalysis = phaseAnalysisArray.find(analysis =>
       analysis.analysis_type === 'porters'
     );
 
@@ -1243,7 +1879,7 @@ const StrategicAnalysis = ({
       return null;
     }
 
-    const renderRecommendationActions = (actions, title, icon) => {
+    const renderRecommendationActions = (actions, title, icon, indexKey) => {
       if (!actions || actions.length === 0) return null;
 
       return (
@@ -1273,87 +1909,98 @@ const StrategicAnalysis = ({
                 </tr>
               </thead>
               <tbody>
-                {actions.map((action, index) => (
-                  <tr key={index}>
-                    <td className="table-value">
-                      <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                        {action.action}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{ fontSize: '13px', color: '#374151' }}>
-                        {action.rationale}
-                      </div>
-                    </td>
-                    <td className="table-value text-center">
-                      <div style={{
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: '500',
-                        display: 'inline-block'
-                      }}>
-                        {action.timeline}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      {action.resources_required && (
-                        <ul className="table-list">
-                          {(Array.isArray(action.resources_required) ? action.resources_required : [action.resources_required]).map((resource, idx) => (
-                            <li key={idx} style={{
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}>
-                              <div style={{
-                                width: '4px',
-                                height: '4px',
-                                borderRadius: '50%',
-                                backgroundColor: '#3b82f6'
-                              }} />
-                              {resource}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                    <td className="table-value">
-                      {action.success_metrics && action.success_metrics.length > 0 && (
-                        <ul className="table-list">
-                          {action.success_metrics.map((metric, idx) => (
-                            <li key={idx} style={{
-                              fontSize: '12px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontWeight: '600',
-                              color: '#059669'
-                            }}>
-                              <Target size={10} />
-                              {metric}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {action.expected_impact && (
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#059669',
-                          display: 'flex',
-                          fontWeight: '600',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <Target size={10} />
-                          {action.expected_impact}
+                {actions.map((action, index) => {
+                  const rowIndex = rowIndices[indexKey]?.[index];
+                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                  const isLast = rowIndex === visibleRows - 1;
+
+                  return (
+                    <StreamingRow
+                      key={index}
+                      isVisible={isVisible}
+                      isLast={isLast && isStreaming}
+                      lastRowRef={lastRowRef}
+                    >
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {action.action}
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                          {action.rationale}
+                        </div>
+                      </td>
+                      <td className="table-value text-center" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                        <div style={{
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          display: 'inline-block'
+                        }}>
+                          {action.timeline}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                        {action.resources_required && (
+                          <ul className="table-list">
+                            {(Array.isArray(action.resources_required) ? action.resources_required : [action.resources_required]).map((resource, idx) => (
+                              <li key={idx} style={{
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}>
+                                <div style={{
+                                  width: '4px',
+                                  height: '4px',
+                                  borderRadius: '50%',
+                                  backgroundColor: '#3b82f6'
+                                }} />
+                                {resource}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                        {action.success_metrics && action.success_metrics.length > 0 && (
+                          <ul className="table-list">
+                            {action.success_metrics.map((metric, idx) => (
+                              <li key={idx} style={{
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontWeight: '600',
+                                color: '#059669'
+                              }}>
+                                <Target size={10} />
+                                {metric}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {action.expected_impact && (
+                          <div style={{
+                            fontSize: '12px',
+                            color: '#059669',
+                            display: 'flex',
+                            fontWeight: '600',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <Target size={10} />
+                            {action.expected_impact}
+                          </div>
+                        )}
+                      </td>
+                    </StreamingRow>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1361,7 +2008,7 @@ const StrategicAnalysis = ({
       );
     };
 
-    const renderInitiatives = (initiatives, title, icon) => {
+    const renderInitiatives = (initiatives, title, icon, indexKey) => {
       if (!initiatives || initiatives.length === 0) return null;
 
       return (
@@ -1390,38 +2037,49 @@ const StrategicAnalysis = ({
                 </tr>
               </thead>
               <tbody>
-                {initiatives.map((initiative, index) => (
-                  <tr key={index}>
-                    <td className="table-value">
-                      <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                        {initiative.initiative}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{
-                        backgroundColor: '#8b5cf6',
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: '500',
-                        display: 'inline-block'
-                      }}>
-                        {initiative.strategic_pillar}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{ fontSize: '13px', color: '#374151' }}>
-                        {initiative.expected_outcome}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{ fontSize: '13px', color: '#dc2626' }}>
-                        {initiative.risk_mitigation}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {initiatives.map((initiative, index) => {
+                  const rowIndex = rowIndices[indexKey]?.[index];
+                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                  const isLast = rowIndex === visibleRows - 1;
+
+                  return (
+                    <StreamingRow
+                      key={index}
+                      isVisible={isVisible}
+                      isLast={isLast && isStreaming}
+                      lastRowRef={lastRowRef}
+                    >
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {initiative.initiative}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                        <div style={{
+                          backgroundColor: '#8b5cf6',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          display: 'inline-block'
+                        }}>
+                          {initiative.strategic_pillar}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                          {initiative.expected_outcome}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                        <div style={{ fontSize: '13px', color: '#dc2626' }}>
+                          {initiative.risk_mitigation}
+                        </div>
+                      </td>
+                    </StreamingRow>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1429,7 +2087,7 @@ const StrategicAnalysis = ({
       );
     };
 
-    const renderLongTermShifts = (shifts, title, icon) => {
+    const renderLongTermShifts = (shifts, title, icon, indexKey) => {
       if (!shifts || shifts.length === 0) return null;
 
       return (
@@ -1458,37 +2116,48 @@ const StrategicAnalysis = ({
                 </tr>
               </thead>
               <tbody>
-                {shifts.map((shift, index) => (
-                  <tr key={index}>
-                    <td className="table-value">
-                      <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                        {shift.shift}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{ fontSize: '13px', color: '#374151' }}>
-                        {shift.transformation_required}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{
-                        fontSize: '13px',
-                        color: '#059669',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        <TrendingUp size={12} />
-                        {shift.competitive_advantage}
-                      </div>
-                    </td>
-                    <td className="table-value">
-                      <div style={{ fontSize: '13px', color: '#374151' }}>
-                        {shift.sustainability}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {shifts.map((shift, index) => {
+                  const rowIndex = rowIndices[indexKey]?.[index];
+                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                  const isLast = rowIndex === visibleRows - 1;
+
+                  return (
+                    <StreamingRow
+                      key={index}
+                      isVisible={isVisible}
+                      isLast={isLast && isStreaming}
+                      lastRowRef={lastRowRef}
+                    >
+                      <td className="table-value">
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                          {shift.shift}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                          {shift.transformation_required}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                        <div style={{
+                          fontSize: '13px',
+                          color: '#059669',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <TrendingUp size={12} />
+                          {shift.competitive_advantage}
+                        </div>
+                      </td>
+                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                          {shift.sustainability}
+                        </div>
+                      </td>
+                    </StreamingRow>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1513,37 +2182,30 @@ const StrategicAnalysis = ({
 
     return (
       <section className="strategic-page-section">
-        {/* <div className="section-headers" style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          borderBottom: 'none',
-          gap: '8px',
-          marginBottom: '20px',
-          background: '#fff'
-        }}>
-          <Settings size={24} style={{ color: 'blue' }} />
-          <h4 style={{ marginTop: '5px' }}>Strategic Recommendations</h4>
-        </div> */}
         {renderRecommendationActions(
           combinedImmediateActions,
           'Immediate Actions',
-          <Zap size={20} style={{ color: '#ef4444' }} />
+          <Zap size={20} style={{ color: '#ef4444' }} />,
+          'immediateActions'
         )}
 
         {renderInitiatives(
           combinedShortTermInitiatives,
           'Short-term Initiatives',
-          <Activity size={20} style={{ color: '#f59e0b' }} />
+          <Activity size={20} style={{ color: '#f59e0b' }} />,
+          'shortTermInitiatives'
         )}
 
         {renderLongTermShifts(
           combinedLongTermShifts,
           'Long-term Strategic Shifts',
-          <TrendingUp size={20} style={{ color: '#10b981' }} />
+          <TrendingUp size={20} style={{ color: '#10b981' }} />,
+          'longTermShifts'
         )}
       </section>
     );
   };
+
   const renderStrategicContent = () => {
     const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
     const recommendations = analysisData?.strategic_recommendations;
@@ -1553,57 +2215,53 @@ const StrategicAnalysis = ({
     return (
       <div className="strategic-content">
         {recommendations.strategy_block && (
-  <div className="block-wrapper" data-component="strategic-direction">
-    <CategorySection
-      id="strategy-block"
-      title="Strategy Block: Direction & Positioning  (S.T.R.)"
-      icon={Target}
-      description="Forward-looking recommendations for where and how to compete, tactical initiatives, and resource allocation."
-    >
-      {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
-      {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
-      {renderResourcesPillar(recommendations.strategy_block.R_resources)}
-    </CategorySection>
-  </div>
-)}
+          <div className="block-wrapper" data-component="strategic-direction">
+            <CategorySection
+              id="strategy-block"
+              title="Strategy Block: Direction & Positioning  (S.T.R.)"
+              icon={Target}
+              description="Forward-looking recommendations for where and how to compete, tactical initiatives, and resource allocation."
+            >
+              {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
+              {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
+              {renderResourcesPillar(recommendations.strategy_block.R_resources)}
+            </CategorySection>
+          </div>
+        )}
 
-{recommendations.execution_block && (
-  <div className="block-wrapper" data-component="strategic-execution">
-    <CategorySection
-      id="execution-block"
-      title="Execution Block: Implementation & Monitoring (A.T.E.)"
-      icon={CheckCircle}
-      description="Data strategy, technology priorities, implementation roadmap, and KPI dashboard for tracking progress."
-    >
-      {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
-      {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
-      {renderExecutionPillar(recommendations.execution_block.E_execution)}
-    </CategorySection>
-  </div>
-)}
+        {recommendations.execution_block && (
+          <div className="block-wrapper" data-component="strategic-execution">
+            <CategorySection
+              id="execution-block"
+              title="Execution Block: Implementation & Monitoring (A.T.E.)"
+              icon={CheckCircle}
+              description="Data strategy, technology priorities, implementation roadmap, and KPI dashboard for tracking progress."
+            >
+              {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
+              {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
+              {renderExecutionPillar(recommendations.execution_block.E_execution)}
+            </CategorySection>
+          </div>
+        )}
 
-{recommendations.sustainability_block && (
-  <div className="block-wrapper" data-component="strategic-sustainability">
-    <CategorySection
-      id="sustainability-block"
-      title="Sustainability Block: Long-term Reinforcement (G.I.C)"
-      icon={Shield}
-      description="Governance frameworks, innovation pipeline, and cultural alignment to sustain strategic momentum."
-    >
-      {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
-      {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
-      {renderCulturePillar(recommendations.sustainability_block.C_culture)}
-    </CategorySection>
-  </div>
-)}
-
-
-        {/* {renderStrategicLinkages(analysisData?.strategic_linkages)} */}
-        {/* {renderStrategicRecommendationsFromAnalyses()} */}
-
+        {recommendations.sustainability_block && (
+          <div className="block-wrapper" data-component="strategic-sustainability">
+            <CategorySection
+              id="sustainability-block"
+              title="Sustainability Block: Long-term Reinforcement (G.I.C)"
+              icon={Shield}
+              description="Governance frameworks, innovation pipeline, and cultural alignment to sustain strategic momentum."
+            >
+              {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
+              {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
+              {renderCulturePillar(recommendations.sustainability_block.C_culture)}
+            </CategorySection>
+          </div>
+        )}
       </div>
     );
   };
+
   if (isRegenerating || isLoading) {
     return (
       <div className="strategic-analysis-container">
@@ -1615,6 +2273,7 @@ const StrategicAnalysis = ({
       </div>
     );
   }
+
   if (errorMessage) {
     return (
       <div className="strategic-analysis-container">
@@ -1629,6 +2288,7 @@ const StrategicAnalysis = ({
       </div>
     );
   }
+
   if (!hasGenerated || !localStrategicData || isStrategicDataIncomplete(localStrategicData)) {
     return (
       <div
@@ -1652,6 +2312,7 @@ const StrategicAnalysis = ({
       </div>
     );
   }
+
   return (
     <div
       className="strategic-analysis-container"
@@ -1665,4 +2326,5 @@ const StrategicAnalysis = ({
     </div>
   );
 };
+
 export default StrategicAnalysis;
