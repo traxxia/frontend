@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { StreamingRow } from './StreamingManager';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const StrategicPositioningRadar = ({
     questions = [],
@@ -13,13 +16,22 @@ const StrategicPositioningRadar = ({
     canRegenerate = true,
     strategicRadarData = null,
     selectedBusinessId,
-    onRedirectToBrief // Add this prop
+    onRedirectToBrief,
+    isExpanded = true,
+    streamingManager,
+    cardId
 }) => {
     const [data, setData] = useState(strategicRadarData);
     const [activeTab, setActiveTab] = useState('overview');
     const [hasGenerated, setHasGenerated] = useState(false);
     const [expandedSections, setExpandedSections] = useState({});
     const [error, setError] = useState(null);
+
+    const [visibleRows, setVisibleRows] = useState(0);
+    const [typingTexts, setTypingTexts] = useState({});
+    const streamingIntervalRef = useRef(null);
+
+    const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
     const getAuthToken = () => sessionStorage.getItem('token');
@@ -44,11 +56,9 @@ const StrategicPositioningRadar = ({
         );
     };
 
-    // Check if the strategic radar data is empty/incomplete
     const isStrategicRadarDataIncomplete = (data) => {
         if (!data) return true;
 
-        // Handle both wrapped and direct API response formats
         let normalizedData;
         if (data.strategicRadar) {
             normalizedData = data;
@@ -58,17 +68,14 @@ const StrategicPositioningRadar = ({
             return true;
         }
 
-        // Check if strategicRadar and dimensions exist
         if (!normalizedData.strategicRadar || !normalizedData.strategicRadar.dimensions) {
             return true;
         }
 
-        // Check if dimensions array is empty or null
         if (!Array.isArray(normalizedData.strategicRadar.dimensions) || normalizedData.strategicRadar.dimensions.length === 0) {
             return true;
         }
 
-        // Check if dimensions have essential data
         const hasValidDimensions = normalizedData.strategicRadar.dimensions.some(dimension =>
             dimension.name &&
             (dimension.currentScore !== undefined || dimension.targetScore !== undefined)
@@ -77,7 +84,148 @@ const StrategicPositioningRadar = ({
         return !hasValidDimensions;
     };
 
-    // Toggle section expansion
+    const calculateTotalRows = (data) => {
+        if (!data || isStrategicRadarDataIncomplete(data)) {
+            return 0;
+        }
+
+        let normalizedData;
+        if (data.strategicRadar) {
+            normalizedData = data;
+        } else if (data.dimensions) {
+            normalizedData = { strategicRadar: data };
+        } else {
+            return 0;
+        }
+
+        let total = 0;
+
+        if (normalizedData.strategicRadar.overallPosition) {
+            total += 3;
+        }
+
+        if (normalizedData.strategicRadar.dimensions) {
+            total += normalizedData.strategicRadar.dimensions.length;
+        }
+
+        return total;
+    };
+
+    useEffect(() => {
+        const totalRows = calculateTotalRows(strategicRadarData);
+
+        if (totalRows === 0) {
+            return;
+        }
+
+        if (!streamingManager?.shouldStream(cardId)) {
+            setVisibleRows(totalRows);
+        }
+    }, [strategicRadarData, cardId, streamingManager]);
+
+    const typeText = (text, rowIndex, field, delay = 0) => {
+        if (!text) return;
+
+        setTimeout(() => {
+            let currentIndex = 0;
+            const key = `${rowIndex}-${field}`;
+
+            const interval = setInterval(() => {
+                if (currentIndex <= text.length) {
+                    setTypingTexts(prev => ({
+                        ...prev,
+                        [key]: text.substring(0, currentIndex)
+                    }));
+                    currentIndex++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, STREAMING_CONFIG.TYPING_SPEED);
+        }, delay);
+    };
+
+    useEffect(() => {
+        if (!streamingManager?.shouldStream(cardId)) {
+            return;
+        }
+
+        if (!strategicRadarData || isRegenerating || isStrategicRadarDataIncomplete(strategicRadarData)) {
+            return;
+        }
+
+        if (streamingIntervalRef.current) {
+            clearInterval(streamingIntervalRef.current);
+        }
+
+        setVisibleRows(0);
+        setTypingTexts({});
+        setUserHasScrolled(false);
+
+        const totalItems = calculateTotalRows(strategicRadarData);
+        let currentRow = 0;
+
+        streamingIntervalRef.current = setInterval(() => {
+            if (currentRow < totalItems) {
+                setVisibleRows(currentRow + 1);
+
+                let normalizedData;
+                if (strategicRadarData.strategicRadar) {
+                    normalizedData = strategicRadarData;
+                } else if (strategicRadarData.dimensions) {
+                    normalizedData = { strategicRadar: strategicRadarData };
+                }
+
+                let rowsProcessed = 0;
+
+                if (normalizedData.strategicRadar.overallPosition) {
+                    if (currentRow === rowsProcessed) {
+                        typeText('Current Average Score', currentRow, 'label', STREAMING_CONFIG.TYPING_DELAY.PRIMARY);
+                        typeText(normalizedData.strategicRadar.overallPosition.currentAverage.toString(), currentRow, 'value', STREAMING_CONFIG.TYPING_DELAY.SECONDARY);
+                    }
+                    rowsProcessed++;
+                    if (currentRow < rowsProcessed) { currentRow++; return; }
+
+                    if (currentRow === rowsProcessed) {
+                        typeText('Target Average Score', currentRow, 'label', STREAMING_CONFIG.TYPING_DELAY.PRIMARY);
+                        typeText(normalizedData.strategicRadar.overallPosition.targetAverage.toString(), currentRow, 'value', STREAMING_CONFIG.TYPING_DELAY.SECONDARY);
+                    }
+                    rowsProcessed++;
+                    if (currentRow < rowsProcessed) { currentRow++; return; }
+
+                    if (currentRow === rowsProcessed) {
+                        typeText('Improvement Gap', currentRow, 'label', STREAMING_CONFIG.TYPING_DELAY.PRIMARY);
+                        const gap = (normalizedData.strategicRadar.overallPosition.targetAverage - normalizedData.strategicRadar.overallPosition.currentAverage).toFixed(1);
+                        typeText(gap, currentRow, 'value', STREAMING_CONFIG.TYPING_DELAY.SECONDARY);
+                    }
+                    rowsProcessed++;
+                    if (currentRow < rowsProcessed) { currentRow++; return; }
+                }
+
+                if (normalizedData.strategicRadar.dimensions) {
+                    const dimensionIndex = currentRow - rowsProcessed;
+                    if (dimensionIndex >= 0 && dimensionIndex < normalizedData.strategicRadar.dimensions.length) {
+                        const dimension = normalizedData.strategicRadar.dimensions[dimensionIndex];
+                        typeText(dimension.name, currentRow, 'name', STREAMING_CONFIG.TYPING_DELAY.PRIMARY);
+                        typeText(dimension.currentScore.toString(), currentRow, 'current', STREAMING_CONFIG.TYPING_DELAY.SECONDARY);
+                    }
+                }
+
+                currentRow++;
+            } else {
+                clearInterval(streamingIntervalRef.current);
+                setVisibleRows(totalItems);
+                streamingManager.stopStreaming(cardId);
+                setUserHasScrolled(false);
+            }
+        }, STREAMING_CONFIG.ROW_INTERVAL);
+
+        return () => {
+            if (streamingIntervalRef.current) {
+                clearInterval(streamingIntervalRef.current);
+            }
+        };
+    }, [cardId, strategicRadarData, isRegenerating, streamingManager, setUserHasScrolled]);
+
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({
             ...prev,
@@ -85,9 +233,9 @@ const StrategicPositioningRadar = ({
         }));
     };
 
-    // Handle regeneration - same pattern as other components in business page
     const handleRegenerate = async () => {
         if (onRegenerate) {
+            streamingManager?.resetCard(cardId);
             try {
                 await onRegenerate();
             } catch (error) {
@@ -97,9 +245,9 @@ const StrategicPositioningRadar = ({
         }
     };
 
-    // Handle retry for error state
     const handleRetry = () => {
         setError(null);
+        streamingManager?.resetCard(cardId);
         if (onRegenerate) {
             onRegenerate();
         }
@@ -107,13 +255,10 @@ const StrategicPositioningRadar = ({
 
     useEffect(() => {
         if (strategicRadarData) {
-            // Handle both wrapped and direct API response formats
             let normalizedData;
             if (strategicRadarData.strategicRadar) {
-                // Data is already wrapped
                 normalizedData = strategicRadarData;
             } else if (strategicRadarData.dimensions) {
-                // Data is direct from API, needs wrapping
                 normalizedData = { strategicRadar: strategicRadarData };
             } else {
                 normalizedData = null;
@@ -131,6 +276,14 @@ const StrategicPositioningRadar = ({
             setHasGenerated(false);
         }
     }, [strategicRadarData]);
+
+    useEffect(() => {
+        return () => {
+            if (streamingIntervalRef.current) {
+                clearInterval(streamingIntervalRef.current);
+            }
+        };
+    }, []);
 
     const getScoreColor = (score) => {
         if (score >= 8) return '#10b981';
@@ -160,7 +313,6 @@ const StrategicPositioningRadar = ({
         return 'low-intensity';
     };
 
-    // Radar Chart Component
     const RadarChart = ({ dimensions }) => {
         const size = 320;
         const center = size / 2;
@@ -175,7 +327,6 @@ const StrategicPositioningRadar = ({
             return { x, y };
         };
 
-        // Generate grid circles
         const gridCircles = Array.from({ length: levels }, (_, i) => {
             const radius = ((i + 1) / levels) * maxRadius;
             return (
@@ -191,7 +342,6 @@ const StrategicPositioningRadar = ({
             );
         });
 
-        // Generate axes and labels
         const axes = dimensions.map((dimension, i) => {
             const angle = i * angleStep;
             const endX = center + maxRadius * Math.cos(angle - Math.PI / 2);
@@ -225,7 +375,6 @@ const StrategicPositioningRadar = ({
             );
         });
 
-        // Current and target score paths
         const currentPoints = dimensions.map((dimension, i) => {
             const angle = i * angleStep;
             return getCoordinates(dimension.currentScore, angle);
@@ -245,7 +394,6 @@ const StrategicPositioningRadar = ({
                     {gridCircles}
                     {axes}
 
-                    {/* Scale labels */}
                     {Array.from({ length: levels }, (_, i) => {
                         const value = ((i + 1) * 10) / levels;
                         const y = center - ((i + 1) / levels) * maxRadius;
@@ -262,7 +410,6 @@ const StrategicPositioningRadar = ({
                         );
                     })}
 
-                    {/* Target area (dashed) */}
                     <path
                         d={targetPath}
                         fill="rgba(59, 130, 246, 0.1)"
@@ -271,7 +418,6 @@ const StrategicPositioningRadar = ({
                         strokeDasharray="5,5"
                     />
 
-                    {/* Current area */}
                     <path
                         d={currentPath}
                         fill="rgba(16, 185, 129, 0.2)"
@@ -279,7 +425,6 @@ const StrategicPositioningRadar = ({
                         strokeWidth="2"
                     />
 
-                    {/* Current score points */}
                     {currentPoints.map((point, i) => (
                         <circle
                             key={`current-${i}`}
@@ -290,7 +435,6 @@ const StrategicPositioningRadar = ({
                         />
                     ))}
 
-                    {/* Target score points */}
                     {targetPoints.map((point, i) => (
                         <circle
                             key={`target-${i}`}
@@ -316,13 +460,11 @@ const StrategicPositioningRadar = ({
         );
     };
 
-    // Strategic Positioning Map Component
     const PositioningMap = ({ dimensions }) => {
         const mapSize = 320;
         const padding = 40;
         const plotSize = mapSize - (padding * 2);
 
-        // Use first two dimensions for X and Y axes
         const xDimension = dimensions[0];
         const yDimension = dimensions[1];
 
@@ -335,7 +477,6 @@ const StrategicPositioningRadar = ({
         const targetPos = getPosition(xDimension.targetScore, yDimension.targetScore);
         const industryPos = getPosition(xDimension.industryAverage, yDimension.industryAverage);
 
-        // Strategic quadrants
         const quadrants = [
             { name: 'Leaders', x: plotSize / 2 + padding, y: padding, color: '#10b981' },
             { name: 'Challengers', x: padding, y: padding, color: '#3b82f6' },
@@ -346,7 +487,6 @@ const StrategicPositioningRadar = ({
         return (
             <div className="positioning-map-container">
                 <svg width={mapSize} height={mapSize}>
-                    {/* Grid lines */}
                     <defs>
                         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
                             <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" strokeWidth="1" />
@@ -354,7 +494,6 @@ const StrategicPositioningRadar = ({
                     </defs>
                     <rect width={mapSize} height={mapSize} fill="url(#grid)" />
 
-                    {/* Quadrant dividers */}
                     <line
                         x1={mapSize / 2} y1={padding}
                         x2={mapSize / 2} y2={mapSize - padding}
@@ -366,7 +505,6 @@ const StrategicPositioningRadar = ({
                         stroke="#d1d5db" strokeWidth="2" strokeDasharray="5,5"
                     />
 
-                    {/* Axes */}
                     <line
                         x1={padding} y1={mapSize - padding}
                         x2={mapSize - padding} y2={mapSize - padding}
@@ -378,7 +516,6 @@ const StrategicPositioningRadar = ({
                         stroke="#374151" strokeWidth="2"
                     />
 
-                    {/* Axis labels */}
                     <text
                         x={mapSize / 2}
                         y={mapSize - 10}
@@ -401,7 +538,6 @@ const StrategicPositioningRadar = ({
                         {yDimension.name}
                     </text>
 
-                    {/* Scale markers */}
                     {[0, 2, 4, 6, 8, 10].map(value => (
                         <g key={`x-${value}`}>
                             <text
@@ -429,7 +565,6 @@ const StrategicPositioningRadar = ({
                         </g>
                     ))}
 
-                    {/* Quadrant labels */}
                     {quadrants.map((quad, i) => (
                         <text
                             key={i}
@@ -444,7 +579,6 @@ const StrategicPositioningRadar = ({
                         </text>
                     ))}
 
-                    {/* Industry average */}
                     <circle
                         cx={industryPos.x}
                         cy={industryPos.y}
@@ -454,7 +588,6 @@ const StrategicPositioningRadar = ({
                         strokeWidth="2"
                     />
 
-                    {/* Current position */}
                     <circle
                         cx={currentPos.x}
                         cy={currentPos.y}
@@ -464,7 +597,6 @@ const StrategicPositioningRadar = ({
                         strokeWidth="2"
                     />
 
-                    {/* Target position */}
                     <circle
                         cx={targetPos.x}
                         cy={targetPos.y}
@@ -475,7 +607,6 @@ const StrategicPositioningRadar = ({
                         strokeDasharray="3,3"
                     />
 
-                    {/* Movement arrow */}
                     <line
                         x1={currentPos.x}
                         y1={currentPos.y}
@@ -512,7 +643,6 @@ const StrategicPositioningRadar = ({
         );
     };
 
-    // Loading state
     if (isRegenerating) {
         return (
             <div className="strategic-radar-container">
@@ -529,11 +659,10 @@ const StrategicPositioningRadar = ({
         );
     }
 
-    // Error state - using AnalysisError component
     if (error) {
         return (
             <div className="strategic-radar-container">
-                <AnalysisError 
+                <AnalysisError
                     error={error}
                     onRetry={handleRetry}
                     title="Strategic Positioning Radar Analysis Error"
@@ -542,11 +671,10 @@ const StrategicPositioningRadar = ({
         );
     }
 
-    // Error state for when analysis fails but no explicit error is set
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
             <div className="strategic-radar-container">
-                <AnalysisError 
+                <AnalysisError
                     error="Unable to generate strategic positioning analysis. Please try regenerating or check your inputs."
                     onRetry={handleRetry}
                     title="Strategic Positioning Radar Analysis Error"
@@ -555,12 +683,9 @@ const StrategicPositioningRadar = ({
         );
     }
 
-    // Check if data is incomplete and show missing questions checker
     if (!strategicRadarData || isStrategicRadarDataIncomplete(strategicRadarData)) {
         return (
             <div className="strategic-radar-container">
-
-                {/* Replace the entire empty-state div with the common component */}
                 <AnalysisEmptyState
                     analysisType="strategicRadar"
                     analysisDisplayName="Strategic Positioning Radar Analysis"
@@ -576,11 +701,10 @@ const StrategicPositioningRadar = ({
         );
     }
 
-    // Check if data structure is valid
     if (!data.strategicRadar || !data.strategicRadar.dimensions) {
         return (
             <div className="strategic-radar-container">
-                <AnalysisError 
+                <AnalysisError
                     error="The strategic positioning data received is not in the expected format. Please regenerate the analysis."
                     onRetry={handleRetry}
                     title="Invalid Data Structure"
@@ -592,16 +716,31 @@ const StrategicPositioningRadar = ({
     const { strategicRadar } = data;
     const { dimensions, overallPosition } = strategicRadar;
 
+    let currentRowIndex = 0;
+    const executiveIndices = {};
+    const dimensionIndices = {};
+
+    if (overallPosition) {
+        executiveIndices.currentAverage = currentRowIndex++;
+        executiveIndices.targetAverage = currentRowIndex++;
+        executiveIndices.improvementGap = currentRowIndex++;
+    }
+
+    dimensions.forEach((_, index) => {
+        dimensionIndices[index] = currentRowIndex++;
+    });
+
+    const isStreaming = streamingManager?.shouldStream(cardId);
+    const hasStreamed = streamingManager?.hasStreamed(cardId);
+
     return (
         <div className="strategic-radar-container">
 
-            {/* Navigation Tabs */}
             <div className="competitive-advantage-tabs">
                 {[
                     { id: 'overview', label: 'Overview', icon: Target },
                     { id: 'radar', label: 'Radar View', icon: Activity },
                     { id: 'positioning', label: 'Positioning Map', icon: BarChart3 },
-                    // { id: 'details', label: 'Details', icon: Award },
                 ].map(tab => {
                     const IconComponent = tab.icon;
                     return (
@@ -617,11 +756,9 @@ const StrategicPositioningRadar = ({
                 })}
             </div>
 
-            {/* Content */}
             <div className="competitive-advantage-content">
                 {activeTab === 'overview' && (
                     <div className="overview-content">
-                        {/* Executive Summary Table */}
                         {overallPosition && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('executive')}>
@@ -640,37 +777,72 @@ const StrategicPositioningRadar = ({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <td><div className="force-name">Current Average Score</div></td>
-                                                    <td>{overallPosition.currentAverage}</td>
+                                                <StreamingRow
+                                                    isVisible={executiveIndices.currentAverage < visibleRows}
+                                                    isLast={executiveIndices.currentAverage === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
                                                     <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Current Average Score' : (typingTexts[`${executiveIndices.currentAverage}-label`] || 'Current Average Score')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ? overallPosition.currentAverage : (typingTexts[`${executiveIndices.currentAverage}-value`] || overallPosition.currentAverage)}
+                                                    </td>
+                                                    <td style={{ opacity: executiveIndices.currentAverage < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         <span className={`status-badge ${getScoreClass(overallPosition.currentAverage)}`}>
                                                             {overallPosition.currentAverage >= 8 ? 'Excellent' :
                                                                 overallPosition.currentAverage >= 6 ? 'Good' :
                                                                     overallPosition.currentAverage >= 4 ? 'Average' : 'Poor'}
                                                         </span>
                                                     </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><div className="force-name">Target Average Score</div></td>
-                                                    <td>{overallPosition.targetAverage}</td>
+                                                </StreamingRow>
+
+                                                <StreamingRow
+                                                    isVisible={executiveIndices.targetAverage < visibleRows}
+                                                    isLast={executiveIndices.targetAverage === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
                                                     <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Target Average Score' : (typingTexts[`${executiveIndices.targetAverage}-label`] || 'Target Average Score')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ? overallPosition.targetAverage : (typingTexts[`${executiveIndices.targetAverage}-value`] || overallPosition.targetAverage)}
+                                                    </td>
+                                                    <td style={{ opacity: executiveIndices.targetAverage < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         <span className={`status-badge ${getScoreClass(overallPosition.targetAverage)}`}>
                                                             {overallPosition.targetAverage >= 8 ? 'Excellent' :
                                                                 overallPosition.targetAverage >= 6 ? 'Good' :
                                                                     overallPosition.targetAverage >= 4 ? 'Average' : 'Poor'}
                                                         </span>
                                                     </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><div className="force-name">Improvement Gap</div></td>
-                                                    <td>{(overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1)}</td>
+                                                </StreamingRow>
+
+                                                <StreamingRow
+                                                    isVisible={executiveIndices.improvementGap < visibleRows}
+                                                    isLast={executiveIndices.improvementGap === visibleRows - 1 && isStreaming}
+                                                    lastRowRef={lastRowRef}
+                                                >
                                                     <td>
+                                                        <div className="force-name">
+                                                            {hasStreamed ? 'Improvement Gap' : (typingTexts[`${executiveIndices.improvementGap}-label`] || 'Improvement Gap')}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {hasStreamed ?
+                                                            (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1) :
+                                                            (typingTexts[`${executiveIndices.improvementGap}-value`] || (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1))
+                                                        }
+                                                    </td>
+                                                    <td style={{ opacity: executiveIndices.improvementGap < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         <span className={`status-badge ${getPerformanceStatusClass(overallPosition.currentAverage, overallPosition.targetAverage)}`}>
                                                             {getPerformanceStatus(overallPosition.currentAverage, overallPosition.targetAverage)}
                                                         </span>
                                                     </td>
-                                                </tr>
+                                                </StreamingRow>
                                             </tbody>
                                         </table>
 
@@ -700,7 +872,6 @@ const StrategicPositioningRadar = ({
                             </div>
                         )}
 
-                        {/* Strategic Dimensions Analysis Table */}
                         {dimensions && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('dimensions')}>
@@ -720,26 +891,41 @@ const StrategicPositioningRadar = ({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {dimensions.map((dimension, index) => (
-                                                    <tr key={index}>
-                                                        <td> <div className="force-name">{dimension.name} </div></td>
-                                                        <td>
-                                                            <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
-                                                                {dimension.currentScore}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
-                                                                {dimension.targetScore}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>
-                                                                {dimension.industryAverage}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {dimensions.map((dimension, index) => {
+                                                    const rowIndex = dimensionIndices[index];
+                                                    const isVisible = rowIndex < visibleRows;
+                                                    const isLast = rowIndex === visibleRows - 1;
+
+                                                    return (
+                                                        <StreamingRow
+                                                            key={index}
+                                                            isVisible={isVisible}
+                                                            isLast={isLast && isStreaming}
+                                                            lastRowRef={lastRowRef}
+                                                        >
+                                                            <td>
+                                                                <div className="force-name">
+                                                                    {hasStreamed ? dimension.name : (typingTexts[`${rowIndex}-name`] || dimension.name)}
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                                <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
+                                                                    {hasStreamed ? dimension.currentScore : (typingTexts[`${rowIndex}-current`] || dimension.currentScore)}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                                                                <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
+                                                                    {dimension.targetScore}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                                                                <span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>
+                                                                    {dimension.industryAverage}
+                                                                </span>
+                                                            </td>
+                                                        </StreamingRow>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>

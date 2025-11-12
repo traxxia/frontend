@@ -466,7 +466,7 @@ const EditableBriefSection = ({
           <Loader size={16} className="spinner" />
           <span>
             {isSaving && 'Saving changes...'}
-            {isAnalysisRegenerating && 'Regenerating analysis...'}
+            {isAnalysisRegenerating && 'Regenerating Insight...'}
             {isEssentialPhaseGenerating && 'Generating essential phase analysis...'}
           </span>
         </div>

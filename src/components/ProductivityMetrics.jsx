@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader, RefreshCw, Activity, BarChart3, DollarSign, Target, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import LiveStreamHandler from "./LiveStreamHandler";
-import "../styles/streaming.css";
+import { StreamingRow } from './StreamingManager';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
 const AnalysisEmptyState = ({ analysisDisplayName, icon: Icon, onImproveAnswers, onRegenerate, isRegenerating, canRegenerate, userAnswers, minimumAnswersRequired }) => (
   <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -31,99 +32,35 @@ const ProductivityMetrics = ({
   canRegenerate = true,
   productivityData = null,
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  isExpanded = true,
+  streamingManager,
+  cardId
 }) => {
   const [data, setData] = useState(productivityData);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
-  
 
-  const [streamedData, setStreamedData] = useState({
-    employeeProductivity: {},
-    costStructure: {},
-    valueDrivers: [],
-    improvementOpportunities: []
-  });
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [typingTexts, setTypingTexts] = useState({});
+  const streamingIntervalRef = useRef(null);
 
-  const [highlightedSection, setHighlightedSection] = useState(null);
+  const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
-  const handleStreamUpdate = (newData) => {
-    setStreamedData((prev) => {
-      const updated = { ...prev };
-
-      if (newData.valueDrivers) {
-        updated.valueDrivers = [...new Set([...prev.valueDrivers, ...newData.valueDrivers])];
-      }
-      if (newData.improvementOpportunities) {
-        updated.improvementOpportunities = [
-          ...new Set([...prev.improvementOpportunities, ...newData.improvementOpportunities]),
-        ];
-      }
-      if (newData.employeeProductivity) {
-        updated.employeeProductivity = { ...prev.employeeProductivity, ...newData.employeeProductivity };
-      }
-      if (newData.costStructure) {
-        updated.costStructure = { ...prev.costStructure, ...newData.costStructure };
-      }
-
-      return updated;
-    });
-  };
-
-  const handleStreamComplete = () => {
-    setIsStreamingActive(false);
-    console.log("✅ Productivity metrics streaming complete");
-  };
-
-  const [isStreamingActive, setIsStreamingActive] = useState(false);
-  const [displayProgress, setDisplayProgress] = useState(0);
-
-  useEffect(() => {
-    if (!isStreamingActive) return;
-
-    let lastTime = 0;
-    const scrollSpeed = 0.4; // Adjust this for smoother or faster scrolling
-    let animationFrame;
-
-    const scrollSmoothly = (timestamp) => {
-      if (!lastTime) lastTime = timestamp;
-      const delta = timestamp - lastTime;
-
-      if (delta > 16) {
-        const metricsContainer = document.getElementById('productivityMetrics');
-        if (metricsContainer) {
-          metricsContainer.scrollBy({ top: scrollSpeed, behavior: 'smooth' });
-        }
-        lastTime = timestamp;
-      }
-
-      animationFrame = requestAnimationFrame(scrollSmoothly);
-    };
-
-    animationFrame = requestAnimationFrame(scrollSmoothly);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [isStreamingActive, streamedData]);
-
-  
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
     }
   };
 
-  const handleRegenerate = () => {
-    setDisplayProgress(0);
-    setStreamedData({
-      employeeProductivity: {},
-     costStructure: {},
-     valueDrivers: [],
-     improvementOpportunities: []
- });
-    setIsStreamingActive(true);
-    if (onRegenerate) onRegenerate();
+  const handleRegenerate = async () => {
+    if (onRegenerate) {
+      streamingManager?.resetCard(cardId);
+      setError(null);
+      onRegenerate();
+    }
   };
-
 
   const handleRetry = () => {
     setError(null);
@@ -131,8 +68,6 @@ const ProductivityMetrics = ({
       onRegenerate();
     }
   };
-
-  
 
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
@@ -159,6 +94,162 @@ const ProductivityMetrics = ({
     const sectionsWithData = [hasEmployeeData, hasCostData, hasValueDrivers, hasImprovements].filter(Boolean).length;
     return sectionsWithData === 0;
   };
+
+  const calculateTotalRows = (data) => {
+    if (!data || isProductivityDataIncomplete(data)) {
+      return 0;
+    }
+
+    let normalizedData;
+    if (data.productivityMetrics) {
+      normalizedData = data;
+    } else if (data.employeeProductivity || data.costStructure) {
+      normalizedData = { productivityMetrics: data };
+    } else {
+      return 0;
+    }
+
+    const metrics = normalizedData.productivityMetrics;
+    let total = 0;
+
+    Object.keys(metrics).forEach(key => {
+      const value = metrics[key];
+      if (Array.isArray(value)) {
+        total += value.length;
+      }
+    });
+
+    return total;
+  };
+
+  const typeText = (text, rowIndex, field, delay = 0) => {
+    if (text === null || text === undefined) return;
+    
+    const textStr = typeof text === 'string' ? text : String(text);
+
+    setTimeout(() => {
+      let currentIndex = 0;
+      const key = `${rowIndex}-${field}`;
+
+      const interval = setInterval(() => {
+        if (currentIndex <= textStr.length) {
+          setTypingTexts(prev => ({
+            ...prev,
+            [key]: textStr.substring(0, currentIndex)
+          }));
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+        }
+      }, STREAMING_CONFIG.TYPING_SPEED);
+    }, delay);
+  };
+
+  useEffect(() => {
+    const totalRows = calculateTotalRows(productivityData);
+
+    if (totalRows === 0) {
+      return;
+    }
+
+    if (!streamingManager?.shouldStream(cardId)) {
+      setVisibleRows(totalRows);
+    }
+  }, [productivityData, cardId, streamingManager]);
+
+  useEffect(() => {
+    if (!streamingManager?.shouldStream(cardId)) {
+      return;
+    }
+
+    if (!productivityData || isRegenerating || isProductivityDataIncomplete(productivityData)) {
+      return;
+    }
+
+    let normalizedData;
+    if (productivityData.productivityMetrics) {
+      normalizedData = productivityData;
+    } else if (productivityData.employeeProductivity || productivityData.costStructure) {
+      normalizedData = { productivityMetrics: productivityData };
+    } else {
+      return;
+    }
+
+    const metrics = normalizedData.productivityMetrics;
+
+    if (streamingIntervalRef.current) {
+      clearInterval(streamingIntervalRef.current);
+    }
+
+    setVisibleRows(0);
+    setTypingTexts({});
+    setUserHasScrolled(false);
+
+    const totalItems = calculateTotalRows(productivityData);
+    let currentRow = 0;
+
+    streamingIntervalRef.current = setInterval(() => {
+      if (currentRow < totalItems) {
+        setVisibleRows(currentRow + 1);
+
+        let rowsProcessed = 0;
+
+        // Process all array sections
+        Object.keys(metrics).forEach(sectionKey => {
+          const sectionData = metrics[sectionKey];
+          
+          if (Array.isArray(sectionData) && sectionData.length > 0) {
+            const index = currentRow - rowsProcessed;
+            
+            if (index >= 0 && index < sectionData.length) {
+              const item = sectionData[index];
+              
+              if (typeof item === 'string') {
+                typeText(item, currentRow, 'item', 0);
+              } else if (typeof item === 'object' && item !== null) {
+                const keys = Object.keys(item);
+                keys.forEach((key, keyIndex) => {
+                  typeText(item[key], currentRow, key, keyIndex * 100);
+                });
+              }
+            }
+            
+            if (index >= 0 && index < sectionData.length) {
+              currentRow++;
+              return;
+            }
+            
+            if (currentRow >= rowsProcessed && currentRow < rowsProcessed + sectionData.length) {
+              return;
+            }
+            
+            rowsProcessed += sectionData.length;
+          }
+        });
+
+        currentRow++;
+      } else {
+        clearInterval(streamingIntervalRef.current);
+        setVisibleRows(totalItems);
+        streamingManager.stopStreaming(cardId);
+        setUserHasScrolled(false);
+      }
+    }, STREAMING_CONFIG.ROW_INTERVAL);
+
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+      }
+    };
+  }, [cardId, productivityData, isRegenerating, streamingManager, setUserHasScrolled]);
+
+  useEffect(() => {
+    return () => {
+      if (streamingIntervalRef.current) {
+        clearInterval(streamingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const toggleSection = (sectionKey) => {
     setExpandedSections(prev => ({
@@ -236,18 +327,11 @@ const ProductivityMetrics = ({
     const chartData = convertObjectToChartData(obj);
 
     return (
-      <div
-        data-section={sectionKey}
-        className="section-container fade-in"
-        key={sectionKey}
-        style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          transition: 'transform 0.3s ease, opacity 0.3s ease',
-        }}
-      >
-
+      <div className="section-container" key={sectionKey} style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',  
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
         <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -286,22 +370,19 @@ const ProductivityMetrics = ({
     );
   };
 
-  const renderArrayTable = (array, sectionKey, sectionTitle) => {
+  const renderArrayTable = (array, sectionKey, sectionTitle, sectionIndices) => {
     if (!array || !Array.isArray(array) || array.length === 0) return null;
+
+    const isStreaming = streamingManager?.shouldStream(cardId);
+    const hasStreamed = streamingManager?.hasStreamed(cardId);
 
     if (typeof array[0] === 'string') {
       return (
-        <div
-          data-section={sectionKey}
-          className={`section-container fade-in ${highlightedSection === sectionKey ? 'streaming-highlight' : ''}`}
-          key={sectionKey}
-          style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-
+        <div className="section-container" key={sectionKey} style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',  
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -331,16 +412,24 @@ const ProductivityMetrics = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {array.map((item, index) => (
-                    <tr key={index} style={{
-                      borderBottom: '1px solid #dee2e6',
-                      transition: 'background-color 0.2s'
-                    }}>
-                      <td style={{ padding: '12px' }}>
-                        <span className="stream-fade">{item}</span>
-                      </td>
-                    </tr>
-                  ))}
+                  {array.map((item, index) => {
+                    const rowIndex = sectionIndices[index];
+                    const isVisible = rowIndex < visibleRows;
+                    const isLast = rowIndex === visibleRows - 1;
+
+                    return (
+                      <StreamingRow
+                        key={index}
+                        isVisible={isVisible}
+                        isLast={isLast && isStreaming}
+                        lastRowRef={lastRowRef}
+                      >
+                        <td style={{ padding: '12px' }}>
+                          {hasStreamed ? item : (typingTexts[`${rowIndex}-item`] || item)}
+                        </td>
+                      </StreamingRow>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -389,18 +478,30 @@ const ProductivityMetrics = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {array.map((item, index) => (
-                    <tr key={index} style={{
-                      borderBottom: '1px solid #dee2e6',
-                      transition: 'background-color 0.2s'
-                    }}>
-                      {keys.map(key => (
-                        <td key={key} style={{ padding: '12px' }}>
-                          <span className="stream-fade">{formatValue(item[key], key)}</span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {array.map((item, index) => {
+                    const rowIndex = sectionIndices[index];
+                    const isVisible = rowIndex < visibleRows;
+                    const isLast = rowIndex === visibleRows - 1;
+
+                    return (
+                      <StreamingRow
+                        key={index}
+                        isVisible={isVisible}
+                        isLast={isLast && isStreaming}
+                        lastRowRef={lastRowRef}
+                      >
+                        {keys.map((key, keyIndex) => (
+                          <td key={key} style={{ 
+                            padding: '12px',
+                            opacity: isVisible ? 1 : 0,
+                            transition: hasStreamed ? 'none' : `opacity 0.3s ${keyIndex * 0.1}s`
+                          }}>
+                            {hasStreamed ? formatValue(item[key], key) : (typingTexts[`${rowIndex}-${key}`] ? formatValue(typingTexts[`${rowIndex}-${key}`], key) : formatValue(item[key], key))}
+                          </td>
+                        ))}
+                      </StreamingRow>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -484,41 +585,29 @@ const ProductivityMetrics = ({
 
   const productivityMetrics = data.productivityMetrics;
 
-  <style>
-{`
-  @keyframes fadeInRow {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  // Calculate row indices inline like PESTEL
+  let currentRowIndex = 0;
+  const sectionIndices = {};
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-
-  .fade-in {
-    animation: fadeInRow 0.5s ease-in;
-  }
-`}
-</style>
+  Object.keys(productivityMetrics).forEach(sectionKey => {
+    const sectionData = productivityMetrics[sectionKey];
+    
+    if (Array.isArray(sectionData) && sectionData.length > 0) {
+      sectionIndices[sectionKey] = {};
+      sectionData.forEach((_, index) => {
+        sectionIndices[sectionKey][index] = currentRowIndex++;
+      });
+    }
+  });
 
   return (
     <div
-      id="productivityMetrics"
       data-analysis-type="productivityMetrics"
       data-analysis-name="Productivity Metrics"
       data-analysis-order="14">
 
-      <LiveStreamHandler
-        parsedData={data?.productivityMetrics}
-        isStreamingActive={isStreamingActive}
-        onStreamingMount={() => setIsStreamingActive(true)}
-        onStreamUpdate={handleStreamUpdate}
-        onStreamComplete={handleStreamComplete}
-      />
-
-      {Object.keys(streamedData).map((sectionKey) => {
-        const sectionData = streamedData[sectionKey];
+      {Object.keys(productivityMetrics).map((sectionKey) => {
+        const sectionData = productivityMetrics[sectionKey];
         const sectionTitle = formatFieldName(sectionKey);
 
         if (sectionData && typeof sectionData === 'object' && !Array.isArray(sectionData)) {
@@ -526,7 +615,7 @@ const ProductivityMetrics = ({
         }
 
         if (Array.isArray(sectionData) && sectionData.length > 0) {
-          return renderArrayTable(sectionData, sectionKey, sectionTitle);
+          return renderArrayTable(sectionData, sectionKey, sectionTitle, sectionIndices[sectionKey] || {});
         }
 
         return null;
