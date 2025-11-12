@@ -1,19 +1,23 @@
 export const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
-  
+
   try {
-    const date = new Date(dateString);
-    
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
+    const dateObj = new Date(dateString);
+
+    if (isNaN(dateObj.getTime())) {
       return 'Invalid Date';
     }
-    
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() returns 0-11
-    const year = date.getFullYear();
-    
-    return `${day}/${month}/${year}`;
+
+    const options = {
+      day: '2-digit',
+      month: 'short',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    };
+
+    return dateObj.toLocaleString('en-GB', options).replace(',', '');
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'Invalid Date';

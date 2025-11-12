@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle } from 'lucide-react';
 import '../styles/question-management.css';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const QuestionManagement = ({ onToast }) => {
   const [questions, setQuestions] = useState([]);
@@ -14,6 +15,9 @@ const QuestionManagement = ({ onToast }) => {
   const [collapsedPhases, setCollapsedPhases] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [isReordering, setIsReordering] = useState(false);
+  const { t } = useTranslation();
+ 
+
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -260,13 +264,13 @@ const QuestionManagement = ({ onToast }) => {
   return (
     <div className="question-management">
       <div className="question-management__header">
-        <h2>Question Management</h2>
+        <h2>{t('question_management')}</h2>
         <button 
           onClick={() => setShowCreateForm(true)}
           className="question-management__add-btn"
         >
           <Plus size={16} />
-          Add Question
+          {t('add_question')}
         </button>
       </div>
 
@@ -299,7 +303,7 @@ const QuestionManagement = ({ onToast }) => {
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
               <strong>{phase.charAt(0).toUpperCase() + phase.slice(1)} Phase</strong>
               <span className="phase-section__count">
-                {phaseQuestions.length} questions
+                {phaseQuestions.length} {t('questions')}
               </span>
             </div>
 
@@ -312,16 +316,16 @@ const QuestionManagement = ({ onToast }) => {
                       #
                     </th>
                     <th className="questions-table__header-cell">
-                      Question Text
+                      {t('question_text')}
                     </th>
                     <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--used-for">
-                      Used For
+                      {t('used_for')}
                     </th>
                     <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--severity">
-                      Severity
+                      {t('severity')}
                     </th>
                     <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--actions">
-                      Actions
+                      {t('actions')}
                     </th>
                   </tr>
                 </thead>
@@ -397,6 +401,7 @@ const QuestionRow = ({
   });
 
   const [showDetails, setShowDetails] = useState(false);
+  const { t } = useTranslation();
 
   const handleSave = () => {
     onUpdate(question._id, {
@@ -484,18 +489,18 @@ const QuestionRow = ({
             <div className="question-row__edit-grid">
               <div className="question-row__edit-field">
                 <label>
-                  Objective
+                  {t('objective')}
                 </label>
                 <textarea
                   name="objective"
                   value={editForm.objective}
                   onChange={handleChange}
-                  placeholder="What this question aims to understand..."
+                  placeholder={t('what_this_question_aims_to_understand')}
                 />
               </div>
               <div className="question-row__edit-field">
                 <label>
-                  Required Information
+                  {t('required_information')}
                 </label>
                 <textarea
                   name="required_info"
@@ -591,13 +596,13 @@ const QuestionRow = ({
             <div className="question-row__details-grid">
               {question.objective && (
                 <div>
-                  <strong className="question-row__details-label">Objective:</strong>
+                  <strong className="question-row__details-label">{t('objective')}:</strong>
                   <div className="question-row__details-content">{question.objective}</div>
                 </div>
               )}
               {question.required_info && (
                 <div>
-                  <strong className="question-row__details-label">Required Information:</strong>
+                  <strong className="question-row__details-label">{t('required_information')}:</strong>
                   <div className="question-row__details-content">{question.required_info}</div>
                 </div>
               )}
@@ -619,36 +624,58 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
     required_info: ''
   });
 
+  
+  const [errors, setErrors] = useState({});
+  const { t } = useTranslation();
+
   const getSeverityForPhase = (phase) => {
     return phase === 'initial' ? 'mandatory' : 'optional';
   };
 
+ const validateForm = () => {
+  const newErrors = {};
+
+  if (!formData.question_text.trim()) {
+    newErrors.question_text = 'Question text is required';
+  } else if (formData.question_text.trim().length < 10) {
+    newErrors.question_text = 'Question must be at least 10 characters long';
+  } else if (formData.question_text.trim().length > 200) {
+    newErrors.question_text = 'Question cannot exceed 200 characters';
+  }
+
+  if (!formData.used_for.trim()) {
+    newErrors.used_for = 'Used For field is required';
+  } else if (!/^[A-Za-z,\s]+$/.test(formData.used_for.trim())) {
+    newErrors.used_for = 'Used For can only contain letters, commas, and spaces';
+  } else if (formData.used_for.trim().length >20) {
+    newErrors.used_for = 'Used For cannot exceed 20 characters';
+  }
+
+  if (!formData.objective.trim()) {
+    newErrors.objective = 'Objective is required';
+  } else if (formData.objective.trim().length < 15) {
+    newErrors.objective = 'Objective must be at least 15 characters long';
+  } else if (formData.objective.trim().length > 200) {
+    newErrors.objective = 'Objective cannot exceed 200 characters';
+  }
+
+  if (formData.required_info && formData.required_info.length > 200) {
+    newErrors.required_info = 'Required info cannot exceed 200 characters';
+  }
+
+ 
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+
   const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.question_text.trim()) {
-      alert('Question text is required');
-      return;
-    }
-    
-    if (!formData.used_for.trim()) {
-      alert('Used For field is required');
-      return;
-    }
-    
-    if (!formData.objective.trim()) {
-      alert('Objective field is required');
-      return;
-    }
-    
-    // Add the auto-determined severity to the form data
-    const submitData = {
-      ...formData,
-      severity: getSeverityForPhase(formData.phase)
-    };
-    onSubmit(submitData);
-  };
+  e.preventDefault();
+  if (!validateForm()) return;
+  const submitData = { ...formData, severity: getSeverityForPhase(formData.phase) };
+  onSubmit(submitData);
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -663,12 +690,12 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
   return (
     <div className="create-form-overlay">
       <div className="create-form">
-        <h3>Create New Question</h3>
+        <h3>{t('create_new_question')}</h3>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} >
           <div className="create-form__field">
             <label>
-              Question Text *
+              {t('question_text')} *
             </label>
             <textarea
               name="question_text"
@@ -676,14 +703,15 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               onChange={handleChange}
               required
               rows="4"
-              placeholder="Enter your question here..."
+              placeholder={t('enter_your_question_here')}
             />
+            {errors.question_text && <span className="error-message">{errors.question_text}</span>}
           </div>
 
           <div className="create-form__grid">
             <div className="create-form__field">
               <label>
-                Phase *
+                {t('phase')} *
               </label>
               <select
                 name="phase"
@@ -699,7 +727,7 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
 
             <div className="create-form__field">
               <label>
-                Used For *
+                {t('used_for')} *
               </label>
               <input
                 type="text"
@@ -709,12 +737,13 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
                 required
                 placeholder="SWOT, Customer Segmentation..."
               />
+              {errors.used_for && <span className="error-message">{errors.used_for}</span>}
             </div>
           </div>
 
           <div className="create-form__field">
             <label>
-              Objective *
+              {t('objective')} *
             </label>
             <textarea
               name="objective"
@@ -722,26 +751,27 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               onChange={handleChange}
               required
               rows="3"
-              placeholder="What this question aims to understand or analyze..."
+              placeholder={t('what_this_question_aims_to_understand_or_analyze')}
             />
+            {errors.objective && <span className="error-message">{errors.objective}</span>}
           </div>
 
           <div className="create-form__field">
             <label>
-              Required Information
+              {t('required_information')}
             </label>
             <textarea
               name="required_info"
               value={formData.required_info}
               onChange={handleChange}
               rows="3"
-              placeholder="What specific information is needed for analysis..."
+              placeholder={t('what_specific_information_is_needed_for_analysis')}
             />
           </div>
 
           <div className="create-form__severity-info">
             <div className="create-form__severity-label">
-              Severity (Auto-assigned)
+              {t('severity')} (Auto-assigned)
             </div>
             <div className="create-form__severity-display">
               <span className={`create-form__severity-badge create-form__severity-badge--${currentSeverity}`}>
@@ -763,14 +793,14 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               disabled={isLoading}
               className="create-form__btn create-form__btn--cancel"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button 
               type="submit"
               disabled={isLoading}
               className="create-form__btn create-form__btn--submit"
             >
-              {isLoading ? 'Creating...' : 'Create Question'}
+              {isLoading ? 'Creating...' : t('create_question')}
             </button>
           </div>
         </form>

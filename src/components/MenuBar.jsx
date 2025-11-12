@@ -118,10 +118,10 @@ const MenuBar = () => {
               </Dropdown.Toggle>
               <Dropdown.Menu align="end" className="traxia-dropdown">
                 <Dropdown.Header className="text-muted small">
-                  {t('signed_in_as')} <strong>{userName}</strong>
+                  {t('signed_in_as')}: <strong>{userName}</strong>
                   {userRole && (
                     <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                      Role: {userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      {t('role')}: {userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </div>
                   )}
                   {/* {companyName && (
@@ -152,7 +152,7 @@ const MenuBar = () => {
                     }}
                   >
                     <Shield size={16} className="me-2" style={{ color: '#f59e0b' }} />
-                    {t('super_admin_panel') || 'Super Admin Panel'}
+                    {t('super_admin_panel')}
                   </Dropdown.Item>
                 )}
 

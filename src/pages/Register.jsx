@@ -114,7 +114,7 @@ const Register = () => {
     
     // Company validation
     if (!form.company_id) {
-      newErrors.company_id = 'Company selection is required';
+      newErrors.company_id = t('Company_selection_is_required');
     }
     
     // Password validation
@@ -135,7 +135,7 @@ const Register = () => {
     
     // Terms and conditions validation (MANDATORY)
     if (!form.terms) {
-      newErrors.terms = 'You must agree to the Terms & Conditions and Privacy Policy to proceed';
+      newErrors.terms = t('You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed');
     }
     
     setErrors(newErrors);
@@ -244,7 +244,7 @@ const Register = () => {
           if (!form.name.trim()) fieldErrors.name = 'Name is required';
           if (!form.email.trim()) fieldErrors.email = 'Email is required';
           if (!form.password) fieldErrors.password = 'Password is required';
-          if (!form.company_id) fieldErrors.company_id = 'Company selection is required';
+          if (!form.company_id) fieldErrors.company_id = t('Company_selection_is_required');
           if (!form.terms) fieldErrors.terms = 'You must agree to the terms and conditions';
           
           setErrors(fieldErrors);
@@ -424,7 +424,7 @@ const Register = () => {
               <label className="checkbox-container">
                 <input type="checkbox" name="terms" checked={form.terms} onChange={handleChange} />
                 <span className="checkbox-label">
-                  <span className="required-indicator">*</span> I agree to the <a href="#terms" onClick={openTermsModal}>{t('terms_conditions') || 'Terms & Conditions'}</a> {t('and') || 'and'} <a href="#privacy" onClick={openPrivacyModal}>{t('privacy_policy') || 'Privacy Policy'}</a>
+                  <span className="required-indicator">*</span> {t('agree_terms')} <a href="#terms" onClick={openTermsModal}>{t('terms_conditions') || 'Terms & Conditions'}</a> {t('and') || 'and'} <a href="#privacy" onClick={openPrivacyModal}>{t('privacy_policy') || 'Privacy Policy'}</a>
                 </span>
               </label>
               {errors.terms && <div className="error-message">{errors.terms}</div>}

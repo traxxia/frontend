@@ -1,5 +1,3 @@
-// utils/businessHelpers.js
-
 export const extractBusinessName = (text) => {
   const patterns = [
     /(?:we are|i am|this is|called|business is|company is)\s+([A-Z][a-zA-Z\s&.-]+?)(?:\.|,|$)/i,

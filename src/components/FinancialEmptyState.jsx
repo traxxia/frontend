@@ -78,7 +78,6 @@ const FinancialEmptyState = ({
             className="missing-metrics-section"
           />
         )}
-
         {/* Only show upload/change buttons if not in read-only mode */}
         {!readOnly && (
           <>

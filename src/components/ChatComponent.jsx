@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Loader, SkipForward, Upload, FileText, Database, MessageCircle, Sparkles, Zap, Brain } from "lucide-react";
+import { Send, Loader, SkipForward, Upload, FileText, Database, BotMessageSquare, Sparkles, Zap, Brain } from "lucide-react";
 import "../styles/ChatComponent.css";
 import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate, formatValidationResults } from '../utils/templateValidator';
+import { formatDate } from '../utils/dateUtils'; // adjust path if needed
+
 
 const ChatComponent = ({
   selectedBusinessId,
@@ -65,6 +67,82 @@ const ChatComponent = ({
       });
     }
   }, [uploadedFileForAnalysis]);
+  /*
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);*/
+  
+  useEffect(() => {
+  if (questions.length === 0 || Object.keys(userAnswers).length === 0) return;
+
+  let newMessages = [...messages];
+  let messageChanged = false;
+
+  questions.forEach((q) => {
+    const qId = q._id || q.question_id;
+    const newAnswerText = userAnswers[qId];
+
+    if (newAnswerText && newAnswerText.trim() && newAnswerText.trim() !== '[Question Skipped]') {
+      const existingUserMessageIndex = newMessages.findIndex(
+        (msg) =>
+          msg.questionId === qId &&
+          msg.type === "user" &&
+          !msg.isFollowUp &&
+          !msg.isSkipped &&
+          !msg.isFileUpload
+      );
+
+      if (existingUserMessageIndex !== -1) {
+        //  Update existing message
+        if (newMessages[existingUserMessageIndex].text !== newAnswerText) {
+          newMessages[existingUserMessageIndex].text = newAnswerText;
+          newMessages[existingUserMessageIndex].timestamp = new Date();
+          messageChanged = true;
+        }
+      } else {
+        //  Remove any old "[Question Skipped]" message before inserting new one
+        newMessages = newMessages.filter(
+          (msg) =>
+            !(
+              msg.questionId === qId &&
+              msg.type === "user" &&
+              msg.isSkipped === true
+            )
+        );
+
+        // Find related bot message (for order)
+        const relatedBotQuestion = newMessages.find(
+          (msg) => msg.questionId === qId && msg.type === "bot"
+        );
+
+        const newMsg = {
+          id: `${Date.now()}_${Math.random()}`,
+          type: "user",
+          text: newAnswerText,
+          timestamp: new Date(),
+          questionId: qId,
+          phase: q.phase,
+          isFollowUp: false,
+          isSkipped: false,
+        };
+
+        if (relatedBotQuestion) {
+          const botIndex = newMessages.indexOf(relatedBotQuestion);
+          newMessages.splice(botIndex + 1, 0, newMsg);
+        } else {
+          newMessages.push(newMsg);
+        }
+
+        messageChanged = true;
+      }
+    }
+  });
+
+  if (messageChanged) {
+    setMessages(newMessages);
+  }
+}, [userAnswers, questions]);
+
 
   useEffect(() => {
     if (scrollToUploadCard && uploadedFileCardRef.current) {
@@ -1469,7 +1547,7 @@ const ChatComponent = ({
                 <div className={`message-wrapper ${message.type}`}>
                   {message.type === 'bot' && (
                     <div className="bot-avatar">
-                      <MessageCircle size={18} color="white" />
+                      <BotMessageSquare size={18} color="white" />
                     </div>
                   )}
 
@@ -1554,7 +1632,7 @@ const ChatComponent = ({
                     )}
 
                     <div className="message-timestamp">
-                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                     {formatDate(message.timestamp)}
                       {message.type === 'bot' && message.phase && (
                         <span style={{ fontStyle: 'italic' }}>
                           - {message.phase} phase{message.isFollowUp && ' followup'}
@@ -1605,7 +1683,7 @@ const ChatComponent = ({
                 ? "Please provide more details..."
                 : nextQuestion
                   ? t("typeYourAnswer")
-                  : "All questions completed!"
+                  : t("All_questions_completed!")
             }
             disabled={isInputDisabled}
             className="message-input"
@@ -1642,7 +1720,7 @@ const ChatComponent = ({
               {isFileUploading && ` • Uploading...`}
             </span>
           ) : (
-            <span>All questions completed!</span>
+            <span>{t("All_questions_completed!")}</span>
           )}
         </div>
       </div>

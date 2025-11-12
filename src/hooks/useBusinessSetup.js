@@ -38,7 +38,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [strategicRadarData, setStrategicRadarData] = useState(null);
   const [productivityData, setProductivityData] = useState(null);
   const [maturityData, setMaturityData] = useState(null);
-  const [competitiveLandscapeData, setCompetitiveLandscapeData] = useState(null); // ADD THIS LINE
+  const [competitiveLandscapeData, setCompetitiveLandscapeData] = useState(null);
 
   // Financial analysis states (Good Phase)
   const [profitabilityData, setProfitabilityData] = useState(null);
@@ -59,7 +59,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [isStrategicRadarRegenerating, setIsStrategicRadarRegenerating] = useState(false);
   const [isProductivityRegenerating, setIsProductivityRegenerating] = useState(false);
   const [isMaturityRegenerating, setIsMaturityRegenerating] = useState(false);
-  const [isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating] = useState(false); // ADD THIS LINE
+  const [isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating] = useState(false);
 
   // Financial analysis regenerating states
   const [isProfitabilityRegenerating, setIsProfitabilityRegenerating] = useState(false);
@@ -71,6 +71,11 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [coreAdjacencyData, setCoreAdjacencyData] = useState(null);
   const [isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating] = useState(false);
   const coreAdjacencyRef = useRef(null);
+  
+  // ✅ NEW: Streaming states for Porter's
+  const [portersStreamingText, setPortersStreamingText] = useState('');
+  const [isPortersStreaming, setIsPortersStreaming] = useState(false);
+  
   // Other states
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
   const [selectedPhase, setSelectedPhase] = useState('initial');
@@ -100,7 +105,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const maturityScoreRef = useRef(null);
   const strategicRadarRef = useRef(null);
   const expandedCapabilityRef = useRef(null);
-  const competitiveLandscapeRef = useRef(null); // ADD THIS LINE
+  const competitiveLandscapeRef = useRef(null);
 
   // Financial analysis refs
   const profitabilityRef = useRef(null);
@@ -129,7 +134,8 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     swotAnalysisResult, setSwotAnalysisResult,
     purchaseCriteriaData, setPurchaseCriteriaData,
     loyaltyNPSData, setLoyaltyNPSData,
-    strategicData, setStrategicData, portersData, setPortersData,
+    strategicData, setStrategicData, 
+    portersData, setPortersData,
     pestelData, setPestelData,
     fullSwotData, setFullSwotData,
     competitiveAdvantageData, setCompetitiveAdvantageData,
@@ -147,11 +153,11 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     investmentPerformanceData, setInvestmentPerformanceData,
     leverageRiskData, setLeverageRiskData,
 
-    // Regenerating states - Active ones only
+    // Regenerating states - ✅ ALL SETTERS INCLUDED
     isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
     isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating,
     isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating,
-    isPortersRegenerating, setIsPortersRegenerating,
+    isPortersRegenerating, setIsPortersRegenerating,  // ✅ SETTER INCLUDED
     isPestelRegenerating, setIsPestelRegenerating,
     isFullSwotRegenerating, setIsFullSwotRegenerating,
     isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating,
@@ -162,12 +168,17 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating,
     isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
     isStrategicRegenerating, setIsStrategicRegenerating,
+    
     // Financial analysis regenerating states
     isProfitabilityRegenerating, setIsProfitabilityRegenerating,
     isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
     isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
     isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
     isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
+
+    // ✅ NEW: Streaming states for Porter's
+    portersStreamingText, setPortersStreamingText,
+    isPortersStreaming, setIsPortersStreaming,
 
     // Other states
     highlightedMissingQuestions, setHighlightedMissingQuestions,
