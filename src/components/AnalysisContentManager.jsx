@@ -260,7 +260,7 @@ const AnalysisContentManager = (props) => {
     highlightedCard,
     hideRegenerateButtons = false
   } = props;
- 
+
   const streamingManager = useStreamingManager();
 
   const isAnalysisLoading = (analysisType) => {
@@ -296,10 +296,10 @@ const AnalysisContentManager = (props) => {
       if (wasExpanded) {
         newSet.delete(cardId);
       } else {
-        newSet.add(cardId); 
-        if (!streamingManager.hasStreamed(cardId)) {
-          streamingManager.startStreaming(cardId);
-        }
+        newSet.add(cardId);
+        // if (!streamingManager.hasStreamed(cardId)) {
+        //   streamingManager.startStreaming(cardId);
+        // }
       }
       return newSet;
     });
@@ -360,7 +360,10 @@ const AnalysisContentManager = (props) => {
             {getStatusIcon()}
             <div onClick={(e) => e.stopPropagation()}>
               <RegenerateButton
-                onRegenerate={onRegenerate}
+                onRegenerate={() => {
+                  streamingManager.startStreaming(id);    // <-- start streaming here (cardId)
+                  onRegenerate?.();
+                }}
                 isRegenerating={isRegenerating || isLoading}
                 canRegenerate={!!onRegenerate}
                 sectionName={title}
@@ -419,6 +422,14 @@ const AnalysisContentManager = (props) => {
     );
   };
 
+  const createSimpleRegenerationHandler = (analysisKey) => () => {
+    const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
+    streamingManager.startStreaming(cardId);
+    if (props.createSimpleRegenerationHandler) {
+      props.createSimpleRegenerationHandler(analysisKey)();
+    }
+  };
+
   const renderAnalysisCard = (analysisKey, config) => {
     const Component = config.component;
     const dataKey = config.dataKey;
@@ -447,7 +458,7 @@ const AnalysisContentManager = (props) => {
             questions={props.questions}
             userAnswers={props.userAnswers}
             businessName={props.businessData.name}
-            onRegenerate={props.createSimpleRegenerationHandler(analysisKey)}
+            onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
             canRegenerate={!props.isAnalysisRegenerating}
             {...{ [dataKey]: data }}
