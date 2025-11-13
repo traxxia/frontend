@@ -41,6 +41,8 @@ const Dashboard = () => {
   const [businessToDelete, setBusinessToDelete] = useState(null);
   const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
+
 
   // Success popup state
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -63,6 +65,7 @@ const Dashboard = () => {
   // API Functions
   const fetchBusinesses = async () => {
     try {
+      setIsLoadingBusinesses(true);
       const token = sessionStorage.getItem('token');
 
       if (!token) {
@@ -97,6 +100,8 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error fetching businesses:', error);
       setBusinessError(t('network_error'));
+    }finally {
+      setIsLoadingBusinesses(false);
     }
   };
 
@@ -456,13 +461,19 @@ const Dashboard = () => {
 
   const BusinessList = ({ businesses, viewType }) => (
     <div className={`business-list ${viewType}`}>
-      {businesses.length === 0 && (
+      {isLoadingBusinesses && (
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <Spinner animation="border" role="status" variant="primary" />
+        <span className="ms-2 text-muted">{t('loading_businesses')}</span>
+      </div>
+    )}
+      {!isLoadingBusinesses && businesses.length === 0 && (
         <div className="text-center text-muted py-5">
           <p className="mb-2">{t('no_businesses_yet')}</p>
           <small>{t('get_started_by_creating')}</small>
         </div>
       )}
-      {businesses.length > 0 && businesses.map((business, index) => (
+      {!isLoadingBusinesses && businesses.length > 0 && businesses.map((business, index) => (
         <DeleteButtonAlternatives
           key={business._id || index}
           business={business}
