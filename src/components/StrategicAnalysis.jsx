@@ -67,7 +67,7 @@ const StrategicAnalysis = ({
   const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(
     streamingManager,
     cardId,
-    isExpanded,
+    false,
     visibleRows
   );
 
