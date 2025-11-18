@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Target, Award, TrendingUp, Users, Building, Zap,
   Loader, Lock, ChevronDown, ChevronUp,
@@ -22,6 +22,7 @@ import InvestmentPerformance from "./InvestmentPerformance";
 import LeverageRisk from "./LeverageRisk";
 import CompetitiveLandscape from "./CompetitiveLandscape";
 import CoreAdjacency from "./CoreAdjacency";
+import { useStreamingManager } from './StreamingManager';
 
 const ANALYSIS_CONFIG = {
   swot: {
@@ -78,7 +79,7 @@ const ANALYSIS_CONFIG = {
     refKey: "leverageRiskRef",
     pdfComponent: "leverage-risk"
   },
-  productivity: {
+  productivityMetrics: {
     component: ProductivityMetrics,
     title: "Productivity Metrics",
     description: "Analysis of organizational productivity and efficiency metrics",
@@ -159,7 +160,7 @@ const ANALYSIS_CONFIG = {
     refKey: "expandedCapabilityRef",
     pdfComponent: "expanded-capability"
   },
-  maturity: {
+  maturityScore: {
     component: MaturityScoreLight,
     title: "Maturity Score",
     description: "Business maturity assessment and scoring",
@@ -237,8 +238,8 @@ const API_TO_ANALYSIS_MAP = {
   'competitive-advantage': 'competitiveAdvantage',
   'expanded-capability-heatmap': 'expandedCapability',
   'strategic-positioning-radar': 'strategicRadar',
-  'productivity-metrics': 'productivity',
-  'maturity-scoring': 'maturity',
+  'productivity-metrics': 'productivityMetrics',
+  'maturity-scoring': 'maturityScore',
   'simple-swot-portfolio': 'competitiveLandscape',
   'core-adjacency': 'coreAdjacency',
   'excel-analysis': 'profitabilityAnalysis',
@@ -259,6 +260,8 @@ const AnalysisContentManager = (props) => {
     highlightedCard,
     hideRegenerateButtons = false
   } = props;
+
+  const streamingManager = useStreamingManager();
 
   const isAnalysisLoading = (analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
@@ -288,10 +291,15 @@ const AnalysisContentManager = (props) => {
   const toggleCard = (cardId) => {
     setExpandedCards(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(cardId)) {
+      const wasExpanded = newSet.has(cardId);
+
+      if (wasExpanded) {
         newSet.delete(cardId);
       } else {
         newSet.add(cardId);
+        // if (!streamingManager.hasStreamed(cardId)) {
+        //   streamingManager.startStreaming(cardId);
+        // }
       }
       return newSet;
     });
@@ -352,7 +360,10 @@ const AnalysisContentManager = (props) => {
             {getStatusIcon()}
             <div onClick={(e) => e.stopPropagation()}>
               <RegenerateButton
-                onRegenerate={onRegenerate}
+                onRegenerate={() => {
+                  streamingManager.startStreaming(id);    // <-- start streaming here (cardId)
+                  onRegenerate?.();
+                }}
                 isRegenerating={isRegenerating || isLoading}
                 canRegenerate={!!onRegenerate}
                 sectionName={title}
@@ -371,7 +382,7 @@ const AnalysisContentManager = (props) => {
             {(isLoading || isRegenerating) && !hasData ? (
               <div className="loading-placeholder">
                 <Loader className="animate-spin" size={24} />
-                <p>Generating analysis...</p>
+                <p>Generating Insight...</p>
               </div>
             ) : (
               children
@@ -411,6 +422,14 @@ const AnalysisContentManager = (props) => {
     );
   };
 
+  const createSimpleRegenerationHandler = (analysisKey) => () => {
+    const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
+    streamingManager.startStreaming(cardId);
+    if (props.createSimpleRegenerationHandler) {
+      props.createSimpleRegenerationHandler(analysisKey)();
+    }
+  };
+
   const renderAnalysisCard = (analysisKey, config) => {
     const Component = config.component;
     const dataKey = config.dataKey;
@@ -421,11 +440,12 @@ const AnalysisContentManager = (props) => {
     const data = props[dataKey];
     const ref = props[refKey];
     const isRegenerating = props[regeneratingKey];
+    const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
 
     return (
       <ModernAnalysisCard
         key={analysisKey}
-        id={analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase()}
+        id={cardId}
         title={config.title}
         description={config.description}
         hasData={!!data}
@@ -438,12 +458,15 @@ const AnalysisContentManager = (props) => {
             questions={props.questions}
             userAnswers={props.userAnswers}
             businessName={props.businessData.name}
-            onRegenerate={props.createSimpleRegenerationHandler(analysisKey)}
+            onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
             canRegenerate={!props.isAnalysisRegenerating}
             {...{ [dataKey]: data }}
             selectedBusinessId={props.selectedBusinessId}
             onRedirectToBrief={props.handleRedirectToBrief}
+            isExpanded={expandedCards.has(cardId)}
+            streamingManager={streamingManager}
+            cardId={cardId}
             {...(analysisKey === 'swot' && {
               analysisResult: data,
               onDataGenerated: props.setSwotAnalysisResult,
@@ -485,8 +508,8 @@ const AnalysisContentManager = (props) => {
 
     const visibleAnalyses = {
       initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
-      essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency', 'productivity'],
-      good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivity', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturity', 'competitiveLandscape', 'coreAdjacency']
+      essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics'],
+      good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivityMetrics', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency']
     };
 
     let currentAnalyses = visibleAnalyses.initial;

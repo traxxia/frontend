@@ -17,10 +17,12 @@ import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
 import UserOverview from "./UserOverview";
 import UserHistory from "./UserHistory";
-import AuditTrail from "./AuditTrail";
+import AuditTrail from "./AuditTrail"
+import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
 const SuperAdminPanel = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("companies");
   const [showToast, setShowToast] = useState({
     show: false,
@@ -50,13 +52,13 @@ const SuperAdminPanel = () => {
 
   // Define tabs based on user role
   const allTabs = [
-    { id: "companies", label: "Companies", icon: Building2 },
-    { id: "users", label: "Users", icon: Users },
-    { id: "history", label: "User History", icon: History },
-    { id: "audit", label: "Audit Trail", icon: Activity },
+    { id: "companies", label: t('companies'), icon: Building2 },
+    { id: "users", label: t('users'), icon: Users },
+    { id: "history", label: t('user_history'), icon: History },
+    { id: "audit", label: t('audit_trail'), icon: Activity },
     {
       id: "questions",
-      label: "Questions",
+      label: t('questions'),
       icon: HelpCircle,
       superAdminOnly: true,
     },
@@ -88,7 +90,7 @@ const SuperAdminPanel = () => {
   };
 
   // Determine title and icon based on user role
-  const panelTitle = isSuperAdmin ? "Super Admin Panel" : "Admin Panel";
+  const panelTitle = isSuperAdmin ? t("super_admin_panel") : t("Admin_Panel");
   const HeaderIcon = isSuperAdmin ? Shield : Settings;
 
   // If active tab is questions but user is not super admin, redirect to companies

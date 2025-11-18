@@ -940,3 +940,105 @@
   width: 4px;
   height: 4px;
 }
+
+/*Dark Mode*/
+
+[data-theme="dark"] .modern-analysis-container {
+  background: #181c24 !important;
+  color: #e5e7eb !important;
+}
+
+/* Category/Phase Section Card */
+[data-theme="dark"] .modern-phase-section,
+[data-theme="dark"] .analysis-category {
+  background: #23263a !important;           /* dark card bg */
+  border-color: #303341 !important;         /* subtle border */
+  box-shadow: 0 2px 6px #000a1a44 !important;
+}
+
+[data-theme="dark"] .modern-phase-header,
+[data-theme="dark"] .category-header {
+  background: linear-gradient(135deg, #242836 0%, #31384b 100%) !important;
+  color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .modern-phase-header:hover,
+[data-theme="dark"] .category-header:hover {
+  background: #23263a !important;
+}
+
+[data-theme="dark"] .modern-phase-info h2,
+[data-theme="dark"] .category-title {
+  color: #eaf2fd !important;
+}
+
+[data-theme="dark"] .modern-phase-info p,
+[data-theme="dark"] .category-header .category-count,
+[data-theme="dark"] .modern-card-text p {
+  color: #a3adc2 !important;
+}
+
+[data-theme="dark"] .modern-analysis-content {
+  background: none !important;
+}
+
+[data-theme="dark"] .modern-phase-icon,
+[data-theme="dark"] .category-icon {
+  background: linear-gradient(135deg, #2563eb 10%, #09418a 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px #18446e44 !important;
+}
+
+[data-theme="dark"] .modern-regenerate-all-btn {
+  background: linear-gradient(135deg, #fbbf24 0%, #ca8a04 100%) !important;
+  color: #101217 !important;
+}
+
+[data-theme="dark"] .modern-phase-section,
+[data-theme="dark"] .modern-analysis-card,
+[data-theme="dark"] .analysis-category {
+  box-shadow: 0 2px 8px rgba(35, 38, 58, 0.3) !important;
+}
+
+[data-theme="dark"] .modern-card-header,
+[data-theme="dark"] .modern-analysis-card {
+  background: #222634 !important;
+  color: #e5e7eb !important;
+  border-color: #2c3345 !important;
+}
+
+[data-theme="dark"] .modern-card-header:hover {
+  background: #242944 !important;
+}
+
+[data-theme="dark"] .modern-card-text h3 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .modern-status-badge {
+  background: linear-gradient(135deg, #2b3564 0%, #426ab3 100%) !important;
+  color: #e0eaff !important;
+}
+
+/* Divider (if any) */
+[data-theme="dark"] .modern-card-header.expanded {
+  border-bottom: 1px solid #334155 !important;
+  box-shadow: 0 2px 8px #22294133 !important;
+}
+
+[data-theme="dark"] .dropdown-category-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e6eefb !important;                    /* bright white-blue */
+  background: #22263a !important;               /* deep navy */
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #313654 !important;  /* clear dark border */
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+[data-theme="dark"] .modern-analysis-container {
+  background: var(--color-bg-primary, #111827) !important; 
+  color: var(--color-text-dark, #e5e7eb) !important;
+}

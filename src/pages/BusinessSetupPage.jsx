@@ -7,6 +7,7 @@ import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
 import StrategicAnalysis from "../components/StrategicAnalysis";
 import PhaseManager from "../components/PhaseManager";
+import PhaseUnlockToast from "../components/PhaseUnlockToast";
 import AnalysisContentManager from "../components/AnalysisContentManager";
 import { useBusinessSetup } from '../hooks/useBusinessSetup';
 import { extractBusinessName, showToastMessage as createToastMessage } from '../utils/businessHelpers';
@@ -14,6 +15,7 @@ import PDFExportButton from "../components/PDFExportButton";
 import { AnalysisApiService } from '../services/analysisApiService';
 import "../styles/businesspage.css";
 import "../styles/business.css";
+import { useStreamingManager } from '../components/StreamingManager';
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -81,6 +83,7 @@ const BusinessSetupPage = () => {
   const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
   const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
   const hasLoadedAnalysis = useRef(false);
+  const streamingManager = useStreamingManager();
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
@@ -279,14 +282,27 @@ const BusinessSetupPage = () => {
 
   const handleStrategicAnalysisRegenerate = async () => {
     if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+
     try {
       isRegeneratingRef.current = true;
       setIsStrategicRegenerating(true);
       showToastMessage("Regenerating Strategic Analysis...", "info");
+
+      // Clear data and reset streaming
       setStrategicData(null);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      if (streamingManager) {
+        streamingManager.resetCard('strategic-analysis');
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Call API
       const result = await apiService.generateStrategicAnalysis(questions, userAnswers, selectedBusinessId);
+
+      // Set flag to trigger streaming, then set data
+      result._isFreshGeneration = true; // Add flag to result
       setStrategicData(result);
+
       showToastMessage("Strategic Analysis regenerated successfully!", "success");
     } catch (error) {
       console.error('Error regenerating Strategic Analysis:', error);
@@ -403,8 +419,45 @@ const BusinessSetupPage = () => {
 
     setTimeout(() => {
       const cardElement = document.getElementById(cardId);
-      if (cardElement) {
-        cardElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!cardElement) return;
+
+      const getScrollParent = (el) => {
+        let cur = el.parentElement;
+        while (cur && cur !== document.body) {
+          const style = window.getComputedStyle(cur);
+          const overflowY = style.overflowY;
+          if (overflowY === 'auto' || overflowY === 'scroll' || cur === document.scrollingElement) return cur;
+          cur = cur.parentElement;
+        }
+        return window;
+      };
+
+      const scrollContainer = getScrollParent(cardElement);
+
+      const headerEls = [
+        document.querySelector('.traxia-navbar'),
+        document.querySelector('.main-header'),
+        document.querySelector('.sub-header'),
+        document.querySelector('.desktop-tabs')
+      ].filter(Boolean);
+
+      const totalHeaderHeight = headerEls.reduce((sum, el) => {
+        const r = el.getBoundingClientRect();
+        return sum + (r.height > 0 && r.bottom > 0 ? r.height : 0);
+      }, 0);
+
+      const gap = 8;
+
+      if (scrollContainer === window) {
+        const top = cardElement.getBoundingClientRect().top + window.pageYOffset;
+        const target = Math.max(0, top - totalHeaderHeight - gap);
+        window.scrollTo({ top: target, behavior: 'smooth' });
+      } else {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elRect = cardElement.getBoundingClientRect();
+        const offsetWithin = elRect.top - containerRect.top + scrollContainer.scrollTop;
+        const target = Math.max(0, offsetWithin - totalHeaderHeight - gap);
+        scrollContainer.scrollTo({ top: target, behavior: 'smooth' });
       }
     }, 600);
   };
@@ -492,7 +545,7 @@ const BusinessSetupPage = () => {
   };
 
   useEffect(() => {
-    setSelectedDropdownValue("Go to Section");
+    setSelectedDropdownValue(t("Go_to_Section"));
   }, []);
 
   useEffect(() => {
@@ -562,6 +615,13 @@ const BusinessSetupPage = () => {
     <div className="business-setup-container">
       <MenuBar />
 
+      <PhaseUnlockToast
+        phase={phaseManager.unlockedPhase}
+        show={phaseManager.showUnlockToast}
+        onClose={() => phaseManager.setShowUnlockToast(false)}
+        autoCloseMs={2500}
+      />
+
       {showToast.show && (
         <div className={`simple-toast ${showToast.type}`}>
           {showToast.message}
@@ -615,6 +675,7 @@ const BusinessSetupPage = () => {
               if (phase === 'good') {
                 try {
                   await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage);
+                  showToastMessage('Good Phase completed! Next: Advanced Phase.', 'success');
                 } catch (error) {
                   console.error('Error generating Good phase analysis:', error);
                   showToastMessage('File uploaded but analysis generation failed', 'error');
@@ -745,7 +806,7 @@ const BusinessSetupPage = () => {
                             ) : (
                               <>
                                 <RefreshCw size={16} />
-                                Regenerate
+                                {t("regenerate")}
                               </>
                             )}
                           </button>
@@ -772,6 +833,10 @@ const BusinessSetupPage = () => {
                             saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                             hideDownload={false}
                             phaseAnalysisArray={phaseAnalysisArray}
+                            onRedirectToChat={handleRedirectToChat}
+                            onRedirectToBrief={handleRedirectToBrief}
+                            streamingManager={streamingManager}  // ADD THIS LINE
+                            isExpanded={true}                      // ADD THIS LINE
                           />
                         </div>
                       )}
@@ -838,7 +903,17 @@ const BusinessSetupPage = () => {
                         userAnswers={userAnswers}
                         businessData={businessData}
                         onBusinessDataUpdate={handleBusinessDataUpdate}
-                        onAnswerUpdate={handleAnswerUpdate}
+                        onAnswerUpdate={async (questionId, newAnswer) => {
+                          handleAnswerUpdate(questionId, newAnswer);
+                          window.dispatchEvent(
+                            new CustomEvent("conversationUpdated", {
+                              detail: { questionId, businessId: selectedBusinessId },
+                            })
+                          );
+                        }}
+
+
+
                         onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
                         isAnalysisRegenerating={isAnalysisRegenerating}
                         isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
@@ -869,6 +944,9 @@ const BusinessSetupPage = () => {
                         saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                         hideDownload={false}
                         phaseAnalysisArray={phaseAnalysisArray}
+                        onRedirectToBrief={handleRedirectToBrief}
+                        streamingManager={streamingManager}  // ADD THIS LINE
+                        isExpanded={true}                      // ADD THIS LINE
                       />
                     </div>
                   )}
@@ -892,7 +970,16 @@ const BusinessSetupPage = () => {
                       userAnswers={userAnswers}
                       businessData={businessData}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
-                      onAnswerUpdate={handleAnswerUpdate}
+                      onAnswerUpdate={async (questionId, newAnswer) => {
+                        handleAnswerUpdate(questionId, newAnswer);
+
+                        window.dispatchEvent(
+                          new CustomEvent('conversationUpdated', {
+                            detail: { questionId, businessId: selectedBusinessId }
+                          })
+                        );
+                      }}
+
                       onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
                       isAnalysisRegenerating={isAnalysisRegenerating}
                       isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
@@ -944,6 +1031,9 @@ const BusinessSetupPage = () => {
                       saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                       hideDownload={false}
                       phaseAnalysisArray={phaseAnalysisArray}
+                      onRedirectToBrief={handleRedirectToBrief}
+                      streamingManager={streamingManager}  // ADD THIS LINE
+                      isExpanded={true}                      // ADD THIS LINE
                     />
                   </div>
                 )}

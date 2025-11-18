@@ -2757,6 +2757,46 @@
   }
 }
 
+.admin-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-top: 6px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-title h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/*Dark Mode*/
+
+[data-theme="dark"] .super-admin-container {
+  background: #000;
+}
+
 [data-theme="dark"] .modal-content {
   background: var(--color-modal-bg);
   border: 1px solid var(--color-modal-border);
@@ -2826,50 +2866,49 @@
   color: var(--color-text-dark);
 }
 
-[data-theme="dark"] .section-header h2 {
-
+[data-theme="dark"] .primary-btn {
+  background-color: var(--color-bg-primary);
   color: var(--color-text-dark);
+}
+
+
+[data-theme="dark"] .section-header {
+  background-color: #181c24; /* deep dark background to separate from page */
+  margin-bottom: 20px;
+  padding: 1rem 1.25rem;
+  border-radius: 8px 8px 0 0;
+}
+
+[data-theme="dark"] .section-header h2 {
+  color: #ffffff; /* white text for dark mode */
+  font-size: 24px;
+  font-weight: 700;
 }
 
 [data-theme="dark"] .table-container {
   background-color: var(--color-bg-secondary);
 }
 
-
-
-
-
-
-.admin-header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+[data-theme="dark"] .status-badge.active {
+  background: #2ecc71;
+  color: #fff;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+[data-theme="dark"] .company-table {
+  background-color: #23272f; /* dark gray */
+  color: #e0e0e0; /* light gray text */
 }
 
-.back-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  margin-top: 6px;
+[data-theme="dark"] .company-table thead tr {
+  background-color: #23272f; /* matches header in your image */
+  color: #ffffff;
 }
 
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+[data-theme="dark"] .company-table tbody tr {
+  background-color: #23272f;
+  border-bottom: 1px solid #374151; /* lighter border for dark mode */
 }
 
-.header-title h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
+[data-theme="dark"] .company-table tbody tr:nth-child(even) {
+  background-color: #293042; /* slight variation for alternate rows */
 }

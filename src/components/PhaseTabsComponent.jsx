@@ -145,7 +145,7 @@ const PhaseTabsComponent = ({
                   e.target.style.transform = "translateY(0)";
                 }}
               >
-                <span>Go to Section</span>
+                <span>{t("Go_to_Section")}</span>
                 <ChevronDown
                   size={16}
                   style={{
