@@ -1,0 +1,36 @@
+# ============================================
+# FULL REPOSITORY MIRROR: GitHub → Azure DevOps
+# Sync ALL BRANCHES + ALL TAGS
+# ============================================
+
+trigger: none
+
+schedules:
+  - cron: "*/10 * * * *"
+    displayName: Sync every 10 minutes
+    always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: none
+
+  - script: |
+      echo "===== MIRRORING FULL GITHUB REPO ====="
+
+      echo "--- Cloning GitHub repo with ALL branches & tags ---"
+      git clone --mirror https://github.com/traxxia/frontend.git github-mirror
+
+      cd github-mirror
+
+      echo "--- Adding Azure DevOps remote ---"
+      git remote add azure https://$(System.AccessToken)@dev.azure.com/mypiquota/Traxxia/_git/traxxia-frontend
+
+      echo "--- Pushing FULL mirror to Azure DevOps (all heads + tags) ---"
+      git push azure --mirror
+
+    env:
+      System.AccessToken: $(System.AccessToken)
+
+    displayName: Mirror Full GitHub → Azure DevOps
