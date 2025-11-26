@@ -1,8 +1,3 @@
-# ============================================
-# FULL REPOSITORY MIRROR: GitHub → Azure DevOps
-# Sync ALL BRANCHES + ALL TAGS
-# ============================================
-
 trigger: none
 
 schedules:
@@ -12,7 +7,6 @@ schedules:
       include:
         - main
     always: true
-
 
 pool:
   vmImage: ubuntu-latest
@@ -37,4 +31,4 @@ steps:
     env:
       System.AccessToken: $(System.AccessToken)
 
-    displayName: Mirror Full GitHub → Azure DevOps
+    displayName: "Mirror Full GitHub → Azure DevOps"
