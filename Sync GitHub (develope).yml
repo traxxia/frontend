@@ -1,0 +1,40 @@
+# ============================================
+# SYNC GITHUB (develope) → AZURE DEVOPS (develope)
+# ============================================
+
+trigger: none     # Azure won't trigger automatically from Azure repo
+
+# Optional: Sync every 30 minutes
+schedules:
+  - cron: "*/10 * * * *"
+    displayName: Sync every 30 minutes
+    branches:
+      include:
+        - develope
+    always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: none    # We manually clone GitHub
+
+  - script: |
+      echo "===== CLONING GITHUB REPO (develope) ====="
+      git clone -b develope https://github.com/traxxia/frontend.git github-repo
+
+      cd github-repo
+
+      echo "===== ADDING AZURE DEVOPS REMOTE ====="
+      git remote add azure https://$(System.AccessToken)@dev.azure.com/mypiquota/Traxxia/_git/traxxia-frontend
+
+      echo "===== PULLING EXISTING AZURE HISTORY (develope) ====="
+      git pull azure develope --allow-unrelated-histories || echo "Azure repo empty or pull failed"
+
+      echo "===== PUSHING LATEST CODE TO AZURE DEVOPS (develope) ====="
+      git push azure develope --force
+
+    env:
+      System.AccessToken: $(System.AccessToken)
+
+    displayName: "Sync GitHub → Azure Repo (develope)"
