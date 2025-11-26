@@ -7,8 +7,12 @@ trigger: none
 
 schedules:
   - cron: "*/10 * * * *"
-    displayName: Sync every 10 minutes
+    displayName: "Sync every 10 minutes"
+    branches:
+      include:
+        - main
     always: true
+
 
 pool:
   vmImage: ubuntu-latest
