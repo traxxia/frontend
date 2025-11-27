@@ -20,6 +20,7 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const MaturityScore = ({
   maturityData = null,
@@ -33,7 +34,9 @@ const MaturityScore = ({
   onRedirectToBrief,
   isExpanded = true,
   streamingManager,
-  cardId
+  cardId,
+  hideImproveButton = false,
+  showImproveButton = true,
 }) => {
   const [data, setData] = useState(maturityData);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -43,6 +46,7 @@ const MaturityScore = ({
   const [visibleRows, setVisibleRows] = useState(0);
   const [typingTexts, setTypingTexts] = useState({});
   const streamingIntervalRef = useRef(null);
+  const { t } = useTranslation();
 
   const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(
     streamingManager,
@@ -532,7 +536,7 @@ const MaturityScore = ({
     return (
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('overview')}>
-          <h3>Maturity Overview</h3>
+          <h3>{t('Maturity_Overview')}</h3>
           {expandedSections.overview ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
 
@@ -541,9 +545,9 @@ const MaturityScore = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Metric</th>
-                  <th>Value</th>
-                  <th>Status</th>
+                  <th>{t('Metric')}</th>
+                  <th>{t('Value')}</th>
+                  <th>{t('Status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -552,7 +556,7 @@ const MaturityScore = ({
                   isLast={visibleRows === 1 && isStreaming}
                   lastRowRef={lastRowRef}
                 >
-                  <td><strong>Overall Maturity Score</strong></td>
+                  <td><strong>{t('Overall_Maturity_Score')}</strong></td>
                   <td>
                     {hasStreamed
                       ? transformedData.overallScore
@@ -574,7 +578,7 @@ const MaturityScore = ({
                   isLast={visibleRows === 2 && isStreaming}
                   lastRowRef={lastRowRef}
                 >
-                  <td><strong>Industry Percentile</strong></td>
+                  <td><strong>{t('Industry_Percentile')}</strong></td>
                   <td>
                     {hasStreamed
                       ? transformedData.industryBenchmark.percentile
@@ -596,7 +600,7 @@ const MaturityScore = ({
                   isLast={visibleRows === 3 && isStreaming}
                   lastRowRef={lastRowRef}
                 >
-                  <td><strong>Industry Average</strong></td>
+                  <td><strong>{t('Industry_Average')}</strong></td>
                   <td>
                     {hasStreamed
                       ? transformedData.industryBenchmark.average
@@ -636,7 +640,7 @@ const MaturityScore = ({
     return (
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('areas')}>
-          <h3>Maturity by Business Area</h3>
+          <h3>{t('Maturity_by_Business_Area')}</h3>
           {expandedSections.areas ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
 
@@ -645,11 +649,11 @@ const MaturityScore = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Business Area</th>
-                  <th>Score</th>
-                  <th>Level</th>
-                  <th>Industry Benchmark</th>
-                  <th>Gap Analysis</th>
+                  <th>{t('Business_Area')}</th>
+                  <th>{t('Score')}</th>
+                  <th>{t('Level')}</th>
+                  <th>{t('Industry_Benchmark')}</th>
+                  <th>{t('Gap_Analysis')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -677,7 +681,7 @@ const MaturityScore = ({
                         </div>
                       </td>
                       <td>
-                        <span className="score-badge">
+                        <span className="score-badge1">
                           {hasStreamed
                             ? dimension.score
                             : (typingTexts[`${rowIndex}-score`] || dimension.score)
@@ -710,14 +714,14 @@ const MaturityScore = ({
 
             {transformedData.dimensions.some(d => d.subDimensions?.length) && (
               <div className="subsection">
-                <h4>Sub-Dimension Details</h4>
+                <h4>{t('Sub-Dimension_Details')}</h4>
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Area</th>
-                      <th>Sub-Dimension</th>
-                      <th>Score</th>
-                      <th>Description</th>
+                      <th>{t('Area')}</th>
+                      <th>{t('Sub-Dimension')}</th>
+                      <th>{t('Score')}</th>
+                      <th>{t('description')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -811,7 +815,7 @@ const MaturityScore = ({
     return (
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('crossScoring')}>
-          <h3>Cross-Dimension Analysis</h3>
+          <h3>{t('Cross-Dimension_Analysis')}</h3>
           {expandedSections.crossScoring ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
 
@@ -820,14 +824,14 @@ const MaturityScore = ({
             {/* Correlations */}
             {crossScoring.correlations?.length > 0 && (
               <div className="subsection">
-                <h4>Correlations</h4>
+                <h4>{t('Correlations')}</h4>
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Dimension 1</th>
-                      <th>Dimension 2</th>
-                      <th>Correlation</th>
-                      <th>Impact</th>
+                      <th>{t('Dimension_1')}</th>
+                      <th>{t('Dimension_2')}</th>
+                      <th>{t('Correlation')}</th>
+                      <th>{t('Impact')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -883,13 +887,13 @@ const MaturityScore = ({
 
             {crossScoring.synergies?.length > 0 && (
               <div className="subsection">
-                <h4>Synergies</h4>
+                <h4>{t('Synergies')}</h4>
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Combination</th>
-                      <th>Synergy Score</th>
-                      <th>Description</th>
+                      <th>{t('Combination')}</th>
+                      <th>{t('Synergy_Score')}</th>
+                      <th>{t('description')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -914,7 +918,7 @@ const MaturityScore = ({
                             </strong>
                           </td>
                           <td>
-                            <span className="score-badge">
+                            <span className="score-badge1">
                               {hasStreamed
                                 ? synergy.synergyScore
                                 : (typingTexts[`${rowIndex}-synergyScore`] || synergy.synergyScore)
@@ -981,7 +985,7 @@ const MaturityScore = ({
     return (
       <div className="section-container">
         <div className="section-header" onClick={() => toggleSection('progression')}>
-          <h3>Path to {nextLevel.target}</h3>
+          <h3>{t('Path_to')} {nextLevel.target}</h3>
           {expandedSections.progression ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
         </div>
 
@@ -990,8 +994,8 @@ const MaturityScore = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Metric</th>
-                  <th>Value</th>
+                  <th>{t('Metric')}</th>
+                  <th>{t('Value')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1000,7 +1004,7 @@ const MaturityScore = ({
                   isLast={progressionIndices.target === visibleRows - 1 && isStreaming}
                   lastRowRef={lastRowRef}
                 >
-                  <td><strong>Target Level</strong></td>
+                  <td><strong>{t('Target_Level')}</strong></td>
                   <td>
                     {hasStreamed
                       ? nextLevel.target
@@ -1014,7 +1018,7 @@ const MaturityScore = ({
                   isLast={progressionIndices.timeline === visibleRows - 1 && isStreaming}
                   lastRowRef={lastRowRef}
                 >
-                  <td><strong>Estimated Timeline</strong></td>
+                  <td><strong>{t('Estimated_Timeline')}</strong></td>
                   <td>
                     <span className="timeline-badge">
                       {hasStreamed
@@ -1031,7 +1035,7 @@ const MaturityScore = ({
                     isLast={progressionIndices.investment === visibleRows - 1 && isStreaming}
                     lastRowRef={lastRowRef}
                   >
-                    <td><strong>Investment Required</strong></td>
+                    <td><strong>{t('Investment_Required')}</strong></td>
                     <td>
                       {hasStreamed
                         ? nextLevel.investment
@@ -1045,11 +1049,11 @@ const MaturityScore = ({
 
             {nextLevel.requirements?.length > 0 && (
               <div className="subsection">
-                <h4>Key Requirements</h4>
+                <h4>{t('Key_Requirements')}</h4>
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Requirement</th>
+                      <th>{t('Requirement')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1137,6 +1141,7 @@ const MaturityScore = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );

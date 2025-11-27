@@ -353,7 +353,7 @@ const DownloadStrategicAnalysis = ({
                 )}
             </button>
 
-            <style jsx>{`
+            <style >{`
                 @keyframes fadeIn {
                     from {
                         opacity: 0;

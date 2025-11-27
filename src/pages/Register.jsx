@@ -387,7 +387,7 @@ const Register = () => {
                   onClick={togglePasswordVisibility}
                   aria-label={showPassword ? t('hide_password') : t('show_password')}
                 >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  {showPassword ? <FaEye /> : <FaEyeSlash />}
                 </button>
               </div>
               {errors.password && <div className="error-message">{errors.password}</div>}
@@ -414,7 +414,7 @@ const Register = () => {
                   onClick={toggleConfirmPasswordVisibility}
                   aria-label={showConfirmPassword ? t('hide_password') : t('show_password')}
                 >
-                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
                 </button>
               </div>
               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}

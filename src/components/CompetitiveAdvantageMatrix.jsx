@@ -6,6 +6,7 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
+import { useTranslation } from '../hooks/useTranslation';
 
 const CompetitiveAdvantageMatrix = ({
     questions = [],
@@ -34,6 +35,7 @@ const CompetitiveAdvantageMatrix = ({
     const [visibleRows, setVisibleRows] = useState(0);
     const [typingTexts, setTypingTexts] = useState({});
     const streamingIntervalRef = useRef(null);
+    const { t } = useTranslation();
  
     const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
@@ -332,7 +334,7 @@ const CompetitiveAdvantageMatrix = ({
 
         return (
             <div className="scatter-plot-container">
-                <h4>Competitive Advantage vs Customer Value Matrix</h4>
+                <h4>{t('Competitive Advantage vs Customer Value Matrix')}</h4>
 
                 <div className="plot-wrapper">
                     <svg width={plotSize} height={plotSize} className="scatter-plot">
@@ -466,7 +468,7 @@ const CompetitiveAdvantageMatrix = ({
 
         return (
             <div className="spider-chart-container">
-                <h4>Differentiators Radar Chart</h4>
+                <h4> {t('Differentiators Radar Chart')} </h4>
 
                 <div className="chart-wrapper">
                     <svg width={size} height={size} className="spider-chart">
@@ -611,10 +613,10 @@ const CompetitiveAdvantageMatrix = ({
             data-analysis-order="9">
             <div className="competitive-advantage-tabs">
                 {[
-                    { id: 'overview', label: 'Overview', icon: Target },
-                    { id: 'matrix', label: 'Scatter Plot', icon: BarChart3 },
-                    { id: 'radar', label: 'Spider Chart', icon: Activity },
-                    { id: 'details', label: 'Details', icon: Award },
+                    { id: 'overview', label: t('Overview'), icon: Target },
+                    { id: 'matrix', label: t('Scatter Plot'), icon: BarChart3 },
+                    { id: 'radar', label: t('Spider Chart'), icon: Activity },
+                    { id: 'details', label: t('details'), icon: Award },
                 ].map(tab => {
                     const IconComponent = tab.icon;
                     return (
@@ -636,7 +638,7 @@ const CompetitiveAdvantageMatrix = ({
                         {advantage.competitivePosition && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('position')}>
-                                    <h3>Market Position</h3>
+                                    <h3>{t('Market Position')}</h3>
                                     {expandedSections.position ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
 
@@ -645,8 +647,8 @@ const CompetitiveAdvantageMatrix = ({
                                         <table className="data-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Metric</th>
-                                                    <th>Value</th>
+                                                    <th>{t('Metric')}</th>
+                                                    <th>{t('Value')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -732,7 +734,7 @@ const CompetitiveAdvantageMatrix = ({
                         {advantage.differentiators && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('differentiators')}>
-                                    <h3>Key Differentiators</h3>
+                                    <h3>{t('Key Differentiators')}</h3>
                                     {expandedSections.differentiators ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
 
@@ -741,12 +743,12 @@ const CompetitiveAdvantageMatrix = ({
                                         <table className="data-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Differentiator</th>
-                                                    <th>Description</th>
-                                                    <th>Uniqueness</th>
-                                                    <th>Customer Value</th>
-                                                    <th>Sustainability</th>
-                                                    <th>Proof Points</th>
+                                                    <th>{t('Differentiator')}</th>
+                                                    <th>{t('description')}</th>
+                                                    <th>{t('Uniqueness')}</th>
+                                                    <th>{t('Customer Value')}</th>
+                                                    <th>{t('Sustainability')}</th>
+                                                    <th>{t('Proof Points')}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

@@ -23,9 +23,51 @@ import LeverageRisk from "./LeverageRisk";
 import CompetitiveLandscape from "./CompetitiveLandscape";
 import CoreAdjacency from "./CoreAdjacency";
 import { useStreamingManager } from './StreamingManager';
+import { useTranslation } from "../hooks/useTranslation";
 
-const ANALYSIS_CONFIG = {
+const AnalysisContentManager = (props) => {
+  const { t } = useTranslation();
+  const CATEGORIES = [
+    {
+      id: 'costs-financial',
+      title: t('Costs/Financial'),
+      subtitle: t('Financial_performance,_profitability,_and_resource_efficiency_metrics'),
+      icon: TrendingUp
+    },
+    {
+      id: 'context-industry',
+      title: t('Context/Industry'),
+      subtitle: t('External_environment,_market_forces,_and_industry_dynamics'),
+      icon: Building
+    },
+    {
+      id: 'customer',
+      title: t('Customer'),
+      subtitle: t('Customer_behavior,_loyalty,_and_purchase_decision_factors'),
+      icon: Users
+    },
+    {
+      id: 'capabilities',
+      title: t('Capabilities'),
+      subtitle: t('Organizational_strengths,_maturity,_and_operational_capabilities'),
+      icon: Zap
+    },
+    {
+      id: 'competition',
+      title: t('Competition'),
+      subtitle: t('Competitive_landscape_and_market_positioning_analysis'),
+      icon: Award
+    },
+    {
+      id: 'current-strategy',
+      title: t('Current Strategy'),
+      subtitle: t('Strategic_focus_areas_and_growth_opportunities'),
+      icon: Target
+    }
+  ];
+  const ANALYSIS_CONFIG = {
   swot: {
+    slug: "swot",
     component: SwotAnalysis,
     title: "SWOT Analysis",
     description: "Comprehensive strengths, weaknesses, opportunities, and threats analysis",
@@ -35,153 +77,170 @@ const ANALYSIS_CONFIG = {
     pdfComponent: "swot-analysis"
   },
   profitabilityAnalysis: {
+    slug: "profitability-analysis",
     component: ProfitabilityAnalysis,
-    title: "Profitability Analysis",
-    description: "Detailed profitability margins with industry benchmark comparisons",
+    title: t("Profitability_Analysis"),
+    description: t("Detailed_profitability_margins_with_industry_benchmark_comparisons"),
     category: "costs-financial",
     dataKey: "profitabilityData",
     refKey: "profitabilityRef",
     pdfComponent: "profitability-analysis"
   },
   growthTracker: {
+    slug: "growth-tracker",
     component: GrowthTracker,
-    title: "Growth Tracker",
-    description: "Revenue and net income trends with growth pattern analysis",
+    title: t("Growth_Tracker"),
+    description: t("Revenue_and_net_income_trends_with_growth_pattern_analysis"),
     category: "costs-financial",
     dataKey: "growthTrackerData",
     refKey: "growthTrackerRef",
     pdfComponent: "growth-tracker"
   },
   liquidityEfficiency: {
+    slug: "liquidity-efficiency",
     component: LiquidityEfficiency,
-    title: "Liquidity & Efficiency",
-    description: "Financial ratios with gauges and color-coded risk indicators",
+    title: t("Liquidity_Efficiency"),
+    description: t("Financial_ratios_with_gauges_and_color-coded_risk_indicators"),
     category: "costs-financial",
     dataKey: "liquidityEfficiencyData",
     refKey: "liquidityEfficiencyRef",
     pdfComponent: "liquidity-efficiency"
   },
   investmentPerformance: {
+    slug: "investment-performance",
     component: InvestmentPerformance,
-    title: "Investment Performance",
-    description: "ROA, ROE, ROIC analysis with benchmark comparisons and trend charts",
+    title: t("Investment_Performance"),
+    description: t("ROA_ROE_ROIC_analysis_with_benchmark_comparisons_and_trend_charts"),
     category: "costs-financial",
     dataKey: "investmentPerformanceData",
     refKey: "investmentPerformanceRef",
     pdfComponent: "investment-performance"
   },
   leverageRisk: {
+    slug: "leverage-risk",
     component: LeverageRisk,
-    title: "Leverage & Risk",
-    description: "Financial risk assessment with traffic light risk indicators",
+    title: t("Leverage_Risk"),
+    description: t("Financial_risk_assessment_with_traffic_light_risk_indicators"),
     category: "costs-financial",
     dataKey: "leverageRiskData",
     refKey: "leverageRiskRef",
     pdfComponent: "leverage-risk"
   },
   productivityMetrics: {
+    slug: "productivity",
     component: ProductivityMetrics,
-    title: "Productivity Metrics",
-    description: "Analysis of organizational productivity and efficiency metrics",
+    title: t("Productivity_Metrics"),
+    description: t("Analysis_of_organizational_productivity_and_efficiency_metrics"),
     category: "costs-financial",
     dataKey: "productivityData",
     refKey: "productivityRef",
     pdfComponent: "productivity"
   },
   fullSwot: {
+    slug: "full-swot",
     component: FullSWOTPortfolio,
-    title: "Full SWOT Portfolio",
-    description: "Comprehensive SWOT analysis with strategic recommendations",
+    title: t("Full_SWOT_Portfolio"),
+    description: t("Comprehensive_SWOT_analysis_with_strategic_recommendations"),
     category: "context-industry",
     dataKey: "fullSwotData",
     refKey: "fullSwotRef",
     pdfComponent: "full-swot"
   },
   strategicRadar: {
+    slug: "strategic-radar",
     component: StrategicPositioningRadar,
-    title: "Strategic Positioning Radar",
-    description: "Visual representation of strategic positioning across key dimensions",
+    title: t("Strategic_Positioning_Radar"),
+    description: t("Visual_representation_of_strategic_positioning_across_key_dimensions"),
     category: "context-industry",
     dataKey: "strategicRadarData",
     refKey: "strategicRadarRef",
     pdfComponent: "strategic-radar"
   },
   porters: {
+    slug: "porters",
     component: PortersFiveForces,
-    title: "Porter's Five Forces",
-    description: "Competitive analysis using Porter's strategic framework",
+    title: t("Porters_Five_Forces"),
+    description: t("Competitive_analysis_using_Porters_strategic_framework"),
     category: "context-industry",
     dataKey: "portersData",
     refKey: "portersRef",
     pdfComponent: "porters-analysis"
   },
   pestel: {
+    slug: "pestel",
     component: PestelAnalysis,
-    title: "PESTEL Analysis",
-    description: "External environment analysis covering political, economic, social, technological, environmental, and legal factors",
+    title: t("PESTEL_Analysis"),
+    description: t("External_environment_analysis_covering_political_economic_social_technological_environmental_and_legal_factors"),
     category: "context-industry",
     dataKey: "pestelData",
     refKey: "pestelRef",
     pdfComponent: "pestel-analysis"
   },
   competitiveAdvantage: {
+    slug: "competitive-advantage",
     component: CompetitiveAdvantageMatrix,
-    title: "Competitive Advantage Matrix",
-    description: "Analysis of competitive positioning and advantages",
+    title: t("Competitive_Advantage_Matrix"),
+    description: t("Analysis_of_competitive_positioning_and_advantages"),
     category: "customer",
     dataKey: "competitiveAdvantageData",
     refKey: "competitiveAdvantageRef",
     pdfComponent: "competitive-advantage"
   },
   purchaseCriteria: {
+    slug: "purchase-criteria",
     component: PurchaseCriteria,
-    title: "Purchase Criteria",
-    description: "Key factors influencing customer buying decisions",
+    title: t("Purchase_Criteria"),
+    description: t("Key_factors_influencing_customer_buying_decisions"),
     category: "customer",
     dataKey: "purchaseCriteriaData",
     refKey: "purchaseCriteriaRef",
     pdfComponent: "purchase-criteria"
   },
   loyaltyNPS: {
+    slug: "loyalty-nps",
     component: LoyaltyNPS,
-    title: "Loyalty & NPS",
-    description: "Customer loyalty metrics and Net Promoter Score analysis",
+    title: t("Loyalty_&_NPS"),
+    description: t("Customer_loyalty_metrics_and_Net_Promoter_Score_analysis"),
     category: "customer",
     dataKey: "loyaltyNPSData",
     refKey: "loyaltyNpsRef",
     pdfComponent: "loyalty-nps"
   },
   expandedCapability: {
+    slug: "expanded-capability",
     component: ExpandedCapabilityHeatmap,
-    title: "Capability Heatmap",
-    description: "Advanced organizational capability analysis",
+    title: t("Capability_Heatmap"),
+    description: t("Advanced_organizational_capability_analysis"),
     category: "capabilities",
     dataKey: "expandedCapabilityData",
     refKey: "expandedCapabilityRef",
     pdfComponent: "expanded-capability"
   },
   maturityScore: {
+    slug: "maturity",
     component: MaturityScoreLight,
-    title: "Maturity Score",
-    description: "Business maturity assessment and scoring",
+    title: t("Maturity_Score"),
+    description: t("Business_maturity_assessment_and_scoring"),
     category: "capabilities",
     dataKey: "maturityData",
     refKey: "maturityScoreRef",
     pdfComponent: "maturity"
   },
   competitiveLandscape: {
+    slug: "competitive-landscape",
     component: CompetitiveLandscape,
-    title: "Competitive Landscape",
-    description: "Comprehensive analysis of key competitors using SWOT framework",
+    title: t("Competitive_Landscape"),
+    description: t("Comprehensive_analysis_of_key_competitors_using_SWOT_framework"),
     category: "competition",
     dataKey: "competitiveLandscapeData",
     refKey: "competitiveLandscapeRef",
     pdfComponent: "competitive-landscape"
   },
   coreAdjacency: {
+    slug: "core-adjacency",
     component: CoreAdjacency,
-    title: "Core",
-    description: "Strategic analysis of core business areas and adjacent growth opportunities",
+    title: t("Core"),
+    description: t("Strategic_analysis_of_core_business_areas_and_adjacent_growth_opportunities"),
     category: "current-strategy",
     dataKey: "coreAdjacencyData",
     refKey: "coreAdjacencyRef",
@@ -189,44 +248,6 @@ const ANALYSIS_CONFIG = {
   }
 };
 
-const CATEGORIES = [
-  {
-    id: 'costs-financial',
-    title: 'Costs/Financial',
-    subtitle: 'Financial performance, profitability, and resource efficiency metrics',
-    icon: TrendingUp
-  },
-  {
-    id: 'context-industry',
-    title: 'Context/Industry',
-    subtitle: 'External environment, market forces, and industry dynamics',
-    icon: Building
-  },
-  {
-    id: 'customer',
-    title: 'Customer',
-    subtitle: 'Customer behavior, loyalty, and purchase decision factors',
-    icon: Users
-  },
-  {
-    id: 'capabilities',
-    title: 'Capabilities',
-    subtitle: 'Organizational strengths, maturity, and operational capabilities',
-    icon: Zap
-  },
-  {
-    id: 'competition',
-    title: 'Competition',
-    subtitle: 'Competitive landscape and market positioning analysis',
-    icon: Award
-  },
-  {
-    id: 'current-strategy',
-    title: 'Current Strategy',
-    subtitle: 'Strategic focus areas and growth opportunities',
-    icon: Target
-  }
-];
 
 const API_TO_ANALYSIS_MAP = {
   'find': 'swot',
@@ -242,14 +263,12 @@ const API_TO_ANALYSIS_MAP = {
   'maturity-scoring': 'maturityScore',
   'simple-swot-portfolio': 'competitiveLandscape',
   'core-adjacency': 'coreAdjacency',
-  'excel-analysis': 'profitabilityAnalysis',
+  'excel-analysis-profitability': 'profitabilityAnalysis',
   'excel-analysis-growth': 'growthTracker',
   'excel-analysis-liquidity': 'liquidityEfficiency',
   'excel-analysis-investment': 'investmentPerformance',
   'excel-analysis-leverage': 'leverageRisk'
 };
-
-const AnalysisContentManager = (props) => {
   const {
     phaseManager,
     apiLoadingStates = {},
@@ -258,7 +277,7 @@ const AnalysisContentManager = (props) => {
     collapsedCategories,
     setCollapsedCategories,
     highlightedCard,
-    hideRegenerateButtons = false
+    hideRegenerateButtons = false,
   } = props;
 
   const streamingManager = useStreamingManager();
@@ -268,7 +287,7 @@ const AnalysisContentManager = (props) => {
 
     if (excelAnalysisTypes.includes(analysisType)) {
       const apiKeyMap = {
-        'profitabilityAnalysis': 'excel-analysis',
+        'profitabilityAnalysis': 'excel-analysis-profitability',
         'growthTracker': 'excel-analysis-growth',
         'liquidityEfficiency': 'excel-analysis-liquidity',
         'investmentPerformance': 'excel-analysis-investment',
@@ -440,7 +459,8 @@ const AnalysisContentManager = (props) => {
     const data = props[dataKey];
     const ref = props[refKey];
     const isRegenerating = props[regeneratingKey];
-    const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
+    // Prefer explicit slug to ensure dropdown scrolling matches IDs
+    const cardId = config.slug || analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
 
     return (
       <ModernAnalysisCard
@@ -467,6 +487,9 @@ const AnalysisContentManager = (props) => {
             isExpanded={expandedCards.has(cardId)}
             streamingManager={streamingManager}
             cardId={cardId}
+            hideImproveButton={props.hideImproveButton}
+            showImproveButton={props.showImproveButton}
+            readOnly={props.readOnly}
             {...(analysisKey === 'swot' && {
               analysisResult: data,
               onDataGenerated: props.setSwotAnalysisResult,

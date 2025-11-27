@@ -11,6 +11,7 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const CompetitiveLandscape = ({
     questions = [],
@@ -34,6 +35,7 @@ const CompetitiveLandscape = ({
     const [visibleRows, setVisibleRows] = useState(0);
     const [typingTexts, setTypingTexts] = useState({});
     const streamingIntervalRef = useRef(null);
+    const { t } = useTranslation();
 
     const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
@@ -388,8 +390,8 @@ const CompetitiveLandscape = ({
                                     <table className="data-table">
                                         <thead>
                                             <tr>
-                                                <th>Category</th>
-                                                <th>Analysis</th>
+                                                <th>{t('Category')}</th>
+                                                <th>{t('Analysis')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>

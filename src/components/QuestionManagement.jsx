@@ -410,7 +410,8 @@ const QuestionRow = ({
       order: editForm.order,
       used_for: editForm.used_for,
       objective: editForm.objective,
-      required_info: editForm.required_info
+      required_info: editForm.required_info,
+      severity: question.severity
     });
   };
 

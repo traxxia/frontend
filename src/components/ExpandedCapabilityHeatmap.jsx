@@ -3,6 +3,7 @@ import { RefreshCw, Loader, TrendingUp, TrendingDown, BarChart3, Grid3x3, Target
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const ExpandedCapabilityHeatmap = ({
     questions = [],
@@ -19,12 +20,14 @@ const ExpandedCapabilityHeatmap = ({
     const [hasGenerated, setHasGenerated] = useState(false);
     const [error, setError] = useState(null);
     const [hoveredCell, setHoveredCell] = useState(null);
+    
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
             onRedirectToBrief(missingQuestionsData);
         }
     };
+    const { t } = useTranslation();
 
     const handleMissingQuestionsCheck = async () => {
         const analysisConfig = ANALYSIS_TYPES.expandedCapability;
@@ -214,7 +217,7 @@ const ExpandedCapabilityHeatmap = ({
         <div className="capability-gaps">
             <h4 className="gaps-header">
                 <Target size={20} color="#f59e0b" />
-                Priority Capability Gaps
+                {t('Priority_Capability_Gaps')}
             </h4>
             <div className="gaps-grid">
                 {gaps.slice(0, 6).map((gap, index) => (
@@ -309,7 +312,7 @@ const ExpandedCapabilityHeatmap = ({
             <div className="heatmap-legend">
                 <div className="legend-info">
                     <Info size={16} color="#6b7280" />
-                    <span className="legend-label">Maturity Levels:</span>
+                    <span className="legend-label">{t('Maturity_Levels')}:</span>
                 </div>
                 {maturityLevels.map((level, index) => (
                     <div key={level} className="legend-item">
@@ -328,10 +331,10 @@ const ExpandedCapabilityHeatmap = ({
                 className="heatmap-grid"
                 style={{ gridTemplateColumns: `200px repeat(${maturityLevels.length}, 1fr)` }}
             >
-                <div className="heatmap-header-cell">Business Function</div>
+                <div className="heatmap-header-cell">{t('Business_Function')}</div>
                 {maturityLevels.map((level, index) => (
                     <div key={level} className="heatmap-header-maturity">
-                        <div className="maturity-level-number">Level {level}</div>
+                        <div className="maturity-level-number">{t('Level')} {level}</div>
                         <div className="maturity-level-name">{maturityLabels[index]}</div>
                     </div>
                 ))}

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { X, Download, Upload, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Accordion } from 'react-bootstrap';
 
 const FinancialTemplatesPopup = ({
   isOpen,
@@ -215,21 +216,18 @@ const FinancialTemplatesPopup = ({
         <div style={{ padding: '24px' }}>
           {/* Download Templates Section */}
           <div style={{ marginBottom: '32px' }}>
-            <h3
-              style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
+            <Accordion defaultActiveKey={null}>
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Download size={20} />
+                    <span style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>
               Download Sample Templates
-            </h3>
+                    </span>
+                  </div>
+            </Accordion.Header>
 
+                <Accordion.Body>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {templates.map((template) => (
                 <div
@@ -243,8 +241,8 @@ const FinancialTemplatesPopup = ({
                     borderRadius: '8px',
                     transition: 'border-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.target.style.borderColor = '#d1d5db'}
-                  onMouseLeave={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  onMouseEnter={(e) => (e.target.style.borderColor = '#d1d5db')}
+                  onMouseLeave={(e) => (e.target.style.borderColor = '#e5e7eb')}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontSize: '32px' }}>{template.icon}</span>
@@ -273,7 +271,6 @@ const FinancialTemplatesPopup = ({
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       onClick={() => handleDownload(template)}
                       style={{
@@ -290,16 +287,18 @@ const FinancialTemplatesPopup = ({
                         fontWeight: '500',
                         transition: 'background-color 0.2s'
                       }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#2563eb'}
+                      onMouseEnter={(e) =>(e.target.style.backgroundColor = '#1d4ed8')}
+                      onMouseLeave={(e) =>(e.target.style.backgroundColor = '#2563eb')}
                     >
                       <Download size={14} />
                       <span>Download</span>
                     </button>
                   </div>
+                    ))}
                 </div>
-              ))}
-            </div>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
           </div>
 
           {/* Template Comparison Section */}
@@ -576,7 +575,7 @@ const FinancialTemplatesPopup = ({
       </div>
 
       {/* Add keyframe animation for spinner */}
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

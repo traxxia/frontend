@@ -666,15 +666,27 @@ const AuditTrail = ({ onToast }) => {
             {/* Advanced Options */}
             <div className="advanced-options">
               <div className="filter-group">
-                <label className="checkbox-label">
+                <div className="checkbox-label">
                   <input
                     type="checkbox"
                     checked={filters.include_analysis_data}
-                    onChange={(e) => handleFilterChange('include_analysis_data', e.target.checked)}
+                    onChange={(e) => {
+                      handleFilterChange('include_analysis_data', e.target.checked);
+                    }}
                   />
-                  <span>Include full analysis data (slower loading)</span>
-                  <Info size={14} className="info-icon" title="When enabled, full analysis results are included in the initial load. Otherwise, they're loaded on-demand." />
-                </label>
+                  <span className='span-text' style={{marginLeft: '2px'}}>Include full analysis data (slower loading)</span>
+                  <span
+                    className="info-tooltip"
+                    tabIndex={0}
+                    role="button"
+                    aria-label="More info about including full analysis data"
+                  >
+                    <Info size={14} className="info-icon" aria-hidden="true" />
+                    <span className="tooltip-content" role="tooltip">
+                      When enabled, full analysis results are included in the initial load. Otherwise, they're loaded on-demand.
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -755,7 +767,7 @@ const AuditTrail = ({ onToast }) => {
                           {/* Regular event details (exclude analysis_generated) */}
                           {entry.event_data && Object.keys(entry.event_data).length > 0 && entry.event_type !== 'analysis_generated' && (
                             <details className="event-details">
-                              <summary>View Details</summary>
+                              <summary>{t("audit_view")}</summary>
                               <pre>{JSON.stringify(entry.event_data, null, 2)}</pre>
                             </details>
                           )}
@@ -792,7 +804,7 @@ const AuditTrail = ({ onToast }) => {
                                   ) : (
                                     <>
                                       <BarChart3 size={12} />
-                                      View Analysis
+                                      {t("audit_analysis")}
                                     </>
                                   )}
                                 </button>

@@ -238,7 +238,7 @@ const LoyaltyNPS = ({
 
     return (
       <div className="ln-scale-info">
-        <h3 className="ln-section-title">Score Interpretation</h3>
+        <h3 className="ln-section-title">{t("Score Interpretation")}</h3>
         <div className="ln-scale-zones">
           {loyaltyData.method === 'NPS' && loyaltyData.scale.zones && (
             <>
@@ -268,7 +268,7 @@ const LoyaltyNPS = ({
 
           {loyaltyData.method !== 'NPS' && (
             <div className="ln-scale-range">
-              <span>Scale: {loyaltyData.scale.min} to {loyaltyData.scale.max}</span>
+              <span>{t("Scale")}: {loyaltyData.scale.min} {t("to")} {loyaltyData.scale.max}</span>
             </div>
           )}
         </div>

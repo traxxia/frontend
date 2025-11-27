@@ -11,6 +11,7 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const CoreAdjacency = ({
     questions = [],
@@ -40,6 +41,7 @@ const CoreAdjacency = ({
     const [visibleRows, setVisibleRows] = useState(0);
     const [typingTexts, setTypingTexts] = useState({});
     const streamingIntervalRef = useRef(null);
+    const { t } = useTranslation();
 
     const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
@@ -513,7 +515,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('coreBusinessDefinition')}>
                         <h5>
                             <Shield size={20} style={{ marginRight: '8px' }} />
-                            Core Business Definition
+                            {t('Core_Business_Definition')}
                         </h5>
                         {expandedSections.coreBusinessDefinition ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
@@ -532,7 +534,7 @@ const CoreAdjacency = ({
                                         <tr>
                                             <td style={{ width: '30%' }}>
                                                 <span className="status-badge high-intensity">
-                                                    Key Segments
+                                                    {t('Key_Segments')}
                                                 </span>
                                             </td>
                                             <td>
@@ -563,7 +565,7 @@ const CoreAdjacency = ({
                                         <tr>
                                             <td style={{ width: '30%' }}>
                                                 <span className="status-badge high-intensity">
-                                                    Primary Capabilities
+                                                    {t('Primary_Capabilities')}
                                                 </span>
                                             </td>
                                             <td>
@@ -594,7 +596,7 @@ const CoreAdjacency = ({
                                         <tr>
                                             <td style={{ width: '30%' }}>
                                                 <span className="status-badge high-intensity">
-                                                    Profit Drivers
+                                                    {t('Profit_Drivers')}
                                                 </span>
                                             </td>
                                             <td>
@@ -633,7 +635,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('growthOpportunities')}>
                         <h5>
                             <TrendingUp size={20} style={{ marginRight: '8px' }} />
-                            Growth Opportunities
+                            {t('Growth_Opportunities')}
                         </h5>
                         {expandedSections.growthOpportunities ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
@@ -642,7 +644,7 @@ const CoreAdjacency = ({
                         <div className="table-container">
                             {data.growthOpportunities.withinCore && data.growthOpportunities.withinCore.length > 0 && (
                                 <>
-                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>Within Core</h6>
+                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t('Within_Core')}</h6>
                                     <table className="data-table">
                                         <tbody>
                                             {data.growthOpportunities.withinCore.map((item, idx) => {
@@ -679,7 +681,7 @@ const CoreAdjacency = ({
 
                             {data.growthOpportunities.adjacent && data.growthOpportunities.adjacent.length > 0 && (
                                 <>
-                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>Adjacent</h6>
+                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t('Adjacent')}</h6>
                                     <table className="data-table">
                                         <tbody>
                                             {data.growthOpportunities.adjacent.map((item, idx) => {
@@ -716,7 +718,7 @@ const CoreAdjacency = ({
 
                             {data.growthOpportunities.nonAdjacent && data.growthOpportunities.nonAdjacent.length > 0 && (
                                 <>
-                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>Non-Adjacent</h6>
+                                    <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{t('Non-Adjacent')}</h6>
                                     <table className="data-table">
                                         <tbody>
                                             {data.growthOpportunities.nonAdjacent.map((item, idx) => {
@@ -760,7 +762,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('growthVectorCategorization')}>
                         <h5>
                             <Target size={20} style={{ marginRight: '8px' }} />
-                            Growth Vector Categorization
+                            {t('Growth_Vector_Categorization')}
                         </h5>
                         {expandedSections.growthVectorCategorization ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
@@ -817,7 +819,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('missingInformation')}>
                         <h5>
                             <AlertTriangle size={20} style={{ marginRight: '8px' }} />
-                            Missing Information
+                           {t('Missing_Information')}
                         </h5>
                         {expandedSections.missingInformation ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
@@ -854,7 +856,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('recommendedNextSteps')}>
                         <h5>
                             <Lightbulb size={20} style={{ marginRight: '8px' }} />
-                            Recommended Next Steps
+                            {t('Recommended_Next_Steps')}
                         </h5>
                         {expandedSections.recommendedNextSteps ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>

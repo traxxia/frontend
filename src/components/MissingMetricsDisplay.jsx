@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Check, X, Info } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const MissingMetricsDisplay = ({ 
   documentInfo,  
   className = "" 
 }) => { 
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation();
 
   const TEMPLATE_METRICS = {
     simple: {
@@ -85,13 +87,13 @@ const MissingMetricsDisplay = ({
       {/* Header */}
       <div className="header">
         <AlertTriangle size={18} />
-        <span>Template Requirements Missing</span>
+        <span>{t("Template_Requirements_Missing")}</span>
       </div>
 
       {/* Main Message */}
       <div className="message-box">
         <div className="main-message">
-          Some required metrics are missing for your selected template.
+          {t("Some_required_metrics_are_missing_for_your_selected_template.")}
         </div> 
       </div>
 
