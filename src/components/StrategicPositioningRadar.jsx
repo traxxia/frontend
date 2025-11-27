@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "../hooks/useTranslation";
 import { RefreshCw, Loader, Target, TrendingUp, Users, BarChart3, Activity, Award, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
@@ -21,6 +22,7 @@ const StrategicPositioningRadar = ({
     streamingManager,
     cardId
 }) => {
+    const { t } = useTranslation();
     const [data, setData] = useState(strategicRadarData);
     const [activeTab, setActiveTab] = useState('overview');
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -738,9 +740,9 @@ const StrategicPositioningRadar = ({
 
             <div className="competitive-advantage-tabs">
                 {[
-                    { id: 'overview', label: 'Overview', icon: Target },
-                    { id: 'radar', label: 'Radar View', icon: Activity },
-                    { id: 'positioning', label: 'Positioning Map', icon: BarChart3 },
+                    { id: 'overview', label: t("overview"), icon: Target },
+                    { id: 'radar', label: t("radar_view"), icon: Activity },
+                    { id: 'positioning', label: t("positioning_map"), icon: BarChart3 },
                 ].map(tab => {
                     const IconComponent = tab.icon;
                     return (
@@ -762,7 +764,7 @@ const StrategicPositioningRadar = ({
                         {overallPosition && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('executive')}>
-                                    <h3>Executive Summary</h3>
+                                    <h3>{t("strategic_card1")}</h3>
                                     {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
 
@@ -771,9 +773,9 @@ const StrategicPositioningRadar = ({
                                         <table className="data-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Metric</th>
-                                                    <th>Value</th>
-                                                    <th>Status</th>
+                                                    <th>{t("strategic_card1_head1")}</th>
+                                                    <th>{t("strategic_card1_head2")}</th>
+                                                    <th>{t("strategic_card1_head3")}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -848,7 +850,7 @@ const StrategicPositioningRadar = ({
 
                                         {overallPosition.strengthAreas && (
                                             <div className="subsection">
-                                                <h4>Strength Areas</h4>
+                                                <h4>{t("strategic_card1_head4")}</h4>
                                                 <div className="forces-tags">
                                                     {overallPosition.strengthAreas.map((area, index) => (
                                                         <span key={index} className="force-tag">{area}</span>
@@ -859,7 +861,7 @@ const StrategicPositioningRadar = ({
 
                                         {overallPosition.improvementAreas && (
                                             <div className="subsection">
-                                                <h4>Improvement Areas</h4>
+                                                <h4>{t("strategic_card1_head5")}</h4>
                                                 <div className="forces-tags">
                                                     {overallPosition.improvementAreas.map((area, index) => (
                                                         <span key={index} className="force-tag">{area}</span>
@@ -875,7 +877,7 @@ const StrategicPositioningRadar = ({
                         {dimensions && (
                             <div className="section-container">
                                 <div className="section-header" onClick={() => toggleSection('dimensions')}>
-                                    <h3>Strategic Dimensions Analysis</h3>
+                                    <h3>{t("strategic_card2")}</h3>
                                     {expandedSections.dimensions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                                 </div>
 
@@ -884,10 +886,10 @@ const StrategicPositioningRadar = ({
                                         <table className="data-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Dimension</th>
-                                                    <th>Current Score</th>
-                                                    <th>Target Score</th>
-                                                    <th>Industry Average</th>
+                                                    <th>{t("strategic_card2_head1")}</th>
+                                                    <th>{t("strategic_card2_head2")}</th>
+                                                    <th>{t("strategic_card2_head3")}</th>
+                                                    <th>{t("strategic_card2_head4")}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

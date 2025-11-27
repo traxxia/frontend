@@ -782,7 +782,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px;
-  background: #fff;
+  background:#d9ebff;
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none; 
@@ -790,7 +790,11 @@
 }
 
 .category-header:hover {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, #e3f0ff 0%, #d4e7ff 100%);
+}
+
+.category-title {
+  font-weight: 610 !important;
 }
 
 .category-header-left {

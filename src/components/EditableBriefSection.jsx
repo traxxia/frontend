@@ -23,7 +23,7 @@ const EditableBriefSection = ({
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
@@ -34,7 +34,7 @@ const EditableBriefSection = ({
 
   useEffect(() => {
     if (questions.length > 0 && Object.keys(userAnswers).length > 0) {
-      generateBriefFields();
+       generateBriefFields();
     }
   }, [questions, userAnswers]);
 
@@ -434,6 +434,9 @@ const EditableBriefSection = ({
 
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].trim()).length;
+  const progressPercentage = totalQuestions > 0
+  ? Math.round((answeredQuestions / totalQuestions) * 100)
+  : 0;
 
   const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
   const essentialQuestions = questions.filter(q => q.phase === 'essential');
@@ -483,7 +486,7 @@ const EditableBriefSection = ({
             <>
               {answeredQuestions > 0 && (
                 <span className="progress-text">
-                  Progress: {answeredQuestions}/{totalQuestions} questions completed
+                  Progress: {progressPercentage}% completed
                 </span>
               )}
             </>

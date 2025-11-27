@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "../hooks/useTranslation";
 import {
     Loader, TrendingUp, TrendingDown, Target, AlertTriangle, Star, Award, Clock, Zap,
     ChevronDown, ChevronRight, Shield, Users, BarChart3, Lightbulb, PieChart,
@@ -26,6 +27,7 @@ const FullSWOTPortfolio = ({
     streamingManager,
     cardId
 }) => {
+    const { t } = useTranslation();
     const [data, setData] = useState(fullSwotData);
     const [hasGenerated, setHasGenerated] = useState(false);
     const [error, setError] = useState(null);
@@ -43,7 +45,7 @@ const FullSWOTPortfolio = ({
     const [typingTexts, setTypingTexts] = useState({});
     const streamingIntervalRef = useRef(null);
 
-    const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+   const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -587,7 +589,7 @@ const FullSWOTPortfolio = ({
             <div className="section-container">
                 <div className="section-header" onClick={() => toggleSection('threats')}>
                     <h5>
-                        Full SWOT
+                        {t("fullswot_card1")}
                     </h5>
                     {expandedSections.threats ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
@@ -599,11 +601,11 @@ const FullSWOTPortfolio = ({
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Strength</th>
-                                            <th>Score</th>
-                                            <th>Category</th>
-                                            <th>Competitive Advantage</th>
-                                            <th>Customer Validated</th>
+                                            <th>{t("fullswot_card1_head1")}</th>
+                                            <th>{t("fullswot_card1_head2")}</th>
+                                            <th>{t("fullswot_card1_head3")}</th>
+                                            <th>{t("fullswot_card1_head4")}</th>
+                                            <th>{t("fullswot_card1_head5")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -672,10 +674,10 @@ const FullSWOTPortfolio = ({
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Weakness</th>
-                                            <th>Score</th>
-                                            <th>Category</th>
-                                            <th>Improvement Priority</th>
+                                            <th>{t("fullswot_card1_head6")}</th>
+                                            <th>{t("fullswot_card1_head2")}</th>
+                                            <th>{t("fullswot_card1_head3")}</th>
+                                            <th>{t("fullswot_card1_head7")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -729,11 +731,11 @@ const FullSWOTPortfolio = ({
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Opportunity</th>
-                                            <th>Score</th>
-                                            <th>Category</th>
-                                            <th>Market Trend</th>
-                                            <th>Timeframe</th>
+                                            <th>{t("fullswot_card1_head8")}</th>
+                                            <th>{t("fullswot_card1_head2")}</th>
+                                            <th>{t("fullswot_card1_head3")}</th>
+                                            <th>{t("fullswot_card1_head9")}</th>
+                                            <th>{t("fullswot_card1_head10")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -798,11 +800,11 @@ const FullSWOTPortfolio = ({
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Threat</th>
-                                            <th>Score</th>
-                                            <th>Category</th>
-                                            <th>Likelihood</th>
-                                            <th>Impact</th>
+                                            <th>{t("fullswot_card1_head11")}</th>
+                                            <th>{t("fullswot_card1_head2")}</th>
+                                            <th>{t("fullswot_card1_head3")}</th>
+                                            <th>{t("fullswot_card1_head12")}</th>
+                                            <th>{t("fullswot_card1_head13")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -863,7 +865,7 @@ const FullSWOTPortfolio = ({
                 <div className="section-container">
                     <div className="section-header" onClick={() => toggleSection('strategicOptions')}>
                         <h5>
-                            Cross Dimensional Action Items
+                            {t("fullswot_card2")}
                         </h5>
                         {expandedSections.strategicOptions ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>
@@ -873,8 +875,8 @@ const FullSWOTPortfolio = ({
                             <table className="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Strategy Type</th>
-                                        <th>Strategy</th>
+                                        <th>{t("fullswot_card2_head1")}</th>
+                                        <th>{t("fullswot_card2_head2")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

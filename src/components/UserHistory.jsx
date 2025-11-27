@@ -183,8 +183,7 @@ const useSortedFilteredUsers = (users, searchTerm) => {
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
-    return user.name.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower);
+    return user.name.toLowerCase().startsWith(searchLower) 
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {
@@ -935,7 +934,7 @@ const TabNavigation = ({
   onTabChange,
   businesses
 }) => {
-
+  const { t } = useTranslation();
   return (
     <div className="admin-nav">
       <button
@@ -943,7 +942,7 @@ const TabNavigation = ({
         className={`nav-tab ${activeTab === 'businesses' ? 'active' : ''}`}
       >
         <Building2 size={16} />
-        <span>Businesses</span>
+        <span>{t('businesses')}</span>
         <span className="tab-badge">{businesses.length}</span>
       </button>
       <button
@@ -951,21 +950,21 @@ const TabNavigation = ({
         className={`nav-tab ${activeTab === 'conversation' ? 'active' : ''}`}
       >
         <FileText size={16} />
-        <span>Conversation</span>
+        <span>{t('conversation')}</span>
       </button>
       <button
         onClick={() => onTabChange('analysis')}
         className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
       >
         <Target size={16} />
-        <span>Insights(6 Cs)</span>
+        <span>{t('analysis')}</span>
       </button>
       <button
         onClick={() => onTabChange('strategic')}
         className={`nav-tab ${activeTab === 'strategic' ? 'active' : ''}`}
       >
         <TrendingUp size={16} />
-        <span>S.T.R.A.T.E.G.I.C</span>
+        <span>{t('strategic')}</span>
       </button>
     </div>
   );
@@ -1073,25 +1072,29 @@ const BusinessesTab = ({ businesses }) => {
   );
 };
 
-const BusinessCard = ({ business }) => (
-  <div className="business-item">
-    <div className="business-header">
-      <h5 className="business-name"><strong>Business Name:</strong> {business.business_name}</h5>
-      <span className="business-date">{formatDate(business.created_at)}</span>
-    </div>
-    <div className="business-purpose">
-      <strong>Purpose:</strong> {business.business_purpose}
-    </div>
-    {business.description && (
-      <div className="business-description">
-        <strong>Description:</strong> {business.description}
+const BusinessCard = ({ business }) => {
+  const { t } = useTranslation();   
+
+  return (
+    <div className="business-item">
+      <div className="business-header">
+        <h5 className="business-name"><strong>{t('business_name')}:</strong> {business.business_name}</h5>
+        <span className="business-date">{formatDate(business.created_at)}</span>
       </div>
-    )}
-    {business.question_statistics && (
-      <BusinessStats stats={business.question_statistics} />
-    )}
-  </div>
-);
+      <div className="business-purpose">
+        <strong>{t('Purpose')}:</strong> {business.business_purpose}
+      </div>
+      {business.description && (
+        <div className="business-description">
+          <strong>{t('description')}:</strong> {business.description}
+        </div>
+      )}
+      {business.question_statistics && (
+        <BusinessStats stats={business.question_statistics} />
+      )}
+    </div>
+  );
+};
 
 const BusinessStats = ({ stats }) => (
   <div className="business-stats">
@@ -1484,6 +1487,8 @@ const AnalysisTab = ({
           hasUploadedDocument={false}
           hideRegenerateButtons={true}
           readOnly={true}
+          hideImproveButton={true}
+          showImproveButton={false}
         />
       </div>
     </div>
@@ -1585,6 +1590,7 @@ const StrategicTab = ({
           canRegenerate={false}
           phaseManager={safePhaseManager}
           hideDownload={true} // Hide the original download button since we have our custom one
+          hideImproveButton={true}
         />
       </div>
     </div>

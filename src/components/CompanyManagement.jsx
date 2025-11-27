@@ -90,12 +90,26 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     onSubmit(submitData);
   };
 
-  const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+
+  // Only clear email error when valid
+  if (name === "admin_email") {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(value.trim())) {
+      setErrors(prev => {
+        const updated = { ...prev };
+        delete updated.admin_email;
+        return updated;
+      });
+    }
+  }
+};
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
@@ -486,7 +500,7 @@ const CompanyManagement = ({ onToast }) => {
   };
 
   const filteredCompanies = companies.filter(company =>
-    company.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+    company.company_name.toLowerCase().startsWith(searchTerm.toLowerCase())
   );
 
   const paginatedCompanies = filteredCompanies.slice(

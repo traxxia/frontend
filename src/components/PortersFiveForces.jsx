@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "../hooks/useTranslation";
 import { Shield, Loader, AlertTriangle, Users, DollarSign, TrendingUp, Building, ArrowRight, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
@@ -22,6 +23,7 @@ const PortersFiveForces = ({
   streamingManager,
   cardId
 }) => {
+  const { t } = useTranslation();
   const [portersAnalysisData, setPortersAnalysisData] = useState(portersData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -391,7 +393,7 @@ const PortersFiveForces = ({
       {parsedData.executive_summary && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('executive')}>
-            <h3>Executive Summary</h3>
+            <h3>{t("porter_card1")}</h3>
             {expandedSections.executive ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
@@ -400,9 +402,9 @@ const PortersFiveForces = ({
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Metric</th>
-                    <th>Value</th>
-                    <th>Status</th>
+                    <th>{t("kpi_table_body")}</th>
+                    <th>{t("porter_card1_head1")}</th>
+                    <th>{t("status")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -452,7 +454,7 @@ const PortersFiveForces = ({
 
               {parsedData.executive_summary.key_competitive_forces?.length > 0 && (
                 <div className="subsection">
-                  <h4>Key Competitive Forces</h4>
+                  <h4>{t("porter_card1_head2")}</h4>
                   <div className="forces-tags">
                     {parsedData.executive_summary.key_competitive_forces.map((force, index) => (
                       <span key={index} className="force-tag">{force}</span>
@@ -468,7 +470,7 @@ const PortersFiveForces = ({
       {parsedData.five_forces_analysis && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('forces')}>
-            <h3>Five Forces Analysis</h3>
+            <h3>{t("porter_card2")}</h3>
             {expandedSections.forces ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
@@ -477,11 +479,11 @@ const PortersFiveForces = ({
               <table className="data-table forces-table">
                 <thead>
                   <tr>
-                    <th>Force</th>
-                    <th>Intensity</th>
-                    <th>Key Factors</th>
-                    <th>Additional Details</th>
-                    <th>Strategic Implications</th>
+                    <th>{t("porter_card2_head1")}</th>
+                    <th>{t("porter_card2_head2")}</th>
+                    <th>{t("porter_card2_head3")}</th>
+                    <th>{t("porter_card2_head4")}</th>
+                    <th>{t("porter_card2_head5")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -574,7 +576,7 @@ const PortersFiveForces = ({
       {parsedData.key_improvements && Array.isArray(parsedData.key_improvements) && parsedData.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
-            <h3>Key Improvements</h3>
+            <h3>{t("porter_card3")}</h3>
             {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 

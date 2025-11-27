@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from "../hooks/useTranslation";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Pagination = ({
@@ -12,6 +13,7 @@ const Pagination = ({
     itemsPerPage = 10,
     showInfo = true
 }) => {
+    const { t } = useTranslation();
     // Don't render if there's only one page or no pages
     if (totalPages <= 1) return null; 
 
@@ -23,7 +25,7 @@ const Pagination = ({
     const PaginationInfo = () => (
         showInfo && totalItems > 0 ? (
             <div className="pagination-info minimal">
-                Showing {startItem}-{endItem} of {totalItems} total entries
+                {t("showing")} {startItem}-{endItem} {t("of")} {totalItems} {t("total_entries")}
             </div>
         ) : null
     );
@@ -80,7 +82,7 @@ const Pagination = ({
                         className="pagination-btn pagination-prev"
                     >
                         <ChevronLeft size={16} />
-                        Previous
+                        {t("previous")}
                     </button>
                 )}
 
@@ -106,7 +108,7 @@ const Pagination = ({
                         disabled={currentPage === totalPages}
                         className="pagination-btn pagination-next"
                     >
-                        Next
+                        {t("next")}
                         <ChevronRight size={16} />
                     </button>
                 )}

@@ -139,6 +139,19 @@
   text-transform: capitalize;
 }
 
+.full-swot-container .data-table td:nth-child(3) { 
+  text-align: center; 
+}
+
+.full-swot-container .data-table .force-tag {
+  white-space: nowrap; 
+  display: inline-block; 
+  min-width: 80px; 
+  padding: 4px 8px; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
 .item-details {
   display: flex;
   flex-wrap: wrap;

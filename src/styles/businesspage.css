@@ -2768,6 +2768,7 @@ body {
   position: absolute;
   top: 110%;
   right: 0;
+  transform: translateX(40px);
   background-color: #fff;
   border: 2px solid #e2e8f0;
   border-radius: 12px;

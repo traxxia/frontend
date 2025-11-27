@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "../hooks/useTranslation";
 import { ChevronDown, ChevronRight, BarChart3, TrendingUp, Loader } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
@@ -20,6 +21,7 @@ const PestelAnalysis = ({
   streamingManager,
   cardId
 }) => {
+  const { t } = useTranslation();
   const [expandedSections, setExpandedSections] = useState({
     executive: true,
     factors: true,
@@ -270,7 +272,7 @@ const PestelAnalysis = ({
       {analysis.factor_summary && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('factors')}>
-            <h3>PESTEL Factors Analysis</h3>
+            <h3>{t("pestel_card1")}</h3>
             {expandedSections.factors ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 
@@ -279,11 +281,11 @@ const PestelAnalysis = ({
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Factor</th>
-                    <th>Strategic Priority</th>
-                    <th>Total Mentions</th>
-                    <th>High Impact Count</th>
-                    <th>Key Themes</th>
+                    <th>{t("pestel_card1_head1")}</th>
+                    <th>{t("pestel_card1_head2")}</th>
+                    <th>{t("pestel_card1_head3")}</th>
+                    <th>{t("pestel_card1_head4")}</th>
+                    <th>{t("pestel_card1_head5")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -333,7 +335,7 @@ const PestelAnalysis = ({
       {analysis.key_improvements && Array.isArray(analysis.key_improvements) && analysis.key_improvements.length > 0 && (
         <div className="section-container">
           <div className="section-header" onClick={() => toggleSection('improvements')}>
-            <h3>Key Improvements</h3>
+            <h3>{t("porter_card3")}</h3>
             {expandedSections.improvements ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
 

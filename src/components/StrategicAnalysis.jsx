@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "../hooks/useTranslation";
 import {
   Loader,
   Target,
@@ -42,10 +43,13 @@ const StrategicAnalysis = ({
   saveAnalysisToBackend,
   selectedBusinessId,
   hideDownload = false,
+  hideImproveButton,
+  showImproveButton = true,
   onRedirectToBrief,
   phaseAnalysisArray = [],
   streamingManager,
 }) => {
+  const { t } = useTranslation();
   const cardId = 'strategic-analysis';
   const isExpanded = true;
 
@@ -166,6 +170,10 @@ const StrategicAnalysis = ({
 
     if (recommendations.strategy_block?.S_strategy?.where_to_compete) {
       total += recommendations.strategy_block.S_strategy.where_to_compete.length;
+    }
+
+    if (recommendations.strategy_block?.S_strategy?.how_to_compete) {
+      total += recommendations.strategy_block.S_strategy.how_to_compete.length;
     }
 
     if (recommendations.strategy_block?.R_resources?.capital_priorities) {
@@ -366,6 +374,12 @@ const StrategicAnalysis = ({
       indices.whereToCompete = {};
       recommendations.strategy_block.S_strategy.where_to_compete.forEach((_, idx) => {
         indices.whereToCompete[idx] = currentIndex++;
+      });
+    }
+    if (recommendations.strategy_block?.S_strategy?.how_to_compete) {
+      indices.howToCompete = {};
+      recommendations.strategy_block.S_strategy.how_to_compete.forEach((_, idx) => {
+        indices.howToCompete[idx] = currentIndex++;
       });
     }
 
@@ -602,7 +616,7 @@ const StrategicAnalysis = ({
         alignItems: 'flex-start',
         gap: '10px'
       }}>
-        <Info size={16} style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }} /> Diagnostic :
+        <Info size={16} style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }} /> {t("diagnostic")}:
         <div style={{
           fontSize: '14px',
           fontStyle: 'italic',
@@ -624,7 +638,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header strategy-header">
             <Target size={22} className="strategy-icon" />
             <h3 className="pillar-title">
-              S – Strategy: Where to Compete
+              S – Strategy: Where to Compete & How to Compete
             </h3>
           </div>
 
@@ -635,7 +649,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <ArrowRight size={16} className="strategy-icon" />
-                  Where to Compete
+                  {t("strategy_subsection_1")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -664,6 +678,41 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
+            {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
+              strategy.how_to_compete[0] !== 'N/A' && (
+                <div className="subsection">
+                <h4 className="subsection-title">
+                  <ArrowRight size={16} className="strategy-icon" />
+                  How to Compete
+                </h4>
+                <div className="table-container">
+                  <table className="data-table">
+                    <tbody>
+                      {strategy.how_to_compete.map((item, idx) => {
+                        const rowIndex = rowIndices.howToCompete?.[idx];
+                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
+                        const isLast = rowIndex === visibleRows - 1;
+ 
+                        return (
+                          <StreamingRow
+                            key={idx}
+                            isVisible={isVisible}
+                            isLast={isLast && isStreaming}
+                            lastRowRef={lastRowRef}
+                          >
+                            <td className="subsection-list-item">
+                              <strong>{item.approach}:</strong>{' '}
+                              {item.description}
+                            </td>
+                          </StreamingRow>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+ 
+            )}
         </div>
       </div>
     );
@@ -679,7 +728,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header tactics-header">
             <Zap size={22} className="tactics-icon" />
             <h3 className="pillar-title">
-              T – Tactics: Action Horizons
+              {t("execution_subtitle_1")}
             </h3>
           </div>
 
@@ -700,7 +749,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header resources-header">
             <DollarSign size={22} className="resources-icon" />
             <h3 className="pillar-title">
-              R – Resources: Allocation & Priorities
+              {t("execution_table5_header")}
             </h3>
           </div>
 
@@ -723,7 +772,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Star size={16} className="resources-icon" />
-                  Capital Priorities
+                  {t("execution_table5_header1")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -757,7 +806,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Users size={16} className="resources-icon" />
-                  Talent Priorities
+                  {t("execution_table5_header2")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -791,7 +840,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Settings size={16} className="resources-icon" />
-                  Technology Investments
+                  {t("execution_table5_header3")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -833,7 +882,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header analysis-data-header">
             <Database size={22} className="analysis-data-icon" />
             <h3 className="pillar-title">
-              A – Analysis & Data Strategy
+              {t("execution1_table_header1")}
             </h3>
           </div>
 
@@ -882,7 +931,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header technology-header">
             <Settings size={22} className="technology-icon" />
             <h3 className="pillar-title">
-              T – Technology & Digitalization
+              {t("execution1_table1_header1")}
             </h3>
           </div>
 
@@ -893,7 +942,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Activity size={16} className="technology-icon" />
-                  Infrastructure Initiatives
+                  {t("execution1_table1_header2")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -927,7 +976,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <BarChart3 size={16} className="technology-icon" />
-                  Platform Priorities
+                  {t("execution1_table1_header3")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -1063,7 +1112,7 @@ const StrategicAnalysis = ({
         <div style={{ marginTop: '20px', marginBottom: '30px' }}>
           <h4 className="subsection-title" style={{ marginBottom: '20px' }}>
             <BarChart3 size={18} className="execution-icon" />
-            Initiative Timeline
+            {t("execution1_table2_header2")}
           </h4>
 
           <div style={{
@@ -1137,7 +1186,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header execution-header">
             <CheckCircle size={22} className="execution-icon" />
             <h3 className="pillar-title">
-              E – Execution: Roadmap & Monitoring
+              {t("execution1_table2_header1")}
             </h3>
           </div>
 
@@ -1150,20 +1199,20 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Calendar size={18} className="execution-icon" />
-                  Implementation Roadmap Details
+                  {t("execution1_table3_header1")}
                 </h4>
 
                 <div className="table-container">
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Initiative</th>
-                        <th>Milestone</th>
-                        <th>Target Date</th>
-                        <th>Owner</th>
-                        <th>Success Metrics</th>
-                        <th>Resources Required</th>
-                        <th>Dependencies</th>
+                        <th>{t("execution_table3_header1")}</th>
+                        <th>{t("execution1_table3_header2")}</th>
+                        <th>{t("execution1_table3_header3")}</th>
+                        <th>{t("execution1_table3_header4")}</th>
+                        <th>{t("execution_table2_header5")}</th>
+                        <th>{t("execution_table2_header4")}</th>
+                        <th>{t("execution1_table3_header5")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1269,7 +1318,7 @@ const StrategicAnalysis = ({
             <div className="subsection">
               <h4 className="subsection-title">
                 <BarChart3 size={18} className="execution-icon" />
-                KPI Dashboard
+                {t("kpi_dashboard")}
               </h4>
 
               {execution.kpi_dashboard.review_cadence && (
@@ -1285,15 +1334,15 @@ const StrategicAnalysis = ({
                 <div className="subsection">
                   <h5 className="subsection-title">
                     <TrendingUp size={14} style={{ color: '#3b82f6' }} />
-                    Adoption Metrics
+                    {t("kpi_table_header")}
                   </h5>
                   <div className="table-container">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Metric</th>
-                          <th>Target</th>
-                          <th>Owner</th>
+                          <th>{t("kpi_table_body")}</th>
+                          <th>{t("kpi_table_body1")}</th>
+                          <th>{t("execution1_table3_header4")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1336,15 +1385,15 @@ const StrategicAnalysis = ({
                 <div className="subsection">
                   <h5 className="subsection-title">
                     <Link2 size={14} style={{ color: '#8b5cf6' }} />
-                    Network Metrics
+                    {t("kpi_table1_header")}
                   </h5>
                   <div className="table-container">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Metric</th>
-                          <th>Target</th>
-                          <th>Owner</th>
+                          <th>{t("kpi_table_body")}</th>
+                          <th>{t("kpi_table_body1")}</th>
+                          <th>{t("execution1_table3_header4")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1387,15 +1436,15 @@ const StrategicAnalysis = ({
                 <div className="subsection">
                   <h5 className="subsection-title">
                     <Activity size={14} style={{ color: '#f59e0b' }} />
-                    Operational Metrics
+                    {t("kpi_table2_header")}
                   </h5>
                   <div className="table-container">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Metric</th>
-                          <th>Target</th>
-                          <th>Owner</th>
+                          <th>{t("kpi_table_body")}</th>
+                          <th>{t("kpi_table_body1")}</th>
+                          <th>{t("execution1_table3_header4")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1438,15 +1487,15 @@ const StrategicAnalysis = ({
                 <div className="subsection">
                   <h5 className="subsection-title">
                     <DollarSign size={14} style={{ color: '#10b981' }} />
-                    Financial Metrics
+                    {t("kpi_table3_header")}
                   </h5>
                   <div className="table-container">
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>Metric</th>
-                          <th>Target</th>
-                          <th>Owner</th>
+                          <th>{t("kpi_table_body")}</th>
+                          <th>{t("kpi_table_body1")}</th>
+                          <th>{t("execution1_table3_header4")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1500,7 +1549,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header governance-header">
             <Shield size={22} className="governance-icon" />
             <h3 className="pillar-title">
-              G – Governance: Decision Rights & Accountability
+              {t("sustainability_card1")}
             </h3>
           </div>
 
@@ -1511,14 +1560,14 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <ArrowRight size={16} className="governance-icon" />
-                  Decision Delegation
+                  {t("sustainability_card1_header")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Decision Type</th>
-                        <th>Delegated To</th>
+                        <th>{t("sustainability_card1_table1")}</th>
+                        <th>{t("sustainability_card1_table2")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1559,7 +1608,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <CheckCircle size={16} className="governance-icon" />
-                  Accountability Framework
+                  {t("sustainability_card1_header1")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -1601,7 +1650,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header innovation-header">
             <Lightbulb size={22} className="innovation-icon" />
             <h3 className="pillar-title">
-              I – Innovation: Pipeline & Portfolio
+              {t("sustainability_card2")}
             </h3>
           </div>
 
@@ -1611,7 +1660,7 @@ const StrategicAnalysis = ({
             <div className="subsection">
               <h4 className="subsection-title">
                 <BarChart3 size={16} className="innovation-icon" />
-                Target Portfolio Mix
+                {t("sustainability_header1")}
               </h4>
               <div className="portfolio-mix-container">
                 {innovation.target_portfolio_mix.core && innovation.target_portfolio_mix.core !== 'N/A' && (
@@ -1653,7 +1702,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <Star size={16} className="innovation-icon" />
-                  Priority Innovation Bets
+                  {t("sustainability_header2")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -1695,7 +1744,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header culture-header">
             <Heart size={22} className="culture-icon" />
             <h3 className="pillar-title">
-              C – Culture: Alignment & Transformation
+              {t("sustainability_card3")}
             </h3>
           </div>
 
@@ -1706,7 +1755,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <TrendingUp size={16} className="culture-icon" />
-                  Cultural Shifts
+                  {t("sustainability_card3_header1")}
                 </h4>
                 <div className="cultural-shifts-container">
                   {culture.cultural_shifts.map((shift, idx) => {
@@ -1746,7 +1795,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <CheckCircle size={16} className="culture-icon" />
-                  Change Approach
+                  {t("sustainability_card3_header2")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -1788,7 +1837,7 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         <div className="section-headers">
           <Link2 size={24} style={{ color: 'blue' }} />
-          <div><h2 className="category-title">Strategic Objective</h2></div>
+          <div><h2 className="category-title">{t("execution_table_header1")}</h2></div>
         </div>
 
         <div className="strategic-linkages-container">
@@ -1796,9 +1845,9 @@ const StrategicAnalysis = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Strategic Objective</th>
-                  <th>Linked Initiatives</th>
-                  <th>Success Criteria</th>
+                  <th>{t("execution_table_header1")}</th>
+                  <th>{t("execution_table_header2")}</th>
+                  <th>{t("execution_table_header3")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1901,11 +1950,11 @@ const StrategicAnalysis = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Action</th>
-                  <th>Rationale</th>
-                  <th>Timeline</th>
-                  <th>Resources Required</th>
-                  <th>Success Metrics</th>
+                  <th>{t("execution_table2_header1")}</th>
+                  <th>{t("execution_table2_header2")}</th>
+                  <th>{t("execution_table2_header3")}</th>
+                  <th>{t("execution_table2_header4")}</th>
+                  <th>{t("execution_table2_header5")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2030,10 +2079,10 @@ const StrategicAnalysis = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Initiative</th>
-                  <th>Strategic Pillar</th>
-                  <th>Expected Outcome</th>
-                  <th>Risk Mitigation</th>
+                  <th>{t("execution_table3_header1")}</th>
+                  <th>{t("execution_table3_header2")}</th>
+                  <th>{t("execution_table3_header3")}</th>
+                  <th>{t("execution_table3_header4")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2109,10 +2158,10 @@ const StrategicAnalysis = ({
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Strategic Shift</th>
-                  <th>Transformation Required</th>
-                  <th>Competitive Advantage</th>
-                  <th>Sustainability</th>
+                  <th>{t("execution_table4_header1")}</th>
+                  <th>{t("execution_table4_header2")}</th>
+                  <th>{t("execution_table4_header3")}</th>
+                  <th>{t("execution_table4_header4")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2184,21 +2233,21 @@ const StrategicAnalysis = ({
       <section className="strategic-page-section">
         {renderRecommendationActions(
           combinedImmediateActions,
-          'Immediate Actions',
+          t('execution_table2_header'),
           <Zap size={20} style={{ color: '#ef4444' }} />,
           'immediateActions'
         )}
 
         {renderInitiatives(
           combinedShortTermInitiatives,
-          'Short-term Initiatives',
+          t('execution_table3_header'),
           <Activity size={20} style={{ color: '#f59e0b' }} />,
           'shortTermInitiatives'
         )}
 
         {renderLongTermShifts(
           combinedLongTermShifts,
-          'Long-term Strategic Shifts',
+          t('execution_table4_header'),
           <TrendingUp size={20} style={{ color: '#10b981' }} />,
           'longTermShifts'
         )}
@@ -2218,9 +2267,9 @@ const StrategicAnalysis = ({
           <div className="block-wrapper" data-component="strategic-direction">
             <CategorySection
               id="strategy-block"
-              title="Strategy Block: Direction & Positioning  (S.T.R.)"
+              title={t("strategy_block_title")}
               icon={Target}
-              description="Forward-looking recommendations for where and how to compete, tactical initiatives, and resource allocation."
+              description={t("strategy_desc")}
             >
               {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
               {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
@@ -2233,9 +2282,9 @@ const StrategicAnalysis = ({
           <div className="block-wrapper" data-component="strategic-execution">
             <CategorySection
               id="execution-block"
-              title="Execution Block: Implementation & Monitoring (A.T.E.)"
+              title={t("execution_block_title")}
               icon={CheckCircle}
-              description="Data strategy, technology priorities, implementation roadmap, and KPI dashboard for tracking progress."
+              description={t("execution_desc")}
             >
               {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
               {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
@@ -2248,9 +2297,9 @@ const StrategicAnalysis = ({
           <div className="block-wrapper" data-component="strategic-sustainability">
             <CategorySection
               id="sustainability-block"
-              title="Sustainability Block: Long-term Reinforcement (G.I.C)"
+              title={t("sustainability-block_title")}
               icon={Shield}
-              description="Governance frameworks, innovation pipeline, and cultural alignment to sustain strategic momentum."
+              description={t("sustainability_desc")}
             >
               {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
               {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
@@ -2308,6 +2357,7 @@ const StrategicAnalysis = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={5}
           customMessage="Complete essential phase questions to unlock comprehensive strategic analysis with implementation roadmaps and accountability frameworks."
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );
