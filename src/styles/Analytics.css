@@ -7421,6 +7421,11 @@
    color: #c62828;
    border: 1px solid #ffcdd2;
  }
+ .critical-intensity{
+    background: #fce4ec;
+    color: #ad1457;
+    border: 1px solid #f8bbd0;
+ }
 
  .medium-intensity {
    background: #fff3e0;
