@@ -6074,7 +6074,6 @@
  .gauge-content {
    position: absolute;
    top: 60%;
-   left: 65%;
    transform: translate(-50%, -30%);
    text-align: center;
  }

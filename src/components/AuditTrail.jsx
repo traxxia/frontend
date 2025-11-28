@@ -590,7 +590,7 @@ const AuditTrail = ({ onToast }) => {
             <div className="filter-group">
               <label>{t('search_events')}</label>
               <div className="search-container">
-                <Search className="search-icon" size={16} />
+                {!filters.search_term && <Search className="search-icon" size={16} />}
                 <input
                   type="text"
                   placeholder="Search by user name, email, or event description..."

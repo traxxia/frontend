@@ -44,7 +44,6 @@
 .compact-search {
   position: relative;
   display: inline-block;
-  margin-bottom: 16px;
 }
 
 .compact-search input {
@@ -3236,7 +3235,6 @@
   position: relative;
   display: flex;
   align-items: center;
-  margin-top: 13px;
 }
 
 .compact-search input {
@@ -4138,8 +4136,7 @@
 }
 .compact-search {
     position: relative;
-    flex-shrink: 0; 
-    margin-bottom: 0 !important;
+    flex-shrink: 0;
 }
 
 .compact-search-icon {
