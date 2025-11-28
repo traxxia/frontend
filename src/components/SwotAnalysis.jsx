@@ -19,7 +19,9 @@ const SwotAnalysis = ({
   onDataGenerated,
   saveAnalysisToBackend,
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  hideImproveButton = false,
+
 }) => {
   const { t } = useTranslation();
   const [analysisResult, setAnalysisResult] = useState(initialAnalysisResult);
@@ -414,6 +416,7 @@ const SwotAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );

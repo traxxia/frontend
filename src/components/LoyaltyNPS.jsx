@@ -15,7 +15,8 @@ const LoyaltyNPS = ({
   canRegenerate = true,
   loyaltyNPSData = null,
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  hideImproveButton = false,
 }) => { 
   
   const [data, setData] = useState(loyaltyNPSData);
@@ -334,6 +335,7 @@ const LoyaltyNPS = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         /> 
       </div>
     );

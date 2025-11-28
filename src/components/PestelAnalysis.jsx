@@ -19,7 +19,8 @@ const PestelAnalysis = ({
   onRedirectToBrief,
   isExpanded = true,
   streamingManager,
-  cardId
+  cardId,
+  hideImproveButton = false,
 }) => {
   const { t } = useTranslation();
   const [expandedSections, setExpandedSections] = useState({
@@ -234,6 +235,7 @@ const PestelAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );

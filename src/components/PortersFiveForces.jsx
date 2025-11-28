@@ -21,7 +21,8 @@ const PortersFiveForces = ({
   onRedirectToBrief,
   isExpanded = true,
   streamingManager,
-  cardId
+  cardId,
+  hideImproveButton = false,
 }) => {
   const { t } = useTranslation();
   const [portersAnalysisData, setPortersAnalysisData] = useState(portersData);
@@ -345,6 +346,7 @@ const PortersFiveForces = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );

@@ -20,7 +20,8 @@ const StrategicPositioningRadar = ({
     onRedirectToBrief,
     isExpanded = true,
     streamingManager,
-    cardId
+    cardId,
+    hideImproveButton = false,
 }) => {
     const { t } = useTranslation();
     const [data, setData] = useState(strategicRadarData);
@@ -698,6 +699,7 @@ const StrategicPositioningRadar = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
+                    showImproveButton={!hideImproveButton}
                 />
             </div>
         );

@@ -16,7 +16,8 @@ const PurchaseCriteria = ({
   canRegenerate = true,
   purchaseCriteriaData = null,
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  hideImproveButton = false,
 }) => {
   const [criteriaData, setCriteriaData] = useState(purchaseCriteriaData);
   const [isLoading, setIsLoading] = useState(false);
@@ -285,6 +286,7 @@ const PurchaseCriteria = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         /> 
       </div>
     );

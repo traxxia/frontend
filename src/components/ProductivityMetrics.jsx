@@ -35,7 +35,8 @@ const ProductivityMetrics = ({
   onRedirectToBrief,
   isExpanded = true,
   streamingManager,
-  cardId
+  cardId,
+  hideImproveButton = false,
 }) => {
   const [data, setData] = useState(productivityData);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -566,6 +567,7 @@ const ProductivityMetrics = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );

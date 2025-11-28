@@ -20,7 +20,8 @@ const CompetitiveAdvantageMatrix = ({
     onRedirectToBrief,
     isExpanded = true,
     streamingManager,
-    cardId
+    cardId,
+    hideImproveButton = false,
 }) => {
     const [data, setData] = useState(competitiveAdvantageData);
     const [hasGenerated, setHasGenerated] = useState(false);
@@ -573,6 +574,7 @@ const CompetitiveAdvantageMatrix = ({
                     canRegenerate={canRegenerate && !!onRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
+                    showImproveButton={!hideImproveButton}
                     customMessage="Complete essential phase questions to unlock competitive advantage analysis."
                 />
             </div>

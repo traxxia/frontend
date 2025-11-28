@@ -15,7 +15,8 @@ const CapabilityHeatmap = ({
   canRegenerate = true,
   capabilityHeatmapData = null,
   selectedBusinessId,
-  onRedirectToBrief
+  onRedirectToBrief,
+  hideImproveButton = false,
 }) => {
   console.log('Raw capabilityHeatmapData:', capabilityHeatmapData);
 
@@ -244,6 +245,7 @@ const CapabilityHeatmap = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
+          showImproveButton={!hideImproveButton}
         />
       </div>
     );
