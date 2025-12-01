@@ -7808,7 +7808,7 @@
  @media (prefers-color-scheme: dark) {
    .porters-container {
      background-color: #1a1a1a;
-     color: #e0e0e0;
+     /* color: #e0e0e0; */
    }
 
    .section-container {
@@ -7868,7 +7868,7 @@
  .section-container .table-container {
    border: none !important;
    background: #ffffff !important;
-   padding: 0px 20px !important;
+   /* padding: 0px 20px !important; */
  }
 
  /* Profitability Analysis Styles */
@@ -9365,4 +9365,13 @@
   padding: 10px 20px 10px 10px;
   transition: none;
   overflow-x: hidden;
+}
+ [data-theme="dark"] .strategic-content,
+ [data-theme="dark"] .expanded-analysis-view,
+ [data-theme="dark"] .expanded-analysis-content{
+    background: var(--color-bg-primary, #111827) !important;
+    color: var(--color-text-dark, #e5e7eb) !important;
+}
+[data-theme="dark"] .subsection-title {
+  color: #3f51b5 !important;
 }

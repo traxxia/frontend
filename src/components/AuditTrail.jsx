@@ -513,7 +513,7 @@ const AuditTrail = ({ onToast }) => {
   };
 
   return (
-    <div className="porters-container audit-trail-container">
+    <div className="audit-trail-container">
       {/* Header */}
       <div className="cs-header">
         <div className="cs-title-section">
@@ -705,7 +705,7 @@ const AuditTrail = ({ onToast }) => {
 
       {/* Audit Entries */}
       <div className="section-container">
-        <div className="table-container">
+        <div className="user-table-wrapper">
           {loading ? (
             <div className="loading-state">
               <RefreshCw className="animate-spin" size={24} />
@@ -724,7 +724,7 @@ const AuditTrail = ({ onToast }) => {
             </div>
           ) : (
             <>
-              <table className="data-table">
+              <table className="user-table">
                 <thead>
                   <tr>
                     <th>{t('event')}</th>
