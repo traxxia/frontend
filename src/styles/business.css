@@ -989,7 +989,7 @@
 
 [data-theme="dark"] .modern-phase-icon,
 [data-theme="dark"] .category-icon {
-  background: linear-gradient(135deg, #2563eb 10%, #09418a 100%) !important;
+  /* background: linear-gradient(135deg, #2563eb 10%, #09418a 100%) !important; */
   color: #fff !important;
   box-shadow: 0 2px 8px #18446e44 !important;
 }

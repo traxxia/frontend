@@ -4293,7 +4293,7 @@
  }
 
  .radar-label {
-   font-size: 6.5px;
+   font-size: 7.5px;
    font-weight: 600;
    fill: #374151;
  }
@@ -9374,4 +9374,11 @@
 }
 [data-theme="dark"] .subsection-title {
   color: #3f51b5 !important;
+}
+.radar-chart-wrapper {
+  overflow: visible !important;
+}
+
+svg.radar-chart {
+  overflow: visible !important;
 }
