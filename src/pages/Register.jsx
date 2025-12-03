@@ -173,7 +173,7 @@ const Register = () => {
       // Prepare user data for API call
       const userData = {
         name: form.name.trim(),
-        email: form.email.trim().toLowerCase(),
+        email: form.email.trim(),
         password: form.password,
         company_id: form.company_id,
         terms_accepted: form.terms, // Required by backend API

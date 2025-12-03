@@ -547,16 +547,13 @@ const CoreAdjacency = ({
                                                         const isLast = rowIndex === visibleRows - 1;
 
                                                         return (
-                                                            <StreamingRow
+                                                            <li
                                                                 key={idx}
-                                                                isVisible={isVisible}
-                                                                isLast={isLast && isStreaming}
-                                                                lastRowRef={lastRowRef}
+                                                                ref={isLast && isStreaming ? lastRowRef : null}
+                                                                style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s' }}
                                                             >
-                                                                <li>
-                                                                    {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                                                </li>
-                                                            </StreamingRow>
+                                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
+                                                            </li>
                                                         );
                                                     })}
                                                 </ul>
@@ -578,16 +575,13 @@ const CoreAdjacency = ({
                                                         const isLast = rowIndex === visibleRows - 1;
 
                                                         return (
-                                                            <StreamingRow
+                                                            <li
                                                                 key={idx}
-                                                                isVisible={isVisible}
-                                                                isLast={isLast && isStreaming}
-                                                                lastRowRef={lastRowRef}
+                                                                ref={isLast && isStreaming ? lastRowRef : null}
+                                                                style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s' }}
                                                             >
-                                                                <li>
-                                                                    {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                                                </li>
-                                                            </StreamingRow>
+                                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
+                                                            </li>
                                                         );
                                                     })}
                                                 </ul>
@@ -609,16 +603,13 @@ const CoreAdjacency = ({
                                                         const isLast = rowIndex === visibleRows - 1;
 
                                                         return (
-                                                            <StreamingRow
+                                                            <li
                                                                 key={idx}
-                                                                isVisible={isVisible}
-                                                                isLast={isLast && isStreaming}
-                                                                lastRowRef={lastRowRef}
+                                                                ref={isLast && isStreaming ? lastRowRef : null}
+                                                                style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s' }}
                                                             >
-                                                                <li>
-                                                                    {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                                                </li>
-                                                            </StreamingRow>
+                                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
+                                                            </li>
                                                         );
                                                     })}
                                                 </ul>
@@ -663,16 +654,14 @@ const CoreAdjacency = ({
                                                         isLast={isLast && isStreaming}
                                                         lastRowRef={lastRowRef}
                                                     >
-                                                        <tr>
-                                                            <td>
-                                                                <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        <td>
+                                                            <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        </td>
+                                                        {rationale && (
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                                {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
                                                             </td>
-                                                            {rationale && (
-                                                                <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                    {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
-                                                                </td>
-                                                            )}
-                                                        </tr>
+                                                        )}
                                                     </StreamingRow>
                                                 );
                                             })}
@@ -700,16 +689,14 @@ const CoreAdjacency = ({
                                                         isLast={isLast && isStreaming}
                                                         lastRowRef={lastRowRef}
                                                     >
-                                                        <tr>
-                                                            <td>
-                                                                <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        <td>
+                                                            <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        </td>
+                                                        {rationale && (
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                                {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
                                                             </td>
-                                                            {rationale && (
-                                                                <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                    {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
-                                                                </td>
-                                                            )}
-                                                        </tr>
+                                                        )}
                                                     </StreamingRow>
                                                 );
                                             })}
@@ -737,16 +724,14 @@ const CoreAdjacency = ({
                                                         isLast={isLast && isStreaming}
                                                         lastRowRef={lastRowRef}
                                                     >
-                                                        <tr>
-                                                            <td>
-                                                                <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        <td>
+                                                            <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        </td>
+                                                        {rationale && (
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                                {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
                                                             </td>
-                                                            {rationale && (
-                                                                <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                    {hasStreamed ? rationale : (typingTexts[`${rowIndex}-rationale`] || rationale)}
-                                                                </td>
-                                                            )}
-                                                        </tr>
+                                                        )}
                                                     </StreamingRow>
                                                 );
                                             })}
@@ -793,16 +778,14 @@ const CoreAdjacency = ({
                                                             isLast={isLast && isStreaming}
                                                             lastRowRef={lastRowRef}
                                                         >
-                                                            <tr>
-                                                                <td style={{ width: '40%' }}>
-                                                                    <strong>{hasStreamed ? vector : (typingTexts[`${rowIndex}-vector`] || vector)}</strong>
+                                                            <td style={{ width: '40%' }}>
+                                                                <strong>{hasStreamed ? vector : (typingTexts[`${rowIndex}-vector`] || vector)}</strong>
+                                                            </td>
+                                                            {description && (
+                                                                <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                                    {hasStreamed ? description : (typingTexts[`${rowIndex}-description`] || description)}
                                                                 </td>
-                                                                {description && (
-                                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
-                                                                        {hasStreamed ? description : (typingTexts[`${rowIndex}-description`] || description)}
-                                                                    </td>
-                                                                )}
-                                                            </tr>
+                                                            )}
                                                         </StreamingRow>
                                                     );
                                                 })}
@@ -835,16 +818,13 @@ const CoreAdjacency = ({
                                     const isLast = rowIndex === visibleRows - 1;
 
                                     return (
-                                        <StreamingRow
+                                        <li
                                             key={idx}
-                                            isVisible={isVisible}
-                                            isLast={isLast && isStreaming}
-                                            lastRowRef={lastRowRef}
+                                            ref={isLast && isStreaming ? lastRowRef : null}
+                                            style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s' }}
                                         >
-                                            <li>
-                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                            </li>
-                                        </StreamingRow>
+                                            {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
+                                        </li>
                                     );
                                 })}
                             </ul>
@@ -872,16 +852,13 @@ const CoreAdjacency = ({
                                     const isLast = rowIndex === visibleRows - 1;
 
                                     return (
-                                        <StreamingRow
+                                        <li
                                             key={idx}
-                                            isVisible={isVisible}
-                                            isLast={isLast && isStreaming}
-                                            lastRowRef={lastRowRef}
+                                            ref={isLast && isStreaming ? lastRowRef : null}
+                                            style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s' }}
                                         >
-                                            <li>
-                                                {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
-                                            </li>
-                                        </StreamingRow>
+                                            {hasStreamed ? item : (typingTexts[`${rowIndex}-content`] || item)}
+                                        </li>
                                     );
                                 })}
                             </ul>
