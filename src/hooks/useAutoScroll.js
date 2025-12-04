@@ -68,7 +68,7 @@ export const useAutoScroll = (streamingManager, cardId, isExpanded, visibleRows)
         isScrollingProgrammatically.current = false;
       }, 1000);
     }
-  }, [visibleRows, cardId, isExpanded, streamingManager, userHasScrolled]);
+  }, [visibleRows, cardId, isExpanded]);
 
   useEffect(() => {
     if (streamingManager?.shouldStream(cardId)) {

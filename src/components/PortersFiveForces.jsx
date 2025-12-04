@@ -415,10 +415,11 @@ const PortersFiveForces = ({
                       isVisible={executiveSummaryIndices.industry_attractiveness < visibleRows}
                       isLast={executiveSummaryIndices.industry_attractiveness === visibleRows - 1 && isStreaming}
                       lastRowRef={lastRowRef}
+                      isStreaming={isStreaming}
                     >
                       <td><div className="force-name">{hasStreamed ? 'Industry Attractiveness' : (typingTexts[`${executiveSummaryIndices.industry_attractiveness}-metric`] || 'Industry Attractiveness')}</div></td>
                       <td>{hasStreamed ? parsedData.executive_summary.industry_attractiveness : (typingTexts[`${executiveSummaryIndices.industry_attractiveness}-value`] || parsedData.executive_summary.industry_attractiveness)}</td>
-                      <td style={{ opacity: executiveSummaryIndices.industry_attractiveness < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                      <td style={{ opacity: executiveSummaryIndices.industry_attractiveness < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                         <span className={`status-badge ${getIntensityColor(parsedData.executive_summary.industry_attractiveness)}`}>
                           {parsedData.executive_summary.industry_attractiveness}
                         </span>
@@ -430,10 +431,11 @@ const PortersFiveForces = ({
                       isVisible={executiveSummaryIndices.overall_competitive_intensity < visibleRows}
                       isLast={executiveSummaryIndices.overall_competitive_intensity === visibleRows - 1 && isStreaming}
                       lastRowRef={lastRowRef}
+                      isStreaming={isStreaming}
                     >
                       <td><div className="force-name">{hasStreamed ? 'Competitive Intensity' : (typingTexts[`${executiveSummaryIndices.overall_competitive_intensity}-metric`] || 'Competitive Intensity')}</div></td>
                       <td>{hasStreamed ? parsedData.executive_summary.overall_competitive_intensity : (typingTexts[`${executiveSummaryIndices.overall_competitive_intensity}-value`] || parsedData.executive_summary.overall_competitive_intensity)}</td>
-                      <td style={{ opacity: executiveSummaryIndices.overall_competitive_intensity < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                      <td style={{ opacity: executiveSummaryIndices.overall_competitive_intensity < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                         <span className={`status-badge ${getIntensityColor(parsedData.executive_summary.overall_competitive_intensity)}`}>
                           {parsedData.executive_summary.overall_competitive_intensity}
                         </span>
@@ -445,6 +447,7 @@ const PortersFiveForces = ({
                       isVisible={executiveSummaryIndices.competitive_position < visibleRows}
                       isLast={executiveSummaryIndices.competitive_position === visibleRows - 1 && isStreaming}
                       lastRowRef={lastRowRef}
+                      isStreaming={isStreaming}
                     >
                       <td><div className="force-name">{hasStreamed ? 'Competitive Position' : (typingTexts[`${executiveSummaryIndices.competitive_position}-metric`] || 'Competitive Position')}</div></td>
                       <td>{hasStreamed ? parsedData.executive_summary.competitive_position : (typingTexts[`${executiveSummaryIndices.competitive_position}-value`] || parsedData.executive_summary.competitive_position)}</td>
@@ -500,6 +503,7 @@ const PortersFiveForces = ({
                         isVisible={isVisible}
                         isLast={isLast && isStreaming}
                         lastRowRef={lastRowRef}
+                        isStreaming={isStreaming}
                       >
                         <td>
                           <div className="force-name">
@@ -512,7 +516,7 @@ const PortersFiveForces = ({
                             {hasStreamed ? forceData.intensity : (typingTexts[`${rowIndex}-intensity`] || forceData.intensity)}
                           </span>
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                           <div className="factors-cell">
                             {forceData.key_factors?.map((factor, idx) => (
                               <div key={idx} className="factor-item">
@@ -527,7 +531,7 @@ const PortersFiveForces = ({
                             ))}
                           </div>
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
                           <div className="additional-details">
                             {forceData.entry_barriers && (
                               <div>
@@ -562,7 +566,7 @@ const PortersFiveForces = ({
                             )}
                           </div>
                         </td>
-                        <td className="implications-cell" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                        <td className="implications-cell" style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                           {forceData.strategic_implications}
                         </td>
                       </StreamingRow>
@@ -597,6 +601,7 @@ const PortersFiveForces = ({
                         isVisible={isVisible}
                         isLast={isLast && isStreaming}
                         lastRowRef={lastRowRef}
+                        isStreaming={isStreaming}
                       >
                         <td>
                           <div className="force-name">

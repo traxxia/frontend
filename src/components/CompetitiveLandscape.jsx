@@ -415,6 +415,7 @@ const CompetitiveLandscape = ({
                                                                 isVisible={isVisible}
                                                                 isLast={isLast && isStreaming}
                                                                 lastRowRef={lastRowRef}
+                                                                isStreaming={isStreaming}
                                                             >
                                                                 {itemIndex === 0 && (
                                                                     <td rowSpan={categoryData.length}>
@@ -442,6 +443,7 @@ const CompetitiveLandscape = ({
                                                                 isVisible={isVisible}
                                                                 isLast={isLast && isStreaming}
                                                                 lastRowRef={lastRowRef}
+                                                                isStreaming={isStreaming}
                                                             >
                                                                 <td>
                                                                     <span className={`status-badge ${categoryColor}`}>

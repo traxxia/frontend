@@ -424,6 +424,7 @@ const ProductivityMetrics = ({
                         isVisible={isVisible}
                         isLast={isLast && isStreaming}
                         lastRowRef={lastRowRef}
+                        isStreaming={isStreaming}
                       >
                         <td style={{ padding: '12px' }}>
                           {hasStreamed ? item : (typingTexts[`${rowIndex}-item`] || item)}
@@ -490,12 +491,13 @@ const ProductivityMetrics = ({
                         isVisible={isVisible}
                         isLast={isLast && isStreaming}
                         lastRowRef={lastRowRef}
+                        isStreaming={isStreaming}
                       >
                         {keys.map((key, keyIndex) => (
                           <td key={key} style={{ 
                             padding: '12px',
                             opacity: isVisible ? 1 : 0,
-                            transition: hasStreamed ? 'none' : `opacity 0.3s ${keyIndex * 0.1}s`
+                            transition: !isStreaming ? 'none' : `opacity 0.3s ${keyIndex * 0.1}s`
                           }}>
                             {hasStreamed ? formatValue(item[key], key) : (typingTexts[`${rowIndex}-${key}`] ? formatValue(typingTexts[`${rowIndex}-${key}`], key) : formatValue(item[key], key))}
                           </td>

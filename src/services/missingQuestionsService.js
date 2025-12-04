@@ -222,6 +222,10 @@ export const ANALYSIS_TYPES = {
   operationalEfficiency: {
     displayName: 'Operational Efficiency Insight',
     customMessage: 'Answer more operational questions to unlock detailed efficiency metrics and resource utilization analysis'
+  },
+  competitiveLandscape: {
+    displayName: 'Competitive Landscape',
+    customMessage: 'Comprehensive analysis of key competitors using SWOT framework'
   }
 };
 

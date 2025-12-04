@@ -10,7 +10,7 @@ import PhaseManager from "../components/PhaseManager";
 import PhaseUnlockToast from "../components/PhaseUnlockToast";
 import AnalysisContentManager from "../components/AnalysisContentManager";
 import { useBusinessSetup } from '../hooks/useBusinessSetup';
-import { extractBusinessName, showToastMessage as createToastMessage } from '../utils/businessHelpers';
+import { extractBusinessName } from '../utils/businessHelpers';
 import PDFExportButton from "../components/PDFExportButton";
 import { AnalysisApiService } from '../services/analysisApiService';
 import "../styles/businesspage.css";
@@ -136,8 +136,20 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
   }, [uploadedFileForAnalysis]);
+  let toastActive = false;
+ const showToastMessage = (setShowToast) => (message, type = "success", options = {}) => {
+  if (toastActive) return; // Prevent multiple calls quickly
+  toastActive = true;
+  const { duration = 4000 } = options;
+  setShowToast({ show: true, message, type });
+  if (duration > 0) {
+    setTimeout(() => {
+      setShowToast({ show: false, message: "", type: "success" });
+      toastActive = false; // Allow toasts after previous one closes
+    }, duration);
+  }
+};
 
-  const showToastMessage = createToastMessage(setShowToast);
 
   const stateSetters = {
     setSwotAnalysisResult, setPurchaseCriteriaData, setLoyaltyNPSData,
@@ -159,6 +171,7 @@ const BusinessSetupPage = () => {
     if (isMobile) {
       setActiveTab("brief");
     } else {
+      console.log("enter")
       if (isAnalysisExpanded) {
         setIsSliding(true);
         setIsAnalysisExpanded(false);
@@ -608,7 +621,7 @@ const BusinessSetupPage = () => {
     createSimpleRegenerationHandler, highlightedCard, expandedCards, setExpandedCards,
     onRedirectToChat: handleRedirectToChat, isMobile, setActiveTab,
     hasUploadedDocument, documentInfo, collapsedCategories, setCollapsedCategories,
-    readOnly: false
+    readOnly: false,isCardExpanded: (cardId) => expandedCards.has(cardId),
   };
 
   return (

@@ -658,6 +658,7 @@ const CompetitiveAdvantageMatrix = ({
                                                     isVisible={positionIndices.overallScore < visibleRows}
                                                     isLast={positionIndices.overallScore === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming={isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -672,6 +673,7 @@ const CompetitiveAdvantageMatrix = ({
                                                     isVisible={positionIndices.marketPosition < visibleRows}
                                                     isLast={positionIndices.marketPosition === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming={isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -686,6 +688,7 @@ const CompetitiveAdvantageMatrix = ({
                                                     isVisible={positionIndices.sustainableAdvantages < visibleRows}
                                                     isLast={positionIndices.sustainableAdvantages === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming={isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -700,6 +703,7 @@ const CompetitiveAdvantageMatrix = ({
                                                     isVisible={positionIndices.vulnerableAdvantages < visibleRows}
                                                     isLast={positionIndices.vulnerableAdvantages === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming={isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -765,6 +769,7 @@ const CompetitiveAdvantageMatrix = ({
                                                             isVisible={isVisible}
                                                             isLast={isLast && isStreaming}
                                                             lastRowRef={lastRowRef}
+                                                            isStreaming={isStreaming}
                                                         >
                                                             <td>
                                                                 <div className="force-name">
@@ -774,22 +779,22 @@ const CompetitiveAdvantageMatrix = ({
                                                             <td>
                                                                 {hasStreamed ? diff.description : (typingTexts[`${rowIndex}-description`] || diff.description)}
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                                 <span className={`score-badge ${getIntensityColor(diff.uniqueness)}`}>
                                                                     {hasStreamed ? `${diff.uniqueness}/10` : (typingTexts[`${rowIndex}-uniqueness`] || `${diff.uniqueness}/10`)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.5s' }}>
                                                                 <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>
                                                                     {hasStreamed ? `${diff.customerValue}/10` : (typingTexts[`${rowIndex}-customerValue`] || `${diff.customerValue}/10`)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
                                                                 <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>
                                                                     {hasStreamed ? `${diff.sustainability}/10` : (typingTexts[`${rowIndex}-sustainability`] || `${diff.sustainability}/10`)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.7s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.7s' }}>
                                                                 {diff.proofPoints && diff.proofPoints.length > 0 && (
                                                                     <ul className="list-items">
                                                                         {diff.proofPoints.map((point, idx) => (

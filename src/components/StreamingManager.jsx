@@ -47,14 +47,14 @@ export const useStreamingManager = () => {
   };
 };
 
-export const StreamingRow = ({ children, isVisible, isLast, lastRowRef }) => {
+export const StreamingRow = ({ children, isVisible, isLast, lastRowRef, isStreaming }) => {
   return (
     <tr 
       ref={isLast ? lastRowRef : null}
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'opacity 0.5s ease, transform 0.5s ease'
+        transition: isStreaming ? 'opacity 0.5s ease, transform 0.5s ease' : 'none'
       }}
     >
       {children}
