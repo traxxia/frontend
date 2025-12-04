@@ -703,6 +703,7 @@ export const staticTranslations = {
     'Generate Analysis Now': 'Generate Analysis Now',
     'Your business analysis will appear here once generated.': 'Your business analysis will appear here once generated.',
     'Continue the conversation to trigger analysis generation.': 'Continue the conversation to trigger analysis generation.',
+    'user_management': 'User Management',
 
     // ===========================
     // ANALYSIS TYPES
@@ -1577,6 +1578,7 @@ export const staticTranslations = {
   'businesses':'Negocios',
   'Purpose':'Propósito',
   'business':'Negocio',
+  'user_management':'Gestión de Usuarios',
   }
 };
 
