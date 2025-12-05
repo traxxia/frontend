@@ -11,6 +11,8 @@ import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin 
 import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
+import NewProjectPage from './components/NewProjectPage';
+
 
 const App = () => {
   useEffect(() => {
@@ -52,7 +54,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/businesspage" element={<BusinessSetupPage />} />
-          
+          <Route path="/projects/new" element={<NewProjectPage />} />
           {/* Regular Admin Route - kept for potential future use */}
           <Route
             path="/admin"

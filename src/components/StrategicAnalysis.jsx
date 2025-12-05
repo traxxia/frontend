@@ -29,6 +29,7 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
+import KickstartProjectsCard from "../components/KickstartProjectsCard";
 import '../styles/StrategicAnalysis.css';
 
 const StrategicAnalysis = ({
@@ -48,7 +49,16 @@ const StrategicAnalysis = ({
   onRedirectToBrief,
   phaseAnalysisArray = [],
   streamingManager,
+  onKickstartProjects
 }) => {
+  const [userRole, setUserRole] = useState("");
+
+  useEffect(() => {
+    const role = sessionStorage.getItem("userRole");
+    setUserRole(role);
+  }, []);
+
+  const isSuperAdmin = userRole === "super_admin";
   const { t } = useTranslation();
   const cardId = 'strategic-analysis';
   const isExpanded = true;
@@ -2370,6 +2380,9 @@ const StrategicAnalysis = ({
       data-analysis-name="Strategic Analysis"
       data-analysis-order="10"
     >
+      {isSuperAdmin && (
+        <KickstartProjectsCard onKickstart={onKickstartProjects} />
+      )}
       <div className="dashboard-container">
         {renderStrategicContent()}
       </div>

@@ -16,6 +16,7 @@ import { AnalysisApiService } from '../services/analysisApiService';
 import "../styles/businesspage.css";
 import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
+import ProjectsSection from "../components/ProjectsSection";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -646,6 +647,13 @@ const BusinessSetupPage = () => {
               {t("strategic")}
             </button>
           )}
+          <button
+  className={`mobile-tab ${activeTab === "projects" ? "active" : ""}`}
+  onClick={() => setActiveTab("projects")}
+>
+  Projects
+</button>
+
         </div>
       )}
 
@@ -689,7 +697,7 @@ const BusinessSetupPage = () => {
         </div>
 
         {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
+          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -707,6 +715,11 @@ const BusinessSetupPage = () => {
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
                           {t("strategic")}
+                        </button>
+                      )}
+                      {unlockedFeatures.analysis && (
+                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
+                          Projects
                         </button>
                       )}
                     </div>
@@ -836,10 +849,12 @@ const BusinessSetupPage = () => {
                             onRedirectToChat={handleRedirectToChat}
                             onRedirectToBrief={handleRedirectToBrief}
                             streamingManager={streamingManager}  // ADD THIS LINE
-                            isExpanded={true}                      // ADD THIS LINE
+                            isExpanded={true} 
+                            onKickstartProjects={() => setActiveTab("projects")}
                           />
                         </div>
                       )}
+                      {activeTab === "projects" && <ProjectsSection />}
                     </div>
                   </div>
                 </div>
@@ -950,6 +965,11 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
+                  {activeTab === "projects" && (
+                    <div className="projects-container">
+                      <ProjectsSection />
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -1033,10 +1053,12 @@ const BusinessSetupPage = () => {
                       phaseAnalysisArray={phaseAnalysisArray}
                       onRedirectToBrief={handleRedirectToBrief}
                       streamingManager={streamingManager}  // ADD THIS LINE
-                      isExpanded={true}                      // ADD THIS LINE
+                      isExpanded={true}    
+                      onKickstartProjects={() => setActiveTab("projects")}     
                     />
                   </div>
                 )}
+                {activeTab === "projects" && <ProjectsSection />}
               </div>
             )}
           </div>
