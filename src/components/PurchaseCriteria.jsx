@@ -204,13 +204,14 @@ const PurchaseCriteria = ({
 
     const center = 100;
     const radius = 85;
+    const labelOffset = 12; // push labels away from data polygon
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
 
     return criteria.map((criterion, index) => {
       const angle = index * angleStep - Math.PI / 2;
-      const x = center + radius * Math.cos(angle);
-      const y = center + radius * Math.sin(angle);
+      const x = center + (radius + labelOffset) * Math.cos(angle);
+      const y = center + (radius + labelOffset) * Math.sin(angle);
 
       return (
         <text
