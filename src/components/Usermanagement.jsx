@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown } from "react-bootstrap";
+import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown, Modal } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical,Search , Plus} from "lucide-react";
 import "../styles/usermanagement.css";
 const userData = [
@@ -54,6 +54,11 @@ const UserManagement = () => {
    const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [filteredUsers, setFilteredUsers] = useState(userData);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleOpenModal = () => setShowModal(true);
+  const handleCloseModal = () => setShowModal(false);
+
 
   // ---- HANDLERS ----
   const handleSearch = (e) => {
@@ -93,36 +98,37 @@ const UserManagement = () => {
         <Col md={3}><Card body><h5>Collaborators</h5><h2>2</h2></Card></Col>
         <Col md={3}><Card body><h5>Pending Invites</h5><h2>1</h2></Card></Col>
       </Row>
-      <Row className="mt-4 g-2 align-items-center">
-          <Col md={8}>
-          <div className="search-input-wrapper">
-            <Search size={18} className="search-icon" />
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-        </Col>
+      <Row className="mt-4 g-2 align-items-center justify-content-between">
 
-          <Col md="auto">
-            <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
-              <option>All Roles</option>
-              <option>Org Admin</option>
-              <option>Collaborator</option>
-              <option>Viewer</option>
-            </Form.Select>
-          </Col>
-          <Col md="auto">
-            <Button className="add-user-btn">
-              <Plus size={16} className="me-2" />
-               Add User
-            </Button>
-          </Col>
+  <Col md={8}>
+    <div className="search-input-wrapper">
+      <Search size={18} className="search-icon" />
+      <input
+        type="text"
+        className="search-input"
+        placeholder="Search by name or email..."
+        value={searchTerm}
+        onChange={handleSearch}
+      />
+    </div>
+  </Col>
 
-        </Row>
+  <Col md="auto" className="d-flex gap-2 align-items-center">
+    <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
+      <option>All Roles</option>
+      <option>Org Admin</option>
+      <option>Collaborator</option>
+      <option>Viewer</option>
+    </Form.Select>
+
+    <Button className="add-user-btn d-flex align-items-center" onClick={handleOpenModal}>
+      <Plus size={16} className="me-2" />
+      Add User
+    </Button>
+  </Col>
+
+</Row>
+
 
 
       <Card className="mt-4">
@@ -193,20 +199,83 @@ const UserManagement = () => {
                   <Dropdown>
                     <Dropdown.Toggle as={CustomToggle} />
 
-                    <Dropdown.Menu align="end">
-                      <Dropdown.Item><span className="crown-purple"><Crown /> Org admin</span></Dropdown.Item>
-                      <Dropdown.Item><span className="cog-bule"><UserCog /> Collaborator</span></Dropdown.Item>
-                      <Dropdown.Item><span className="user-sandel"><User /> Viewer</span></Dropdown.Item>
+                    <Dropdown.Menu
+                        align="end"
+                        flip={true}
+                        renderOnMount
+                        autoFocus={false}
+                        popperConfig={{
+                          strategy: "fixed",
+                          modifiers: [
+                            {
+                              name: "preventOverflow",
+                              options: {
+                                boundary: "viewport",
+                                padding: 10,
+                              },
+                            },
+                            {
+                              name: "flip",
+                              options: {
+                                fallbackPlacements: ["left", "top", "bottom", "right"],
+                              },
+                            },
+                          ],
+                        }}
+                        style={{ maxHeight: "200px", overflowY: "auto" }}
+                      >
+
+                      <Dropdown.Item>
+                        <span className="crown-purple"><Crown /> Org admin</span>
+                      </Dropdown.Item>
+                      <Dropdown.Item>
+                        <span className="cog-bule"><UserCog /> Collaborator</span>
+                      </Dropdown.Item>
+                      <Dropdown.Item>
+                        <span className="user-sandel"><User /> Viewer</span>
+                      </Dropdown.Item>
                       <Dropdown.Item className="text-danger">Remove</Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
                 </td>
+
                 </tr>
               ))}
             </tbody>
           </Table>
         </Card.Body>
       </Card>
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Add New User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3" controlId="formUserName">
+              <Form.Label>User Name</Form.Label>
+              <Form.Control type="text" placeholder="Enter name" />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formUserEmail">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control type="email" placeholder="Enter email" />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formUserRole">
+              <Form.Label>Role</Form.Label>
+              <Form.Select>
+                <option>Org Admin</option>
+                <option>Collaborator</option>
+                <option>Viewer</option>
+              </Form.Select>
+            </Form.Group>
+            <Button variant="secondary" className="me-2" onClick={handleCloseModal}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Add User
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };
