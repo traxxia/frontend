@@ -155,7 +155,7 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 
 
 
-const NewProjectPage = () => {
+const EditProjectPage = () => {
   const navigate = useNavigate();
 
   const [projectName, setProjectName] = useState("");
@@ -163,15 +163,13 @@ const NewProjectPage = () => {
   const [importance, setImportance] = useState("");
   const [openDropdown, setOpenDropdown] = useState(null);
   const [selectedImpact, setSelectedImpact] = useState("");
-const [selectedEffort, setSelectedEffort] = useState("");
-const [selectedRisk, setSelectedRisk] = useState("");
-const [selectedTheme, setSelectedTheme] = useState("");
+  const [selectedEffort, setSelectedEffort] = useState("");
+  const [selectedRisk, setSelectedRisk] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState("");
 
 
   return (
     <div style={{ padding: "16px", paddingTop: "24px", backgroundColor: "#f9fafb", minHeight: "100vh" }}>
-      
-        {/* Header Card */}
         <div
         style={{
             background: "#fff",
@@ -197,17 +195,16 @@ const [selectedTheme, setSelectedTheme] = useState("");
             <ChevronLeft size={16} /> Back
         </button>
 
-        {/* Breadcrumb */}
         <p
         style={{
             fontSize: "18px",
-            color: "#6b7280", // grey for Dashboard and Projects
+            color: "#6b7280", 
             margin: "0 0 10px 0",
         }}
         >
-        Dashboard  ›  Projects  ›  
+        Dashboard  ›  Projects  › 
         <span style={{ color: "#111827", fontWeight: "500" }}>
-            New Project
+            Edit Project
         </span>
         </p>
 
@@ -223,19 +220,6 @@ const [selectedTheme, setSelectedTheme] = useState("");
             >
             Project Idea
             </h1>
-
-            <span
-            style={{
-                background: "#d3a3ddff",
-                color: "#692c75ff",
-                padding: "4px 10px",
-                borderRadius: "8px",
-                fontSize: "12px",
-                fontWeight: "600",
-            }}
-            >
-            Ideas
-            </span>
         </div>
         </div>
       <div
@@ -297,7 +281,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
                 placeholder="Launch digital wallet product and achieve market penetration"
                 rows={3}
                 style={{
-                marginTop: "8px",
+              marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -322,7 +306,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
                 placeholder="Explain why this project is strategically important"
                 rows={3}
                 style={{
-                marginTop: "8px",
+              marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -333,6 +317,9 @@ const [selectedTheme, setSelectedTheme] = useState("");
                 resize: "none",
                 }}
             />
+            </div>
+            <div style={{ background: "rgba(127, 246, 243, 0.8)", padding: "8px 12px", borderRadius: "6px" }} >
+                <div><b>Source : </b>This is where the source will be displayed</div>
             </div>
         </div>
       </div>
@@ -437,8 +424,6 @@ const [selectedTheme, setSelectedTheme] = useState("");
               }
             />
           </div>
-
-          {/* Dependencies */}
           <div style={{ marginBottom: "26px" }}>
             <label style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
               Dependencies (on other projects or systems)
@@ -448,7 +433,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
               placeholder="List dependencies (one per line)"
               rows={3}
               style={{
-                marginTop: "8px",
+                marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 border: "none",
@@ -483,8 +468,6 @@ const [selectedTheme, setSelectedTheme] = useState("");
           <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "24px" }}>
             Detailed Planning
           </h3>
-
-          {/* High-Level Requirements */}
           <div style={{ marginBottom: "26px" }}>
             <label style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
               High-Level Requirements
@@ -494,7 +477,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
               placeholder="What are the main requirements?"
               rows={3}
               style={{
-                marginTop: "8px",
+                marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -506,8 +489,6 @@ const [selectedTheme, setSelectedTheme] = useState("");
               }}
             />
           </div>
-
-          {/* Scope Definition */}
           <div style={{ marginBottom: "26px" }}>
             <label style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
               Scope Definition
@@ -517,7 +498,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
               placeholder="Define the project scope"
               rows={3}
               style={{
-                marginTop: "8px",
+                marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -540,7 +521,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
               placeholder="What is the end result?"
               rows={3}
               style={{
-                marginTop: "8px",
+                marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -563,7 +544,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
               placeholder="How will you measure success? (one metric per line)"
               rows={3}
               style={{
-                marginTop: "8px",
+                marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -575,8 +556,6 @@ const [selectedTheme, setSelectedTheme] = useState("");
               }}
             />
           </div>
-
-          {/* Timeline + Budget (Two Columns) */}
           <div
             style={{
               display: "grid",
@@ -658,7 +637,7 @@ const [selectedTheme, setSelectedTheme] = useState("");
       cursor: "pointer",
     }}
   >
-    Create Project
+    Save Changes
   </button>
 </div>
 
@@ -666,4 +645,4 @@ const [selectedTheme, setSelectedTheme] = useState("");
   );
 };
 
-export default NewProjectPage;
+export default EditProjectPage;

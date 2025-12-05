@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
 import NewProjectPage from './components/NewProjectPage';
+import Editprojectpage from './components/Editprojectpage';
 
 
 const App = () => {
@@ -55,6 +56,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/businesspage" element={<BusinessSetupPage />} />
           <Route path="/projects/new" element={<NewProjectPage />} />
+          <Route path="/projects/edit" element={<Editprojectpage />} />
           {/* Regular Admin Route - kept for potential future use */}
           <Route
             path="/admin"

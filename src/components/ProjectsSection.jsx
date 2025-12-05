@@ -390,6 +390,7 @@ const ProjectsSection = () => {
                 {/* Buttons */}
                 <div className="d-flex flex-column flex-md-row gap-2 mt-3">
                   <button
+                    onClick={() => navigate("/projects/edit")}
                     className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
                   >
                     <Pencil size={16} /> Edit
