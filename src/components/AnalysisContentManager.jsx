@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Target, Award, TrendingUp, Users, Building, Zap,
   Loader, Lock, ChevronDown, ChevronUp,
@@ -25,8 +25,145 @@ import CoreAdjacency from "./CoreAdjacency";
 import { useStreamingManager } from './StreamingManager';
 import { useTranslation } from "../hooks/useTranslation";
 
+const MemoizedAnalysisCard = React.memo(
+  ({ 
+    id, 
+    title, 
+    description, 
+    children, 
+    onRegenerate, 
+    isRegenerating, 
+    hasData, 
+    isLoading,
+    isExpanded,
+    isHighlighted,
+    onToggleCard,
+    streamingManager,
+    hideRegenerateButtons
+  }) => {
+    const getStatusIcon = () => {
+      if (isRegenerating || isLoading) {
+        return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
+      }
+      return null;
+    };
+
+    const getActualStatus = () => {
+      if (isRegenerating || isLoading) return 'loading';
+      if (hasData) return 'completed';
+      return 'error';
+    };
+
+    return (
+      <div
+        id={id}
+        className={`modern-analysis-card ${getActualStatus()} ${isHighlighted ? 'highlighted' : ''}`}
+      >
+        <div 
+          className={`modern-card-header ${isExpanded ? 'expanded' : ''}`} 
+          onClick={() => onToggleCard(id)}
+        >
+          <div className="modern-card-header-left">
+            <div className="modern-card-text">
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </div>
+          </div>
+
+          <div className="modern-card-header-right">
+            {getStatusIcon()}
+            <div onClick={(e) => e.stopPropagation()}>
+              <RegenerateButton
+                onRegenerate={() => {
+                  streamingManager.startStreaming(id);
+                  onRegenerate?.();
+                }}
+                isRegenerating={isRegenerating || isLoading}
+                canRegenerate={!!onRegenerate}
+                sectionName={title}
+                size="small"
+                hideRegenerateButtons={hideRegenerateButtons}
+              />
+            </div>
+            <button className="modern-expand-btn">
+              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+          </div>
+        </div>
+
+        <div className={`modern-card-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+          <div className="modern-card-content-inner">
+            {(isLoading || isRegenerating) && !hasData ? (
+              <div className="loading-placeholder">
+                <Loader className="animate-spin" size={24} />
+                <p>Generating Insight...</p>
+              </div>
+            ) : (
+              children
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.id === nextProps.id &&
+      prevProps.isExpanded === nextProps.isExpanded &&
+      prevProps.isRegenerating === nextProps.isRegenerating &&
+      prevProps.isLoading === nextProps.isLoading &&
+      prevProps.hasData === nextProps.hasData &&
+      prevProps.isHighlighted === nextProps.isHighlighted &&
+      prevProps.title === nextProps.title &&
+      prevProps.description === nextProps.description &&
+      prevProps.hideRegenerateButtons === nextProps.hideRegenerateButtons
+    );
+  }
+);
+
+MemoizedAnalysisCard.displayName = 'MemoizedAnalysisCard';
+
+const CategorySection = React.memo(
+  ({ id, title, subtitle, icon: IconComponent, children, isCollapsed, onToggle }) => {
+    return (
+      <div className="analysis-category">
+        <div className="category-header" onClick={() => onToggle(id)}>
+          <div className="category-header-left">
+            <IconComponent size={24} className="category-icon" />
+            <div className="category-title-group">
+              <h2 className="category-title">{title}</h2>
+              {subtitle && (
+                <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="category-toggle">
+            {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+          </div>
+        </div>
+
+        <div className={`category-content ${isCollapsed ? 'collapsed' : 'expanded'}`}>
+          <div className="category-grid">{children}</div>
+        </div>
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.id === nextProps.id &&
+      prevProps.isCollapsed === nextProps.isCollapsed &&
+      prevProps.children === nextProps.children
+    );
+  }
+);
+
+CategorySection.displayName = 'CategorySection';
+
 const AnalysisContentManager = (props) => {
   const { t } = useTranslation();
+  
   const CATEGORIES = [
     {
       id: 'costs-financial',
@@ -65,210 +202,211 @@ const AnalysisContentManager = (props) => {
       icon: Target
     }
   ];
+
   const ANALYSIS_CONFIG = {
-  swot: {
-    slug: "swot",
-    component: SwotAnalysis,
-    title: "SWOT Analysis",
-    description: "Comprehensive strengths, weaknesses, opportunities, and threats analysis",
-    category: "context-industry",
-    dataKey: "swotAnalysisResult",
-    refKey: "swotRef",
-    pdfComponent: "swot-analysis"
-  },
-  profitabilityAnalysis: {
-    slug: "profitability-analysis",
-    component: ProfitabilityAnalysis,
-    title: t("Profitability_Analysis"),
-    description: t("Detailed_profitability_margins_with_industry_benchmark_comparisons"),
-    category: "costs-financial",
-    dataKey: "profitabilityData",
-    refKey: "profitabilityRef",
-    pdfComponent: "profitability-analysis"
-  },
-  growthTracker: {
-    slug: "growth-tracker",
-    component: GrowthTracker,
-    title: t("Growth_Tracker"),
-    description: t("Revenue_and_net_income_trends_with_growth_pattern_analysis"),
-    category: "costs-financial",
-    dataKey: "growthTrackerData",
-    refKey: "growthTrackerRef",
-    pdfComponent: "growth-tracker"
-  },
-  liquidityEfficiency: {
-    slug: "liquidity-efficiency",
-    component: LiquidityEfficiency,
-    title: t("Liquidity_Efficiency"),
-    description: t("Financial_ratios_with_gauges_and_color-coded_risk_indicators"),
-    category: "costs-financial",
-    dataKey: "liquidityEfficiencyData",
-    refKey: "liquidityEfficiencyRef",
-    pdfComponent: "liquidity-efficiency"
-  },
-  investmentPerformance: {
-    slug: "investment-performance",
-    component: InvestmentPerformance,
-    title: t("Investment_Performance"),
-    description: t("ROA_ROE_ROIC_analysis_with_benchmark_comparisons_and_trend_charts"),
-    category: "costs-financial",
-    dataKey: "investmentPerformanceData",
-    refKey: "investmentPerformanceRef",
-    pdfComponent: "investment-performance"
-  },
-  leverageRisk: {
-    slug: "leverage-risk",
-    component: LeverageRisk,
-    title: t("Leverage_Risk"),
-    description: t("Financial_risk_assessment_with_traffic_light_risk_indicators"),
-    category: "costs-financial",
-    dataKey: "leverageRiskData",
-    refKey: "leverageRiskRef",
-    pdfComponent: "leverage-risk"
-  },
-  productivityMetrics: {
-    slug: "productivity",
-    component: ProductivityMetrics,
-    title: t("Productivity_Metrics"),
-    description: t("Analysis_of_organizational_productivity_and_efficiency_metrics"),
-    category: "costs-financial",
-    dataKey: "productivityData",
-    refKey: "productivityRef",
-    pdfComponent: "productivity"
-  },
-  fullSwot: {
-    slug: "full-swot",
-    component: FullSWOTPortfolio,
-    title: t("Full_SWOT_Portfolio"),
-    description: t("Comprehensive_SWOT_analysis_with_strategic_recommendations"),
-    category: "context-industry",
-    dataKey: "fullSwotData",
-    refKey: "fullSwotRef",
-    pdfComponent: "full-swot"
-  },
-  strategicRadar: {
-    slug: "strategic-radar",
-    component: StrategicPositioningRadar,
-    title: t("Strategic_Positioning_Radar"),
-    description: t("Visual_representation_of_strategic_positioning_across_key_dimensions"),
-    category: "context-industry",
-    dataKey: "strategicRadarData",
-    refKey: "strategicRadarRef",
-    pdfComponent: "strategic-radar"
-  },
-  porters: {
-    slug: "porters",
-    component: PortersFiveForces,
-    title: t("Porters_Five_Forces"),
-    description: t("Competitive_analysis_using_Porters_strategic_framework"),
-    category: "context-industry",
-    dataKey: "portersData",
-    refKey: "portersRef",
-    pdfComponent: "porters-analysis"
-  },
-  pestel: {
-    slug: "pestel",
-    component: PestelAnalysis,
-    title: t("PESTEL_Analysis"),
-    description: t("External_environment_analysis_covering_political_economic_social_technological_environmental_and_legal_factors"),
-    category: "context-industry",
-    dataKey: "pestelData",
-    refKey: "pestelRef",
-    pdfComponent: "pestel-analysis"
-  },
-  competitiveAdvantage: {
-    slug: "competitive-advantage",
-    component: CompetitiveAdvantageMatrix,
-    title: t("Competitive_Advantage_Matrix"),
-    description: t("Analysis_of_competitive_positioning_and_advantages"),
-    category: "customer",
-    dataKey: "competitiveAdvantageData",
-    refKey: "competitiveAdvantageRef",
-    pdfComponent: "competitive-advantage"
-  },
-  purchaseCriteria: {
-    slug: "purchase-criteria",
-    component: PurchaseCriteria,
-    title: t("Purchase_Criteria"),
-    description: t("Key_factors_influencing_customer_buying_decisions"),
-    category: "customer",
-    dataKey: "purchaseCriteriaData",
-    refKey: "purchaseCriteriaRef",
-    pdfComponent: "purchase-criteria"
-  },
-  loyaltyNPS: {
-    slug: "loyalty-nps",
-    component: LoyaltyNPS,
-    title: t("Loyalty_&_NPS"),
-    description: t("Customer_loyalty_metrics_and_Net_Promoter_Score_analysis"),
-    category: "customer",
-    dataKey: "loyaltyNPSData",
-    refKey: "loyaltyNpsRef",
-    pdfComponent: "loyalty-nps"
-  },
-  expandedCapability: {
-    slug: "expanded-capability",
-    component: ExpandedCapabilityHeatmap,
-    title: t("Capability_Heatmap"),
-    description: t("Advanced_organizational_capability_analysis"),
-    category: "capabilities",
-    dataKey: "expandedCapabilityData",
-    refKey: "expandedCapabilityRef",
-    pdfComponent: "expanded-capability"
-  },
-  maturityScore: {
-    slug: "maturity",
-    component: MaturityScoreLight,
-    title: t("Maturity_Score"),
-    description: t("Business_maturity_assessment_and_scoring"),
-    category: "capabilities",
-    dataKey: "maturityData",
-    refKey: "maturityScoreRef",
-    pdfComponent: "maturity"
-  },
-  competitiveLandscape: {
-    slug: "competitive-landscape",
-    component: CompetitiveLandscape,
-    title: t("Competitive_Landscape"),
-    description: t("Comprehensive_analysis_of_key_competitors_using_SWOT_framework"),
-    category: "competition",
-    dataKey: "competitiveLandscapeData",
-    refKey: "competitiveLandscapeRef",
-    pdfComponent: "competitive-landscape"
-  },
-  coreAdjacency: {
-    slug: "core-adjacency",
-    component: CoreAdjacency,
-    title: t("Core"),
-    description: t("Strategic_analysis_of_core_business_areas_and_adjacent_growth_opportunities"),
-    category: "current-strategy",
-    dataKey: "coreAdjacencyData",
-    refKey: "coreAdjacencyRef",
-    pdfComponent: "core-adjacency"
-  }
-};
+    swot: {
+      slug: "swot",
+      component: SwotAnalysis,
+      title: "SWOT Analysis",
+      description: "Comprehensive strengths, weaknesses, opportunities, and threats analysis",
+      category: "context-industry",
+      dataKey: "swotAnalysisResult",
+      refKey: "swotRef",
+      pdfComponent: "swot-analysis"
+    },
+    profitabilityAnalysis: {
+      slug: "profitability-analysis",
+      component: ProfitabilityAnalysis,
+      title: t("Profitability_Analysis"),
+      description: t("Detailed_profitability_margins_with_industry_benchmark_comparisons"),
+      category: "costs-financial",
+      dataKey: "profitabilityData",
+      refKey: "profitabilityRef",
+      pdfComponent: "profitability-analysis"
+    },
+    growthTracker: {
+      slug: "growth-tracker",
+      component: GrowthTracker,
+      title: t("Growth_Tracker"),
+      description: t("Revenue_and_net_income_trends_with_growth_pattern_analysis"),
+      category: "costs-financial",
+      dataKey: "growthTrackerData",
+      refKey: "growthTrackerRef",
+      pdfComponent: "growth-tracker"
+    },
+    liquidityEfficiency: {
+      slug: "liquidity-efficiency",
+      component: LiquidityEfficiency,
+      title: t("Liquidity_Efficiency"),
+      description: t("Financial_ratios_with_gauges_and_color-coded_risk_indicators"),
+      category: "costs-financial",
+      dataKey: "liquidityEfficiencyData",
+      refKey: "liquidityEfficiencyRef",
+      pdfComponent: "liquidity-efficiency"
+    },
+    investmentPerformance: {
+      slug: "investment-performance",
+      component: InvestmentPerformance,
+      title: t("Investment_Performance"),
+      description: t("ROA_ROE_ROIC_analysis_with_benchmark_comparisons_and_trend_charts"),
+      category: "costs-financial",
+      dataKey: "investmentPerformanceData",
+      refKey: "investmentPerformanceRef",
+      pdfComponent: "investment-performance"
+    },
+    leverageRisk: {
+      slug: "leverage-risk",
+      component: LeverageRisk,
+      title: t("Leverage_Risk"),
+      description: t("Financial_risk_assessment_with_traffic_light_risk_indicators"),
+      category: "costs-financial",
+      dataKey: "leverageRiskData",
+      refKey: "leverageRiskRef",
+      pdfComponent: "leverage-risk"
+    },
+    productivityMetrics: {
+      slug: "productivity",
+      component: ProductivityMetrics,
+      title: t("Productivity_Metrics"),
+      description: t("Analysis_of_organizational_productivity_and_efficiency_metrics"),
+      category: "costs-financial",
+      dataKey: "productivityData",
+      refKey: "productivityRef",
+      pdfComponent: "productivity"
+    },
+    fullSwot: {
+      slug: "full-swot",
+      component: FullSWOTPortfolio,
+      title: t("Full_SWOT_Portfolio"),
+      description: t("Comprehensive_SWOT_analysis_with_strategic_recommendations"),
+      category: "context-industry",
+      dataKey: "fullSwotData",
+      refKey: "fullSwotRef",
+      pdfComponent: "full-swot"
+    },
+    strategicRadar: {
+      slug: "strategic-radar",
+      component: StrategicPositioningRadar,
+      title: t("Strategic_Positioning_Radar"),
+      description: t("Visual_representation_of_strategic_positioning_across_key_dimensions"),
+      category: "context-industry",
+      dataKey: "strategicRadarData",
+      refKey: "strategicRadarRef",
+      pdfComponent: "strategic-radar"
+    },
+    porters: {
+      slug: "porters",
+      component: PortersFiveForces,
+      title: t("Porters_Five_Forces"),
+      description: t("Competitive_analysis_using_Porters_strategic_framework"),
+      category: "context-industry",
+      dataKey: "portersData",
+      refKey: "portersRef",
+      pdfComponent: "porters-analysis"
+    },
+    pestel: {
+      slug: "pestel",
+      component: PestelAnalysis,
+      title: t("PESTEL_Analysis"),
+      description: t("External_environment_analysis_covering_political_economic_social_technological_environmental_and_legal_factors"),
+      category: "context-industry",
+      dataKey: "pestelData",
+      refKey: "pestelRef",
+      pdfComponent: "pestel-analysis"
+    },
+    competitiveAdvantage: {
+      slug: "competitive-advantage",
+      component: CompetitiveAdvantageMatrix,
+      title: t("Competitive_Advantage_Matrix"),
+      description: t("Analysis_of_competitive_positioning_and_advantages"),
+      category: "customer",
+      dataKey: "competitiveAdvantageData",
+      refKey: "competitiveAdvantageRef",
+      pdfComponent: "competitive-advantage"
+    },
+    purchaseCriteria: {
+      slug: "purchase-criteria",
+      component: PurchaseCriteria,
+      title: t("Purchase_Criteria"),
+      description: t("Key_factors_influencing_customer_buying_decisions"),
+      category: "customer",
+      dataKey: "purchaseCriteriaData",
+      refKey: "purchaseCriteriaRef",
+      pdfComponent: "purchase-criteria"
+    },
+    loyaltyNPS: {
+      slug: "loyalty-nps",
+      component: LoyaltyNPS,
+      title: t("Loyalty_&_NPS"),
+      description: t("Customer_loyalty_metrics_and_Net_Promoter_Score_analysis"),
+      category: "customer",
+      dataKey: "loyaltyNPSData",
+      refKey: "loyaltyNpsRef",
+      pdfComponent: "loyalty-nps"
+    },
+    expandedCapability: {
+      slug: "expanded-capability",
+      component: ExpandedCapabilityHeatmap,
+      title: t("Capability_Heatmap"),
+      description: t("Advanced_organizational_capability_analysis"),
+      category: "capabilities",
+      dataKey: "expandedCapabilityData",
+      refKey: "expandedCapabilityRef",
+      pdfComponent: "expanded-capability"
+    },
+    maturityScore: {
+      slug: "maturity",
+      component: MaturityScoreLight,
+      title: t("Maturity_Score"),
+      description: t("Business_maturity_assessment_and_scoring"),
+      category: "capabilities",
+      dataKey: "maturityData",
+      refKey: "maturityScoreRef",
+      pdfComponent: "maturity"
+    },
+    competitiveLandscape: {
+      slug: "competitive-landscape",
+      component: CompetitiveLandscape,
+      title: t("Competitive_Landscape"),
+      description: t("Comprehensive_analysis_of_key_competitors_using_SWOT_framework"),
+      category: "competition",
+      dataKey: "competitiveLandscapeData",
+      refKey: "competitiveLandscapeRef",
+      pdfComponent: "competitive-landscape"
+    },
+    coreAdjacency: {
+      slug: "core-adjacency",
+      component: CoreAdjacency,
+      title: t("Core"),
+      description: t("Strategic_analysis_of_core_business_areas_and_adjacent_growth_opportunities"),
+      category: "current-strategy",
+      dataKey: "coreAdjacencyData",
+      refKey: "coreAdjacencyRef",
+      pdfComponent: "core-adjacency"
+    }
+  };
 
+  const API_TO_ANALYSIS_MAP = {
+    'find': 'swot',
+    'purchase-criteria': 'purchaseCriteria',
+    'loyalty-metrics': 'loyaltyNPS',
+    'porter-analysis': 'porters',
+    'pestel-analysis': 'pestel',
+    'full-swot-portfolio': 'fullSwot',
+    'competitive-advantage': 'competitiveAdvantage',
+    'expanded-capability-heatmap': 'expandedCapability',
+    'strategic-positioning-radar': 'strategicRadar',
+    'productivity-metrics': 'productivityMetrics',
+    'maturity-scoring': 'maturityScore',
+    'simple-swot-portfolio': 'competitiveLandscape',
+    'core-adjacency': 'coreAdjacency',
+    'excel-analysis-profitability': 'profitabilityAnalysis',
+    'excel-analysis-growth': 'growthTracker',
+    'excel-analysis-liquidity': 'liquidityEfficiency',
+    'excel-analysis-investment': 'investmentPerformance',
+    'excel-analysis-leverage': 'leverageRisk'
+  };
 
-const API_TO_ANALYSIS_MAP = {
-  'find': 'swot',
-  'purchase-criteria': 'purchaseCriteria',
-  'loyalty-metrics': 'loyaltyNPS',
-  'porter-analysis': 'porters',
-  'pestel-analysis': 'pestel',
-  'full-swot-portfolio': 'fullSwot',
-  'competitive-advantage': 'competitiveAdvantage',
-  'expanded-capability-heatmap': 'expandedCapability',
-  'strategic-positioning-radar': 'strategicRadar',
-  'productivity-metrics': 'productivityMetrics',
-  'maturity-scoring': 'maturityScore',
-  'simple-swot-portfolio': 'competitiveLandscape',
-  'core-adjacency': 'coreAdjacency',
-  'excel-analysis-profitability': 'profitabilityAnalysis',
-  'excel-analysis-growth': 'growthTracker',
-  'excel-analysis-liquidity': 'liquidityEfficiency',
-  'excel-analysis-investment': 'investmentPerformance',
-  'excel-analysis-leverage': 'leverageRisk'
-};
   const {
     phaseManager,
     apiLoadingStates = {},
@@ -282,7 +420,7 @@ const API_TO_ANALYSIS_MAP = {
 
   const streamingManager = useStreamingManager();
 
-  const isAnalysisLoading = (analysisType) => {
+  const isAnalysisLoading = useCallback((analysisType) => {
     const excelAnalysisTypes = ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'];
 
     if (excelAnalysisTypes.includes(analysisType)) {
@@ -305,9 +443,9 @@ const API_TO_ANALYSIS_MAP = {
       .map(([endpoint]) => endpoint);
 
     return relevantEndpoints.some(endpoint => apiLoadingStates[endpoint]);
-  };
+  }, [apiLoadingStates, props, API_TO_ANALYSIS_MAP]);
 
-  const toggleCard = (cardId) => {
+  const toggleCard = useCallback((cardId) => {
     setExpandedCards(prev => {
       const newSet = new Set(prev);
       const wasExpanded = newSet.has(cardId);
@@ -316,15 +454,12 @@ const API_TO_ANALYSIS_MAP = {
         newSet.delete(cardId);
       } else {
         newSet.add(cardId);
-        // if (!streamingManager.hasStreamed(cardId)) {
-        //   streamingManager.startStreaming(cardId);
-        // }
       }
       return newSet;
     });
-  };
+  }, [setExpandedCards]);
 
-  const toggleCategory = (categoryId) => {
+  const toggleCategory = useCallback((categoryId) => {
     setCollapsedCategories(prev => {
       const newSet = new Set(prev);
       if (newSet.has(categoryId)) {
@@ -334,122 +469,17 @@ const API_TO_ANALYSIS_MAP = {
       }
       return newSet;
     });
-  };
+  }, [setCollapsedCategories]);
 
-  const ModernAnalysisCard = ({
-    id,
-    title,
-    description,
-    children,
-    onRegenerate,
-    isRegenerating = false,
-    hasData = false,
-    isLoading = false,
-  }) => {
-    const isExpanded = expandedCards.has(id);
-    const isHighlighted = highlightedCard === id;
-
-    const getStatusIcon = () => {
-      if (isRegenerating || isLoading) {
-        return <Loader className="modern-status-icon loading modern-animate-spin" size={16} />;
-      }
-      return null;
-    };
-
-    const getActualStatus = () => {
-      if (isRegenerating || isLoading) return 'loading';
-      if (hasData) return 'completed';
-      return 'error';
-    };
-
-    return (
-      <div
-        id={id}
-        className={`modern-analysis-card ${getActualStatus()} ${isHighlighted ? 'highlighted' : ''}`}
-      >
-        <div className={`modern-card-header ${isExpanded ? 'expanded' : ''}`} onClick={() => toggleCard(id)}>
-          <div className="modern-card-header-left">
-            <div className="modern-card-text">
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </div>
-          </div>
-
-          <div className="modern-card-header-right">
-            {getStatusIcon()}
-            <div onClick={(e) => e.stopPropagation()}>
-              <RegenerateButton
-                onRegenerate={() => {
-                  streamingManager.startStreaming(id);    // <-- start streaming here (cardId)
-                  onRegenerate?.();
-                }}
-                isRegenerating={isRegenerating || isLoading}
-                canRegenerate={!!onRegenerate}
-                sectionName={title}
-                size="small"
-                hideRegenerateButtons={hideRegenerateButtons}
-              />
-            </div>
-            <button className="modern-expand-btn">
-              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            </button>
-          </div>
-        </div>
-
-        <div className={`modern-card-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
-          <div className="modern-card-content-inner">
-            {(isLoading || isRegenerating) && !hasData ? (
-              <div className="loading-placeholder">
-                <Loader className="animate-spin" size={24} />
-                <p>Generating Insight...</p>
-              </div>
-            ) : (
-              children
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const CategorySection = ({ id, title, subtitle, icon: IconComponent, children }) => {
-    const isCollapsed = collapsedCategories.has(id);
-
-    return (
-      <div className="analysis-category">
-        <div className="category-header" onClick={() => toggleCategory(id)}>
-          <div className="category-header-left">
-            <IconComponent size={24} className="category-icon" />
-            <div className="category-title-group">
-              <h2 className="category-title">{title}</h2>
-              {subtitle && (
-                <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0 0', fontWeight: '500' }}>
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="category-toggle">
-            {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-          </div>
-        </div>
-
-        <div className={`category-content ${isCollapsed ? 'collapsed' : 'expanded'}`}>
-          <div className="category-grid">{children}</div>
-        </div>
-      </div>
-    );
-  };
-
-  const createSimpleRegenerationHandler = (analysisKey) => () => {
+  const createSimpleRegenerationHandler = useCallback((analysisKey) => () => {
     const cardId = analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
     streamingManager.startStreaming(cardId);
     if (props.createSimpleRegenerationHandler) {
       props.createSimpleRegenerationHandler(analysisKey)();
     }
-  };
+  }, [streamingManager, props]);
 
-  const renderAnalysisCard = (analysisKey, config) => {
+  const renderAnalysisCard = useCallback((analysisKey, config) => {
     const Component = config.component;
     const dataKey = config.dataKey;
     const refKey = config.refKey;
@@ -459,11 +489,10 @@ const API_TO_ANALYSIS_MAP = {
     const data = props[dataKey];
     const ref = props[refKey];
     const isRegenerating = props[regeneratingKey];
-    // Prefer explicit slug to ensure dropdown scrolling matches IDs
     const cardId = config.slug || analysisKey.replace(/([A-Z])/g, '-$1').toLowerCase();
 
     return (
-      <ModernAnalysisCard
+      <MemoizedAnalysisCard
         key={analysisKey}
         id={cardId}
         title={config.title}
@@ -472,6 +501,11 @@ const API_TO_ANALYSIS_MAP = {
         onRegenerate={props.createSimpleRegenerationHandler(analysisKey)}
         isRegenerating={isRegenerating}
         isLoading={isAnalysisLoading(analysisKey)}
+        isExpanded={expandedCards.has(cardId)}
+        isHighlighted={highlightedCard === cardId}
+        onToggleCard={toggleCard}
+        streamingManager={streamingManager}
+        hideRegenerateButtons={hideRegenerateButtons}
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component
@@ -512,75 +546,160 @@ const API_TO_ANALYSIS_MAP = {
             })}
           />
         </div>
-      </ModernAnalysisCard>
+      </MemoizedAnalysisCard>
     );
-  };
+  }, [
+    props.questions,
+    props.userAnswers,
+    props.businessData.name,
+    props.selectedBusinessId,
+    props.isAnalysisRegenerating,
+    props.swotAnalysisResult,
+    props.purchaseCriteriaData,
+    props.loyaltyNPSData,
+    props.portersData,
+    props.pestelData,
+    props.fullSwotData,
+    props.competitiveAdvantageData,
+    props.expandedCapabilityData,
+    props.strategicRadarData,
+    props.productivityData,
+    props.maturityData,
+    props.profitabilityData,
+    props.growthTrackerData,
+    props.liquidityEfficiencyData,
+    props.investmentPerformanceData,
+    props.leverageRiskData,
+    props.competitiveLandscapeData,
+    props.coreAdjacencyData,
+    props.isSwotAnalysisRegenerating,
+    props.isPurchaseCriteriaRegenerating,
+    props.isLoyaltyNPSRegenerating,
+    props.isPortersRegenerating,
+    props.isPestelRegenerating,
+    props.isFullSwotRegenerating,
+    props.isCompetitiveAdvantageRegenerating,
+    props.isExpandedCapabilityRegenerating,
+    props.isStrategicRadarRegenerating,
+    props.isProductivityRegenerating,
+    props.isMaturityRegenerating,
+    props.isProfitabilityRegenerating,
+    props.isGrowthTrackerRegenerating,
+    props.isLiquidityEfficiencyRegenerating,
+    props.isInvestmentPerformanceRegenerating,
+    props.isLeverageRiskRegenerating,
+    props.isCompetitiveLandscapeRegenerating,
+    props.isCoreAdjacencyRegenerating,
+    props.uploadedFileForAnalysis,
+    props.hasUploadedDocument,
+    props.documentInfo,
+    props.hideImproveButton,
+    props.showImproveButton,
+    props.readOnly,
+    props.handleRedirectToBrief,
+    props.onRedirectToChat,
+    props.isMobile,
+    props.setActiveTab,
+    props.apiService,
+    props.createSimpleRegenerationHandler,
+    props.swotRef,
+    props.purchaseCriteriaRef,
+    props.loyaltyNpsRef,
+    props.portersRef,
+    props.pestelRef,
+    props.fullSwotRef,
+    props.competitiveAdvantageRef,
+    props.expandedCapabilityRef,
+    props.strategicRadarRef,
+    props.productivityRef,
+    props.maturityScoreRef,
+    props.profitabilityRef,
+    props.growthTrackerRef,
+    props.liquidityEfficiencyRef,
+    props.investmentPerformanceRef,
+    props.leverageRiskRef,
+    props.competitiveLandscapeRef,
+    props.coreAdjacencyRef,
+    expandedCards,
+    highlightedCard,
+    hideRegenerateButtons,
+    streamingManager,
+    toggleCard,
+    createSimpleRegenerationHandler,
+    isAnalysisLoading
+  ]);
 
-  const renderModernAnalysisContent = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-
-    if (!unlockedFeatures.analysis) {
-      return (
-        <div className="modern-locked-state">
-          <Lock size={60} className="modern-locked-icon" />
-          <h3>Analysis Locked</h3>
-          <p>Complete all initial phase questions to unlock your comprehensive business analysis.</p>
-        </div>
-      );
-    }
-
+  // Get unlocked features and determine current analyses
+  const unlockedFeatures = phaseManager.getUnlockedFeatures();
+  
+  const currentAnalyses = useMemo(() => {
     const visibleAnalyses = {
       initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
       essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics'],
       good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivityMetrics', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency']
     };
 
-    let currentAnalyses = visibleAnalyses.initial;
     if (unlockedFeatures.goodPhase) {
-      currentAnalyses = visibleAnalyses.good;
+      return visibleAnalyses.good;
     } else if (unlockedFeatures.fullSwot) {
-      currentAnalyses = visibleAnalyses.essential;
+      return visibleAnalyses.essential;
     }
+    return visibleAnalyses.initial;
+  }, [unlockedFeatures.analysis, unlockedFeatures.goodPhase, unlockedFeatures.fullSwot]);
 
-    const categorizedAnalyses = {};
+  // Memoize the categorized analyses
+  const categorizedAnalyses = useMemo(() => {
+    const result = {};
     CATEGORIES.forEach(cat => {
-      categorizedAnalyses[cat.id] = [];
+      result[cat.id] = [];
     });
 
     currentAnalyses.forEach(analysisKey => {
       const config = ANALYSIS_CONFIG[analysisKey];
       if (config) {
-        categorizedAnalyses[config.category].push(renderAnalysisCard(analysisKey, config));
+        result[config.category].push(renderAnalysisCard(analysisKey, config));
       }
     });
 
-    return (
-      <div className="modern-analysis-container">
-        <div className="modern-analysis-content">
-          <div className="categorized-analysis">
-            {CATEGORIES.map(category => {
-              const analyses = categorizedAnalyses[category.id];
-              if (analyses.length === 0) return null;
+    return result;
+  }, [currentAnalyses, renderAnalysisCard, CATEGORIES, ANALYSIS_CONFIG]);
 
-              return (
-                <CategorySection
-                  key={category.id}
-                  id={category.id}
-                  title={category.title}
-                  subtitle={category.subtitle}
-                  icon={category.icon}
-                >
-                  {analyses}
-                </CategorySection>
-              );
-            })}
-          </div>
-        </div>
+  if (!unlockedFeatures.analysis) {
+    return (
+      <div className="modern-locked-state">
+        <Lock size={60} className="modern-locked-icon" />
+        <h3>Analysis Locked</h3>
+        <p>Complete all initial phase questions to unlock your comprehensive business analysis.</p>
       </div>
     );
-  };
+  }
 
-  return renderModernAnalysisContent();
+  return (
+    <div className="modern-analysis-container">
+      <div className="modern-analysis-content">
+        <div className="categorized-analysis">
+          {CATEGORIES.map(category => {
+            const analyses = categorizedAnalyses[category.id];
+            if (analyses.length === 0) return null;
+
+            return (
+              <CategorySection
+                key={category.id}
+                id={category.id}
+                title={category.title}
+                subtitle={category.subtitle}
+                icon={category.icon}
+                isCollapsed={collapsedCategories.has(category.id)}
+                onToggle={toggleCategory}
+              >
+                {analyses}
+              </CategorySection>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AnalysisContentManager;
