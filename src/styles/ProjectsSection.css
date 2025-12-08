@@ -1,0 +1,252 @@
+/* Wrapper */
+.projects-wrapper {
+  background-color: #f5f7fb;
+  padding: 20px;
+}
+
+/* --------------------- */
+/* OPEN COLLAB CARD       */
+/* --------------------- */
+.open-collab-card {
+  background-color: #E8F3FF;
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 22px;
+  margin-top: 12px;
+  border: 1px solid #589be9ff;
+}
+
+.open-collab-title {
+  color: #589be9ff;
+  margin-bottom: 18px;
+  font-size: 21px;
+}
+
+.open-collab-text {
+  margin: 0;
+  font-size: 16px;
+  color: #589be9ff;
+}
+
+.open-collab-btn {
+  background-color: #ffffff !important;
+  border: 1px solid #589be9ff !important;
+  border-radius: 15px !important;
+  color: #589be9ff !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 6px 14px !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --------------------- */
+/* PORTFOLIO CARD         */
+/* --------------------- */
+.portfolio-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-bottom: 22px;
+  margin-top: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.portfolio-title {
+  color: #333;
+  font-size: 20px;
+}
+
+.portfolio-box {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #edf2f7;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.portfolio-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+/* --------------------- */
+/* IMPACT DOTS            */
+/* --------------------- */
+.impact-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.impact-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.impact-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.impact-dot.green {
+  background: #34c759;
+}
+
+.impact-dot.orange {
+  background: #ff9500;
+}
+
+.impact-dot.blue {
+  background: #46506dff;
+}
+
+/* --------------------- */
+/* RISK ROW               */
+/* --------------------- */
+.risk-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.risk-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* --------------------- */
+/* PROJECT HEADER SECTION */
+/* --------------------- */
+.projects-header-container {
+  margin-top: 32px;
+  margin-bottom: 18px;
+  margin-left: 24px;
+}
+
+.projects-small-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  color: #1f2937;
+}
+
+.projects-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.projects-count {
+  color: #6c757d;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Buttons */
+.btn-new-project {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-rank-projects {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* --------------------- */
+/* PROJECTS LIST          */
+/* --------------------- */
+.projects-list-wrapper {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-top: 12px;
+}
+
+/* Project Card */
+.project-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.project-initiative {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.project-initiative-highlight {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.project-title {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.project-description {
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.project-quote {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-style: italic;
+  font-size: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #589be9ff;
+  background-color: #E8F3FF;
+  color: #589be9ff;
+}
+
+.project-last-edited {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.project-last-edited-name {
+  color: #000;
+}
+
+.project-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .project-actions {
+    flex-direction: row;
+  }
+}

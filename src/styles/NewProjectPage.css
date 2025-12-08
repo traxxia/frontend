@@ -1,0 +1,321 @@
+/* Page wrapper */
+.page-wrapper {
+  padding: 16px;
+  padding-top: 24px;
+  background-color: #f9fafb;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: #111827;
+}
+
+/* Header card */
+.header-card {
+  background: #fff;
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 17px;
+  color: #6b7280;
+  margin-bottom: 10px;
+  cursor: pointer;
+  margin-left: -25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.breadcrumb {
+  font-size: 18px;
+  color: #6b7280;
+  margin: 0 0 10px 0;
+}
+
+.breadcrumb-strong {
+  color: #111827;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.idea-tag {
+  background: #d3a3ddff;
+  color: #692c75ff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Centering and cards */
+.center-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.form-card {
+  margin-top: 24px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid #e5e7eb;
+  max-width: 900px;
+  width: 100%;
+}
+
+/* Titles and small tags */
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.card-header-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.optional-tag {
+  font-size: 12px;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 6px;
+  height: fit-content;
+}
+
+/* Grid helpers */
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Field rows */
+.field-row {
+  margin-bottom: 26px;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Inputs / textareas */
+.field-input {
+  margin-top: 8px;
+  width: 100%;
+  font-size: 15px;
+  color: #111827;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+  outline: none;
+  background: transparent;
+  height: 38px;
+}
+
+.field-textarea {
+  margin-top: 8px;
+  width: 100%;
+  font-size: 15px;
+  color: #111827;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+  outline: none;
+  resize: none;
+  min-height: 72px;
+  background: transparent;
+}
+
+.field-textarea.transparent {
+  background: transparent;
+}
+
+/* SelectField styles */
+.sf-wrapper {
+  margin-bottom: 0;
+}
+
+.sf-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  display: block;
+}
+
+.sf-dropdown-wrapper {
+  position: relative;
+  margin-top: 8px;
+}
+
+.sf-dropdown-header {
+  width: 100%;
+  font-size: 15px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sf-arrow {
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.sf-arrow.open {
+  transform: rotate(180deg);
+}
+
+.sf-options-container {
+  position: absolute;
+  top: 35px;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 0;
+  z-index: 10;
+  box-shadow: 0 8px 20px rgba(16,24,40,0.06);
+}
+
+.sf-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+/* Actions (buttons row) */
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  gap: 7px;
+  margin-right: 0;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 40px;
+}
+
+.btn-cancel {
+  background: #fff;
+  color: #6c757d;                   /* Bootstrap secondary text */
+  border: 1px solid #6c757d; 
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-cancel:hover {
+  background: #6c757d;              /* Bootstrap hover */
+  color: #fff;
+}
+
+.btn-create {
+  background: linear-gradient(90deg, #a855f7, #9333ea);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 15px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .form-card {
+    padding: 22px;
+  }
+
+  .back-btn {
+    margin-left: 0;
+  }
+
+  .actions-row {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+}
+
+@media (max-width: 576px) {
+  .page-wrapper {
+    padding: 12px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .header-card {
+    padding: 16px;
+  }
+
+  .form-card {
+    padding: 18px;
+  }
+
+  .back-btn {
+    font-size: 15px;
+  }
+
+  .actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0 8px 24px;
+  }
+
+  .btn-create, .btn-cancel {
+    width: 100%;
+  }
+}

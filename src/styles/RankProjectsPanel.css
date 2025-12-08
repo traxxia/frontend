@@ -1,0 +1,228 @@
+/* Outer Container */
+.rank-panel-container {
+  background: #fff7d1;
+  border: 1px solid #cc8f1c;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+/* Header */
+.rank-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rank-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.rank-header-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-save-rank {
+  background-color: #2563eb !important;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+}
+
+.btn-lock-rank {
+  background-color: #f59e0b !important;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+}
+
+/* Description */
+.rank-description {
+  font-size: 14px;
+  color: #995d25;
+  margin-top: 12px;
+}
+
+/* Project Cards */
+.rank-project-card {
+  background: white;
+  padding: 18px;
+  border-radius: 10px;
+  border: 1px solid #f3e6b6;
+  margin-bottom: 16px;
+}
+
+/* Top Row */
+.rank-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Number Circle */
+.rank-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fbbf24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  margin-right: 12px;
+}
+
+/* Title + Description */
+.rank-content {
+  flex: 1;
+}
+
+.rank-project-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.rank-project-desc {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+}
+
+/* Up/Down Buttons */
+.rank-move-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.move-icon {
+  cursor: pointer;
+  color: #999;
+}
+
+.move-icon:hover {
+  color: #000;
+}
+
+/* Rationale Area */
+.rank-rationale-btn-container {
+  padding-left: 48px;
+  margin-top: 10px;
+}
+
+.rank-rationale-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  color: #d97706; 
+  cursor: pointer;
+}
+
+.rank-rationale-toggle:hover {
+  text-decoration: underline;
+}
+
+.rank-rationale-textarea {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+/* Remove global drag cursor */
+.rank-project-card * {
+  cursor: default !important;
+}
+
+/* Apply drag cursor ONLY to the drag zone */
+.rank-card-top {
+  cursor: grab !important;
+}
+
+.rank-card-top:active {
+  cursor: grabbing !important;
+}
+
+/* Up/Down buttons → pointer */
+.rank-move-buttons,
+.rank-move-buttons * {
+  cursor: pointer !important;
+}
+
+/* Rationale toggle → pointer */
+.rank-rationale-btn-container,
+.rank-rationale-btn-container * {
+  cursor: pointer !important;
+}
+
+
+/* ------- MOBILE RESPONSIVE ------- */
+@media (max-width: 768px) {
+
+  .responsive-panel {
+    padding: 12px;
+  }
+
+  .responsive-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .responsive-btn-group {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .responsive-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .responsive-card {
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+
+  .responsive-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rank-number {
+    margin-bottom: 8px;
+  }
+
+  .responsive-move-buttons {
+    margin-top: 10px;
+  }
+
+  .rank-project-title {
+    font-size: 16px;
+  }
+
+  .rank-project-desc {
+    font-size: 14px;
+  }
+
+  .responsive-rationale-btn {
+    margin-top: 10px;
+  }
+
+  .responsive-textarea {
+    font-size: 14px;
+    padding: 10px;
+    min-height: 80px;
+  }
+
+  
+}
