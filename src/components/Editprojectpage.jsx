@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { TrendingUp, Zap, AlertTriangle, Circle,  Diamond,  Rocket,  Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign  } from "lucide-react";
+import Aiassistant from './Aiassistant';
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -170,6 +171,7 @@ const EditProjectPage = () => {
 
   return (
     <div style={{ padding: "16px", paddingTop: "24px", backgroundColor: "#f9fafb", minHeight: "100vh" }}>
+      <Aiassistant />
         <div
         style={{
             background: "#fff",
