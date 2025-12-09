@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "../hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { TrendingUp, Zap, AlertTriangle, Circle,  Diamond,  Rocket,  Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign  } from "lucide-react";
@@ -124,6 +125,7 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 };
 
 const NewProjectPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [projectName, setProjectName] = useState("");
@@ -153,7 +155,7 @@ const NewProjectPage = () => {
 
         {/* Page Title + Tag */}
         <div className="title-row">
-          <h1 className="page-title">Project Idea</h1>
+          <h1 className="page-title">{t("Project_Idea")}</h1>
 
           <span className="idea-tag">Ideas</span>
         </div>
@@ -162,7 +164,7 @@ const NewProjectPage = () => {
       {/* Required Information Card */}
       <div className="center-row">
         <div className="form-card">
-          <h3 className="section-title">Required Information</h3>
+          <h3 className="section-title">{t("Required_Information")}</h3>
 
           {/* Project Name */}
           <div className="field-row">
@@ -206,8 +208,8 @@ const NewProjectPage = () => {
       <div className="center-row">
         <div className="form-card">
           <div className="card-header-between">
-            <h3 className="section-title">Strategic Context</h3>
-            <span className="optional-tag">Optional</span>
+            <h3 className="section-title">{t("Strategic_Context")}</h3>
+            <span className="optional-tag">{t("Optional")}</span>
           </div>
 
           {/* Impact / Effort / Risk */}
@@ -287,8 +289,8 @@ const NewProjectPage = () => {
       <div className="center-row">
         <div className="form-card">
           <div className="card-header-between">
-            <h3 className="section-title">Detailed Planning</h3>
-            <span className="optional-tag">Optional</span>
+            <h3 className="section-title">{t("Detailed_Planning")}</h3>
+            <span className="optional-tag">{t("Optional")}</span>
           </div>
 
           {/* High-Level Requirements */}
@@ -353,11 +355,11 @@ const NewProjectPage = () => {
       {/* Actions */}
       <div className="actions-row">
         <button type="button" className="btn-cancel">
-          Cancel
+          {t("cancel")}
         </button>
 
         <button type="submit" className="btn-create">
-          Create Project
+          {t("Create_Project")}
         </button>
       </div>
     </div>

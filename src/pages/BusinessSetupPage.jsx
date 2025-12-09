@@ -648,12 +648,11 @@ const BusinessSetupPage = () => {
             </button>
           )}
           <button
-  className={`mobile-tab ${activeTab === "projects" ? "active" : ""}`}
-  onClick={() => setActiveTab("projects")}
->
-  Projects
-</button>
-
+            className={`mobile-tab ${activeTab === "projects" ? "active" : ""}`}
+            onClick={() => setActiveTab("projects")}
+          >
+            {t("Projects")}
+          </button>
         </div>
       )}
 
@@ -719,7 +718,7 @@ const BusinessSetupPage = () => {
                       )}
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                          Projects
+                          {t("Projects")}
                         </button>
                       )}
                     </div>
