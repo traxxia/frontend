@@ -1,0 +1,47 @@
+.Ai-button {
+    background: #ad5389;
+    background: -webkit-linear-gradient(to right, #3c1053, #ad5389);
+    background: linear-gradient(to right, #3c1053, #ad5389);
+    border: none;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    box-shadow: 0px 6px 20px rgba(90, 60, 255, 0.3);
+    transition: 0.25s;
+}
+.ai-send-button {
+    padding: 10px 14px;
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.ai-input{
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+.ai-input-area {
+    position: absolute;
+    bottom: 20px;
+    width: 85%;
+    display: flex;
+    gap: 8px;
+}
+.ai-suggestion {
+    background: #f3f4f6;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    color: black;
+}
