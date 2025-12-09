@@ -782,7 +782,45 @@ export const staticTranslations = {
     'environmental_factors': 'Environmental',
     'create_company': 'Create Company',
     'Minimum_8_characters': 'Minimum 8 characters',
-    'user_history_and_chat_records': 'User History & Chat Records'
+    'user_history_and_chat_records': 'User History & Chat Records',
+  
+
+    // ===========================
+    // KICK START PROJECT
+    // ===========================
+
+    'Ready_to_Start_Project_Planning': 'Ready to Start Project Planning',
+    'Kickstart_your_project_workflow_by_cloning_initiatives_into_actionable_projects.':'Kickstart your project workflow by cloning initiatives into actionable projects.',
+    'Kickstart_Projects':'Kickstart Projects',
+
+
+  // ===========================
+  // COLLABORATION CARD
+  // ===========================
+    'Open_for_Collaboration':'Open for Collaboration',
+    'All_collaborators_can_add_projects_update_info_and_rank':'All collaborators can add projects, update info, and rank',
+    'Lock_Project_Creation':'Lock Project Creation',
+    'Portfolio_Overview':'Portfolio Overview',
+    'Total_Projects':'Total Projects',
+    'Impact_Distribution':'Impact Distribution',
+    'Risk_Balance':'Risk Balance',
+    'Completed_Details':'Completed Details',
+    'Projects':'Projects',
+    'total_projects':'total projects',
+    'New_Project':'New Project',
+    'Rank_Projects':'Rank Projects',
+    'Hide':'Hide',
+    'Edit':'Edit',
+    'Delete':'Delete',
+    'Required_Information':'Required Information',
+    'Project_Idea':'Project Idea',
+    'Ideas':'Ideas',
+    'Strategic_Context':'Strategic Context',
+    'Optional':'Optional',
+    'Detailed_Planning':'Detailed Planning',
+    'Create_Project':'Create Project',
+    'Rank_Your_Projects':'Rank Your Projects',
+    'Projects':'Projects',
   },
 
   es: {
@@ -1579,6 +1617,42 @@ export const staticTranslations = {
   'Purpose':'Propósito',
   'business':'Negocio',
   'user_management':'Gestión de Usuarios',
+
+  // ===========================
+  // KICK START PROJECT
+  // ===========================
+
+    'Ready_to_Start_Project_Planning': 'Listo para comenzar la planificación del proyecto',
+    'Kickstart_your_project_workflow_by_cloning_initiatives_into_actionable_projects.':'Ponga en marcha el flujo de trabajo de su proyecto clonando iniciativas en proyectos viables.',
+    'Kickstart_Projects':'Proyectos de inicio',
+
+  // ===========================
+  // COLLABORATION CARD
+  // ===========================
+    'Open_for_Collaboration':'Abierto a la colaboración',
+    'All_collaborators_can_add_projects_update_info_and_rank':'Todos los colaboradores pueden agregar proyectos, actualizar información y clasificar.',
+    'Lock_Project_Creation':'Bloquear creación de proyecto',
+    'Portfolio_Overview':'Descripción general de la cartera',
+    'Total_Projects':'Proyectos totales',
+    'Impact_Distribution':'Distribución de impacto',
+    'Risk_Balance':'Balance de riesgos',
+    'Completed_Details':'Detalles completados',
+    'Projects':'Proyectos',
+    'total_projects':'proyectos totales',
+    'New_Project':'Nuevo proyecto',
+    'Rank_Projects':'Clasificar proyectos',
+    'Hide':'Esconder',
+    'Edit':'Editar',
+    'Delete':'Borrar',
+    'Required_Information':'Información requerida',
+    'Project_Idea':'idea de proyecto',
+    'Ideas':'Ideas',
+    'Strategic_Context':'Contexto estratégico',
+    'Optional':'Opcional',
+    'Detailed_Planning':'Planificación detallada',
+    'Create_Project':'Crear proyecto',
+    'Rank_Your_Projects':'Clasifica tus proyectos',
+    'Projects':'Proyectos',
   }
 };
 

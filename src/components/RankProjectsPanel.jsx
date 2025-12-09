@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useTranslation } from "../hooks/useTranslation";
 import {
   Button,
   Card,
@@ -24,6 +25,7 @@ function RationaleToggle({ eventKey, children }) {
 }
 
 const RankProjectsPanel = ({ show, projects }) => {
+  const { t } = useTranslation();
   const [projectList, setProjectList] = useState(projects);
 
   const dragItem = useRef();
@@ -58,7 +60,7 @@ const RankProjectsPanel = ({ show, projects }) => {
       {/* Header Section */}
       <Row className="rank-panel-header">
         <Col xs={12} md={6}>
-          <h4 className="rank-title">Rank Your Projects</h4>
+          <h4 className="rank-title">{t("Rank_Your_Projects")}</h4>
         </Col>
 
         <Col

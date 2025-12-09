@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "../hooks/useTranslation";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { Lock, AlertTriangle, AlertCircle, CheckCircle, Plus, ListOrdered, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +73,7 @@ const portfolioData = {
 };
 
 const ProjectsSection = () => {
+  const { t } = useTranslation();
   const [userRole, setUserRole] = useState("");
   const [showRankScreen, setShowRankScreen] = useState(false);
 
@@ -91,16 +93,16 @@ const ProjectsSection = () => {
         <Card className="open-collab-card shadow-sm">
           <Row className="align-items-center">
             <Col md="8">
-              <h5 className="open-collab-title fw-bold">Open for Collaboration</h5>
+              <h5 className="open-collab-title fw-bold">{t("Open_for_Collaboration")}</h5>
               <p className="open-collab-text">
-                All collaborators can add projects, update info, and rank
+                {t("All_collaborators_can_add_projects_update_info_and_rank")}
               </p>
             </Col>
 
             <Col md="4" className="d-flex justify-content-end align-items-center">
               <Button className="open-collab-btn">
                 <Lock size={16} color="#589be9ff" strokeWidth={2} />
-                Lock Project Creation
+                {t("Lock_Project_Creation")}
               </Button>
             </Col>
           </Row>
@@ -109,16 +111,16 @@ const ProjectsSection = () => {
 
       {/* PORTFOLIO OVERVIEW */}
       <Card className="portfolio-card shadow-sm">
-        <h5 className="portfolio-title fw-bold mb-4">Portfolio Overview</h5>
+        <h5 className="portfolio-title fw-bold mb-4">{t("Portfolio_Overview")}</h5>
 
         <Row>
           {[
             {
-              title: "Total Projects",
+              title: t("Total_Projects"),
               content: <h3 className="fw-bold">{portfolioData.totalProjects}</h3>,
             },
             {
-              title: "Impact Distribution",
+              title: t("Impact_Distribution"),
               content: (
                 <div className="impact-row">
                   <div className="impact-item">
@@ -139,7 +141,7 @@ const ProjectsSection = () => {
               ),
             },
             {
-              title: "Risk Balance",
+              title: t("Risk_Balance"),
               content: (
                 <div className="risk-row">
                   <div className="risk-item">
@@ -160,7 +162,7 @@ const ProjectsSection = () => {
               ),
             },
             {
-              title: "Completed Details",
+              title: t("Completed_Details"),
               content: <h3 className="fw-bold">{portfolioData.completedDetails}</h3>,
             },
           ].map((item, index) => (
@@ -176,11 +178,11 @@ const ProjectsSection = () => {
 
       {/* PROJECT HEADER SECTION */}
       <div className="projects-header-container">
-        <h6 className="projects-small-title">Projects</h6>
+        <h6 className="projects-small-title">{t("Projects")}</h6>
 
         <div className="projects-header-row">
           <h2 className="projects-count">
-            {portfolioData.totalProjects} total projects
+            {portfolioData.totalProjects} {t("total_projects")}
           </h2>
 
           <div className="d-flex gap-2 flex-wrap justify-content-end">
@@ -189,7 +191,7 @@ const ProjectsSection = () => {
               className="btn-new-project"
             >
               <Plus size={18} />
-              New Project
+              {t("New_Project")}
             </button>
 
             <button
@@ -197,7 +199,7 @@ const ProjectsSection = () => {
               className="btn-rank-projects"
             >
               <ListOrdered size={18} />
-              {showRankScreen ? "Hide" : "Rank Projects"}
+              {showRankScreen ? t("Hide") :t("Rank_Projects")}
             </button>
           </div>
         </div>
@@ -240,11 +242,11 @@ const ProjectsSection = () => {
                     onClick={() => navigate("/projects/edit")}
                     className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
                   >
-                    <Pencil size={16} /> Edit
+                    <Pencil size={16} /> {t("Edit")}
                   </button>
 
                   <button className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2">
-                    <Trash2 size={16} /> Delete
+                    <Trash2 size={16} /> {t("Delete")}
                   </button>
                 </div>
               </div>
