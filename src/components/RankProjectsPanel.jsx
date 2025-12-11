@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   Button,
@@ -8,6 +8,7 @@ import {
   Row,
   Col
 } from "react-bootstrap";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Lock, ChevronUp, ChevronDown } from "lucide-react";
 import "../styles/RankProjectsPanel.css";
 
@@ -28,34 +29,21 @@ const RankProjectsPanel = ({ show, projects }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState(projects);
 
-  const dragItem = useRef();
-  const dragOverItem = useRef();
-
   if (!show) return null;
 
-  const handleDragStart = (position) => {
-    dragItem.current = position;
-  };
+  // REORDER HANDLER 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
 
-  const handleDragEnter = (position) => {
-    dragOverItem.current = position;
-  };
+    const items = Array.from(projectList);
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
 
-  const handleDragEnd = () => {
-    const listCopy = [...projectList];
-
-    const draggedItemContent = listCopy[dragItem.current];
-    listCopy.splice(dragItem.current, 1);
-    listCopy.splice(dragOverItem.current, 0, draggedItemContent);
-
-    dragItem.current = null;
-    dragOverItem.current = null;
-
-    setProjectList(listCopy);
+    setProjectList(items);
   };
 
   return (
-    <div className="rank-panel-container responsive-panel">
+    <div className="rank-panel-container responsive-panel compact-mode">
 
       {/* Header Section */}
       <Row className="rank-panel-header">
@@ -68,9 +56,9 @@ const RankProjectsPanel = ({ show, projects }) => {
           md={6}
           className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
         >
-          <Button className="btn-save-rank responsive-btn">Save Rankings</Button>
+          <Button className="btn-save-rank responsive-btn">{t("Save_Rankings")}</Button>
           <Button className="btn-lock-rank responsive-btn">
-            <Lock size={16} /> Lock My Rankings
+            <Lock size={16} /> {t("Lock_My_Rankings")}
           </Button>
         </Col>
       </Row>
@@ -79,56 +67,74 @@ const RankProjectsPanel = ({ show, projects }) => {
         Drag projects to reorder. Add rationale to explain your ranking.
       </p>
 
-      {/* Card List */}
-      <Accordion alwaysOpen>
-        {projectList.map((item, index) => (
-          <Card
-            key={item.id}
-            className="rank-project-card responsive-card"
-            draggable
-            onDragStart={() => handleDragStart(index)}
-            onDragEnter={() => handleDragEnter(index)}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => e.preventDefault()}
-          >
-            <Card.Body>
-              <div className="rank-card-top responsive-card-top">
+      {/* DRAG & DROP START */}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="rank-projects">
+          {(provided) => (
+            <Accordion alwaysOpen ref={provided.innerRef} {...provided.droppableProps}>
+              {projectList.map((item, index) => (
+                <Draggable
+                  key={item.id}
+                  draggableId={item.id.toString()}
+                  index={index}
+                >
+                  {(provided, snapshot) => (
+                    <Card
+                      className={`rank-project-card responsive-card ${
+                        snapshot.isDragging ? "dragging" : ""
+                      }`}
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                    >
+                      <Card.Body>
 
-                {/* Number */}
-                <div className="rank-number">{index + 1}</div>
+                        <div className="rank-card-top responsive-card-top">
+                          
+                          
+                          {/* Number */}
+                          <div className="rank-number">{index + 1}</div>
 
-                {/* Content */}
-                <div className="rank-content">
-                  <h5 className="rank-project-title">{item.title}</h5>
-                  <p className="rank-project-desc">{item.description}</p>
-                </div>
+                          {/* Content */}
+                          <div className="rank-content">
+                            <h5 className="rank-project-title">{item.title}</h5>
+                            <p className="rank-project-desc">{item.description}</p>
+                          </div>
+                          {/* ⭐ Drag handle (Grip icon) */}
+                          <div
+                            className="rank-move-buttons responsive-move-buttons"
+                            {...provided.dragHandleProps}
+                            style={{ cursor: "grab" }}
+                          >
+                            <ChevronUp size={18} className="move-icon" />
+                            <ChevronDown size={18} className="move-icon" />
+                          </div>
+                        </div>
 
-                {/* Move icons */}
-                <div className="rank-move-buttons responsive-move-buttons">
-                  <ChevronUp size={18} className="move-icon" />
-                  <ChevronDown size={18} className="move-icon" />
-                </div>
-              </div>
+                        {/* Rationale Toggle */}
+                        <div className="rank-rationale-btn-container responsive-rationale-btn">
+                          <RationaleToggle eventKey={index.toString()}>
+                            Add Rationale ▼
+                          </RationaleToggle>
+                        </div>
 
-              {/* Rationale Toggle */}
-              <div className="rank-rationale-btn-container responsive-rationale-btn">
-                <RationaleToggle eventKey={index.toString()}>
-                  Add Rationale ▼
-                </RationaleToggle>
-              </div>
+                        {/* Accordion Content */}
+                        <Accordion.Collapse eventKey={index.toString()}>
+                          <textarea
+                            className="rank-rationale-textarea responsive-textarea"
+                            placeholder="Why did you rank this project here?"
+                          />
+                        </Accordion.Collapse>
 
-              {/* Accordion Content */}
-              <Accordion.Collapse eventKey={index.toString()}>
-                <textarea
-                  className="rank-rationale-textarea responsive-textarea"
-                  placeholder="Why did you rank this project here?"
-                />
-              </Accordion.Collapse>
-
-            </Card.Body>
-          </Card>
-        ))}
-      </Accordion>
+                      </Card.Body>
+                    </Card>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </Accordion>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 };

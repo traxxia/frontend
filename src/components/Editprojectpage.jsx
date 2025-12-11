@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "../hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { TrendingUp, Zap, AlertTriangle, Circle,  Diamond,  Rocket,  Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign  } from "lucide-react";
@@ -157,6 +158,7 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 
 
 const EditProjectPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [projectName, setProjectName] = useState("");
@@ -220,7 +222,7 @@ const EditProjectPage = () => {
                 color: "#111827", // dark title color (as in your image)
             }}
             >
-            Project Idea
+            {t("Project_Idea")}
             </h1>
         </div>
         </div>
@@ -244,7 +246,7 @@ const EditProjectPage = () => {
           }}
         >
           <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "24px" }}>
-            Required Information
+            {t("Required_Information")}
           </h3>
 
             {/* Project Name */}
@@ -339,7 +341,7 @@ const EditProjectPage = () => {
         >
           {/* Title + Optional Tag */}
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: "600" }}>Strategic Context</h3>
+            <h3 style={{ fontSize: "18px", fontWeight: "600" }}>{t("Strategic_Context")}</h3>
 
             <span
               style={{
@@ -350,7 +352,7 @@ const EditProjectPage = () => {
                 height: "fit-content",
               }}
             >
-              Optional
+              {t("Optional")}
             </span>
           </div>
 
@@ -468,7 +470,7 @@ const EditProjectPage = () => {
           }}
         >
           <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "24px" }}>
-            Detailed Planning
+            {t("Detailed_Planning")}
           </h3>
           <div style={{ marginBottom: "26px" }}>
             <label style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
@@ -623,7 +625,7 @@ const EditProjectPage = () => {
     type="button"
     className="btn btn-outline-secondary btn-sm w-30 w-md-auto"
   >
-    Cancel
+    {t("cancel")}
   </button>
 
   <button
@@ -639,7 +641,7 @@ const EditProjectPage = () => {
       cursor: "pointer",
     }}
   >
-    Save Changes
+    {t("Save_Changes")}
   </button>
 </div>
 

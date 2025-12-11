@@ -51,7 +51,8 @@
   padding: 18px;
   border-radius: 10px;
   border: 1px solid #f3e6b6;
-  margin-bottom: 16px;
+  padding: 10px !important;        /* reduce inner spacing */
+  margin-bottom: 10px !important;
 }
 
 /* Top Row */
@@ -91,6 +92,19 @@
   font-size: 13px;
 }
 
+.rank-rationale-btn-container {
+  margin-left: 40px !important;
+}
+
+/* Hover effect for each card */
+.rank-project-card:hover {
+  border-color: #d97706 !important;   /* orange border */
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.4) !important; /* soft glow */
+  transition: 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+
 /* Up/Down Buttons */
 .rank-move-buttons {
   display: flex;
@@ -109,8 +123,8 @@
 
 /* Rationale Area */
 .rank-rationale-btn-container {
-  padding-left: 48px;
-  margin-top: 10px;
+  padding-left: 0 !important;
+  margin-top: 4px !important;
 }
 
 .rank-rationale-toggle {
@@ -160,6 +174,67 @@
 .rank-rationale-btn-container * {
   cursor: pointer !important;
 }
+
+/* ---- COMPACT MODE (GLOBAL SHRINK) ---- */
+.compact-mode {
+  font-size: 0.85rem !important;
+}
+
+.compact-mode .rank-panel-container {
+  padding: 12px !important;
+  margin-top: 10px !important;
+}
+
+.compact-mode .rank-project-card {
+  padding: 12px !important;
+  margin-bottom: 10px !important;
+}
+
+.compact-mode .rank-number {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+.compact-mode .rank-project-title {
+  font-size: 14px !important;
+}
+
+.compact-mode .rank-project-desc {
+  font-size: 12px !important;
+}
+
+.compact-mode .rank-rationale-toggle {
+  font-size: 13px !important;
+}
+
+.compact-mode .rank-rationale-textarea {
+  font-size: 13px !important;
+  padding: 8px !important;
+}
+
+.compact-mode .btn-save-rank,
+.compact-mode .btn-lock-rank {
+  padding: 9px 12px !important;
+  font-size: 13px !important;
+}
+
+.compact-mode .rank-description {
+  font-size: 12px !important;
+  margin-top: 4px !important;      /* was 12px */
+  margin-bottom: 8px !important;   /* add small buffer, no big gap */
+  line-height: 1.2 !important;
+}
+
+/* Header spacing */
+.compact-mode .rank-panel-header {
+  margin-bottom: 4px !important;
+}
+
+.rank-project-card .card-body {
+  padding: 8px !important;     /* compress the inside area */
+}
+
 
 
 /* ------- MOBILE RESPONSIVE ------- */

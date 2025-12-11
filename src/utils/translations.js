@@ -821,6 +821,28 @@ export const staticTranslations = {
     'Create_Project':'Create Project',
     'Rank_Your_Projects':'Rank Your Projects',
     'Projects':'Projects',
+    'Save_Rankings':'Save Rankings',
+    'Lock_My_Rankings':'Lock My Rankings',
+    'Total_Users':'Total Users',
+    'Active_Users':'Active Users',
+    'Collaborators':'Collaborators',
+    'Pending_Invites':'Pending Invites',
+    'Save_Changes':'Save Changes',
+    
+
+  // ===========================
+  // USER MANAGEMENT BLOCK
+  // ===========================
+  'User_Management':'User Management',
+  'Add_and_manage_organization_collaborators_and_viewers':'Add and manage organization collaborators and viewers',
+  'Search_by_name_or_email':'Search by name or email...',
+  'All_Roles':'All Roles',
+  'Add_User':'Add User',
+  'All_Users':'All Users',
+  'User':'User',
+  'Role':'Role',
+  'Last_Active':'Last Active',
+  'Action':'Action',
   },
 
   es: {
@@ -1653,6 +1675,28 @@ export const staticTranslations = {
     'Create_Project':'Crear proyecto',
     'Rank_Your_Projects':'Clasifica tus proyectos',
     'Projects':'Proyectos',
+    'Save_Rankings':'Guardar clasificaciones',
+    'Lock_My_Rankings':'Bloquear mis clasificaciones',
+    'Save_Changes':'Guardar cambios',
+
+  // ===========================
+  // USER MANAGEMENT BLOCK
+  // ===========================
+  'User_Management':'Gestión de usuarios',
+  'Add_and_manage_organization_collaborators_and_viewers':'Agregar y administrar colaboradores y espectadores de la organización',
+  'Total_Users':'Total de usuarios',
+  'Active_Users':'Usuarios activos',
+  'Collaborators':'Colaboradores',
+  'Pending_Invites':'Invitaciones pendientes',
+  'Search_by_name_or_email':'Buscar por nombre o correo ...',
+  'All_Roles':'Todos los roles',
+  'Add_User':'Agregar usuario',
+  'All_Users':'Todos los usuarios',
+  'User':'Usuario',
+  'Role':'Rol',
+  'Last_Active':'Última actividad',
+  'Action':'Acción',
+
   }
 };
 

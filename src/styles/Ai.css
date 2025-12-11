@@ -62,12 +62,12 @@
 .ai-tool-bar {
     background: #6f3cff;
     color: #fff;
-    border-radius: 10px;
+    border-radius: 0;
     padding: 14px 14px;
     align-items: center;
     justify-content: space-between;
     position: relative;
-    top: -10px;
+    top: 0; 
 }
 .credits-pill {
     background: rgba(255,255,255,0.15);

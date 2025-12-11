@@ -14,11 +14,11 @@ const Aiassistant = () => {
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [showSources, setShowSources] = useState(true);
   const [sources, setSources] = useState({
-    internet: true,
-    traxxia: true,
-    qa: true,
-    financials: true,
-    other: true,
+    internet: false,
+    traxxia: false,
+    qa: false,
+    financials: false,
+    other: false,
   });
 
   const suggestedQuestions = [
@@ -72,120 +72,119 @@ const Aiassistant = () => {
           </div>
         </div>
 
-        {/* Scrollable content area to prevent overlap with input */}
-        <div className="ai-content">
           {/* Context */}
-          <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 12, color: "#6b7280" }}>Context: Analyzing</div>
-            <div style={{ fontWeight: 500 }}>{context}</div>
-          </div>
-
-          {/* Chat Window */}
-          <div
-            style={{
-              marginTop: 12,
-              border: "1px solid #e5e7eb",
-              borderRadius: 8,
-              background: "#0f172a",
-              padding: 12,
-            }}
-          >
-            {messages.map((m, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "flex",
-                  justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-                  marginBottom: 8,
-                }}
-              >
+        <div
+          style={{
+            background: "#E9F5FF",
+            borderBottom: "1px solid #90c5e4ff",
+            padding: "10px 14px 12px 14px",
+            margin: 0,      
+          }}
+        >
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Context: Analyzing</div>
+          <div style={{ fontWeight: 600, marginTop: 4 }}>{context}</div>
+        </div>
+          <div className="ai-content">
+            {/* Chat Window */}
+            <div
+              style={{
+                background: "#ffffffff",
+                padding: 12,
+              }}
+            >
+              {messages.map((m, idx) => (
                 <div
+                  key={idx}
                   style={{
-                    maxWidth: "85%",
-                    padding: "8px 10px",
-                    borderRadius: 10,
-                    background: m.role === "user" ? "#1f2937" : "#111827",
-                    color: "#fff",
-                    fontSize: 13,
-                    lineHeight: 1.4,
+                    display: "flex",
+                    justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+                    marginBottom: 8,
                   }}
                 >
-                  {m.text}
+                  <div
+                    style={{
+                      maxWidth: "85%",
+                      padding: "8px 10px",
+                      borderRadius: 10,
+                      background: m.role === "user" ? "#6f3cff" : "#f3f4f6",
+                      color: m.role === "user" ? "#ffffff" : "#050505ff",
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                    }}
+                  >          
+                    {m.text}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Suggested Questions - Accordion */}
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "#111827" }}>
+                Suggested questions
               </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {suggestedQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    className="ai-suggestion"
+                    onClick={() => setQuery(q)}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Data Sources - Accordion */}
+          <div
+          style={{
+            marginTop: 16,
+            background: "#ffffff",
+            padding: "14px 12px",
+            borderTop: "1px solid #e5e7eb",
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              marginBottom: 10,
+              color: "#111827",
+            }}
+          >
+            Data Sources
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { key: "internet", label: "Internet Search (Perplexity)" },
+              { key: "traxxia", label: "Traxxia Insights" },
+              { key: "qa", label: "Historical Q&A" },
+              { key: "financials", label: "Company Financials" },
+              { key: "other", label: "Other Projects" },
+            ].map((item) => (
+              <label
+                key={item.key}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!sources[item.key]}
+                  onChange={() => toggleSource(item.key)}
+                />
+                <span>{item.label}</span>
+              </label>
             ))}
           </div>
-
-          {/* Suggested Questions - Accordion */}
-          <div className="ai-accordion">
-            <button
-              className="ai-accordion-header"
-              onClick={() => setShowSuggestions((v) => !v)}
-              aria-expanded={showSuggestions}
-            >
-              <span className="ai-accordion-title">Suggested questions</span>
-              <ChevronDown
-                size={18}
-                className={`ai-accordion-icon ${showSuggestions ? "open" : ""}`}
-              />
-            </button>
-            {showSuggestions && (
-              <div className="ai-accordion-content">
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {suggestedQuestions.map((q, i) => (
-                    <button
-                      className="ai-suggestion"
-                      key={i}
-                      onClick={() => setQuery(q)}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Data Sources - Accordion */}
-          <div className="ai-accordion">
-            <button
-              className="ai-accordion-header"
-              onClick={() => setShowSources((v) => !v)}
-              aria-expanded={showSources}
-            >
-              <span className="ai-accordion-title">Data Sources</span>
-              <ChevronDown
-                size={18}
-                className={`ai-accordion-icon ${showSources ? "open" : ""}`}
-              />
-            </button>
-            {showSources && (
-              <div className="ai-accordion-content">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
-                  {[
-                    { key: "internet", label: "Internet Search (Perplexity)" },
-                    { key: "traxxia", label: "Traxxia Insights" },
-                    { key: "qa", label: "Historical Q&A" },
-                    { key: "financials", label: "Company Financials" },
-                    { key: "other", label: "Other Projects" },
-                  ].map((item) => (
-                    <label
-                      key={item.key}
-                      style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={!!sources[item.key]}
-                        onChange={() => toggleSource(item.key)}
-                      />
-                      <span>{item.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        </div>    
 
         {/* Input Area */}
         <div className="ai-input-area">
