@@ -555,6 +555,7 @@ const MaturityScore = ({
                   isVisible={visibleRows > 0}
                   isLast={visibleRows === 1 && isStreaming}
                   lastRowRef={lastRowRef}
+                  isStreaming={isStreaming}
                 >
                   <td><strong>{t('Overall_Maturity_Score')}</strong></td>
                   <td>
@@ -577,6 +578,7 @@ const MaturityScore = ({
                   isVisible={visibleRows > 1}
                   isLast={visibleRows === 2 && isStreaming}
                   lastRowRef={lastRowRef}
+                  isStreaming={isStreaming}
                 >
                   <td><strong>{t('Industry_Percentile')}</strong></td>
                   <td>
@@ -599,6 +601,7 @@ const MaturityScore = ({
                   isVisible={visibleRows > 2}
                   isLast={visibleRows === 3 && isStreaming}
                   lastRowRef={lastRowRef}
+                  isStreaming={isStreaming}
                 >
                   <td><strong>{t('Industry_Average')}</strong></td>
                   <td>
@@ -668,6 +671,7 @@ const MaturityScore = ({
                       isVisible={isVisible}
                       isLast={isLast && isStreaming}
                       lastRowRef={lastRowRef}
+                      isStreaming={isStreaming}
                     >
                       <td>
                         <div className="force-name">
@@ -696,10 +700,10 @@ const MaturityScore = ({
                           }
                         </span>
                       </td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
                         {dimension.benchmark || 'N/A'}
                       </td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.8s' }}>
+                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.8s' }}>
                         {dimension.gap && (
                           <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>
                             {dimension.gap}
@@ -737,6 +741,7 @@ const MaturityScore = ({
                             isVisible={isVisible}
                             isLast={isLast && isStreaming}
                             lastRowRef={lastRowRef}
+                            isStreaming={isStreaming}
                           >
                             <td>
                               {hasStreamed
@@ -846,6 +851,7 @@ const MaturityScore = ({
                           isVisible={isVisible}
                           isLast={isLast && isStreaming}
                           lastRowRef={lastRowRef}
+                          isStreaming={isStreaming}
                         >
                           <td>
                             <strong>
@@ -908,6 +914,7 @@ const MaturityScore = ({
                           isVisible={isVisible}
                           isLast={isLast && isStreaming}
                           lastRowRef={lastRowRef}
+                          isStreaming={isStreaming}
                         >
                           <td>
                             <strong>
@@ -1003,6 +1010,7 @@ const MaturityScore = ({
                   isVisible={progressionIndices.target < visibleRows}
                   isLast={progressionIndices.target === visibleRows - 1 && isStreaming}
                   lastRowRef={lastRowRef}
+                  isStreaming={isStreaming}
                 >
                   <td><strong>{t('Target_Level')}</strong></td>
                   <td>
@@ -1017,6 +1025,7 @@ const MaturityScore = ({
                   isVisible={progressionIndices.timeline < visibleRows}
                   isLast={progressionIndices.timeline === visibleRows - 1 && isStreaming}
                   lastRowRef={lastRowRef}
+                  isStreaming={isStreaming}
                 >
                   <td><strong>{t('Estimated_Timeline')}</strong></td>
                   <td>
@@ -1034,6 +1043,7 @@ const MaturityScore = ({
                     isVisible={progressionIndices.investment < visibleRows}
                     isLast={progressionIndices.investment === visibleRows - 1 && isStreaming}
                     lastRowRef={lastRowRef}
+                    isStreaming={isStreaming}
                   >
                     <td><strong>{t('Investment_Required')}</strong></td>
                     <td>
@@ -1068,6 +1078,7 @@ const MaturityScore = ({
                           isVisible={isVisible}
                           isLast={isLast && isStreaming}
                           lastRowRef={lastRowRef}
+                          isStreaming={isStreaming}
                         >
                           <td>
                             {hasStreamed

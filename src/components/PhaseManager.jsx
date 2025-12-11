@@ -307,7 +307,7 @@ const PhaseManager = ({
             allPhasesCelebratedRef.current = true;
             showToastMessage?.('🎉 All phases completed! You have unlocked all analyses.', 'success');
         }
-    }, [completedPhases, showToastMessage]);
+    }, [completedPhases]);
     const handlePhaseCompleted = async (phase, updatedCompletedSet) => {
         await handleSimplifiedPhaseCompletion(phase, updatedCompletedSet);
     };
@@ -375,12 +375,6 @@ const PhaseManager = ({
         }
         return null;
     };
-
-    useEffect(() => {
-        if (selectedBusinessId && questionsLoaded && questions.length > 0) {
-            loadExistingAnalysis();
-        }
-    }, [selectedBusinessId, questionsLoaded, questions]);
     return {
         completedPhases,
         PHASES,

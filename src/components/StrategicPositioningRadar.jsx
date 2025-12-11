@@ -785,6 +785,7 @@ const StrategicPositioningRadar = ({
                                                     isVisible={executiveIndices.currentAverage < visibleRows}
                                                     isLast={executiveIndices.currentAverage === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming = {isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -794,7 +795,7 @@ const StrategicPositioningRadar = ({
                                                     <td>
                                                         {hasStreamed ? overallPosition.currentAverage : (typingTexts[`${executiveIndices.currentAverage}-value`] || overallPosition.currentAverage)}
                                                     </td>
-                                                    <td style={{ opacity: executiveIndices.currentAverage < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <td style={{ opacity: executiveIndices.currentAverage < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         <span className={`status-badge ${getScoreClass(overallPosition.currentAverage)}`}>
                                                             {overallPosition.currentAverage >= 8 ? 'Excellent' :
                                                                 overallPosition.currentAverage >= 6 ? 'Good' :
@@ -807,6 +808,7 @@ const StrategicPositioningRadar = ({
                                                     isVisible={executiveIndices.targetAverage < visibleRows}
                                                     isLast={executiveIndices.targetAverage === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming = {isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -816,7 +818,7 @@ const StrategicPositioningRadar = ({
                                                     <td>
                                                         {hasStreamed ? overallPosition.targetAverage : (typingTexts[`${executiveIndices.targetAverage}-value`] || overallPosition.targetAverage)}
                                                     </td>
-                                                    <td style={{ opacity: executiveIndices.targetAverage < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <td style={{ opacity: executiveIndices.targetAverage < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         <span className={`status-badge ${getScoreClass(overallPosition.targetAverage)}`}>
                                                             {overallPosition.targetAverage >= 8 ? 'Excellent' :
                                                                 overallPosition.targetAverage >= 6 ? 'Good' :
@@ -829,6 +831,7 @@ const StrategicPositioningRadar = ({
                                                     isVisible={executiveIndices.improvementGap < visibleRows}
                                                     isLast={executiveIndices.improvementGap === visibleRows - 1 && isStreaming}
                                                     lastRowRef={lastRowRef}
+                                                    isStreaming = {isStreaming}
                                                 >
                                                     <td>
                                                         <div className="force-name">
@@ -841,7 +844,7 @@ const StrategicPositioningRadar = ({
                                                             (typingTexts[`${executiveIndices.improvementGap}-value`] || (overallPosition.targetAverage - overallPosition.currentAverage).toFixed(1))
                                                         }
                                                     </td>
-                                                    <td style={{ opacity: executiveIndices.improvementGap < visibleRows ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <td style={{ opacity: executiveIndices.improvementGap < visibleRows ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         <span className={`status-badge ${getPerformanceStatusClass(overallPosition.currentAverage, overallPosition.targetAverage)}`}>
                                                             {getPerformanceStatus(overallPosition.currentAverage, overallPosition.targetAverage)}
                                                         </span>
@@ -906,23 +909,24 @@ const StrategicPositioningRadar = ({
                                                             isVisible={isVisible}
                                                             isLast={isLast && isStreaming}
                                                             lastRowRef={lastRowRef}
+                                                            isStreaming={isStreaming}
                                                         >
                                                             <td>
                                                                 <div className="force-name">
                                                                     {hasStreamed ? dimension.name : (typingTexts[`${rowIndex}-name`] || dimension.name)}
                                                                 </div>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                                 <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.currentScore) }}>
                                                                     {hasStreamed ? dimension.currentScore : (typingTexts[`${rowIndex}-current`] || dimension.currentScore)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
                                                                 <span className="score-badge" style={{ backgroundColor: getScoreColor(dimension.targetScore), opacity: 0.8 }}>
                                                                     {dimension.targetScore}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                                                                 <span className="score-badge" style={{ backgroundColor: '#9ca3af' }}>
                                                                     {dimension.industryAverage}
                                                                 </span>
