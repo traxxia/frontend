@@ -59,6 +59,8 @@ const StrategicAnalysis = ({
   }, []);
 
   const isSuperAdmin = userRole === "super_admin";
+  const isCompanyAdmin = userRole === "company_admin";
+  const canShowKickstart = isSuperAdmin || isCompanyAdmin;
   const { t } = useTranslation();
   const cardId = 'strategic-analysis';
   const isExpanded = true;
@@ -68,6 +70,35 @@ const StrategicAnalysis = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isFreshGeneration, setIsFreshGeneration] = useState(false);
+  const [hasKickstarted, setHasKickstarted] = useState(false);
+  const handleKickstart = () => {
+    if (onKickstartProjects) {
+      try {
+        onKickstartProjects();
+      } catch (e) {
+        console.warn('Kickstart handler error:', e);
+      }
+    }
+    try {
+      phaseManager?.openTab?.('projects');
+      phaseManager?.goToTab?.('projects');
+      phaseManager?.setActiveTab?.('projects');
+    } catch (e) {
+    }
+    setHasKickstarted(true);
+    try {
+      sessionStorage.setItem('showProjectsTab', 'true');
+      sessionStorage.setItem('activeTab', 'projects');
+    } catch {}
+  };
+  useEffect(() => {
+    try {
+      const active = sessionStorage.getItem('activeTab');
+      if (active === 'projects' && !hasKickstarted) {
+        setHasKickstarted(true);
+      }
+    } catch {}
+  }, [hasKickstarted]);
 
   const [collapsedCategories, setCollapsedCategories] = useState(
     new Set(['strategy-block', 'execution-block', 'sustainability-block'])
@@ -2380,8 +2411,8 @@ const StrategicAnalysis = ({
       data-analysis-name="Strategic Analysis"
       data-analysis-order="10"
     >
-      {isSuperAdmin && (
-        <KickstartProjectsCard onKickstart={onKickstartProjects} />
+      {canShowKickstart && !hasKickstarted && (
+        <KickstartProjectsCard onKickstart={handleKickstart} />
       )}
       <div className="dashboard-container">
         {renderStrategicContent()}

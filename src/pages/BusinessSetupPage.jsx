@@ -85,6 +85,7 @@ const BusinessSetupPage = () => {
   const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
   const hasLoadedAnalysis = useRef(false);
   const streamingManager = useStreamingManager();
+  const [showProjectsTab, setShowProjectsTab] = useState(false);
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
@@ -151,6 +152,25 @@ const BusinessSetupPage = () => {
   }
 };
 
+  // Initialize Projects tab visibility from sessionStorage and activeTab
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('showProjectsTab');
+      if (stored === 'true') {
+        setShowProjectsTab(true);
+      }
+    } catch {}
+  }, []);
+
+  // Ensure Projects tab button appears once projects is active
+  useEffect(() => {
+    if (activeTab === 'projects' && !showProjectsTab) {
+      setShowProjectsTab(true);
+      try { sessionStorage.setItem('showProjectsTab', 'true'); } catch {}
+    }
+  }, [activeTab, showProjectsTab]);
+
+  //const showToastMessage = createToastMessage(setShowToast);
 
   const stateSetters = {
     setSwotAnalysisResult, setPurchaseCriteriaData, setLoyaltyNPSData,
@@ -660,12 +680,14 @@ const BusinessSetupPage = () => {
               {t("strategic")}
             </button>
           )}
-          <button
-            className={`mobile-tab ${activeTab === "projects" ? "active" : ""}`}
-            onClick={() => setActiveTab("projects")}
-          >
-            {t("Projects")}
-          </button>
+          {showProjectsTab && (
+            <button
+              className={`mobile-tab ${activeTab === "projects" ? "active" : ""}`}
+              onClick={() => setActiveTab("projects")}
+            >
+              {t("Projects")}
+            </button>
+          )}
         </div>
       )}
 
@@ -729,7 +751,7 @@ const BusinessSetupPage = () => {
                           {t("strategic")}
                         </button>
                       )}
-                      {unlockedFeatures.analysis && (
+                      {showProjectsTab && (
                         <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                           {t("Projects")}
                         </button>

@@ -82,7 +82,7 @@ const ProjectsSection = () => {
     setUserRole(role);
   }, []);
 
-  const isSuperAdmin = userRole === "super_admin";
+  const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
   const navigate = useNavigate();
 
   return (
