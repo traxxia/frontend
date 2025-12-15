@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import { Container, Row, Col, Card, Button, Accordion, AccordionItem, Table, Badge } from "react-bootstrap";
+import { Container, Row, Col, Card, Button ,Toast, Accordion, AccordionItem, Table, Badge} from "react-bootstrap";
 import { Lock, AlertTriangle, AlertCircle, CheckCircle, Plus, ListOrdered, Pencil, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -14,6 +14,9 @@ const ProjectsSection = ({ selectedBusinessId }) => {
   const [userRole, setUserRole] = useState("");
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [rankingsLocked, setRankingsLocked] = useState(false);
+  const [showLockToast, setShowLockToast] = useState(false);
+  
   const token = sessionStorage.getItem("token");
   const user = sessionStorage.getItem("userName")
 
@@ -208,24 +211,36 @@ const portfolioData = {
               {t("New_Project")}
             </button>
 
-            <button
-              onClick={() => setShowRankScreen(!showRankScreen)}
-              className="btn-rank-projects"
-            >
-              <ListOrdered size={18} />
-              {showRankScreen ? t("Hide") :t("Rank_Projects")}
-            </button>
+            {rankingsLocked ? (
+              <button className="btn-rankings-locked" disabled>
+                <Lock size={18} />
+                {t("Rankings_Locked")}
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowRankScreen(!showRankScreen)}
+                className="btn-rank-projects"
+              >
+                <ListOrdered size={18} />
+                {showRankScreen ? t("Hide") : t("Rank_Projects")}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       <RankProjectsPanel
         show={showRankScreen}
-        onClose={() => setShowRankScreen(false)}
         projects={projects}
-      />
+          onLockRankings={() => {
+            setRankingsLocked(true);
+            setShowLockToast(true);
 
-      <div className="rank-list mt-4">
+            // auto-hide after 3 seconds
+            setTimeout(() => setShowLockToast(false), 3000);
+          }}
+        />
+         <div className="rank-list mt-4">
         <Accordion>
           <Accordion.Item eventKey="0">
             <Accordion.Header>
@@ -340,6 +355,15 @@ const portfolioData = {
             </Col>
           ))}
         </Row>
+      </div>
+      {/* Rankings Locked Toast */}
+      <div className="rankings-toast-wrapper">
+        <Toast show={showLockToast} onClose={() => setShowLockToast(false)}>
+          <Toast.Body className="rankings-toast-body">
+            <CheckCircle size={18} />
+            <span>{t("Your_rankings_have_been_locked")}</span>
+          </Toast.Body>
+        </Toast>
       </div>
     </Container>
   );

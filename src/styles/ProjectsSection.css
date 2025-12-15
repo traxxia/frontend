@@ -245,6 +245,71 @@
   gap: 10px;
 }
 
+/* Rankings Locked Button */
+.btn-rankings-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  background-color: #0f5328;       /* Green (Tailwind green-500) */
+  color: #ffffff;
+
+  border: none;
+  border-radius: 8px;
+
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: not-allowed;
+  opacity: 1;                      /* Keep strong green even when disabled */
+}
+
+/* Icon color */
+.btn-rankings-locked svg {
+  stroke: #ffffff;
+}
+
+/* Prevent Bootstrap disabled fade */
+.btn-rankings-locked:disabled {
+  background-color: #26a856;
+  color: #ffffff;
+  opacity: 1;
+}
+
+/* Toast position */
+.rankings-toast-wrapper {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+}
+
+/* Toast body */
+.rankings-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: #ffffff;
+  color: #1f2937;
+
+  padding: 12px 16px;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Success icon */
+.rankings-toast-body svg {
+  color: #22c55e; /* green check */
+}
+
+
+
 @media (min-width: 768px) {
   .project-actions {
     flex-direction: row;

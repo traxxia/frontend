@@ -25,12 +25,12 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings }) => {
   const { t } = useTranslation();
-  const [projectList, setProjectList] = useState(projects || []);
+   const [projectList, setProjectList] = useState(projects || []);
 
   // Keep local list in sync with incoming projects from API
-  useEffect(() => {
+   useEffect(() => {
     setProjectList(projects || []);
   }, [projects]);
 
@@ -62,7 +62,10 @@ const RankProjectsPanel = ({ show, projects }) => {
           className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
         >
           <Button className="btn-save-rank responsive-btn">{t("Save_Rankings")}</Button>
-          <Button className="btn-lock-rank responsive-btn">
+          <Button
+            className="btn-lock-rank responsive-btn"
+            onClick={onLockRankings}
+          >
             <Lock size={16} /> {t("Lock_My_Rankings")}
           </Button>
         </Col>
@@ -90,6 +93,7 @@ const RankProjectsPanel = ({ show, projects }) => {
                       }`}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
+                      {...provided.dragHandleProps}
                     >
                       <Card.Body>
 
@@ -106,8 +110,7 @@ const RankProjectsPanel = ({ show, projects }) => {
                           </div>
                           {/* ⭐ Drag handle (Grip icon) */}
                           <div
-                            className="rank-move-buttons responsive-move-buttons"
-                            {...provided.dragHandleProps}
+                            className="rank-move-buttons responsive-move-buttons"   
                             style={{ cursor: "grab" }}
                           >
                             <ChevronUp size={18} className="move-icon" />

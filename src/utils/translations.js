@@ -828,6 +828,8 @@ export const staticTranslations = {
     'Collaborators':'Collaborators',
     'Pending_Invites':'Pending Invites',
     'Save_Changes':'Save Changes',
+    'Rankings_Locked':'Rankings Locked',
+    'Your_rankings_have_been_locked':'Your rankings have been locked',
     
 
   // ===========================
@@ -1683,6 +1685,8 @@ export const staticTranslations = {
     'Save_Rankings':'Guardar clasificaciones',
     'Lock_My_Rankings':'Bloquear mis clasificaciones',
     'Save_Changes':'Guardar cambios',
+    'Rankings_Locked':'Clasificaciones bloqueadas',
+    'Your_rankings_have_been_locked':'Tus clasificaciones han sido bloqueadas',
 
   // ===========================
   // USER MANAGEMENT BLOCK
