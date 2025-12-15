@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { ArrowLeft, Loader, RefreshCw, ChevronDown } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
@@ -180,6 +181,40 @@ const BusinessSetupPage = () => {
       try { sessionStorage.setItem('showProjectsTab', 'true'); } catch {}
     }
   }, [activeTab, showProjectsTab]);
+
+  // Automatically show Projects tab if this business already has projects
+  useEffect(() => {
+    const fetchProjectsForBusiness = async () => {
+      if (!selectedBusinessId) return;
+
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) return;
+
+        const res = await axios.get(
+          `${API_BASE_URL}/api/projects`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            params: {
+              business_id: selectedBusinessId
+            }
+          }
+        );
+
+        const projects = res.data?.projects || [];
+        if (projects.length > 0) {
+          setShowProjectsTab(true);
+          try { sessionStorage.setItem('showProjectsTab', 'true'); } catch {}
+        }
+      } catch (err) {
+        console.error('Failed to check existing projects for business:', err);
+      }
+    };
+
+    fetchProjectsForBusiness();
+  }, [selectedBusinessId, API_BASE_URL]);
 
   //const showToastMessage = createToastMessage(setShowToast);
 
@@ -1110,7 +1145,9 @@ const BusinessSetupPage = () => {
                     />
                   </div>
                 )}
-                {activeTab === "projects" && <ProjectsSection />}
+                {activeTab === "projects" && (
+                  <ProjectsSection selectedBusinessId={selectedBusinessId} />
+                )}
               </div>
             )}
           </div>

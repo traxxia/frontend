@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { Lock, AlertTriangle, AlertCircle, CheckCircle, Plus, ListOrdered, Pencil, Trash2 } from "lucide-react";
+import { Container, Row, Col, Card, Button, Accordion, AccordionItem, Table, Badge } from "react-bootstrap";
+import { Lock, AlertTriangle, AlertCircle, CheckCircle, Plus, ListOrdered, Pencil, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import RankProjectsPanel from "../components/RankProjectsPanel";
@@ -15,6 +15,7 @@ const ProjectsSection = ({ selectedBusinessId }) => {
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [projects, setProjects] = useState([]);
   const token = sessionStorage.getItem("token");
+  const user = sessionStorage.getItem("userName")
 
 
   useEffect(() => {
@@ -223,6 +224,71 @@ const portfolioData = {
         onClose={() => setShowRankScreen(false)}
         projects={projects}
       />
+
+      <div className="rank-list mt-4">
+        <Accordion>
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>
+            <div className="d-flex flex-column">
+              <div className="d-flex align-items-center gap-2">
+                <Users size={18} className="text-info"/>
+                <strong>Team Rankings View</strong>
+              </div>
+              <small className="text-muted">
+                See how all team members ranked projects
+              </small>
+            </div>
+          </Accordion.Header>
+            <Accordion.Body>
+              <div className="d-flex gap-4 mb-3">
+              <span>🟢 High Agreement</span>
+              <span>🟡 Medium Agreement</span>
+              <span>🔴 Low Agreement</span>
+            </div>
+             <Table hover responsive>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th className="text-center">{user}</th>
+                  <th className="text-center">Consensus</th>
+                </tr>
+              </thead>
+              <tbody>
+  {projects.map((p, i) => (
+    <tr key={p._id || i}>
+      <td>{p.project_name}</td>
+
+      <td className="text-center">
+        <Badge pill bg="primary">
+          {p.rank ?? "8"}
+        </Badge>
+      </td>
+
+      <td className="text-center">
+        <Badge
+          pill
+          bg={
+            p.consensus === "high"
+              ? "success"
+              : p.consensus === "medium"
+              ? "warning"
+              : "danger"
+          }
+        >
+          &nbsp;
+        </Badge>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
+            </Table>
+
+            </Accordion.Body>
+           </Accordion.Item>
+        </Accordion>
+
+      </div>
 
       {/* PROJECTS LIST */}
       <div className="projects-list-wrapper">
