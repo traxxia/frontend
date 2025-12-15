@@ -309,6 +309,69 @@
 }
 
 
+.project-creation-locked-card {
+  margin-top: 12px !important;
+  margin-bottom: 22px; /* keep nice spacing below */
+  padding: 28px 32px;
+  background: #fff7cc;
+  border: 1px solid #f5c26b;
+  border-radius: 8px;
+}
+
+.project-locked-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-locked-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-locked-icon {
+  color: #f59e0b;
+}
+
+.project-locked-title {
+  font-weight: 600;
+  color: #f59e0b;
+  font-size: 15px;
+}
+
+.project-locked-meta {
+  font-size: 13px;
+  color: #f59e0b;
+}
+
+.project-locked-subtitle {
+  font-size: 14px;
+  color: #f59e0b;
+  margin: 0;
+}
+.project-lock-toast-wrapper {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+}
+
+.project-lock-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #111;
+}
+
+.project-lock-toast-body svg {
+  color: #16a34a; /* green check */
+}
+
+
+
 
 @media (min-width: 768px) {
   .project-actions {

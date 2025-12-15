@@ -16,7 +16,10 @@ const ProjectsSection = ({ selectedBusinessId }) => {
   const [projects, setProjects] = useState([]);
   const [rankingsLocked, setRankingsLocked] = useState(false);
   const [showLockToast, setShowLockToast] = useState(false);
-  
+  const [projectCreationLocked, setProjectCreationLocked] = useState(false);
+  const [showProjectLockToast, setShowProjectLockToast] = useState(false);
+
+
   const token = sessionStorage.getItem("token");
   const user = sessionStorage.getItem("userName")
 
@@ -107,23 +110,62 @@ const portfolioData = {
 
       {/* OPEN FOR COLLABORATION CARD */}
       {isSuperAdmin && (
-        <Card className="open-collab-card shadow-sm">
-          <Row className="align-items-center">
-            <Col md="8">
-              <h5 className="open-collab-title fw-bold">{t("Open_for_Collaboration")}</h5>
-              <p className="open-collab-text">
-                {t("All_collaborators_can_add_projects_update_info_and_rank")}
-              </p>
-            </Col>
+        <div className="collaboration-card-wrapper">
+          {!projectCreationLocked ? (
+            <Card className="open-collab-card shadow-sm">
+              <Row className="align-items-center">
+                <Col md="8">
+                  <h5 className="open-collab-title fw-bold">
+                    {t("Open_for_Collaboration")}
+                  </h5>
+                  <p className="open-collab-text">
+                    {t("All_collaborators_can_add_projects_update_info_and_rank")}
+                  </p>
+                </Col>
 
-            <Col md="4" className="d-flex justify-content-end align-items-center">
-              <Button className="open-collab-btn">
-                <Lock size={16} color="#589be9ff" strokeWidth={2} />
-                {t("Lock_Project_Creation")}
-              </Button>
-            </Col>
-          </Row>
-        </Card>
+                <Col md="4" className="d-flex justify-content-end align-items-center">
+                  <Button
+                      className="open-collab-btn"
+                      onClick={() => {
+                        setProjectCreationLocked(true);
+                        setShowProjectLockToast(true);
+
+                        setTimeout(() => {
+                          setShowProjectLockToast(false);
+                        }, 3000);
+                      }}
+                    >
+                    <Lock size={16} color="#589be9ff" strokeWidth={2} />
+                    {t("Lock_Project_Creation")}
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
+          ) : (
+            <Card className="project-creation-locked-card shadow-sm">
+              <Row>
+                <Col>
+                  <div className="project-locked-content">
+                    <div className="project-locked-header">
+                      <span className="project-locked-title">
+                        Project Creation Locked
+                      </span>
+                      <Lock size={16} className="project-locked-icon" />
+                      <span className="project-locked-meta">
+                        0 of 1 collaborators locked
+                      </span>
+                    </div>
+
+                    <p className="project-locked-subtitle">
+                      No new projects can be added. Continue ranking and updating.
+                    </p>
+                  </div>
+                </Col>
+              </Row>
+            </Card>
+
+          )}
+        </div>
       )}
 
       {/* PORTFOLIO OVERVIEW */}
@@ -332,24 +374,26 @@ const portfolioData = {
                 <hr />
 
                 <div className="project-actions">
+                  {/* Edit button – always visible */}
                   <button
                     onClick={() =>
-                            navigate("/projects/edit", {
-                              state: { projectId: p._id }
-                            })
-                          }
-
+                      navigate("/projects/edit", {
+                        state: { projectId: p._id }
+                      })
+                    }
                     className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
                   >
                     <Pencil size={16} /> {t("Edit")}
                   </button>
-
-                  <button 
-                    onClick={() => handleDelete(p._id)}
-                    className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
-                  >
-                    <Trash2 size={16} /> {t("Delete")}
-                  </button>
+                  {/* Delete button – hidden when project creation is locked */}
+                  {!projectCreationLocked && (
+                    <button
+                      onClick={() => handleDelete(p._id)}
+                      className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+                    >
+                      <Trash2 size={16} /> {t("Delete")}
+                    </button>
+                  )}
                 </div>
               </div>
             </Col>
@@ -365,6 +409,19 @@ const portfolioData = {
           </Toast.Body>
         </Toast>
       </div>
+      {/* Lock Project Creation Toast */}
+      <div className="project-lock-toast-wrapper">
+        <Toast
+          show={showProjectLockToast}
+          onClose={() => setShowProjectLockToast(false)}
+        >
+          <Toast.Body className="project-lock-toast-body">
+            <CheckCircle size={18} />
+            <span>Project creation locked. Continue ranking.</span>
+          </Toast.Body>
+        </Toast>
+      </div>
+
     </Container>
   );
 };
