@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { TrendingUp, Zap, AlertTriangle, Circle,  Diamond,  Rocket,  Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign  } from "lucide-react";
 import Aiassistant from './Aiassistant';
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import { useLocation } from "react-router-dom";
+
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -160,7 +164,7 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 const EditProjectPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
+  const { id } = useParams();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState("");
@@ -169,6 +173,104 @@ const EditProjectPage = () => {
   const [selectedEffort, setSelectedEffort] = useState("");
   const [selectedRisk, setSelectedRisk] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("");
+  const [dependencies, setDependencies] = useState("");
+const [highLevelReq, setHighLevelReq] = useState("");
+const [scope, setScope] = useState("");
+const [outcome, setOutcome] = useState("");
+const [successMetrics, setSuccessMetrics] = useState("");
+const [timeline, setTimeline] = useState("");
+const [budget, setBudget] = useState("");
+
+  const { state } = useLocation();
+  const projectId = state?.projectId;
+
+
+useEffect(() => {
+  if (!projectId) {
+    console.error("No Project ID found");
+    return;
+  }
+
+  const token = sessionStorage.getItem("token");
+
+  axios.get(
+    `${process.env.REACT_APP_BACKEND_URL}/api/projects/${projectId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  .then((res) => {
+    const p = res.data.project;
+
+    setProjectName(p.project_name || "");
+    setDescription(p.description || "");
+    setImportance(p.why_this_matters || "");
+
+    // DROPDOWNS
+    setSelectedImpact(p.impact || "");
+    setSelectedEffort(p.effort || "");
+    setSelectedRisk(p.risk || "");
+    setSelectedTheme(p.strategic_theme || "");
+
+    // DETAILS
+    setDependencies(p.dependencies || "");
+    setHighLevelReq(p.high_level_requirements || "");
+    setScope(p.scope_definition || "");
+    setOutcome(p.expected_outcome || "");
+    setSuccessMetrics(p.success_metrics || "");
+    setTimeline(p.estimated_timeline || "");
+    setBudget(p.budget_estimate || "");
+
+  })
+  .catch(err => console.error("Error loading project:", err));
+}, [projectId]);
+
+const handleSave = async () => {
+  if (!projectId) {
+    console.error("No project ID found!");
+    return;
+  }
+
+  const token = sessionStorage.getItem("token");
+  if (!token) {
+    console.error("Token missing!");
+    return;
+  }
+
+  const payload = {
+    project_name: projectName,
+    description: description,
+    why_this_matters: importance,
+    impact: selectedImpact,
+    effort: selectedEffort,
+    risk: selectedRisk,
+    strategic_theme: selectedTheme,
+    dependencies: dependencies,
+    high_level_requirements: highLevelReq,
+    scope_definition: scope,
+    expected_outcome: outcome,
+    success_metrics: successMetrics,
+    estimated_timeline: timeline,
+    budget_estimate: budget,
+  };
+
+  try {
+    await axios.patch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects/${projectId}`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    alert("Project updated successfully!");
+  } catch (error) {
+    console.error("Error updating project:", error);
+    alert("Failed to update project.");
+  }
+};
+
 
 
   return (
@@ -410,8 +512,6 @@ const EditProjectPage = () => {
               />
             </div>
           </div>
-
-          {/* Strategic Theme */}
           <div style={{ marginBottom: "26px" }}>
             <label style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
               Strategic Theme / Horizon
@@ -434,6 +534,8 @@ const EditProjectPage = () => {
             </label>
 
             <textarea
+              value={dependencies}
+              onChange={e => setDependencies(e.target.value)}
               placeholder="List dependencies (one per line)"
               rows={3}
               style={{
@@ -478,6 +580,8 @@ const EditProjectPage = () => {
             </label>
 
             <textarea
+              value={highLevelReq}
+              onChange={e => setHighLevelReq(e.target.value)}
               placeholder="What are the main requirements?"
               rows={3}
               style={{
@@ -499,6 +603,8 @@ const EditProjectPage = () => {
             </label>
 
             <textarea
+              value={scope}
+              onChange={e => setScope(e.target.value)}
               placeholder="Define the project scope"
               rows={3}
               style={{
@@ -522,6 +628,8 @@ const EditProjectPage = () => {
             </label>
 
             <textarea
+              value={outcome}
+              onChange={e => setOutcome(e.target.value)}
               placeholder="What is the end result?"
               rows={3}
               style={{
@@ -545,6 +653,8 @@ const EditProjectPage = () => {
             </label>
 
             <textarea
+              value={successMetrics}
+              onChange={e => setSuccessMetrics(e.target.value)} 
               placeholder="How will you measure success? (one metric per line)"
               rows={3}
               style={{
@@ -575,6 +685,8 @@ const EditProjectPage = () => {
               </label>
               <input
                 type="text"
+                value={timeline}
+                onChange={e => setTimeline(e.target.value)}
                 placeholder="e.g., 3–6 months"
                 style={{
                   marginTop: "8px",
@@ -596,6 +708,8 @@ const EditProjectPage = () => {
               </label>
               <input
                 type="text"
+                value={budget}
+                onChange={e => setBudget(e.target.value)}
                 placeholder="e.g., $50K - $100K"
                 style={{
                   marginTop: "8px",
@@ -630,6 +744,7 @@ const EditProjectPage = () => {
 
   <button
     type="submit"
+    onClick={handleSave}
     className="btn btn-sm w-30 w-md-auto"
     style={{
       background: "linear-gradient(90deg, #a855f7, #9333ea)",

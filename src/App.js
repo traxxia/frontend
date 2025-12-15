@@ -55,7 +55,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/businesspage" element={<BusinessSetupPage />} />
-          <Route path="/projects/new" element={<NewProjectPage />} />
+          <Route path="/projects/new/:businessId" element={<NewProjectPage />} />
           <Route path="/projects/edit" element={<Editprojectpage />} />
           {/* Regular Admin Route - kept for potential future use */}
           <Route

@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { TrendingUp, Zap, AlertTriangle, Circle,  Diamond,  Rocket,  Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign  } from "lucide-react";
 import "../styles/NewProjectPage.css";
+import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -91,6 +93,8 @@ const themeOptions = [
   },
 ];
 const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) => {
+  const selectedOption = options.find((opt) => opt.value === value);
+
   return (
     <div className="sf-wrapper">
       <label className="sf-label">
@@ -99,7 +103,10 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 
       <div className="sf-dropdown-wrapper">
         <div className="sf-dropdown-header" onClick={() => setOpen()}>
-          <span>{value || (label ? `Select ${label.toLowerCase()}` : "Select")}</span>
+          <span>
+            {selectedOption?.label ||
+              (label ? `Select ${label.toLowerCase()}` : "Select")}
+          </span>
           <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
         </div>
 
@@ -110,7 +117,7 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
                 key={item.value}
                 className="sf-option"
                 onClick={() => {
-                  onChange(item.label);
+                  onChange(item.value);
                   setOpen();
                 }}
               >
@@ -127,16 +134,76 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 const NewProjectPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
+  const { businessId } = useParams();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState("");
   const [openDropdown, setOpenDropdown] = useState(null);
-
+  
   const [selectedImpact, setSelectedImpact] = useState("");
   const [selectedEffort, setSelectedEffort] = useState("");
   const [selectedRisk, setSelectedRisk] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("");
+  const [dependencies, setDependencies] = useState("");
+const [highLevelReq, setHighLevelReq] = useState("");
+const [scope, setScope] = useState("");
+const [outcome, setOutcome] = useState("");
+const [successMetrics, setSuccessMetrics] = useState("");
+const [timeline, setTimeline] = useState("");
+const [budget, setBudget] = useState("");
+  
+  const handleCreate = async () => {
+  const token = sessionStorage.getItem("token");
+  const userId = sessionStorage.getItem("userId");
+
+  // if (!token || !businessId || !userId) {
+  //   alert("Missing authentication or business information.");
+  //   return;
+  // }
+
+  const payload = {
+    business_id: businessId,
+    user_id: userId,
+    collaborators: [],
+    status: "draft",
+
+    project_name: projectName,
+    description: description,
+    why_this_matters: importance,
+
+    impact: selectedImpact,
+    effort: selectedEffort,
+    risk: selectedRisk,
+    strategic_theme: selectedTheme,
+
+    dependencies,
+    high_level_requirements: highLevelReq,
+    scope_definition: scope,
+    expected_outcome: outcome,
+    success_metrics: successMetrics,
+    estimated_timeline: timeline,
+    budget_estimate: budget || 0,
+  };
+
+  try {
+    const res = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    alert("Project created successfully!");
+  } catch (err) {
+    console.error("Project creation failed:", err);
+    alert("Failed to create project.");
+  }
+};
+
 
   return (
     <div className="page-wrapper">
@@ -280,6 +347,8 @@ const NewProjectPage = () => {
               placeholder="List dependencies (one per line)"
               rows={3}
               className="field-textarea transparent"
+              value={dependencies}
+              onChange={e => setDependencies(e.target.value)}
             />
           </div>
         </div>
@@ -300,6 +369,8 @@ const NewProjectPage = () => {
               placeholder="What are the main requirements?"
               rows={3}
               className="field-textarea"
+              value={highLevelReq}
+              onChange={e => setHighLevelReq(e.target.value)}
             />
           </div>
 
@@ -310,6 +381,8 @@ const NewProjectPage = () => {
               placeholder="Define the project scope"
               rows={3}
               className="field-textarea"
+              value={scope}
+              onChange={e => setScope(e.target.value)}
             />
           </div>
 
@@ -320,6 +393,8 @@ const NewProjectPage = () => {
               placeholder="What is the end result?"
               rows={3}
               className="field-textarea"
+              value={outcome}
+              onChange={e => setOutcome(e.target.value)}
             />
           </div>
 
@@ -330,6 +405,8 @@ const NewProjectPage = () => {
               placeholder="How will you measure success? (one metric per line)"
               rows={3}
               className="field-textarea"
+              value={successMetrics}
+              onChange={e => setSuccessMetrics(e.target.value)}
             />
           </div>
 
@@ -339,14 +416,14 @@ const NewProjectPage = () => {
               <label className="field-label">
                 <Clock size={16} /> Estimated Timeline
               </label>
-              <input type="text" placeholder="e.g., 3–6 months" className="field-input" />
+              <input type="text" placeholder="e.g., 3–6 months" className="field-input" value={timeline} onChange={e => setTimeline(e.target.value)} />
             </div>
 
             <div>
               <label className="field-label">
                 <DollarSign size={16} /> Budget Estimate
               </label>
-              <input type="text" placeholder="e.g., $50K - $100K" className="field-input" />
+              <input type="text" placeholder="e.g., $50K - $100K" className="field-input" value={budget} onChange={e => setBudget(e.target.value)} />
             </div>
           </div>
         </div>
@@ -358,7 +435,8 @@ const NewProjectPage = () => {
           {t("cancel")}
         </button>
 
-        <button type="submit" className="btn-create">
+        <button type="button" className="btn-create" onClick={handleCreate}>
+
           {t("Create_Project")}
         </button>
       </div>

@@ -47,6 +47,8 @@ const Dashboard = () => {
   // Success popup state
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [collaboratingBusinesses, setCollaboratingBusinesses] = useState([]);
+
 
   // Tour modal state
   const [showHowModal, setShowHowModal] = useState(false);
@@ -84,7 +86,10 @@ const Dashboard = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Businesses API response:', data);
+        const collabList = data.collaboratingBusinesses || data.collaborating_businesses || [];
         setBusinesses(data.businesses || []);
+        setCollaboratingBusinesses(Array.isArray(collabList) ? collabList : []);
         setBusinessError('');
       } else {
         const errorData = await response.json();
@@ -517,6 +522,16 @@ const Dashboard = () => {
                     <h6 className="mb-3">{t('my_businesses')}</h6>
                     <BusinessList businesses={businesses} viewType="mobile" />
                   </div>
+                  {collaboratingBusinesses.length > 0 && (
+                    <>
+                      <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
+                      <BusinessList
+                        businesses={collaboratingBusinesses}
+                        viewType="mobile"
+                      />
+                    </>
+                  )}
+
                   <div className="px-4 pb-4 d-flex flex-wrap gap-2">
                     <Button
                       variant="primary"
@@ -575,7 +590,15 @@ const Dashboard = () => {
                       <div>
                         <h6 className="mb-4">{t('my_businesses')}</h6>
                         <BusinessList businesses={businesses} viewType="desktop" />
+                        
+
                       </div>
+                      {collaboratingBusinesses.length > 0 && (
+                          <>
+                            <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
+                            <BusinessList businesses={collaboratingBusinesses} viewType="desktop" />
+                          </>
+                        )}
                     </Col>
                   </Row>
                 </Card.Body>

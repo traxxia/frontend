@@ -48,11 +48,24 @@ const UserManagement = ({ onToast }) => {
   const [newRole, setNewRole] = useState(""); 
   const token = sessionStorage.getItem("token");
 
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignUserId, setAssignUserId] = useState("");
+  const [businesses, setBusinesses] = useState([]);
+  const [assignBusinessId, setAssignBusinessId] = useState("");
+
+
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
 
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
+  const handleOpenAssignModal = () => setShowAssignModal(true);
+  const handleCloseAssignModal = () => {
+    setShowAssignModal(false);
+    setAssignUserId("");
+    setAssignBusinessId("");
+    
+  };
   
   const validateForm = () => {
   const newErrors = {};
@@ -122,6 +135,36 @@ const UserManagement = ({ onToast }) => {
     }
   }
 };
+
+const handleAssign = async (e) => {
+  e.preventDefault();
+
+  if (!assignUserId || !assignBusinessId) {
+    onToast("Select user and business");
+    return;
+  }
+
+  try {
+    await axios.post(
+      `${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`,
+      {
+        user_id: assignUserId,   
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    onToast("Collaborator assigned successfully");
+    handleCloseAssignModal();
+  } catch (error) {
+    console.error(error);
+    onToast("Failed to assign collaborator");
+  }
+};
+
 const formatRole = (role_name) => {
   switch (role_name?.toLowerCase()) {
     case "company_admin":
@@ -156,7 +199,9 @@ const fetchUsers = async () => {
   const collaboratorsCount = users.filter(
   (u) => formatRole(u.role_name || u.role) === "Collaborator"
 ).length;
-
+   const collaboratorUsers = users.filter(
+  (u) => formatRole(u.role_name || u.role) === "Collaborator"
+);
 
   // ---- HANDLERS ----
   const handleSearch = (e) => {
@@ -201,6 +246,20 @@ const formatDate = (iso) => {
     day: "numeric",
   });
 };
+useEffect(() => {
+  fetchUsers();
+  fetchBusinesses();
+}, []);
+
+const fetchBusinesses = async () => {
+  try {
+    const res = await axios.get(`${BACKEND_URL}/api/businesses`);
+    const data = Array.isArray(res.data) ? res.data : res.data.businesses || [];
+    setBusinesses(data);
+  } catch (error) {
+    alert("Failed to fetch businesses");
+  }
+};
   return (
     <Container fluid className="p-4">
       <h2 className="fw-bold">User Management</h2>
@@ -239,8 +298,12 @@ const formatDate = (iso) => {
       <Plus size={16} className="me-2" />
       Add User
     </Button>
-  </Col>
 
+    <Button  className="add-user-btn d-flex align-items-center" onClick={handleOpenAssignModal}>
+      <User size={16} className="me-2" />
+      Assign User
+    </Button>
+  </Col>
 </Row>
 
 
@@ -416,6 +479,60 @@ const formatDate = (iso) => {
 
         </Modal.Body>
       </Modal>
+
+      <Modal show={showAssignModal} onHide={handleCloseAssignModal} centered>
+  <Modal.Header closeButton>
+    <Modal.Title>Assign Collaborator</Modal.Title>
+  </Modal.Header>
+
+  <Modal.Body>
+    <Form onSubmit={handleAssign}>
+
+      <Form.Group className="mb-3">
+        <Form.Label>User</Form.Label>
+        <Form.Select
+          value={assignUserId}
+          onChange={(e) => setAssignUserId(e.target.value)}
+          required
+        >
+          <option value="">Select collaborator</option>
+          {collaboratorUsers.map((u) => (
+    <option key={u._id} value={u._id}>
+      {u.name} 
+    </option>
+  ))}
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Business</Form.Label>
+        <Form.Select
+          value={assignBusinessId}
+          onChange={(e) => setAssignBusinessId(e.target.value)}
+          required
+        >
+          <option value="">Select Business</option>
+          {businesses.map((b) => (
+            <option key={b._id} value={b._id}>
+              {b.business_name || b.name}
+            </option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+
+      <div className="d-flex justify-content-end">
+        <Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>
+          Cancel
+        </Button>
+        <Button variant="primary" type="submit">
+          Save
+        </Button>
+      </div>
+
+    </Form>
+  </Modal.Body>
+</Modal>
+
     </Container>
   );
 };

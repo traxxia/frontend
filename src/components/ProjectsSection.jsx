@@ -3,59 +3,10 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { Lock, AlertTriangle, AlertCircle, CheckCircle, Plus, ListOrdered, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import "../styles/ProjectsSection.css";
 
-const projects = [
-  {
-    id: 1,
-    initiative: "Immediate Initiative",
-    title: "Enhance digital product offerings",
-    description: "Expand digital product suite to diversify revenue",
-    quote: "Reduces dependency on single product and increases customer lifetime value",
-    lastUpdated: "Last edited by John Doe",
-  },
-  {
-    id: 2,
-    initiative: "Short-term Initiative",
-    title: "Strengthen partnerships with key merchants",
-    description: "Build strategic merchant partnerships for transaction volumes",
-    quote: "Network effects drive platform value and competitive moat",
-    lastUpdated: "Last edited by John Doe",
-  },
-  {
-    id: 3,
-    initiative: "Short-term Initiative",
-    title: "Strengthen customer loyalty programs",
-    description: "Implement comprehensive loyalty program to reduce churn",
-    quote: "Customer retention is 5x cheaper than acquisition",
-    lastUpdated: "Last edited by John Doe",
-  },
-  {
-    id: 4,
-    initiative: "Long-term Initiative",
-    title: "Expand into new geographical markets",
-    description: "Geographic expansion beyond Peru",
-    quote: "Unlocks new revenue streams and reduces regional risk",
-    lastUpdated: "Last edited by John Doe",
-  },
-  {
-    id: 5,
-    initiative: "Long-term Initiative",
-    title: "Adopt advanced analytics and AI",
-    description: "Build data infrastructure and AI capabilities",
-    quote: "Data-driven decisions improve margins and customer experience",
-    lastUpdated: "Last edited by John Doe",
-  },
-  {
-    id: 6,
-    initiative: "Immediate Initiative",
-    title: "Digital Wallet Launch",
-    description: "Launch digital wallet product to capture market share",
-    quote: "Critical for market entry and customer acquisition in digital payments space",
-    lastUpdated: "Last edited by John Doe",
-  },
-];
 
 const portfolioData = {
   totalProjects: 6,
@@ -72,10 +23,13 @@ const portfolioData = {
   completedDetails: 0,
 };
 
-const ProjectsSection = () => {
+const ProjectsSection = ({ selectedBusinessId }) => {
   const { t } = useTranslation();
   const [userRole, setUserRole] = useState("");
   const [showRankScreen, setShowRankScreen] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const token = sessionStorage.getItem("token");
+
 
   useEffect(() => {
     const role = sessionStorage.getItem("userRole");
@@ -84,6 +38,65 @@ const ProjectsSection = () => {
 
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
   const navigate = useNavigate();
+  useEffect(() => {
+  if (!selectedBusinessId) return;
+
+  const fetchProjects = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            business_id: selectedBusinessId  // <-- FILTER WORKS HERE
+          }
+        }
+      );
+
+      setProjects(res.data?.projects || []);
+    } catch (err) {
+      console.error("Error fetching projects:", err);
+    }
+  };
+
+
+  fetchProjects();
+}, [selectedBusinessId]);
+
+const handleDelete = async (projectId) => {
+  try {
+    const token = sessionStorage.getItem("token");
+
+    const res = await axios.delete(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects/${projectId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log("DELETE SUCCESS:", res.data);
+    alert("Project deleted successfully!");
+
+    // Optionally refresh the list
+    setProjects(projects.filter(p => p._id !== projectId));
+
+  } catch (err) {
+    console.error("DELETE FAILED:", err);
+    alert("Failed to delete project.");
+  }
+};
+
 
   return (
     <Container fluid className="projects-wrapper">
@@ -187,7 +200,7 @@ const ProjectsSection = () => {
 
           <div className="d-flex gap-2 flex-wrap justify-content-end">
             <button
-              onClick={() => navigate("/projects/new")}
+              onClick={() => navigate(`/projects/new/${selectedBusinessId}`)}
               className="btn-new-project"
             >
               <Plus size={18} />
@@ -215,37 +228,45 @@ const ProjectsSection = () => {
       <div className="projects-list-wrapper">
         <Row className="g-4">
           {projects.map((p) => (
-            <Col xs={12} sm={12} md={6} key={p.id}>
+             <Col xs={12} sm={12} md={6} key={p._id}>
               <div className="project-card">
                 <p className="project-initiative">
                   from{" "}
-                  <span className="project-initiative-highlight">{p.initiative}</span>
+                  <span className="project-initiative-highlight">{p.initiative || "initiatives"}</span>
                 </p>
 
-                <h5 className="project-title">{p.title}</h5>
+                <h5 className="project-title">{p.project_name}</h5>
 
                 <p className="project-description">{p.description}</p>
 
-                <div className="project-quote">“{p.quote}”</div>
+                <div className="project-quote">“{p.quote || "Generate using AI"}”</div>
 
                 <p className="project-last-edited">
-                  Last edited by{" "}
-                  <span className="project-last-edited-name">
-                    {p.lastUpdated.split(" ").slice(-2).join(" ")}
-                  </span>
-                </p>
+                Created by{" "}
+                <span className="project-last-edited-name">
+                  {p.created_by || "Unknown"}
+                </span>
+              </p>
 
                 <hr />
 
                 <div className="project-actions">
                   <button
-                    onClick={() => navigate("/projects/edit")}
+                    onClick={() =>
+                            navigate("/projects/edit", {
+                              state: { projectId: p._id }
+                            })
+                          }
+
                     className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
                   >
                     <Pencil size={16} /> {t("Edit")}
                   </button>
 
-                  <button className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2">
+                  <button 
+                    onClick={() => handleDelete(p._id)}
+                    className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+                  >
                     <Trash2 size={16} /> {t("Delete")}
                   </button>
                 </div>
