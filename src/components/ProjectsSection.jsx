@@ -8,20 +8,6 @@ import RankProjectsPanel from "../components/RankProjectsPanel";
 import "../styles/ProjectsSection.css";
 
 
-const portfolioData = {
-  totalProjects: 6,
-  impactDistribution: {
-    green: 0,
-    orange: 0,
-    blue: 0,
-  },
-  riskBalance: {
-    high: 0,
-    medium: 0,
-    low: 0,
-  },
-  completedDetails: 0,
-};
 
 const ProjectsSection = ({ selectedBusinessId }) => {
   const { t } = useTranslation();
@@ -95,6 +81,20 @@ const handleDelete = async (projectId) => {
     console.error("DELETE FAILED:", err);
     alert("Failed to delete project.");
   }
+};
+const portfolioData = {
+  totalProjects: projects.length,
+  impactDistribution: {
+    green: 0,
+    orange: 0,
+    blue: 0,
+  },
+  riskBalance: {
+    high: 0,
+    medium: 0,
+    low: 0,
+  },
+  completedDetails: 0,
 };
 
 

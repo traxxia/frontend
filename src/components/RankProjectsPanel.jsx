@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   Button,
@@ -27,7 +27,12 @@ function RationaleToggle({ eventKey, children }) {
 
 const RankProjectsPanel = ({ show, projects }) => {
   const { t } = useTranslation();
-  const [projectList, setProjectList] = useState(projects);
+  const [projectList, setProjectList] = useState(projects || []);
+
+  // Keep local list in sync with incoming projects from API
+  useEffect(() => {
+    setProjectList(projects || []);
+  }, [projects]);
 
   if (!show) return null;
 
@@ -74,8 +79,8 @@ const RankProjectsPanel = ({ show, projects }) => {
             <Accordion alwaysOpen ref={provided.innerRef} {...provided.droppableProps}>
               {projectList.map((item, index) => (
                 <Draggable
-                  key={item.id}
-                  draggableId={item.id.toString()}
+                  key={item._id || index}
+                  draggableId={(item._id || index).toString()}
                   index={index}
                 >
                   {(provided, snapshot) => (
@@ -96,7 +101,7 @@ const RankProjectsPanel = ({ show, projects }) => {
 
                           {/* Content */}
                           <div className="rank-content">
-                            <h5 className="rank-project-title">{item.title}</h5>
+                            <h5 className="rank-project-title">{item.project_name || item.title}</h5>
                             <p className="rank-project-desc">{item.description}</p>
                           </div>
                           {/* ⭐ Drag handle (Grip icon) */}

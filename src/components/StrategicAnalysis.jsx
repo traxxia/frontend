@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   Loader,
@@ -71,7 +72,110 @@ const StrategicAnalysis = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [isFreshGeneration, setIsFreshGeneration] = useState(false);
   const [hasKickstarted, setHasKickstarted] = useState(false);
-  const handleKickstart = () => {
+  const handleKickstart = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const userId = sessionStorage.getItem("userId");
+
+      if (token && selectedBusinessId && userId && localStrategicData) {
+        const analysisData = localStrategicData.strategic_analysis || localStrategicData;
+        const recommendations = analysisData?.strategic_recommendations;
+
+        const pestelAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'pestel');
+        const portersAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'porters');
+
+        const pestelRec = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
+        const portersRec = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
+
+        const immediateActions = [
+          ...(pestelRec?.immediate_actions || []),
+          ...(portersRec?.immediate_actions || [])
+        ];
+
+        const shortTermInitiatives = [
+          ...(pestelRec?.short_term_initiatives || []),
+          ...(portersRec?.short_term_initiatives || [])
+        ];
+
+        const longTermShifts = [
+          ...(pestelRec?.long_term_strategic_shifts || []),
+          ...(portersRec?.long_term_strategic_shifts || [])
+        ];
+
+        const itemsToCreate = [];
+
+        immediateActions.forEach(action => {
+          if (!action || action === 'N/A') return;
+          itemsToCreate.push({
+            project_name: action.action,
+            description: action.rationale,
+            expected_outcome: action.expected_impact || '',
+            estimated_timeline: action.timeline || ''
+          });
+        });
+
+        shortTermInitiatives.forEach(initiative => {
+          if (!initiative || initiative === 'N/A') return;
+          itemsToCreate.push({
+            project_name: initiative.initiative,
+            description: initiative.expected_outcome || '',
+            expected_outcome: initiative.expected_outcome || '',
+            estimated_timeline: ''
+          });
+        });
+
+        longTermShifts.forEach(shift => {
+          if (!shift || shift === 'N/A') return;
+          itemsToCreate.push({
+            project_name: shift.shift,
+            description: shift.transformation_required || '',
+            expected_outcome: shift.competitive_advantage || '',
+            estimated_timeline: ''
+          });
+        });
+
+        for (const item of itemsToCreate) {
+          const payload = {
+            business_id: selectedBusinessId,
+            user_id: userId,
+            collaborators: [],
+            status: "draft",
+            project_name: item.project_name,
+            description: '',
+            why_this_matters: '',
+            impact: '',
+            effort: '',
+            risk: '',
+            strategic_theme: '',
+            dependencies: '',
+            high_level_requirements: '',
+            scope_definition: '',
+            expected_outcome: item.expected_outcome,
+            success_metrics:  item.success_metrics || item.metrics,
+            estimated_timeline: item.estimated_timeline,
+            budget_estimate: 0,
+          };
+
+          try {
+            await axios.post(
+              `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+              payload,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json"
+                }
+              }
+            );
+          } catch (postErr) {
+            console.error("Kickstart project creation failed", postErr);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Kickstart processing failed", e);
+    }
+
     if (onKickstartProjects) {
       try {
         onKickstartProjects();
