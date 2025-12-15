@@ -843,6 +843,11 @@ export const staticTranslations = {
   'Role':'Role',
   'Last_Active':'Last Active',
   'Action':'Action',
+  'Add_New_User':'Add New User',
+  'Enter_name':'Enter name',
+  'Enter_email':'Enter email',
+  'Enter_password':'Enter password',
+  'Select_role':'Select role',
   },
 
   es: {
@@ -1696,6 +1701,11 @@ export const staticTranslations = {
   'Role':'Rol',
   'Last_Active':'Última actividad',
   'Action':'Acción',
+  'Add_New_User':'Agregar nuevo usuario',
+  'Enter_name':'Ingrese nombre',
+  'Enter_email':'Ingrese correo',
+  'Enter_password':'Ingrese contraseña',
+  'Select_role':'Seleccione rol',
 
   }
 };

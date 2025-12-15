@@ -152,7 +152,185 @@
     border-radius: 8px;
 }
 
+.chat-wrapper {
+  background: #ffffff;
+  padding: 12px;
+}
 /* Ensure panel content doesn't hide under sticky toolbar */
 .ai-panel {
     padding-top: 20px;
+}
+
+.datasource-wrapper {
+  margin-top: 16px;
+  background: #ffffff;
+  padding: 14px 12px;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.datasource-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.datasource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.datasource-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #111827;
+}
+/* ----------------------------- */
+/*          DARK MODE            */
+/* ----------------------------- */
+
+[data-theme="dark"] .Ai-button {
+  background: linear-gradient(to right, #2c0f4a, #6b2b85) !important;
+  box-shadow: 0px 6px 20px rgba(150, 90, 255, 0.3) !important;
+}
+
+/* Main panel */
+[data-theme="dark"] .ai-panel {
+  background: #1a1a1a !important;
+  box-shadow: -4px 0px 20px rgba(0, 0, 0, 0.6) !important;
+  color: #e5e7eb !important;
+}
+
+/* Top bar */
+[data-theme="dark"] .ai-tool-bar {
+  background: #4c1d95 !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .credits-pill {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Close button */
+[data-theme="dark"] .ai-close-btn {
+  color: #fff !important;
+}
+
+/* Chat area */
+[data-theme="dark"] .ai-content {
+  background: #1a1a1a !important;
+}
+
+/* Assistant messages */
+[data-theme="dark"] .ai-content div[style*="#f3f4f6"] {
+  background: #2a2a2a !important;
+  color: #e5e7eb !important;
+}
+
+/* User messages */
+[data-theme="dark"] .ai-content div[style*="#6f3cff"] {
+  background: #5b21b6 !important;
+}
+
+/* Suggested questions */
+[data-theme="dark"] .ai-suggestion {
+  background: #2a2a2a !important;
+  color: #e5e7eb !important;
+  border: 1px solid #3f3f3f !important;
+}
+
+[data-theme="dark"] .ai-suggestion:hover {
+  background: #3a3a3a !important;
+}
+
+/* Data sources section */
+[data-theme="dark"] .ai-content label span,
+[data-theme="dark"] label span {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] input[type="checkbox"] {
+  accent-color: #8b5cf6 !important;
+}
+
+/* Data sources block */
+[data-theme="dark"] div[style*="background: #ffffff"] {
+  background: #1f1f1f !important;
+  border-color: #333 !important;
+  color: #e5e7eb !important;
+}
+
+/* Inputs */
+[data-theme="dark"] .ai-input-area {
+  background: #1f1f1f !important;
+  border-top: 1px solid #333 !important;
+}
+
+[data-theme="dark"] .ai-input {
+  background: #2a2a2a !important;
+  border: 1px solid #444 !important;
+  color: #fff !important;
+}
+
+/* Send button */
+[data-theme="dark"] .ai-send-button {
+  background: #5b21b6 !important;
+}
+
+[data-theme="dark"] .ai-send-button:disabled {
+  background: #3f3f3f !important;
+}
+
+/* Context box */
+[data-theme="dark"] div[style*="background: #E9F5FF"] {
+  background: #2a2340 !important;
+  border-bottom: 1px solid #4b3e68 !important;
+  color: #0b0b0c !important;
+}
+
+[data-theme="dark"] div[style*="font-size: 12px"] {
+  color: #110f0f !important;
+}
+
+[data-theme="dark"] div[style*="font-weight: 600"] {
+  color: #6b6969 !important;
+}
+
+[data-theme="dark"] .chat-container {
+  background: #0f172a; /* dark navy */
+}
+
+[data-theme="dark"] .bot-msg {
+  background: #1e293b;   /* slate bubble */
+  color: #e2e8f0;        /* light text */
+}
+
+[data-theme="dark"] .user-msg {
+  background: #6f3cff;   /* keep same purple */
+  color: #ffffff;
+}
+[data-theme="dark"] .chat-wrapper {
+  background: #0f172a !important;   /* Dark navy */
+}
+
+[data-theme="dark"] .datasource-wrapper {
+  background: #353638;        /* dark slate card */
+  border-top-color: #334155;  /* darker border */
+  border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .datasource-title {
+  color: #e5e7eb;             /* light title text */
+}
+
+[data-theme="dark"] .datasource-item {
+  color: #d1d5db;             /* grey text */
+}
+
+[data-theme="dark"] .datasource-item input {
+  accent-color: #6f3cff;      /* purple checkbox */
 }

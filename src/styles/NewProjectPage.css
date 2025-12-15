@@ -319,3 +319,111 @@
     width: 100%;
   }
 }
+
+/* ----------------------------- */
+/*          DARK MODE            */
+/* ----------------------------- */
+
+[data-theme="dark"] .page-wrapper {
+  background-color: #121212 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .header-card {
+  background-color: #1f1f1f !important;
+  box-shadow: 0 2px 8px rgba(255,255,255,0.05) !important;
+  border: 1px solid #333 !important;
+}
+
+[data-theme="dark"] .back-btn {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .breadcrumb {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .breadcrumb-strong {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .page-title {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .idea-tag {
+  background: #4c1d95 !important;
+  color: #f3e8ff !important;
+}
+
+/* Form cards */
+[data-theme="dark"] .form-card {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333 !important;
+  color: #e5e7eb !important;
+}
+
+/* Section Titles */
+[data-theme="dark"] .section-title {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .optional-tag {
+  background: #2c2c2c !important;
+  color: #cbd5e1 !important;
+}
+
+/* Field labels */
+[data-theme="dark"] .field-label,
+[data-theme="dark"] .sf-label {
+  color: #e5e7eb !important;
+}
+
+/* Inputs / Textareas */
+[data-theme="dark"] .field-input,
+[data-theme="dark"] .field-textarea {
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #555 !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] .field-textarea.transparent {
+  background: transparent !important;
+}
+
+/* SelectField */
+[data-theme="dark"] .sf-dropdown-header {
+  border-bottom: 1px solid #555 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .sf-options-container {
+  background: #1f1f1f !important;
+  border: 1px solid #555 !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5) !important;
+}
+
+[data-theme="dark"] .sf-option {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .sf-option:hover {
+  background-color: #333 !important;
+}
+
+/* Actions Buttons */
+[data-theme="dark"] .btn-cancel {
+  background: #333 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #555 !important;
+}
+
+[data-theme="dark"] .btn-cancel:hover {
+  background: #555 !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .btn-create {
+  background: linear-gradient(90deg, #9333ea, #a855f7) !important;
+  color: #fff !important;
+}

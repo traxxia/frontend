@@ -67,4 +67,116 @@
   border-top: 1px solid #dee2e6 !important;
 }
 
+/* ----------------------- */
+/*      USER MGMT DARK     */
+/* ----------------------- */
+
+[data-theme="dark"] {
+  background-color: #0f1217 !important;
+  color: #e5e7eb !important;
+}
+
+/* Page text */
+[data-theme="dark"] h2,
+[data-theme="dark"] h5,
+[data-theme="dark"] p,
+[data-theme="dark"] label,
+[data-theme="dark"] small,
+[data-theme="dark"] span {
+  color: #e5e7eb !important;
+}
+
+/* Cards */
+[data-theme="dark"] .card {
+  background-color: #1a1d23 !important;
+  border: 1px solid #2a2f38 !important;
+}
+
+/* Search Input */
+[data-theme="dark"] .search-input {
+  background-color: #1a1d23 !important;
+  border: 1px solid #2a2f38 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .search-icon {
+  color: #9ca3af !important;
+}
+
+/* Select */
+[data-theme="dark"] .role-select {
+  background-color: #1a1d23 !important;
+  border: 1px solid #2a2f38 !important;
+  color: #e5e7eb !important;
+}
+
+/* Table */
+[data-theme="dark"] .table-heading tr th {
+  background-color: #2a2f38 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] table tbody tr:hover {
+  background-color: #20242b !important;
+}
+
+/* Dropdown */
+[data-theme="dark"] .dropdown-menu {
+  background-color: #1a1d23 !important;
+  border: 1px solid #2a2f38 !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: #e5e7eb !important;
+}
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: #2a2f38 !important;
+}
+
+/* Modal */
+[data-theme="dark"] .modal-content {
+  background-color: #1a1d23 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: #1a1d23 !important;
+  border: 1px solid #2a2f38 !important;
+  color: #e5e7eb !important;
+}
+
+/* Status badges dim */
+[data-theme="dark"] span[style*="background-color"] {
+  filter: brightness(0.8);
+}
+
+/* =============================== */
+/*   DARK MODE – USER TABLE FIX    */
+/* =============================== */
+
+[data-theme="dark"] table {
+  background-color: #1a1d23 !important;
+}
+
+[data-theme="dark"] table tbody tr {
+  background-color: #1a1d23 !important;
+  border-bottom: 1px solid #2a2f38 !important;
+}
+
+[data-theme="dark"] table tbody tr td {
+  background-color: #1a1d23 !important;
+  color: #e5e7eb !important;
+}
+
+/* Hover effect */
+[data-theme="dark"] table tbody tr:hover {
+  background-color: #242830 !important;
+}
+
+/* User icon circle */
+[data-theme="dark"] td div[style*="border-radius"] {
+  background-color: #2a2f38 !important;
+  color: #cbd5e1 !important;
+}
 

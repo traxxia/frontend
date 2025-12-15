@@ -39,7 +39,8 @@ const MemoizedAnalysisCard = React.memo(
     isHighlighted,
     onToggleCard,
     streamingManager,
-    hideRegenerateButtons
+    hideRegenerateButtons,
+    canRegenerate 
   }) => {
     const getStatusIcon = () => {
       if (isRegenerating || isLoading) {
@@ -75,11 +76,12 @@ const MemoizedAnalysisCard = React.memo(
             <div onClick={(e) => e.stopPropagation()}>
               <RegenerateButton
                 onRegenerate={() => {
+                  if (!canRegenerate) return;
                   streamingManager.startStreaming(id);
                   onRegenerate?.();
                 }}
                 isRegenerating={isRegenerating || isLoading}
-                canRegenerate={!!onRegenerate}
+                canRegenerate={canRegenerate}  
                 sectionName={title}
                 size="small"
                 hideRegenerateButtons={hideRegenerateButtons}
@@ -506,6 +508,7 @@ const AnalysisContentManager = (props) => {
         onToggleCard={toggleCard}
         streamingManager={streamingManager}
         hideRegenerateButtons={hideRegenerateButtons}
+        canRegenerate={props.canRegenerate}
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component
@@ -514,7 +517,7 @@ const AnalysisContentManager = (props) => {
             businessName={props.businessData.name}
             onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
-            canRegenerate={!props.isAnalysisRegenerating}
+            canRegenerate={props.canRegenerate} 
             {...{ [dataKey]: data }}
             selectedBusinessId={props.selectedBusinessId}
             onRedirectToBrief={props.handleRedirectToBrief}

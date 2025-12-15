@@ -77,6 +77,17 @@ const BusinessSetupPage = () => {
   const [collapsedCategories, setCollapsedCategories] = useState(
     new Set(['costs-financial', 'context-industry', 'customer', 'capabilities', 'competition', 'current-strategy'])
   );
+
+  const getLoggedInRole = () => {
+    return (
+      sessionStorage.getItem("role") ||
+      sessionStorage.getItem("userRole") ||
+      ""
+    ).toLowerCase();
+  };
+
+  const loggedInRole = getLoggedInRole();
+  const canRegenerate = !["viewer"].includes(loggedInRole);
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
@@ -811,8 +822,8 @@ const BusinessSetupPage = () => {
                           />
 
                           <button
-                            onClick={() => handleRegeneratePhase(currentPhase)}
-                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+                            onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
                             className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                           >
                             {isAnalysisRegenerating ? (
@@ -841,8 +852,8 @@ const BusinessSetupPage = () => {
                             strategicData={strategicData}
                           />
                           <button
-                            onClick={handleStrategicAnalysisRegenerate}
-                            disabled={isStrategicRegenerating || isAnalysisRegenerating}
+                            onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                            disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate}
                             className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating ? 'disabled' : ''}`}
                           >
                             {isStrategicRegenerating ? (
@@ -864,7 +875,10 @@ const BusinessSetupPage = () => {
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
-                      {activeTab === "analysis" && <AnalysisContentManager {...analysisProps} />}
+                      {activeTab === "analysis" && 
+                        <AnalysisContentManager 
+                          {...analysisProps}
+                          canRegenerate={canRegenerate}  />}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -888,7 +902,7 @@ const BusinessSetupPage = () => {
                           />
                         </div>
                       )}
-                      {activeTab === "projects" && <ProjectsSection />}
+                      {activeTab === "projects" && <ProjectsSection selectedBusinessId={selectedBusinessId} />}
                     </div>
                   </div>
                 </div>
@@ -917,8 +931,8 @@ const BusinessSetupPage = () => {
                   {activeTab === "analysis" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
                       <button
-                        onClick={() => handleRegeneratePhase(currentPhase)}
-                        disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+                        onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                        disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
                         className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                       >
                         {isAnalysisRegenerating ? (
@@ -974,7 +988,9 @@ const BusinessSetupPage = () => {
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
                       <div className="analysis-content">
-                        <AnalysisContentManager {...analysisProps} />
+                        <AnalysisContentManager 
+                          {...analysisProps}
+                          canRegenerate={canRegenerate}  />
                       </div>
                     </div>
                   )}
@@ -999,9 +1015,9 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {activeTab === "projects" && (
+                {activeTab === "projects" && (
                     <div className="projects-container">
-                      <ProjectsSection />
+                      <ProjectsSection selectedBusinessId={selectedBusinessId} />
                     </div>
                   )}
                 </div>
@@ -1047,8 +1063,8 @@ const BusinessSetupPage = () => {
                     {unlockedFeatures.analysis && (
                       <div className="analysis-section-mobile-controls">
                         <button
-                          onClick={() => handleRegeneratePhase(currentPhase)}
-                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis}
+                          onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
                           className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                         >
                           {isAnalysisRegenerating ? (
@@ -1066,7 +1082,9 @@ const BusinessSetupPage = () => {
                       </div>
                     )}
                     <div className="analysis-content">
-                      <AnalysisContentManager {...analysisProps} />
+                      <AnalysisContentManager 
+                        {...analysisProps}
+                        canRegenerate={canRegenerate}  />
                     </div>
                   </div>
                 )}

@@ -250,3 +250,130 @@
     flex-direction: row;
   }
 }
+
+/* ========================================= */
+/*               DARK MODE                   */
+/* ========================================= */
+
+[data-theme="dark"] .projects-wrapper {
+  background-color: #121317 !important;
+}
+
+/* -------- OPEN COLLAB CARD -------- */
+[data-theme="dark"] .open-collab-card {
+  background-color: #1c1f26 !important;
+  border-color: #589be9ff !important;
+}
+
+[data-theme="dark"] .open-collab-title,
+[data-theme="dark"] .open-collab-text {
+  color: #8bbcff !important;
+}
+
+[data-theme="dark"] .open-collab-btn {
+  background-color: transparent !important;
+  border-color: #589be9ff !important;
+  color: #8bbcff !important;
+}
+
+/* -------- PORTFOLIO CARD -------- */
+[data-theme="dark"] .portfolio-card {
+  background-color: #1c1f26 !important;
+  border-color: #2a2f3a !important;
+}
+
+[data-theme="dark"] .portfolio-title {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .portfolio-box {
+  background-color: #2a2f3a !important;
+  border-color: #3a404c !important;
+}
+
+[data-theme="dark"] .portfolio-label {
+  color: #9ca3af !important;
+}
+
+/* -------- IMPACT DOTS -------- */
+[data-theme="dark"] .impact-dot.blue {
+  background-color: #6b7aff !important;
+}
+
+/* -------- RISK ROW -------- */
+[data-theme="dark"] .risk-item span {
+  color: #e5e7eb !important;
+}
+
+/* -------- PROJECT HEADER -------- */
+[data-theme="dark"] .projects-small-title {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .projects-count {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .btn-new-project {
+  background-color: #1d4ed8 !important;
+}
+
+[data-theme="dark"] .btn-rank-projects {
+  background-color: #c27803 !important;
+}
+
+/* -------- PROJECTS LIST -------- */
+[data-theme="dark"] .projects-list-wrapper {
+  background-color: #1c1f26 !important;
+  border-color: #2a2f3a !important;
+}
+
+/* -------- PROJECT CARD -------- */
+[data-theme="dark"] .project-card {
+  background-color: #2a2f3a !important;
+  border-color: #3a404c !important;
+}
+
+[data-theme="dark"] .project-initiative {
+  color: #d1d5db !important;
+}
+
+[data-theme="dark"] .project-initiative-highlight {
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .project-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .project-description {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .project-quote {
+  background-color: #1e293b !important;
+  border-color: #589be9ff !important;
+  color: #8bbcff !important;
+}
+
+[data-theme="dark"] .project-last-edited {
+  color: #9ca3af !important;
+}
+
+[data-theme="dark"] .project-last-edited-name {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+  border-color: #6b7280 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .btn-outline-danger {
+  border-color: #ef4444 !important;
+  color: #f87171 !important;
+}
+[data-theme="dark"] .portfolio-box h3.fw-bold {
+  color: #ffffff !important;   /* Bright white number */
+}
+

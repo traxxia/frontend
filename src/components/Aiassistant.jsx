@@ -86,12 +86,7 @@ const Aiassistant = () => {
         </div>
           <div className="ai-content">
             {/* Chat Window */}
-            <div
-              style={{
-                background: "#ffffffff",
-                padding: 12,
-              }}
-            >
+            <div className="chat-wrapper">
               {messages.map((m, idx) => (
                 <div
                   key={idx}
@@ -138,27 +133,10 @@ const Aiassistant = () => {
             </div>
           </div>
           {/* Data Sources - Accordion */}
-          <div
-          style={{
-            marginTop: 16,
-            background: "#ffffff",
-            padding: "14px 12px",
-            borderTop: "1px solid #e5e7eb",
-            borderBottom: "1px solid #e5e7eb",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              marginBottom: 10,
-              color: "#111827",
-            }}
-          >
-            Data Sources
-          </div>
+          <div className="datasource-wrapper">
+          <div className="datasource-title">Data Sources</div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="datasource-list">
             {[
               { key: "internet", label: "Internet Search (Perplexity)" },
               { key: "traxxia", label: "Traxxia Insights" },
