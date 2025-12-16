@@ -370,6 +370,239 @@
   color: #16a34a; /* green check */
 }
 
+.project-locked-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.project-locked-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.finalize-prioritization-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  background-color: #ffffff;
+  color: #f59e0b;
+
+  border: 1px solid #f5c26b;
+  border-radius: 9999px; 
+
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* icon */
+.finalize-prioritization-btn svg {
+  stroke: #f59e0b;
+}
+
+/* hover */
+.finalize-prioritization-btn:hover {
+  background-color: #fff3bf;
+  border-color: #f59e0b;
+}
+
+/* remove bootstrap focus */
+.finalize-prioritization-btn:focus,
+.finalize-prioritization-btn:active {
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* ------------------------------- */
+/* PRIORITIZATION COMPLETE CARD */
+/* ------------------------------- */
+
+.prioritization-complete-card {
+  margin-top: 12px;
+  margin-bottom: 22px;
+  padding: 28px 32px;
+  background: #dcfce7;
+  border: 1px solid #22c55e;
+  border-radius: 8px;
+}
+
+.prioritization-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #16a34a;
+  margin-bottom: 6px;
+}
+
+.prioritization-subtitle {
+  font-size: 14px;
+  color: #166534;
+  margin: 0;
+}
+
+.launch-projects-btn {
+  background: #ffffff;
+  color: #16a34a;
+  border: 1px solid #22c55e;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ------------------------------- */
+/* PROJECT HEADER – FINALIZED */
+/* ------------------------------- */
+
+.projects-header-finalized .projects-small-title {
+  color: #16a34a;
+}
+
+.projects-header-finalized .projects-count {
+  color: #15803d;
+}
+.project-card {
+  position: relative;
+}
+
+.project-serial-number {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+
+  width: 32px;
+  height: 32px;
+
+  background-color: #16a34a; 
+  color: #e9ecef;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  border-radius: 50%; 
+}
+.finalized-view .project-initiative {
+  padding-left: 37px; /* 32px circle + 12px gap */
+  display: flex;
+  align-items: center;
+  min-height: 32px; 
+}
+
+.finalize-toast-wrapper {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1055;
+}
+
+.finalize-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.finalize-toast-body svg {
+  color: #22c55e; 
+}
+
+.launched-card {
+  background: #eafff3;
+  border: 1px solid #34c759;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.launched-title {
+  color: #0f9d58;
+  font-weight: 700;
+}
+
+.launched-subtitle {
+  color: #2e7d32;
+  margin-bottom: 0;
+}
+
+/* View Details – EXACT image look (outlined mint) */
+.view-details-btn {
+  width: 100%;
+  padding: 12px 0;
+
+  background: #f6fffb !important;   
+  border: 1px solid #2fbf71 !important;
+  border-radius: 10px;
+
+  color: #1f7a4f !important;        
+  font-size: 14px;
+  font-weight: 500;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+/* Hover – slightly stronger mint */
+.view-details-btn:hover {
+  background: #e9fbf2 !important;
+  border-color: #25a964 !important;
+  color: #1b6b45 !important;
+}
+
+/* Remove bootstrap focus/active effects */
+.view-details-btn:focus,
+.view-details-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* Launch toast position */
+.launch-toast-wrapper {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+/* Toast body style (matches image) */
+.launch-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px 16px;
+
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Icon color */
+.launch-toast-body svg {
+  color: #16a34a; 
+}
+
 
 
 

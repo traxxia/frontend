@@ -9,7 +9,7 @@ import "../styles/ProjectsSection.css";
 
 
 
-const ProjectsSection = ({ selectedBusinessId }) => {
+const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   const { t } = useTranslation();
   const [userRole, setUserRole] = useState("");
   const [showRankScreen, setShowRankScreen] = useState(false);
@@ -18,6 +18,11 @@ const ProjectsSection = ({ selectedBusinessId }) => {
   const [showLockToast, setShowLockToast] = useState(false);
   const [projectCreationLocked, setProjectCreationLocked] = useState(false);
   const [showProjectLockToast, setShowProjectLockToast] = useState(false);
+  const [rankingLockedFirst, setRankingLockedFirst] = useState(false);
+  const [finalizeCompleted, setFinalizeCompleted] = useState(false);
+  const [showFinalizeToast, setShowFinalizeToast] = useState(false);
+  const [launched, setLaunched] = useState(false);
+  const [showLaunchToast, setShowLaunchToast] = useState(false);
 
 
   const token = sessionStorage.getItem("token");
@@ -55,7 +60,11 @@ const ProjectsSection = ({ selectedBusinessId }) => {
         }
       );
 
-      setProjects(res.data?.projects || []);
+      const fetched = res.data?.projects || [];
+      setProjects(fetched);
+      if (onProjectCountChange) {
+        onProjectCountChange(fetched.length);
+      }
     } catch (err) {
       console.error("Error fetching projects:", err);
     }
@@ -82,7 +91,11 @@ const handleDelete = async (projectId) => {
     alert("Project deleted successfully!");
 
     // Optionally refresh the list
-    setProjects(projects.filter(p => p._id !== projectId));
+    const updated = projects.filter(p => p._id !== projectId);
+    setProjects(updated);
+    if (onProjectCountChange) {
+      onProjectCountChange(updated.length);
+    }
 
   } catch (err) {
     console.error("DELETE FAILED:", err);
@@ -103,6 +116,12 @@ const portfolioData = {
   },
   completedDetails: 0,
 };
+
+const isFinalized =
+  rankingsLocked &&
+  projectCreationLocked &&
+  rankingLockedFirst;
+
 
 
   return (
@@ -141,12 +160,13 @@ const portfolioData = {
                 </Col>
               </Row>
             </Card>
-          ) : (
-            <Card className="project-creation-locked-card shadow-sm">
-              <Row>
-                <Col>
-                  <div className="project-locked-content">
-                    <div className="project-locked-header">
+          ) : !finalizeCompleted ? (
+          <Card className="project-creation-locked-card shadow-sm">
+            <Row>
+              <Col>
+                <div className="project-locked-content">
+                  <div className="project-locked-header project-locked-header-row">
+                    <div className="project-locked-left">
                       <span className="project-locked-title">
                         Project Creation Locked
                       </span>
@@ -156,18 +176,73 @@ const portfolioData = {
                       </span>
                     </div>
 
-                    <p className="project-locked-subtitle">
-                      No new projects can be added. Continue ranking and updating.
-                    </p>
+                    {isFinalized && (
+                      <button
+                        className="finalize-prioritization-btn"
+                        onClick={() => {
+                          setFinalizeCompleted(true);
+                          setShowFinalizeToast(true);
+
+                          // auto-hide toast after 3 seconds
+                          setTimeout(() => setShowFinalizeToast(false), 3000);
+                        }}
+                      >
+                        <CheckCircle size={16} />
+                        Finalize Prioritization
+                      </button>
+                    )}
                   </div>
-                </Col>
-              </Row>
-            </Card>
 
-          )}
-        </div>
-      )}
+                  <p className="project-locked-subtitle">
+                    No new projects can be added. Continue ranking and updating.
+                  </p>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+        ) : launched ? (
+          <Card className="launched-card shadow-sm">
+            <Row>
+              <Col>
+                <h5 className="launched-title">Launched</h5>
+                <p className="launched-subtitle">
+                  Projects ready for execution
+                </p>
+              </Col>
+            </Row>
+          </Card>
+        ) : (
+          <Card className="prioritization-complete-card shadow-sm">
 
+            <Row className="align-items-center">
+              <Col md={8}>
+                <h5 className="prioritization-title">
+                  Prioritization Complete
+                </h5>
+                <p className="prioritization-subtitle">
+                  Projects prioritized. Complete all required details before launch.
+                </p>
+              </Col>
+
+              <Col md={4} className="d-flex justify-content-end">
+                <button
+                  className="launch-projects-btn"
+                  onClick={() => {
+                    setLaunched(true);
+                    setShowLaunchToast(true);
+
+                    // auto-hide after 3 seconds
+                    setTimeout(() => setShowLaunchToast(false), 3000);
+                  }}
+                >
+                  Launch Projects
+                </button>
+              </Col>
+            </Row>
+          </Card>
+        )}
+          </div>
+        )}
       {/* PORTFOLIO OVERVIEW */}
       <Card className="portfolio-card shadow-sm">
         <h5 className="portfolio-title fw-bold mb-4">{t("Portfolio_Overview")}</h5>
@@ -245,27 +320,31 @@ const portfolioData = {
           </h2>
 
           <div className="d-flex gap-2 flex-wrap justify-content-end">
-            <button
-              onClick={() => navigate(`/projects/new/${selectedBusinessId}`)}
-              className="btn-new-project"
-            >
-              <Plus size={18} />
-              {t("New_Project")}
-            </button>
-
-            {rankingsLocked ? (
-              <button className="btn-rankings-locked" disabled>
-                <Lock size={18} />
-                {t("Rankings_Locked")}
-              </button>
-            ) : (
+            {!isFinalized && (
               <button
-                onClick={() => setShowRankScreen(!showRankScreen)}
-                className="btn-rank-projects"
+                onClick={() => navigate(`/projects/new/${selectedBusinessId}`)}
+                className="btn-new-project"
               >
-                <ListOrdered size={18} />
-                {showRankScreen ? t("Hide") : t("Rank_Projects")}
+                <Plus size={18} />
+                {t("New_Project")}
               </button>
+            )}
+
+            {!isFinalized && (
+              rankingsLocked ? (
+                <button className="btn-rankings-locked" disabled>
+                  <Lock size={18} />
+                  {t("Rankings_Locked")}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowRankScreen(!showRankScreen)}
+                  className="btn-rank-projects"
+                >
+                  <ListOrdered size={18} />
+                  {showRankScreen ? t("Hide") : t("Rank_Projects")}
+                </button>
+              )
             )}
           </div>
         </div>
@@ -276,6 +355,7 @@ const portfolioData = {
         projects={projects}
           onLockRankings={() => {
             setRankingsLocked(true);
+            setRankingLockedFirst(true);
             setShowLockToast(true);
 
             // auto-hide after 3 seconds
@@ -348,13 +428,23 @@ const portfolioData = {
       </div>
 
       {/* PROJECTS LIST */}
-      <div className="projects-list-wrapper">
+      <div className={`projects-list-wrapper ${isFinalized ? "finalized-view" : ""}`}>
         <Row className="g-4">
-          {projects.map((p) => (
-             <Col xs={12} sm={12} md={6} key={p._id}>
+          {projects.map((p, index) => (
+             <Col
+              xs={12}
+              sm={12}
+              md={isFinalized ? 12 : 6}
+              key={p._id}
+            >
               <div className="project-card">
+                  {finalizeCompleted && (
+                    <div className="project-serial-number">
+                      {index + 1}
+                    </div>
+                  )}
                 <p className="project-initiative">
-                  from{" "}
+                  from&nbsp;
                   <span className="project-initiative-highlight">{p.initiative || "initiatives"}</span>
                 </p>
 
@@ -374,26 +464,38 @@ const portfolioData = {
                 <hr />
 
                 <div className="project-actions">
-                  {/* Edit button – always visible */}
-                  <button
-                    onClick={() =>
-                      navigate("/projects/edit", {
-                        state: { projectId: p._id }
-                      })
-                    }
-                    className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2"
-                  >
-                    <Pencil size={16} /> {t("Edit")}
-                  </button>
-                  {/* Delete button – hidden when project creation is locked */}
-                  {!projectCreationLocked && (
+                  {launched ? (
+                    <button 
+                      onClick={() =>
+                        navigate("/projects/edit", {
+                          state: { projectId: p._id,mode: "view", }
+                        })
+                      }
+                      className="view-details-btn"
+                    >
+                      View Details
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        navigate("/projects/edit", {
+                          state: { projectId: p._id }
+                        })
+                      }
+                      className="view-details-btn"
+                    >
+                      <Pencil size={16} /> Edit
+                    </button>
+                  )}
+
+                  { isSuperAdmin && !projectCreationLocked && (                  
                     <button
                       onClick={() => handleDelete(p._id)}
                       className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
                     >
-                      <Trash2 size={16} /> {t("Delete")}
+                      <Trash2 size={16} /> Delete
                     </button>
-                  )}
+                  )}      
                 </div>
               </div>
             </Col>
@@ -421,6 +523,31 @@ const portfolioData = {
           </Toast.Body>
         </Toast>
       </div>
+      {/* Finalize Prioritization Toast */}
+      <div className="finalize-toast-wrapper">
+        <Toast
+          show={showFinalizeToast}
+          onClose={() => setShowFinalizeToast(false)}
+        >
+          <Toast.Body className="finalize-toast-body">
+            <CheckCircle size={18} />
+            <span>Prioritization complete! Add detailed planning.</span>
+          </Toast.Body>
+        </Toast>
+      </div>
+      {/* Launch Projects Toast */}
+      <div className="launch-toast-wrapper">
+        <Toast
+          show={showLaunchToast}
+          onClose={() => setShowLaunchToast(false)}
+        >
+          <Toast.Body className="launch-toast-body">
+            <CheckCircle size={18} />
+            <span>Projects launched! Ready for execution.</span>
+          </Toast.Body>
+        </Toast>
+      </div>
+
 
     </Container>
   );

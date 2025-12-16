@@ -94,7 +94,7 @@ const themeOptions = [
     icon: <Boxes size={16} color="#fb923c" />, // orange
   },
 ];
-const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) => {
+const SelectField = ({ label, icon, options, value, onChange, open, setOpen, disabled }) => {
   return (
     <div>
       <label style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
@@ -103,16 +103,17 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
 
       <div style={{ position: "relative", marginTop: "8px" }}>
         <div
-          onClick={() => setOpen(!open)}
+          onClick={() => !disabled && setOpen(!open)}
           style={{
             width: "100%",
             fontSize: "15px",
             borderBottom: "1px solid #e5e7eb",
             paddingBottom: "6px",
-            cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            cursor: disabled ? "not-allowed" : "pointer",
+            opacity: disabled ? 0.6 : 1,
           }}
         >
           <span>{value || `Select ${label.toLowerCase()}`}</span>
@@ -181,8 +182,11 @@ const [successMetrics, setSuccessMetrics] = useState("");
 const [timeline, setTimeline] = useState("");
 const [budget, setBudget] = useState("");
 
-  const { state } = useLocation();
-  const projectId = state?.projectId;
+const location = useLocation();
+const projectId = location.state?.projectId;
+const isReadOnly = location.state?.mode === "view";
+
+
 
 
 useEffect(() => {
@@ -361,6 +365,8 @@ const handleSave = async () => {
                 type="text"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
+                readOnly={isReadOnly}
+                className={isReadOnly ? "readonly-input" : ""}
                 placeholder="Digital Wallet Launch"
                 style={{
                 marginTop: "8px",
@@ -384,6 +390,8 @@ const handleSave = async () => {
             <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                readOnly={isReadOnly}
+                className={isReadOnly ? "readonly-input" : ""}
                 placeholder="Launch digital wallet product and achieve market penetration"
                 rows={3}
                 style={{
@@ -409,10 +417,12 @@ const handleSave = async () => {
             <textarea
                 value={importance}
                 onChange={(e) => setImportance(e.target.value)}
+                readOnly={isReadOnly}
+                className={isReadOnly ? "readonly-input" : ""}
                 placeholder="Explain why this project is strategically important"
                 rows={3}
                 style={{
-              marginTop: "0",
+                marginTop: "0",
                 width: "100%",
                 fontSize: "15px",
                 color: "#111827",
@@ -479,6 +489,7 @@ const handleSave = async () => {
                 setOpen={() =>
                   setOpenDropdown(openDropdown === "impact" ? null : "impact")
                 }
+                disabled={isReadOnly} 
               />
           </div>
             {/* Effort */}
@@ -493,6 +504,7 @@ const handleSave = async () => {
                 setOpen={() =>
                   setOpenDropdown(openDropdown === "effort" ? null : "effort")
                 }
+                disabled={isReadOnly} 
               />
 
             </div>
@@ -509,6 +521,7 @@ const handleSave = async () => {
                 setOpen={() =>
                   setOpenDropdown(openDropdown === "risk" ? null : "risk")
                 }
+                disabled={isReadOnly} 
               />
             </div>
           </div>
@@ -526,6 +539,7 @@ const handleSave = async () => {
               setOpen={() =>
                 setOpenDropdown(openDropdown === "theme" ? null : "theme")
               }
+              disabled={isReadOnly} 
             />
           </div>
           <div style={{ marginBottom: "26px" }}>
@@ -536,6 +550,8 @@ const handleSave = async () => {
             <textarea
               value={dependencies}
               onChange={e => setDependencies(e.target.value)}
+              readOnly={isReadOnly}
+              className={isReadOnly ? "readonly-input" : ""}
               placeholder="List dependencies (one per line)"
               rows={3}
               style={{
@@ -582,6 +598,8 @@ const handleSave = async () => {
             <textarea
               value={highLevelReq}
               onChange={e => setHighLevelReq(e.target.value)}
+              readOnly={isReadOnly}
+              className={isReadOnly ? "readonly-input" : ""}
               placeholder="What are the main requirements?"
               rows={3}
               style={{
@@ -606,6 +624,8 @@ const handleSave = async () => {
               value={scope}
               onChange={e => setScope(e.target.value)}
               placeholder="Define the project scope"
+              readOnly={isReadOnly}
+              className={isReadOnly ? "readonly-input" : ""}
               rows={3}
               style={{
                 marginTop: "0",
@@ -631,6 +651,8 @@ const handleSave = async () => {
               value={outcome}
               onChange={e => setOutcome(e.target.value)}
               placeholder="What is the end result?"
+              readOnly={isReadOnly}
+              className={isReadOnly ? "readonly-input" : ""}
               rows={3}
               style={{
                 marginTop: "0",
@@ -656,6 +678,8 @@ const handleSave = async () => {
               value={successMetrics}
               onChange={e => setSuccessMetrics(e.target.value)} 
               placeholder="How will you measure success? (one metric per line)"
+              readOnly={isReadOnly}
+              className={isReadOnly ? "readonly-input" : ""}
               rows={3}
               style={{
                 marginTop: "0",
@@ -687,6 +711,8 @@ const handleSave = async () => {
                 type="text"
                 value={timeline}
                 onChange={e => setTimeline(e.target.value)}
+                readOnly={isReadOnly}
+                className={isReadOnly ? "readonly-input" : ""}
                 placeholder="e.g., 3–6 months"
                 style={{
                   marginTop: "8px",
@@ -711,6 +737,8 @@ const handleSave = async () => {
                 value={budget}
                 onChange={e => setBudget(e.target.value)}
                 placeholder="e.g., $50K - $100K"
+                readOnly={isReadOnly}
+                className={isReadOnly ? "readonly-input" : ""}
                 style={{
                   marginTop: "8px",
                   width: "100%",
@@ -726,6 +754,7 @@ const handleSave = async () => {
           </div>
         </div>
       </div>
+      {!isReadOnly && (
       <div
   style={{
     display: "flex",
@@ -759,6 +788,7 @@ const handleSave = async () => {
     {t("Save_Changes")}
   </button>
 </div>
+)}
 
     </div>
   );
