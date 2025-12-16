@@ -52,6 +52,45 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   }, []);
 
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
+   const updateBusinessStatus = async (newStatus) => {
+
+    if (!selectedBusinessId) return;
+
+    try {
+
+      const token = sessionStorage.getItem("token");
+
+      if (!token) return;
+
+
+
+      await axios.patch(
+
+        `${process.env.REACT_APP_BACKEND_URL}/api/business/${selectedBusinessId}/status`,
+
+        { status: newStatus },
+
+        {
+
+          headers: {
+
+            Authorization: `Bearer ${token}`,
+
+            "Content-Type": "application/json",
+
+          },
+
+        }
+
+      );
+
+    } catch (err) {
+
+      console.error("Failed to update business status", err);
+
+    }
+
+  };
 
   useEffect(() => {
     if (!selectedBusinessId) return;
@@ -82,6 +121,83 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
       setProjects(fetched);
       if (onProjectCountChange) {
         onProjectCountChange(fetched.length);
+      }
+       // Derive portfolio status from project statuses so it persists
+
+      const statuses = fetched
+
+        .map((p) => p.status)
+
+        .filter(Boolean);
+
+
+
+      let backendStatus = "draft";
+
+      if (statuses.includes("launched")) {
+
+        backendStatus = "launched";
+
+      } else if (statuses.includes("prioritized")) {
+
+        backendStatus = "prioritized";
+
+      } else if (statuses.includes("prioritizing")) {
+
+        backendStatus = "prioritizing";
+
+      }
+
+
+
+      if (backendStatus === "draft") {
+
+        setProjectCreationLocked(false);
+
+        setRankingsLocked(false);
+
+        setRankingLockedFirst(false);
+
+        setFinalizeCompleted(false);
+
+        setLaunched(false);
+
+      } else if (backendStatus === "prioritizing") {
+
+        setProjectCreationLocked(true);
+
+        setRankingsLocked(false);
+
+        setRankingLockedFirst(false);
+
+        setFinalizeCompleted(false);
+
+        setLaunched(false);
+
+      } else if (backendStatus === "prioritized") {
+
+        setProjectCreationLocked(true);
+
+        setRankingsLocked(true);
+
+        setRankingLockedFirst(true);
+
+        setFinalizeCompleted(true);
+
+        setLaunched(false);
+
+      } else if (backendStatus === "launched") {
+
+        setProjectCreationLocked(true);
+
+        setRankingsLocked(true);
+
+        setRankingLockedFirst(true);
+
+        setFinalizeCompleted(true);
+
+        setLaunched(true);
+
       }
     } catch (err) {
       console.error("Error fetching projects:", err);
@@ -131,8 +247,29 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   };
 
   const isFinalized = rankingsLocked && projectCreationLocked && rankingLockedFirst;
+ 
+   const status = launched
 
-  // Handle opening new project form
+    ? "launched"
+
+    : finalizeCompleted
+
+    ? "prioritized"
+
+    : projectCreationLocked
+
+    ? "prioritizing"
+
+    : "draft";
+
+
+
+  const isDraft = status === "draft";
+  const isPrioritizing = status === "prioritizing";
+  const isPrioritized = status === "prioritized";
+  const isLaunched = status === "launched";
+  const isFinalizedView = isPrioritized || isLaunched;
+
   const handleNewProject = () => {
     resetForm();
     setActiveView("new");
@@ -347,6 +484,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                       onClick={() => {
                         setProjectCreationLocked(true);
                         setShowProjectLockToast(true);
+                        updateBusinessStatus("prioritizing");
                         setTimeout(() => {
                           setShowProjectLockToast(false);
                         }, 3000);
@@ -380,6 +518,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                             onClick={() => {
                               setFinalizeCompleted(true);
                               setShowFinalizeToast(true);
+                              updateBusinessStatus("prioritized");
                               setTimeout(() => setShowFinalizeToast(false), 3000);
                             }}
                           >
@@ -425,6 +564,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                       onClick={() => {
                         setLaunched(true);
                         setShowLaunchToast(true);
+                        updateBusinessStatus("launched");
                         setTimeout(() => setShowLaunchToast(false), 3000);
                       }}
                     >
@@ -510,7 +650,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
             </h2>
 
             <div className="d-flex gap-2 flex-wrap justify-content-end">
-              {!isFinalized && (
+              {!isLaunched && (
                 <button
                   onClick={handleNewProject}
                   className="btn-new-project"
@@ -520,25 +660,63 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                 </button>
               )}
 
-              {!isFinalized && (
-                rankingsLocked ? (
-                  <button className="btn-rankings-locked" disabled>
-                    <Lock size={18} />
-                    {t("Rankings_Locked")}
-                  </button>
-                ) : (
+              {isPrioritizing && !rankingsLocked && (
+
+              <button
+
+                onClick={() => setShowRankScreen(!showRankScreen)}
+
+                className="btn-rank-projects"
+
+              >
+
+                <ListOrdered size={18} />
+
+                {showRankScreen ? t("Hide") : t("Rank_Projects")}
+
+              </button>
+
+            )}
+
+
+
+            {isPrioritizing && rankingsLocked && (
+
+              <>
+
+                <button className="btn-rankings-locked" disabled>
+
+                  <Lock size={18} />
+
+                  {t("Rankings_Locked")}
+
+                </button>
+
+                {showRankScreen && (
+
                   <button
-                    onClick={() => setShowRankScreen(!showRankScreen)}
+
+                    onClick={() => setShowRankScreen(false)}
+
                     className="btn-rank-projects"
+
                   >
-                    <ListOrdered size={18} />
-                    {showRankScreen ? t("Hide") : t("Rank_Projects")}
+
+                    {t("Hide")}
+
                   </button>
-                )
-              )}
-            </div>
+
+                )}
+
+              </>
+
+            )}
+
           </div>
+
         </div>
+
+      </div>
 
         <RankProjectsPanel
           show={showRankScreen}
@@ -550,7 +728,8 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
             setTimeout(() => setShowLockToast(false), 3000);
           }}
         />
-
+        
+        {isPrioritizing && (
         <div className="rank-list mt-4">
           <Accordion>
             <Accordion.Item eventKey="0">
@@ -610,15 +789,16 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
             </Accordion.Item>
           </Accordion>
         </div>
+        )}
 
         {/* PROJECTS LIST */}
-        <div className={`projects-list-wrapper ${isFinalized ? "finalized-view" : ""}`}>
+        <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
           <Row className="g-4">
             {projects.map((p, index) => (
               <Col
                 xs={12}
                 sm={12}
-                md={isFinalized ? 12 : 6}
+                md={isFinalizedView ? 12 : 6}
                 key={p._id}
               >
                 <div className="project-card">
