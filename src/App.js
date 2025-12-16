@@ -11,8 +11,6 @@ import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin 
 import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
-import NewProjectPage from './components/NewProjectPage';
-import Editprojectpage from './components/Editprojectpage';
 
 
 const App = () => {
@@ -54,9 +52,7 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/businesspage" element={<BusinessSetupPage />} />
-          <Route path="/projects/new/:businessId" element={<NewProjectPage />} />
-          <Route path="/projects/edit" element={<Editprojectpage />} />
+          <Route path="/businesspage" element={<BusinessSetupPage />} /> 
           {/* Regular Admin Route - kept for potential future use */}
           <Route
             path="/admin"

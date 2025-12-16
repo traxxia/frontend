@@ -69,15 +69,14 @@
   display: flex;
   justify-content: center;
   width: 100%;
+  padding:10px;
 }
 
-.form-card {
-  margin-top: 24px;
+.form-card { 
   background: #fff;
   border-radius: 12px;
   padding: 32px;
-  border: 1px solid #e5e7eb;
-  max-width: 900px;
+  border: 1px solid #e5e7eb; 
   width: 100%;
 }
 

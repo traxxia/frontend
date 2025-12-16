@@ -1,12 +1,8 @@
-import React, { useState,useEffect } from "react";
+import React from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
-import { TrendingUp, Zap, AlertTriangle, Circle,  Diamond,  Rocket,  Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign  } from "lucide-react";
+import { Breadcrumb } from "react-bootstrap";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign } from "lucide-react";
 import "../styles/NewProjectPage.css";
-import axios from "axios";
-import { useLocation } from "react-router-dom";
-
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
   { value: "Medium", label: "Medium - Significant", icon: <Circle size={14} color="gold" fill="gold" /> },
@@ -42,7 +38,6 @@ const effortOptions = [
   },
 ];
 
-
 const riskOptions = [
   {
     value: "Low",
@@ -60,6 +55,7 @@ const riskOptions = [
     icon: <Circle size={14} color="red" fill="red" />,
   },
 ];
+
 const themeOptions = [
   {
     value: "Growth",
@@ -92,7 +88,8 @@ const themeOptions = [
     icon: <Boxes size={16} color="#fb923c" />,
   },
 ];
-const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) => {
+
+const SelectField = ({ label, icon, options, value, onChange, open, setOpen, disabled }) => {
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
@@ -102,15 +99,21 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
       </label>
 
       <div className="sf-dropdown-wrapper">
-        <div className="sf-dropdown-header" onClick={() => setOpen()}>
+        <div 
+          className="sf-dropdown-header" 
+          onClick={() => !disabled && setOpen()}
+          style={{ 
+            cursor: disabled ? "not-allowed" : "pointer",
+            opacity: disabled ? 0.6 : 1 
+          }}
+        >
           <span>
-            {selectedOption?.label ||
-              (label ? `Select ${label.toLowerCase()}` : "Select")}
+            {selectedOption?.label || (label ? `Select ${label.toLowerCase()}` : "Select")}
           </span>
           <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
         </div>
 
-        {open && (
+        {open && !disabled && (
           <div className="sf-options-container">
             {options.map((item) => (
               <div
@@ -131,99 +134,90 @@ const SelectField = ({ label, icon, options, value, onChange, open, setOpen }) =
   );
 };
 
-const NewProjectPage = () => {
+const ProjectForm = ({
+  mode, // 'new', 'edit', or 'view'
+  projectName,
+  setProjectName,
+  description,
+  setDescription,
+  importance,
+  setImportance,
+  selectedImpact,
+  setSelectedImpact,
+  selectedEffort,
+  setSelectedEffort,
+  selectedRisk,
+  setSelectedRisk,
+  selectedTheme,
+  setSelectedTheme,
+  dependencies,
+  setDependencies,
+  highLevelReq,
+  setHighLevelReq,
+  scope,
+  setScope,
+  outcome,
+  setOutcome,
+  successMetrics,
+  setSuccessMetrics,
+  timeline,
+  setTimeline,
+  budget,
+  setBudget,
+  openDropdown,
+  setOpenDropdown,
+  onBack,
+  onSubmit,
+}) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { businessId } = useParams();
-  const [projectName, setProjectName] = useState("");
-  const [description, setDescription] = useState("");
-  const [importance, setImportance] = useState("");
-  const [openDropdown, setOpenDropdown] = useState(null);
-  
-  const [selectedImpact, setSelectedImpact] = useState("");
-  const [selectedEffort, setSelectedEffort] = useState("");
-  const [selectedRisk, setSelectedRisk] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState("");
-  const [dependencies, setDependencies] = useState("");
-const [highLevelReq, setHighLevelReq] = useState("");
-const [scope, setScope] = useState("");
-const [outcome, setOutcome] = useState("");
-const [successMetrics, setSuccessMetrics] = useState("");
-const [timeline, setTimeline] = useState("");
-const [budget, setBudget] = useState("");
-  
-  const handleCreate = async () => {
-  const token = sessionStorage.getItem("token");
-  const userId = sessionStorage.getItem("userId");
+  const isReadOnly = mode === "view";
 
-  // if (!token || !businessId || !userId) {
-  //   alert("Missing authentication or business information.");
-  //   return;
-  // }
-
-  const payload = {
-    business_id: businessId,
-    user_id: userId,
-    collaborators: [],
-    project_name: projectName,
-    description: description,
-    why_this_matters: importance,
-
-    impact: selectedImpact,
-    effort: selectedEffort,
-    risk: selectedRisk,
-    strategic_theme: selectedTheme,
-
-    dependencies,
-    high_level_requirements: highLevelReq,
-    scope_definition: scope,
-    expected_outcome: outcome,
-    success_metrics: successMetrics,
-    estimated_timeline: timeline,
-    budget_estimate: budget || 0,
+  const getTitle = () => {
+    switch (mode) {
+      case "new":
+        return "New Project";
+      case "view":
+        return "View Project";
+      case "edit":
+        return "Edit Project";
+      default:
+        return "Project";
+    }
   };
 
-  try {
-    const res = await axios.post(
-      `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    alert("Project created successfully!");
-  } catch (err) {
-    console.error("Project creation failed:", err);
-    alert("Failed to create project.");
-  }
-};
-
+  const getSubmitButtonText = () => {
+    switch (mode) {
+      case "new":
+        return t("Create_Project");
+      case "edit":
+        return t("Save_Changes");
+      default:
+        return t("Submit");
+    }
+  };
 
   return (
-    <div className="page-wrapper">
-      {/* Header Card */}
-      <div className="header-card">
-        {/* Back */}
-        <button onClick={() => navigate(-1)} className="back-btn">
-          <ChevronLeft size={16} /> Back
-        </button>
-
-        {/* Breadcrumb */}
-        <p className="breadcrumb">
-          Dashboard  ›  Projects  ›
-          <span className="breadcrumb-strong"> New Project</span>
-        </p>
-
-        {/* Page Title + Tag */}
-        <div className="title-row">
-          <h1 className="page-title">{t("Project_Idea")}</h1>
-
-          <span className="idea-tag">Ideas</span>
-        </div>
+    <div>
+      {/* Stylish Breadcrumb */}
+      <div>
+        <Breadcrumb 
+          style={{
+            background: "#f8f9fa",
+            padding: "12px 16px",
+            borderRadius: "8px",
+            marginBottom: "0"
+          }}
+        >
+          <Breadcrumb.Item 
+            onClick={onBack}
+            style={{ cursor: "pointer" }}
+          >
+            Projects
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>
+            {getTitle()}
+          </Breadcrumb.Item>
+        </Breadcrumb>
       </div>
 
       {/* Required Information Card */}
@@ -231,7 +225,6 @@ const [budget, setBudget] = useState("");
         <div className="form-card">
           <h3 className="section-title">{t("Required_Information")}</h3>
 
-          {/* Project Name */}
           <div className="field-row">
             <label className="field-label">Project Name</label>
             <input
@@ -240,10 +233,11 @@ const [budget, setBudget] = useState("");
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="Digital Wallet Launch"
               className="field-input"
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
 
-          {/* Project Description */}
           <div className="field-row">
             <label className="field-label">Project Description</label>
             <textarea
@@ -252,10 +246,11 @@ const [budget, setBudget] = useState("");
               placeholder="Launch digital wallet product and achieve market penetration"
               rows={3}
               className="field-textarea"
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
 
-          {/* Why This Matters */}
           <div className="field-row">
             <label className="field-label">Why This Matters (Strategic Importance)</label>
             <textarea
@@ -264,6 +259,8 @@ const [budget, setBudget] = useState("");
               placeholder="Explain why this project is strategically important"
               rows={3}
               className="field-textarea"
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
         </div>
@@ -277,7 +274,6 @@ const [budget, setBudget] = useState("");
             <span className="optional-tag">{t("Optional")}</span>
           </div>
 
-          {/* Impact / Effort / Risk */}
           <div className="grid-3">
             <div>
               <SelectField
@@ -287,9 +283,8 @@ const [budget, setBudget] = useState("");
                 value={selectedImpact}
                 onChange={setSelectedImpact}
                 open={openDropdown === "impact"}
-                setOpen={() =>
-                  setOpenDropdown(openDropdown === "impact" ? null : "impact")
-                }
+                setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")}
+                disabled={isReadOnly}
               />
             </div>
 
@@ -301,9 +296,8 @@ const [budget, setBudget] = useState("");
                 value={selectedEffort}
                 onChange={setSelectedEffort}
                 open={openDropdown === "effort"}
-                setOpen={() =>
-                  setOpenDropdown(openDropdown === "effort" ? null : "effort")
-                }
+                setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")}
+                disabled={isReadOnly}
               />
             </div>
 
@@ -315,30 +309,25 @@ const [budget, setBudget] = useState("");
                 value={selectedRisk}
                 onChange={setSelectedRisk}
                 open={openDropdown === "risk"}
-                setOpen={() =>
-                  setOpenDropdown(openDropdown === "risk" ? null : "risk")
-                }
+                setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")}
+                disabled={isReadOnly}
               />
             </div>
           </div>
 
-          {/* Strategic Theme */}
           <div className="field-row">
             <label className="field-label">Strategic Theme / Horizon</label>
-
             <SelectField
               label=""
               options={themeOptions}
               value={selectedTheme}
               onChange={setSelectedTheme}
               open={openDropdown === "theme"}
-              setOpen={() =>
-                setOpenDropdown(openDropdown === "theme" ? null : "theme")
-              }
+              setOpen={() => setOpenDropdown(openDropdown === "theme" ? null : "theme")}
+              disabled={isReadOnly}
             />
           </div>
 
-          {/* Dependencies */}
           <div className="field-row">
             <label className="field-label">Dependencies (on other projects or systems)</label>
             <textarea
@@ -347,6 +336,8 @@ const [budget, setBudget] = useState("");
               className="field-textarea transparent"
               value={dependencies}
               onChange={e => setDependencies(e.target.value)}
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
         </div>
@@ -360,7 +351,6 @@ const [budget, setBudget] = useState("");
             <span className="optional-tag">{t("Optional")}</span>
           </div>
 
-          {/* High-Level Requirements */}
           <div className="field-row">
             <label className="field-label">High-Level Requirements</label>
             <textarea
@@ -369,10 +359,11 @@ const [budget, setBudget] = useState("");
               className="field-textarea"
               value={highLevelReq}
               onChange={e => setHighLevelReq(e.target.value)}
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
 
-          {/* Scope Definition */}
           <div className="field-row">
             <label className="field-label">Scope Definition</label>
             <textarea
@@ -381,10 +372,11 @@ const [budget, setBudget] = useState("");
               className="field-textarea"
               value={scope}
               onChange={e => setScope(e.target.value)}
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
 
-          {/* Expected Outcome */}
           <div className="field-row">
             <label className="field-label">Expected Outcome</label>
             <textarea
@@ -393,10 +385,11 @@ const [budget, setBudget] = useState("");
               className="field-textarea"
               value={outcome}
               onChange={e => setOutcome(e.target.value)}
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
 
-          {/* Success Metrics */}
           <div className="field-row">
             <label className="field-label">Success Metrics (KPIs)</label>
             <textarea
@@ -405,41 +398,67 @@ const [budget, setBudget] = useState("");
               className="field-textarea"
               value={successMetrics}
               onChange={e => setSuccessMetrics(e.target.value)}
+              readOnly={isReadOnly}
+              style={{ opacity: isReadOnly ? 0.7 : 1 }}
             />
           </div>
 
-          {/* Timeline + Budget */}
           <div className="grid-2" style={{ marginTop: 12 }}>
             <div>
               <label className="field-label">
                 <Clock size={16} /> Estimated Timeline
               </label>
-              <input type="text" placeholder="e.g., 3–6 months" className="field-input" value={timeline} onChange={e => setTimeline(e.target.value)} />
+              <input 
+                type="text" 
+                placeholder="e.g., 3–6 months" 
+                className="field-input" 
+                value={timeline} 
+                onChange={e => setTimeline(e.target.value)}
+                readOnly={isReadOnly}
+                style={{ opacity: isReadOnly ? 0.7 : 1 }}
+              />
             </div>
 
             <div>
               <label className="field-label">
                 <DollarSign size={16} /> Budget Estimate
               </label>
-              <input type="text" placeholder="e.g., $50K - $100K" className="field-input" value={budget} onChange={e => setBudget(e.target.value)} />
+              <input 
+                type="text" 
+                placeholder="e.g., $50K - $100K" 
+                className="field-input" 
+                value={budget} 
+                onChange={e => setBudget(e.target.value)}
+                readOnly={isReadOnly}
+                style={{ opacity: isReadOnly ? 0.7 : 1 }}
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="actions-row">
-        <button type="button" className="btn-cancel">
-          {t("cancel")}
-        </button>
+      {!isReadOnly && (
+        <div className="actions-row">
+          <button 
+            type="button" 
+            className="btn-cancel"
+            onClick={onBack}
+          >
+            {t("cancel")}
+          </button>
 
-        <button type="button" className="btn-create" onClick={handleCreate}>
-
-          {t("Create_Project")}
-        </button>
-      </div>
+          <button 
+            type="button" 
+            className="btn-create" 
+            onClick={onSubmit}
+          >
+            {getSubmitButtonText()}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default NewProjectPage;
+export default ProjectForm;
