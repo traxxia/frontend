@@ -400,7 +400,7 @@ const Dashboard = () => {
   }, []);
 
   // Different delete button alternatives
-  const DeleteButtonAlternatives = ({ business, viewType }) => {
+  const DeleteButtonAlternatives = ({ business, viewType, canDelete = true }) => {
     const stats = business.question_statistics || {};
     const progress = stats.progress_percentage || 0;
     const completedQuestions = stats.completed_questions || 0;
@@ -459,12 +459,12 @@ const Dashboard = () => {
             )}
           </small>
         </div>
-        <SimpleDeleteButton />
+        {canDelete && <SimpleDeleteButton />}
       </div>
     );
   };
 
-  const BusinessList = ({ businesses, viewType }) => (
+  const BusinessList = ({ businesses, viewType, canDelete = true }) => (
     <div className={`business-list ${viewType}`}>
       {isLoadingBusinesses && (
       <div className="d-flex justify-content-center align-items-center py-5">
@@ -483,6 +483,7 @@ const Dashboard = () => {
           key={business._id || index}
           business={business}
           viewType={viewType}
+          canDelete={canDelete}
         />
       ))}
     </div>
@@ -528,6 +529,7 @@ const Dashboard = () => {
                       <BusinessList
                         businesses={collaboratingBusinesses}
                         viewType="mobile"
+                        canDelete={false}
                       />
                     </>
                   )}
@@ -594,11 +596,15 @@ const Dashboard = () => {
 
                       </div>
                       {collaboratingBusinesses.length > 0 && (
-                          <>
-                            <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
-                            <BusinessList businesses={collaboratingBusinesses} viewType="desktop" />
-                          </>
-                        )}
+                        <>
+                          <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
+                          <BusinessList
+                            businesses={collaboratingBusinesses}
+                            viewType="desktop"
+                            canDelete={false}
+                          />
+                        </>
+                      )}
                     </Col>
                   </Row>
                 </Card.Body>

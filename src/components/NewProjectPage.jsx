@@ -165,8 +165,6 @@ const [budget, setBudget] = useState("");
     business_id: businessId,
     user_id: userId,
     collaborators: [],
-    status: "draft",
-
     project_name: projectName,
     description: description,
     why_this_matters: importance,

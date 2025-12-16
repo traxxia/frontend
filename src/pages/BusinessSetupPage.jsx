@@ -164,23 +164,28 @@ const BusinessSetupPage = () => {
   }
 };
 
-  // Initialize Projects tab visibility from sessionStorage and activeTab
+  // Initialize Projects tab visibility from sessionStorage (scoped per business)
   useEffect(() => {
+    if (!selectedBusinessId) return;
     try {
-      const stored = sessionStorage.getItem('showProjectsTab');
+      const stored = sessionStorage.getItem(`showProjectsTab_${selectedBusinessId}`);
       if (stored === 'true') {
         setShowProjectsTab(true);
       }
     } catch {}
-  }, []);
+  }, [selectedBusinessId]);
 
   // Ensure Projects tab button appears once projects is active
   useEffect(() => {
     if (activeTab === 'projects' && !showProjectsTab) {
       setShowProjectsTab(true);
-      try { sessionStorage.setItem('showProjectsTab', 'true'); } catch {}
+      try {
+        if (selectedBusinessId) {
+          sessionStorage.setItem(`showProjectsTab_${selectedBusinessId}`, 'true');
+        }
+      } catch {}
     }
-  }, [activeTab, showProjectsTab]);
+  }, [activeTab, showProjectsTab, selectedBusinessId]);
 
   // Automatically show Projects tab if this business already has projects
   useEffect(() => {
@@ -204,10 +209,18 @@ const BusinessSetupPage = () => {
         );
 
         const projects = res.data?.projects || [];
-        if (projects.length > 0) {
-          setShowProjectsTab(true);
-          try { sessionStorage.setItem('showProjectsTab', 'true'); } catch {}
-        }
+        const hasProjects = projects.length > 0;
+        setShowProjectsTab(hasProjects);
+        try {
+          if (selectedBusinessId) {
+            const key = `showProjectsTab_${selectedBusinessId}`;
+            if (hasProjects) {
+              sessionStorage.setItem(key, 'true');
+            } else {
+              sessionStorage.removeItem(key);
+            }
+          }
+        } catch {}
       } catch (err) {
         console.error('Failed to check existing projects for business:', err);
       }
@@ -691,6 +704,20 @@ const BusinessSetupPage = () => {
     readOnly: false,isCardExpanded: (cardId) => expandedCards.has(cardId),
   };
 
+  const handleProjectCountChange = (count) => {
+    const hasProjects = count > 0;
+    setShowProjectsTab(hasProjects);
+    try {
+      if (!selectedBusinessId) return;
+      const key = `showProjectsTab_${selectedBusinessId}`;
+      if (hasProjects) {
+        sessionStorage.setItem(key, 'true');
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch {}
+  };
+
   return (
     <div className="business-setup-container">
       <MenuBar />
@@ -934,10 +961,16 @@ const BusinessSetupPage = () => {
                             streamingManager={streamingManager}  // ADD THIS LINE
                             isExpanded={true} 
                             onKickstartProjects={() => setActiveTab("projects")}
+                            hasProjectsTab={showProjectsTab}
                           />
                         </div>
                       )}
-                      {activeTab === "projects" && <ProjectsSection selectedBusinessId={selectedBusinessId} />}
+                      {activeTab === "projects" && (
+                        <ProjectsSection
+                          selectedBusinessId={selectedBusinessId}
+                          onProjectCountChange={handleProjectCountChange}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1047,12 +1080,16 @@ const BusinessSetupPage = () => {
                         onRedirectToBrief={handleRedirectToBrief}
                         streamingManager={streamingManager}  // ADD THIS LINE
                         isExpanded={true}                      // ADD THIS LINE
+                        hasProjectsTab={showProjectsTab}
                       />
                     </div>
                   )}
                 {activeTab === "projects" && (
                     <div className="projects-container">
-                      <ProjectsSection selectedBusinessId={selectedBusinessId} />
+                      <ProjectsSection
+                        selectedBusinessId={selectedBusinessId}
+                        onProjectCountChange={handleProjectCountChange}
+                      />
                     </div>
                   )}
                 </div>
@@ -1142,11 +1179,15 @@ const BusinessSetupPage = () => {
                       streamingManager={streamingManager}  // ADD THIS LINE
                       isExpanded={true}    
                       onKickstartProjects={() => setActiveTab("projects")}     
+                      hasProjectsTab={showProjectsTab}
                     />
                   </div>
                 )}
                 {activeTab === "projects" && (
-                  <ProjectsSection selectedBusinessId={selectedBusinessId} />
+                  <ProjectsSection
+                    selectedBusinessId={selectedBusinessId}
+                    onProjectCountChange={handleProjectCountChange}
+                  />
                 )}
               </div>
             )}

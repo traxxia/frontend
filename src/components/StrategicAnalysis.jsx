@@ -50,7 +50,8 @@ const StrategicAnalysis = ({
   onRedirectToBrief,
   phaseAnalysisArray = [],
   streamingManager,
-  onKickstartProjects
+  onKickstartProjects,
+  hasProjectsTab = false,
 }) => {
   const [userRole, setUserRole] = useState("");
 
@@ -198,11 +199,17 @@ const StrategicAnalysis = ({
   useEffect(() => {
     try {
       const active = sessionStorage.getItem('activeTab');
-      if (active === 'projects' && !hasKickstarted) {
+      if (active === 'projects' && hasProjectsTab && !hasKickstarted) {
         setHasKickstarted(true);
       }
     } catch {}
-  }, [hasKickstarted]);
+  }, [hasKickstarted, hasProjectsTab]);
+
+  useEffect(() => {
+    if (!hasProjectsTab && hasKickstarted) {
+      setHasKickstarted(false);
+    }
+  }, [hasProjectsTab, hasKickstarted]);
 
   const [collapsedCategories, setCollapsedCategories] = useState(
     new Set(['strategy-block', 'execution-block', 'sustainability-block'])
@@ -663,10 +670,6 @@ const StrategicAnalysis = ({
         });
       }
     }
-
-    // ===== SUSTAINABILITY BLOCK (G.I.C) - These render together =====
-
-    // G - Governance Block
     if (recommendations.sustainability_block?.G_governance) {
       if (recommendations.sustainability_block.G_governance.decision_delegation) {
         indices.decisionDelegation = {};
@@ -2515,7 +2518,7 @@ const StrategicAnalysis = ({
       data-analysis-name="Strategic Analysis"
       data-analysis-order="10"
     >
-      {canShowKickstart && !hasKickstarted && (
+      {canShowKickstart && !hasKickstarted && !hasProjectsTab && (
         <KickstartProjectsCard onKickstart={handleKickstart} />
       )}
       <div className="dashboard-container">
