@@ -262,14 +262,14 @@ const fetchBusinesses = async () => {
 };
   return (
     <Container fluid className="p-4">
-      <h2 className="fw-bold">User Management</h2>
-      <p className="text-muted">Add and manage organization collaborators and viewers</p>
+      <h2 className="fw-bold">{t("User_Management")}</h2>
+      <p className="text-muted">{t("Add_and_manage_organization_collaborators_and_viewers")}</p>
 
       <Row className="mt-4 g-3">
-        <Col md={3}><Card body><h5>Total Users</h5><h2>{users.length}</h2></Card></Col>
-        <Col md={3}><Card body><h5>Active Users</h5><h2>4</h2></Card></Col>
-        <Col md={3}><Card body><h5>Collaborators</h5><h2>{collaboratorsCount}</h2></Card></Col>
-        <Col md={3}><Card body><h5>Pending Invites</h5><h2>1</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("Total_Users")}</h5><h2>{users.length}</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("Active_Users")}</h5><h2>4</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("Collaborators")}</h5><h2>{collaboratorsCount}</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("Pending_Invites")}</h5><h2>1</h2></Card></Col>
       </Row>
       <Row className="mt-4 g-2 align-items-center justify-content-between">
 
@@ -288,7 +288,7 @@ const fetchBusinesses = async () => {
 
   <Col md="auto" className="d-flex gap-2 align-items-center">
     <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
-      <option>All Roles</option>
+      <option>{t("All_Roles")}</option>
       <option>Org Admin</option>
       <option>Collaborator</option>
       <option>Viewer</option>
@@ -296,12 +296,12 @@ const fetchBusinesses = async () => {
 
     <Button className="add-user-btn d-flex align-items-center" onClick={handleOpenModal}>
       <Plus size={16} className="me-2" />
-      Add User
+      {t("Add_User")}
     </Button>
 
     <Button  className="add-user-btn d-flex align-items-center" onClick={handleOpenAssignModal}>
       <User size={16} className="me-2" />
-      Assign User
+      {t("Assign_User")}
     </Button>
   </Col>
 </Row>
@@ -310,17 +310,17 @@ const fetchBusinesses = async () => {
 
       <Card className="mt-4">
         <Card.Body>
-          <h5 className="fw-semibold mb-3">All Users ({users.length})</h5>
+          <h5 className="fw-semibold mb-3">{t("All_Users")} ({users.length})</h5>
 
           <Table hover responsive className="align-middle">
             <thead className="table-heading" >
               <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Joined</th>
-                <th>Last Active</th>
-                <th className="text-end">Action</th>
+                <th>{t("User")}</th>
+                <th>Role{t("Role")}</th>
+                <th>{t("status")}</th>
+                <th>{t("joined")}</th>
+                <th>{t("Last_Active")}</th>
+                <th className="text-end">{t("Action")}</th>
               </tr>
             </thead>
             <tbody>
@@ -410,15 +410,15 @@ const fetchBusinesses = async () => {
       </Card>
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Add New User</Modal.Title>
+          <Modal.Title>{t("Add_New_User")}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAddUser}>
   <Form.Group className="mb-3">
-    <Form.Label>User Name <span className="text-danger">*</span></Form.Label>
+    <Form.Label> {t("user_name")}<span className="text-danger">*</span></Form.Label>
     <Form.Control
       type="text"
-      placeholder="Enter name"
+      placeholder={t("Enter_name")}
       value={newName}
       onChange={(e) => setNewName(e.target.value)}
       required
@@ -427,10 +427,10 @@ const fetchBusinesses = async () => {
   </Form.Group>
 
   <Form.Group className="mb-3">
-    <Form.Label>Email <span className="text-danger">*</span></Form.Label>
+    <Form.Label>{t("email")} <span className="text-danger">*</span></Form.Label>
     <Form.Control
       type="email"
-      placeholder="Enter email"
+      placeholder={t("Enter_email")}
       value={newEmail}
       onChange={(e) => setNewEmail(e.target.value)}
       required
@@ -439,10 +439,10 @@ const fetchBusinesses = async () => {
   </Form.Group>
 
   <Form.Group className="mb-3">
-    <Form.Label>Password <span className="text-danger">*</span></Form.Label>
+    <Form.Label>{t("password")} <span className="text-danger">*</span></Form.Label>
     <Form.Control
       type="password"
-      placeholder="Enter password"
+      placeholder={t("Enter_password")}
       value={newPassword}
       onChange={(e) => setNewPassword(e.target.value)}
       required
@@ -451,13 +451,13 @@ const fetchBusinesses = async () => {
   </Form.Group>
 
   <Form.Group className="mb-3">
-    <Form.Label>Role <span className="text-danger">*</span></Form.Label>
+    <Form.Label>{t("role")} <span className="text-danger">*</span></Form.Label>
     <Form.Select
       value={newRole}
       onChange={(e) => setNewRole(e.target.value)}
       required
     >
-      <option value="">Select role</option>
+      <option value="">{t("Select_role")}</option>
       <option value="Collaborator">Collaborator</option>
       <option value="Viewer">Viewer</option>
     </Form.Select>
@@ -468,11 +468,11 @@ const fetchBusinesses = async () => {
 
   <div className="d-flex justify-content-end">
     <Button variant="secondary" className="me-2" onClick={handleCloseModal}>
-      Cancel
+      {t("cancel")}
     </Button> 
 
     <Button variant="primary" type="submit">
-      Add User
+      {t("Add_User")}
     </Button>
   </div>
 </Form>
@@ -482,20 +482,20 @@ const fetchBusinesses = async () => {
 
       <Modal show={showAssignModal} onHide={handleCloseAssignModal} centered>
   <Modal.Header closeButton>
-    <Modal.Title>Assign Collaborator</Modal.Title>
+    <Modal.Title>{t("Assign_Collaborator")}</Modal.Title>
   </Modal.Header>
 
   <Modal.Body>
     <Form onSubmit={handleAssign}>
 
       <Form.Group className="mb-3">
-        <Form.Label>User</Form.Label>
+        <Form.Label>{t("user")}</Form.Label>
         <Form.Select
           value={assignUserId}
           onChange={(e) => setAssignUserId(e.target.value)}
           required
         >
-          <option value="">Select collaborator</option>
+          <option value="">{t("Select_collaborator")}</option>
           {collaboratorUsers.map((u) => (
     <option key={u._id} value={u._id}>
       {u.name} 
@@ -505,13 +505,13 @@ const fetchBusinesses = async () => {
       </Form.Group>
 
       <Form.Group className="mb-3">
-        <Form.Label>Business</Form.Label>
+        <Form.Label>{t("business")}</Form.Label>
         <Form.Select
           value={assignBusinessId}
           onChange={(e) => setAssignBusinessId(e.target.value)}
           required
         >
-          <option value="">Select Business</option>
+          <option value="">{t("Select_Business")}</option>
           {businesses.map((b) => (
             <option key={b._id} value={b._id}>
               {b.business_name || b.name}
@@ -522,10 +522,10 @@ const fetchBusinesses = async () => {
 
       <div className="d-flex justify-content-end">
         <Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>
-          Cancel
+          {t("cancel")}
         </Button>
         <Button variant="primary" type="submit">
-          Save
+          {t("save")}
         </Button>
       </div>
 

@@ -830,7 +830,29 @@ export const staticTranslations = {
     'Save_Changes':'Save Changes',
     'Rankings_Locked':'Rankings Locked',
     'Your_rankings_have_been_locked':'Your rankings have been locked',
-    
+    'Project_Creation_Locked':'Project Creation Locked',
+    'No_newprojectscan_be_added_Continue_ranking_and_updating.':'No new projects can be added. Continue ranking and updating.',
+    'Finalize_Prioritization':'Finalize Prioritization',
+    'Prioritization_Complete':'Prioritization Complete',
+    'Projects_prioritized':'Projects prioritized. Complete all required details before launch.',
+    'Launch_Projects':'Launch Projects',
+    'Project_creation_locked_Continue_ranking':'Project creation locked. Continue ranking.',
+    'Prioritization_complete_Add_detailed_planning':'Prioritization complete! Add detailed planning.',
+    'Projects_launched_Ready_for_execution.':'Projects launched! Ready for execution.',
+    'Launched':'Launched',
+    'Projects_ready_for_execution':'Projects ready for execution',
+    'View_Details':'View Details',
+
+  // ===========================
+  // TEAM RANKING BLOCK
+  // ===========================
+    'Team_Rankings_View':'Team Rankings View',
+    'See_how_all_team_members_ranked_projects':'See how all team members ranked projects',
+    'High_Agreement':'High Agreement',
+    'Medium_Agreement':'Medium Agreement',
+    'Low_Agreement':'Low Agreement',
+    'Project':'Project',
+    'Consensus':'Consensus',
 
   // ===========================
   // USER MANAGEMENT BLOCK
@@ -840,6 +862,7 @@ export const staticTranslations = {
   'Search_by_name_or_email':'Search by name or email...',
   'All_Roles':'All Roles',
   'Add_User':'Add User',
+  'Assign_User':'Assign User',
   'All_Users':'All Users',
   'User':'User',
   'Role':'Role',
@@ -850,6 +873,9 @@ export const staticTranslations = {
   'Enter_email':'Enter email',
   'Enter_password':'Enter password',
   'Select_role':'Select role',
+  'Assign_Collaborator':'Assign Collaborator',
+  'Select_collaborator':'Select collaborator',
+  'Select_Business':'Select Business',
   },
 
   es: {
@@ -1687,6 +1713,31 @@ export const staticTranslations = {
     'Save_Changes':'Guardar cambios',
     'Rankings_Locked':'Clasificaciones bloqueadas',
     'Your_rankings_have_been_locked':'Tus clasificaciones han sido bloqueadas',
+    'Project_Creation_Locked':'Creación de proyecto bloqueada',
+    'No_newprojectscan_be_added_Continue_ranking_and_updating.':'No se pueden añadir nuevos proyectos. Continúe clasificando y actualizando.',
+    'Finalize_Prioritization':'Finalizar la priorización',
+    'Prioritization_Complete':'Prioritization complete',
+    'Projects_prioritized':'Proyectos priorizados. Complete todos los detalles necesarios antes del lanzamiento.',
+    'Launch_Projects':'Lanzar proyectos',
+    'Project_creation_locked_Continue_ranking':'Creación de proyecto bloqueada. Continuar clasificando.',
+    'Prioritization_complete_Add_detailed_planning':'¡Priorización completa! Agregue planificación detallada.',
+    'Projects_launched_Ready_for_execution.':'¡Proyectos lanzados! Listos para su ejecución.',
+    'Launched':'Lanzado',
+    'Projects_ready_for_execution':'Proyectos listos para ejecución',
+    'View_Details':'Ver detalles',
+
+  // ===========================
+  // TEAM RANKING BLOCK
+  // ===========================
+
+    'Team_Rankings_View':'Vista de clasificaciones de equipos',
+    'See_how_all_team_members_ranked_projects':'Vea cómo todos los miembros del equipo clasificaron los proyectos',
+    'High_Agreement':'Alto Acuerdo',
+    'Medium_Agreement':'Acuerdo medio',
+    'Low_Agreement':'Acuerdo bajo',
+    'Project':'Proyecto',
+    'Consensus':'Consenso',
+
 
   // ===========================
   // USER MANAGEMENT BLOCK
@@ -1700,6 +1751,7 @@ export const staticTranslations = {
   'Search_by_name_or_email':'Buscar por nombre o correo ...',
   'All_Roles':'Todos los roles',
   'Add_User':'Agregar usuario',
+  'Assign_User':'Asignar usuario',
   'All_Users':'Todos los usuarios',
   'User':'Usuario',
   'Role':'Rol',
@@ -1710,6 +1762,9 @@ export const staticTranslations = {
   'Enter_email':'Ingrese correo',
   'Enter_password':'Ingrese contraseña',
   'Select_role':'Seleccione rol',
+  'Assign_Collaborator':'Asignar colaborador',
+  'Select_collaborator':'Seleccionar colaborador',
+  'Select_Business':'Seleccionar negocio',
 
   }
 };

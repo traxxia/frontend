@@ -2,9 +2,11 @@
 
 .question-management {
   padding: 24px;
-  max-width: max-content;
+  max-width: 1200px;   /* or 100% if you want full width */
+  width: 100%;
   margin: 0 auto;
 }
+
 
 .section-header {
   display: flex;
@@ -51,6 +53,8 @@
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+
 
 .phase-header {
   display: flex;

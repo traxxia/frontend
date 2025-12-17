@@ -504,7 +504,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                       <div className="project-locked-header project-locked-header-row">
                         <div className="project-locked-left">
                           <span className="project-locked-title">
-                            Project Creation Locked
+                            {t("Project_Creation_Locked")}
                           </span>
                           <Lock size={16} className="project-locked-icon" />
                           <span className="project-locked-meta">
@@ -523,13 +523,13 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                             }}
                           >
                             <CheckCircle size={16} />
-                            Finalize Prioritization
+                            {t("Finalize_Prioritization")}
                           </button>
                         )}
                       </div>
 
                       <p className="project-locked-subtitle">
-                        No new projects can be added. Continue ranking and updating.
+                        {t("No_newprojectscan_be_added_Continue_ranking_and_updating.")}
                       </p>
                     </div>
                   </Col>
@@ -539,9 +539,9 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
               <Card className="launched-card shadow-sm">
                 <Row>
                   <Col>
-                    <h5 className="launched-title">Launched</h5>
+                    <h5 className="launched-title">{t("Launched")}</h5>
                     <p className="launched-subtitle">
-                      Projects ready for execution
+                      {t("Projects_ready_for_execution")}
                     </p>
                   </Col>
                 </Row>
@@ -551,10 +551,10 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                 <Row className="align-items-center">
                   <Col md={8}>
                     <h5 className="prioritization-title">
-                      Prioritization Complete
+                      {t("Prioritization_Complete")}
                     </h5>
                     <p className="prioritization-subtitle">
-                      Projects prioritized. Complete all required details before launch.
+                      {t("Projects_prioritized")}
                     </p>
                   </Col>
 
@@ -568,7 +568,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                         setTimeout(() => setShowLaunchToast(false), 3000);
                       }}
                     >
-                      Launch Projects
+                      {t("Launch_Projects")}
                     </button>
                   </Col>
                 </Row>
@@ -737,25 +737,25 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                 <div className="d-flex flex-column">
                   <div className="d-flex align-items-center gap-2">
                     <Users size={18} className="text-info"/>
-                    <strong>Team Rankings View</strong>
+                    <strong>{t("Team_Rankings_View")}</strong>
                   </div>
                   <small className="text-muted">
-                    See how all team members ranked projects
+                    {t("See_how_all_team_members_ranked_projects")}
                   </small>
                 </div>
               </Accordion.Header>
               <Accordion.Body>
                 <div className="d-flex gap-4 mb-3">
-                  <span>🟢 High Agreement</span>
-                  <span>🟡 Medium Agreement</span>
-                  <span>🔴 Low Agreement</span>
+                  <span>🟢 {t("High_Agreement")}</span>
+                  <span>🟡 {t("Medium_Agreement")}</span>
+                  <span>🔴 {t("Low_Agreement")}</span>
                 </div>
                 <Table hover responsive>
                   <thead>
                     <tr>
-                      <th>Project</th>
+                      <th>{t("Project")}</th>
                       <th className="text-center">{user}</th>
-                      <th className="text-center">Consensus</th>
+                      <th className="text-center">{t("Consensus")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -833,14 +833,14 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                         onClick={() => handleEditProject(p, "view")}
                         className="view-details-btn"
                       >
-                        View Details
+                        {t("View_Details")}
                       </button>
                     ) : (
                       <button
                         onClick={() => handleEditProject(p, "edit")}
                         className="view-details-btn"
                       >
-                        <Pencil size={16} /> Edit
+                        <Pencil size={16} /> {t("edit")}
                       </button>
                     )}
 
@@ -849,7 +849,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                         onClick={() => handleDelete(p._id)}
                         className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
                       >
-                        <Trash2 size={16} /> Delete
+                        <Trash2 size={16} /> {t("delete")}
                       </button>
                     )}      
                   </div>
@@ -876,7 +876,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
           >
             <Toast.Body className="project-lock-toast-body">
               <CheckCircle size={18} />
-              <span>Project creation locked. Continue ranking.</span>
+              <span>{t("Project_creation_locked_Continue_ranking")}</span>
             </Toast.Body>
           </Toast>
         </div>
@@ -888,7 +888,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
           >
             <Toast.Body className="finalize-toast-body">
               <CheckCircle size={18} />
-              <span>Prioritization complete! Add detailed planning.</span>
+              <span>{t("Prioritization_complete_Add_detailed_planning")}</span>
             </Toast.Body>
           </Toast>
         </div>
@@ -900,7 +900,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
           >
             <Toast.Body className="launch-toast-body">
               <CheckCircle size={18} />
-              <span>Projects launched! Ready for execution.</span>
+              <span>{t("Projects_launched_Ready_for_execution.")}</span>
             </Toast.Body>
           </Toast>
         </div>

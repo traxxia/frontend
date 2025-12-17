@@ -35,6 +35,9 @@ const Dashboard = () => {
   });
   const [businessError, setBusinessError] = useState('');
   const [formErrors, setFormErrors] = useState({});
+  const userRole = sessionStorage.getItem("userRole");
+  const isViewer = userRole?.toLowerCase() === "viewer";
+
 
   // Delete business state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -408,18 +411,23 @@ const Dashboard = () => {
     const remainingQuestions = stats.pending_questions || 0;
 
     // Alternative 1: Simple Delete Button (Always Visible)
-    const SimpleDeleteButton = () => (
-      <button
-        className="btn btn-outline-danger btn-sm delete-btn-simple"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleShowDeleteModal(business);
-        }}
-        title={t('delete_business')}
-      >
-        <Trash2 size={16} />
-      </button>
-    );
+    const SimpleDeleteButton = () => {
+  if (isViewer) return null; // 👈 HIDE FOR VIEWER
+
+  return (
+    <button
+      className="btn btn-outline-danger btn-sm delete-btn-simple"
+      onClick={(e) => {
+        e.stopPropagation();
+        handleShowDeleteModal(business);
+      }}
+      title={t('delete_business')}
+    >
+      <Trash2 size={16} />
+    </button>
+  );
+};
+
     return (
       <div
         className="business-item d-flex align-items-center p-3 border-bottom position-relative"
