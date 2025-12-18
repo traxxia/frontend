@@ -27,6 +27,9 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
 });
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin";
+  const allCollaboratorsLocked =
+  lockSummary.total_users > 0 &&
+  lockSummary.locked_users_count === lockSummary.total_users;
 
   // Content management states
   const [activeView, setActiveView] = useState("list"); // 'list', 'new', 'edit', 'view'
@@ -615,7 +618,7 @@ const refreshTeamRankings = async () => {
                           </span>
                         </div>
 
-                        {isFinalized && (
+                        {isFinalized && allCollaboratorsLocked && (
                           <button
                             className="finalize-prioritization-btn"
                             onClick={() => {

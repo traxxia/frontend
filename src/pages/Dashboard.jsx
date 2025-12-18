@@ -59,6 +59,13 @@ const Dashboard = () => {
   // Custom menu state for alternatives
   const [showCustomMenu, setShowCustomMenu] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
+  const myBusinesses = businesses.filter(
+  b => Boolean(b.has_projects) === false
+);
+
+const projectPhaseBusinesses = businesses.filter(
+  b => Boolean(b.has_projects) === true
+);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -529,8 +536,18 @@ const Dashboard = () => {
                   </div>
                   <div className="px-4 mb-4">
                     <h6 className="mb-3">{t('my_businesses')}</h6>
-                    <BusinessList businesses={businesses} viewType="mobile" />
+                    <BusinessList businesses={myBusinesses} viewType="mobile" />
                   </div>
+                  {projectPhaseBusinesses.length > 0 && (
+                    <div className="px-4 mb-4">
+                      <h6 className="mb-3">Project Phase</h6>
+                      <BusinessList
+                        businesses={projectPhaseBusinesses}
+                        viewType="mobile"
+                        canDelete={false}
+                      />
+                    </div>
+                  )}
                   {collaboratingBusinesses.length > 0 && (
                     <>
                       <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
@@ -599,10 +616,20 @@ const Dashboard = () => {
                     <Col md={6} className="businesses-section">
                       <div>
                         <h6 className="mb-4">{t('my_businesses')}</h6>
-                        <BusinessList businesses={businesses} viewType="desktop" />
+                        <BusinessList businesses={myBusinesses} viewType="desktop" />
                         
 
                       </div>
+                      {projectPhaseBusinesses.length > 0 && (
+                            <div className="mt-4">
+                              <h6 className="mb-3">Project Phase</h6>
+                              <BusinessList
+                                businesses={projectPhaseBusinesses}
+                                viewType="desktop"
+                                canDelete={false}
+                              />
+                            </div>
+                          )}
                       {collaboratingBusinesses.length > 0 && (
                         <>
                           <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
