@@ -72,19 +72,19 @@ const UserManagement = ({ onToast }) => {
 
   // Name validation
   if (!newName.trim()) {
-    newErrors.name = "Name is required.";
+    newErrors.name = t("Name_is_required")
   } 
   else if (!/^[A-Za-z]/.test(newName)) {
-    newErrors.name = "Name must start with a letter.";
+    newErrors.name = t("Name_must_start_with_letter")
   } 
   else if (newName.trim().length < 3) {
-    newErrors.name = "Name must be at least 3 characters long.";
+    newErrors.name = t("Name_must_be_atleast3_characters_long")
   }
 
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!newEmail.trim() || !emailPattern.test(newEmail)) {
-    newErrors.email = "Enter a valid email address.";
+    newErrors.email = t("Enter a valid email address")
   }
 
   if (
@@ -93,11 +93,11 @@ const UserManagement = ({ onToast }) => {
     !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(newPassword)
   ) {
     newErrors.password =
-      "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";
+      t("Password_uppercase_lowercase_number_special character")
   }
 
   if (!newRole) {
-    newErrors.role = "Role is required.";
+    newErrors.role = t("Role_is_required")
   }
 
   setErrors(newErrors);
@@ -381,16 +381,7 @@ const fetchBusinesses = async () => {
 
           {/* STATUS COLUMN */}
           <td>
-            <span
-              style={{
-                backgroundColor: s.bg,
-                color: s.color,
-                padding: "5px 12px",
-                borderRadius: "16px",
-                fontSize: "13px",
-                fontWeight: 500,
-              }}
-            >
+            <span className={`status-badge status-${statusValue.toLowerCase()}`}>
               {statusValue}
             </span>
           </td>

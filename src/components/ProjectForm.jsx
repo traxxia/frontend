@@ -175,13 +175,13 @@ const ProjectForm = ({
   const getTitle = () => {
     switch (mode) {
       case "new":
-        return "New Project";
+        return t("New_Project");
       case "view":
-        return "View Project";
+        return t("View_Project");
       case "edit":
-        return "Edit Project";
+        return t("Edit_Project");
       default:
-        return "Project";
+        return t("Project");
     }
   };
 
@@ -199,20 +199,13 @@ const ProjectForm = ({
   return (
     <div>
       {/* Stylish Breadcrumb */}
-      <div>
-        <Breadcrumb 
-          style={{
-            background: "#f8f9fa",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            marginBottom: "0"
-          }}
-        >
+      <div className="projects-breadcrumb">
+        <Breadcrumb className="projects-breadcrumb">
           <Breadcrumb.Item 
             onClick={onBack}
             style={{ cursor: "pointer" }}
           >
-            Projects
+            {t("Projects")}
           </Breadcrumb.Item>
           <Breadcrumb.Item active>
             {getTitle()}
@@ -226,7 +219,7 @@ const ProjectForm = ({
           <h3 className="section-title">{t("Required_Information")}</h3>
 
           <div className="field-row">
-            <label className="field-label">Project Name</label>
+            <label className="field-label">{t("Project_Name")}</label>
             <input
               type="text"
               value={projectName}
@@ -239,7 +232,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Project Description</label>
+            <label className="field-label">{t("Project_Description")}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -252,7 +245,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Why This Matters (Strategic Importance)</label>
+            <label className="field-label">{t("Why_This_Matters")}</label>
             <textarea
               value={importance}
               onChange={(e) => setImportance(e.target.value)}
@@ -277,7 +270,7 @@ const ProjectForm = ({
           <div className="grid-3">
             <div>
               <SelectField
-                label="Impact"
+                label={t("Impact")}
                 icon={<TrendingUp size={16} />}
                 options={impactOptions}
                 value={selectedImpact}
@@ -290,7 +283,7 @@ const ProjectForm = ({
 
             <div>
               <SelectField
-                label="Effort"
+                label={t("Effor")}
                 icon={<Zap size={16} />}
                 options={effortOptions}
                 value={selectedEffort}
@@ -303,7 +296,7 @@ const ProjectForm = ({
 
             <div>
               <SelectField
-                label="Risk"
+                label={t("Risk")}
                 icon={<AlertTriangle size={16} />}
                 options={riskOptions}
                 value={selectedRisk}
@@ -316,7 +309,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Strategic Theme / Horizon</label>
+            <label className="field-label">{t("Strategic_Theme_Horizon")}</label>
             <SelectField
               label=""
               options={themeOptions}
@@ -329,7 +322,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Dependencies (on other projects or systems)</label>
+            <label className="field-label">{t("Dependencies")}</label>
             <textarea
               placeholder="List dependencies (one per line)"
               rows={3}
@@ -352,7 +345,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">High-Level Requirements</label>
+            <label className="field-label">{t("High-Level_Requirements")}</label>
             <textarea
               placeholder="What are the main requirements?"
               rows={3}
@@ -365,7 +358,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Scope Definition</label>
+            <label className="field-label">{t("Scope_Definition")}</label>
             <textarea
               placeholder="Define the project scope"
               rows={3}
@@ -378,7 +371,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Expected Outcome</label>
+            <label className="field-label">{t("Expected_Outcome")}</label>
             <textarea
               placeholder="What is the end result?"
               rows={3}
@@ -391,7 +384,7 @@ const ProjectForm = ({
           </div>
 
           <div className="field-row">
-            <label className="field-label">Success Metrics (KPIs)</label>
+            <label className="field-label">{t("Success_Metrics")}</label>
             <textarea
               placeholder="How will you measure success? (one metric per line)"
               rows={3}
@@ -406,7 +399,7 @@ const ProjectForm = ({
           <div className="grid-2" style={{ marginTop: 12 }}>
             <div>
               <label className="field-label">
-                <Clock size={16} /> Estimated Timeline
+                <Clock size={16} /> {t("Estimated_Timeline")}
               </label>
               <input 
                 type="text" 
@@ -421,7 +414,7 @@ const ProjectForm = ({
 
             <div>
               <label className="field-label">
-                <DollarSign size={16} /> Budget Estimate
+                <DollarSign size={16} /> {t("Budget_Estimate")}
               </label>
               <input 
                 type="text" 

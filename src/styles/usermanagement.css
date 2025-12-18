@@ -66,6 +66,24 @@
   background-color: #e1e2e3 !important;
   border-top: 1px solid #dee2e6 !important;
 }
+/* Status badge base */
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-active {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #b45309;
+}
 
 /* ----------------------- */
 /*      USER MGMT DARK     */
@@ -178,5 +196,15 @@
 [data-theme="dark"] td div[style*="border-radius"] {
   background-color: #2a2f38 !important;
   color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .status-active {
+  background-color: rgba(16, 185, 129, 0.2); 
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .status-pending {
+  background-color: rgba(245, 158, 11, 0.2); 
+  color: #fcd34d;
 }
 

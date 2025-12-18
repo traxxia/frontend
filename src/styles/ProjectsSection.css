@@ -738,3 +738,75 @@
   color: #ffffff !important;   /* Bright white number */
 }
 
+[data-theme="dark"] .team-rankings-view .accordion-item {
+  background-color: #1c1f26 !important;
+  border: 1px solid #2a2f3a !important;
+}
+
+[data-theme="dark"] .team-rankings-view .accordion-button {
+  background-color: #20242d !important;
+  color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .team-rankings-view .accordion-button::after {
+  filter: brightness(0) invert(1);
+}
+
+[data-theme="dark"] .team-rankings-view .accordion-body {
+  background-color: #1c1f26 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .team-rankings-view thead th {
+  background-color: #20242d !important;
+  color: #e5e7eb !important;
+  border-bottom: 1px solid #2a2f3a !important;
+}
+
+[data-theme="dark"] .view-details-btn {
+  background: #2a2f3a !important;      
+  border-color: #22c55e !important;   
+  color: #86efac !important;   
+}
+
+[data-theme="dark"] .view-details-btn:hover {
+  background: #14532d !important;     
+  border-color: #16a34a !important; 
+}
+
+[data-theme="dark"] .toast {
+  background-color: #1a1d23 !important;
+  border: 1px solid #2a2f38 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .toast-body {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .rankings-toast-body {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  color: #67e8f9 !important;
+}
+
+[data-theme="dark"] .project-lock-toast-body {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #6ee7b7 !important;
+}
+
+[data-theme="dark"] .finalize-toast-body {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .launch-toast-body {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+[data-theme="dark"] .toast-body svg {
+  stroke: currentColor !important;
+}
+
+

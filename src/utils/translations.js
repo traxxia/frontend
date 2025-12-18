@@ -876,7 +876,38 @@ export const staticTranslations = {
   'Assign_Collaborator':'Assign Collaborator',
   'Select_collaborator':'Select collaborator',
   'Select_Business':'Select Business',
+  'Name_is_required':'Name is required.',
+  'Name_must_start_with_letter':'Name must start with a letter.',
+  'Name_must_be_atleast3_characters_long':'Name must be at least 3 characters long.',
+  'Enter a valid email address':'Enter a valid email address.',
+  'Password_uppercase_lowercase_number_special character':'Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.',
+  'Role_is_required':'Role is required.',
+
+  // ===========================
+  // PROJECT FOEM PAGE
+  // ===========================
+
+  'New_Project':'New Project',
+  'View_Project':'View Project',
+  'Edit_Project':'Edit Project',
+  'Project':'Project',
+  'Project_Name':'Project Name',
+  'Project_Description':'Project Description',
+  'Why_This_Matters':'Why This Matters (Strategic Importance)',
+  'Impact':'Impact',
+  'Effort':'Effort',
+  'Risk':'Risk',
+  'Strategic_Theme_Horizon':'Strategic Theme / Horizon',
+  'Dependencies':'Dependencies (on other projects or systems)',
+  'High-Level_Requirements':'High-Level Requirements',
+  'Scope_Definition':'Scope Definition',
+  'Expected_Outcome':'Expected Outcome',
+  'Success_Metrics':'Success Metrics (KPIs)',
+  'Estimated_Timeline':'Estimated Timeline',
+  'Budget_Estimate':'Budget Estimate',
+  'Projects':'Projects',
   },
+
 
   es: {
     // ===========================
@@ -1765,6 +1796,36 @@ export const staticTranslations = {
   'Assign_Collaborator':'Asignar colaborador',
   'Select_collaborator':'Seleccionar colaborador',
   'Select_Business':'Seleccionar negocio',
+  'Name_is_required':'el nombre es requerido.',
+  'Name_must_start_with_letter':'El nombre debe comenzar con una letra.',
+  'Name_must_be_atleast3_characters_long':'El nombre debe tener al menos 3 caracteres.',
+  'Enter a valid email address':'Ingrese una dirección de correo electrónico válida.',
+  'Password_uppercase_lowercase_number_special character':'La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, un número y un carácter especial.',
+  'Role_is_required':'El rol es obligatorio.',
+
+  // ===========================
+  // PROJECT FOEM PAGE
+  // ===========================
+
+  'New_Project':'Nuevo proyecto',
+  'View_Project':'Ver proyecto',
+  'Edit_Project':'Editar proyecto',
+  'Project':'Proyecto',
+  'Project_Name':'Nombre del proyecto',
+  'Project_Description':'Descripción del proyecto',
+  'Why_This_Matters':'Por qué esto importa (importancia estratégica)',
+  'Impact':'Impacto',
+  'Effort':'Esfuerzo',
+  'Risk':'Riesgo',
+  'Strategic_Theme_Horizon':'Tema Estratégico / Horizonte',
+  'Dependencies':'Dependencias (de otros proyectos o sistemas)',
+  'High-Level_Requirements':'Requisitos de alto nivel',
+  'Scope_Definition':'Definición del alcance',
+  'Expected_Outcome':'Resultado esperado',
+  'Success_Metrics':'Métricas de éxito (KPIs)',
+  'Estimated_Timeline':'Cronograma estimado',
+  'Budget_Estimate':'Estimación del presupuesto',
+  'Projects':'Proyectos',
 
   }
 };
