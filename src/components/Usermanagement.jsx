@@ -70,9 +70,17 @@ const UserManagement = ({ onToast }) => {
   const validateForm = () => {
   const newErrors = {};
 
-  if (!newName.trim() || newName.length < 3) {
-    newErrors.name = "Name must be at least 3 characters.";
+  // Name validation
+  if (!newName.trim()) {
+    newErrors.name = "Name is required.";
+  } 
+  else if (!/^[A-Za-z]/.test(newName)) {
+    newErrors.name = "Name must start with a letter.";
+  } 
+  else if (newName.trim().length < 3) {
+    newErrors.name = "Name must be at least 3 characters long.";
   }
+
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!newEmail.trim() || !emailPattern.test(newEmail)) {
@@ -80,13 +88,13 @@ const UserManagement = ({ onToast }) => {
   }
 
   if (
-  !newPassword ||
-  newPassword.length < 8 ||
-  !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)
-) {
-  newErrors.password =
-    "Password must be at least 8 characters and include uppercase, lowercase, and a number.";
-}
+    !newPassword ||
+    newPassword.length < 8 ||
+    !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(newPassword)
+  ) {
+    newErrors.password =
+      "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";
+  }
 
   if (!newRole) {
     newErrors.role = "Role is required.";
@@ -219,8 +227,8 @@ const fetchUsers = async () => {
   const applyFilters = (search, role) => {
   const result = users.filter((user) => {
     const matchSearch =
-      user.name?.toLowerCase().includes(search.toLowerCase()) ||
-      user.email?.toLowerCase().includes(search.toLowerCase());
+      user.name?.toLowerCase().startsWith(search.toLowerCase()) ||
+      user.email?.toLowerCase().startsWith(search.toLowerCase());
 
     const uiRole = formatRole(user.role_name || user.role); // FIXED
 
@@ -279,7 +287,7 @@ const fetchBusinesses = async () => {
       <input
         type="text"
         className="search-input"
-        placeholder="Search by name or email..."
+        placeholder={t("Search_by_name_or_email")}
         value={searchTerm}
         onChange={handleSearch}
       />
@@ -316,7 +324,7 @@ const fetchBusinesses = async () => {
             <thead className="table-heading" >
               <tr>
                 <th>{t("User")}</th>
-                <th>Role{t("Role")}</th>
+                <th>{t("Role")}</th>
                 <th>{t("status")}</th>
                 <th>{t("joined")}</th>
                 <th>{t("Last_Active")}</th>
@@ -417,13 +425,14 @@ const fetchBusinesses = async () => {
   <Form.Group className="mb-3">
     <Form.Label> {t("user_name")}<span className="text-danger">*</span></Form.Label>
     <Form.Control
-      type="text"
-      placeholder={t("Enter_name")}
-      value={newName}
-      onChange={(e) => setNewName(e.target.value)}
-      required
-    />
-    {errors.name && (<small className="text-danger">{errors.name}</small>)}
+  type="text"
+  placeholder={t("Enter_name")}
+  value={newName}
+  onChange={(e) => setNewName(e.target.value)}
+  required
+/>
+{errors.name && <small className="text-danger">{errors.name}</small>}
+
   </Form.Group>
 
   <Form.Group className="mb-3">

@@ -21,6 +21,8 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   const [showFinalizeToast, setShowFinalizeToast] = useState(false);
   const [launched, setLaunched] = useState(false);
   const [showLaunchToast, setShowLaunchToast] = useState(false);
+  const isViewer = userRole === "viewer";
+  const isEditor = userRole === "super_admin" || userRole === "company_admin";
 
   // Content management states
   const [activeView, setActiveView] = useState("list"); // 'list', 'new', 'edit', 'view'
@@ -205,6 +207,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   };
 
   const handleDelete = async (projectId) => {
+    if (isViewer) return; 
     try {
       const token = sessionStorage.getItem("token");
 
@@ -464,7 +467,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
     return (
       <>
         {/* OPEN FOR COLLABORATION CARD */}
-        {isSuperAdmin && (
+        {isEditor && !isViewer && (
           <div className="collaboration-card-wrapper">
             {!projectCreationLocked ? (
               <Card className="open-collab-card shadow-sm">
@@ -650,7 +653,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
             </h2>
 
             <div className="d-flex gap-2 flex-wrap justify-content-end">
-              {!isLaunched && (
+              {!isLaunched && !isViewer && (
                 <button
                   onClick={handleNewProject}
                   className="btn-new-project"
@@ -660,7 +663,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                 </button>
               )}
 
-              {isPrioritizing && !rankingsLocked && (
+              {isPrioritizing && !rankingsLocked && !isViewer && (
 
               <button
 
@@ -729,7 +732,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
           }}
         />
         
-        {isPrioritizing && (
+        {isPrioritizing && !isViewer &&(
         <div className="rank-list mt-4">
           <Accordion>
             <Accordion.Item eventKey="0">
@@ -837,21 +840,31 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleEditProject(p, "edit")}
-                        className="view-details-btn"
-                      >
-                        <Pencil size={16} /> {t("edit")}
-                      </button>
+  onClick={() =>
+    handleEditProject(p, isViewer ? "view" : "edit")
+  }
+  className="view-details-btn"
+>
+  {isViewer ? (
+    t("View_Details")
+  ) : (
+    <>
+      <Pencil size={16} /> {t("edit")}
+    </>
+  )}
+</button>
+
                     )}
 
-                    {isSuperAdmin && !projectCreationLocked && (                  
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
-                      >
-                        <Trash2 size={16} /> {t("delete")}
-                      </button>
-                    )}      
+                    {isEditor && !isViewer && !projectCreationLocked && (
+  <button
+    onClick={() => handleDelete(p._id)}
+    className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+  >
+    <Trash2 size={16} /> {t("delete")}
+  </button>
+)}
+      
                   </div>
                 </div>
               </Col>
