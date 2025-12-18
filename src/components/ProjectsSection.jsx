@@ -21,6 +21,10 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   const [showFinalizeToast, setShowFinalizeToast] = useState(false);
   const [launched, setLaunched] = useState(false);
   const [showLaunchToast, setShowLaunchToast] = useState(false);
+  const [lockSummary, setLockSummary] = useState({
+  locked_users_count: 0,
+  total_users: 0
+});
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin";
 
@@ -44,9 +48,10 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   const [successMetrics, setSuccessMetrics] = useState("");
   const [timeline, setTimeline] = useState("");
   const [budget, setBudget] = useState("");
+  const [teamRankings, setTeamRankings] = useState([]);
 
-  const token = sessionStorage.getItem("token");
   const user = sessionStorage.getItem("userName");
+  const [adminRanks, setAdminRanks] = useState([]);
 
   useEffect(() => {
     const role = sessionStorage.getItem("userRole");
@@ -93,7 +98,28 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
     }
 
   };
+  const isFinalized = rankingsLocked && projectCreationLocked && rankingLockedFirst;
+   const status = launched
+    ? "launched"
+    : finalizeCompleted
 
+    ? "prioritized"
+
+    : projectCreationLocked
+
+    ? "prioritizing"
+
+    : "draft";
+
+
+
+  const isDraft = status === "draft";
+  const isPrioritizing = status === "prioritizing";
+  const isPrioritized = status === "prioritized";
+  const isLaunched = status === "launched";
+  const isFinalizedView = isPrioritized || isLaunched;
+  
+ 
   useEffect(() => {
     if (!selectedBusinessId) return;
     fetchProjects();
@@ -205,6 +231,99 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
       console.error("Error fetching projects:", err);
     }
   };
+ useEffect(() => {
+  if (!selectedBusinessId) return;
+  fetchTeamRankings();
+  fetchAdminRankings();
+}, [selectedBusinessId, isPrioritizing, isPrioritized]);
+
+
+const fetchTeamRankings = async () => {
+  try {
+    const token = sessionStorage.getItem("token");
+    const userId = sessionStorage.getItem("userId");
+
+    const res = await axios.get(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          business_id: selectedBusinessId
+        }
+      }
+    );
+
+    setTeamRankings(res.data.projects || []);
+    setLockSummary(res.data.ranking_lock_summary || { locked_users_count: 0, total_users: 0 });
+
+  } catch (err) {
+    console.error("Failed to fetch team rankings", err);
+  }
+};
+// ProjectsSection.jsx
+const fetchAdminRankings = async () => {
+  const token = sessionStorage.getItem("token");
+
+  const res = await axios.get(
+    `${process.env.REACT_APP_BACKEND_URL}/api/projects/admin-rank`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { business_id: selectedBusinessId }
+    }
+  );
+
+  setAdminRanks(res.data.projects || []);
+};
+const normalizeId = (id) => String(id);
+const rankMap = teamRankings.reduce((acc, r) => {
+  acc[normalizeId(r.project_id)] = r.rank;
+  return acc;
+}, {});
+
+const adminRankMap = adminRanks.reduce((acc, r) => {
+  acc[normalizeId(r.project_id)] = r.rank;
+  return acc;
+}, {});
+
+const getConsensusVariant = (u, a) => {
+  if (!u || !a) return "secondary";
+  const diff = Math.abs(u - a);
+  if (diff === 0) return "success";
+  if (diff <= 2) return "warning";
+  return "danger";
+};
+
+const lockMyRanking = async (projectId) => {
+  try {
+    const token = sessionStorage.getItem("token");
+
+    await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects/lock-rank`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          project_id: projectId
+        }
+      }
+    );
+
+    setRankingsLocked(true);
+    setRankingLockedFirst(true);
+    setShowLockToast(true);
+
+    refreshTeamRankings(); // 🔥 immediate sync
+
+    setTimeout(() => setShowLockToast(false), 3000);
+  } catch (err) {
+    console.error("Failed to lock ranking", err);
+    alert("Failed to lock ranking");
+  }
+};
 
   const handleDelete = async (projectId) => {
     if (isViewer) return; 
@@ -249,29 +368,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
     completedDetails: 0,
   };
 
-  const isFinalized = rankingsLocked && projectCreationLocked && rankingLockedFirst;
- 
-   const status = launched
-
-    ? "launched"
-
-    : finalizeCompleted
-
-    ? "prioritized"
-
-    : projectCreationLocked
-
-    ? "prioritizing"
-
-    : "draft";
-
-
-
-  const isDraft = status === "draft";
-  const isPrioritizing = status === "prioritizing";
-  const isPrioritized = status === "prioritized";
-  const isLaunched = status === "launched";
-  const isFinalizedView = isPrioritized || isLaunched;
+  
 
   const handleNewProject = () => {
     resetForm();
@@ -420,7 +517,10 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
       alert("Failed to update project.");
     }
   };
-
+const refreshTeamRankings = async () => {
+  await fetchTeamRankings();
+  await fetchAdminRankings();
+};
   // Render project form (for new/edit/view)
   const renderProjectForm = () => {
     return (
@@ -511,7 +611,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                           </span>
                           <Lock size={16} className="project-locked-icon" />
                           <span className="project-locked-meta">
-                            0 of 1 collaborators locked
+                            {lockSummary.locked_users_count} of {lockSummary.total_users} collaborators locked
                           </span>
                         </div>
 
@@ -724,14 +824,12 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
         <RankProjectsPanel
           show={showRankScreen}
           projects={projects}
-          onLockRankings={() => {
-            setRankingsLocked(true);
-            setRankingLockedFirst(true);
-            setShowLockToast(true);
-            setTimeout(() => setShowLockToast(false), 3000);
-          }}
+          businessId ={selectedBusinessId}
+          onLockRankings={() => lockMyRanking(projects[0]?._id)}
+          onRankSaved={refreshTeamRankings}
+          isAdmin={isEditor}
         />
-        
+        {/* TEAM RANKINGS VIEW */}
         {isPrioritizing && !isViewer &&(
         <div className="rank-list mt-4">
           <Accordion>
@@ -762,31 +860,34 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {projects.map((p, i) => (
-                      <tr key={p._id || i}>
-                        <td>{p.project_name}</td>
-                        <td className="text-center">
-                          <Badge pill bg="primary">
-                            {p.rank ?? "8"}
-                          </Badge>
-                        </td>
-                        <td className="text-center">
-                          <Badge
-                            pill
-                            bg={
-                              p.consensus === "high"
-                                ? "success"
-                                : p.consensus === "medium"
-                                ? "warning"
-                                : "danger"
-                            }
-                          >
-                            &nbsp;
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                {projects.map((p) => {
+                  const key = String(p._id);
+                  const userRank = rankMap[key];
+                  const adminRank = adminRankMap[key];
+
+                  return (
+                    <tr key={p._id}>
+                      {/* Project Name */}
+                      <td>{p.project_name}</td>
+
+                      {/* User Rank */}
+                      <td className="text-center">
+                        <Badge pill bg="primary">
+                          {userRank ?? "-"}
+                        </Badge>
+                      </td>
+
+                      {/* Consensus */}
+                      <td className="text-center">
+                        <Badge pill bg={getConsensusVariant(userRank, adminRank)}>
+                          &nbsp;
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+
                 </Table>
               </Accordion.Body>
             </Accordion.Item>

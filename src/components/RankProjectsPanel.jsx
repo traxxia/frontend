@@ -10,10 +10,13 @@ import {
 } from "react-bootstrap";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Lock, ChevronUp, ChevronDown } from "lucide-react";
+import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 
+/* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
   const decoratedOnClick = useAccordionButton(eventKey);
+
   return (
     <Button
       variant="link"
@@ -25,18 +28,19 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings }) => {
+/* ---------- MAIN COMPONENT ---------- */
+const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin }) => {
   const { t } = useTranslation();
-   const [projectList, setProjectList] = useState(projects || []);
+  const [projectList, setProjectList] = useState([]);
 
-  // Keep local list in sync with incoming projects from API
-   useEffect(() => {
+  /* Sync projects from parent */
+  useEffect(() => {
     setProjectList(projects || []);
   }, [projects]);
 
   if (!show) return null;
 
-  // REORDER HANDLER 
+  /* ---------- DRAG HANDLER ---------- */
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 
@@ -47,10 +51,45 @@ const RankProjectsPanel = ({ show, projects, onLockRankings }) => {
     setProjectList(items);
   };
 
+  /* ---------- SAVE RANKINGS API ---------- */
+  const handleSaveRankings = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const payload = {
+        business_id: businessId,
+        projects: projectList.map((p, index) => ({
+          project_id: p._id,
+          rank: index + 1,
+          rationals: p.rationale || ""
+        }))
+      };
+
+      await axios.put(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      alert("Rankings saved successfully");
+      if (onRankSaved) {
+  onRankSaved();
+}
+    } catch (err) {
+      console.error("Save rankings failed", err);
+      alert("Failed to save rankings");
+    }
+  };
+
   return (
     <div className="rank-panel-container responsive-panel compact-mode">
 
-      {/* Header Section */}
+      {/* ---------- HEADER ---------- */}
       <Row className="rank-panel-header">
         <Col xs={12} md={6}>
           <h4 className="rank-title">{t("Rank_Your_Projects")}</h4>
@@ -61,13 +100,21 @@ const RankProjectsPanel = ({ show, projects, onLockRankings }) => {
           md={6}
           className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
         >
-          <Button className="btn-save-rank responsive-btn">{t("Save_Rankings")}</Button>
           <Button
-            className="btn-lock-rank responsive-btn"
-            onClick={onLockRankings}
+            className="btn-save-rank responsive-btn"
+            onClick={handleSaveRankings}
           >
-            <Lock size={16} /> {t("Lock_My_Rankings")}
+            {t("Save_Rankings")}
           </Button>
+
+          {!isAdmin && (
+            <Button
+              className="btn-lock-rank responsive-btn"
+              onClick={onLockRankings}
+            >
+              <Lock size={16} /> {t("Lock_My_Rankings")}
+            </Button>
+          )}
         </Col>
       </Row>
 
@@ -75,61 +122,75 @@ const RankProjectsPanel = ({ show, projects, onLockRankings }) => {
         Drag projects to reorder. Add rationale to explain your ranking.
       </p>
 
-      {/* DRAG & DROP START */}
+      {/* ---------- DRAG & DROP ---------- */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="rank-projects">
           {(provided) => (
-            <Accordion alwaysOpen ref={provided.innerRef} {...provided.droppableProps}>
+            <Accordion
+              alwaysOpen
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
               {projectList.map((item, index) => (
                 <Draggable
-                  key={item._id || index}
-                  draggableId={(item._id || index).toString()}
+                  key={item._id}
+                  draggableId={item._id}
                   index={index}
                 >
                   {(provided, snapshot) => (
                     <Card
-                      className={`rank-project-card responsive-card ${
-                        snapshot.isDragging ? "dragging" : ""
-                      }`}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
+                      className={`rank-project-card responsive-card ${
+                        snapshot.isDragging ? "dragging" : ""
+                      }`}
                     >
                       <Card.Body>
 
+                        {/* ---------- TOP ---------- */}
                         <div className="rank-card-top responsive-card-top">
-                          
-                          
-                          {/* Number */}
+
                           <div className="rank-number">{index + 1}</div>
 
-                          {/* Content */}
                           <div className="rank-content">
-                            <h5 className="rank-project-title">{item.project_name || item.title}</h5>
-                            <p className="rank-project-desc">{item.description}</p>
+                            <h5 className="rank-project-title">
+                              {item.project_name}
+                            </h5>
+                            <p className="rank-project-desc">
+                              {item.description}
+                            </p>
                           </div>
-                          {/* ⭐ Drag handle (Grip icon) */}
+
                           <div
-                            className="rank-move-buttons responsive-move-buttons"   
+                            className="rank-move-buttons responsive-move-buttons"
                             style={{ cursor: "grab" }}
                           >
-                            <ChevronUp size={18} className="move-icon" />
-                            <ChevronDown size={18} className="move-icon" />
+                            <ChevronUp size={18} />
+                            <ChevronDown size={18} />
                           </div>
                         </div>
 
-                        {/* Rationale Toggle */}
+                        {/* ---------- RATIONALE ---------- */}
                         <div className="rank-rationale-btn-container responsive-rationale-btn">
                           <RationaleToggle eventKey={index.toString()}>
                             Add Rationale ▼
                           </RationaleToggle>
                         </div>
 
-                        {/* Accordion Content */}
                         <Accordion.Collapse eventKey={index.toString()}>
                           <textarea
                             className="rank-rationale-textarea responsive-textarea"
                             placeholder="Why did you rank this project here?"
+                            value={item.rationale || ""}
+                            onChange={(e) => {
+                              const updated = [...projectList];
+                              updated[index] = {
+                                ...updated[index],
+                                rationale: e.target.value
+                              };
+                              setProjectList(updated);
+                            }}
                           />
                         </Accordion.Collapse>
 
