@@ -89,6 +89,19 @@ const BusinessSetupPage = () => {
 
   const loggedInRole = getLoggedInRole();
   const canRegenerate = !["viewer"].includes(loggedInRole);
+  const businessStatus = (() => {
+    try {
+      return (
+        sessionStorage.getItem("selectedBusinessStatus") ||
+        business?.status ||
+        ""
+      );
+    } catch {
+      return business?.status || "";
+    }
+  })();
+  const isLaunchedStatus = businessStatus === "launched";
+  const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus;
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
@@ -150,19 +163,17 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
   }, [uploadedFileForAnalysis]);
-  let toastActive = false;
- const showToastMessage = (setShowToast) => (message, type = "success", options = {}) => {
-  if (toastActive) return; // Prevent multiple calls quickly
-  toastActive = true;
-  const { duration = 4000 } = options;
-  setShowToast({ show: true, message, type });
-  if (duration > 0) {
-    setTimeout(() => {
-      setShowToast({ show: false, message: "", type: "success" });
-      toastActive = false; // Allow toasts after previous one closes
-    }, duration);
-  }
-};
+
+  const showToastMessage = (message, type = "success", options = {}) => {
+    const { duration = 4000 } = options;
+    setShowToast({ show: true, message, type });
+
+    if (duration > 0) {
+      setTimeout(() => {
+        setShowToast({ show: false, message: "", type: "success" });
+      }, duration);
+    }
+  };
 
   // Initialize Projects tab visibility from sessionStorage (scoped per business)
   useEffect(() => {
@@ -883,23 +894,25 @@ const BusinessSetupPage = () => {
                             leverageRiskData={leverageRiskData}
                           />
 
-                          <button
-                            onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
-                            className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                          >
-                            {isAnalysisRegenerating ? (
-                              <>
-                                <Loader size={16} className="animate-spin" />
-                                Regenerating...
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw size={16} />
-                                {t('RegenerateAll') || 'Regenerate All'}
-                              </>
-                            )}
-                          </button>
+                          {canShowRegenerateButtons && (
+                            <button
+                              onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                              className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                            >
+                              {isAnalysisRegenerating ? (
+                                <>
+                                  <Loader size={16} className="animate-spin" />
+                                  Regenerating...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw size={16} />
+                                  {t('RegenerateAll') || 'Regenerate All'}
+                                </>
+                              )}
+                            </button>
+                          )}
                         </>
                       )}
 
@@ -913,23 +926,25 @@ const BusinessSetupPage = () => {
                             exportType="strategic"
                             strategicData={strategicData}
                           />
-                          <button
-                            onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                            disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate}
-                            className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating ? 'disabled' : ''}`}
-                          >
-                            {isStrategicRegenerating ? (
-                              <>
-                                <Loader size={16} className="animate-spin" />
-                                Regenerating...
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw size={16} />
-                                {t("regenerate")}
-                              </>
-                            )}
-                          </button>
+                          {canShowRegenerateButtons && (
+                            <button
+                              onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate}
+                              className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating ? 'disabled' : ''}`}
+                            >
+                              {isStrategicRegenerating ? (
+                                <>
+                                  <Loader size={16} className="animate-spin" />
+                                  Regenerating...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw size={16} />
+                                  {t("regenerate")}
+                                </>
+                              )}
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -962,6 +977,7 @@ const BusinessSetupPage = () => {
                             isExpanded={true} 
                             onKickstartProjects={() => setActiveTab("projects")}
                             hasProjectsTab={showProjectsTab}
+                            onToastMessage={showToastMessage}
                           />
                         </div>
                       )}
@@ -998,23 +1014,25 @@ const BusinessSetupPage = () => {
 
                   {activeTab === "analysis" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
-                      <button
-                        onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                        disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
-                        className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                      >
-                        {isAnalysisRegenerating ? (
-                          <>
-                            <Loader size={16} className="animate-spin" />
-                            Regenerating...
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw size={16} />
-                            {t('RegenerateAll') || 'Regenerate All'}
-                          </>
-                        )}
-                      </button>
+                      {canShowRegenerateButtons && (
+                        <button
+                          onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                          className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                        >
+                          {isAnalysisRegenerating ? (
+                            <>
+                              <Loader size={16} className="animate-spin" />
+                              Regenerating...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={16} />
+                              {t('RegenerateAll') || 'Regenerate All'}
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1134,23 +1152,25 @@ const BusinessSetupPage = () => {
                   <div className="analysis-section">
                     {unlockedFeatures.analysis && (
                       <div className="analysis-section-mobile-controls">
-                        <button
-                          onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                          disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
-                          className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                        >
-                          {isAnalysisRegenerating ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              Regenerating...
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw size={16} />
-                              {t('RegenerateAll') || 'Regenerate All'}
-                            </>
-                          )}
-                        </button>
+                        {canShowRegenerateButtons && (
+                          <button
+                            onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                            className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                          >
+                            {isAnalysisRegenerating ? (
+                              <>
+                                <Loader size={16} className="animate-spin" />
+                                Regenerating...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw size={16} />
+                                {t('RegenerateAll') || 'Regenerate All'}
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
                     )}
                     <div className="analysis-content">

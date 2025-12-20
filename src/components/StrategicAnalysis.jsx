@@ -52,6 +52,7 @@ const StrategicAnalysis = ({
   streamingManager,
   onKickstartProjects,
   hasProjectsTab = false,
+  onToastMessage,
 }) => {
   const [userRole, setUserRole] = useState("");
 
@@ -71,12 +72,24 @@ const StrategicAnalysis = ({
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [kickstartError, setKickstartError] = useState('');
   const [isFreshGeneration, setIsFreshGeneration] = useState(false);
   const [hasKickstarted, setHasKickstarted] = useState(false);
   const handleKickstart = async () => {
     try {
       const token = sessionStorage.getItem("token");
       const userId = sessionStorage.getItem("userId");
+
+      setKickstartError('');
+
+      if (!token || !selectedBusinessId || !userId || !localStrategicData) {
+        const msg = 'Unable to kickstart projects. Please make sure a business is selected and strategic analysis is available.';
+        setKickstartError(msg);
+        if (onToastMessage) {
+          onToastMessage(msg, 'error');
+        }
+        return;
+      }
 
       if (token && selectedBusinessId && userId && localStrategicData) {
         const analysisData = localStrategicData.strategic_analysis || localStrategicData;
@@ -135,6 +148,15 @@ const StrategicAnalysis = ({
           });
         });
 
+        if (itemsToCreate.length === 0) {
+          const msg = 'No recommended projects are available to create from the strategic analysis.';
+          setKickstartError(msg);
+          if (onToastMessage) {
+            onToastMessage(msg, 'warning');
+          }
+          return;
+        }
+
         for (const item of itemsToCreate) {
           const payload = {
             business_id: selectedBusinessId,
@@ -154,7 +176,7 @@ const StrategicAnalysis = ({
             expected_outcome: item.expected_outcome,
             success_metrics:  item.success_metrics || item.metrics,
             estimated_timeline: item.estimated_timeline,
-            budget_estimate: 0,
+            budget_estimate: '',
           };
 
           try {
@@ -175,6 +197,12 @@ const StrategicAnalysis = ({
       }
     } catch (e) {
       console.error("Kickstart processing failed", e);
+      const msg = 'Something went wrong while kickstarting projects. Please try again.';
+      setKickstartError(msg);
+      if (onToastMessage) {
+        onToastMessage(msg, 'error');
+      }
+      return;
     }
 
     if (onKickstartProjects) {

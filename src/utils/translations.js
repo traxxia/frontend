@@ -77,7 +77,7 @@ export const staticTranslations = {
     "dashboard": "Dashboard",
     "welcome_dashboard": "Welcome!",
     "create_business_plans": "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making.",
-    "my_businesses": "My Businesses",
+    "my_businesses": "Businesses",
     "create_business": "Create Business",
     "authentication_required": "Authentication required",
     "failed_to_load_businesses": "Failed to load businesses",

@@ -506,6 +506,13 @@ const projectPhaseBusinesses = businesses.filter(
 
   // Event Handlers
   const handleBusinessClick = (business) => {
+    try {
+      if (business?._id) {
+        sessionStorage.setItem('selectedBusinessStatus', business.status || '');
+      }
+    } catch (e) {
+      console.warn('Failed to persist selected business status to sessionStorage', e);
+    }
     navigate('/businesspage', { state: { business } });
   };
 
@@ -559,23 +566,25 @@ const projectPhaseBusinesses = businesses.filter(
                     </>
                   )}
 
-                  <div className="px-4 pb-4 d-flex flex-wrap gap-2">
-                    <Button
-                      variant="primary"
-                      className="flex-grow-1 create-business-btn"
-                      onClick={handleShowCreateModal}
-                    >
-                      {t('create_business')}
-                    </Button>
-                    <Button
-                      variant="primary"
-                      className="flex-grow-1 create-business-btn"
-                      onClick={() => setShowHowModal(true)}
-                    >
-                      <Info size={18} className="me-2" />
-                      {t('how_it_works')}
-                    </Button>
-                  </div>
+                  {!isViewer && (
+                    <div className="px-4 pb-4 d-flex flex-wrap gap-2">
+                      <Button
+                        variant="primary"
+                        className="flex-grow-1 create-business-btn"
+                        onClick={handleShowCreateModal}
+                      >
+                        {t('create_business')}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="flex-grow-1 create-business-btn"
+                        onClick={() => setShowHowModal(true)}
+                      >
+                        <Info size={18} className="me-2" />
+                        {t('how_it_works')}
+                      </Button>
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
 
@@ -591,24 +600,26 @@ const projectPhaseBusinesses = businesses.filter(
                           </div>
                         </div>
                         <p className="text-muted mb-4">{t('create_business_plans')}</p>
-                        <div className="d-flex flex-wrap gap-2">
-                          <Button
-                            variant="primary"
-                            className="create-business-btn"
-                            onClick={handleShowCreateModal}
-                          >
-                            {t('create_business')}
-                          </Button>
+                        {!isViewer && (
+                          <div className="d-flex flex-wrap gap-2">
+                            <Button
+                              variant="primary"
+                              className="create-business-btn"
+                              onClick={handleShowCreateModal}
+                            >
+                              {t('create_business')}
+                            </Button>
 
-                          <Button
-                            variant="primary"
-                            className="create-business-btn"
-                            onClick={() => setShowHowModal(true)}
-                          >
-                            <Info size={18} className="me-2" />
-                            {t('how_it_works')}
-                          </Button>
-                        </div>
+                            <Button
+                              variant="primary"
+                              className="create-business-btn"
+                              onClick={() => setShowHowModal(true)}
+                            >
+                              <Info size={18} className="me-2" />
+                              {t('how_it_works')}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </Col>
 

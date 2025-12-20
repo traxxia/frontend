@@ -169,6 +169,10 @@ const handleAssign = async (e) => {
     handleCloseAssignModal();
   } catch (error) {
     console.error(error);
+    if (error.response?.data?.message) {
+      onToast(error.response.data.message);
+      return;
+    }
     onToast("Failed to assign collaborator");
   }
 };
@@ -210,6 +214,9 @@ const fetchUsers = async () => {
    const collaboratorUsers = users.filter(
   (u) => formatRole(u.role_name || u.role) === "Collaborator"
 );
+  const viewersCount = users.filter(
+  (u) => formatRole(u.role_name || u.role) === "Viewer"
+).length;
 
   // ---- HANDLERS ----
   const handleSearch = (e) => {
@@ -275,9 +282,9 @@ const fetchBusinesses = async () => {
 
       <Row className="mt-4 g-3">
         <Col md={3}><Card body><h5>{t("Total_Users")}</h5><h2>{users.length}</h2></Card></Col>
-        <Col md={3}><Card body><h5>{t("Active_Users")}</h5><h2>4</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("Active_Users")}</h5><h2>{users.length}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Collaborators")}</h5><h2>{collaboratorsCount}</h2></Card></Col>
-        <Col md={3}><Card body><h5>{t("Pending_Invites")}</h5><h2>1</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("Viewers")}</h5><h2>{viewersCount}</h2></Card></Col>
       </Row>
       <Row className="mt-4 g-2 align-items-center justify-content-between">
 
@@ -299,6 +306,7 @@ const fetchBusinesses = async () => {
       <option>{t("All_Roles")}</option>
       <option>Org Admin</option>
       <option>Collaborator</option>
+      <option>User</option>
       <option>Viewer</option>
     </Form.Select>
 
@@ -328,7 +336,7 @@ const fetchBusinesses = async () => {
                 <th>{t("status")}</th>
                 <th>{t("joined")}</th>
                 <th>{t("Last_Active")}</th>
-                <th className="text-end">{t("Action")}</th>
+                {/* <th className="text-end">{t("Action")}</th> */}
               </tr>
             </thead>
             <tbody>
@@ -390,7 +398,7 @@ const fetchBusinesses = async () => {
           <td className="text-muted">-</td>
 
           {/* ACTION COLUMN */}
-          <td className="text-end">
+          {/* <td className="text-end">
             <Dropdown>
               <Dropdown.Toggle as={CustomToggle} />
               <Dropdown.Menu align="end">
@@ -399,7 +407,7 @@ const fetchBusinesses = async () => {
                 <Dropdown.Item className="text-danger">Remove</Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
-          </td>
+          </td> */}
         </tr>
       );
     })}
@@ -460,6 +468,7 @@ const fetchBusinesses = async () => {
       <option value="">{t("Select_role")}</option>
       <option value="Collaborator">Collaborator</option>
       <option value="Viewer">Viewer</option>
+      <option value="User">User</option>
     </Form.Select>
     <Form.Control.Feedback type="invalid">
       {errors.role}

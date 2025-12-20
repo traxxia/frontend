@@ -96,6 +96,12 @@
   width: 100%;
 }
 
+.kickstart-error-message {
+  margin-top: 8px;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
 /* Strategic Content */
 .strategic-content {
   width: 100%;

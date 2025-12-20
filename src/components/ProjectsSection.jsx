@@ -94,6 +94,10 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
 
       );
 
+      try {
+        sessionStorage.setItem("selectedBusinessStatus", newStatus);
+      } catch {}
+
     } catch (err) {
 
       console.error("Failed to update business status", err);
@@ -102,7 +106,15 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
 
   };
   const isFinalized = rankingsLocked && projectCreationLocked && rankingLockedFirst;
-   const status = launched
+   const storedStatus = (() => {
+    try {
+      return sessionStorage.getItem("selectedBusinessStatus");
+    } catch {
+      return null;
+    }
+  })();
+
+   const status = storedStatus || (launched
     ? "launched"
     : finalizeCompleted
 
@@ -112,7 +124,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
 
     ? "prioritizing"
 
-    : "draft";
+  : "draft");
 
 
 
@@ -446,7 +458,7 @@ const lockMyRanking = async (projectId) => {
       expected_outcome: outcome,
       success_metrics: successMetrics,
       estimated_timeline: timeline,
-      budget_estimate: budget || 0,
+      budget_estimate: budget || "",
     };
 
     try {
@@ -618,7 +630,7 @@ const refreshTeamRankings = async () => {
                           </span>
                         </div>
 
-                        {isFinalized && allCollaboratorsLocked && (
+                        {allCollaboratorsLocked && (
                           <button
                             className="finalize-prioritization-btn"
                             onClick={() => {
@@ -756,7 +768,7 @@ const refreshTeamRankings = async () => {
             </h2>
 
             <div className="d-flex gap-2 flex-wrap justify-content-end">
-              {!isLaunched && !isViewer && (
+              {isDraft && !isViewer && (
                 <button
                   onClick={handleNewProject}
                   className="btn-new-project"
@@ -911,7 +923,7 @@ const refreshTeamRankings = async () => {
                 <div className="project-card">
                   {finalizeCompleted && (
                     <div className="project-serial-number">
-                      {index + 1}
+                      {rankMap[String(p._id)] ?? "-"}
                     </div>
                   )}
                   <p className="project-initiative">
@@ -960,7 +972,7 @@ const refreshTeamRankings = async () => {
 
                     )}
 
-                    {isEditor && !isViewer && !projectCreationLocked && (
+                    {isEditor && !isViewer && isDraft && !projectCreationLocked && (
   <button
     onClick={() => handleDelete(p._id)}
     className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
