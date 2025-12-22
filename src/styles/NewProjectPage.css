@@ -121,6 +121,21 @@
   margin-bottom: 26px;
 }
 
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-lock-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #f59e0b;
+}
+
 .field-label {
   font-size: 14px;
   font-weight: 600;

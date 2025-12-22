@@ -3,8 +3,10 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Container, Row, Col, Card, Button, Toast, Accordion, Table, Badge } from "react-bootstrap";
 import { Lock, AlertTriangle, AlertCircle, CheckCircle, Plus, ListOrdered, Pencil, Trash2, Users } from "lucide-react";
 import axios from "axios";
+import { lockField, heartbeat, unlockFields } from "@/hooks/fieldlockapi";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import ProjectForm from "../components/ProjectForm";
+import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
 import "../styles/ProjectsSection.css";
 
 const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
@@ -21,6 +23,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   const [showFinalizeToast, setShowFinalizeToast] = useState(false);
   const [launched, setLaunched] = useState(false);
   const [showLaunchToast, setShowLaunchToast] = useState(false);
+ 
   const [lockSummary, setLockSummary] = useState({
   locked_users_count: 0,
   total_users: 0
@@ -34,7 +37,55 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   // Content management states
   const [activeView, setActiveView] = useState("list"); // 'list', 'new', 'edit', 'view'
   const [currentProject, setCurrentProject] = useState(null);
+  const { locks } = useFieldLockPolling(currentProject?._id);
+  const myUserId = sessionStorage.getItem("userId");
 
+  const isLockedByOther = (field) =>
+    locks.some(
+      (l) => l.field_name === field && l.locked_by !== myUserId
+    );
+
+  const getLockOwnerForField = (field) => {
+    const lock = locks.find(
+      (l) => l.field_name === field && l.locked_by !== myUserId
+    );
+    return lock?.locked_by_name || null;
+  };
+
+  const getToken = () => sessionStorage.getItem("token");
+
+  const lockFieldSafe = async (fieldName) => {
+    try {
+      if (!currentProject?._id) return;
+      const token = getToken();
+      if (!token) return;
+      await lockField(currentProject._id, fieldName, token);
+    } catch (err) {
+      console.error("Failed to lock field", fieldName, err);
+    }
+  };
+
+  const heartbeatSafe = async () => {
+    try {
+      if (!currentProject?._id) return;
+      const token = getToken();
+      if (!token) return;
+      await heartbeat(currentProject._id, token);
+    } catch (err) {
+      console.error("Failed to send lock heartbeat", err);
+    }
+  };
+
+  const unlockAllFieldsSafe = async () => {
+    try {
+      if (!currentProject?._id) return;
+      const token = getToken();
+      if (!token) return;
+      await unlockFields(currentProject._id, null, token);
+    } catch (err) {
+      console.error("Failed to unlock fields", err);
+    }
+  };
   // Form states for new/edit project
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
@@ -52,6 +103,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   const [timeline, setTimeline] = useState("");
   const [budget, setBudget] = useState("");
   const [teamRankings, setTeamRankings] = useState([]);
+  const [activeAccordionKey, setActiveAccordionKey] = useState(null);
 
   const user = sessionStorage.getItem("userName");
   const [adminRanks, setAdminRanks] = useState([]);
@@ -114,7 +166,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
     }
   })();
 
-   const status = storedStatus || (launched
+   const status = launched
     ? "launched"
     : finalizeCompleted
 
@@ -124,7 +176,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
 
     ? "prioritizing"
 
-  : "draft");
+  : "draft";
 
 
 
@@ -387,6 +439,7 @@ const lockMyRanking = async (projectId) => {
 
   const handleNewProject = () => {
     resetForm();
+    setCurrentProject(null);
     setActiveView("new");
   };
 
@@ -412,6 +465,7 @@ const lockMyRanking = async (projectId) => {
 
   // Handle back to list
   const handleBackToList = () => {
+    unlockAllFieldsSafe();
     setActiveView("list");
     setCurrentProject(null);
     resetForm();
@@ -474,6 +528,7 @@ const lockMyRanking = async (projectId) => {
       );
 
       alert("Project created successfully!");
+      await unlockAllFieldsSafe();
       await fetchProjects();
       handleBackToList();
     } catch (err) {
@@ -525,6 +580,7 @@ const lockMyRanking = async (projectId) => {
       );
 
       alert("Project updated successfully!");
+      await unlockAllFieldsSafe();
       await fetchProjects();
       handleBackToList();
     } catch (error) {
@@ -535,6 +591,17 @@ const lockMyRanking = async (projectId) => {
 const refreshTeamRankings = async () => {
   await fetchTeamRankings();
   await fetchAdminRankings();
+};
+
+const handleAccordionSelect = (eventKey) => {
+  setActiveAccordionKey((prevKey) => {
+    const nextKey = prevKey === eventKey ? null : eventKey;
+    if (nextKey === "0" && prevKey !== "0") {
+      // Accordion with key "0" was just opened
+      refreshTeamRankings();
+    }
+    return nextKey;
+  });
 };
   // Render project form (for new/edit/view)
   const renderProjectForm = () => {
@@ -573,6 +640,10 @@ const refreshTeamRankings = async () => {
         setOpenDropdown={setOpenDropdown}
         onBack={handleBackToList}
         onSubmit={activeView === "new" ? handleCreate : handleSave}
+        isLockedByOther={isLockedByOther}
+        getLockOwnerForField={getLockOwnerForField}
+        onFieldFocus={lockFieldSafe}
+        onFieldEdit={heartbeatSafe}
       />
     );
   };
@@ -847,7 +918,7 @@ const refreshTeamRankings = async () => {
         {/* TEAM RANKINGS VIEW */}
         {isPrioritizing && !isViewer &&(
         <div className="rank-list mt-4">
-          <Accordion>
+          <Accordion activeKey={activeAccordionKey} onSelect={handleAccordionSelect}>
             <Accordion.Item eventKey="0">
               <Accordion.Header>
                 <div className="d-flex flex-column">
@@ -894,7 +965,7 @@ const refreshTeamRankings = async () => {
 
                       {/* Consensus */}
                       <td className="text-center">
-                        <Badge pill bg={getConsensusVariant(userRank, adminRank)}>
+                   <Badge pill bg={getConsensusVariant(userRank, adminRank)}>
                           &nbsp;
                         </Badge>
                       </td>
@@ -921,9 +992,9 @@ const refreshTeamRankings = async () => {
                 key={p._id}
               >
                 <div className="project-card">
-                  {finalizeCompleted && (
+                  {finalizeCompleted && ( 
                     <div className="project-serial-number">
-                      {rankMap[String(p._id)] ?? "-"}
+                      {rankMap[String(p._id)] ?? index + 1}
                     </div>
                   )}
                   <p className="project-initiative">

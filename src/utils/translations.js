@@ -214,7 +214,7 @@ export const staticTranslations = {
     'Email_is_required': 'Email is required',
     'Please_enter_a_valid_email_address': 'Please enter a valid email address',
     'Password_is_required': 'Password is required',
-
+    "is_editing": "is editing",
 
     // ===========================
     // BUSINESS DETAIL PAGE
@@ -1826,6 +1826,7 @@ export const staticTranslations = {
   'Estimated_Timeline':'Cronograma estimado',
   'Budget_Estimate':'Estimación del presupuesto',
   'Projects':'Proyectos',
+  "is_editing": "está editando",
 
   }
 };
