@@ -330,7 +330,11 @@ const rankMap = teamRankings.reduce((acc, r) => {
   acc[normalizeId(r.project_id)] = r.rank;
   return acc;
 }, {});
-
+const sortedProjects = [...projects].sort((a, b) => {
+  const rankA = rankMap[String(a._id)] ?? Infinity;
+  const rankB = rankMap[String(b._id)] ?? Infinity;
+  return rankA - rankB;
+});
 const adminRankMap = adminRanks.reduce((acc, r) => {
   acc[normalizeId(r.project_id)] = r.rank;
   return acc;
@@ -574,7 +578,10 @@ const refreshTeamRankings = async () => {
   await fetchTeamRankings();
   await fetchAdminRankings();
 };
-
+const rankedProjects = projects.map((p) => ({
+  ...p,
+  rank: rankMap[String(p._id)]
+}));
 const handleAccordionSelect = (eventKey) => {
   setActiveAccordionKey((prevKey) => {
     const nextKey = prevKey === eventKey ? null : eventKey;
@@ -890,13 +897,13 @@ const handleAccordionSelect = (eventKey) => {
       </div>
 
         <RankProjectsPanel
-          show={showRankScreen}
-          projects={projects}
-          businessId ={selectedBusinessId}
-          onLockRankings={() => lockMyRanking(projects[0]?._id)}
-          onRankSaved={refreshTeamRankings}
-          isAdmin={isEditor}
-        />
+        show={showRankScreen}
+        projects={rankedProjects}   // ✅ FIX
+        businessId={selectedBusinessId}
+        onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
+        onRankSaved={refreshTeamRankings}
+        isAdmin={isEditor}
+      />
         {/* TEAM RANKINGS VIEW */}
         {isPrioritizing && !isViewer &&(
         <div className="rank-list mt-4">
@@ -928,7 +935,7 @@ const handleAccordionSelect = (eventKey) => {
                     </tr>
                   </thead>
                   <tbody>
-                {projects.map((p) => {
+                {sortedProjects.map((p) => {
                   const key = String(p._id);
                   const userRank = rankMap[key];
                   const adminRank = adminRankMap[key];
@@ -966,7 +973,7 @@ const handleAccordionSelect = (eventKey) => {
         {/* PROJECTS LIST */}
         <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
           <Row className="g-4">
-            {projects.map((p, index) => (
+            {sortedProjects.map((p, index) => (
               <Col
                 xs={12}
                 sm={12}

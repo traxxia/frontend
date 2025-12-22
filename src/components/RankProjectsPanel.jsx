@@ -27,20 +27,24 @@ function RationaleToggle({ eventKey, children }) {
     </Button>
   );
 }
-
-/* ---------- MAIN COMPONENT ---------- */
 const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
 
-  /* Sync projects from parent */
-  useEffect(() => {
-    setProjectList(projects || []);
-  }, [projects]);
+ useEffect(() => {
+  if (!projects || projects.length === 0) return;
+
+  const sorted = [...projects].sort((a, b) => {
+    const rankA = a.rank ?? Infinity;
+    const rankB = b.rank ?? Infinity;
+    return rankA - rankB;
+  });
+
+  setProjectList(sorted);
+}, [projects]);
+
 
   if (!show) return null;
-
-  /* ---------- DRAG HANDLER ---------- */
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 
@@ -51,7 +55,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     setProjectList(items);
   };
 
-  /* ---------- SAVE RANKINGS API ---------- */
   const handleSaveRankings = async () => {
     try {
       const token = sessionStorage.getItem("token");
@@ -88,8 +91,6 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   return (
     <div className="rank-panel-container responsive-panel compact-mode">
-
-      {/* ---------- HEADER ---------- */}
       <Row className="rank-panel-header">
         <Col xs={12} md={6}>
           <h4 className="rank-title">{t("Rank_Your_Projects")}</h4>
