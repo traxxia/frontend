@@ -15,7 +15,8 @@ const EditableBriefSection = ({
   isAnalysisRegenerating = false,
   selectedBusinessId,
   highlightedMissingQuestions,
-  onClearHighlight
+  onClearHighlight,
+  isLaunchedStatus = false
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
@@ -36,6 +37,7 @@ const EditableBriefSection = ({
   }, []);
 
   const isViewer = userRole === "viewer";
+  const canEdit = !isViewer && !isLaunchedStatus;
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -329,12 +331,12 @@ const EditableBriefSection = ({
               </span>
             )}
           </span>
-          {!isEditing && !isViewer &&  (
+          {!isEditing && canEdit &&  (
             <button
               className="edit-button"
               onClick={() => handleEdit(field)}
               type="button"
-              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
+              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
               title="Edit answer"
             >
               <Edit3 size={14} />
@@ -342,13 +344,13 @@ const EditableBriefSection = ({
           )}
         </div>
 
-        {isEditing && !isViewer? (
+        {isEditing && canEdit ? (
           <div className="edit-container">
             <textarea
               ref={el => inputRefs.current[field.key] = el}
               className="edit-textarea"
               defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
-              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
+              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
               style={{ minHeight: '100px', resize: 'vertical' }}
               placeholder={`Enter your answer for: ${field.label}`}
               onChange={(e) => handleAutoSave(field, e.target.value)}
@@ -356,7 +358,7 @@ const EditableBriefSection = ({
             <div className="edit-actions">
               <button
                 onClick={() => handleSave(field)}
-                disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
+                disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
                 className="save-button enhanced"
                 title="Save changes"
                 style={{
@@ -391,7 +393,7 @@ const EditableBriefSection = ({
               </button>
               <button
                 onClick={handleCancel}
-                disabled={isSaving || isEssentialPhaseGenerating}
+                disabled={isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
                 className="cancel-button enhanced"
                 title="Cancel changes"
                 style={{
@@ -429,8 +431,8 @@ const EditableBriefSection = ({
         ) : (
           <div
             className="item-text"
-            onClick={() => !(isSaving || isEssentialPhaseGenerating) && handleEdit(field)}
-            style={{ cursor: (isSaving || isEssentialPhaseGenerating) ? 'not-allowed' : 'pointer' }}
+            onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating) && handleEdit(field)}
+            style={{ cursor: (!canEdit || isSaving || isEssentialPhaseGenerating) ? 'default' : 'pointer' }}
           >
             {field.value || `Add ${field.label.toLowerCase()}...`}
             {isEdited && <span className="edited-indicator" title="Modified"> ✏️</span>}

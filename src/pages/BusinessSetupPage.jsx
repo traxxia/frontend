@@ -66,7 +66,6 @@ const BusinessSetupPage = () => {
   const business = location.state?.business;
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
-  // NOTE: API returns `company_admin_id` (singular) as an array, not `company_admin_ids`
   const companyAdminIds = location.state?.business?.company_admin_id || [];
 
   console.log("BusinessSetupPage companyAdminIds:", companyAdminIds);
@@ -950,7 +949,7 @@ const BusinessSetupPage = () => {
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
-                          canRegenerate={canRegenerate}  />}
+                          canRegenerate={canShowRegenerateButtons}  />}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -959,7 +958,7 @@ const BusinessSetupPage = () => {
                             businessName={businessData.name}
                             onRegenerate={handleStrategicAnalysisRegenerate}
                             isRegenerating={isStrategicRegenerating}
-                            canRegenerate={!isAnalysisRegenerating}
+                            canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating}
                             strategicData={strategicData}
                             selectedBusinessId={selectedBusinessId}
                             phaseManager={phaseManager}
@@ -1065,6 +1064,7 @@ const BusinessSetupPage = () => {
                         isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                         highlightedMissingQuestions={highlightedMissingQuestions}
                         onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                        isLaunchedStatus={isLaunchedStatus}
                       />
                     </div>
                   )}
@@ -1073,7 +1073,7 @@ const BusinessSetupPage = () => {
                       <div className="analysis-content">
                         <AnalysisContentManager 
                           {...analysisProps}
-                          canRegenerate={canRegenerate}  />
+                          canRegenerate={canShowRegenerateButtons}  />
                       </div>
                     </div>
                   )}
@@ -1085,7 +1085,7 @@ const BusinessSetupPage = () => {
                         businessName={businessData.name}
                         onRegenerate={handleStrategicAnalysisRegenerate}
                         isRegenerating={isStrategicRegenerating}
-                        canRegenerate={!isAnalysisRegenerating}
+                        canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating}
                         strategicData={strategicData}
                         selectedBusinessId={selectedBusinessId}
                         phaseManager={phaseManager}
@@ -1144,6 +1144,7 @@ const BusinessSetupPage = () => {
                       isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                       highlightedMissingQuestions={highlightedMissingQuestions}
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}
+                      isLaunchedStatus={isLaunchedStatus}
                     />
                   </div>
                 )}
@@ -1175,7 +1176,7 @@ const BusinessSetupPage = () => {
                     <div className="analysis-content">
                       <AnalysisContentManager 
                         {...analysisProps}
-                        canRegenerate={canRegenerate}  />
+                        canRegenerate={canShowRegenerateButtons}  />
                     </div>
                   </div>
                 )}
@@ -1187,7 +1188,7 @@ const BusinessSetupPage = () => {
                       businessName={businessData.name}
                       onRegenerate={handleStrategicAnalysisRegenerate}
                       isRegenerating={isStrategicRegenerating}
-                      canRegenerate={!isAnalysisRegenerating}
+                      canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating}
                       strategicData={strategicData}
                       selectedBusinessId={selectedBusinessId}
                       phaseManager={phaseManager}
