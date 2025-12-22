@@ -89,17 +89,7 @@ const BusinessSetupPage = () => {
 
   const loggedInRole = getLoggedInRole();
   const canRegenerate = !["viewer"].includes(loggedInRole);
-  const businessStatus = (() => {
-    try {
-      return (
-        sessionStorage.getItem("selectedBusinessStatus") ||
-        business?.status ||
-        ""
-      );
-    } catch {
-      return business?.status || "";
-    }
-  })();
+  const [businessStatus, setBusinessStatus] = useState(business?.status || "");
   const isLaunchedStatus = businessStatus === "launched";
   const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus;
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
@@ -985,6 +975,7 @@ const BusinessSetupPage = () => {
                         <ProjectsSection
                           selectedBusinessId={selectedBusinessId}
                           onProjectCountChange={handleProjectCountChange}
+                          onBusinessStatusChange={setBusinessStatus}
                         />
                       )}
                     </div>
@@ -1107,6 +1098,7 @@ const BusinessSetupPage = () => {
                       <ProjectsSection
                         selectedBusinessId={selectedBusinessId}
                         onProjectCountChange={handleProjectCountChange}
+                        onBusinessStatusChange={setBusinessStatus}
                       />
                     </div>
                   )}
@@ -1207,6 +1199,7 @@ const BusinessSetupPage = () => {
                   <ProjectsSection
                     selectedBusinessId={selectedBusinessId}
                     onProjectCountChange={handleProjectCountChange}
+                    onBusinessStatusChange={setBusinessStatus}
                   />
                 )}
               </div>

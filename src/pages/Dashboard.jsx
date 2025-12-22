@@ -506,13 +506,6 @@ const projectPhaseBusinesses = businesses.filter(
 
   // Event Handlers
   const handleBusinessClick = (business) => {
-    try {
-      if (business?._id) {
-        sessionStorage.setItem('selectedBusinessStatus', business.status || '');
-      }
-    } catch (e) {
-      console.warn('Failed to persist selected business status to sessionStorage', e);
-    }
     navigate('/businesspage', { state: { business } });
   };
 

@@ -9,7 +9,7 @@ import ProjectForm from "../components/ProjectForm";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
 import "../styles/ProjectsSection.css";
 
-const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
+const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessStatusChange }) => {
   const { t } = useTranslation();
   const [userRole, setUserRole] = useState("");
   const [showRankScreen, setShowRankScreen] = useState(false);
@@ -114,7 +114,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
   }, []);
 
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
-   const updateBusinessStatus = async (newStatus) => {
+  const updateBusinessStatus = async (newStatus) => {
 
     if (!selectedBusinessId) return;
 
@@ -127,46 +127,28 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange }) => {
 
 
       await axios.patch(
-
         `${process.env.REACT_APP_BACKEND_URL}/api/business/${selectedBusinessId}/status`,
-
         { status: newStatus },
-
         {
-
           headers: {
-
             Authorization: `Bearer ${token}`,
-
             "Content-Type": "application/json",
-
           },
-
         }
-
       );
 
-      try {
-        sessionStorage.setItem("selectedBusinessStatus", newStatus);
-      } catch {}
+      if (onBusinessStatusChange) {
+        onBusinessStatusChange(newStatus);
+      }
 
     } catch (err) {
 
       console.error("Failed to update business status", err);
 
     }
-
   };
   const isFinalized = rankingsLocked && projectCreationLocked && rankingLockedFirst;
-   const storedStatus = (() => {
-    try {
-      return sessionStorage.getItem("selectedBusinessStatus");
-    } catch {
-      return null;
-    }
-  })();
-
-   const status = launched
+  const status = launched
     ? "launched"
     : finalizeCompleted
 
