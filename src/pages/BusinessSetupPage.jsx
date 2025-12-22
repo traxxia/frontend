@@ -66,6 +66,11 @@ const BusinessSetupPage = () => {
   const business = location.state?.business;
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
+  // NOTE: API returns `company_admin_id` (singular) as an array, not `company_admin_ids`
+  const companyAdminIds = location.state?.business?.company_admin_id || [];
+
+  console.log("BusinessSetupPage companyAdminIds:", companyAdminIds);
+
   const { t } = useTranslation();
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -976,6 +981,7 @@ const BusinessSetupPage = () => {
                           selectedBusinessId={selectedBusinessId}
                           onProjectCountChange={handleProjectCountChange}
                           onBusinessStatusChange={setBusinessStatus}
+                          companyAdminIds={companyAdminIds}
                         />
                       )}
                     </div>
@@ -1099,6 +1105,7 @@ const BusinessSetupPage = () => {
                         selectedBusinessId={selectedBusinessId}
                         onProjectCountChange={handleProjectCountChange}
                         onBusinessStatusChange={setBusinessStatus}
+                        companyAdminIds={companyAdminIds}
                       />
                     </div>
                   )}
@@ -1200,6 +1207,7 @@ const BusinessSetupPage = () => {
                     selectedBusinessId={selectedBusinessId}
                     onProjectCountChange={handleProjectCountChange}
                     onBusinessStatusChange={setBusinessStatus}
+                    companyAdminIds={companyAdminIds}
                   />
                 )}
               </div>

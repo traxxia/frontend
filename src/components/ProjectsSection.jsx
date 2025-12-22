@@ -9,7 +9,7 @@ import ProjectForm from "../components/ProjectForm";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
 import "../styles/ProjectsSection.css";
 
-const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessStatusChange }) => {
+const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessStatusChange, companyAdminIds }) => {
   const { t } = useTranslation();
   const [userRole, setUserRole] = useState("");
   const [showRankScreen, setShowRankScreen] = useState(false);
@@ -311,7 +311,6 @@ const fetchTeamRankings = async () => {
     console.error("Failed to fetch team rankings", err);
   }
 };
-// ProjectsSection.jsx
 const fetchAdminRankings = async () => {
   const token = sessionStorage.getItem("token");
 
@@ -319,9 +318,12 @@ const fetchAdminRankings = async () => {
     `${process.env.REACT_APP_BACKEND_URL}/api/projects/admin-rank`,
     {
       headers: { Authorization: `Bearer ${token}` },
-      params: { business_id: selectedBusinessId }
+      params: { business_id: selectedBusinessId, admin_user_id: companyAdminIds[0] }
     }
   );
+  console.log("Frontend → Admin User IDs:", companyAdminIds);
+console.log("Frontend → Admin User ID (single):", companyAdminIds?.[0]);
+console.log("Frontend → Business ID:", selectedBusinessId);
 
   setAdminRanks(res.data.projects || []);
 };
