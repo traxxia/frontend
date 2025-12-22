@@ -50,6 +50,14 @@ const ChatComponent = ({
     upload_decision: null
   });
   const uploadedFileCardRef = useRef(null);
+  const [userRole, setUserRole] = useState("");
+
+  useEffect(() => {
+    const role = sessionStorage.getItem("userRole");
+    setUserRole(role);
+  }, []);
+
+  const isViewer = userRole === "viewer";
 
   useEffect(() => {
     const handleConversationUpdate = async (event) => {
@@ -1634,7 +1642,7 @@ const ChatComponent = ({
                 !messages.slice(index + 1).some(m => m.phase === 'essential' || m.questionId === 'upload_option' || m.questionId === 'upload_skipped'))
             );
 
-            return (
+            return (              
               <React.Fragment key={message.id}>
                 <div className={`message-wrapper ${message.type}`}>
                   {message.type === 'bot' && (
@@ -1649,7 +1657,7 @@ const ChatComponent = ({
                       {message.isSkipped && <span className="skip-indicator"></span>}
                     </div>
 
-                    {message.showUploadButtons && !hasUploadedDocument && (
+                    {!isViewer && message.showUploadButtons && !hasUploadedDocument && (
                       <div className="upload-decision-buttons" style={{
                         display: 'flex',
                         gap: '12px',
@@ -1695,7 +1703,7 @@ const ChatComponent = ({
                       </div>
                     )}
 
-                    {message.showUploadButton && !hasUploadedDocument && (
+                    {!isViewer && message.showUploadButton && !hasUploadedDocument && (
                       <div style={{
                         display: 'flex',
                         marginTop: '12px'
@@ -1734,8 +1742,8 @@ const ChatComponent = ({
                   </div>
                 </div>
 
-                {shouldShowFileCardAfter && <UploadedFileCard />}
-              </React.Fragment>
+                {!isViewer && shouldShowFileCardAfter && <UploadedFileCard />}
+              </React.Fragment> 
             );
           })}
 
@@ -1753,7 +1761,7 @@ const ChatComponent = ({
 
         <div ref={messagesEndRef} />
       </div>
-      {canShowSkipButton && (
+      {canShowSkipButton && !isViewer && (
         <button
           onClick={handleSkip}
           disabled={isSkipDisabled}
@@ -1765,34 +1773,36 @@ const ChatComponent = ({
         </button>
       )}
       <div className="input-area">
-        <div className="input-wrapper">
-          <textarea
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={
-              pendingValidation
-                ? "Please provide more details..."
-                : nextQuestion
+        {!isViewer && (
+          <div className="input-wrapper">
+            <textarea
+              value={currentInput}
+              onChange={(e) => setCurrentInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={
+                pendingValidation
+                  ? "Please provide more details..."
+                  : nextQuestion
                   ? t("typeYourAnswer")
                   : t("All_questions_completed!")
-            }
-            disabled={isInputDisabled}
-            className="message-input"
-            rows="2"
-          />
+              }
+              disabled={isInputDisabled}
+              className="message-input"
+              rows="2"
+            />
 
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitDisabled}
-            className={`send-button ${isSubmitDisabled ? 'disabled' : ''}`}
-          >
-            {(isSaving || isValidatingAnswer || processingAnswer.current) ?
-              <Loader size={16} className="spinner" /> :
-              <Send size={16} />
-            }
-          </button>
-        </div>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitDisabled}
+              className={`send-button ${isSubmitDisabled ? 'disabled' : ''}`}
+            >
+              {(isSaving || isValidatingAnswer || processingAnswer.current) ?
+                <Loader size={16} className="spinner" /> :
+                <Send size={16} />
+              }
+            </button>
+          </div>
+        )}
 
         <div className="status-text">
           {pendingValidation ? (

@@ -28,6 +28,14 @@ const EditableBriefSection = ({
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
   const { t } = useTranslation();
+  const [userRole, setUserRole] = useState("");
+
+  useEffect(() => {
+    const role = sessionStorage.getItem("userRole");
+    setUserRole(role);
+  }, []);
+
+  const isViewer = userRole === "viewer";
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -321,7 +329,7 @@ const EditableBriefSection = ({
               </span>
             )}
           </span>
-          {!isEditing && (
+          {!isEditing && !isViewer &&  (
             <button
               className="edit-button"
               onClick={() => handleEdit(field)}
@@ -334,7 +342,7 @@ const EditableBriefSection = ({
           )}
         </div>
 
-        {isEditing ? (
+        {isEditing && !isViewer? (
           <div className="edit-container">
             <textarea
               ref={el => inputRefs.current[field.key] = el}
