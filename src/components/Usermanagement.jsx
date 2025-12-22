@@ -55,8 +55,10 @@ const UserManagement = ({ onToast }) => {
 
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-
+  const currentRole = sessionStorage.getItem("userRole");
+  const isSuperAdmin = currentRole === "super_admin";
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
   const handleOpenAssignModal = () => setShowAssignModal(true);
@@ -117,6 +119,7 @@ const UserManagement = ({ onToast }) => {
     name: newName,
     email: newEmail,
     password: newPassword,
+    ...(isSuperAdmin && { company_id: selectedCompanyId }),
     role: newRole,
   };
 
@@ -143,6 +146,24 @@ const UserManagement = ({ onToast }) => {
     }
   }
 };
+useEffect(() => {
+  if (!isSuperAdmin) return;
+
+  const fetchCompanies = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/companies`);
+      const data = Array.isArray(res.data)
+        ? res.data
+        : res.data.companies || [];
+
+      setCompanies(data);
+    } catch (err) {
+      console.error("Failed to fetch companies", err);
+    }
+  };
+
+  fetchCompanies();
+}, [isSuperAdmin]);
 
 const handleAssign = async (e) => {
   e.preventDefault();
@@ -315,10 +336,16 @@ const fetchBusinesses = async () => {
       {t("Add_User")}
     </Button>
 
-    <Button  className="add-user-btn d-flex align-items-center" onClick={handleOpenAssignModal}>
-      <User size={16} className="me-2" />
-      {t("Assign_User")}
-    </Button>
+    {!isSuperAdmin && (
+  <Button
+    className="add-user-btn d-flex align-items-center"
+    onClick={handleOpenAssignModal}
+  >
+    <User size={16} className="me-2" />
+    {t("Assign_User")}
+  </Button>
+)}
+
   </Col>
 </Row>
 
@@ -332,6 +359,7 @@ const fetchBusinesses = async () => {
             <thead className="table-heading" >
               <tr>
                 <th>{t("User")}</th>
+                {isSuperAdmin && <th>{t("Company")}</th>}
                 <th>{t("Role")}</th>
                 <th>{t("status")}</th>
                 <th>{t("joined")}</th>
@@ -376,7 +404,7 @@ const fetchBusinesses = async () => {
               <small className="text-muted">{user.email}</small>
             </div>
           </td>
-
+          {isSuperAdmin && <td>{user.company_name || "-"}</td>}
           {/* ROLE COLUMN */}
           <td>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -457,6 +485,27 @@ const fetchBusinesses = async () => {
     />
     {errors.password && (<small className="text-danger">{errors.password}</small>)}
   </Form.Group>
+  {isSuperAdmin && (
+  <Form.Group className="mb-3">
+    <Form.Label>
+      Companies <span className="text-danger">*</span>
+    </Form.Label>
+
+    <Form.Select
+      value={selectedCompanyId}
+      onChange={(e) => setSelectedCompanyId(e.target.value)}
+      required
+    >
+      <option value="">Select Company</option>
+      {companies.map((c) => (
+        <option key={c._id} value={c._id}>
+          {c.company_name || c.name}
+        </option>
+      ))}
+    </Form.Select>
+  </Form.Group>
+)}
+
 
   <Form.Group className="mb-3">
     <Form.Label>{t("role")} <span className="text-danger">*</span></Form.Label>
