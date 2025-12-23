@@ -10,6 +10,7 @@ import {
   Modal,
   Form,
   Alert,
+  Accordion
 } from "react-bootstrap";
 import {
   Info, X, Trash2
@@ -534,30 +535,77 @@ const projectPhaseBusinesses = businesses.filter(
                     </div>
                     <p className="text-muted small mb-4">{t('create_business_plans')}</p>
                   </div>
-                  <div className="px-4 mb-4">
-                    <h6 className="mb-3">{t('my_businesses')}</h6>
-                    <BusinessList businesses={myBusinesses} viewType="mobile" />
-                  </div>
-                  {projectPhaseBusinesses.length > 0 && (
-                    <div className="px-4 mb-4">
-                      <h6 className="mb-3">Project Phase</h6>
-                      <BusinessList
-                        businesses={projectPhaseBusinesses}
-                        viewType="mobile"
-                        canDelete={false}
-                      />
-                    </div>
-                  )}
-                  {collaboratingBusinesses.length > 0 && (
-                    <>
-                      <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
-                      <BusinessList
-                        businesses={collaboratingBusinesses}
-                        viewType="mobile"
-                        canDelete={false}
-                      />
-                    </>
-                  )}
+                  <Accordion className="px-4 mb-4" defaultActiveKey="0">
+                    {/* My Businesses */}
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header>
+                        <div className="accordion-header-content">
+                          <span className="accordion-title-text">
+                            {t("my_businesses")}
+                          </span>
+                          <span className="accordion-count-pill">
+                            {myBusinesses.length}
+                          </span>
+                        </div>
+                      </Accordion.Header>
+
+                      <Accordion.Body>
+                        <BusinessList
+                          businesses={myBusinesses}
+                          viewType="mobile"
+                        />
+                      </Accordion.Body>
+                    </Accordion.Item>
+
+                    {/* Project Phase */}
+                    {projectPhaseBusinesses.length > 0 && (
+                      <Accordion.Item eventKey="1">
+                        <Accordion.Header>
+                          <div className="accordion-header-content">
+                            <span className="accordion-title-text">
+                              Project Phase
+                            </span>
+                            <span className="accordion-count-pill">
+                              {projectPhaseBusinesses.length}
+                            </span>
+                          </div>
+                        </Accordion.Header>
+
+                        <Accordion.Body>
+                          <BusinessList
+                            businesses={projectPhaseBusinesses}
+                            viewType="mobile"
+                            canDelete={false}
+                          />
+                        </Accordion.Body>
+                      </Accordion.Item>
+                    )}
+
+                    {/* Collaborating Businesses */}
+                    {collaboratingBusinesses.length > 0 && (
+                      <Accordion.Item eventKey="2">
+                        <Accordion.Header>
+                          <div className="accordion-header-content">
+                            <span className="accordion-title-text">
+                              Collaborating Businesses
+                            </span>
+                            <span className="accordion-count-pill">
+                              {collaboratingBusinesses.length}
+                            </span>
+                          </div>
+                        </Accordion.Header>
+
+                        <Accordion.Body>
+                          <BusinessList
+                            businesses={collaboratingBusinesses}
+                            viewType="mobile"
+                            canDelete={false}
+                          />
+                        </Accordion.Body>
+                      </Accordion.Item>
+                    )}
+
+                  </Accordion>
 
                   {!isViewer && (
                     <div className="px-4 pb-4 d-flex flex-wrap gap-2">
@@ -618,33 +666,75 @@ const projectPhaseBusinesses = businesses.filter(
 
                     {/* RIGHT SIDE - Business List */}
                     <Col md={6} className="businesses-section">
-                      <div>
-                        <h6 className="mb-4">{t('my_businesses')}</h6>
-                        <BusinessList businesses={myBusinesses} viewType="desktop" />
-                        
+                      <Accordion defaultActiveKey="0">
+                        {/* My Businesses */}
+                        <Accordion.Item eventKey="0">
+                          <Accordion.Header>
+                            <div className="accordion-header-content">
+                              <span className="accordion-title-text">
+                                {t("my_businesses")}
+                              </span>
+                              <span className="accordion-count-pill">
+                                {myBusinesses.length}
+                              </span>
+                            </div>
+                          </Accordion.Header>
+                          <Accordion.Body>
+                            <BusinessList
+                              businesses={myBusinesses}
+                              viewType="desktop"
+                            />
+                          </Accordion.Body>
+                        </Accordion.Item>
 
-                      </div>
-                      {projectPhaseBusinesses.length > 0 && (
-                            <div className="mt-4">
-                              <h6 className="mb-3">Project Phase</h6>
+                        {/* Project Phase */}
+                        {projectPhaseBusinesses.length > 0 && (
+                          <Accordion.Item eventKey="1">
+                            <Accordion.Header>
+                              <div className="accordion-header-content">
+                                <span className="accordion-title-text">
+                                  Project Phase
+                                </span>
+                                <span className="accordion-count-pill">
+                                  {projectPhaseBusinesses.length}
+                                </span>
+                              </div>
+                            </Accordion.Header>
+                            <Accordion.Body>
                               <BusinessList
                                 businesses={projectPhaseBusinesses}
                                 viewType="desktop"
                                 canDelete={false}
                               />
-                            </div>
-                          )}
-                      {collaboratingBusinesses.length > 0 && (
-                        <>
-                          <h6 className="mt-4 mb-3">Collaborating Businesses</h6>
-                          <BusinessList
-                            businesses={collaboratingBusinesses}
-                            viewType="desktop"
-                            canDelete={false}
-                          />
-                        </>
-                      )}
+                            </Accordion.Body>
+                          </Accordion.Item>
+                        )}
+
+                        {/* Collaborating Businesses */}
+                        {collaboratingBusinesses.length > 0 && (
+                          <Accordion.Item eventKey="2">
+                            <Accordion.Header>
+                              <div className="accordion-header-content">
+                                <span className="accordion-title-text">
+                                  Collaborating Businesses
+                                </span>
+                                <span className="accordion-count-pill">
+                                  {collaboratingBusinesses.length}
+                                </span>
+                              </div>
+                            </Accordion.Header>
+                            <Accordion.Body>
+                              <BusinessList
+                                businesses={collaboratingBusinesses}
+                                viewType="desktop"
+                                canDelete={false}
+                              />
+                            </Accordion.Body>
+                          </Accordion.Item>
+                        )}
+                      </Accordion>
                     </Col>
+
                   </Row>
                 </Card.Body>
               </Card>

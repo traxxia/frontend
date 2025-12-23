@@ -820,6 +820,193 @@
     outline: 2px solid #007bff;
     outline-offset: 2px;
   }
+  /* ==============================
+   BUSINESS ACCORDION – DESKTOP
+   ============================== */
+
+.businesses-section .accordion {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Individual accordion item */
+.businesses-section .accordion-item {
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* Remove double borders */
+.businesses-section .accordion-item:not(:first-of-type) {
+  border-top: 1px solid #e6e6e6;
+}
+
+/* Header */
+.businesses-section .accordion-header {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Accordion button */
+.businesses-section .accordion-button {
+  background-color: #f8f9fb;
+  color: #1f2937;
+  padding: 14px 18px;
+  border-radius: 10px;
+  box-shadow: none;
+  transition: background-color 0.2s ease;
+}
+
+/* Expanded state */
+.businesses-section .accordion-button:not(.collapsed) {
+  background-color: #eef2ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Hover effect */
+.businesses-section .accordion-button:hover {
+  background-color: #eef2ff;
+}
+
+/* Remove default focus outline */
+.businesses-section .accordion-button:focus {
+  box-shadow: none;
+}
+
+/* Body */
+.businesses-section .accordion-body {
+  padding: 16px 18px;
+  background-color: #ffffff;
+}
+
+/* Business list spacing inside accordion */
+.businesses-section .accordion-body > *:not(:last-child) {
+  margin-bottom: 12px;
+}
+
+/* Smooth animation */
+.businesses-section .accordion-collapse {
+  transition: height 0.25s ease;
+}
+
+/* Chevron icon smooth rotation */
+.businesses-section .accordion-button::after {
+  transition: transform 0.2s ease;
+}
+
+/* Header content layout */
+.accordion-header-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-right: 12px; /* space before chevron */
+}
+
+/* Title text */
+.accordion-title-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827; /* dashboard dark */
+}
+
+/* Subtle count pill */
+.accordion-count-pill {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;          /* gray-500 */
+  background-color: #f3f4f6; /* gray-100 */
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+/* Active accordion */
+.accordion-button:not(.collapsed) .accordion-count-pill {
+  background-color: #e5e7eb; /* gray-200 */
+  color: #374151;
+}
+
+
+/* Active accordion color tweak */
+.accordion-button:not(.collapsed) .accordion-count {
+  background-color: #c7d2fe;
+}
+
+/* Mobile safety */
+@media (max-width: 768px) {
+  .businesses-section .accordion-button {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .businesses-section .accordion-body {
+    padding: 14px;
+  }
+  /* ==============================
+   BUSINESS ACCORDION – MOBILE
+   Same as Desktop
+   ============================== */
+
+.accordion-button {
+  background-color: #f8f9fb;
+  color: #1f2937;
+  box-shadow: none;
+  transition: background-color 0.2s ease;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #eef2ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.accordion-button:hover {
+  background-color: #eef2ff;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+}
+
+/* Header content layout */
+.accordion-header-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-right: 12px;
+}
+
+/* Title text */
+.accordion-title-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Count pill */
+.accordion-count-pill {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+/* Active count */
+.accordion-button:not(.collapsed) .accordion-count-pill {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+}
+
 
   /* Animations */
   @keyframes fadeIn {
