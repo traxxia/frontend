@@ -124,7 +124,9 @@ const StrategicAnalysis = ({
             project_name: action.action,
             description: action.rationale,
             expected_outcome: action.expected_impact || '',
-            estimated_timeline: action.timeline || ''
+            estimated_timeline: action.timeline || '',
+            success_metrics: action.success_metrics || action.metrics || [],
+            project_type: 'immediate_action'
           });
         });
 
@@ -134,7 +136,8 @@ const StrategicAnalysis = ({
             project_name: initiative.initiative,
             description: initiative.expected_outcome || '',
             expected_outcome: initiative.expected_outcome || '',
-            estimated_timeline: ''
+            estimated_timeline: '',
+            project_type: 'short_term_initiative'
           });
         });
 
@@ -144,7 +147,8 @@ const StrategicAnalysis = ({
             project_name: shift.shift,
             description: shift.transformation_required || '',
             expected_outcome: shift.competitive_advantage || '',
-            estimated_timeline: ''
+            estimated_timeline: '',
+            project_type: 'long_term_shift'
           });
         });
 
@@ -165,6 +169,7 @@ const StrategicAnalysis = ({
             status: "draft",
             project_name: item.project_name,
             description: '',
+            project_type: item.project_type,
             why_this_matters: '',
             impact: '',
             effort: '',

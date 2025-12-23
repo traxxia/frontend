@@ -990,7 +990,7 @@ const handleAccordionSelect = (eventKey) => {
                   )}
                   <p className="project-initiative">
                     from&nbsp;
-                    <span className="project-initiative-highlight">{p.initiative || "initiatives"}</span>
+                    <span className="project-initiative-highlight">{p.project_type || "Created project"}</span>
                   </p>
 
                   <h5 className="project-title">{p.project_name}</h5>
