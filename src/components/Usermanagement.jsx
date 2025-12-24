@@ -238,6 +238,10 @@ const fetchUsers = async () => {
   const viewersCount = users.filter(
   (u) => formatRole(u.role_name || u.role) === "Viewer"
 ).length;
+  const usersCount = users.filter(
+  (u) => formatRole(u.role_name || u.role) === "User"
+).length;
+
 
   // ---- HANDLERS ----
   const handleSearch = (e) => {
@@ -299,11 +303,10 @@ const fetchBusinesses = async () => {
   return (
     <Container fluid className="p-4">
       <h2 className="fw-bold">{t("User_Management")}</h2>
-      <p className="text-muted">{t("Add_and_manage_organization_collaborators_and_viewers")}</p>
-
+      
       <Row className="mt-4 g-3">
         <Col md={3}><Card body><h5>{t("Total_Users")}</h5><h2>{users.length}</h2></Card></Col>
-        <Col md={3}><Card body><h5>{t("Active_Users")}</h5><h2>{users.length}</h2></Card></Col>
+        <Col md={3}><Card body><h5>{t("users")}</h5><h2>{usersCount}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Collaborators")}</h5><h2>{collaboratorsCount}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Viewers")}</h5><h2>{viewersCount}</h2></Card></Col>
       </Row>
@@ -342,7 +345,7 @@ const fetchBusinesses = async () => {
     onClick={handleOpenAssignModal}
   >
     <User size={16} className="me-2" />
-    {t("Assign_User")}
+    {t("Collaborator")}
   </Button>
 )}
 
@@ -547,7 +550,7 @@ const fetchBusinesses = async () => {
     <Form onSubmit={handleAssign}>
 
       <Form.Group className="mb-3">
-        <Form.Label>{t("user")}</Form.Label>
+        <Form.Label>{t("Collaborator")}</Form.Label>
         <Form.Select
           value={assignUserId}
           onChange={(e) => setAssignUserId(e.target.value)}

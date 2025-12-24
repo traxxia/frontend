@@ -30,6 +30,14 @@ function RationaleToggle({ eventKey, children }) {
 const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
+  const [isLocked, setIsLocked] = useState(false);
+
+  useEffect(() => {
+    const locked = localStorage.getItem(`rankingLocked_${businessId}`);
+    if (locked === "true") {
+      setIsLocked(true);
+    } 
+  }, [businessId]);
 
  useEffect(() => {
   if (!projects || projects.length === 0) return;
@@ -56,38 +64,48 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   };
 
   const handleSaveRankings = async () => {
-    try {
-      const token = sessionStorage.getItem("token");
+  try {
+    const token = sessionStorage.getItem("token");
 
-      const payload = {
-        business_id: businessId,
-        projects: projectList.map((p, index) => ({
-          project_id: p._id,
-          rank: index + 1,
-          rationals: p.rationale || ""
-        }))
-      };
+    const payload = {
+      business_id: businessId,
+      projects: projectList.map((p, index) => ({
+        project_id: p._id,
+        rank: index + 1,
+        rationals: p.rationale || ""
+      }))
+    };
 
-      await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+    await axios.put(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
-      );
+      }
+    );
 
-      alert("Rankings saved successfully");
-      if (onRankSaved) {
-  onRankSaved();
-}
-    } catch (err) {
-      console.error("Save rankings failed", err);
-      alert("Failed to save rankings");
+    alert("Rankings saved successfully");
+    if (onRankSaved) {
+      onRankSaved();
+    }
+  } catch (err) {
+    console.error("Save rankings failed", err);
+    alert("Failed to save rankings");
+  }
+};
+
+
+  const handleLockRankings = () => {
+    setIsLocked(true);
+    localStorage.setItem(`rankingLocked_${businessId}`, "true");
+    if (onLockRankings) {
+      onLockRankings();
     }
   };
+
 
   return (
     <div className="rank-panel-container responsive-panel compact-mode">
@@ -101,17 +119,20 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           md={6}
           className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
         >
+         {(isAdmin || !isLocked) && (
           <Button
             className="btn-save-rank responsive-btn"
             onClick={handleSaveRankings}
           >
             {t("Save_Rankings")}
           </Button>
+        )}
 
           {!isAdmin && (
             <Button
               className="btn-lock-rank responsive-btn"
-              onClick={onLockRankings}
+              onClick={handleLockRankings}
+              disabled={isLocked}
             >
               <Lock size={16} /> {t("Lock_My_Rankings")}
             </Button>

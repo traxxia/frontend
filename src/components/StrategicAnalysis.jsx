@@ -126,7 +126,7 @@ const StrategicAnalysis = ({
             expected_outcome: action.expected_impact || '',
             estimated_timeline: action.timeline || '',
             success_metrics: action.success_metrics || action.metrics || [],
-            project_type: 'immediate_action'
+            project_type: 'immediate action'
           });
         });
 
@@ -137,7 +137,7 @@ const StrategicAnalysis = ({
             description: initiative.expected_outcome || '',
             expected_outcome: initiative.expected_outcome || '',
             estimated_timeline: '',
-            project_type: 'short_term_initiative'
+            project_type: 'short term initiative'
           });
         });
 
@@ -148,7 +148,7 @@ const StrategicAnalysis = ({
             description: shift.transformation_required || '',
             expected_outcome: shift.competitive_advantage || '',
             estimated_timeline: '',
-            project_type: 'long_term_shift'
+            project_type: 'long term shift'
           });
         });
 
@@ -160,6 +160,7 @@ const StrategicAnalysis = ({
           }
           return;
         }
+        let hasServerError = false;
 
         for (const item of itemsToCreate) {
           const payload = {
@@ -195,10 +196,19 @@ const StrategicAnalysis = ({
                 }
               }
             );
-          } catch (postErr) {
-            console.error("Kickstart project creation failed", postErr);
-          }
+            } catch (postErr) {
+              console.error("Kickstart project creation failed", postErr);
+              hasServerError = true;
+               break; 
+            }
         }
+      
+      if (hasServerError) {
+        const msg = "Failed to kickstart projects. Please try again.";
+        setKickstartError(msg);
+        onToastMessage?.(msg, "error");
+        return; 
+      }
       }
     } catch (e) {
       console.error("Kickstart processing failed", e);
