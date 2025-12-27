@@ -39,6 +39,8 @@ const UserManagement = ({ onToast }) => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const { t } = useTranslation();
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
 
   const [showModal, setShowModal] = useState(false);
@@ -59,7 +61,16 @@ const UserManagement = ({ onToast }) => {
   const isSuperAdmin = currentRole === "super_admin";
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
-  const handleOpenModal = () => setShowModal(true);
+  const handleOpenModal = () => {
+    setNewName("");
+    setNewEmail("");
+    setNewPassword("");
+    setNewRole("");
+    setSelectedCompanyId("");
+    setErrors({});
+    setShowModal(true);
+  };
+
   const handleCloseModal = () => setShowModal(false);
   const handleOpenAssignModal = () => setShowAssignModal(true);
   const handleCloseAssignModal = () => {
@@ -108,13 +119,13 @@ const UserManagement = ({ onToast }) => {
 };
 
 
- const handleAddUser = async (e) => {
+const handleAddUser = async (e) => {
   e.preventDefault();
 
-  if (!validateForm()) {
-    return; 
-  }
-  
+  if (!validateForm()) return;
+
+  setIsSubmitting(true); // ✅ START LOADER
+
   const payload = {
     name: newName,
     email: newEmail,
@@ -126,24 +137,25 @@ const UserManagement = ({ onToast }) => {
   try {
     await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
 
-    alert("User added successfully!");
+    onToast("User added successfully!");
 
-    // Refresh table immediately
     await fetchUsers();
 
     setNewName("");
     setNewEmail("");
     setNewPassword("");
     setNewRole("");
+    setSelectedCompanyId("");
 
     handleCloseModal();
-
   } catch (error) {
     if (error.response?.status === 409) {
       onToast("User already exists!");
     } else {
       onToast("Failed to add user");
     }
+  } finally {
+    setIsSubmitting(false); 
   }
 };
 useEffect(() => {
@@ -459,7 +471,7 @@ const fetchBusinesses = async () => {
   placeholder={t("Enter_name")}
   value={newName}
   onChange={(e) => setNewName(e.target.value)}
-  required
+  disabled={isSubmitting}
 />
 {errors.name && <small className="text-danger">{errors.name}</small>}
 
@@ -472,7 +484,7 @@ const fetchBusinesses = async () => {
       placeholder={t("Enter_email")}
       value={newEmail}
       onChange={(e) => setNewEmail(e.target.value)}
-      required
+      disabled={isSubmitting}
     />
     {errors.email && (<small className="text-danger">{errors.email}</small>)}
   </Form.Group>
@@ -484,7 +496,7 @@ const fetchBusinesses = async () => {
       placeholder={t("Enter_password")}
       value={newPassword}
       onChange={(e) => setNewPassword(e.target.value)}
-      required
+      disabled={isSubmitting}
     />
     {errors.password && (<small className="text-danger">{errors.password}</small>)}
   </Form.Group>
@@ -497,7 +509,7 @@ const fetchBusinesses = async () => {
     <Form.Select
       value={selectedCompanyId}
       onChange={(e) => setSelectedCompanyId(e.target.value)}
-      required
+      disabled={isSubmitting}
     >
       <option value="">Select Company</option>
       {companies.map((c) => (
@@ -515,7 +527,7 @@ const fetchBusinesses = async () => {
     <Form.Select
       value={newRole}
       onChange={(e) => setNewRole(e.target.value)}
-      required
+      disabled={isSubmitting}
     >
       <option value="">{t("Select_role")}</option>
       <option value="Collaborator">Collaborator</option>
@@ -528,12 +540,19 @@ const fetchBusinesses = async () => {
   </Form.Group>
 
   <div className="d-flex justify-content-end">
-    <Button variant="secondary" className="me-2" onClick={handleCloseModal}>
+    <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={isSubmitting}>
       {t("cancel")}
     </Button> 
 
-    <Button variant="primary" type="submit">
-      {t("Add_User")}
+    <Button variant="primary" type="submit" disabled={isSubmitting}>
+      {isSubmitting ? (
+        <>
+          <span className="spinner-border spinner-border-sm me-2" />
+          Adding...
+        </>
+      ) : (
+        t("Add_User")
+      )}
     </Button>
   </div>
 </Form>

@@ -34,6 +34,9 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
   lockSummary.total_users > 0 &&
   lockSummary.locked_users_count === lockSummary.total_users;
 
+  const isRankingLocked =
+    lockSummary.total_users > 0 &&
+    lockSummary.locked_users_count === lockSummary.total_users;
   // Content management states
   const [activeView, setActiveView] = useState("list"); // 'list', 'new', 'edit', 'view'
   const [currentProject, setCurrentProject] = useState(null);
@@ -905,6 +908,7 @@ const handleAccordionSelect = (eventKey) => {
         onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
         onRankSaved={refreshTeamRankings}
         isAdmin={isEditor}
+        isRankingLocked={isRankingLocked} 
       />
         {/* TEAM RANKINGS VIEW */}
         {isPrioritizing && !isViewer &&(

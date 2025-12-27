@@ -27,17 +27,11 @@ function RationaleToggle({ eventKey, children }) {
     </Button>
   );
 }
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin ,isRankingLocked}) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
-
-  useEffect(() => {
-    const locked = localStorage.getItem(`rankingLocked_${businessId}`);
-    if (locked === "true") {
-      setIsLocked(true);
-    } 
-  }, [businessId]);
+  const [isSaved, setIsSaved] = useState(false); // ✅ ADD THIS
 
  useEffect(() => {
   if (!projects || projects.length === 0) return;
@@ -88,6 +82,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     );
 
     alert("Rankings saved successfully");
+    setIsSaved(true); // ✅ ADD THIS LINE
+
     if (onRankSaved) {
       onRankSaved();
     }
@@ -99,12 +95,16 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
 
   const handleLockRankings = () => {
-    setIsLocked(true);
-    localStorage.setItem(`rankingLocked_${businessId}`, "true");
-    if (onLockRankings) {
-      onLockRankings();
-    }
-  };
+  if (!isSaved) {
+    alert("Please save your rankings before locking.");
+    return; 
+  }
+  setIsLocked(true);
+  localStorage.setItem(`rankingLocked_${businessId}`, "true");
+  if (onLockRankings) {
+    onLockRankings();
+  }
+};
 
 
   return (
@@ -119,7 +119,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           md={6}
           className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
         >
-         {(isAdmin || !isLocked) && (
+         {(isAdmin || !isRankingLocked) && (
           <Button
             className="btn-save-rank responsive-btn"
             onClick={handleSaveRankings}
@@ -132,7 +132,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             <Button
               className="btn-lock-rank responsive-btn"
               onClick={handleLockRankings}
-              disabled={isLocked}
+              disabled={isLocked || !isSaved} 
             >
               <Lock size={16} /> {t("Lock_My_Rankings")}
             </Button>
