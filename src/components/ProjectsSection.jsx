@@ -202,6 +202,10 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
       if (onProjectCountChange) {
         onProjectCountChange(fetched.length);
       }
+      setLockSummary(prev => ({
+        locked_users_count: res.data?.ranking_lock_summary?.locked_users_count ?? prev.locked_users_count,
+        total_users: res.data?.ranking_lock_summary?.total_users ?? prev.total_users
+      }));      
        // Derive portfolio status from project statuses so it persists
 
       const statuses = fetched
@@ -306,9 +310,11 @@ const fetchTeamRankings = async () => {
         }
       }
     );
-
     setTeamRankings(res.data.projects || []);
-    setLockSummary(res.data.ranking_lock_summary || { locked_users_count: 0, total_users: 0 });
+    setLockSummary(prev => ({
+      locked_users_count: res.data?.ranking_lock_summary?.locked_users_count ?? prev.locked_users_count,
+      total_users: res.data?.ranking_lock_summary?.total_users ?? prev.total_users
+    }));
 
   } catch (err) {
     console.error("Failed to fetch team rankings", err);
@@ -960,7 +966,7 @@ const handleAccordionSelect = (eventKey) => {
 
                       {/* Consensus */}
                       <td className="text-center">
-                   <Badge pill bg={getConsensusVariant(userRank, adminRank)}>
+                        <Badge pill bg={getConsensusVariant(userRank, adminRank)}>
                           &nbsp;
                         </Badge>
                       </td>
