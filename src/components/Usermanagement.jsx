@@ -137,7 +137,7 @@ const handleAddUser = async (e) => {
   try {
     await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
 
-    onToast("User added successfully!");
+    onToast("User added successfully!", "success");
 
     await fetchUsers();
 
@@ -149,12 +149,17 @@ const handleAddUser = async (e) => {
 
     handleCloseModal();
   } catch (error) {
-    if (error.response?.status === 409) {
-      onToast("User already exists!");
-    } else {
-      onToast("Failed to add user");
-    }
-  } finally {
+  const message =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    "Failed to add user";
+
+  if (message.toLowerCase().includes("exist")) {
+    onToast("User already exists!", "error");
+  } else {
+    onToast(message, "error");
+  }
+}finally {
     setIsSubmitting(false); 
   }
 };
@@ -206,7 +211,7 @@ const handleAssign = async (e) => {
       onToast(error.response.data.message);
       return;
     }
-    onToast("Failed to assign collaborator");
+    onToast("Failed to assign collaborator", "error");
   }
 };
 

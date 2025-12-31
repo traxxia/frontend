@@ -160,6 +160,7 @@ const ProjectForm = ({
   setDescription,
   importance,
   setImportance,
+  errors,
   selectedImpact,
   setSelectedImpact,
   selectedEffort,
@@ -267,18 +268,23 @@ const ProjectForm = ({
               {renderLockBadge("project_name")} 
             </div>
             <input
-              type="text"
-              value={projectName}
-              onChange={(e) => {
-                setProjectName(e.target.value);
-                handleFieldEdit("project_name");
-              }}
-              placeholder="Digital Wallet Launch"
-              className="field-input"
-              readOnly={isFieldDisabled("project_name")}
-              onFocus={() => handleFieldFocus("project_name")}
-              style={{ opacity: isFieldDisabled("project_name") ? 0.6 : 1 }}
-            />
+  type="text"
+  value={projectName}
+  onChange={(e) => {
+    setProjectName(e.target.value);
+    handleFieldEdit("project_name");
+  }}
+  placeholder="Digital Wallet Launch"
+  className={`field-input ${errors?.projectName ? "error" : ""}`}
+  readOnly={isFieldDisabled("project_name")}
+  onFocus={() => handleFieldFocus("project_name")}
+  style={{ opacity: isFieldDisabled("project_name") ? 0.6 : 1 }}
+/>
+
+{errors?.projectName && (
+  <small className="error-text">{errors.projectName}</small>
+)}
+
           </div>
 
           <div className="field-row">
@@ -287,18 +293,22 @@ const ProjectForm = ({
               {renderLockBadge("project_description")} 
             </div>
             <textarea
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                handleFieldEdit("project_description");
-              }}
-              placeholder="Launch digital wallet product and achieve market penetration"
-              rows={3}
-              className="field-textarea"
-              readOnly={isFieldDisabled("project_description")}
-              onFocus={() => handleFieldFocus("project_description")}
-              style={{ opacity: isFieldDisabled("project_description") ? 0.6 : 1, cursor: isFieldDisabled("project_description") ? "not-allowed" : "text" }}
-            />
+  value={description}
+  onChange={(e) => {
+    setDescription(e.target.value);
+    handleFieldEdit("project_description");
+  }}
+  placeholder="Launch digital wallet product and achieve market penetration"
+  rows={3}
+  className={`field-textarea ${errors?.description ? "error" : ""}`}
+  readOnly={isFieldDisabled("project_description")}
+  onFocus={() => handleFieldFocus("project_description")}
+/>
+
+{errors?.description && (
+  <small className="error-text">{errors.description}</small>
+)}
+
           </div>
 
           <div className="field-row">
@@ -307,18 +317,22 @@ const ProjectForm = ({
               {renderLockBadge("why_this_matters")} 
             </div>
             <textarea
-              value={importance}
-              onChange={(e) => {
-                setImportance(e.target.value);
-                handleFieldEdit("why_this_matters");
-              }}
-              placeholder="Explain why this project is strategically important"
-              rows={3}
-              className="field-textarea"
-              readOnly={isFieldDisabled("why_this_matters")}
-              onFocus={() => handleFieldFocus("why_this_matters")}
-              style={{ opacity: isFieldDisabled("why_this_matters") ? 0.6 : 1, cursor: isFieldDisabled("why_this_matters") ? "not-allowed" : "text" }}
-            />
+  value={importance}
+  onChange={(e) => {
+    setImportance(e.target.value);
+    handleFieldEdit("why_this_matters");
+  }}
+  placeholder="Explain why this project is strategically important"
+  rows={3}
+  className={`field-textarea ${errors?.importance ? "error" : ""}`}
+  readOnly={isFieldDisabled("why_this_matters")}
+  onFocus={() => handleFieldFocus("why_this_matters")}
+/>
+
+{errors?.importance && (
+  <small className="error-text">{errors.importance}</small>
+)}
+
           </div>
         </div>
       </div>

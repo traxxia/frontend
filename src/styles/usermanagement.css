@@ -85,6 +85,36 @@
   color: #b45309;
 }
 
+/* ============================= */
+/*        TOAST COLOR FIX        */
+/* ============================= */
+
+/* Success Toast */
+.toast.bg-success {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-left: 6px solid #10b981;
+}
+
+/* Error Toast */
+.toast.bg-danger {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border-left: 6px solid #ef4444;
+}
+
+/* Warning Toast */
+.toast.bg-warning {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-left: 6px solid #f59e0b;
+}
+
+/* Toast text */
+.toast-body {
+  font-weight: 500;
+}
+
 /* ----------------------- */
 /*      USER MGMT DARK     */
 /* ----------------------- */

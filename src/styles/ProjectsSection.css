@@ -4,6 +4,23 @@
   padding: 20px;
 }
 
+.validation-toast-wrapper {
+  position: fixed;
+  top: 120px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.validation-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffe5e5;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+
 /* --------------------- */
 /* OPEN COLLAB CARD       */
 /* --------------------- */

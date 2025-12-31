@@ -106,7 +106,11 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
   const [timeline, setTimeline] = useState("");
   const [budget, setBudget] = useState("");
   const [teamRankings, setTeamRankings] = useState([]);
+  const [errors, setErrors] = useState({});
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
+  const [showValidationToast, setShowValidationToast] = useState(false);
+const [validationMessage, setValidationMessage] = useState("");
+
 
   const user = sessionStorage.getItem("userName");
   const [adminRanks, setAdminRanks] = useState([]);
@@ -486,53 +490,91 @@ const lockMyRanking = async (projectId) => {
     setBudget("");
     setOpenDropdown(null);
   };
+const validateProjectForm = () => {
+  const newErrors = {};
+
+  const isEmpty = (val) => !val || val.trim().length === 0;
+  const hasLetter = (val) => /[a-zA-Z]/.test(val);
+
+  if (isEmpty(projectName)) {
+    newErrors.projectName = "Project name is required";
+  } else if (!hasLetter(projectName)) {
+    newErrors.projectName = "Project name must contain letters";
+  }
+
+  if (isEmpty(description)) {
+    newErrors.description = "Description is required";
+  } else if (!hasLetter(description)) {
+    newErrors.description = "Description must contain letters";
+  }
+
+  if (isEmpty(importance)) {
+    newErrors.importance = "Why this matters is required";
+  } else if (!hasLetter(importance)) {
+    newErrors.importance = "Must contain meaningful text";
+  }
+
+  setErrors(newErrors);
+
+  // 🔔 SHOW TOAST
+  if (Object.keys(newErrors).length > 0) {
+    const firstError = Object.values(newErrors)[0];
+    setValidationMessage(firstError);
+    setShowValidationToast(true);
+    return false;
+  }
+
+  return true;
+};
 
   // Handle create project
   const handleCreate = async () => {
-    const token = sessionStorage.getItem("token");
-    const userId = sessionStorage.getItem("userId");
+  if (!validateProjectForm()) return; // ❗ STOP if invalid
 
-    const payload = {
-      business_id: selectedBusinessId,
-      user_id: userId,
-      collaborators: [],
-      project_name: projectName,
-      description: description,
-      why_this_matters: importance,
-      impact: selectedImpact,
-      effort: selectedEffort,
-      risk: selectedRisk,
-      strategic_theme: selectedTheme,
-      dependencies,
-      high_level_requirements: highLevelReq,
-      scope_definition: scope,
-      expected_outcome: outcome,
-      success_metrics: successMetrics,
-      estimated_timeline: timeline,
-      budget_estimate: budget || "",
-    };
+  const token = sessionStorage.getItem("token");
+  const userId = sessionStorage.getItem("userId");
 
-    try {
-      await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      alert("Project created successfully!");
-      await unlockAllFieldsSafe();
-      await fetchProjects();
-      handleBackToList();
-    } catch (err) {
-      console.error("Project creation failed:", err);
-      alert("Failed to create project.");
-    }
+  const payload = {
+    business_id: selectedBusinessId,
+    user_id: userId,
+    collaborators: [],
+    project_name: projectName.trim(),
+    description: description.trim(),
+    why_this_matters: importance.trim(),
+    impact: selectedImpact || null,
+    effort: selectedEffort || null,
+    risk: selectedRisk || null,
+    strategic_theme: selectedTheme || null,
+    dependencies,
+    high_level_requirements: highLevelReq,
+    scope_definition: scope,
+    expected_outcome: outcome,
+    success_metrics: successMetrics,
+    estimated_timeline: timeline,
+    budget_estimate: budget,
   };
+
+  try {
+    await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    alert("Project created successfully!");
+    await unlockAllFieldsSafe();
+    await fetchProjects();
+    handleBackToList();
+  } catch (err) {
+    console.error("Project creation failed:", err);
+    alert("Failed to create project.");
+  }
+};
 
   // Handle save project
   const handleSave = async () => {
@@ -644,6 +686,7 @@ const handleAccordionSelect = (eventKey) => {
         getLockOwnerForField={getLockOwnerForField}
         onFieldFocus={lockFieldSafe}
         onFieldEdit={heartbeatSafe}
+        errors={errors}
       />
     );
   };
@@ -1108,12 +1151,31 @@ const handleAccordionSelect = (eventKey) => {
       </>
     );
   };
+  
 
   return (
+  <>
+    {/* 🔴 GLOBAL VALIDATION TOAST */}
+    <div className="validation-toast-wrapper">
+      <Toast
+        show={showValidationToast}
+        onClose={() => setShowValidationToast(false)}
+        delay={3000}
+        autohide
+      >
+        <Toast.Body className="validation-toast-body">
+          <AlertTriangle size={18} />
+          <span>{validationMessage}</span>
+        </Toast.Body>
+      </Toast>
+    </div>
+
     <Container fluid className="projects-wrapper">
       {activeView === "list" ? renderProjectList() : renderProjectForm()}
     </Container>
-  );
+  </>
+);
+
 };
 
 export default ProjectsSection;
