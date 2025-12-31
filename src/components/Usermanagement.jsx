@@ -58,7 +58,10 @@ const UserManagement = ({ onToast }) => {
   const [businesses, setBusinesses] = useState([]);
   const [assignBusinessId, setAssignBusinessId] = useState("");
   const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
-  
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [pendingRole, setPendingRole] = useState(null);
+
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
@@ -186,6 +189,31 @@ useEffect(() => {
   fetchCompanies();
 }, [isSuperAdmin]);
 
+const handleRoleUpdate = async (userId, role) => {
+  try {
+    await axios.put(
+      `${BACKEND_URL}/api/admin/users/${userId}/role`,
+      { role },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    onToast("User role updated successfully", "success");
+
+    // Refresh users after update
+    fetchUsers();
+  } catch (error) {
+    console.error(error);
+    onToast(
+      error.response?.data?.error || "Failed to update role",
+      "error"
+    );
+  }
+};
+
 const handleAssign = async (e) => {
   e.preventDefault();
 
@@ -268,12 +296,14 @@ const fetchUsers = async () => {
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
+    setCurrentPage(1);
     applyFilters(value, selectedRole);
   };
 
   const handleRoleChange = (e) => {
     const value = e.target.value;
     setSelectedRole(value);
+    setCurrentPage(1);
     applyFilters(searchTerm, value);
   };
 
@@ -410,7 +440,7 @@ const fetchBusinesses = async () => {
             </thead>
             <tbody>
   {Array.isArray(filteredUsers) &&
-     filteredUsers.map((user, index) => {
+     paginatedUsers.map((user, index) => {
       const uiRole = formatRole(user.role_name);              // FIXED
       const roleStyle = roleStyles[uiRole] || roleStyles["Viewer"];
 
@@ -467,16 +497,46 @@ const fetchBusinesses = async () => {
           <td className="text-muted">-</td>
 
           {/* ACTION COLUMN */}
-          {/* <td className="text-end">
-            <Dropdown>
-              <Dropdown.Toggle as={CustomToggle} />
-              <Dropdown.Menu align="end">
-                <Dropdown.Item><UserCog /> Collaborator</Dropdown.Item>
-                <Dropdown.Item><User /> Viewer</Dropdown.Item>
-                <Dropdown.Item className="text-danger">Remove</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </td> */}
+          <td className="text-end">
+  <Dropdown>
+    <Dropdown.Toggle as={CustomToggle} />
+
+    <Dropdown.Menu align="end">
+      <Dropdown.Item
+        onClick={() => {
+          setPendingUserId(user._id);
+          setPendingRole("collaborator");
+          setShowConfirm(true);
+        }}
+      >
+        <UserCog className="me-2" />
+        Collaborator
+      </Dropdown.Item>
+
+      <Dropdown.Item
+        onClick={() => {
+          setPendingUserId(user._id);
+          setPendingRole("viewer");
+          setShowConfirm(true);
+        }}
+      >
+        <User className="me-2" />
+        Viewer
+      </Dropdown.Item>
+
+      <Dropdown.Item
+        onClick={() => {
+          setPendingUserId(user._id);
+          setPendingRole("user");
+          setShowConfirm(true);
+        }}
+      >
+        <ShieldCheck className="me-2" />
+        User
+      </Dropdown.Item>
+    </Dropdown.Menu>
+  </Dropdown>
+</td>
         </tr>
       );
     })}
@@ -705,6 +765,73 @@ const fetchBusinesses = async () => {
 
 
 </Modal>
+<Modal
+  show={showConfirm}
+  onHide={() => setShowConfirm(false)}
+  centered
+  backdrop="static"
+>
+  <Modal.Header closeButton className="border-0 pb-0">
+    <Modal.Title className="fw-semibold">
+      Confirm Role Change
+    </Modal.Title>
+  </Modal.Header>
+
+  <Modal.Body className="pt-2">
+    <div className="d-flex align-items-start gap-3">
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          background: "#fff4e5",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#f59e0b",
+          fontSize: "20px",
+          fontWeight: "bold",
+        }}
+      >
+        !
+      </div>
+
+      <div>
+        <p className="mb-1 fw-semibold">
+          Are you sure you want to change this user’s role?
+        </p>
+        <p className="mb-0 text-muted">
+          The role will be updated to{" "}
+          <span className="fw-bold text-primary text-capitalize">
+            {pendingRole}
+          </span>
+          .
+        </p>
+      </div>
+    </div>
+  </Modal.Body>
+
+  <Modal.Footer className="border-0 pt-0">
+    <Button
+      variant="light"
+      onClick={() => setShowConfirm(false)}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      variant="primary"
+      className="px-4"
+      onClick={() => {
+        handleRoleUpdate(pendingUserId, pendingRole);
+        setShowConfirm(false);
+      }}
+    >
+      Yes, Change Role
+    </Button>
+  </Modal.Footer>
+</Modal>
+
 
 
     </Container>
