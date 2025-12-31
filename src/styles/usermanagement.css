@@ -115,6 +115,42 @@
   font-weight: 500;
 }
 
+
+/* =============================== */
+/*   USER TOOLBAR ALIGNMENT FIX    */
+/* =============================== */
+
+.user-toolbar {
+  align-items: center;
+}
+
+.toolbar-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Make select height match buttons */
+.role-select {
+  height: 42px;
+  width: 140px;
+  border-radius: 10px;
+}
+
+/* Ensure search & buttons align */
+.search-input {
+  height: 42px;
+  
+}
+
+.search-input-wrapper {
+  position: relative;
+  margin-top: -6px; /* ⬅ move search bar UP */
+}
+
+
 /* ----------------------- */
 /*      USER MGMT DARK     */
 /* ----------------------- */

@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown, Modal 
 import { Crown, UserCog, User, ShieldCheck, MoreVertical,Search , Plus} from "lucide-react";
 import "../styles/usermanagement.css";
 import axios from "axios";
+import Pagination from "../components/Pagination";
 import { useTranslation } from '../hooks/useTranslation';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -36,7 +37,9 @@ const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { t } = useTranslation();
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +57,8 @@ const UserManagement = ({ onToast }) => {
   const [assignUserId, setAssignUserId] = useState("");
   const [businesses, setBusinesses] = useState([]);
   const [assignBusinessId, setAssignBusinessId] = useState("");
-
+  const [showGiveAccessModal, setShowGiveAccessModal] = useState(false);
+  
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
@@ -288,6 +292,14 @@ const fetchUsers = async () => {
 
   setFilteredUsers(result);
 };
+const totalItems = filteredUsers.length;
+const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+const paginatedUsers = filteredUsers.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+);
+
 
 const roleStyles = {
   "Org Admin": { icon: <Crown size={16} color="#7c3aed" />, color: "#7c3aed" },
@@ -342,6 +354,7 @@ const fetchBusinesses = async () => {
     </div>
   </Col>
 
+  {/* Actions */}
   <Col md="auto" className="d-flex gap-2 align-items-center">
     <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
       <option>{t("All_Roles")}</option>
@@ -357,14 +370,22 @@ const fetchBusinesses = async () => {
     </Button>
 
     {!isSuperAdmin && (
-  <Button
-    className="add-user-btn d-flex align-items-center"
-    onClick={handleOpenAssignModal}
-  >
-    <User size={16} className="me-2" />
-    {t("Collaborator")}
-  </Button>
-)}
+      <Button
+        className="add-user-btn d-flex align-items-center"
+        onClick={handleOpenAssignModal}
+      >
+        <User size={16} className="me-2" />
+        {t("Collaborator")}
+      </Button>   
+    )}
+    <Button
+      className="add-user-btn d-flex align-items-center"
+      onClick={() => setShowGiveAccessModal(true)}
+    >
+      <ShieldCheck size={16} className="me-2" />
+      Add Project Access
+    </Button>
+
 
   </Col>
 </Row>
@@ -373,8 +394,8 @@ const fetchBusinesses = async () => {
 
       <Card className="mt-4">
         <Card.Body>
-          <h5 className="fw-semibold mb-3">{t("All_Users")} ({users.length})</h5>
-
+           <h5 className="fw-semibold mb-3">{t("All_Users")} ({users.length})</h5>
+          
           <Table hover responsive className="align-middle">
             <thead className="table-heading" >
               <tr>
@@ -389,7 +410,7 @@ const fetchBusinesses = async () => {
             </thead>
             <tbody>
   {Array.isArray(filteredUsers) &&
-    filteredUsers.map((user, index) => {
+     filteredUsers.map((user, index) => {
       const uiRole = formatRole(user.role_name);              // FIXED
       const roleStyle = roleStyles[uiRole] || roleStyles["Viewer"];
 
@@ -461,6 +482,13 @@ const fetchBusinesses = async () => {
     })}
 </tbody>
           </Table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </Card.Body>
       </Card>
       <Modal show={showModal} onHide={handleCloseModal} centered>
@@ -617,6 +645,67 @@ const fetchBusinesses = async () => {
     </Form>
   </Modal.Body>
 </Modal>
+<Modal
+  show={showGiveAccessModal}
+  onHide={() => setShowGiveAccessModal(false)}
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title> Add Project Access</Modal.Title>
+  </Modal.Header>
+
+ <Modal.Body>
+  <Form onSubmit={(e) => e.preventDefault()}>
+
+    {/* Business */}
+    <Form.Group className="mb-3">
+      <Form.Label>{t("Business")}</Form.Label>
+      <Form.Select defaultValue="" required>
+        <option value="">{t("Select_Business")}</option>
+        <option value="business_1">Business Alpha</option>
+        <option value="business_2">Business Beta</option>
+      </Form.Select>
+    </Form.Group>
+
+    {/* Project */}
+    <Form.Group className="mb-3">
+      <Form.Label>{t("Project")}</Form.Label>
+      <Form.Select defaultValue="" required>
+        <option value="">Select Project</option>
+        <option value="project_1">Project Apollo</option>
+        <option value="project_2">Project Orion</option>
+      </Form.Select>
+    </Form.Group>
+
+    {/* Collaborator */}
+    <Form.Group className="mb-3">
+      <Form.Label>{t("Collaborator")}</Form.Label>
+      <Form.Select defaultValue="" required>
+        <option value="">Select Collaborator</option>
+        <option value="user_1">John Doe</option>
+        <option value="user_2">Jane Smith</option>
+      </Form.Select>
+    </Form.Group>
+
+    <div className="d-flex justify-content-end">
+      <Button
+        variant="secondary"
+        className="me-2"
+        onClick={() => setShowGiveAccessModal(false)}
+      >
+        {t("cancel")}
+      </Button>
+      <Button variant="primary">
+        Give Access
+      </Button>
+    </div>
+
+  </Form>
+</Modal.Body>
+
+
+</Modal>
+
 
     </Container>
   );

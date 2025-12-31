@@ -8,6 +8,7 @@ import RankProjectsPanel from "../components/RankProjectsPanel";
 import ProjectForm from "../components/ProjectForm";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
 import "../styles/ProjectsSection.css";
+import ConsensusButtonPopover from "../components/ConsensusButtonPopover";
 
 const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessStatusChange, companyAdminIds }) => {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
   const [errors, setErrors] = useState({});
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [showValidationToast, setShowValidationToast] = useState(false);
-const [validationMessage, setValidationMessage] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
 
 
   const user = sessionStorage.getItem("userName");
@@ -490,7 +491,7 @@ const lockMyRanking = async (projectId) => {
     setBudget("");
     setOpenDropdown(null);
   };
-const validateProjectForm = () => {
+  const validateProjectForm = () => {
   const newErrors = {};
 
   const isEmpty = (val) => !val || val.trim().length === 0;
@@ -529,52 +530,52 @@ const validateProjectForm = () => {
 
   // Handle create project
   const handleCreate = async () => {
-  if (!validateProjectForm()) return; // ❗ STOP if invalid
+     if (!validateProjectForm()) return; // ❗ STOP if invalid
 
-  const token = sessionStorage.getItem("token");
-  const userId = sessionStorage.getItem("userId");
+    const token = sessionStorage.getItem("token");
+    const userId = sessionStorage.getItem("userId");
 
-  const payload = {
-    business_id: selectedBusinessId,
-    user_id: userId,
-    collaborators: [],
-    project_name: projectName.trim(),
+    const payload = {
+      business_id: selectedBusinessId,
+      user_id: userId,
+      collaborators: [],
+      project_name: projectName.trim(),
     description: description.trim(),
     why_this_matters: importance.trim(),
     impact: selectedImpact || null,
     effort: selectedEffort || null,
     risk: selectedRisk || null,
     strategic_theme: selectedTheme || null,
-    dependencies,
-    high_level_requirements: highLevelReq,
-    scope_definition: scope,
-    expected_outcome: outcome,
-    success_metrics: successMetrics,
-    estimated_timeline: timeline,
-    budget_estimate: budget,
+      dependencies,
+      high_level_requirements: highLevelReq,
+      scope_definition: scope,
+      expected_outcome: outcome,
+      success_metrics: successMetrics,
+      estimated_timeline: timeline,
+       budget_estimate: budget,
+    };
+
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      alert("Project created successfully!");
+      await unlockAllFieldsSafe();
+      await fetchProjects();
+      handleBackToList();
+    } catch (err) {
+      console.error("Project creation failed:", err);
+      alert("Failed to create project.");
+    }
   };
-
-  try {
-    await axios.post(
-      `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    alert("Project created successfully!");
-    await unlockAllFieldsSafe();
-    await fetchProjects();
-    handleBackToList();
-  } catch (err) {
-    console.error("Project creation failed:", err);
-    alert("Failed to create project.");
-  }
-};
 
   // Handle save project
   const handleSave = async () => {
@@ -1009,9 +1010,12 @@ const handleAccordionSelect = (eventKey) => {
 
                       {/* Consensus */}
                       <td className="text-center">
-                        <Badge pill bg={getConsensusVariant(userRank, adminRank)}>
-                          &nbsp;
-                        </Badge>
+                        <ConsensusButtonPopover
+                           userRole={userRole} 
+                          userRank={userRank}
+                          adminRank={adminRank}
+                          project={p}
+                        />
                       </td>
                     </tr>
                   );
@@ -1151,9 +1155,9 @@ const handleAccordionSelect = (eventKey) => {
       </>
     );
   };
-  
 
-  return (
+
+return (
   <>
     {/* 🔴 GLOBAL VALIDATION TOAST */}
     <div className="validation-toast-wrapper">
