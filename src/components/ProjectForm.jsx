@@ -154,6 +154,7 @@ const SelectField = ({
 
 const ProjectForm = ({
   mode, // 'new', 'edit', or 'view'
+   readOnly = false,
   projectName,
   setProjectName,
   description,
@@ -193,7 +194,8 @@ const ProjectForm = ({
   onFieldEdit,
 }) => {
   const { t } = useTranslation();
-  const isReadOnly = mode === "view";
+  const isReadOnly = mode === "view" || readOnly;
+
 
   const getTitle = () => {
     switch (mode) {

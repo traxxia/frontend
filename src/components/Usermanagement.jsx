@@ -61,6 +61,17 @@ const UserManagement = ({ onToast }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingUserId, setPendingUserId] = useState(null);
   const [pendingRole, setPendingRole] = useState(null);
+  // ---- Project Access states ----
+const [accessBusinessId, setAccessBusinessId] = useState("");
+const [projects, setProjects] = useState([]);
+const [selectedProjectId, setSelectedProjectId] = useState("");
+const [loadingProjects, setLoadingProjects] = useState(false);
+const [launchedProjectMap, setLaunchedProjectMap] = useState({});
+// ---- Collaborator Access states ----
+const [collaborators, setCollaborators] = useState([]);
+const [selectedCollaboratorId, setSelectedCollaboratorId] = useState("");
+const [loadingCollaborators, setLoadingCollaborators] = useState(false);
+
 
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -213,6 +224,44 @@ const handleRoleUpdate = async (userId, role) => {
     );
   }
 };
+const handleGiveProjectAccess = async () => {
+  if (!accessBusinessId || !selectedProjectId || !selectedCollaboratorId) {
+    onToast("Please select business, project and collaborator", "error");
+    return;
+  }
+
+  try {
+    await axios.patch(
+      `${BACKEND_URL}/api/projects/${selectedProjectId}/status`,
+      { status: "reprioritizing" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    await axios.patch(
+      `${BACKEND_URL}/api/projects/${selectedProjectId}`,
+      {
+        status: "reprioritizing",
+        allowed_collaborators: [selectedCollaboratorId],
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    onToast("Project access given successfully", "success");
+
+    setShowGiveAccessModal(false);
+    setAccessBusinessId("");
+    setSelectedProjectId("");
+    setSelectedCollaboratorId("");
+    setProjects([]);
+    setCollaborators([]);
+  } catch (error) {
+    console.error(error);
+    onToast(
+      error.response?.data?.error || "Failed to give project access",
+      "error"
+    );
+  }
+};
 
 const handleAssign = async (e) => {
   e.preventDefault();
@@ -359,6 +408,93 @@ const fetchBusinesses = async () => {
     alert("Failed to fetch businesses");
   }
 };
+const loadLaunchedBusinessAndProjects = async () => {
+  try {
+    setLoadingProjects(true);
+
+    // Fetch all launched projects
+    const projectRes = await axios.get(`${BACKEND_URL}/api/projects`, {
+      params: { status: "launched" },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const launchedProjects = projectRes.data.projects || [];
+
+    // Fetch all businesses
+    const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const allBusinesses =
+      businessRes.data.businesses || businessRes.data || [];
+
+    // Build business → projects map
+    const map = {};
+    launchedProjects.forEach((p) => {
+      const bId = p.business_id?.toString();
+      if (!bId) return;
+
+      if (!map[bId]) map[bId] = [];
+      map[bId].push(p);
+    });
+
+    // Keep only businesses that have launched projects
+    const validBusinesses = allBusinesses.filter(
+      (b) => map[b._id.toString()]
+    );
+
+    setBusinesses(validBusinesses);
+    setLaunchedProjectMap(map);
+
+    // reset selections
+    setAccessBusinessId("");
+    setProjects([]);
+    setSelectedProjectId("");
+  } catch (err) {
+    console.error("Failed to load launched data", err);
+  } finally {
+    setLoadingProjects(false);
+  }
+};
+useEffect(() => {
+  if (!accessBusinessId) {
+    setProjects([]);
+    return;
+  }
+
+  setProjects(launchedProjectMap[accessBusinessId] || []);
+}, [accessBusinessId, launchedProjectMap]);
+const fetchCollaboratorsByBusiness = async (businessId) => {
+  if (!businessId) return;
+
+  try {
+    setLoadingCollaborators(true);
+
+    const res = await axios.get(
+      `${BACKEND_URL}/api/businesses/${businessId}/collaborators`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    setCollaborators(res.data.collaborators || []);
+    setSelectedCollaboratorId("");
+  } catch (err) {
+    console.error("Failed to fetch collaborators", err);
+    onToast("Failed to load collaborators", "error");
+  } finally {
+    setLoadingCollaborators(false);
+  }
+};
+useEffect(() => {
+  if (!accessBusinessId) {
+    setCollaborators([]);
+    return;
+  }
+
+  fetchCollaboratorsByBusiness(accessBusinessId);
+}, [accessBusinessId]);
+
   return (
     <Container fluid className="p-4">
       <h2 className="fw-bold">{t("User_Management")}</h2>
@@ -410,7 +546,10 @@ const fetchBusinesses = async () => {
     )}
     <Button
       className="add-user-btn d-flex align-items-center"
-      onClick={() => setShowGiveAccessModal(true)}
+      onClick={() => {
+        loadLaunchedBusinessAndProjects();
+        setShowGiveAccessModal(true);
+      }}
     >
       <ShieldCheck size={16} className="me-2" />
       Add Project Access
@@ -719,33 +858,65 @@ const fetchBusinesses = async () => {
 
     {/* Business */}
     <Form.Group className="mb-3">
-      <Form.Label>{t("Business")}</Form.Label>
-      <Form.Select defaultValue="" required>
-        <option value="">{t("Select_Business")}</option>
-        <option value="business_1">Business Alpha</option>
-        <option value="business_2">Business Beta</option>
-      </Form.Select>
-    </Form.Group>
+  <Form.Label>{t("Business")}</Form.Label>
+  <Form.Select
+    value={accessBusinessId}
+    onChange={(e) => setAccessBusinessId(e.target.value)}
+    required
+  >
+    <option value="">{t("Select_Business")}</option>
+    {businesses.map((b) => (
+      <option key={b._id} value={b._id}>
+        {b.business_name || b.name}
+      </option>
+    ))}
+  </Form.Select>
+</Form.Group>
+
 
     {/* Project */}
     <Form.Group className="mb-3">
-      <Form.Label>{t("Project")}</Form.Label>
-      <Form.Select defaultValue="" required>
-        <option value="">Select Project</option>
-        <option value="project_1">Project Apollo</option>
-        <option value="project_2">Project Orion</option>
-      </Form.Select>
-    </Form.Group>
+  <Form.Label>{t("Project")}</Form.Label>
+  <Form.Select
+    value={selectedProjectId}
+    onChange={(e) => setSelectedProjectId(e.target.value)}
+    disabled={!accessBusinessId || loadingProjects}
+    required
+  >
+    <option value="">
+      {loadingProjects ? "Loading projects..." : "Select Project"}
+    </option>
+
+    {projects.map((p) => (
+      <option key={p._id} value={p._id}>
+        {p.project_name}
+      </option>
+    ))}
+  </Form.Select>
+</Form.Group>
+
 
     {/* Collaborator */}
     <Form.Group className="mb-3">
-      <Form.Label>{t("Collaborator")}</Form.Label>
-      <Form.Select defaultValue="" required>
-        <option value="">Select Collaborator</option>
-        <option value="user_1">John Doe</option>
-        <option value="user_2">Jane Smith</option>
-      </Form.Select>
-    </Form.Group>
+  <Form.Label>{t("Collaborator")}</Form.Label>
+  <Form.Select
+    value={selectedCollaboratorId}
+    onChange={(e) => setSelectedCollaboratorId(e.target.value)}
+    disabled={!accessBusinessId || loadingCollaborators}
+    required
+  >
+    <option value="">
+      {loadingCollaborators ? "Loading collaborators..." : "Select Collaborator"}
+    </option>
+
+    {collaborators.map((c) => (
+      <option key={c._id} value={c._id}>
+        {c.name}
+      </option>
+    ))}
+  </Form.Select>
+</Form.Group>
+
 
     <div className="d-flex justify-content-end">
       <Button
@@ -755,9 +926,14 @@ const fetchBusinesses = async () => {
       >
         {t("cancel")}
       </Button>
-      <Button variant="primary">
-        Give Access
-      </Button>
+      <Button
+  variant="primary"
+  disabled={!accessBusinessId || !selectedProjectId || !selectedCollaboratorId}
+  onClick={handleGiveProjectAccess}
+>
+  Give Access
+</Button>
+
     </div>
 
   </Form>

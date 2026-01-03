@@ -31,6 +31,28 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
 });
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin";
+  const myUserId = sessionStorage.getItem("userId");
+
+const canEditReprioritizingProject = (project) => {
+  if (!project) return false;
+
+  // Must be reprioritizing
+  if (project.status !== "reprioritizing") return false;
+
+  // Admins can edit any reprioritizing project
+  if (isEditor) return true;
+
+  // Any allowed collaborator can edit any reprioritizing project
+  if (
+    Array.isArray(project.allowed_collaborators) &&
+    project.allowed_collaborators.includes(myUserId)
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
   const allCollaboratorsLocked =
   lockSummary.total_users > 0 &&
   lockSummary.locked_users_count === lockSummary.total_users;
@@ -42,8 +64,7 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
   const [activeView, setActiveView] = useState("list"); // 'list', 'new', 'edit', 'view'
   const [currentProject, setCurrentProject] = useState(null);
   const { locks } = useFieldLockPolling(currentProject?._id);
-  const myUserId = sessionStorage.getItem("userId");
-
+  
   const isLockedByOther = (field) =>
     locks.some(
       (l) => l.field_name === field && l.locked_by !== myUserId
@@ -579,6 +600,14 @@ const lockMyRanking = async (projectId) => {
 
   // Handle save project
   const handleSave = async () => {
+    if (
+  currentProject?.status === "reprioritizing" &&
+  !canEditReprioritizingProject(currentProject)
+) {
+  alert("You are not allowed to edit this project");
+  return;
+}
+
     if (!currentProject?._id) {
       console.error("No project ID found!");
       return;
@@ -651,6 +680,12 @@ const handleAccordionSelect = (eventKey) => {
     return (
       <ProjectForm
         mode={activeView}
+        readOnly={
+  activeView === "view" ||
+  (currentProject?.status === "reprioritizing" &&
+    !canEditReprioritizingProject(currentProject))
+}
+
         projectName={projectName}
         setProjectName={setProjectName}
         description={description}
@@ -1067,13 +1102,23 @@ const handleAccordionSelect = (eventKey) => {
 
                   <div className="project-actions">
                     {launched ? (
-                      <button 
-                        onClick={() => handleEditProject(p, "view")}
-                        className="view-details-btn"
-                      >
-                        {t("View_Details")}
-                      </button>
-                    ) : (
+  canEditReprioritizingProject(p) ? (
+    <button
+      onClick={() => handleEditProject(p, "edit")}
+      className="view-details-btn"
+    >
+      <Pencil size={16} /> {t("edit")}
+    </button>
+  ) : (
+    <button
+      onClick={() => handleEditProject(p, "view")}
+      className="view-details-btn"
+    >
+      {t("View_Details")}
+    </button>
+  )
+) : (
+
                       <button
   onClick={() =>
     handleEditProject(p, isViewer ? "view" : "edit")

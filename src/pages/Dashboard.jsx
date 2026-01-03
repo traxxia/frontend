@@ -533,7 +533,9 @@ const projectPhaseBusinesses = businesses.filter(
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h5 className="mb-0">{t('welcome_dashboard')}</h5>
                     </div>
+                    {!isViewer && (
                     <p className="text-muted small mb-4">{t('create_business_plans')}</p>
+                    )}
                   </div>
                   <Accordion className="px-4 mb-4" defaultActiveKey="0">
                     {/* My Businesses */}
@@ -640,7 +642,9 @@ const projectPhaseBusinesses = businesses.filter(
                             <h5 className="mb-2">{t('welcome_dashboard')}</h5>
                           </div>
                         </div>
+                        {!isViewer && (
                         <p className="text-muted mb-4">{t('create_business_plans')}</p>
+                        )}
                         {!isViewer && (
                           <div className="d-flex flex-wrap gap-2">
                             <Button
