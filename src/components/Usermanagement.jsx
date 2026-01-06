@@ -61,6 +61,12 @@ const UserManagement = ({ onToast }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingUserId, setPendingUserId] = useState(null);
   const [pendingRole, setPendingRole] = useState(null);
+  const [accessType, setAccessType] = useState("reRanking");
+  // All businesses (for Assign Collaborator)
+  const [allBusinesses, setAllBusinesses] = useState([]);
+
+  // Only launched businesses (for Add Project Access)
+  const [launchedBusinesses, setLaunchedBusinesses] = useState([]);
   // ---- Project Access states ----
 const [accessBusinessId, setAccessBusinessId] = useState("");
 const [projects, setProjects] = useState([]);
@@ -225,43 +231,98 @@ const handleRoleUpdate = async (userId, role) => {
   }
 };
 const handleGiveProjectAccess = async () => {
-  if (!accessBusinessId || !selectedProjectId || !selectedCollaboratorId) {
-    onToast("Please select business, project and collaborator", "error");
+  if (!accessBusinessId) {
+    onToast("Please select business", "error");
+    return;
+  }
+
+  if (!selectedCollaboratorId) {
+    onToast("Please select collaborator", "error");
     return;
   }
 
   try {
-    await axios.patch(
-      `${BACKEND_URL}/api/projects/${selectedProjectId}/status`,
-      { status: "reprioritizing" },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
 
-    await axios.patch(
-      `${BACKEND_URL}/api/projects/${selectedProjectId}`,
-      {
-        status: "reprioritizing",
-        allowed_collaborators: [selectedCollaboratorId],
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+     /*MOVE TO REPRIORITIZING STAGE*/
+    if (accessType === "projectEdit") {
+      if (!selectedProjectId) {
+        onToast("Please select project", "error");
+        return;
+      }
 
-    onToast("Project access given successfully", "success");
+      await axios.put(
+        `${BACKEND_URL}/api/projects/edit-access`,
+        {
+          scope: "projectEdit",
+          business_id: accessBusinessId,
+          project_id: selectedProjectId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    }
+
+    if (accessType === "reRanking") {
+      await axios.put(
+        `${BACKEND_URL}/api/projects/edit-access`,
+        {
+          scope: "reRanking",
+          business_id: accessBusinessId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    }
+
+     /* GRANT COLLABORATOR ACCESS*/    
+    if (accessType === "projectEdit") {
+      await axios.patch(
+        `${BACKEND_URL}/api/businesses/${accessBusinessId}/project/${selectedProjectId}/allowed-collaborators`,
+        {
+          collaborator_ids: [selectedCollaboratorId],
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      onToast("Project moved to reprioritizing & edit access granted", "success");
+    }
+
+    if (accessType === "reRanking") {
+      await axios.patch(
+        `${BACKEND_URL}/api/businesses/${accessBusinessId}/allowed-ranking-collaborators`,
+        {
+          collaborator_ids: [selectedCollaboratorId],
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      onToast("Business moved to reprioritizing & reranking access granted", "success");
+    }
+
 
     setShowGiveAccessModal(false);
-    setAccessBusinessId("");
     setSelectedProjectId("");
     setSelectedCollaboratorId("");
-    setProjects([]);
-    setCollaborators([]);
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     onToast(
-      error.response?.data?.error || "Failed to give project access",
+      err.response?.data?.error || "Failed to give access",
       "error"
     );
   }
 };
+
+
+const handleAccessTypeChange = (value) => {
+  setAccessType(value);
+};
+
 
 const handleAssign = async (e) => {
   e.preventDefault();
@@ -402,17 +463,21 @@ useEffect(() => {
 const fetchBusinesses = async () => {
   try {
     const res = await axios.get(`${BACKEND_URL}/api/businesses`);
-    const data = Array.isArray(res.data) ? res.data : res.data.businesses || [];
-    setBusinesses(data);
+    const data = Array.isArray(res.data)
+      ? res.data
+      : res.data.businesses || [];
+
+    setAllBusinesses(data); // ALL businesses
   } catch (error) {
     alert("Failed to fetch businesses");
   }
 };
+
 const loadLaunchedBusinessAndProjects = async () => {
   try {
     setLoadingProjects(true);
 
-    // Fetch all launched projects
+    // Fetch launched projects
     const projectRes = await axios.get(`${BACKEND_URL}/api/projects`, {
       params: { status: "launched" },
       headers: { Authorization: `Bearer ${token}` },
@@ -425,7 +490,7 @@ const loadLaunchedBusinessAndProjects = async () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const allBusinesses =
+    const allBiz =
       businessRes.data.businesses || businessRes.data || [];
 
     // Build business → projects map
@@ -439,14 +504,13 @@ const loadLaunchedBusinessAndProjects = async () => {
     });
 
     // Keep only businesses that have launched projects
-    const validBusinesses = allBusinesses.filter(
+    const validBusinesses = allBiz.filter(
       (b) => map[b._id.toString()]
     );
 
-    setBusinesses(validBusinesses);
+    setLaunchedBusinesses(validBusinesses); // launched only
     setLaunchedProjectMap(map);
 
-    // reset selections
     setAccessBusinessId("");
     setProjects([]);
     setSelectedProjectId("");
@@ -824,11 +888,12 @@ useEffect(() => {
           required
         >
           <option value="">{t("Select_Business")}</option>
-          {businesses.map((b) => (
+          {allBusinesses.map((b) => (
             <option key={b._id} value={b._id}>
               {b.business_name || b.name}
             </option>
           ))}
+
         </Form.Select>
       </Form.Group>
 
@@ -855,6 +920,35 @@ useEffect(() => {
 
  <Modal.Body>
   <Form onSubmit={(e) => e.preventDefault()}>
+    <Form.Group className="mb-3">
+      <Form.Label className="fw-bold">Access Type</Form.Label>
+
+      <div className="mt-2 ms-3">
+
+        <Form.Check
+      type="radio"
+      name="accessType"
+      id="reRanking"
+      value="reRanking"
+      checked={accessType === "reRanking"}
+    onChange={() => handleAccessTypeChange("reRanking")}
+
+      label="Enable Reranking Project"
+    />
+
+    <Form.Check
+      type="radio"
+      name="accessType"
+      id="projectEdit"
+      value="projectEdit"
+      checked={accessType === "projectEdit"}
+      onChange={() => handleAccessTypeChange("projectEdit")}
+      label="Edit the Project"
+    />
+
+
+      </div>
+    </Form.Group>
 
     {/* Business */}
     <Form.Group className="mb-3">
@@ -865,35 +959,37 @@ useEffect(() => {
     required
   >
     <option value="">{t("Select_Business")}</option>
-    {businesses.map((b) => (
-      <option key={b._id} value={b._id}>
-        {b.business_name || b.name}
-      </option>
-    ))}
+    {launchedBusinesses.map((b) => (
+  <option key={b._id} value={b._id}>
+    {b.business_name || b.name}
+  </option>
+))}
   </Form.Select>
 </Form.Group>
 
 
     {/* Project */}
-    <Form.Group className="mb-3">
-  <Form.Label>{t("Project")}</Form.Label>
-  <Form.Select
-    value={selectedProjectId}
-    onChange={(e) => setSelectedProjectId(e.target.value)}
-    disabled={!accessBusinessId || loadingProjects}
-    required
-  >
-    <option value="">
-      {loadingProjects ? "Loading projects..." : "Select Project"}
-    </option>
-
-    {projects.map((p) => (
-      <option key={p._id} value={p._id}>
-        {p.project_name}
+    {accessType === "projectEdit" && (
+  <Form.Group className="mb-3">
+    <Form.Label>{t("Project")}</Form.Label>
+    <Form.Select
+      value={selectedProjectId}
+      onChange={(e) => setSelectedProjectId(e.target.value)}
+      disabled={!accessBusinessId || loadingProjects}
+      required
+    >
+      <option value="">
+        {loadingProjects ? "Loading projects..." : "Select Project"}
       </option>
-    ))}
-  </Form.Select>
-</Form.Group>
+
+      {projects.map((p) => (
+        <option key={p._id} value={p._id}>
+          {p.project_name}
+        </option>
+      ))}
+    </Form.Select>
+  </Form.Group>
+)}
 
 
     {/* Collaborator */}
@@ -906,7 +1002,9 @@ useEffect(() => {
     required
   >
     <option value="">
-      {loadingCollaborators ? "Loading collaborators..." : "Select Collaborator"}
+      {loadingCollaborators
+        ? "Loading collaborators..."
+        : "Select Collaborator"}
     </option>
 
     {collaborators.map((c) => (
@@ -928,7 +1026,11 @@ useEffect(() => {
       </Button>
       <Button
   variant="primary"
-  disabled={!accessBusinessId || !selectedProjectId || !selectedCollaboratorId}
+  disabled={
+    !accessBusinessId ||
+    !selectedCollaboratorId ||
+    (accessType === "projectEdit" && !selectedProjectId)
+  }
   onClick={handleGiveProjectAccess}
 >
   Give Access
