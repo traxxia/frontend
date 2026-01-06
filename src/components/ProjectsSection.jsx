@@ -24,47 +24,33 @@ const ProjectsSection = ({ selectedBusinessId, onProjectCountChange, onBusinessS
   const [showFinalizeToast, setShowFinalizeToast] = useState(false);
   const [launched, setLaunched] = useState(false);
   const [showLaunchToast, setShowLaunchToast] = useState(false);
- 
+
   const [lockSummary, setLockSummary] = useState({
-  locked_users_count: 0,
-  total_users: 0
-});
+    locked_users_count: 0,
+    total_users: 0
+  });
+
+  // NEW: Access control states
+  const [userHasRerankAccess, setUserHasRerankAccess] = useState(false);
+  const [userHasProjectEditAccess, setUserHasProjectEditAccess] = useState({});
+
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin";
   const myUserId = sessionStorage.getItem("userId");
 
-const canEditReprioritizingProject = (project) => {
-  if (!project) return false;
-
-  // Must be reprioritizing
-  if (project.status !== "reprioritizing") return false;
-
-  // Admins can edit any reprioritizing project
-  if (isEditor) return true;
-
-  // Any allowed collaborator can edit any reprioritizing project
-  if (
-    Array.isArray(project.allowed_collaborators) &&
-    project.allowed_collaborators.includes(myUserId)
-  ) {
-    return true;
-  }
-
-  return false;
-};
-
   const allCollaboratorsLocked =
-  lockSummary.total_users > 0 &&
-  lockSummary.locked_users_count === lockSummary.total_users;
+    lockSummary.total_users > 0 &&
+    lockSummary.locked_users_count === lockSummary.total_users;
 
   const isRankingLocked =
     lockSummary.total_users > 0 &&
     lockSummary.locked_users_count === lockSummary.total_users;
+
   // Content management states
   const [activeView, setActiveView] = useState("list"); // 'list', 'new', 'edit', 'view'
   const [currentProject, setCurrentProject] = useState(null);
   const { locks } = useFieldLockPolling(currentProject?._id);
-  
+
   const isLockedByOther = (field) =>
     locks.some(
       (l) => l.field_name === field && l.locked_by !== myUserId
@@ -111,6 +97,7 @@ const canEditReprioritizingProject = (project) => {
       console.error("Failed to unlock fields", err);
     }
   };
+
   // Form states for new/edit project
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
@@ -133,7 +120,6 @@ const canEditReprioritizingProject = (project) => {
   const [showValidationToast, setShowValidationToast] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
 
-
   const user = sessionStorage.getItem("userName");
   const [adminRanks, setAdminRanks] = useState([]);
 
@@ -143,17 +129,13 @@ const canEditReprioritizingProject = (project) => {
   }, []);
 
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
-  const updateBusinessStatus = async (newStatus) => {
 
+  const updateBusinessStatus = async (newStatus) => {
     if (!selectedBusinessId) return;
 
     try {
-
       const token = sessionStorage.getItem("token");
-
       if (!token) return;
-
-
 
       await axios.patch(
         `${process.env.REACT_APP_BACKEND_URL}/api/business/${selectedBusinessId}/status`,
@@ -169,39 +151,76 @@ const canEditReprioritizingProject = (project) => {
       if (onBusinessStatusChange) {
         onBusinessStatusChange(newStatus);
       }
-
     } catch (err) {
-
       console.error("Failed to update business status", err);
-
     }
   };
+
   const isFinalized = rankingsLocked && projectCreationLocked && rankingLockedFirst;
   const status = launched
     ? "launched"
     : finalizeCompleted
-
-    ? "prioritized"
-
-    : projectCreationLocked
-
-    ? "prioritizing"
-
-  : "draft";
-
-
+      ? "prioritized"
+      : projectCreationLocked
+        ? "prioritizing"
+        : "draft";
 
   const isDraft = status === "draft";
   const isPrioritizing = status === "prioritizing";
   const isPrioritized = status === "prioritized";
   const isLaunched = status === "launched";
   const isFinalizedView = isPrioritized || isLaunched;
-  
- 
+
+  // NEW: Check user access permissions
+  // In ProjectsSection.jsx - Update checkUserAccess function
+
+  const checkUserAccess = async (projectId = null) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const params = {
+        business_id: selectedBusinessId,
+      };
+
+      if (projectId) {
+        // Ensure projectId is a string
+        params.project_id = String(projectId);
+      }
+
+      console.log("Checking access with params:", params); // Debug log
+
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/check-access`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params,
+        }
+      );
+
+      setUserHasRerankAccess(res.data.has_rerank_access);
+
+      if (projectId) {
+        setUserHasProjectEditAccess(prev => ({
+          ...prev,
+          [String(projectId)]: res.data.has_project_edit_access
+        }));
+      }
+
+      return res.data;
+    } catch (err) {
+      console.error("Failed to check access:", err);
+      // Don't throw error, just return default values
+      return {
+        has_rerank_access: false,
+        has_project_edit_access: false
+      };
+    }
+  };
+
   useEffect(() => {
     if (!selectedBusinessId) return;
     fetchProjects();
   }, [selectedBusinessId]);
+
 
   const fetchProjects = async () => {
     try {
@@ -231,192 +250,170 @@ const canEditReprioritizingProject = (project) => {
       setLockSummary(prev => ({
         locked_users_count: res.data?.ranking_lock_summary?.locked_users_count ?? prev.locked_users_count,
         total_users: res.data?.ranking_lock_summary?.total_users ?? prev.total_users
-      }));      
-       // Derive portfolio status from project statuses so it persists
+      }));
 
+      // Derive portfolio status from project statuses
       const statuses = fetched
-
         .map((p) => p.status)
-
         .filter(Boolean);
 
-
-
       let backendStatus = "draft";
-
       if (statuses.includes("launched")) {
-
         backendStatus = "launched";
-
       } else if (statuses.includes("prioritized")) {
-
         backendStatus = "prioritized";
-
       } else if (statuses.includes("prioritizing")) {
-
         backendStatus = "prioritizing";
-
       }
 
-
-
       if (backendStatus === "draft") {
-
         setProjectCreationLocked(false);
-
         setRankingsLocked(false);
-
         setRankingLockedFirst(false);
-
         setFinalizeCompleted(false);
-
         setLaunched(false);
-
       } else if (backendStatus === "prioritizing") {
-
         setProjectCreationLocked(true);
-
         setRankingsLocked(false);
-
         setRankingLockedFirst(false);
-
         setFinalizeCompleted(false);
-
         setLaunched(false);
-
       } else if (backendStatus === "prioritized") {
-
         setProjectCreationLocked(true);
-
         setRankingsLocked(true);
-
         setRankingLockedFirst(true);
-
         setFinalizeCompleted(true);
-
         setLaunched(false);
-
       } else if (backendStatus === "launched") {
-
         setProjectCreationLocked(true);
-
         setRankingsLocked(true);
-
         setRankingLockedFirst(true);
-
         setFinalizeCompleted(true);
-
         setLaunched(true);
+      }
 
+      // Check business-level access first (no project_id)
+      const businessAccess = await checkUserAccess();
+
+      // Only check project-level access for launched projects
+      if (backendStatus === "launched") {
+        const projectAccessPromises = fetched
+          .filter(p => p.status === "launched")
+          .map(project => checkUserAccess(project._id));
+
+        await Promise.all(projectAccessPromises);
       }
     } catch (err) {
       console.error("Error fetching projects:", err);
     }
   };
- useEffect(() => {
-  if (!selectedBusinessId) return;
-  fetchTeamRankings();
-  fetchAdminRankings();
-}, [selectedBusinessId, isPrioritizing, isPrioritized]);
 
+  useEffect(() => {
+    if (!selectedBusinessId) return;
+    fetchTeamRankings();
+    fetchAdminRankings();
+  }, [selectedBusinessId, isPrioritizing, isPrioritized]);
 
-const fetchTeamRankings = async () => {
-  try {
+  const fetchTeamRankings = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const userId = sessionStorage.getItem("userId");
+
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            business_id: selectedBusinessId
+          }
+        }
+      );
+      setTeamRankings(res.data.projects || []);
+      setLockSummary(prev => ({
+        locked_users_count: res.data?.ranking_lock_summary?.locked_users_count ?? prev.locked_users_count,
+        total_users: res.data?.ranking_lock_summary?.total_users ?? prev.total_users
+      }));
+    } catch (err) {
+      console.error("Failed to fetch team rankings", err);
+    }
+  };
+
+  const fetchAdminRankings = async () => {
     const token = sessionStorage.getItem("token");
-    const userId = sessionStorage.getItem("userId");
 
     const res = await axios.get(
-      `${process.env.REACT_APP_BACKEND_URL}/api/projects/rank/${userId}`,
+      `${process.env.REACT_APP_BACKEND_URL}/api/projects/admin-rank`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
-          business_id: selectedBusinessId
-        }
+        headers: { Authorization: `Bearer ${token}` },
+        params: { business_id: selectedBusinessId, admin_user_id: companyAdminIds[0] }
       }
     );
-    setTeamRankings(res.data.projects || []);
-    setLockSummary(prev => ({
-      locked_users_count: res.data?.ranking_lock_summary?.locked_users_count ?? prev.locked_users_count,
-      total_users: res.data?.ranking_lock_summary?.total_users ?? prev.total_users
-    }));
+    console.log("Frontend → Admin User IDs:", companyAdminIds);
+    console.log("Frontend → Admin User ID (single):", companyAdminIds?.[0]);
+    console.log("Frontend → Business ID:", selectedBusinessId);
 
-  } catch (err) {
-    console.error("Failed to fetch team rankings", err);
-  }
-};
-const fetchAdminRankings = async () => {
-  const token = sessionStorage.getItem("token");
+    setAdminRanks(res.data.projects || []);
+  };
 
-  const res = await axios.get(
-    `${process.env.REACT_APP_BACKEND_URL}/api/projects/admin-rank`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { business_id: selectedBusinessId, admin_user_id: companyAdminIds[0] }
+  const normalizeId = (id) => String(id);
+  const rankMap = teamRankings.reduce((acc, r) => {
+    acc[normalizeId(r.project_id)] = r.rank;
+    return acc;
+  }, {});
+
+  const sortedProjects = [...projects].sort((a, b) => {
+    const rankA = rankMap[String(a._id)] ?? Infinity;
+    const rankB = rankMap[String(b._id)] ?? Infinity;
+    return rankA - rankB;
+  });
+
+  const adminRankMap = adminRanks.reduce((acc, r) => {
+    acc[normalizeId(r.project_id)] = r.rank;
+    return acc;
+  }, {});
+
+  const getConsensusVariant = (u, a) => {
+    if (!u || !a) return "secondary";
+    const diff = Math.abs(u - a);
+    if (diff === 0) return "success";
+    if (diff <= 2) return "warning";
+    return "danger";
+  };
+
+  const lockMyRanking = async (projectId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/lock-rank`,
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            project_id: projectId
+          }
+        }
+      );
+
+      setRankingsLocked(true);
+      setRankingLockedFirst(true);
+      setShowLockToast(true);
+
+      refreshTeamRankings();
+
+      setTimeout(() => setShowLockToast(false), 3000);
+    } catch (err) {
+      console.error("Failed to lock ranking", err);
+      alert("Failed to lock ranking");
     }
-  );
-  console.log("Frontend → Admin User IDs:", companyAdminIds);
-console.log("Frontend → Admin User ID (single):", companyAdminIds?.[0]);
-console.log("Frontend → Business ID:", selectedBusinessId);
-
-  setAdminRanks(res.data.projects || []);
-};
-const normalizeId = (id) => String(id);
-const rankMap = teamRankings.reduce((acc, r) => {
-  acc[normalizeId(r.project_id)] = r.rank;
-  return acc;
-}, {});
-const sortedProjects = [...projects].sort((a, b) => {
-  const rankA = rankMap[String(a._id)] ?? Infinity;
-  const rankB = rankMap[String(b._id)] ?? Infinity;
-  return rankA - rankB;
-});
-const adminRankMap = adminRanks.reduce((acc, r) => {
-  acc[normalizeId(r.project_id)] = r.rank;
-  return acc;
-}, {});
-
-const getConsensusVariant = (u, a) => {
-  if (!u || !a) return "secondary";
-  const diff = Math.abs(u - a);
-  if (diff === 0) return "success";
-  if (diff <= 2) return "warning";
-  return "danger";
-};
-
-const lockMyRanking = async (projectId) => {
-  try {
-    const token = sessionStorage.getItem("token");
-
-    await axios.post(
-      `${process.env.REACT_APP_BACKEND_URL}/api/projects/lock-rank`,
-      null,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
-          project_id: projectId
-        }
-      }
-    );
-
-    setRankingsLocked(true);
-    setRankingLockedFirst(true);
-    setShowLockToast(true);
-
-    refreshTeamRankings(); // 🔥 immediate sync
-
-    setTimeout(() => setShowLockToast(false), 3000);
-  } catch (err) {
-    console.error("Failed to lock ranking", err);
-    alert("Failed to lock ranking");
-  }
-};
+  };
 
   const handleDelete = async (projectId) => {
-    if (isViewer) return; 
+    if (isViewer) return;
     try {
       const token = sessionStorage.getItem("token");
 
@@ -457,8 +454,6 @@ const lockMyRanking = async (projectId) => {
     },
     completedDetails: 0,
   };
-
-  
 
   const handleNewProject = () => {
     resetForm();
@@ -512,46 +507,46 @@ const lockMyRanking = async (projectId) => {
     setBudget("");
     setOpenDropdown(null);
   };
+
   const validateProjectForm = () => {
-  const newErrors = {};
+    const newErrors = {};
 
-  const isEmpty = (val) => !val || val.trim().length === 0;
-  const hasLetter = (val) => /[a-zA-Z]/.test(val);
+    const isEmpty = (val) => !val || val.trim().length === 0;
+    const hasLetter = (val) => /[a-zA-Z]/.test(val);
 
-  if (isEmpty(projectName)) {
-    newErrors.projectName = "Project name is required";
-  } else if (!hasLetter(projectName)) {
-    newErrors.projectName = "Project name must contain letters";
-  }
+    if (isEmpty(projectName)) {
+      newErrors.projectName = "Project name is required";
+    } else if (!hasLetter(projectName)) {
+      newErrors.projectName = "Project name must contain letters";
+    }
 
-  if (isEmpty(description)) {
-    newErrors.description = "Description is required";
-  } else if (!hasLetter(description)) {
-    newErrors.description = "Description must contain letters";
-  }
+    if (isEmpty(description)) {
+      newErrors.description = "Description is required";
+    } else if (!hasLetter(description)) {
+      newErrors.description = "Description must contain letters";
+    }
 
-  if (isEmpty(importance)) {
-    newErrors.importance = "Why this matters is required";
-  } else if (!hasLetter(importance)) {
-    newErrors.importance = "Must contain meaningful text";
-  }
+    if (isEmpty(importance)) {
+      newErrors.importance = "Why this matters is required";
+    } else if (!hasLetter(importance)) {
+      newErrors.importance = "Must contain meaningful text";
+    }
 
-  setErrors(newErrors);
+    setErrors(newErrors);
 
-  // 🔔 SHOW TOAST
-  if (Object.keys(newErrors).length > 0) {
-    const firstError = Object.values(newErrors)[0];
-    setValidationMessage(firstError);
-    setShowValidationToast(true);
-    return false;
-  }
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      setValidationMessage(firstError);
+      setShowValidationToast(true);
+      return false;
+    }
 
-  return true;
-};
+    return true;
+  };
 
   // Handle create project
   const handleCreate = async () => {
-     if (!validateProjectForm()) return; // ❗ STOP if invalid
+    if (!validateProjectForm()) return;
 
     const token = sessionStorage.getItem("token");
     const userId = sessionStorage.getItem("userId");
@@ -561,19 +556,19 @@ const lockMyRanking = async (projectId) => {
       user_id: userId,
       collaborators: [],
       project_name: projectName.trim(),
-    description: description.trim(),
-    why_this_matters: importance.trim(),
-    impact: selectedImpact || null,
-    effort: selectedEffort || null,
-    risk: selectedRisk || null,
-    strategic_theme: selectedTheme || null,
+      description: description.trim(),
+      why_this_matters: importance.trim(),
+      impact: selectedImpact || null,
+      effort: selectedEffort || null,
+      risk: selectedRisk || null,
+      strategic_theme: selectedTheme || null,
       dependencies,
       high_level_requirements: highLevelReq,
       scope_definition: scope,
       expected_outcome: outcome,
       success_metrics: successMetrics,
       estimated_timeline: timeline,
-       budget_estimate: budget,
+      budget_estimate: budget,
     };
 
     try {
@@ -598,15 +593,39 @@ const lockMyRanking = async (projectId) => {
     }
   };
 
+  // NEW: Updated canEditProject function
+  const canEditProject = (project) => {
+    if (!project) return false;
+
+    // Admins can always edit (except truly locked launched projects)
+    if (isEditor && project.status !== "launched") return true;
+
+    // For reprioritizing projects
+    if (project.status === "reprioritizing") {
+      if (isEditor) return true;
+
+      if (
+        Array.isArray(project.allowed_collaborators) &&
+        project.allowed_collaborators.includes(myUserId)
+      ) {
+        return true;
+      }
+    }
+
+    // NEW: For launched projects, check if user has been granted access
+    if (project.status === "launched") {
+      return userHasProjectEditAccess[project._id] === true;
+    }
+
+    return false;
+  };
+
   // Handle save project
   const handleSave = async () => {
-    if (
-  currentProject?.status === "reprioritizing" &&
-  !canEditReprioritizingProject(currentProject)
-) {
-  alert("You are not allowed to edit this project");
-  return;
-}
+    if (!canEditProject(currentProject)) {
+      alert("You are not allowed to edit this project");
+      return;
+    }
 
     if (!currentProject?._id) {
       console.error("No project ID found!");
@@ -657,35 +676,36 @@ const lockMyRanking = async (projectId) => {
       alert("Failed to update project.");
     }
   };
-const refreshTeamRankings = async () => {
-  await fetchTeamRankings();
-  await fetchAdminRankings();
-};
-const rankedProjects = projects.map((p) => ({
-  ...p,
-  rank: rankMap[String(p._id)]
-}));
-const handleAccordionSelect = (eventKey) => {
-  setActiveAccordionKey((prevKey) => {
-    const nextKey = prevKey === eventKey ? null : eventKey;
-    if (nextKey === "0" && prevKey !== "0") {
-      // Accordion with key "0" was just opened
-      refreshTeamRankings();
-    }
-    return nextKey;
-  });
-};
+
+  const refreshTeamRankings = async () => {
+    await fetchTeamRankings();
+    await fetchAdminRankings();
+  };
+
+  const rankedProjects = projects.map((p) => ({
+    ...p,
+    rank: rankMap[String(p._id)]
+  }));
+
+  const handleAccordionSelect = (eventKey) => {
+    setActiveAccordionKey((prevKey) => {
+      const nextKey = prevKey === eventKey ? null : eventKey;
+      if (nextKey === "0" && prevKey !== "0") {
+        refreshTeamRankings();
+      }
+      return nextKey;
+    });
+  };
+
   // Render project form (for new/edit/view)
   const renderProjectForm = () => {
     return (
       <ProjectForm
         mode={activeView}
         readOnly={
-  activeView === "view" ||
-  (currentProject?.status === "reprioritizing" &&
-    !canEditReprioritizingProject(currentProject))
-}
-
+          activeView === "view" ||
+          (currentProject && !canEditProject(currentProject))
+        }
         projectName={projectName}
         setProjectName={setProjectName}
         description={description}
@@ -928,140 +948,108 @@ const handleAccordionSelect = (eventKey) => {
                 </button>
               )}
 
-              {isPrioritizing && !rankingsLocked && !isViewer && (
-
-              <button
-
-                onClick={() => setShowRankScreen(!showRankScreen)}
-
-                className="btn-rank-projects"
-
-              >
-
-                <ListOrdered size={18} />
-
-                {showRankScreen ? t("Hide") : t("Rank_Projects")}
-
-              </button>
-
-            )}
-
-
-
-            {isPrioritizing && rankingsLocked && (
-
-              <>
-
-                <button className="btn-rankings-locked" disabled>
-
-                  <Lock size={18} />
-
-                  {t("Rankings_Locked")}
-
+              {/* NEW: Show rank button if user has rerank access even when launched */}
+              {((isPrioritizing && !rankingsLocked) || (launched && userHasRerankAccess)) && !isViewer && (
+                <button
+                  onClick={() => setShowRankScreen(!showRankScreen)}
+                  className="btn-rank-projects"
+                >
+                  <ListOrdered size={18} />
+                  {showRankScreen ? t("Hide") : t("Rank_Projects")}
                 </button>
+              )}
 
-                {showRankScreen && (
-
-                  <button
-
-                    onClick={() => setShowRankScreen(false)}
-
-                    className="btn-rank-projects"
-
-                  >
-
-                    {t("Hide")}
-
+              {isPrioritizing && rankingsLocked && !userHasRerankAccess && (
+                <>
+                  <button className="btn-rankings-locked" disabled>
+                    <Lock size={18} />
+                    {t("Rankings_Locked")}
                   </button>
-
-                )}
-
-              </>
-
-            )}
-
+                  {showRankScreen && (
+                    <button
+                      onClick={() => setShowRankScreen(false)}
+                      className="btn-rank-projects"
+                    >
+                      {t("Hide")}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-
         </div>
-
-      </div>
 
         <RankProjectsPanel
-        show={showRankScreen}
-        projects={rankedProjects}   // ✅ FIX
-        businessId={selectedBusinessId}
-        onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
-        onRankSaved={refreshTeamRankings}
-        isAdmin={isEditor}
-        isRankingLocked={isRankingLocked} 
-      />
+          show={showRankScreen}
+          projects={rankedProjects}
+          businessId={selectedBusinessId}
+          onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
+          onRankSaved={refreshTeamRankings}
+          isAdmin={isEditor}
+          isRankingLocked={isRankingLocked}
+        />
+
         {/* TEAM RANKINGS VIEW */}
-        {isPrioritizing && !isViewer &&(
-        <div className="rank-list mt-4">
-          <Accordion activeKey={activeAccordionKey} onSelect={handleAccordionSelect}>
-            <Accordion.Item eventKey="0">
-              <Accordion.Header>
-                <div className="d-flex flex-column">
-                  <div className="d-flex align-items-center gap-2">
-                    <Users size={18} className="text-info"/>
-                    <strong>{t("Team_Rankings_View")}</strong>
+        {(isPrioritizing || (launched && userHasRerankAccess)) && !isViewer && (
+          <div className="rank-list mt-4">
+            <Accordion activeKey={activeAccordionKey} onSelect={handleAccordionSelect}>
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>
+                  <div className="d-flex flex-column">
+                    <div className="d-flex align-items-center gap-2">
+                      <Users size={18} className="text-info" />
+                      <strong>{t("Team_Rankings_View")}</strong>
+                    </div>
+                    <small className="text-muted">
+                      {t("See_how_all_team_members_ranked_projects")}
+                    </small>
                   </div>
-                  <small className="text-muted">
-                    {t("See_how_all_team_members_ranked_projects")}
-                  </small>
-                </div>
-              </Accordion.Header>
-              <Accordion.Body>
-                <div className="d-flex gap-4 mb-3">
-                  <span>🟢 {t("High_Agreement")}</span>
-                  <span>🟡 {t("Medium_Agreement")}</span>
-                  <span>🔴 {t("Low_Agreement")}</span>
-                </div>
-                <Table hover responsive>
-                  <thead>
-                    <tr>
-                      <th>{t("Project")}</th>
-                      <th className="text-center">{user}</th>
-                      <th className="text-center">{t("Consensus")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                {sortedProjects.map((p) => {
-                  const key = String(p._id);
-                  const userRank = rankMap[key];
-                  const adminRank = adminRankMap[key];
+                </Accordion.Header>
+                <Accordion.Body>
+                  <div className="d-flex gap-4 mb-3">
+                    <span>🟢 {t("High_Agreement")}</span>
+                    <span>🟡 {t("Medium_Agreement")}</span>
+                    <span>🔴 {t("Low_Agreement")}</span>
+                  </div>
+                  <Table hover responsive>
+                    <thead>
+                      <tr>
+                        <th>{t("Project")}</th>
+                        <th className="text-center">{user}</th>
+                        <th className="text-center">{t("Consensus")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedProjects.map((p) => {
+                        const key = String(p._id);
+                        const userRank = rankMap[key];
+                        const adminRank = adminRankMap[key];
 
-                  return (
-                    <tr key={p._id}>
-                      {/* Project Name */}
-                      <td>{p.project_name}</td>
-
-                      {/* User Rank */}
-                      <td className="text-center">
-                        <Badge pill bg="primary">
-                          {userRank ?? "-"}
-                        </Badge>
-                      </td>
-
-                      {/* Consensus */}
-                      <td className="text-center">
-                        <ConsensusButtonPopover
-                           userRole={userRole} 
-                          userRank={userRank}
-                          adminRank={adminRank}
-                          project={p}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-
-                </Table>
-              </Accordion.Body>
-            </Accordion.Item>
-          </Accordion>
-        </div>
+                        return (
+                          <tr key={p._id}>
+                            <td>{p.project_name}</td>
+                            <td className="text-center">
+                              <Badge pill bg="primary">
+                                {userRank ?? "-"}
+                              </Badge>
+                            </td>
+                            <td className="text-center">
+                              <ConsensusButtonPopover
+                                userRole={userRole}
+                                userRank={userRank}
+                                adminRank={adminRank}
+                                project={p}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
+          </div>
         )}
 
         {/* PROJECTS LIST */}
@@ -1075,7 +1063,7 @@ const handleAccordionSelect = (eventKey) => {
                 key={p._id}
               >
                 <div className="project-card">
-                  {finalizeCompleted && ( 
+                  {finalizeCompleted && (
                     <div className="project-serial-number">
                       {rankMap[String(p._id)] ?? index + 1}
                     </div>
@@ -1101,50 +1089,48 @@ const handleAccordionSelect = (eventKey) => {
                   <hr />
 
                   <div className="project-actions">
+                    {/* NEW: Updated edit button logic */}
                     {launched ? (
-  canEditReprioritizingProject(p) ? (
-    <button
-      onClick={() => handleEditProject(p, "edit")}
-      className="view-details-btn"
-    >
-      <Pencil size={16} /> {t("edit")}
-    </button>
-  ) : (
-    <button
-      onClick={() => handleEditProject(p, "view")}
-      className="view-details-btn"
-    >
-      {t("View_Details")}
-    </button>
-  )
-) : (
-
+                      canEditProject(p) ? (
+                        <button
+                          onClick={() => handleEditProject(p, "edit")}
+                          className="view-details-btn"
+                        >
+                          <Pencil size={16} /> {t("edit")}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEditProject(p, "view")}
+                          className="view-details-btn"
+                        >
+                          {t("View_Details")}
+                        </button>
+                      )
+                    ) : (
                       <button
-  onClick={() =>
-    handleEditProject(p, isViewer ? "view" : "edit")
-  }
-  className="view-details-btn"
->
-  {isViewer ? (
-    t("View_Details")
-  ) : (
-    <>
-      <Pencil size={16} /> {t("edit")}
-    </>
-  )}
-</button>
-
+                        onClick={() =>
+                          handleEditProject(p, isViewer ? "view" : "edit")
+                        }
+                        className="view-details-btn"
+                      >
+                        {isViewer ? (
+                          t("View_Details")
+                        ) : (
+                          <>
+                            <Pencil size={16} /> {t("edit")}
+                          </>
+                        )}
+                      </button>
                     )}
 
                     {isEditor && !isViewer && isDraft && !projectCreationLocked && (
-  <button
-    onClick={() => handleDelete(p._id)}
-    className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
-  >
-    <Trash2 size={16} /> {t("delete")}
-  </button>
-)}
-      
+                      <button
+                        onClick={() => handleDelete(p._id)}
+                        className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+                      >
+                        <Trash2 size={16} /> {t("delete")}
+                      </button>
+                    )}
                   </div>
                 </div>
               </Col>
@@ -1201,30 +1187,28 @@ const handleAccordionSelect = (eventKey) => {
     );
   };
 
+  return (
+    <>
+      {/* GLOBAL VALIDATION TOAST */}
+      <div className="validation-toast-wrapper">
+        <Toast
+          show={showValidationToast}
+          onClose={() => setShowValidationToast(false)}
+          delay={3000}
+          autohide
+        >
+          <Toast.Body className="validation-toast-body">
+            <AlertTriangle size={18} />
+            <span>{validationMessage}</span>
+          </Toast.Body>
+        </Toast>
+      </div>
 
-return (
-  <>
-    {/* 🔴 GLOBAL VALIDATION TOAST */}
-    <div className="validation-toast-wrapper">
-      <Toast
-        show={showValidationToast}
-        onClose={() => setShowValidationToast(false)}
-        delay={3000}
-        autohide
-      >
-        <Toast.Body className="validation-toast-body">
-          <AlertTriangle size={18} />
-          <span>{validationMessage}</span>
-        </Toast.Body>
-      </Toast>
-    </div>
-
-    <Container fluid className="projects-wrapper">
-      {activeView === "list" ? renderProjectList() : renderProjectForm()}
-    </Container>
-  </>
-);
-
+      <Container fluid className="projects-wrapper">
+        {activeView === "list" ? renderProjectList() : renderProjectForm()}
+      </Container>
+    </>
+  );
 };
 
 export default ProjectsSection;
