@@ -35,7 +35,7 @@ const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]); 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const { t } = useTranslation();
@@ -44,8 +44,8 @@ const UserManagement = ({ onToast }) => {
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState("");
+  const [newPassword, setNewPassword] = useState(""); 
+  const [newRole, setNewRole] = useState(""); 
   const token = sessionStorage.getItem("token");
 
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -92,19 +92,19 @@ const UserManagement = ({ onToast }) => {
   const handleCloseAssignModal = () => {
     setShowAssignModal(false);
     setAssignUserId("");
-    setAssignBusinessId("");
+    setAssignBusinessId("");   
   };
-
+  
   const validateForm = () => {
     const newErrors = {};
 
     // Name validation
     if (!newName.trim()) {
       newErrors.name = t("Name_is_required")
-    }
+    } 
     else if (!/^[A-Za-z]/.test(newName)) {
       newErrors.name = t("Name_must_start_with_letter")
-    }
+    } 
     else if (newName.trim().length < 3) {
       newErrors.name = t("Name_must_be_atleast3_characters_long")
     }
@@ -169,7 +169,7 @@ const UserManagement = ({ onToast }) => {
         onToast(message, "error");
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); 
     }
   };
   useEffect(() => {
@@ -258,7 +258,7 @@ const UserManagement = ({ onToast }) => {
         );
       }
 
-      /* GRANT COLLABORATOR ACCESS*/
+      /* GRANT COLLABORATOR ACCESS*/    
       if (accessType === "projectEdit") {
         await axios.patch(
           `${BACKEND_URL}/api/businesses/${accessBusinessId}/project/${selectedProjectId}/allowed-collaborators`,
@@ -313,7 +313,7 @@ const UserManagement = ({ onToast }) => {
       await axios.post(
         `${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`,
         {
-          user_id: assignUserId,
+          user_id: assignUserId,   
         },
         {
           headers: {
@@ -341,9 +341,9 @@ const UserManagement = ({ onToast }) => {
       case "collaborator":
         return "Collaborator";
       case "user":
-        return "User";
+        return "User"; 
       default:
-        return "Viewer";
+        return "Viewer";   
     }
   };
 
@@ -366,7 +366,7 @@ const UserManagement = ({ onToast }) => {
   const collaboratorsCount = users.filter(
     (u) => formatRole(u.role_name || u.role) === "Collaborator"
   ).length;
-  const collaboratorUsers = users.filter(
+   const collaboratorUsers = users.filter(
     (u) => formatRole(u.role_name || u.role) === "Collaborator"
   );
   const viewersCount = users.filter(
@@ -535,51 +535,55 @@ const UserManagement = ({ onToast }) => {
   return (
     <Container fluid className="p-4">
       <h2 className="fw-bold">{t("User_Management")}</h2>
-
+      
       <Row className="mt-4 g-3">
         <Col md={3}><Card body><h5>{t("Total_Users")}</h5><h2>{users.length}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("users")}</h5><h2>{usersCount}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Collaborators")}</h5><h2>{collaboratorsCount}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Viewers")}</h5><h2>{viewersCount}</h2></Card></Col>
       </Row>
-      <Row className="mt-4 g-2 align-items-center justify-content-between">
+      <Row className="mt-4">
+        <Col>
+          <div className="user-toolbar d-flex align-items-center justify-content-between flex-wrap gap-3">
 
-        <Col md={8}>
-          <div className="search-input-wrapper">
-            <Search size={18} className="search-icon" />
-            <input
-              type="text"
-              className="search-input"
-              placeholder={t("Search_by_name_or_email")}
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-        </Col>
+            {/* Search */}
+            <div className="search-container flex-grow-1">
+              <div className="search-input-wrapper">
+                <Search size={18} className="search-icon" />
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder={t("Search_by_name_or_email")}
+                  value={searchTerm}
+                  onChange={handleSearch}
+                />
+              </div>
+            </div>
 
-        {/* Actions */}
-        <Col md="auto" className="d-flex gap-2 align-items-center">
-          <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
-            <option>{t("All_Roles")}</option>
-            <option>Org Admin</option>
-            <option>Collaborator</option>
-            <option>User</option>
-            <option>Viewer</option>
-          </Form.Select>
+            {/* Actions */}
+            <div className="toolbar-actions">
+              <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
+                <option>{t("All_Roles")}</option>
+                <option>Org Admin</option>
+                <option>Collaborator</option>
+                <option>User</option>
+                <option>Viewer</option>
+              </Form.Select>
 
-          <Button className="add-user-btn d-flex align-items-center" onClick={handleOpenModal}>
-            <Plus size={16} className="me-2" />
-            {t("Add_User")}
-          </Button>
+              <Button className="add-user-btn d-flex align-items-center" onClick={handleOpenModal}>
+                <Plus size={16} className="me-2" />
+                {t("Add_User")}
+              </Button>
 
-          {!isSuperAdmin && (
-            <><Button
-              className="add-user-btn d-flex align-items-center"
-              onClick={handleOpenAssignModal}
-            >
-              <User size={16} className="me-2" />
-              {t("Collaborator")}
-            </Button>
+              {!isSuperAdmin && (
+                <Button 
+                className="add-user-btn d-flex align-items-center" 
+                onClick={handleOpenAssignModal}
+                >
+                  <User size={16} className="me-2" />
+                  {t("Collaborator")}
+                </Button>
+              )}
               <Button
                 className="add-user-btn d-flex align-items-center"
                 onClick={() => {
@@ -588,15 +592,16 @@ const UserManagement = ({ onToast }) => {
                 }}
               >
                 <ShieldCheck size={16} className="me-2" />
-                Add Project Access
-              </Button></>
-          )}
+                {t("Add Project Access")}
+              </Button>
+            </div>
+
+          </div>
         </Col>
       </Row>
       <Card className="mt-4">
         <Card.Body>
-          <h5 className="fw-semibold mb-3">{t("All_Users")} ({users.length})</h5>
-
+                     
           <Table hover responsive className="align-middle">
             <thead className="table-heading" >
               <tr>
@@ -762,25 +767,25 @@ const UserManagement = ({ onToast }) => {
               {errors.password && (<small className="text-danger">{errors.password}</small>)}
             </Form.Group>
             {isSuperAdmin && (
-              <Form.Group className="mb-3">
-                <Form.Label>
-                  Companies <span className="text-danger">*</span>
-                </Form.Label>
+            <Form.Group className="mb-3">
+              <Form.Label>
+                Companies <span className="text-danger">*</span>
+              </Form.Label>
 
-                <Form.Select
-                  value={selectedCompanyId}
-                  onChange={(e) => setSelectedCompanyId(e.target.value)}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Company</option>
-                  {companies.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.company_name || c.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            )}
+              <Form.Select
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                disabled={isSubmitting}
+              >
+                <option value="">Select Company</option>
+                {companies.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.company_name || c.name}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          )}
             <Form.Group className="mb-3">
               <Form.Label>{t("role")} <span className="text-danger">*</span></Form.Label>
               <Form.Select
@@ -801,7 +806,7 @@ const UserManagement = ({ onToast }) => {
             <div className="d-flex justify-content-end">
               <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={isSubmitting}>
                 {t("cancel")}
-              </Button>
+              </Button> 
 
               <Button variant="primary" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
@@ -835,7 +840,7 @@ const UserManagement = ({ onToast }) => {
                 <option value="">{t("Select_collaborator")}</option>
                 {collaboratorUsers.map((u) => (
                   <option key={u._id} value={u._id}>
-                    {u.name}
+                    {u.name} 
                   </option>
                 ))}
               </Form.Select>
@@ -876,13 +881,13 @@ const UserManagement = ({ onToast }) => {
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title> Add Project Access</Modal.Title>
+          <Modal.Title> {t("Add Project Access")}</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
           <Form onSubmit={(e) => e.preventDefault()}>
             <Form.Group className="mb-3">
-              <Form.Label className="fw-bold">Access Type</Form.Label>
+              <Form.Label className="fw-bold">{t("Access Type")}</Form.Label>
 
               <div className="mt-2 ms-3">
                 <Form.Check
@@ -893,7 +898,7 @@ const UserManagement = ({ onToast }) => {
                   checked={accessType === "reRanking"}
                   onChange={() => handleAccessTypeChange("reRanking")}
 
-                  label="Enable Reranking Project"
+                    label="Enable Reranking Project"
                 />
 
                 <Form.Check
@@ -910,7 +915,7 @@ const UserManagement = ({ onToast }) => {
 
             {/* Business */}
             <Form.Group className="mb-3">
-              <Form.Label>{t("Business")}</Form.Label>
+              <Form.Label>{t("business")}</Form.Label>
               <Form.Select
                 value={accessBusinessId}
                 onChange={(e) => setAccessBusinessId(e.target.value)}
@@ -936,7 +941,7 @@ const UserManagement = ({ onToast }) => {
                   required
                 >
                   <option value="">
-                    {loadingProjects ? "Loading projects..." : "Select Project"}
+                    {loadingProjects ? t("Loading projects") : t("Select Project")}
                   </option>
 
                   {projects.map((p) => (
@@ -959,8 +964,8 @@ const UserManagement = ({ onToast }) => {
               >
                 <option value="">
                   {loadingCollaborators
-                    ? "Loading collaborators..."
-                    : "Select Collaborator"}
+                    ? t("Loading collaborators")
+                    : t("Select Collaborator")}
                 </option>
 
                 {collaborators.map((c) => (
@@ -987,7 +992,7 @@ const UserManagement = ({ onToast }) => {
                 }
                 onClick={handleGiveProjectAccess}
               >
-                Give Access
+                {t("Give Access")}
               </Button>
             </div>
           </Form>

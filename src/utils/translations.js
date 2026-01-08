@@ -76,6 +76,7 @@ export const staticTranslations = {
     // ===========================
     "dashboard": "Dashboard",
     "welcome_dashboard": "Welcome!",
+    "Project Phase":"Project Phase",
     "create_business_plans": "Create business plans step by step with the S.T.R.A.T.E.G.I.C framework. Activate AI capabilities for analysis, prediction, and decision-making.",
     "my_businesses": "Businesses",
     "create_business": "Create Business",
@@ -319,6 +320,7 @@ export const staticTranslations = {
     'users': 'Users',
     'user_history': 'User History',
     'audit_trail': 'Audit Trail',
+    'View_audit_logs_for_all_users_in_your_company':'View audit logs for all users in your company',
     'search_users': 'Search users...',
     'user': 'User',
     'System_wide_Audit_Trail': 'System-wide Audit Trail',
@@ -885,6 +887,27 @@ export const staticTranslations = {
   'Role_is_required':'Role is required.',
 
   // ===========================
+  // ACCESS MANAGEMENT BLOCK
+  // ===========================
+  'access_management':'Access Management',
+  'Total Users with Access':'Total Users with Access',
+  'Reranking Access':'Reranking Access',
+  'Project Edit Access':'Project Edit Access',
+  'Users with Granted Access':'Users with Granted Access',
+  'Rerank Access':'Rerank Access',
+  'Project Edit Access':'Project Edit Access', 
+  'Projects with Access':'Projects with Access',
+  'No Launched Businesses':'No Launched Businesses',
+  'No businesses have been launched yet. Access management is only available for launched businesses.':'No businesses have been launched yet. Access management is only available for launched businesses.',
+  'Add Project Access':'Add Project Access',
+  'Access Type':'Access Type',
+  'Select Project':'Select Project',
+  'Select Collaborator':'Select Collaborator',
+  'Loading collaborators':'Loading collaborators...',
+  'Loading projects':'Loading projects...',
+  'Give Access':'Give Access',
+
+  // ===========================
   // PROJECT FOEM PAGE
   // ===========================
 
@@ -980,6 +1003,7 @@ export const staticTranslations = {
     // ===========================
     "dashboard": "Panel de Control",
     "welcome_dashboard": "¡Bienvenido!",
+    "Project Phase":"Fase del Proyecto",
     "create_business_plans": "Crea planes de negocio paso a paso con el marco S.T.R.A.T.E.G.I.C. Activa las capacidades de IA para análisis, predicción y toma de decisiones.",
     "my_businesses": "Mis Negocios",
     "create_business": "Crear Negocio",
@@ -1368,6 +1392,7 @@ export const staticTranslations = {
     'System_wide_Audit_Trail': 'Pista de Auditoría del Sistema',
     'Company_Audit_Trail': 'Pista de Auditoría de la Compañía',
     'Audit_Trail': 'Pista de Auditoría',
+    'View_audit_logs_for_all_users_in_your_company':'Ver registros de auditoría de todos los usuarios de su empresa',
     'View_audit_logs_for_all_users_across_all_companies': 'Ver registros de auditoría para todos los usuarios en todas las compañías',
     'Filters': 'Filtros',
     'Refresh': 'Actualizar',
@@ -1804,6 +1829,27 @@ export const staticTranslations = {
   'Enter a valid email address':'Ingrese una dirección de correo electrónico válida.',
   'Password_uppercase_lowercase_number_special character':'La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, un número y un carácter especial.',
   'Role_is_required':'El rol es obligatorio.',
+
+  // ===========================
+  // ACCESS MANAGEMENT BLOCK
+  // ===========================
+  'access_management':'Gestión de Accesos',
+  'Total Users with Access':'Total de Usuarios con Acceso',
+  'Reranking Access':'Acceso a re-ranking',
+  'Project Edit Access':'Acceso a edición de proyecto',
+  'Users with Granted Access':'Usuarios con acceso concedido',
+  'Rerank Access':'Acceso a reclasificación',
+  'Project Edit Access':'Acceso a edición de proyecto', 
+  'Projects with Access':'Proyectos con acceso',   
+  'No Launched Businesses':'No hay empresas lanzadas',
+  'No businesses have been launched yet. Access management is only available for launched businesses.':'Aún no se han lanzado empresas. La gestión de acceso solo está disponible para empresas ya lanzadas.', 
+  'Add Project Access':'Agregar acceso al proyecto',
+  'Access Type':'Tipo de acceso',
+  'Select Project':'Seleccionar Proyecto',
+  'Select Collaborator':'Seleccionar Colaborador',
+  'Loading collaborators':'Cargando colaboradoras...',
+  'Loading projects':'Cargando proyectos...',
+  'Give Access':'Dar acceso',
 
   // ===========================
   // PROJECT FOEM PAGE

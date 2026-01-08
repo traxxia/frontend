@@ -122,9 +122,9 @@ const AccessManagement = ({ onToast }) => {
             <Container fluid className="p-4">
                 <Card className="text-center p-5">
                     <AlertCircle size={48} className="mx-auto mb-3 text-muted" />
-                    <h5>{t("No_Launched_Businesses")}</h5>
+                    <h5>{t("No Launched Businesses")}</h5>
                     <p className="text-muted">
-                        No businesses have been launched yet. Access management is only available for launched businesses.
+                        {t('No businesses have been launched yet. Access management is only available for launched businesses.')}
                     </p>
                 </Card>
             </Container>
@@ -133,28 +133,35 @@ const AccessManagement = ({ onToast }) => {
 
     return (
         <Container fluid className="p-4">
-            <h2 className="fw-bold mb-4">{t("Access_Management")}</h2>
+            <div className="access-header">
+            <h2 className="page-title">{t("access_management")}</h2>
+            </div>
 
-            {/* Business Selector */}
-            <Row className="mb-4">
-                <Col md={6}>
+            <div className="access-content">
+                
+                {/* Business Selector */}
+                <Card className="business-selector-card mb-4">
+                <Card.Body>
                     <Form.Group>
-                        <Form.Label className="fw-semibold">Select Business</Form.Label>
-                        <Form.Select
-                            value={selectedBusinessId}
-                            onChange={(e) => setSelectedBusinessId(e.target.value)}
-                            className="form-select-lg"
-                        >
-                            <option value="">Select a business</option>
-                            {businesses.map((b) => (
-                                <option key={b._id} value={b._id}>
-                                    {b.business_name || b.name}
-                                </option>
-                            ))}
-                        </Form.Select>
+                    <Form.Label className="selector-label">
+                        {t("Select_Business")}
+                    </Form.Label>
+                    <Form.Select
+                        value={selectedBusinessId}
+                        onChange={(e) => setSelectedBusinessId(e.target.value)}
+                        className="business-select"
+                    >
+                        <option value="">Select a business</option>
+                        {businesses.map((b) => (
+                        <option key={b._id} value={b._id}>
+                            {b.business_name || b.name}
+                        </option>
+                        ))}
+                    </Form.Select>
                     </Form.Group>
-                </Col>
-            </Row>
+                </Card.Body>
+                </Card>
+
 
             {loading ? (
                 <div className="text-center p-5">
@@ -172,7 +179,7 @@ const AccessManagement = ({ onToast }) => {
                                         <Users size={24} className="text-primary" />
                                     </div>
                                     <div>
-                                        <h6 className="mb-0 text-muted">Total Users with Access</h6>
+                                        <h6 className="mb-0 text-muted">{t("Total Users with Access")}</h6>
                                         <h3 className="mb-0 fw-bold">{accessData.total_users_with_access}</h3>
                                     </div>
                                 </div>
@@ -186,7 +193,7 @@ const AccessManagement = ({ onToast }) => {
                                         <Lock size={24} className="text-warning" />
                                     </div>
                                     <div>
-                                        <h6 className="mb-0 text-muted">Reranking Access</h6>
+                                        <h6 className="mb-0 text-muted">{t('Reranking Access')}</h6>
                                         <h3 className="mb-0 fw-bold">
                                             {accessData.access_list.filter(u => u.has_rerank_access).length}
                                         </h3>
@@ -202,7 +209,7 @@ const AccessManagement = ({ onToast }) => {
                                         <Pencil size={24} className="text-success" />
                                     </div>
                                     <div>
-                                        <h6 className="mb-0 text-muted">Project Edit Access</h6>
+                                        <h6 className="mb-0 text-muted">{t('Project Edit Access')}</h6>
                                         <h3 className="mb-0 fw-bold">
                                             {accessData.access_list.filter(u => u.has_project_edit_access).length}
                                         </h3>
@@ -216,7 +223,7 @@ const AccessManagement = ({ onToast }) => {
                     <Card>
                         <Card.Body>
                             <h5 className="fw-semibold mb-3">
-                                Users with Granted Access ({accessData.access_list.length})
+                                {t('Users with Granted Access')} ({accessData.access_list.length})
                             </h5>
 
                             {accessData.access_list.length === 0 ? (
@@ -230,11 +237,11 @@ const AccessManagement = ({ onToast }) => {
                                 <Table hover responsive className="align-middle">
                                     <thead className="table-heading">
                                         <tr>
-                                            <th>User</th>
-                                            <th className="text-center">Rerank Access</th>
-                                            <th className="text-center">Project Edit Access</th>
-                                            <th>Projects with Access</th>
-                                            <th className="text-center">Actions</th>
+                                            <th>{t('user')}</th>
+                                            <th className="text-center">{t("Rerank Access")}</th>
+                                            <th className="text-center">{t("Project Edit Access")}</th>
+                                            <th>{t("Projects with Access")}</th>
+                                            <th className="text-center">{t('actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -468,6 +475,7 @@ const AccessManagement = ({ onToast }) => {
                     </Button>
                 </Modal.Footer>
             </Modal>
+            </div>
         </Container>
     );
 };

@@ -97,7 +97,6 @@ const projectPhaseBusinesses = businesses.filter(
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Businesses API response:', data);
         const collabList = data.collaboratingBusinesses || data.collaborating_businesses || [];
         setBusinesses(data.businesses || []);
         setCollaboratingBusinesses(Array.isArray(collabList) ? collabList : []);
@@ -565,7 +564,7 @@ const projectPhaseBusinesses = businesses.filter(
                         <Accordion.Header>
                           <div className="accordion-header-content">
                             <span className="accordion-title-text">
-                              Project Phase
+                              {t("Project Phase")}
                             </span>
                             <span className="accordion-count-pill">
                               {projectPhaseBusinesses.length}
@@ -697,7 +696,7 @@ const projectPhaseBusinesses = businesses.filter(
                             <Accordion.Header>
                               <div className="accordion-header-content">
                                 <span className="accordion-title-text">
-                                  Project Phase
+                                  {t("Project Phase")}
                                 </span>
                                 <span className="accordion-count-pill">
                                   {projectPhaseBusinesses.length}

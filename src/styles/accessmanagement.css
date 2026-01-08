@@ -60,7 +60,9 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.75rem;
+    font-size: 1rem;
 }
+
 
 .business-select {
     border: 2px solid #e2e8f0;
@@ -672,6 +674,12 @@
     text-transform: capitalize;
 }
 
+.access-content {
+  max-width: 1440px;   
+  margin: 0 auto;
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
     .access-management-container {
@@ -723,15 +731,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Modal Styles */
-.modal-header {
-    background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
-    color: white;
-}
 
-.modal-header .btn-close {
-    filter: brightness(0) invert(1);
-}
 
 .revoke-details {
     font-size: 0.95rem;
