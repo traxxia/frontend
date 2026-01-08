@@ -44,7 +44,6 @@ const ChannelEffectivenessMap = ({
   };
  
   const handleRegenerate = async () => {
-    console.log('ChannelEffectiveness handleRegenerate called', { onRegenerate: !!onRegenerate });
     
     if (onRegenerate) {
       try {

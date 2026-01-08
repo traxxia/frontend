@@ -741,7 +741,6 @@ export class AnalysisApiService {
 
       // ✅ NEW: Handle streaming setup for Porter's
       if (analysisType === 'porters' && streamingCallbacks.setIsStreaming && streamingCallbacks.setStreamingText) {
-        console.log('🚀 Setting up Porter\'s streaming');
         streamingCallbacks.setIsStreaming(true);
         streamingCallbacks.setStreamingText('');
       }
@@ -763,7 +762,6 @@ export class AnalysisApiService {
       // ✅ NEW: Create streaming callback for Porter's
       const onStreamChunk = (analysisType === 'porters' && streamingCallbacks.setStreamingText) 
         ? (buffer) => {
-            console.log('📥 Streaming chunk received:', buffer.substring(0, 100) + '...');
             streamingCallbacks.setStreamingText(buffer);
           }
         : null;
@@ -784,7 +782,6 @@ export class AnalysisApiService {
 
       // ✅ NEW: Clean up streaming state
       if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
-        console.log('✅ Porter\'s streaming complete');
         streamingCallbacks.setIsStreaming(false);
       }
 
@@ -794,7 +791,6 @@ export class AnalysisApiService {
       
       // ✅ NEW: Clean up streaming state on error
       if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
-        console.log('❌ Porter\'s streaming error, cleaning up');
         streamingCallbacks.setIsStreaming(false);
       }
       
@@ -813,9 +809,6 @@ async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = n
   if (!endpoint) {
     throw new Error(`Unknown analysis type: ${analysisType}`);
   }
-
-  console.log(`🔵 Calling ${analysisType} with streaming:`, !!onStreamChunk);
-
   // For excel-analysis types, call with specific metric_type
   if (this.isExcelAnalysisType(analysisType)) {
     const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(

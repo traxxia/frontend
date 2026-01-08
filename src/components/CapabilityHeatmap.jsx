@@ -18,7 +18,6 @@ const CapabilityHeatmap = ({
   onRedirectToBrief,
   hideImproveButton = false,
 }) => {
-  console.log('Raw capabilityHeatmapData:', capabilityHeatmapData);
 
   const [capabilityData, setCapabilityData] = useState(null);
   const [error, setError] = useState(null);
@@ -133,7 +132,6 @@ const CapabilityHeatmap = ({
 
   useEffect(() => {
     const extractedData = extractCapabilityData(capabilityHeatmapData);
-    console.log('Extracted capability data:', extractedData);
 
     if (extractedData && extractedData !== capabilityData) {
       setCapabilityData(extractedData);

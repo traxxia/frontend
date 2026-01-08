@@ -58,7 +58,12 @@ const SuperAdminPanel = () => {
     { id: "history", label: t('user_history'), icon: History },
     { id: "audit", label: t('audit_trail'), icon: Activity },
     { id: "user_management", label: t('user_management'), icon: CircleUserRound },
-    { id: "access_management", label: t('access_management'), icon: Key }, // NEW TAB
+    {
+      id: "access_management",
+      label: t('access_management'),
+      icon: Key,
+      adminOnly: true  
+    },
     {
       id: "questions",
       label: t('questions'),
@@ -67,7 +72,13 @@ const SuperAdminPanel = () => {
     },
   ];
 
-  const tabs = allTabs.filter((tab) => !tab.superAdminOnly || isSuperAdmin);
+  const tabs = allTabs.filter((tab) => {
+    if (tab.superAdminOnly && !isSuperAdmin) return false;
+
+    if (tab.adminOnly && userRole !== 'company_admin') return false;
+
+    return true;
+  });
 
   const renderContent = () => {
     switch (activeTab) {

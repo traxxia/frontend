@@ -133,13 +133,15 @@ const MenuBar = () => {
                 <Dropdown.Divider />
 
                 {/* Dashboard Link */}
-                <Dropdown.Item
+                {!isSuperAdmin && (
+                  <Dropdown.Item
                   onClick={handleDashboardClick}
                   className={`dropdown-item-traxia ${isCurrentPage('/dashboard') ? 'active' : ''}`}
                 >
                   <Home size={16} className="me-2" />
                   {t('dashboard')}
                 </Dropdown.Item>
+                )}
 
                 {/* NEW: Super Admin Panel (only for super admin) */}
                 {isSuperAdmin && (

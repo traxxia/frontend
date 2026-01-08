@@ -213,9 +213,7 @@ const OperationalEfficiencyInsight = ({
   };
 
   // Handle regenerate
-  const handleRegenerate = async () => {
-    console.log('OperationalEfficiency handleRegenerate called', { onRegenerate: !!onRegenerate });
-    
+  const handleRegenerate = async () => {    
     if (onRegenerate) {
       try {
         setError(null); // Clear any existing errors

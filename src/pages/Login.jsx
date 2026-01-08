@@ -54,7 +54,11 @@ const Login = () => {
         : "en";
       sessionStorage.setItem("appLanguage", currentLang);
 
-      navigate("/dashboard");
+      if (res.data.user.role === "super_admin") {
+        navigate("/super-admin");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       console.error(err.response?.data || err.message); 
       const errorMessage = err.response?.data?.error || t("login_failed");

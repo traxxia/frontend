@@ -35,7 +35,6 @@ const Aiassistant = () => {
   const handleSend = () => {
     if (!query.trim()) return;
     // Placeholder: integrate with backend/LLM later
-    console.log("AI Query:", { query, context, sources });
     setMessages((prev) => [
       ...prev,
       { role: "user", text: query },

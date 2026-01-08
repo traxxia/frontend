@@ -52,7 +52,6 @@ const Register = () => {
       // Updated to match backend response structure
       if (response.data.companies) {
         setCompanies(response.data.companies);
-        console.log(`✅ Loaded ${response.data.companies.length} companies`);
       } else {
         throw new Error('Invalid response format');
       }
@@ -157,7 +156,6 @@ const Register = () => {
     // Validate all required fields before proceeding
     if (!validate()) {
       // If validation fails, don't proceed with API call
-      console.log('Form validation failed');
       return;
     }
 
@@ -179,12 +177,6 @@ const Register = () => {
         terms_accepted: form.terms, // Required by backend API
         job_title: form.job_title.trim() || undefined // Optional field
       };
-
-      console.log('Submitting registration data:', { 
-        ...userData, 
-        password: '[HIDDEN]',
-        terms_accepted: userData.terms_accepted 
-      });
 
       // Call registration API
       const response = await axios.post(`${API_BASE_URL}/api/register`, userData);

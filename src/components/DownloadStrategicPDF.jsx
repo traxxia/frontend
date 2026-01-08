@@ -42,8 +42,6 @@ const DownloadStrategicPDF = ({
                 return;
             }
 
-            console.log('Found strategic container:', strategicContainer);
-
             // Define the specific strategic components we want to capture
             const strategicComponents = [
                 { 
@@ -100,8 +98,6 @@ const DownloadStrategicPDF = ({
                 return null;
             };
 
-            console.log('Defined strategic components:', strategicComponents.length);
-
             // Find actual strategic sections using our specific components
             const strategicSections = [];
             for (const componentConfig of strategicComponents) {
@@ -122,47 +118,29 @@ const DownloadStrategicPDF = ({
                         element: component,
                         name: componentConfig.name
                     });
-                    console.log(`Found component: ${componentConfig.name}`);
-                } else {
-                    console.log(`Component not found: ${componentConfig.name}`);
-                }
+                } 
             }
-
-            console.log('Found strategic sections:', strategicSections.length);
-
             // Import PDF libraries
             const jsPDF = (await import('jspdf')).default;
             const html2canvas = (await import('html2canvas')).default;
-
-            console.log('PDF libraries loaded');
 
             // Initialize PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
             let isFirstPage = true;
-
-            console.log('PDF initialized - Page size:', pageWidth, 'x', pageHeight);
-
             // Helper function to capture a single section
-            const captureSection = async (sectionData, sectionIndex) => {
-                console.log(`\n--- Capturing Section ${sectionIndex + 1} ---`);
-                
+            const captureSection = async (sectionData, sectionIndex) => {                
                 const section = sectionData.element;
                 const sectionTitle = sectionData.name;
                 
                 if (!section || section.offsetHeight === 0 || section.offsetWidth === 0) {
-                    console.log('Section is not visible, skipping');
                     return false;
                 }
 
                 try {
-                    console.log('Section title:', sectionTitle);
-
                     // Hide buttons temporarily
-                    const buttons = section.querySelectorAll('button');
-                    console.log('Found buttons to hide:', buttons.length);
-                    
+                    const buttons = section.querySelectorAll('button');                    
                     const originalDisplay = [];
                     buttons.forEach((btn, index) => {
                         originalDisplay[index] = btn.style.display;
@@ -170,7 +148,6 @@ const DownloadStrategicPDF = ({
                     });
 
                     // Capture with html2canvas
-                    console.log('Starting html2canvas capture...');
                     const canvas = await html2canvas(section, {
                         scale: 1.5,
                         useCORS: true,
@@ -181,8 +158,6 @@ const DownloadStrategicPDF = ({
                         width: section.scrollWidth
                     });
 
-                    console.log('Canvas captured - Size:', canvas.width, 'x', canvas.height);
-
                     // Restore buttons
                     buttons.forEach((btn, index) => {
                         btn.style.display = originalDisplay[index];
@@ -191,7 +166,6 @@ const DownloadStrategicPDF = ({
                     // Add new page if not first
                     if (!isFirstPage) {
                         pdf.addPage();
-                        console.log('Added new page to PDF');
                     } else {
                         isFirstPage = false;
                     }
@@ -211,8 +185,6 @@ const DownloadStrategicPDF = ({
                     const finalWidth = imgHeight > maxHeight ? (canvas.width * maxHeight) / canvas.height : imgWidth;
 
                     pdf.addImage(imgData, 'PNG', 20, 35, finalWidth, finalHeight);
-
-                    console.log('Added image to PDF - Final size:', finalWidth, 'x', finalHeight);
                     return true;
 
                 } catch (error) {
@@ -223,25 +195,15 @@ const DownloadStrategicPDF = ({
 
             // Capture all sections
             let capturedCount = 0;
-            console.log('\n=== Starting to capture all sections ===');
-
             for (let i = 0; i < strategicSections.length; i++) {
                 const success = await captureSection(strategicSections[i], i);
                 if (success) {
                     capturedCount++;
-                    console.log(`Successfully captured section ${i + 1}: ${strategicSections[i].name}`);
-                } else {
-                    console.log(`Failed to capture section ${i + 1}: ${strategicSections[i].name}`);
-                }
+                } 
                 
                 // Small delay between captures
                 await new Promise(resolve => setTimeout(resolve, 300));
-            }
-
-            console.log(`\n=== Capture Summary ===`);
-            console.log(`Total sections found: ${strategicSections.length}`);
-            console.log(`Successfully captured: ${capturedCount}`);
-
+            } 
             // Check if we captured anything
             if (capturedCount === 0) {
                 console.error('No sections were captured successfully');
@@ -253,21 +215,12 @@ const DownloadStrategicPDF = ({
 
             // Generate filename
             const fileName = `Strategic_Analysis_${businessName ? businessName.replace(/[^a-z0-9]/gi, '_') : 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`;
-            console.log('Generated filename:', fileName);
-
             // Save the PDF
-            console.log('Saving PDF...');
             pdf.save(fileName);
-            console.log('PDF saved successfully!');
-
             // Show success message
             if (onToastMessage) {
                 onToastMessage(`Strategic Analysis PDF generated successfully! (${capturedCount} sections captured)`, "success");
             }
-
-            console.log(`\n=== PDF Generation Complete ===`);
-            console.log(`Filename: ${fileName}`);
-            console.log(`Sections captured: ${capturedCount}/${strategicSections.length}`);
 
         } catch (error) {
             console.error('Error in download process:', error);
@@ -276,7 +229,6 @@ const DownloadStrategicPDF = ({
             }
         } finally {
             setIsGenerating(false);
-            console.log('PDF generation process finished');
         }
     };
 

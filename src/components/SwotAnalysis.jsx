@@ -65,8 +65,6 @@ const SwotAnalysis = ({
 
   // Handle regenerate - this is the key function
   const handleRegenerate = async () => {
-    console.log('SWOT handleRegenerate called', { onRegenerate: !!onRegenerate });
-
     if (onRegenerate) {
       try {
         await onRegenerate();
@@ -76,7 +74,6 @@ const SwotAnalysis = ({
       }
     } else {
       // Fallback to internal generation if no external handler
-      console.log('Using internal SWOT generation');
       await generateSwotAnalysis();
     }
   };

@@ -395,58 +395,48 @@ const parseAnalysisData = (userDetails, user) => {
         case 'profitability_analysis':
         case 'profitability':
           analysisData.profitabilityData = analysisResult;
-          console.log('✓ Profitability Analysis loaded:', !!analysisResult);
           break;
         case 'growthtracker':
         case 'growth_tracker':
         case 'growth':
           analysisData.growthTrackerData = analysisResult;
-          console.log('✓ Growth Tracker loaded:', !!analysisResult);
           break;
         case 'liquidityefficiency':
         case 'liquidity_efficiency':
         case 'liquidity':
           analysisData.liquidityEfficiencyData = analysisResult;
-          console.log('✓ Liquidity Efficiency loaded:', !!analysisResult);
           break;
         case 'investmentperformance':
         case 'investment_performance':
         case 'investment':
           analysisData.investmentPerformanceData = analysisResult;
-          console.log('✓ Investment Performance loaded:', !!analysisResult);
           break;
         case 'leveragerisk':
         case 'leverage_risk':
         case 'leverage':
           analysisData.leverageRiskData = analysisResult;
-          console.log('✓ Leverage Risk loaded:', !!analysisResult);
           break;
         case 'costefficiency':
         case 'cost_efficiency':
           analysisData.costEfficiency = analysisResult;
-          console.log('✓ Cost Efficiency loaded:', !!analysisResult);
           break;
         case 'financialperformance':
         case 'financial_performance':
           analysisData.financialPerformance = analysisResult;
-          console.log('✓ Financial Performance loaded:', !!analysisResult);
           break;
         case 'financialbalance':
         case 'financial_balance':
         case 'financial_health':
           analysisData.financialBalance = analysisResult;
-          console.log('✓ Financial Balance loaded:', !!analysisResult);
           break;
         case 'operationalefficiency':
         case 'operational_efficiency':
           analysisData.operationalEfficiency = analysisResult;
-          console.log('✓ Operational Efficiency loaded:', !!analysisResult);
           break;
 
         default:
           // Fallback detection for financial analyses based on is_financial_analysis flag
           if (result.is_financial_analysis) {
-            console.log('Processing fallback financial analysis:', analysisType);
 
             if (analysisType.includes('profitab')) {
               analysisData.profitabilityData = analysisResult;
@@ -475,14 +465,6 @@ const parseAnalysisData = (userDetails, user) => {
     analysisData.investmentPerformanceData ? 'investment' : null,
     analysisData.leverageRiskData ? 'leverage' : null
   ].filter(Boolean);
-
-  console.log('Final Analysis Data Summary:', {
-    totalAnalyses: userDetails.system?.length || 0,
-    financialAnalysesFound: financialAnalysesFound.length,
-    financialTypes: financialAnalysesFound,
-    hasDocument: userDetails?.document_info?.has_document || false,
-    documentExists: userDetails?.document_info?.file_exists || false
-  });
 
   return analysisData;
 };

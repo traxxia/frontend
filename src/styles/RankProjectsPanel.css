@@ -349,3 +349,26 @@
   border-color: #fbbf24 !important;
   box-shadow: 0 0 6px rgba(251, 191, 36, 0.5) !important;
 }
+/* Add these styles to your existing RankProjectsPanel.css */
+
+/* Highlight cards that need rationale */
+.rank-project-card.needs-rationale {
+  border-left: 4px solid #dc3545;
+  background-color: #fff5f5;
+}
+
+/* Style for rationale textarea when required */
+.rank-rationale-textarea.border-danger {
+  border-color: #dc3545 !important;
+}
+
+.rank-rationale-textarea.border-danger:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Disabled drag state */
+.rank-project-card[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

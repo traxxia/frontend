@@ -160,8 +160,6 @@ const UserOverview = ({ onToast }) => {
         url += `?${params.toString()}`;
       }
 
-      console.log('Loading users with URL:', url); // Debug log
-
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -171,7 +169,6 @@ const UserOverview = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Users data received:', data); // Debug log
 
         // Map the backend response to match frontend expectations
         const mappedUsers = data.users.map(user => ({
@@ -402,7 +399,6 @@ const UserOverview = ({ onToast }) => {
             value={selectedCompany}
             className='select-company-dropdown'
             onChange={(e) => {
-              console.log('Company filter changed to:', e.target.value); // Debug log
               setSelectedCompany(e.target.value);
             }}
           >

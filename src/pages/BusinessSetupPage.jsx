@@ -67,9 +67,6 @@ const BusinessSetupPage = () => {
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
   const companyAdminIds = location.state?.business?.company_admin_id || [];
-
-  console.log("BusinessSetupPage companyAdminIds:", companyAdminIds);
-
   const { t } = useTranslation();
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -256,7 +253,6 @@ const BusinessSetupPage = () => {
     if (isMobile) {
       setActiveTab("brief");
     } else {
-      console.log("enter")
       if (isAnalysisExpanded) {
         setIsSliding(true);
         setIsAnalysisExpanded(false);
