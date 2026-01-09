@@ -35,7 +35,7 @@ const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]); 
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const { t } = useTranslation();
@@ -44,8 +44,8 @@ const UserManagement = ({ onToast }) => {
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState(""); 
-  const [newRole, setNewRole] = useState(""); 
+  const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState("");
   const token = sessionStorage.getItem("token");
 
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -57,26 +57,24 @@ const UserManagement = ({ onToast }) => {
   const [pendingUserId, setPendingUserId] = useState(null);
   const [pendingRole, setPendingRole] = useState(null);
   const [accessType, setAccessType] = useState("reRanking");
-  // All businesses (for Assign Collaborator)
   const [allBusinesses, setAllBusinesses] = useState([]);
-
-  // Only launched businesses (for Add Project Access)
   const [launchedBusinesses, setLaunchedBusinesses] = useState([]);
-  // ---- Project Access states ----
   const [accessBusinessId, setAccessBusinessId] = useState("");
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [launchedProjectMap, setLaunchedProjectMap] = useState({});
-  // ---- Collaborator Access states ----
   const [collaborators, setCollaborators] = useState([]);
-  const [selectedCollaboratorId, setSelectedCollaboratorId] = useState("");
+  const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState(false);
+  const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
+
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
   const isSuperAdmin = currentRole === "super_admin";
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
+
   const handleOpenModal = () => {
     setNewName("");
     setNewEmail("");
@@ -92,19 +90,18 @@ const UserManagement = ({ onToast }) => {
   const handleCloseAssignModal = () => {
     setShowAssignModal(false);
     setAssignUserId("");
-    setAssignBusinessId("");   
+    setAssignBusinessId("");
   };
-  
+
   const validateForm = () => {
     const newErrors = {};
 
-    // Name validation
     if (!newName.trim()) {
       newErrors.name = t("Name_is_required")
-    } 
+    }
     else if (!/^[A-Za-z]/.test(newName)) {
       newErrors.name = t("Name_must_start_with_letter")
-    } 
+    }
     else if (newName.trim().length < 3) {
       newErrors.name = t("Name_must_be_atleast3_characters_long")
     }
@@ -134,7 +131,7 @@ const UserManagement = ({ onToast }) => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setIsSubmitting(true); // ✅ START LOADER
+    setIsSubmitting(true);
     const payload = {
       name: newName,
       email: newEmail,
@@ -169,9 +166,10 @@ const UserManagement = ({ onToast }) => {
         onToast(message, "error");
       }
     } finally {
-      setIsSubmitting(false); 
+      setIsSubmitting(false);
     }
   };
+
   useEffect(() => {
     if (!isSuperAdmin) return;
 
@@ -203,7 +201,6 @@ const UserManagement = ({ onToast }) => {
         }
       );
       onToast("User role updated successfully", "success");
-      // Refresh users after update
       fetchUsers();
     } catch (error) {
       console.error(error);
@@ -213,25 +210,40 @@ const UserManagement = ({ onToast }) => {
       );
     }
   };
-  const handleGiveProjectAccess = async () => {
+
+  const handleCollaboratorToggle = (collaboratorId) => {
+    setSelectedCollaboratorIds(prev => {
+      if (prev.includes(collaboratorId)) {
+        return prev.filter(id => id !== collaboratorId);
+      } else {
+        return [...prev, collaboratorId];
+      }
+    });
+  };
+
+  const handleProceedToConfirmation = () => {
     if (!accessBusinessId) {
       onToast("Please select business", "error");
       return;
     }
 
-    if (!selectedCollaboratorId) {
-      onToast("Please select collaborator", "error");
+    if (selectedCollaboratorIds.length === 0) {
+      onToast("Please select at least one collaborator", "error");
       return;
     }
 
-    try {
-      /*MOVE TO REPRIORITIZING STAGE*/
-      if (accessType === "projectEdit") {
-        if (!selectedProjectId) {
-          onToast("Please select project", "error");
-          return;
-        }
+    if (accessType === "projectEdit" && !selectedProjectId) {
+      onToast("Please select project", "error");
+      return;
+    }
 
+    setShowGiveAccessModal(false);
+    setShowAccessConfirmation(true);
+  };
+
+  const handleGiveProjectAccess = async () => {
+    try {
+      if (accessType === "projectEdit") {
         await axios.put(
           `${BACKEND_URL}/api/projects/edit-access`,
           {
@@ -258,36 +270,35 @@ const UserManagement = ({ onToast }) => {
         );
       }
 
-      /* GRANT COLLABORATOR ACCESS*/    
       if (accessType === "projectEdit") {
         await axios.patch(
           `${BACKEND_URL}/api/businesses/${accessBusinessId}/project/${selectedProjectId}/allowed-collaborators`,
           {
-            collaborator_ids: [selectedCollaboratorId],
+            collaborator_ids: selectedCollaboratorIds,
           },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
-        onToast("Access granted", "success");
       }
 
       if (accessType === "reRanking") {
         await axios.patch(
           `${BACKEND_URL}/api/businesses/${accessBusinessId}/allowed-ranking-collaborators`,
           {
-            collaborator_ids: [selectedCollaboratorId],
+            collaborator_ids: selectedCollaboratorIds,
           },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        onToast("Access granted", "success");
       }
-      setShowGiveAccessModal(false);
+
+      onToast("Access granted successfully", "success");
+      setShowAccessConfirmation(false);
       setSelectedProjectId("");
-      setSelectedCollaboratorId("");
+      setSelectedCollaboratorIds([]);
+      setAccessBusinessId("");
     } catch (err) {
       console.error(err);
       onToast(
@@ -313,7 +324,7 @@ const UserManagement = ({ onToast }) => {
       await axios.post(
         `${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`,
         {
-          user_id: assignUserId,   
+          user_id: assignUserId,
         },
         {
           headers: {
@@ -341,9 +352,9 @@ const UserManagement = ({ onToast }) => {
       case "collaborator":
         return "Collaborator";
       case "user":
-        return "User"; 
+        return "User";
       default:
-        return "Viewer";   
+        return "Viewer";
     }
   };
 
@@ -362,11 +373,10 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  // ---- DERIVED METRICS ----
   const collaboratorsCount = users.filter(
     (u) => formatRole(u.role_name || u.role) === "Collaborator"
   ).length;
-   const collaboratorUsers = users.filter(
+  const collaboratorUsers = users.filter(
     (u) => formatRole(u.role_name || u.role) === "Collaborator"
   );
   const viewersCount = users.filter(
@@ -376,7 +386,6 @@ const UserManagement = ({ onToast }) => {
     (u) => formatRole(u.role_name || u.role) === "User"
   ).length;
 
-  // ---- HANDLERS ----
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -397,7 +406,7 @@ const UserManagement = ({ onToast }) => {
         user.name?.toLowerCase().startsWith(search.toLowerCase()) ||
         user.email?.toLowerCase().startsWith(search.toLowerCase());
 
-      const uiRole = formatRole(user.role_name || user.role); // FIXED
+      const uiRole = formatRole(user.role_name || user.role);
 
       const matchRole = role === "All Roles" || uiRole === role;
 
@@ -406,6 +415,7 @@ const UserManagement = ({ onToast }) => {
 
     setFilteredUsers(result);
   };
+
   const totalItems = filteredUsers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -420,6 +430,7 @@ const UserManagement = ({ onToast }) => {
     Viewer: { icon: <User size={16} color="#ca8a04" />, color: "#ca8a04" },
     User: { icon: <ShieldCheck size={16} color="#16a34a" />, color: "#16a34a" },
   };
+
   const formatDate = (iso) => {
     if (!iso) return "-";
     return new Date(iso).toLocaleDateString("en-US", {
@@ -428,6 +439,7 @@ const UserManagement = ({ onToast }) => {
       day: "numeric",
     });
   };
+
   useEffect(() => {
     fetchUsers();
     fetchBusinesses();
@@ -440,7 +452,7 @@ const UserManagement = ({ onToast }) => {
         ? res.data
         : res.data.businesses || [];
 
-      setAllBusinesses(data); // ALL businesses
+      setAllBusinesses(data);
     } catch (error) {
       alert("Failed to fetch businesses");
     }
@@ -450,7 +462,6 @@ const UserManagement = ({ onToast }) => {
     try {
       setLoadingProjects(true);
 
-      // Fetch launched projects
       const projectRes = await axios.get(`${BACKEND_URL}/api/projects`, {
         params: { status: "launched" },
         headers: { Authorization: `Bearer ${token}` },
@@ -458,7 +469,6 @@ const UserManagement = ({ onToast }) => {
 
       const launchedProjects = projectRes.data.projects || [];
 
-      // Fetch all businesses
       const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -466,7 +476,6 @@ const UserManagement = ({ onToast }) => {
       const allBiz =
         businessRes.data.businesses || businessRes.data || [];
 
-      // Build business → projects map
       const map = {};
       launchedProjects.forEach((p) => {
         const bId = p.business_id?.toString();
@@ -476,23 +485,24 @@ const UserManagement = ({ onToast }) => {
         map[bId].push(p);
       });
 
-      // Keep only businesses that have launched projects
       const validBusinesses = allBiz.filter(
         (b) => map[b._id.toString()]
       );
 
-      setLaunchedBusinesses(validBusinesses); // launched only
+      setLaunchedBusinesses(validBusinesses);
       setLaunchedProjectMap(map);
 
       setAccessBusinessId("");
       setProjects([]);
       setSelectedProjectId("");
+      setSelectedCollaboratorIds([]);
     } catch (err) {
       console.error("Failed to load launched data", err);
     } finally {
       setLoadingProjects(false);
     }
   };
+
   useEffect(() => {
     if (!accessBusinessId) {
       setProjects([]);
@@ -501,6 +511,7 @@ const UserManagement = ({ onToast }) => {
 
     setProjects(launchedProjectMap[accessBusinessId] || []);
   }, [accessBusinessId, launchedProjectMap]);
+
   const fetchCollaboratorsByBusiness = async (businessId) => {
     if (!businessId) return;
 
@@ -515,7 +526,7 @@ const UserManagement = ({ onToast }) => {
       );
 
       setCollaborators(res.data.collaborators || []);
-      setSelectedCollaboratorId("");
+      setSelectedCollaboratorIds([]);
     } catch (err) {
       console.error("Failed to fetch collaborators", err);
       onToast("Failed to load collaborators", "error");
@@ -523,6 +534,7 @@ const UserManagement = ({ onToast }) => {
       setLoadingCollaborators(false);
     }
   };
+
   useEffect(() => {
     if (!accessBusinessId) {
       setCollaborators([]);
@@ -532,21 +544,36 @@ const UserManagement = ({ onToast }) => {
     fetchCollaboratorsByBusiness(accessBusinessId);
   }, [accessBusinessId]);
 
+  const getSelectedCollaboratorNames = () => {
+    return collaborators
+      .filter(c => selectedCollaboratorIds.includes(c._id))
+      .map(c => c.name);
+  };
+
+  const getSelectedProjectName = () => {
+    const project = projects.find(p => p._id === selectedProjectId);
+    return project?.project_name || "";
+  };
+
+  const getSelectedBusinessName = () => {
+    const business = launchedBusinesses.find(b => b._id === accessBusinessId);
+    return business?.business_name || business?.name || "";
+  };
+
   return (
     <Container fluid className="p-4">
       <h2 className="fw-bold">{t("User_Management")}</h2>
-      
+
       <Row className="mt-4 g-3">
         <Col md={3}><Card body><h5>{t("Total_Users")}</h5><h2>{users.length}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("users")}</h5><h2>{usersCount}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Collaborators")}</h5><h2>{collaboratorsCount}</h2></Card></Col>
         <Col md={3}><Card body><h5>{t("Viewers")}</h5><h2>{viewersCount}</h2></Card></Col>
       </Row>
+
       <Row className="mt-4">
         <Col>
           <div className="user-toolbar d-flex align-items-center justify-content-between flex-wrap gap-3">
-
-            {/* Search */}
             <div className="search-container flex-grow-1">
               <div className="search-input-wrapper">
                 <Search size={18} className="search-icon" />
@@ -560,7 +587,6 @@ const UserManagement = ({ onToast }) => {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="toolbar-actions">
               <Form.Select className="role-select" value={selectedRole} onChange={handleRoleChange}>
                 <option>{t("All_Roles")}</option>
@@ -576,9 +602,9 @@ const UserManagement = ({ onToast }) => {
               </Button>
 
               {!isSuperAdmin && (
-                <Button 
-                className="add-user-btn d-flex align-items-center" 
-                onClick={handleOpenAssignModal}
+                <Button
+                  className="add-user-btn d-flex align-items-center"
+                  onClick={handleOpenAssignModal}
                 >
                   <User size={16} className="me-2" />
                   {t("Collaborator")}
@@ -595,13 +621,12 @@ const UserManagement = ({ onToast }) => {
                 {t("Add Project Access")}
               </Button>
             </div>
-
           </div>
         </Col>
       </Row>
+
       <Card className="mt-4">
         <Card.Body>
-                     
           <Table hover responsive className="align-middle">
             <thead className="table-heading" >
               <tr>
@@ -611,15 +636,15 @@ const UserManagement = ({ onToast }) => {
                 <th>{t("status")}</th>
                 <th>{t("joined")}</th>
                 <th>{t("Last_Active")}</th>
-                {/* <th className="text-end">{t("Action")}</th> */}
+                <th className="text-end">{t("Action")}</th>
               </tr>
             </thead>
             <tbody>
               {Array.isArray(filteredUsers) &&
                 paginatedUsers.map((user, index) => {
-                  const uiRole = formatRole(user.role_name);              // FIXED
+                  const uiRole = formatRole(user.role_name);
                   const roleStyle = roleStyles[uiRole] || roleStyles["Viewer"];
-                  const statusValue = "Active";                           // Backend has no status
+                  const statusValue = "Active";
                   const s = statusStyles[statusValue] || {
                     bg: "#e5e7eb",
                     color: "#374151"
@@ -627,7 +652,6 @@ const UserManagement = ({ onToast }) => {
 
                   return (
                     <tr key={index}>
-                      {/* USER COLUMN */}
                       <td className="d-flex align-items-center gap-2">
                         <div
                           style={{
@@ -651,7 +675,6 @@ const UserManagement = ({ onToast }) => {
                         </div>
                       </td>
                       {isSuperAdmin && <td>{user.company_name || "-"}</td>}
-                      {/* ROLE COLUMN */}
                       <td>
                         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           {roleStyle.icon}
@@ -661,7 +684,6 @@ const UserManagement = ({ onToast }) => {
                         </span>
                       </td>
 
-                      {/* STATUS COLUMN */}
                       <td>
                         <span className={`status-badge status-${statusValue.toLowerCase()}`}>
                           {statusValue}
@@ -669,7 +691,6 @@ const UserManagement = ({ onToast }) => {
                       </td>
                       <td className="text-muted">{formatDate(user.created_at)}</td>
                       <td className="text-muted">-</td>
-                      {/* ACTION COLUMN */}
                       <td className="text-end">
                         <Dropdown>
                           <Dropdown.Toggle as={CustomToggle} />
@@ -724,6 +745,7 @@ const UserManagement = ({ onToast }) => {
           />
         </Card.Body>
       </Card>
+
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>{t("Add_New_User")}</Modal.Title>
@@ -740,7 +762,6 @@ const UserManagement = ({ onToast }) => {
                 disabled={isSubmitting}
               />
               {errors.name && <small className="text-danger">{errors.name}</small>}
-
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -767,25 +788,25 @@ const UserManagement = ({ onToast }) => {
               {errors.password && (<small className="text-danger">{errors.password}</small>)}
             </Form.Group>
             {isSuperAdmin && (
-            <Form.Group className="mb-3">
-              <Form.Label>
-                Companies <span className="text-danger">*</span>
-              </Form.Label>
+              <Form.Group className="mb-3">
+                <Form.Label>
+                  Companies <span className="text-danger">*</span>
+                </Form.Label>
 
-              <Form.Select
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                disabled={isSubmitting}
-              >
-                <option value="">Select Company</option>
-                {companies.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.company_name || c.name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          )}
+                <Form.Select
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select Company</option>
+                  {companies.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.company_name || c.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
             <Form.Group className="mb-3">
               <Form.Label>{t("role")} <span className="text-danger">*</span></Form.Label>
               <Form.Select
@@ -806,7 +827,7 @@ const UserManagement = ({ onToast }) => {
             <div className="d-flex justify-content-end">
               <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={isSubmitting}>
                 {t("cancel")}
-              </Button> 
+              </Button>
 
               <Button variant="primary" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
@@ -840,7 +861,7 @@ const UserManagement = ({ onToast }) => {
                 <option value="">{t("Select_collaborator")}</option>
                 {collaboratorUsers.map((u) => (
                   <option key={u._id} value={u._id}>
-                    {u.name} 
+                    {u.name}
                   </option>
                 ))}
               </Form.Select>
@@ -859,7 +880,6 @@ const UserManagement = ({ onToast }) => {
                     {b.business_name || b.name}
                   </option>
                 ))}
-
               </Form.Select>
             </Form.Group>
 
@@ -871,24 +891,24 @@ const UserManagement = ({ onToast }) => {
                 {t("save")}
               </Button>
             </div>
-
           </Form>
         </Modal.Body>
       </Modal>
+
       <Modal
         show={showGiveAccessModal}
         onHide={() => setShowGiveAccessModal(false)}
         centered
+        size="lg"
       >
         <Modal.Header closeButton>
-          <Modal.Title> {t("Add Project Access")}</Modal.Title>
+          <Modal.Title>{t("Add Project Access")}</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
           <Form onSubmit={(e) => e.preventDefault()}>
             <Form.Group className="mb-3">
               <Form.Label className="fw-bold">{t("Access Type")}</Form.Label>
-
               <div className="mt-2 ms-3">
                 <Form.Check
                   type="radio"
@@ -897,10 +917,8 @@ const UserManagement = ({ onToast }) => {
                   value="reRanking"
                   checked={accessType === "reRanking"}
                   onChange={() => handleAccessTypeChange("reRanking")}
-
-                    label="Enable Reranking Project"
+                  label="Enable Reranking Project"
                 />
-
                 <Form.Check
                   type="radio"
                   name="accessType"
@@ -913,7 +931,6 @@ const UserManagement = ({ onToast }) => {
               </div>
             </Form.Group>
 
-            {/* Business */}
             <Form.Group className="mb-3">
               <Form.Label>{t("business")}</Form.Label>
               <Form.Select
@@ -930,7 +947,6 @@ const UserManagement = ({ onToast }) => {
               </Form.Select>
             </Form.Group>
 
-            {/* Project */}
             {accessType === "projectEdit" && (
               <Form.Group className="mb-3">
                 <Form.Label>{t("Project")}</Form.Label>
@@ -943,7 +959,6 @@ const UserManagement = ({ onToast }) => {
                   <option value="">
                     {loadingProjects ? t("Loading projects") : t("Select Project")}
                   </option>
-
                   {projects.map((p) => (
                     <option key={p._id} value={p._id}>
                       {p.project_name}
@@ -953,28 +968,42 @@ const UserManagement = ({ onToast }) => {
               </Form.Group>
             )}
 
-            {/* Collaborator */}
             <Form.Group className="mb-3">
-              <Form.Label>{t("Collaborator")}</Form.Label>
-              <Form.Select
-                value={selectedCollaboratorId}
-                onChange={(e) => setSelectedCollaboratorId(e.target.value)}
-                disabled={!accessBusinessId || loadingCollaborators}
-                required
+              <Form.Label>{t("Collaborators")}</Form.Label>
+              <div
+                style={{
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "4px",
+                  padding: "10px"
+                }}
               >
-                <option value="">
-                  {loadingCollaborators
-                    ? t("Loading collaborators")
-                    : t("Select Collaborator")}
-                </option>
-
-                {collaborators.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Form.Select>
+                {loadingCollaborators ? (
+                  <div className="text-center py-3">Loading collaborators...</div>
+                ) : collaborators.length === 0 ? (
+                  <div className="text-muted text-center py-3">No collaborators available</div>
+                ) : (
+                  collaborators.map((c) => (
+                    <Form.Check
+                      key={c._id}
+                      type="checkbox"
+                      id={`collab-${c._id}`}
+                      label={c.name}
+                      checked={selectedCollaboratorIds.includes(c._id)}
+                      onChange={() => handleCollaboratorToggle(c._id)}
+                      className="mb-2"
+                    />
+                  ))
+                )}
+              </div>
+              {selectedCollaboratorIds.length > 0 && (
+                <small className="text-muted">
+                  {selectedCollaboratorIds.length} collaborator(s) selected
+                </small>
+              )}
             </Form.Group>
+
             <div className="d-flex justify-content-end">
               <Button
                 variant="secondary"
@@ -987,17 +1016,66 @@ const UserManagement = ({ onToast }) => {
                 variant="primary"
                 disabled={
                   !accessBusinessId ||
-                  !selectedCollaboratorId ||
+                  selectedCollaboratorIds.length === 0 ||
                   (accessType === "projectEdit" && !selectedProjectId)
                 }
-                onClick={handleGiveProjectAccess}
+                onClick={handleProceedToConfirmation}
               >
-                {t("Give Access")}
+                {t("Continue")}
               </Button>
             </div>
           </Form>
         </Modal.Body>
       </Modal>
+
+      <Modal
+        show={showAccessConfirmation}
+        onHide={() => setShowAccessConfirmation(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Access Grant</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <strong>Business:</strong> {getSelectedBusinessName()}
+          </div>
+          {accessType === "projectEdit" && (
+            <div className="mb-3">
+              <strong>Project:</strong> {getSelectedProjectName()}
+            </div>
+          )}
+          <div className="mb-3">
+            <strong>Access Type:</strong> {accessType === "reRanking" ? "Enable Reranking Project" : "Edit the Project"}
+          </div>
+          <div className="mb-3">
+            <strong>Collaborators ({selectedCollaboratorIds.length}):</strong>
+            <ul className="mt-2">
+              {getSelectedCollaboratorNames().map((name, idx) => (
+                <li key={idx}>{name}</li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-muted">
+            Are you sure you want to grant access to these collaborators?
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowAccessConfirmation(false);
+              setShowGiveAccessModal(true);
+            }}
+          >
+            Go Back
+          </Button>
+          <Button variant="primary" onClick={handleGiveProjectAccess}>
+            Yes, Grant Access
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <Modal
         show={showConfirm}
         onHide={() => setShowConfirm(false)}
@@ -1030,7 +1108,7 @@ const UserManagement = ({ onToast }) => {
             </div>
             <div>
               <p className="mb-1 fw-semibold">
-                Are you sure you want to change this user’s role?
+                Are you sure you want to change this user's role?
               </p>
               <p className="mb-0 text-muted">
                 The role will be updated to{" "}

@@ -8,6 +8,8 @@ import { useProjectOperations } from "../hooks/useProjectOperations";
 import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
+import { simulateMLRankingAPI } from "../utils/aiRankingGenerator";
+import { saveAIRankings } from "../services/aiRankingService";
 
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
@@ -17,7 +19,6 @@ import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
 import ToastNotifications from "../components/ToastNotifications";
-
 import "../styles/ProjectsSection.css";
 
 const ProjectsSection = ({
@@ -28,54 +29,49 @@ const ProjectsSection = ({
 }) => {
   const { t } = useTranslation();
 
-  // User & Role State
   const [userRole, setUserRole] = useState("");
   const myUserId = sessionStorage.getItem("userId");
   const user = sessionStorage.getItem("userName");
 
-  // View State
   const [activeView, setActiveView] = useState("list");
   const [currentProject, setCurrentProject] = useState(null);
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
 
-  // Project State
   const [projects, setProjects] = useState([]);
   const [teamRankings, setTeamRankings] = useState([]);
   const [adminRanks, setAdminRanks] = useState([]);
 
-  // Status State
   const [rankingsLocked, setRankingsLocked] = useState(false);
   const [projectCreationLocked, setProjectCreationLocked] = useState(false);
   const [rankingLockedFirst, setRankingLockedFirst] = useState(false);
   const [finalizeCompleted, setFinalizeCompleted] = useState(false);
   const [launched, setLaunched] = useState(false);
 
-  // Lock Summary
   const [lockSummary, setLockSummary] = useState({
     locked_users_count: 0,
     total_users: 0,
   });
 
-  // Toast State
   const [showLockToast, setShowLockToast] = useState(false);
   const [showProjectLockToast, setShowProjectLockToast] = useState(false);
   const [showFinalizeToast, setShowFinalizeToast] = useState(false);
   const [showLaunchToast, setShowLaunchToast] = useState(false);
   const [showValidationToast, setShowValidationToast] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
+  const [showAIRankingToast, setShowAIRankingToast] = useState(false);
+  const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
 
-  // Custom Hooks
   const { locks } = useFieldLockPolling(currentProject?._id);
   const { fetchProjects, deleteProject, createProject, updateProject } =
     useProjectOperations(selectedBusinessId, onProjectCountChange);
   const { fetchTeamRankings, fetchAdminRankings, lockRanking } =
     useRankingOperations(selectedBusinessId, companyAdminIds);
-  const { 
-    userHasRerankAccess, 
-    checkBusinessAccess, 
-    checkProjectsAccess, 
-    canEditProject 
+  const {
+    userHasRerankAccess,
+    checkBusinessAccess,
+    checkProjectsAccess,
+    canEditProject
   } = useAccessControl(selectedBusinessId);
   const {
     formState,
@@ -86,7 +82,6 @@ const ProjectsSection = ({
     validateForm,
   } = useProjectForm();
 
-  // Computed Values
   const isViewer = userRole === "viewer";
   const isEditor = userRole === "super_admin" || userRole === "company_admin";
   const isSuperAdmin = isEditor;
@@ -102,10 +97,10 @@ const ProjectsSection = ({
   const status = launched
     ? "launched"
     : finalizeCompleted
-    ? "prioritized"
-    : projectCreationLocked
-    ? "prioritizing"
-    : "draft";
+      ? "prioritized"
+      : projectCreationLocked
+        ? "prioritizing"
+        : "draft";
 
   const isDraft = status === "draft";
   const isPrioritizing = status === "prioritizing";
@@ -113,7 +108,6 @@ const ProjectsSection = ({
   const isLaunched = status === "launched";
   const isFinalizedView = isPrioritized || isLaunched;
 
-  // Portfolio Data
   const portfolioData = {
     totalProjects: projects.length,
     impactDistribution: {
@@ -129,7 +123,6 @@ const ProjectsSection = ({
     completedDetails: 0,
   };
 
-  // Rankings
   const normalizeId = (id) => String(id);
   const rankMap = teamRankings.reduce((acc, r) => {
     acc[normalizeId(r.project_id)] = r.rank;
@@ -152,7 +145,6 @@ const ProjectsSection = ({
     rank: rankMap[String(p._id)],
   }));
 
-  // Field Lock Helpers
   const getToken = () => sessionStorage.getItem("token");
 
   const isLockedByOther = (field) =>
@@ -198,7 +190,6 @@ const ProjectsSection = ({
     }
   };
 
-  // Business Status Update
   const updateBusinessStatus = async (newStatus) => {
     if (!selectedBusinessId) return;
 
@@ -225,7 +216,6 @@ const ProjectsSection = ({
     }
   };
 
-  // Data Fetching
   const loadProjects = useCallback(async () => {
     const result = await fetchProjects();
     if (!result) return;
@@ -237,8 +227,6 @@ const ProjectsSection = ({
         result.lockSummary?.locked_users_count ?? prev.locked_users_count,
       total_users: result.lockSummary?.total_users ?? prev.total_users,
     }));
-
-    // Derive status from projects
     const statuses = fetched.map((p) => p.status).filter(Boolean);
 
     let backendStatus = "draft";
@@ -249,8 +237,6 @@ const ProjectsSection = ({
     } else if (statuses.includes("prioritizing")) {
       backendStatus = "prioritizing";
     }
-
-    // Update status flags
     if (backendStatus === "draft") {
       setProjectCreationLocked(false);
       setRankingsLocked(false);
@@ -276,11 +262,8 @@ const ProjectsSection = ({
       setFinalizeCompleted(true);
       setLaunched(true);
     }
-
-    // Check business-level access once
     await checkBusinessAccess();
 
-    // Only check project-level access for launched projects - BATCH ALL AT ONCE
     if (backendStatus === "launched") {
       const launchedProjectIds = fetched
         .filter((p) => p.status === "launched")
@@ -314,12 +297,39 @@ const ProjectsSection = ({
     await loadAdminRankings();
   }, [loadTeamRankings, loadAdminRankings]);
 
-  // Event Handlers
-  const handleLockProjectCreation = () => {
-    setProjectCreationLocked(true);
-    setShowProjectLockToast(true);
-    updateBusinessStatus("prioritizing");
-    setTimeout(() => setShowProjectLockToast(false), 3000);
+  const handleLockProjectCreation = async () => {
+    try {
+      if (!projects || projects.length === 0) {
+        alert("No projects available to rank. Please create projects first.");
+        return;
+      }
+
+      setIsGeneratingAIRankings(true);
+      const mlResponse = await simulateMLRankingAPI(selectedBusinessId, projects);
+      const saveResponse = await saveAIRankings(
+        selectedBusinessId,
+        mlResponse.rankings,
+        mlResponse.model_version,
+        mlResponse.metadata
+      );
+      setProjectCreationLocked(true);
+      setShowAIRankingToast(true);
+      setShowProjectLockToast(true);
+      await updateBusinessStatus("prioritizing");
+      await loadProjects();
+
+      setTimeout(() => {
+        setShowAIRankingToast(false);
+        setShowProjectLockToast(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error("Failed to lock project creation and generate AI rankings:", error);
+      alert("Failed to generate AI rankings. Please try again.");
+      setIsGeneratingAIRankings(false);
+    } finally {
+      setIsGeneratingAIRankings(false);
+    }
   };
 
   const handleFinalizePrioritization = () => {
@@ -441,7 +451,6 @@ const ProjectsSection = ({
     });
   };
 
-  // Effects
   useEffect(() => {
     const role = sessionStorage.getItem("userRole");
     setUserRole(role);
@@ -458,7 +467,6 @@ const ProjectsSection = ({
     loadAdminRankings();
   }, [selectedBusinessId, isPrioritizing, isPrioritized, loadTeamRankings, loadAdminRankings]);
 
-  // Render
   const renderProjectForm = () => {
     return (
       <ProjectForm
@@ -532,6 +540,7 @@ const ProjectsSection = ({
             rankMap={rankMap}
             adminRankMap={adminRankMap}
             userRole={userRole}
+            businessId={selectedBusinessId}
           />
         )}
 
@@ -570,7 +579,38 @@ const ProjectsSection = ({
         showValidationToast={showValidationToast}
         setShowValidationToast={setShowValidationToast}
         validationMessage={validationMessage}
+        showAIRankingToast={showAIRankingToast}
+        setShowAIRankingToast={setShowAIRankingToast}
       />
+
+      {isGeneratingAIRankings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '2rem',
+            borderRadius: '8px',
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div className="spinner-border text-primary mb-3" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <h5>Generating AI Rankings...</h5>
+            <p className="text-muted mb-0">Please wait while we analyze your projects</p>
+          </div>
+        </div>
+      )}
 
       <Container fluid className="projects-wrapper">
         {activeView === "list" ? renderProjectList() : renderProjectForm()}

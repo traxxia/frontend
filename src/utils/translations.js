@@ -848,7 +848,7 @@ export const staticTranslations = {
   // ===========================
   // TEAM RANKING BLOCK
   // ===========================
-    'Team_Rankings_View':'Team Rankings View',
+    'Team_Rankings_View':'Rankings View',
     'See_how_all_team_members_ranked_projects':'See how all team members ranked projects',
     'High_Agreement':'High Agreement',
     'Medium_Agreement':'Medium Agreement',
