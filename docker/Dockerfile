@@ -47,5 +47,4 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 # Set user context
 USER nginx
 
-# EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

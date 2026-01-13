@@ -36,10 +36,7 @@ const StrategicAcronym = ({ analysisResult }) => {
   const conclusion = getStrategicConclusion(analysisResult, lang);
   const recommendations = getRecommendations(analysisResult, lang);
   
-  // Debug logging
-  console.log('Strategic Analysis Result:', analysisResult);
-  console.log('Extracted Strategic Items:', strategicItems);
-  console.log('Language detected:', lang);
+  
   
   if (!strategicItems || strategicItems.length === 0 || strategicItems.every(item => item === null)) {
     return (
@@ -203,8 +200,7 @@ const extractStrategicItemsWithH5 = (strategicContent, lang) => {
       content: match[2]
     });
   }
-
-  console.log('Found H5 sections:', h5Sections);
+ 
 
   // For each letter in the acronym, find the corresponding H5 section
   acronymSequence.forEach((letter, index) => {

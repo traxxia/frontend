@@ -1,0 +1,64 @@
+name: TRAXXIA-$(Date:yyyyMMdd)-$(Rev:r)
+
+trigger:
+  branches:
+    include:
+      - master
+      - develop
+
+variables:
+  - group: traxxia-frontend-dev
+  - name: MAJOR
+    value: 1
+  - name: MINOR
+    value: 0
+  - name: PATCH
+    value: $[counter(format('{0}.{1}', variables['MAJOR'], variables['MINOR']), 0)]
+  - name: SEMVER
+    value: $(MAJOR).$(MINOR).$(PATCH)
+  - name: IMAGE_VERSION
+    value: $(SEMVER)
+  - name: IMAGE_NAME
+    value: trax_dev_frontend
+
+stages:
+  - stage: BuildAndPush
+    displayName: Build and Push Docker Image for frontend
+    jobs:
+      - job: BuildJob
+        displayName: Build Docker Image and Push to ACR
+        pool:
+          vmImage: 'ubuntu-latest'
+
+        steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+
+          - script: |
+              rm -f .env
+              echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
+              echo 'REACT_APP_ML_BACKEND_URL=$(REACT_APP_ML_BACKEND_URL)' >> .env
+              echo "Contents of .env file:"
+              cat .env
+            displayName: 'Generate .env file'
+
+          # - task: npmAuthenticate@0
+          #   inputs:
+          #     workingFile: '$(System.DefaultWorkingDirectory)/docker/services/product-client/.npmrc'
+          #   displayName: 'Authenticate npm'
+
+          - task: Docker@2
+            displayName: 'Build and Push Traxxia FE Docker Image to ACR'
+            inputs:
+              containerRegistry: 'trax-sc-dev-acr'     # Use your ACR service connection
+              repository: $(IMAGE_NAME)
+              command: buildAndPush
+              Dockerfile: 'docker/Dockerfile'
+              buildContext: '.'
+              tags: |
+                latest
+                $(IMAGE_VERSION)
+
+          - script: echo "Docker Image tagged as $(IMAGE_NAME):$(IMAGE_VERSION)"
+            displayName: 'Output Docker Tag'

@@ -1,0 +1,190 @@
+
+.info-block {
+  margin-bottom: 12px;
+}
+
+.info-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.project-name {
+  font-weight: 600;
+}
+
+.muted {
+  color: #4b5563;
+}
+
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 10px 0;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.consensus-badge {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.consensus-popover {
+  min-width: 460px;     /* wider */
+  max-width: 520px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border: none;
+}
+
+.consensus-popover-body {
+  padding: 18px 20px;
+  background-color: #ffffff;
+}
+
+.consensus-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.consensus-table td {
+  padding: 6px 4px;
+  vertical-align: top;
+}
+
+.consensus-table .label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  width: 40%;
+  white-space: nowrap;
+}
+
+.consensus-table .value {
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.consensus-table .project-name {
+  font-weight: 600;
+}
+
+/* Section layout */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;          /* tighter inside spacing */
+  margin-bottom: 8px; /* controlled spacing between sections */
+}
+
+
+.section-row {
+  display: flex;
+  gap: 20px;
+}
+
+/* Labels */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Values */
+.section-value {
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.project-name {
+  font-weight: 600;
+}
+
+.muted {
+  color: #9ca3af;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 10px 0;
+}
+.consensus-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.consensus-table th,
+.consensus-table td {
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.consensus-table th {
+  width: 38%;
+  background-color: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.consensus-table td {
+  color: #111827;
+}
+
+.consensus-table tr:last-child td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+/* Badge */
+.consensus-badge {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+.consensus-badge {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  border-radius: 50%;
+}
+
+/* CLICKABLE INDICATOR */
+.consensus-badge.clickable {
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.consensus-badge.clickable:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.45);
+}

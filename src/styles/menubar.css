@@ -1,7 +1,114 @@
 /* TRAXIA MenuBar Styles */
 /* Import the CSS variables file before using this */
 /* @import 'path/to/css-variables.css'; */
+/* Add these styles to your menubar.css file */
 
+.traxia-navbar .container-fluid > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+[data-theme="dark"] .traxia-navbar {
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border-dark);
+}
+[data-theme="dark"] {
+  --color-text-white: #ffffff;
+}
+
+/* Left section - Company Logo */
+.navbar-left {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-width: 120px; /* Reserve space for company logo */
+}
+
+.company-logo {
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+.company-logo:hover {
+  opacity: 0.8;
+}
+
+.company-logo img {
+  border-radius: 4px; /* Optional: slight rounding for company logos */
+}
+
+/* Center section - Traxxia Logo */
+.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.traxia-logo {
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.traxia-logo:hover {
+  opacity: 0.8;
+  text-decoration: none;
+}
+
+/* Right section - User Menu */
+.navbar-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 120px; /* Reserve space for user menu */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar-left {
+    min-width: 80px;
+  }
+  
+  .navbar-right {
+    min-width: 80px;
+  }
+  
+  .company-logo img {
+    max-width: 80px;
+    height: 28px;
+  }
+  
+  .traxia-logo img {
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-left {
+    min-width: 60px;
+  }
+  
+  .navbar-right {
+    min-width: 60px;
+  }
+  
+  .company-logo img {
+    max-width: 60px;
+    height: 24px;
+  }
+  
+  .traxia-logo img {
+    height: 18px;
+  }
+}
 .traxia-navbar {
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border-light);
@@ -154,6 +261,14 @@
   font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
+}
+[data-theme="dark"] .traxia-dropdown {
+
+  border: 1px solid var(--color-border-dark);
+}
+
+[data-theme="dark"] .text-muted {
+  color: var(--color-text-white) !important;
 }
 
 /* Dropdown Divider */
