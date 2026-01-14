@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
-import PMFInsights from '../components/PMFInsights';
 import '../styles/pmf-onboarding.css';
 
 const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [showInsights, setShowInsights] = useState(false);
   const totalSteps = 9;
   const [formData, setFormData] = useState({
     companyName: '',
@@ -336,43 +334,46 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   const handleSubmit = () => {
-  // ❌ Do NOT call onSubmit or handleClose here
-  setShowInsights(true);
+  if (onSubmit) {
+    onSubmit(formData); // pass answers to parent
+  }
+  handleClose(); // close modal
 };
 
 
+
   const handleClose = () => {
-    setCurrentStep(1);
-    setShowInsights(false);
-    setFormData({
-      companyName: '',
-      website: '',
-      country: '',
-      city: '',
-      primaryIndustry: '',
-      geography1: '',
-      geography2: '',
-      geography3: '',
-      customerSegment1: '',
-      customerSegment2: '',
-      customerSegment3: '',
-      productService1: '',
-      productService2: '',
-      productService3: '',
-      channel1: '',
-      channel2: '',
-      channel3: '',
-      strategicObjective: '',
-      strategicObjectiveOther: '',
-      keyChallenge: '',
-      keyChallengeOther: '',
-      differentiation: [],
-      differentiationOther: '',
-      usageContext: ''
-    });
-    setErrors({});
-    onHide();
-  };
+  setCurrentStep(1);
+  setFormData({
+    companyName: '',
+    website: '',
+    country: '',
+    city: '',
+    primaryIndustry: '',
+    geography1: '',
+    geography2: '',
+    geography3: '',
+    customerSegment1: '',
+    customerSegment2: '',
+    customerSegment3: '',
+    productService1: '',
+    productService2: '',
+    productService3: '',
+    channel1: '',
+    channel2: '',
+    channel3: '',
+    strategicObjective: '',
+    strategicObjectiveOther: '',
+    keyChallenge: '',
+    keyChallengeOther: '',
+    differentiation: [],
+    differentiationOther: '',
+    usageContext: ''
+  });
+  setErrors({});
+  onHide();
+};
+
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1051,35 +1052,21 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     </Modal.Header>
 
     <Modal.Body className="pmf-modal-body">
-  {showInsights ? (
-    <PMFInsights
-      onContinue={() => {
-        if (onSubmit) {
-          onSubmit(formData);
-        }
-        setShowInsights(false);
-        handleClose();
-      }}
-    />
-  ) : (
-    <>
-      <div className="pmf-progress-container">
-        <div className="pmf-progress-bar">
-          <div
-            className="pmf-progress-fill"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-      </div>
+  <div className="pmf-progress-container">
+    <div className="pmf-progress-bar">
+      <div
+        className="pmf-progress-fill"
+        style={{ width: `${progressPercentage}%` }}
+      />
+    </div>
+  </div>
 
-      {renderStepContent()}
-    </>
-  )}
+  {renderStepContent()}
 </Modal.Body>
 
 
-    {!showInsights && (
-  <Modal.Footer className="pmf-modal-footer">
+    <Modal.Footer className="pmf-modal-footer">
+
 
       <Button
         variant="outline-secondary"
@@ -1104,7 +1091,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         )}
       </Button>
     </Modal.Footer>
-    )}
   </Modal>
 );
 

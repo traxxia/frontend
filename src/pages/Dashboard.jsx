@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import PMFInsights from "../components/PMFInsights";
 import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
@@ -523,8 +525,17 @@ const projectPhaseBusinesses = businesses.filter(
   // Main render
   return (
     <div className="dashboard-layout">
-      <MenuBar />
 
+  {/* FULL PAGE PMF INSIGHTS */}
+  {showInsights ? (
+    <PMFInsights
+      onContinue={() => {
+        setShowInsights(false);
+      }}
+    />
+  ) : (
+    <>
+      <MenuBar />
       <Container fluid className="p-0 main-content">
         <div className="responsive-view-container">
           <Row className="h-100 justify-content-center">
@@ -901,6 +912,7 @@ const projectPhaseBusinesses = businesses.filter(
           // You can add additional logic here if needed to process pmfFormData
           console.log('PMF Onboarding completed:', pmfFormData);
           setShowPMFOnboarding(false);
+          setShowInsights(true);
         }}
       />
 
@@ -1147,7 +1159,12 @@ const projectPhaseBusinesses = businesses.filter(
           </Button>
         </Modal.Footer>
       </Modal>
+          </>
+  )}
+
     </div>
+    
+
   );
 };
 

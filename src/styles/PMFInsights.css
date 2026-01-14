@@ -8,6 +8,39 @@
   text-align: center;
   margin-bottom: 40px;
 }
+.icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e8f0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.insight-list {
+  padding-left: 18px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.insight-list li::marker {
+  color: #2563eb;
+}
+
+
+.icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+}
 
 .pmf-insights-header .badge {
   background: #e8f0ff;
