@@ -1,0 +1,280 @@
+/* PMF Onboarding Modal Styles */
+.pmf-onboarding-modal .modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.pmf-modal-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 24px;
+  position: relative;
+}
+
+.pmf-header-content {
+  flex: 1;
+}
+
+.pmf-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.pmf-close-button {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: absolute;
+  top: 20px;
+  right: 24px;
+}
+
+.pmf-close-button:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.pmf-modal-body {
+  padding: 24px;
+}
+
+/* Progress Bar */
+.pmf-progress-container {
+  margin-bottom: 32px;
+}
+
+.pmf-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pmf-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #217aff, #4a90e2);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Step Content */
+.pmf-step-content {
+  min-height: 200px;
+}
+
+.pmf-step-question {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 24px;
+}
+
+.pmf-form-label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.pmf-form-control {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pmf-form-control select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.pmf-form-control:focus {
+  border-color: #217aff;
+  box-shadow: 0 0 0 3px rgba(33, 122, 255, 0.1);
+  outline: none;
+}
+
+.pmf-form-control.is-invalid {
+  border-color: #ef4444;
+}
+
+.pmf-form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.pmf-form-control select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+  width: 100%;
+}
+
+.pmf-form-control select:focus {
+  border-color: #217aff;
+  box-shadow: 0 0 0 3px rgba(33, 122, 255, 0.1);
+  outline: none;
+}
+
+.pmf-form-control optgroup {
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+  padding: 8px 0;
+  background-color: #f9fafb;
+}
+
+.pmf-form-control option {
+  padding: 8px 12px;
+  font-weight: 400;
+  color: #1f2937;
+}
+
+.pmf-form-control option:hover {
+  background-color: #f3f4f6;
+}
+
+.pmf-step-question {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+/* Modal Footer */
+.pmf-modal-footer {
+  border-top: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.pmf-back-button {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.pmf-back-button:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  color: #1f2937;
+}
+
+.pmf-back-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pmf-next-button {
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: #217aff;
+  border: none;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.pmf-next-button:hover {
+  background-color: #1e6ae8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(33, 122, 255, 0.3);
+}
+
+.pmf-next-button:active {
+  transform: translateY(0);
+}
+
+.pmf-radio-card {
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  padding: 14px 16px 14px 32px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.pmf-radio-card:hover {
+  border-color: #4f46e5;
+}
+
+.pmf-radio-card.selected {
+  border-color: #4f46e5;
+  background: #eef2ff;
+}
+
+.pmf-checkbox-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 14px 16px 14px 24px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pmf-checkbox-card.selected {
+  border-color: #3b82f6;
+  background-color: #f0f6ff;
+}
+
+.pmf-checkbox-input .form-check-input {
+  margin-right: 10px;
+}
+
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pmf-modal-header {
+    padding: 16px 20px;
+  }
+
+  .pmf-modal-title {
+    font-size: 18px;
+  }
+
+  .pmf-modal-body {
+    padding: 20px;
+  }
+
+  .pmf-modal-footer {
+    padding: 12px 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pmf-back-button,
+  .pmf-next-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

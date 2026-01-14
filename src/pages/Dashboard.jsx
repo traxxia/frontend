@@ -16,6 +16,7 @@ import {
   Info, X, Trash2
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
+import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
@@ -26,6 +27,7 @@ const Dashboard = () => {
   const { t } = useTranslation();
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
@@ -212,10 +214,12 @@ const projectPhaseBusinesses = businesses.filter(
         await fetchBusinesses();
         setShowCreateModal(false);
 
+        // Show PMF Onboarding modal after successful business creation
         setTimeout(() => {
           setShowSuccessPopup(false);
           setSuccessMessage('');
-        }, 4000);
+          setShowPMFOnboarding(true);
+        }, 2000);
       } else {
         console.error('Create business error:', data);
 
@@ -887,6 +891,18 @@ const projectPhaseBusinesses = businesses.filter(
           </div>
         </div>
       )}
+
+      {/* PMF Onboarding Modal */}
+      <PMFOnboardingModal
+        show={showPMFOnboarding}
+        onHide={() => setShowPMFOnboarding(false)}
+        onSubmit={(pmfFormData) => {
+          // PMF Onboarding completed - business is already created
+          // You can add additional logic here if needed to process pmfFormData
+          console.log('PMF Onboarding completed:', pmfFormData);
+          setShowPMFOnboarding(false);
+        }}
+      />
 
       {/* Create Business Modal */}
       <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
