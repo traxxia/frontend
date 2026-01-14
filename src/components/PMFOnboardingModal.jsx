@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import PMFInsights from '../components/PMFInsights';
 import '../styles/pmf-onboarding.css';
 
 const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
+  const [showInsights, setShowInsights] = useState(false);
   const totalSteps = 9;
   const [formData, setFormData] = useState({
     companyName: '',
@@ -334,16 +336,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   const handleSubmit = () => {
-    // Call the parent's onSubmit handler with form data
-    if (onSubmit) {
-      onSubmit(formData);
-    }
-    // Reset form and close modal
-    handleClose();
-  };
+  // ❌ Do NOT call onSubmit or handleClose here
+  setShowInsights(true);
+};
+
 
   const handleClose = () => {
     setCurrentStep(1);
+    setShowInsights(false);
     setFormData({
       companyName: '',
       website: '',
@@ -1026,66 +1026,88 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   return (
-    <Modal
-      show={show}
-      onHide={handleClose}
-      centered
-      size="lg"
-      backdrop="static"
-      className="pmf-onboarding-modal"
-    >
-      <Modal.Header className="pmf-modal-header">
-        <div className="pmf-header-content">
-          <Modal.Title className="pmf-modal-title">
-            {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {totalSteps}
-          </Modal.Title>
+  <Modal
+    show={show}
+    onHide={handleClose}
+    centered
+    size="lg"
+    backdrop="static"
+    className="pmf-onboarding-modal"
+  >
+    <Modal.Header className="pmf-modal-header">
+      <div className="pmf-header-content">
+        <Modal.Title className="pmf-modal-title">
+          {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {totalSteps}
+        </Modal.Title>
+      </div>
+      <button
+        type="button"
+        className="pmf-close-button"
+        onClick={handleClose}
+        aria-label="Close"
+      >
+        <X size={20} />
+      </button>
+    </Modal.Header>
+
+    <Modal.Body className="pmf-modal-body">
+  {showInsights ? (
+    <PMFInsights
+      onContinue={() => {
+        if (onSubmit) {
+          onSubmit(formData);
+        }
+        setShowInsights(false);
+        handleClose();
+      }}
+    />
+  ) : (
+    <>
+      <div className="pmf-progress-container">
+        <div className="pmf-progress-bar">
+          <div
+            className="pmf-progress-fill"
+            style={{ width: `${progressPercentage}%` }}
+          />
         </div>
-        <button
-          type="button"
-          className="pmf-close-button"
-          onClick={handleClose}
-          aria-label="Close"
-        >
-          <X size={20} />
-        </button>
-      </Modal.Header>
+      </div>
 
-      <Modal.Body className="pmf-modal-body">
-        {/* Progress Bar */}
-        <div className="pmf-progress-container">
-          <div className="pmf-progress-bar">
-            <div
-              className="pmf-progress-fill"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
+      {renderStepContent()}
+    </>
+  )}
+</Modal.Body>
 
-        {/* Step Content */}
-        {renderStepContent()}
-      </Modal.Body>
 
-      <Modal.Footer className="pmf-modal-footer">
-        <Button
-          variant="outline-secondary"
-          onClick={handleBack}
-          disabled={currentStep === 1}
-          className="pmf-back-button"
-        >
-          <ChevronLeft size={18} className="me-1" />
-          {t('back') || 'Back'}
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleNext}
-          className="pmf-next-button"
-        >
-          {currentStep === totalSteps ? (t('finish') || 'Finish') : (t('next') || 'Next')}
-          {currentStep < totalSteps && <ChevronRight size={18} className="ms-1" />}
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
+    {!showInsights && (
+  <Modal.Footer className="pmf-modal-footer">
+
+      <Button
+        variant="outline-secondary"
+        onClick={handleBack}
+        disabled={currentStep === 1}
+        className="pmf-back-button"
+      >
+        <ChevronLeft size={18} className="me-1" />
+        {t('back') || 'Back'}
+      </Button>
+
+      <Button
+        variant="primary"
+        onClick={handleNext}
+        className="pmf-next-button"
+      >
+        {currentStep === totalSteps
+          ? (t('finish') || 'Complete Onboarding')
+          : (t('next') || 'Next')}
+        {currentStep < totalSteps && (
+          <ChevronRight size={18} className="ms-1" />
+        )}
+      </Button>
+    </Modal.Footer>
+    )}
+  </Modal>
+);
+
 };
 
 export default PMFOnboardingModal;
