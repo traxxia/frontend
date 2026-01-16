@@ -531,6 +531,7 @@ const projectPhaseBusinesses = businesses.filter(
     <PMFInsights
       onContinue={() => {
         setShowInsights(false);
+        navigate("/businesspage");
       }}
     />
   ) : (
