@@ -2,12 +2,20 @@ import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import {
+  COUNTRIES,
+  INDUSTRIES_BY_CATEGORY,
+  STRATEGIC_OBJECTIVES,
+  KEY_CHALLENGES,
+  DIFFERENTIATION_OPTIONS,
+  USAGE_CONTEXT_OPTIONS,
+  TOTAL_STEPS
+} from '../config/pmfOnboardingConfig';
 import '../styles/pmf-onboarding.css';
 
 const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 9;
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
@@ -36,90 +44,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   });
   const [errors, setErrors] = useState({});
 
-  // List of countries for dropdown
-  const countries = [
-    'United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Chile', 
-    'Colombia', 'Peru', 'United Kingdom', 'Germany', 'France', 'Spain', 
-    'Italy', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Sweden', 
-    'Norway', 'Denmark', 'Finland', 'Poland', 'Portugal', 'Greece', 
-    'Ireland', 'Czech Republic', 'Hungary', 'Romania', 'Bulgaria', 'Croatia',
-    'Australia', 'New Zealand', 'Japan', 'China', 'India', 'South Korea', 
-    'Singapore', 'Malaysia', 'Thailand', 'Indonesia', 'Philippines', 'Vietnam',
-    'South Africa', 'Egypt', 'Nigeria', 'Kenya', 'Morocco', 'Israel', 
-    'Turkey', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Kuwait'
-  ];
-
-  // List of industries organized by categories
-  const industriesByCategory = [
-    {
-      category: 'Extraction & Natural Resources',
-      industries: [
-        'Mining',
-        'Fishing',
-        'Agriculture / Agribusiness'
-      ]
-    },
-    {
-      category: 'Manufacturing & Industrial',
-      industries: [
-        'Manufacturing / Industrial Goods',
-        'Construction'
-      ]
-    },
-    {
-      category: 'Consumer & Retail',
-      industries: [
-        'Retail',
-        'Consumer Products (CPG)'
-      ]
-    },
-    {
-      category: 'Financial Services',
-      industries: [
-        'Payments / Fintech',
-        'Commercial Banking',
-        'Microfinance',
-        'Investment Banking / Capital Markets',
-        'Other Financial Services'
-      ]
-    },
-    {
-      category: 'Services',
-      industries: [
-        'Professional Services',
-        'Education',
-        'Healthcare'
-      ]
-    },
-    {
-      category: 'Infrastructure & Connectivity',
-      industries: [
-        'Distribution / Logistics / Transportation',
-        'Energy / Utilities',
-        'Telecom / Media'
-      ]
-    },
-    {
-      category: 'Technology',
-      industries: [
-        'Technology / SaaS'
-      ]
-    },
-    {
-      category: 'Public Sector',
-      industries: [
-        'Government / Public Sector'
-      ]
-    },
-    {
-      category: 'Other',
-      industries: [
-        'Other'
-      ]
-    }
-  ];
-
-  const progressPercentage = (currentStep / totalSteps) * 100;
+  const progressPercentage = (currentStep / TOTAL_STEPS) * 100;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -319,7 +244,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     }
 
     
-    if (currentStep < totalSteps) {
+    if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
       // On last step, submit the form
@@ -441,7 +366,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 isInvalid={!!errors.country}
               >
                 <option value="">{t('select_country') || 'Select country'}</option>
-                {countries.map((country) => (
+                {COUNTRIES.map((country) => (
                   <option key={country} value={country}>
                     {country}
                   </option>
@@ -490,7 +415,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 isInvalid={!!errors.primaryIndustry}
               >
                 <option value="">{t('select_industry') || 'Select industry'}</option>
-                {industriesByCategory.map((categoryGroup) => (
+                {INDUSTRIES_BY_CATEGORY.map((categoryGroup) => (
                   <optgroup key={categoryGroup.category} label={categoryGroup.category}>
                     {categoryGroup.industries.map((industry) => (
                       <option key={industry} value={industry}>
@@ -805,14 +730,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 {t('strategic_objective') || 'Strategic Objective'}
               </h5>
 
-              {[
-                'Grow',
-                'Improve profitability',
-                'Focus / simplify',
-                'Enter a new market',
-                'Fix execution',
-                'Other'
-              ].map((option) => (
+              {STRATEGIC_OBJECTIVES.map((option) => (
                 <div
                   key={option}
                   className={`pmf-radio-card ${
@@ -866,14 +784,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 Key challenges / constraints
               </h5>
 
-              {[
-                'Too many initiatives',
-                'Weak differentiation',
-                'Pricing pressure',
-                'Execution slippage',
-                'Talent / structure',
-                'Other'
-              ].map(option => (
+              {KEY_CHALLENGES.map(option => (
                 <div
                   key={option}
                   className={`pmf-radio-card ${
@@ -928,16 +839,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 Select up to 2
               </p>
 
-              {[
-                'Price',
-                'Quality / expertise',
-                'Speed / responsiveness',
-                'Relationships / trust',
-                'Customization',
-                'Scale',
-                'Brand',
-                'Other'
-              ].map(option => (
+              {DIFFERENTIATION_OPTIONS.map(option => (
                 <div
                   key={option}
                   className={`pmf-checkbox-card ${
@@ -986,7 +888,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   Usage Context
                 </h5>
 
-                {['My company', 'A client'].map(option => (
+                {USAGE_CONTEXT_OPTIONS.map(option => (
                   <div
                     key={option}
                     className={`pmf-radio-card ${
@@ -1038,7 +940,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     <Modal.Header className="pmf-modal-header">
       <div className="pmf-header-content">
         <Modal.Title className="pmf-modal-title">
-          {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {totalSteps}
+          {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
         </Modal.Title>
       </div>
       <button
@@ -1083,10 +985,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         onClick={handleNext}
         className="pmf-next-button"
       >
-        {currentStep === totalSteps
+        {currentStep === TOTAL_STEPS
           ? (t('finish') || 'Complete Onboarding')
           : (t('next') || 'Next')}
-        {currentStep < totalSteps && (
+        {currentStep < TOTAL_STEPS && (
           <ChevronRight size={18} className="ms-1" />
         )}
       </Button>
