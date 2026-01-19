@@ -18,6 +18,7 @@ import "../styles/businesspage.css";
 import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
 import ProjectsSection from "../components/ProjectsSection";
+import PMFInsights from "../components/PMFInsights";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -744,6 +745,12 @@ const BusinessSetupPage = () => {
           <button className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
             {t("brief")}
           </button>
+          <button
+            className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
+            onClick={() => setActiveTab("aha")}
+          >
+            AHA
+          </button>
           {unlockedFeatures.analysis && (
             <button className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
               {t("analysis")}
@@ -814,6 +821,12 @@ const BusinessSetupPage = () => {
                       <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
                         <ArrowLeft size={18} />
                         {t("backToOverview")}
+                      </button>
+                      <button
+                        className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
+                        onClick={() => setActiveTab("aha")}
+                      >
+                        AHA
                       </button>
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
@@ -942,6 +955,9 @@ const BusinessSetupPage = () => {
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
+                      {activeTab === "aha" && (
+                        <PMFInsights onContinue={() => setActiveTab("analysis")} />
+                      )}
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
@@ -992,6 +1008,7 @@ const BusinessSetupPage = () => {
                     <button className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
                       {t("brief")}
                     </button>
+                    
                     {unlockedFeatures.analysis && (
                       <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                         {t("analysis")}
@@ -1063,6 +1080,9 @@ const BusinessSetupPage = () => {
                         isLaunchedStatus={isLaunchedStatus}
                       />
                     </div>
+                  )}
+                  {activeTab === "aha" && (
+                    <PMFInsights onContinue={() => setActiveTab("analysis")} />
                   )}
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
@@ -1143,6 +1163,9 @@ const BusinessSetupPage = () => {
                       isLaunchedStatus={isLaunchedStatus}
                     />
                   </div>
+                )}
+                {activeTab === "aha" && (
+                  <PMFInsights onContinue={() => setActiveTab("analysis")} />
                 )}
                 {activeTab === "analysis" && (
                   <div className="analysis-section">
