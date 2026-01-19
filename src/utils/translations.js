@@ -252,8 +252,8 @@ export const staticTranslations = {
     // BUSINESS DETAIL PAGE
     // ===========================
     'questions': 'Questions',
-    'analysis': 'Insights (6 Cs)',
-    'strategic': 'S.T.R.A.T.E.G.I.C',
+    'analysis': 'Appendix (6 Cs)',
+    'strategic': 'Executive Summary',
     'saving': 'Saving...',
     'save_successful': 'Save successful!',
     'save_failed': 'Save failed',
@@ -1148,8 +1148,8 @@ export const staticTranslations = {
     // PÁGINA DE DETALLE DEL NEGOCIO
     // ===========================
     'questions': 'Preguntas',
-    'analysis': 'Perspectivas (6 Cs)',
-    'strategic': 'E.S.T.R.A.T.É.G.I.C.O',
+    'analysis': 'Apéndice (6 Cs)',
+    'strategic': 'Resumen ejecutivo',
     'saving': 'Guardando...',
     'save_successful': '¡Guardado exitoso!',
     'save_failed': 'Error al guardar',
