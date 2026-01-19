@@ -18,7 +18,7 @@ import "../styles/businesspage.css";
 import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
 import ProjectsSection from "../components/ProjectsSection";
-import PMFInsights from "../components/PMFInsights";
+import PMFInsightsTab from "../components/PMFInsightsTab";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -586,6 +586,19 @@ const BusinessSetupPage = () => {
     }
   };
 
+  const handleAhaTabClick = () => {
+  if (isMobile) {
+    setActiveTab("aha");
+  } else {
+    if (!isAnalysisExpanded) {
+      setIsAnalysisExpanded(true);
+      setActiveTab("aha");
+    } else {
+      setActiveTab("aha");
+    }
+  }
+};
+
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
 
@@ -747,7 +760,8 @@ const BusinessSetupPage = () => {
           </button>
           <button
             className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
-            onClick={() => setActiveTab("aha")}
+            onClick={handleAhaTabClick}
+
           >
             AHA
           </button>
@@ -824,7 +838,8 @@ const BusinessSetupPage = () => {
                       </button>
                       <button
                         className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
-                        onClick={() => setActiveTab("aha")}
+                        onClick={handleAhaTabClick}
+
                       >
                         AHA
                       </button>
@@ -956,7 +971,7 @@ const BusinessSetupPage = () => {
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
                       {activeTab === "aha" && (
-                        <PMFInsights onContinue={() => setActiveTab("analysis")} />
+                        <PMFInsightsTab/>
                       )}
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
@@ -1008,7 +1023,13 @@ const BusinessSetupPage = () => {
                     <button className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
                       {t("brief")}
                     </button>
-                    
+                    <button
+                      className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
+                      onClick={handleAhaTabClick}
+                    >
+                      AHA
+                    </button>
+
                     {unlockedFeatures.analysis && (
                       <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                         {t("analysis")}
@@ -1082,7 +1103,7 @@ const BusinessSetupPage = () => {
                     </div>
                   )}
                   {activeTab === "aha" && (
-                    <PMFInsights onContinue={() => setActiveTab("analysis")} />
+                    <PMFInsightsTab/>
                   )}
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
@@ -1165,7 +1186,7 @@ const BusinessSetupPage = () => {
                   </div>
                 )}
                 {activeTab === "aha" && (
-                  <PMFInsights onContinue={() => setActiveTab("analysis")} />
+                  <PMFInsightsTab/>
                 )}
                 {activeTab === "analysis" && (
                   <div className="analysis-section">
