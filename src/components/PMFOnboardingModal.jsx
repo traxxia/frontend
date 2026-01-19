@@ -133,9 +133,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   const validateStep4 = () => {
     const newErrors = {};
     // At least one geography should be filled (optional but recommended)
-    const hasAtLeastOneGeography = formData.geography1.trim() || 
-                                    formData.geography2.trim() || 
-                                    formData.geography3.trim();
+    const hasAtLeastOneGeography = formData.geography1.trim() ||
+      formData.geography2.trim() ||
+      formData.geography3.trim();
     // This step seems optional based on the image, so we'll allow proceeding without validation
     setErrors(newErrors);
     return true; // Always allow proceeding, geographies are optional
@@ -243,7 +243,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
       if (!validateStep9()) return;
     }
 
-    
+
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -259,45 +259,45 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   const handleSubmit = () => {
-  if (onSubmit) {
-    onSubmit(formData); // pass answers to parent
-  }
-  handleClose(); // close modal
-};
+    if (onSubmit) {
+      onSubmit(formData); // pass answers to parent
+    }
+    handleClose(); // close modal
+  };
 
 
 
   const handleClose = () => {
-  setCurrentStep(1);
-  setFormData({
-    companyName: '',
-    website: '',
-    country: '',
-    city: '',
-    primaryIndustry: '',
-    geography1: '',
-    geography2: '',
-    geography3: '',
-    customerSegment1: '',
-    customerSegment2: '',
-    customerSegment3: '',
-    productService1: '',
-    productService2: '',
-    productService3: '',
-    channel1: '',
-    channel2: '',
-    channel3: '',
-    strategicObjective: '',
-    strategicObjectiveOther: '',
-    keyChallenge: '',
-    keyChallengeOther: '',
-    differentiation: [],
-    differentiationOther: '',
-    usageContext: ''
-  });
-  setErrors({});
-  onHide();
-};
+    setCurrentStep(1);
+    setFormData({
+      companyName: '',
+      website: '',
+      country: '',
+      city: '',
+      primaryIndustry: '',
+      geography1: '',
+      geography2: '',
+      geography3: '',
+      customerSegment1: '',
+      customerSegment2: '',
+      customerSegment3: '',
+      productService1: '',
+      productService2: '',
+      productService3: '',
+      channel1: '',
+      channel2: '',
+      channel3: '',
+      strategicObjective: '',
+      strategicObjectiveOther: '',
+      keyChallenge: '',
+      keyChallengeOther: '',
+      differentiation: [],
+      differentiationOther: '',
+      usageContext: ''
+    });
+    setErrors({});
+    onHide();
+  };
 
 
   const renderStepContent = () => {
@@ -353,7 +353,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
             <h5 className="pmf-step-question mb-4">
               {t('where_is_business_based') || 'Where is this business primarily based?'}
             </h5>
-            
+
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
                 {t('country') || 'Country'} <span className="text-danger">*</span>
@@ -442,17 +442,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('enter_up_to_3_geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
             </p>
-            
+
             <Form.Group className="mb-3">
-              <Form.Label className="pmf-form-label">
-                {t('geography') || 'Geography'} 1
-              </Form.Label>
               <Form.Control
                 type="text"
                 name="geography1"
                 value={formData.geography1}
                 onChange={handleInputChange}
-                placeholder={t('enter_geography') || 'Enter geography (e.g., United States)'}
+                placeholder={`${t('geography') || 'Geography'} 1`}
                 className="pmf-form-control"
                 isInvalid={!!errors.geography1}
               />
@@ -464,15 +461,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label className="pmf-form-label">
-                {t('geography') || 'Geography'} 2
-              </Form.Label>
               <Form.Control
                 type="text"
                 name="geography2"
                 value={formData.geography2}
                 onChange={handleInputChange}
-                placeholder={t('enter_geography') || 'Enter geography (e.g., LATAM)'}
+                placeholder={`${t('geography') || 'Geography'} 2`}
                 className="pmf-form-control"
                 isInvalid={!!errors.geography2}
               />
@@ -484,15 +478,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label">
-                {t('geography') || 'Geography'} 3
-              </Form.Label>
               <Form.Control
                 type="text"
                 name="geography3"
                 value={formData.geography3}
                 onChange={handleInputChange}
-                placeholder={t('enter_geography') || 'Enter geography (e.g., Southeast Asia)'}
+                placeholder={`${t('geography') || 'Geography'} 3`}
                 className="pmf-form-control"
                 isInvalid={!!errors.geography3}
               />
@@ -513,7 +504,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('your_best_estimate_enough') || 'Your best estimate is enough.'}
             </p>
-            
+
             {/* Customer Segments Section */}
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
@@ -522,7 +513,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('customer_segments_example') || 'e.g., young adults, SMEs, enterprise'}
               </p>
-              
+
               <Form.Group className="mb-3">
                 <Form.Control
                   type="text"
@@ -583,7 +574,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('products_services_example') || 'e.g., ice cream, M&A advisory'}
               </p>
-              
+
               <Form.Group className="mb-3">
                 <Form.Control
                   type="text"
@@ -723,200 +714,202 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
 
           </div>
         );
-        case 6:
-          return (
-            <div className="pmf-step-content">
-              <h5 className="pmf-step-question mb-4">
-                {t('strategic_objective') || 'Strategic Objective'}
-              </h5>
+      case 6:
+        return (
+          <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4">
+              {t('strategic_objective') || 'Strategic Objective'}
+            </h5>
 
-              {STRATEGIC_OBJECTIVES.map((option) => (
-                <div
-                  key={option}
-                  className={`pmf-radio-card ${
-                    formData.strategicObjective === option ? 'selected' : ''
+            {STRATEGIC_OBJECTIVES.map((option) => (
+              <div
+                key={option}
+                className={`pmf-radio-card ${formData.strategicObjective === option ? 'selected' : ''
                   }`}
-                  onClick={() => handleRadioSelect(option)}
-                >
-                  <Form.Check
-                    type="radio"
-                    name="strategicObjective"
-                    checked={formData.strategicObjective === option}
-                    onChange={() => handleRadioSelect(option)}
-                    label={option}
-                  />
-                </div>
-              ))}
+                onClick={() => handleRadioSelect(option)}
+              >
+                <Form.Check
+                  type="radio"
+                  name="strategicObjective"
+                  checked={formData.strategicObjective === option}
+                  onChange={() => handleRadioSelect(option)}
+                  label={
+                    <span className="pmf-radio-label">
+                      {option}
+                    </span>
+                  }
+                />
+              </div>
+            ))}
 
-              {/* Show input ONLY when Other is selected */}
-              {formData.strategicObjective === 'Other' && (
-                <Form.Group className="mt-3">
-                  <Form.Control
-                    type="text"
-                    placeholder="Please specify"
-                    value={formData.strategicObjectiveOther}
-                    onChange={(e) =>
-                      setFormData(prev => ({
-                        ...prev,
-                        strategicObjectiveOther: e.target.value
-                      }))
-                    }
-                    className="pmf-form-control"
-                    isInvalid={!!errors.strategicObjectiveOther}
-                  />
-                  {errors.strategicObjectiveOther && (
-                    <Form.Text className="text-danger">
-                      {errors.strategicObjectiveOther}
-                    </Form.Text>
-                  )}
-                </Form.Group>
-              )}
-
-              {errors.strategicObjective && (
-                <div className="text-danger mt-2">{errors.strategicObjective}</div>
-              )}
-            </div>
-          );
-        case 7:
-          return (
-            <div className="pmf-step-content">
-              <h5 className="pmf-step-question mb-4">
-                Key challenges / constraints
-              </h5>
-
-              {KEY_CHALLENGES.map(option => (
-                <div
-                  key={option}
-                  className={`pmf-radio-card ${
-                    formData.keyChallenge === option ? 'selected' : ''
-                  }`}
-                  onClick={() => handleRadioChange('keyChallenge', option)}
-                >
-                  <Form.Check
-                    type="radio"
-                    name="keyChallenge"
-                    label={option}
-                    checked={formData.keyChallenge === option}
-                    onChange={() => handleRadioChange('keyChallenge', option)}
-                  />
-                </div>
-              ))}
-
-              {/* Other input */}
-              {formData.keyChallenge === 'Other' && (
-                <Form.Group className="mt-3">
-                  <Form.Control
-                    type="text"
-                    placeholder="Please specify"
-                    value={formData.keyChallengeOther}
-                    onChange={(e) =>
-                      setFormData(prev => ({
-                        ...prev,
-                        keyChallengeOther: e.target.value
-                      }))
-                    }
-                    isInvalid={!!errors.keyChallengeOther}
-                  />
+            {/* Show input ONLY when Other is selected */}
+            {formData.strategicObjective === 'Other' && (
+              <Form.Group className="mt-3">
+                <Form.Control
+                  type="text"
+                  placeholder="Please specify"
+                  value={formData.strategicObjectiveOther}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      strategicObjectiveOther: e.target.value
+                    }))
+                  }
+                  className="pmf-form-control"
+                  isInvalid={!!errors.strategicObjectiveOther}
+                />
+                {errors.strategicObjectiveOther && (
                   <Form.Text className="text-danger">
-                    {errors.keyChallengeOther}
+                    {errors.strategicObjectiveOther}
                   </Form.Text>
-                </Form.Group>
-              )}
+                )}
+              </Form.Group>
+            )}
 
-              {errors.keyChallenge && (
-                <div className="text-danger mt-2">{errors.keyChallenge}</div>
-              )}
-            </div>
-          );
-        case 8:
-          return (
-            <div className="pmf-step-content">
-              <h5 className="pmf-step-question mb-2">
-                Today, you primarily differentiate through:
-              </h5>
+            {errors.strategicObjective && (
+              <div className="text-danger mt-2">{errors.strategicObjective}</div>
+            )}
+          </div>
+        );
+      case 7:
+        return (
+          <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4">
+              Key challenges / constraints
+            </h5>
 
-              <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
-                Select up to 2
-              </p>
-
-              {DIFFERENTIATION_OPTIONS.map(option => (
-                <div
-                  key={option}
-                  className={`pmf-checkbox-card ${
-                    formData.differentiation.includes(option) ? 'selected' : ''
+            {KEY_CHALLENGES.map(option => (
+              <div
+                key={option}
+                className={`pmf-radio-card ${formData.keyChallenge === option ? 'selected' : ''
                   }`}
-                >
-                  <Form.Check
-                    type="checkbox"
-                    label={option}
-                    checked={formData.differentiation.includes(option)}
-                    onChange={() => handleDifferentiationChange(option)}
-                    className="pmf-checkbox-input"
-                  />
+                onClick={() => handleRadioChange('keyChallenge', option)}
+              >
+                <Form.Check
+                  type="radio"
+                  name="keyChallenge"
+                  label={
+                    <span className="pmf-radio-label">{option} </span>
+                  }
+                  checked={formData.keyChallenge === option}
+                  onChange={() => handleRadioChange('keyChallenge', option)}
+                />
+              </div>
+            ))}
 
-                  {/* 👇 SHOW ONLY FOR OTHER */}
-                  {option === 'Other' &&
-                    formData.differentiation.includes('Other') && (
-                      <Form.Control
-                        type="text"
-                        placeholder="Please specify"
-                        value={formData.differentiationOther}
-                        onChange={(e) =>
-                          setFormData(prev => ({
-                            ...prev,
-                            differentiationOther: e.target.value
-                          }))
-                        }
-                        className="pmf-form-control mt-3"
-                      />
-                    )}
-                </div>
-              ))}
+            {/* Other input */}
+            {formData.keyChallenge === 'Other' && (
+              <Form.Group className="mt-3">
+                <Form.Control
+                  type="text"
+                  placeholder="Please specify"
+                  value={formData.keyChallengeOther}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      keyChallengeOther: e.target.value
+                    }))
+                  }
+                  isInvalid={!!errors.keyChallengeOther}
+                />
+                <Form.Text className="text-danger">
+                  {errors.keyChallengeOther}
+                </Form.Text>
+              </Form.Group>
+            )}
 
-              {errors.differentiation && (
-                <div className="text-danger mt-2">
-                  {errors.differentiation}
-                </div>
-              )}
-            </div>
-          );
+            {errors.keyChallenge && (
+              <div className="text-danger mt-2">{errors.keyChallenge}</div>
+            )}
+          </div>
+        );
+      case 8:
+        return (
+          <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-2">
+              Today, you primarily differentiate through:
+            </h5>
 
-          case 9:
-            return (
-              <div className="pmf-step-content">
-                <h5 className="pmf-step-question mb-4">
-                  Usage Context
-                </h5>
+            <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
+              Select up to 2
+            </p>
 
-                {USAGE_CONTEXT_OPTIONS.map(option => (
-                  <div
-                    key={option}
-                    className={`pmf-radio-card ${
-                      formData.usageContext === option ? 'selected' : ''
-                    }`}
-                    onClick={() =>
-                      setFormData(prev => ({
-                        ...prev,
-                        usageContext: option
-                      }))
-                    }
-                  >
-                    <Form.Check
-                      type="radio"
-                      name="usageContext"
-                      label={option}
-                      checked={formData.usageContext === option}
-                      onChange={() =>
+            {DIFFERENTIATION_OPTIONS.map(option => (
+              <div
+                key={option}
+                className={`pmf-checkbox-card ${formData.differentiation.includes(option) ? 'selected' : ''
+                  }`}
+              >
+                <Form.Check
+                  type="checkbox"
+                  label={option}
+                  checked={formData.differentiation.includes(option)}
+                  onChange={() => handleDifferentiationChange(option)}
+                  className="pmf-checkbox-input"
+                />
+
+                {/* 👇 SHOW ONLY FOR OTHER */}
+                {option === 'Other' &&
+                  formData.differentiation.includes('Other') && (
+                    <Form.Control
+                      type="text"
+                      placeholder="Please specify"
+                      value={formData.differentiationOther}
+                      onChange={(e) =>
                         setFormData(prev => ({
                           ...prev,
-                          usageContext: option
+                          differentiationOther: e.target.value
                         }))
                       }
+                      className="pmf-form-control mt-3"
                     />
-                  </div>
-                ))}
+                  )}
               </div>
-            );
+            ))}
+
+            {errors.differentiation && (
+              <div className="text-danger mt-2">
+                {errors.differentiation}
+              </div>
+            )}
+          </div>
+        );
+
+      case 9:
+        return (
+          <div className="pmf-step-content">
+            <h5 className="pmf-step-question mb-4">
+              Usage Context
+            </h5>
+
+            {USAGE_CONTEXT_OPTIONS.map(option => (
+              <div
+                key={option}
+                className={`pmf-radio-card ${formData.usageContext === option ? 'selected' : ''
+                  }`}
+                onClick={() =>
+                  setFormData(prev => ({
+                    ...prev,
+                    usageContext: option
+                  }))
+                }
+              >
+                <Form.Check
+                  type="radio"
+                  name="usageContext"
+                  label={option}
+                  checked={formData.usageContext === option}
+                  onChange={() =>
+                    setFormData(prev => ({
+                      ...prev,
+                      usageContext: option
+                    }))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        );
 
       // Add more steps here as needed
       default:
@@ -929,72 +922,72 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   return (
-  <Modal
-    show={show}
-    onHide={handleClose}
-    centered
-    size="lg"
-    backdrop="static"
-    className="pmf-onboarding-modal"
-  >
-    <Modal.Header className="pmf-modal-header">
-      <div className="pmf-header-content">
-        <Modal.Title className="pmf-modal-title">
-          {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
-        </Modal.Title>
-      </div>
-      <button
-        type="button"
-        className="pmf-close-button"
-        onClick={handleClose}
-        aria-label="Close"
-      >
-        <X size={20} />
-      </button>
-    </Modal.Header>
+    <Modal
+      show={show}
+      onHide={handleClose}
+      centered
+      size="lg"
+      backdrop="static"
+      className="pmf-onboarding-modal"
+    >
+      <Modal.Header className="pmf-modal-header">
+        <div className="pmf-header-content">
+          <Modal.Title className="pmf-modal-title">
+            {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
+          </Modal.Title>
+        </div>
+        <button
+          type="button"
+          className="pmf-close-button"
+          onClick={handleClose}
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+      </Modal.Header>
 
-    <Modal.Body className="pmf-modal-body">
-  <div className="pmf-progress-container">
-    <div className="pmf-progress-bar">
-      <div
-        className="pmf-progress-fill"
-        style={{ width: `${progressPercentage}%` }}
-      />
-    </div>
-  </div>
+      <Modal.Body className="pmf-modal-body">
+        <div className="pmf-progress-container">
+          <div className="pmf-progress-bar">
+            <div
+              className="pmf-progress-fill"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
 
-  {renderStepContent()}
-</Modal.Body>
-
-
-    <Modal.Footer className="pmf-modal-footer">
+        {renderStepContent()}
+      </Modal.Body>
 
 
-      <Button
-        variant="outline-secondary"
-        onClick={handleBack}
-        disabled={currentStep === 1}
-        className="pmf-back-button"
-      >
-        <ChevronLeft size={18} className="me-1" />
-        {t('back') || 'Back'}
-      </Button>
+      <Modal.Footer className="pmf-modal-footer">
 
-      <Button
-        variant="primary"
-        onClick={handleNext}
-        className="pmf-next-button"
-      >
-        {currentStep === TOTAL_STEPS
-          ? (t('finish') || 'Complete Onboarding')
-          : (t('next') || 'Next')}
-        {currentStep < TOTAL_STEPS && (
-          <ChevronRight size={18} className="ms-1" />
-        )}
-      </Button>
-    </Modal.Footer>
-  </Modal>
-);
+
+        <Button
+          variant="outline-secondary"
+          onClick={handleBack}
+          disabled={currentStep === 1}
+          className="pmf-back-button"
+        >
+          <ChevronLeft size={18} className="me-1" />
+          {t('back') || 'Back'}
+        </Button>
+
+        <Button
+          variant="primary"
+          onClick={handleNext}
+          className="pmf-next-button"
+        >
+          {currentStep === TOTAL_STEPS
+            ? (t('finish') || 'Complete Onboarding')
+            : (t('next') || 'Next')}
+          {currentStep < TOTAL_STEPS && (
+            <ChevronRight size={18} className="ms-1" />
+          )}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
 
 };
 

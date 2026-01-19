@@ -39,7 +39,7 @@ const PMFInsights = ({ onContinue }) => {
               <Card.Body className="p-4">
                 <div className="d-flex align-items-start gap-3">
                   <div className="icon-box">
-                    <TrendingUp size={18} />
+                    <TrendingUp size={18} color="#2563eb"/>
                   </div>
 
                   <div>
@@ -74,7 +74,7 @@ const PMFInsights = ({ onContinue }) => {
               <Card.Body className="p-4">
                 <div className="d-flex align-items-start gap-3">
                   <div className="icon-box">
-                    <Target size={18} />
+                    <Target size={18} color="#2563eb"/>
                   </div>
 
                   <div>
@@ -105,7 +105,7 @@ const PMFInsights = ({ onContinue }) => {
               <Card.Body className="p-4">
                 <div className="d-flex align-items-start gap-3">
                   <div className="icon-box">
-                    <Puzzle size={18} />
+                    <Puzzle size={18} color="#2563eb"/>
                   </div>
 
                   <div>
@@ -139,7 +139,7 @@ const PMFInsights = ({ onContinue }) => {
               <Card.Body className="p-4">
                 <div className="d-flex align-items-start gap-3">
                   <div className="icon-box">
-                    <AlertCircle size={18} />
+                    <AlertCircle size={18} color="#2563eb"/>
                   </div>
 
                   <div>
