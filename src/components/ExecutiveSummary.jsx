@@ -17,27 +17,27 @@ const ExecutiveSummary = () => {
   };
 
   return (
-    <div className="executive-summary-container">
+    <div className="exc-executive-summary-container">
       {/* Content Sections */}
-      <div className="executive-content">
+      <div className="exc-executive-content">
         {/* WHERE TO COMPETE */}
-        <div className="section-card">
+        <div className="exc-section-card">
           <div
-            className="section-header"
+            className="exc-section-header"
             onClick={() => toggleSection("whereToCompete")}
           >
-            <div className="section-title-wrapper">
-              <div className="section-icon where-icon">
+            <div className="exc-section-title-wrapper">
+              <div className="exc-section-icon exc-where-icon">
                 <Target size={20} />
               </div>
               <div>
-                <h2 className="section-title">WHERE TO COMPETE</h2>
-                <p className="section-subtitle">
+                <h3 className="exc-section-title">WHERE TO COMPETE</h3>
+                <p className="exc-section-subtitle">
                   Current Core, Existing Adjacencies, and New Adjacencies to Explore
                 </p>
               </div>
             </div>
-            <button className="section-toggle">
+            <button className="exc-section-toggle">
               {expandedSections.whereToCompete ? (
                 <ChevronUp size={20} />
               ) : (
@@ -47,56 +47,50 @@ const ExecutiveSummary = () => {
           </div>
 
           {expandedSections.whereToCompete && (
-            <div className="section-body">
+            <div className="exc-section-body">
               {/* Current Core */}
-              <div className="subsection current-core">
-                <div className="subsection-header">
-                  <div className="subsection-icon blue">
-                    <Circle size={14} fill="currentColor" />
-                  </div>
-                  <h3 className="subsection-title">Current Core</h3>
+              <div className="exc-subsection exc-current-core">
+                <div className="exc-subsection-icon exc-blue">
+                  <Target size={18} />
                 </div>
-                <div className="subsection-content">
-                  <p className="source-label">
+                <div className="exc-subsection-body">
+                  <h3 className="exc-subsection-title">Current Core</h3>
+                  <p className="exc-source-label">
                     <Info size={14} /> Profit arenas inferred from Q5
                   </p>
-                  <p className="content-text"><strong>Segments:</strong> dfg</p>
+                  <p className="exc-content-text"><b>Segments:</b> dfg</p>
                 </div>
               </div>
 
               {/* Existing Adjacencies */}
-              <div className="subsection existing-adjacencies">
-                <div className="subsection-header">
-                  <div className="subsection-icon orange">
-                    <Star size={14} fill="currentColor" />
-                  </div>
-                  <h3 className="subsection-title">Existing Adjacencies</h3>
+              <div className="exc-subsection exc-existing-adjacencies">
+                <div className="exc-subsection-icon exc-orange">
+                  <FileText size={18} />
                 </div>
-                <div className="subsection-content">
-                  <p className="source-label orange-text">
+                <div className="exc-subsection-body">
+                  <h3 className="exc-subsection-title">Existing Adjacencies</h3>
+                  <p className="exc-source-label exc-orange-text">
                     <Info size={14} /> AI-inferred from your core business data
                   </p>
-                  <p className="content-text italic">No existing adjacencies inferred. Business appears focused on core.</p>
+                  <p className="exc-content-text exc-italic">No existing adjacencies inferred. Business appears focused on core.</p>
                 </div>
               </div>
 
               {/* New Adjacencies to Explore */}
-              <div className="subsection new-adjacencies">
-                <div className="subsection-header">
-                  <div className="subsection-icon green">
-                    <Star size={14} fill="currentColor" />
-                  </div>
-                  <h3 className="subsection-title">New Adjacencies to Explore</h3>
+              <div className="exc-subsection exc-new-adjacencies">
+                <div className="exc-subsection-icon exc-green">
+                  <ListChecks size={18} />
                 </div>
-                <div className="subsection-content">
-                  <p className="source-label green-text">
+                <div className="exc-subsection-body">
+                  <h3 className="exc-subsection-title">New Adjacencies to Explore</h3>
+                  <p className="exc-source-label exc-green-text">
                     <Info size={14} /> AI-recommended based on industry and core business
                   </p>
-                  <div className="option-block">
-                    <p className="option-title"><strong>Option 1</strong></p>
-                    <p className="content-text"><strong>Segments:</strong> Adjacent to dfg</p>
-                    <p className="content-text"><strong>Products:</strong> Complementary products, Value-added services</p>
-                    <p className="content-text"><strong>Channels:</strong> Multi-channel</p>
+                  <div className="exc-option-block">
+                    <p className="exc-option-title"><strong>Option 1</strong></p>
+                    <p className="exc-content-text"><strong>Segments:</strong> Adjacent to dfg</p>
+                    <p className="exc-content-text"><strong>Products:</strong> Complementary products, Value-added services</p>
+                    <p className="exc-content-text"><strong>Channels:</strong> Multi-channel</p>
                   </div>
                 </div>
               </div>
@@ -105,23 +99,23 @@ const ExecutiveSummary = () => {
         </div>
 
         {/* HOW TO COMPETE */}
-        <div className="section-card">
+        <div className="exc-section-card">
           <div
-            className="section-header"
+            className="exc-section-header"
             onClick={() => toggleSection("howToCompete")}
           >
-            <div className="section-title-wrapper">
-              <div className="section-icon how-icon">
+            <div className="exc-section-title-wrapper">
+              <div className="exc-section-icon exc-how-icon">
                 <FileText size={20} />
               </div>
               <div>
-                <h2 className="section-title">HOW TO COMPETE</h2>
-                <p className="section-subtitle">
+                <h3 className="exc-section-title">HOW TO COMPETE</h3>
+                <p className="exc-section-subtitle">
                   Differentiation strategy and what to focus on or exclude
                 </p>
               </div>
             </div>
-            <button className="section-toggle">
+            <button className="exc-section-toggle">
               {expandedSections.howToCompete ? (
                 <ChevronUp size={20} />
               ) : (
@@ -131,30 +125,30 @@ const ExecutiveSummary = () => {
           </div>
 
           {expandedSections.howToCompete && (
-            <div className="section-body">
-              <div className="how-compete-box">
-                <p className="box-title">This is how you should differentiate:</p>
+            <div className="exc-section-body">
+              <div className="exc-how-compete-box">
+                <p className="exc-box-title">This is how you should differentiate:</p>
                 
-                <div className="differentiation-section">
-                  <p className="differentiation-label">Recommended differentiation levers (from Q8)</p>
-                  <p className="differentiation-text"><strong>Relationships / trust + Speed / responsiveness</strong></p>
+                <div className="exc-differentiation-section">
+                  <p className="exc-differentiation-label">Recommended differentiation levers (from Q8)</p>
+                  <p className="exc-differentiation-text"><strong>Relationships / trust + Speed / responsiveness</strong></p>
                 </div>
 
-                <div className="implications-section">
-                  <div className="implication-item includes">
-                    <div className="icon-label">
+                <div className="exc-implications-section">
+                  <div className="exc-implication-item exc-includes">
+                    <div className="exc-icon-label">
                       <CheckCircle2 size={16} />
                       <span>What this implies:</span>
                     </div>
-                    <p className="implication-text">Focus all resources, messaging, and operations on excelling at relationships / trust speed / responsiveness</p>
+                    <p className="exc-implication-text">Focus all resources, messaging, and operations on excelling at relationships / trust speed / responsiveness</p>
                   </div>
 
-                  <div className="implication-item excludes">
-                    <div className="icon-label">
+                  <div className="exc-implication-item exc-excludes">
+                    <div className="exc-icon-label">
                       <AlertCircle size={16} />
                       <span>What this excludes:</span>
                     </div>
-                    <p className="implication-text">Competing primarily on price or quality / expertise</p>
+                    <p className="exc-implication-text">Competing primarily on price or quality / expertise</p>
                   </div>
                 </div>
               </div>
@@ -163,23 +157,23 @@ const ExecutiveSummary = () => {
         </div>
 
         {/* TOP 3-5 PRIORITIES */}
-        <div className="section-card">
+        <div className="exc-section-card">
           <div
-            className="section-header"
+            className="exc-section-header"
             onClick={() => toggleSection("topPriorities")}
           >
-            <div className="section-title-wrapper">
-              <div className="section-icon priorities-icon">
+            <div className="exc-section-title-wrapper">
+              <div className="exc-section-icon exc-priorities-icon">
                 <ListChecks size={20} />
               </div>
               <div>
-                <h2 className="section-title">TOP 3-5 PRIORITIES</h2>
-                <p className="section-subtitle">
+                <h3 className="exc-section-title">TOP 3-5 PRIORITIES</h3>
+                <p className="exc-section-subtitle">
                   Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion
                 </p>
               </div>
             </div>
-            <button className="section-toggle">
+            <button className="exc-section-toggle">
               {expandedSections.topPriorities ? (
                 <ChevronUp size={20} />
               ) : (
@@ -189,23 +183,23 @@ const ExecutiveSummary = () => {
           </div>
 
           {expandedSections.topPriorities && (
-            <div className="section-body">
+            <div className="exc-section-body">
               {/* Priority 1 */}
-              <div className="priority-item">
-                <div className="priority-header">
-                  <span className="priority-number">1.</span>
-                  <h4 className="priority-title">Strengthen core differentiation</h4>
+              <div className="exc-priority-item">
+                <div className="exc-priority-header">
+                  <span className="exc-priority-number">1.</span>
+                  <h4 className="exc-priority-title">Strengthen core differentiation</h4>
                 </div>
-                <div className="priority-actions">
-                  <div className="action-item">
+                <div className="exc-priority-actions">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Align all operations and marketing to reinforce Relationships / trust</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Develop brand positioning that clearly communicates core differentiator</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Train team on delivering consistent differentiated experience</span>
                   </div>
@@ -213,21 +207,21 @@ const ExecutiveSummary = () => {
               </div>
 
               {/* Priority 2 */}
-              <div className="priority-item">
-                <div className="priority-header">
-                  <span className="priority-number">2.</span>
-                  <h4 className="priority-title">Optimize profit pool concentration</h4>
+              <div className="exc-priority-item">
+                <div className="exc-priority-header">
+                  <span className="exc-priority-number">2.</span>
+                  <h4 className="exc-priority-title">Optimize profit pool concentration</h4>
                 </div>
-                <div className="priority-actions">
-                  <div className="action-item">
+                <div className="exc-priority-actions">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Double down on highest-margin customer segments and products</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Implement tiered pricing strategy for premium segments</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Analyze and phase out unprofitable customer relationships</span>
                   </div>
@@ -235,21 +229,21 @@ const ExecutiveSummary = () => {
               </div>
 
               {/* Priority 3 */}
-              <div className="priority-item">
-                <div className="priority-header">
-                  <span className="priority-number">3.</span>
-                  <h4 className="priority-title">Evaluate and rationalize adjacencies</h4>
+              <div className="exc-priority-item">
+                <div className="exc-priority-header">
+                  <span className="exc-priority-number">3.</span>
+                  <h4 className="exc-priority-title">Evaluate and rationalize adjacencies</h4>
                 </div>
-                <div className="priority-actions">
-                  <div className="action-item">
+                <div className="exc-priority-actions">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Exit low-ROI adjacencies, scale what reinforces the core</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Conduct ROI analysis on all adjacent business lines</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Develop exit strategy for underperforming initiatives</span>
                   </div>
@@ -257,21 +251,21 @@ const ExecutiveSummary = () => {
               </div>
 
               {/* Priority 4 */}
-              <div className="priority-item">
-                <div className="priority-header">
-                  <span className="priority-number">4.</span>
-                  <h4 className="priority-title">Address primary constraint</h4>
+              <div className="exc-priority-item">
+                <div className="exc-priority-header">
+                  <span className="exc-priority-number">4.</span>
+                  <h4 className="exc-priority-title">Address primary constraint</h4>
                 </div>
-                <div className="priority-actions">
-                  <div className="action-item">
+                <div className="exc-priority-actions">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Tackle execution slippage</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Establish metrics and monitoring system for constraint resolution</span>
                   </div>
-                  <div className="action-item">
+                  <div className="exc-action-item">
                     <CheckCircle2 size={16} />
                     <span>Allocate dedicated resources to resolve primary bottleneck</span>
                   </div>
