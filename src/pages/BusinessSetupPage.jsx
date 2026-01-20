@@ -19,7 +19,8 @@ import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
 import ProjectsSection from "../components/ProjectsSection";
 import PMFInsightsTab from "../components/PMFInsightsTab";
-import ExecutiveSummary from "../components/ExecutiveSummary";
+//import ExecutiveSummary from "../components/ExecutiveSummary";
+import PrioritiesProjects from "../components/PrioritiesProjects";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -600,7 +601,7 @@ const BusinessSetupPage = () => {
   }
   };
 
-  const handleExecutiveTabClick = () => {
+  /*const handleExecutiveTabClick = () => {
   if (isMobile) {
     setActiveTab("executive");
   } else {
@@ -611,7 +612,21 @@ const BusinessSetupPage = () => {
       setActiveTab("executive");
     }
   }
+  };*/
+
+  const handlePrioritiesTabClick = () => {
+    if (isMobile) {
+      setActiveTab("priorities");
+    } else {
+      if (!isAnalysisExpanded) {
+        setIsAnalysisExpanded(true);
+        setActiveTab("priorities");
+      } else {
+        setActiveTab("priorities");
+      }
+    }
   };
+
 
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
@@ -857,12 +872,19 @@ const BusinessSetupPage = () => {
                       >
                         AHA
                       </button>
-                      <button
+                      {/*<button
                         className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                         onClick={handleExecutiveTabClick}
                       >
                         Executive Summary
+                      </button>*/}
+                      <button
+                        className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
+                        onClick={handlePrioritiesTabClick}
+                      >
+                        Priorities & Projects
                       </button>
+
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
                           {t("analysis")}
@@ -993,9 +1015,12 @@ const BusinessSetupPage = () => {
                       {activeTab === "aha" && (
                         <PMFInsightsTab/>
                       )}
-                      {activeTab === "executive" && (
+                      {/*{activeTab === "executive" && (
                         <ExecutiveSummary/>
                       )}
+                      {activeTab === "priorities" && (
+                        <PrioritiesProjects />
+                      )}*/}
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
@@ -1052,11 +1077,17 @@ const BusinessSetupPage = () => {
                     >
                       AHA
                     </button>
-                    <button
+                    {/*<button
                       className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                       onClick={handleExecutiveTabClick}
                     >
                       Executive Summary
+                    </button>*/}
+                    <button
+                      className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
+                      onClick={handlePrioritiesTabClick}
+                    >
+                      Priorities & Projects
                     </button>
 
                     {unlockedFeatures.analysis && (
@@ -1134,8 +1165,11 @@ const BusinessSetupPage = () => {
                   {activeTab === "aha" && (
                     <PMFInsightsTab/>
                   )}
-                  {activeTab === "executive" && (
+                  {/*{activeTab === "executive" && (
                     <ExecutiveSummary/>
+                  )}*/}
+                  {activeTab === "priorities" && (
+                    <PrioritiesProjects />
                   )}
                   {activeTab === "analysis" && (
                     <div className="analysis-section">

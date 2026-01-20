@@ -1,0 +1,117 @@
+/* Page container */
+.priorities-container {
+  max-width: 1500px;
+}
+
+/* Header */
+.priorities-title {
+  font-weight: 700;
+}
+
+.priorities-subtitle {
+  color: #6c757d;
+}
+
+
+/* Kickstart card */
+.kickstart-card {
+  background: #f4e9fb;
+  border: 1px solid #d8b4fe;
+  border-radius: 8px;
+}
+
+.kickstart-title {
+  font-weight: 600;
+}
+
+.kickstart-button {
+  white-space: nowrap;
+}
+
+/* Priority cards */
+.priority-card {
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.priority-card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.priority-title {
+  font-weight: 600;
+}
+
+.priority-desc {
+  color: #6c757d;
+}
+
+/* Count badge */
+.priority-count {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+/* Footer note */
+.footer-note {
+  background: #f1f7ff;
+  border: 1px solid #cfe2ff;
+  border-radius: 8px;
+}
+/* Expand click area */
+.expand-trigger {
+  cursor: pointer;
+}
+
+/* Chevron rotate */
+.rotate {
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+/* Expanded projects */
+.projects-section {
+  border-top: 1px solid #e9ecef;
+  padding-top: 12px;
+}
+
+.projects-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Individual project row */
+.project-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+/* Projects header icon */
+.projects-icon {
+  color: #6c757d;
+}
+
+/* Status badge (Not Started) */
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Not started state */
+.not-started {
+  background-color: #f1f3f5;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
