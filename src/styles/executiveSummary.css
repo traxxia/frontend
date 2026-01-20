@@ -1,0 +1,433 @@
+/* Executive Summary Styles */
+
+.executive-summary-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Executive Content */
+.executive-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Section Cards */
+.section-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.section-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.section-header:hover {
+  background-color: #fafbfc;
+}
+
+.section-title-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.section-icon {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.875rem;
+}
+
+.section-icon.where-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.section-icon.how-icon {
+  background: #fed7aa;
+  color: #f59e0b;
+}
+
+.section-icon.priorities-icon {
+  background: #ccfbf1;
+  color: #10b981;
+}
+
+.section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.05rem 0;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.section-subtitle {
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.section-toggle {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.section-toggle:hover {
+  color: #2563eb;
+}
+
+/* Section Body */
+.section-body {
+  padding: 0.875rem;
+  background: white;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* WHERE TO COMPETE Subsections */
+.subsection {
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.subsection:last-child {
+  margin-bottom: 0;
+}
+
+.subsection.current-core {
+  border-color: #bfdbfe;
+  background: white;
+}
+
+.subsection.existing-adjacencies {
+  border-color: #fed7aa;
+  background: white;
+}
+
+.subsection.new-adjacencies {
+  border-color: #a7f3d0;
+  background: white;
+}
+
+.subsection-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.2;
+}
+
+.subsection-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.subsection-icon.blue {
+  background: #2563eb;
+}
+
+.subsection-icon.orange {
+  background: #f59e0b;
+}
+
+.subsection-icon.green {
+  background: #10b981;
+}
+
+.subsection-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.subsection-content {
+  padding: 1rem;
+}
+
+.source-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #3b82f6;
+  margin: 0 0 0.75rem 0;
+  font-style: italic;
+}
+
+.source-label.orange-text {
+  color: #f59e0b;
+}
+
+.source-label.green-text {
+  color: #10b981;
+}
+
+.content-text {
+  font-size: 0.95rem;
+  color: #1f2937;
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.content-text.italic {
+  font-style: italic;
+  color: #6b7280;
+}
+
+.option-block {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+}
+
+.option-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+/* HOW TO COMPETE Section */
+.how-compete-box {
+  background: white;
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.box-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.differentiation-section {
+  margin-bottom: 1rem;
+  padding: 0.875rem;
+  border-radius: 6px;
+  background: #dbeafe;
+}
+
+.differentiation-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2563eb;
+  margin: 0 0 0.5rem 0;
+}
+
+.differentiation-text {
+  font-size: 0.875rem;
+  color: #1f2937;
+  margin: 0;
+  font-weight: 500;
+}
+
+.implications-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.implication-item {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #f59e0b;
+}
+
+.implication-item.includes {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.implication-item.excludes {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.icon-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.35rem;
+}
+
+.icon-label svg {
+  flex-shrink: 0;
+}
+
+.implication-item.includes .icon-label {
+  color: #10b981;
+}
+
+.implication-item.excludes .icon-label {
+  color: #ef4444;
+}
+
+.implication-text {
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* TOP 3-5 PRIORITIES Section */
+.priority-item {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.priority-item:last-child {
+  margin-bottom: 0;
+}
+
+.priority-item:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.priority-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.priority-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #10b981;
+  min-width: 1.75rem;
+}
+
+.priority-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.priority-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.action-item svg {
+  color: #10b981;
+  min-width: 1rem;
+  margin-top: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .executive-summary-container {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .section-header {
+    padding: 1rem;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .section-body {
+    padding: 1rem;
+  }
+
+  .subsection {
+    margin-bottom: 1rem;
+  }
+
+  .subsection-content {
+    padding: 1rem;
+  }
+
+  .how-compete-box {
+    padding: 1rem;
+  }
+
+  .priority-item {
+    padding: 1rem;
+  }
+}

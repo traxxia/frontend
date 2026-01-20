@@ -19,6 +19,7 @@ import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
 import ProjectsSection from "../components/ProjectsSection";
 import PMFInsightsTab from "../components/PMFInsightsTab";
+import ExecutiveSummary from "../components/ExecutiveSummary";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -597,7 +598,20 @@ const BusinessSetupPage = () => {
       setActiveTab("aha");
     }
   }
-};
+  };
+
+  const handleExecutiveTabClick = () => {
+  if (isMobile) {
+    setActiveTab("executive");
+  } else {
+    if (!isAnalysisExpanded) {
+      setIsAnalysisExpanded(true);
+      setActiveTab("executive");
+    } else {
+      setActiveTab("executive");
+    }
+  }
+  };
 
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
@@ -826,7 +840,7 @@ const BusinessSetupPage = () => {
         </div>
 
         {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
+          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -842,6 +856,12 @@ const BusinessSetupPage = () => {
 
                       >
                         AHA
+                      </button>
+                      <button
+                        className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
+                        onClick={handleExecutiveTabClick}
+                      >
+                        Executive Summary
                       </button>
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
@@ -973,6 +993,9 @@ const BusinessSetupPage = () => {
                       {activeTab === "aha" && (
                         <PMFInsightsTab/>
                       )}
+                      {activeTab === "executive" && (
+                        <ExecutiveSummary/>
+                      )}
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
@@ -1028,6 +1051,12 @@ const BusinessSetupPage = () => {
                       onClick={handleAhaTabClick}
                     >
                       AHA
+                    </button>
+                    <button
+                      className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
+                      onClick={handleExecutiveTabClick}
+                    >
+                      Executive Summary
                     </button>
 
                     {unlockedFeatures.analysis && (
@@ -1104,6 +1133,9 @@ const BusinessSetupPage = () => {
                   )}
                   {activeTab === "aha" && (
                     <PMFInsightsTab/>
+                  )}
+                  {activeTab === "executive" && (
+                    <ExecutiveSummary/>
                   )}
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
