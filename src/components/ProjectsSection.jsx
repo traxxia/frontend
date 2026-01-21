@@ -82,8 +82,8 @@ const ProjectsSection = ({
   } = useProjectForm();
 
   const isViewer = userRole === "viewer";
-  const isEditor = userRole === "super_admin" || userRole === "company_admin";
-  const isSuperAdmin = isEditor;
+  const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator";
+  const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
 
   const allCollaboratorsLocked =
     lockSummary.total_users > 0 &&
@@ -489,7 +489,7 @@ const ProjectsSection = ({
   const renderProjectList = () => {
     return (
       <>
-        {isEditor && !isViewer && (
+        {isSuperAdmin && !isViewer && (
           <div className="collaboration-card-wrapper">
             <CollaborationCard
               projectCreationLocked={projectCreationLocked}

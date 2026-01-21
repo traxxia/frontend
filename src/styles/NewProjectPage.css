@@ -474,3 +474,18 @@
 [data-theme="dark"] .projects-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
   color: #9ca3af; 
 }
+.required {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.field-input.error,
+.field-textarea.error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.btn-create.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
