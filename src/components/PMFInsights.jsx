@@ -1,5 +1,6 @@
 import React from "react";
 import { Container, Row, Col, Card, Badge, Button } from "react-bootstrap";
+import { useTranslation } from "../hooks/useTranslation";
 import {
   TrendingUp,
   Target,
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 
 const PMFInsights = ({ onContinue }) => {
+  const { t } = useTranslation();
   return (
     <div className="bg-light py-5 min-vh-100">
       <Container style={{ maxWidth: "1080px" }}>
@@ -18,16 +20,15 @@ const PMFInsights = ({ onContinue }) => {
             text="primary"
             className="px-3 py-2 rounded-pill fw-semibold"
           >
-            ✨ AHA Insights
+            ✨ {t("AHA_Insights")}
           </Badge>
 
           <h2 className="fw-bold mt-3 mb-2">
-            Here's what we discovered
+            {t("Here's what we discovered")}
           </h2>
 
           <p className="text-muted fs-6">
-            Based on your inputs, here are four critical insights about your
-            strategic position.
+            {t("Based on your inputs")}
           </p>
         </div>
 
@@ -174,7 +175,7 @@ const PMFInsights = ({ onContinue }) => {
             className="px-5 rounded-3 fw-semibold"
             onClick={onContinue}
           >
-            Continue
+            {t("Continue")}
           </Button>
         </div>
       </Container>

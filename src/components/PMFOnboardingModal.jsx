@@ -728,7 +728,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="channel1"
                   value={formData.channel1}
                   onChange={handleInputChange}
-                  placeholder="Channel 1"
+                  placeholder={t("Channel 1")}
                   className="pmf-form-control"
                 />
               </Form.Group>
@@ -739,7 +739,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="channel2"
                   value={formData.channel2}
                   onChange={handleInputChange}
-                  placeholder="Channel 2"
+                  placeholder={t("Channel 2")}
                   className="pmf-form-control"
                 />
               </Form.Group>
@@ -750,7 +750,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="channel3"
                   value={formData.channel3}
                   onChange={handleInputChange}
-                  placeholder="Channel 3"
+                  placeholder={t("Channel 3")}
                   className="pmf-form-control"
                 />
               </Form.Group>
@@ -771,7 +771,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="geography1"
                   value={formData.geography1}
                   onChange={handleInputChange}
-                  placeholder="Geography 1"
+                  placeholder={t("Geography 1")}
                   className="pmf-form-control"
                 />
               </Form.Group>
@@ -782,7 +782,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="geography2"
                   value={formData.geography2}
                   onChange={handleInputChange}
-                  placeholder="Geography 2"
+                  placeholder={t("Geography 2")}
                   className="pmf-form-control"
                 />
               </Form.Group>
@@ -793,7 +793,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="geography3"
                   value={formData.geography3}
                   onChange={handleInputChange}
-                  placeholder="Geography 3"
+                  placeholder={t("Geography 3")}
                   className="pmf-form-control"
                 />
               </Form.Group>
@@ -862,7 +862,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-4">
-              Key challenges / constraints
+              {t("Key challenges / constraints")}
             </h5>
 
             {KEY_CHALLENGES.map(option => (
@@ -914,11 +914,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-2">
-              Today, you primarily differentiate through:
+              {t("Today, you primarily differentiate through")}:
             </h5>
 
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
-              Select up to 2
+              {t("Select up to")} 2
             </p>
 
             {DIFFERENTIATION_OPTIONS.map(option => (
@@ -966,7 +966,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-4">
-              Usage Context
+              {t("Usage Context")}
             </h5>
 
             {USAGE_CONTEXT_OPTIONS.map(option => (
