@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
 
 export const saveAIRankings = async (businessId, aiRankings, modelVersion, metadata) => {
   const token = sessionStorage.getItem("token");
@@ -88,11 +89,11 @@ export const callMLRankingAPI = async (projects) => {
   try {
     const projectList = projects.map(project => ({
       name: project.project_name,
-      id:project._id
+      id: project._id
     }));
 
     const response = await axios.post(
-      'https://traxxia-backend-ml.onrender.com/rerank',
+      `${ML_API_BASE_URL}/rerank`,
       {
         projects: projectList
       },
