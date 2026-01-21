@@ -157,17 +157,13 @@ const validateProjectName = (value) => {
   const trimmed = value.trim();
   if (!trimmed) return "Project name is required";
 
-  const validPattern = /^[a-zA-Z][a-zA-Z\s‑—\-&'.,\/]*$/;
+  const validPattern = /^[a-zA-Z0-9\s‑—\-_,.'!"?:;()[\]{}#%@&*+=/\\R&D]*$/;
   if (!validPattern.test(trimmed)) {
     return "Invalid characters in project name";
   }
 
   if (trimmed.length < 3) {
     return "Project name must be at least 3 characters long";
-  }
-
-  if (trimmed.length > 100) {
-    return "Project name must be less than 100 characters";
   }
 
   return null;
@@ -180,16 +176,7 @@ const validateDescription = (value) => {
   const validPattern = /^[a-zA-Z0-9\s‑—\-_,.'!"?:;()[\]{}#%@&*+=/\\R&D]*$/;
   if (!validPattern.test(trimmed)) {
     return "Description contains invalid characters";
-  }
-
-  if (trimmed.length < 10) {
-    return "Description must be at least 10 characters long";
-  }
-
-  if (trimmed.length > 500) {
-    return "Description must be less than 500 characters";
-  }
-
+  } 
   return null;
 };
 
@@ -201,15 +188,6 @@ const validateImportance = (value) => {
   if (!validPattern.test(trimmed)) {
     return "Strategic importance contains invalid characters";
   }
-
-  if (trimmed.length < 20) {
-    return "Please provide more detail (minimum 20 characters)";
-  }
-
-  if (trimmed.length > 1000) {
-    return "Strategic importance must be less than 1000 characters";
-  }
-
   return null;
 };
 
