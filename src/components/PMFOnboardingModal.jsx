@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
 import {
   COUNTRIES,
@@ -45,6 +46,19 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   const [errors, setErrors] = useState({});
 
   const progressPercentage = (currentStep / TOTAL_STEPS) * 100;
+  const countryOptions = COUNTRIES.map(c => ({
+    value: c,
+    label: c
+  }));
+
+  const industryOptions = INDUSTRIES_BY_CATEGORY.map(group => ({
+    label: group.category,
+    options: group.industries.map(ind => ({
+      value: ind,
+      label: ind
+    }))
+  }));
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -358,20 +372,57 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               <Form.Label className="pmf-form-label">
                 {t('country') || 'Country'} <span className="text-danger">*</span>
               </Form.Label>
-              <Form.Select
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
-                className="pmf-form-control"
-                isInvalid={!!errors.country}
-              >
-                <option value="">{t('select_country') || 'Select country'}</option>
-                {COUNTRIES.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </Form.Select>
+              <Select
+                classNamePrefix="pmf-select"
+                placeholder={t('select_country') || 'Select country'}
+                options={countryOptions}
+                value={countryOptions.find(o => o.value === formData.country)}
+                onChange={(selected) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    country: selected?.value || ''
+                  }))
+                }
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({
+                    ...base,
+                    zIndex: 9999
+                  }),
+                  menu: base => ({
+                    ...base,
+                    maxHeight: 200,
+                    overflow: "hidden"
+                  }),
+                  menuList: base => ({
+                    ...base,
+                    maxHeight: 200,
+                    padding: 0,
+                    overflowY: "auto",
+                    WebkitOverflowScrolling: "touch"
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    padding: "10px 14px",
+                    fontSize: "14px",
+                    lineHeight: "18px",
+                    backgroundColor: state.isSelected
+                      ? "#217aff"
+                      : state.isFocused
+                      ? "#eef4ff"
+                      : "#fff",
+                    color: state.isSelected ? "#fff" : "#111",
+                    cursor: "pointer"
+                  }),
+                  control: base => ({
+                    ...base,
+                    minHeight: 44,
+                    borderRadius: 6
+                  })
+                }}
+
+              />
+
               {errors.country && (
                 <Form.Text className="text-danger d-block mt-1">
                   {errors.country}
@@ -407,24 +458,60 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               <Form.Label className="pmf-form-label">
                 {t('primary_industry') || 'Primary Industry'} <span className="text-danger">*</span>
               </Form.Label>
-              <Form.Select
-                name="primaryIndustry"
-                value={formData.primaryIndustry}
-                onChange={handleInputChange}
-                className="pmf-form-control"
-                isInvalid={!!errors.primaryIndustry}
-              >
-                <option value="">{t('select_industry') || 'Select industry'}</option>
-                {INDUSTRIES_BY_CATEGORY.map((categoryGroup) => (
-                  <optgroup key={categoryGroup.category} label={categoryGroup.category}>
-                    {categoryGroup.industries.map((industry) => (
-                      <option key={industry} value={industry}>
-                        {industry}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </Form.Select>
+              <Select
+                classNamePrefix="pmf-select"
+                placeholder={t('select_industry') || 'Select industry'}
+                options={industryOptions}
+                value={
+                  industryOptions
+                    .flatMap(g => g.options)
+                    .find(o => o.value === formData.primaryIndustry)
+                }
+                onChange={(selected) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    primaryIndustry: selected?.value || ''
+                  }))
+                }
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: base => ({
+                    ...base,
+                    zIndex: 9999
+                  }),
+                  menu: base => ({
+                    ...base,
+                    maxHeight: 200,
+                    overflow: "hidden"
+                  }),
+                  menuList: base => ({
+                    ...base,
+                    maxHeight: 200,
+                    padding: 0,
+                    overflowY: "auto",
+                    WebkitOverflowScrolling: "touch"
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    padding: "10px 14px",
+                    fontSize: "14px",
+                    lineHeight: "18px",
+                    backgroundColor: state.isSelected
+                      ? "#217aff"
+                      : state.isFocused
+                      ? "#eef4ff"
+                      : "#fff",
+                    color: state.isSelected ? "#fff" : "#111",
+                    cursor: "pointer"
+                  }),
+                  control: base => ({
+                    ...base,
+                    minHeight: 44,
+                    borderRadius: 6
+                  })
+                }}
+                />
+
               {errors.primaryIndustry && (
                 <Form.Text className="text-danger d-block mt-1">
                   {errors.primaryIndustry}

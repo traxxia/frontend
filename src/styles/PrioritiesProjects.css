@@ -114,4 +114,98 @@
   color: #495057;
   border: 1px solid #dee2e6;
 }
+/* =========================
+   Mobile Responsive Styles
+   ========================= */
+@media (max-width: 768px) {
+
+  /* Page padding */
+  .priorities-container {
+    padding: 0 12px;
+  }
+
+  /* Header */
+  .priorities-title {
+    font-size: 1.1rem;
+  }
+
+  .priorities-subtitle {
+    font-size: 0.85rem;
+  }
+
+  /* Kickstart card */
+  .kickstart-card .card-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .kickstart-button {
+    width: 100%;
+  }
+
+  /* Priority card body */
+  .priority-card .card-body {
+    padding: 12px;
+  }
+
+  /* Header row stacking */
+  .priority-card .row {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  /* Checkbox spacing */
+  .priority-card .form-check {
+    margin-top: 4px;
+  }
+
+  /* Priority title */
+  .priority-title {
+    font-size: 0.95rem;
+  }
+
+  .priority-desc {
+    font-size: 0.8rem;
+  }
+
+  /* Expand trigger */
+  .expand-trigger {
+    padding: 6px;
+  }
+
+  /* Count badge */
+  .priority-count {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+
+  /* Chevron */
+  .expand-trigger svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Expanded projects */
+  .projects-section {
+    padding-top: 10px;
+  }
+
+  /* Project row */
+  .project-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  /* Status badge */
+  .status-badge {
+    align-self: flex-start;
+  }
+
+  /* Footer note */
+  .footer-note {
+    font-size: 0.8rem;
+  }
+}
 

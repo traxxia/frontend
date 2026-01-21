@@ -812,6 +812,14 @@ const BusinessSetupPage = () => {
               {t("Projects")}
             </button>
           )}
+          {showProjectsTab && (
+            <button
+              className={`mobile-tab ${activeTab === "priorities" ? "active" : ""}`}
+              onClick={() => setActiveTab("priorities")}
+            >
+              Priorities & Projects
+            </button>
+          )}
         </div>
       )}
 
@@ -855,7 +863,7 @@ const BusinessSetupPage = () => {
         </div>
 
         {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
+          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" || activeTab === "priorities" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -878,12 +886,6 @@ const BusinessSetupPage = () => {
                       >
                         Executive Summary
                       </button>*/}
-                      <button
-                        className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                        onClick={handlePrioritiesTabClick}
-                      >
-                        Priorities & Projects
-                      </button>
 
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
@@ -898,6 +900,14 @@ const BusinessSetupPage = () => {
                       {showProjectsTab && (
                         <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                           {t("Projects")}
+                        </button>
+                      )}
+                      {showProjectsTab && (
+                        <button
+                          className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
+                          onClick={handlePrioritiesTabClick}
+                        >
+                          Priorities & Projects
                         </button>
                       )}
                     </div>
@@ -1018,9 +1028,6 @@ const BusinessSetupPage = () => {
                       {/*{activeTab === "executive" && (
                         <ExecutiveSummary/>
                       )}*/}
-                      {activeTab === "priorities" && (
-                        <PrioritiesProjects />
-                      )}
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
@@ -1058,6 +1065,12 @@ const BusinessSetupPage = () => {
                           companyAdminIds={companyAdminIds}
                         />
                       )}
+                      {showProjectsTab && activeTab === "priorities" && (
+                        <PrioritiesProjects
+                          selectedBusinessId={selectedBusinessId}
+                          companyAdminIds={companyAdminIds}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1082,13 +1095,7 @@ const BusinessSetupPage = () => {
                       onClick={handleExecutiveTabClick}
                     >
                       Executive Summary
-                    </button>*/}
-                    <button
-                      className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
-                      onClick={handlePrioritiesTabClick}
-                    >
-                      Priorities & Projects
-                    </button>
+                    </button>*/}            
 
                     {unlockedFeatures.analysis && (
                       <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
@@ -1168,9 +1175,6 @@ const BusinessSetupPage = () => {
                   {/*{activeTab === "executive" && (
                     <ExecutiveSummary/>
                   )}*/}
-                  {activeTab === "priorities" && (
-                    <PrioritiesProjects />
-                  )}
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
                       <div className="analysis-content">
@@ -1211,6 +1215,12 @@ const BusinessSetupPage = () => {
                         companyAdminIds={companyAdminIds}
                       />
                     </div>
+                  )}
+                  {showProjectsTab && activeTab === "priorities" && (
+                    <PrioritiesProjects
+                      selectedBusinessId={selectedBusinessId}
+                      companyAdminIds={companyAdminIds}
+                    />
                   )}
                 </div>
               </>
@@ -1314,6 +1324,12 @@ const BusinessSetupPage = () => {
                     selectedBusinessId={selectedBusinessId}
                     onProjectCountChange={handleProjectCountChange}
                     onBusinessStatusChange={setBusinessStatus}
+                    companyAdminIds={companyAdminIds}
+                  />
+                )}
+                {showProjectsTab && activeTab === "priorities" && (
+                  <PrioritiesProjects
+                    selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
                   />
                 )}
