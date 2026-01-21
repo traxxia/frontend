@@ -976,7 +976,7 @@ const UserManagement = ({ onToast }) => {
                   overflowY: "auto",
                   border: "1px solid #dee2e6",
                   borderRadius: "4px",
-                  padding: "10px"
+                  padding: "10px 10px 10px 20px"
                 }}
               >
                 {loadingCollaborators ? (
