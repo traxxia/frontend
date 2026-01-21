@@ -161,6 +161,7 @@ const StrategicAnalysis = ({
           return;
         }
         let hasServerError = false;
+        let serverErrorMessage;
 
         for (const item of itemsToCreate) {
           const payload = {
@@ -198,15 +199,19 @@ const StrategicAnalysis = ({
             );
             } catch (postErr) {
               console.error("Kickstart project creation failed", postErr);
+              serverErrorMessage = postErr?.response?.data?.error ||
+                      postErr?.response?.data?.message ||
+                      postErr?.message ||
+                      "Failed to kickstart projects.";
+                      
               hasServerError = true;
                break; 
             }
         }
       
-      if (hasServerError) {
-        const msg = "Failed to kickstart projects. Please try again.";
-        setKickstartError(msg);
-        onToastMessage?.(msg, "error");
+      if (hasServerError) { 
+        setKickstartError(serverErrorMessage);
+        onToastMessage?.(serverErrorMessage, "error");
         return; 
       }
       }

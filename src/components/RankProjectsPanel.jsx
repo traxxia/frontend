@@ -15,6 +15,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Lock, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/RankProjectsPanel.css";
+import { validateRationale } from "../utils/validation";
 
 /* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
@@ -34,16 +35,16 @@ function RationaleToggle({ eventKey, children }) {
 const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
-  const [initialOrder, setInitialOrder] = useState([]); // Track initial order
+  const [initialOrder, setInitialOrder] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [validationError, setValidationError] = useState("");
-  
-  // Modal states
+
   const [showRationaleModal, setShowRationaleModal] = useState(false);
   const [pendingDragResult, setPendingDragResult] = useState(null);
   const [tempRationale, setTempRationale] = useState("");
   const [movedProjectName, setMovedProjectName] = useState("");
+  const [rationaleErrors, setRationaleErrors] = useState({});
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
@@ -54,30 +55,27 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       return rankA - rankB;
     }).map(project => ({
       ...project,
-      // Ensure rationale field exists, check both 'rationale' and 'rationals' 
       rationale: project.rationale || project.rationals || ""
-    })); 
+    }));
     setProjectList(sorted);
-    // Store initial order to compare later
     setInitialOrder(sorted.map(p => p._id));
   }, [projects]);
 
   if (!show) return null;
 
-  // Check if a project's position has changed
   const hasPositionChanged = (projectId, currentIndex) => {
     const initialIndex = initialOrder.indexOf(projectId);
     return initialIndex !== -1 && initialIndex !== currentIndex;
   };
 
-  // Validate that reordered projects have rationale
   const validateRankings = () => {
     const missingRationales = [];
 
     projectList.forEach((project, index) => {
       if (hasPositionChanged(project._id, index)) {
-        if (!project.rationale || project.rationale.trim() === "") {
-          missingRationales.push(project.project_name);
+        const validation = validateRationale(project.rationale);
+        if (!validation.isValid) {
+          missingRationales.push(`${project.project_name}: ${validation.error}`);
         }
       }
     });
@@ -88,91 +86,97 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 
-    // Don't allow drag if ranking is locked for non-admins
     if (isRankingLocked && !isAdmin) return;
 
     const sourceIndex = result.source.index;
     const destIndex = result.destination.index;
 
-    // If dropped in same position, do nothing
     if (sourceIndex === destIndex) return;
 
     const movedProject = projectList[sourceIndex];
     const movedProjectId = movedProject._id;
     const initialIndex = initialOrder.indexOf(movedProjectId);
 
-    // Check if this creates a position change from initial order
     const willChangePosition = initialIndex !== destIndex;
 
-    // If the project already has rationale or position won't change, apply immediately
-    if (!willChangePosition || (movedProject.rationale && movedProject.rationale.trim() !== "")) {
-      applyDragResult(result);
+    if (willChangePosition && movedProject.rationale && movedProject.rationale.trim() !== "") {
+      const validation = validateRationale(movedProject.rationale);
+
+      if (!validation.isValid) {
+        alert(`Cannot move project: ${validation.error}\n\nPlease fix the rationale before moving this project.`);
+        return;
+      }
+
+      applyDragResult(result, movedProject.rationale);
       return;
     }
 
-    // Otherwise, show modal to ask for rationale
-    setPendingDragResult(result);
-    setMovedProjectName(movedProject.project_name);
-    setTempRationale(movedProject.rationale || "");
-    setShowRationaleModal(true);
+    if (willChangePosition) {
+      setPendingDragResult(result);
+      setMovedProjectName(movedProject.project_name);
+      setTempRationale(movedProject.rationale || "");
+      setShowRationaleModal(true);
+      return;
+    }
+
+    applyDragResult(result);
   };
 
   const applyDragResult = (result, rationale = null) => {
     const sourceIndex = result.source.index;
     const destIndex = result.destination.index;
-    
+
     const items = Array.from(projectList);
     const [moved] = items.splice(sourceIndex, 1);
-    
-    // Update rationale for the moved project if provided
+
     if (rationale !== null) {
       moved.rationale = rationale;
     }
-    
+
     items.splice(destIndex, 0, moved);
 
-    // Add automatic rationale to all affected projects
     if (rationale !== null && rationale.trim() !== "") {
       const movedProjectName = moved.project_name;
       const autoRationale = `Order changed due to "${movedProjectName}" being repositioned. ${rationale}`;
-      
-      // Determine the range of affected projects
+
       const startIdx = Math.min(sourceIndex, destIndex);
       const endIdx = Math.max(sourceIndex, destIndex);
-      
-      // Add rationale to all projects in the affected range (except the moved one)
+
       items.forEach((project, index) => {
-        // Skip if it's the moved project itself
         if (project._id === moved._id) return;
-        
-        // Check if this project is in the affected range
+
         if (index >= startIdx && index <= endIdx) {
-          // Only add auto-rationale if the project doesn't already have one
-          // or if its current rationale is also an auto-generated one
           const isAutoRationale = project.rationale && project.rationale.includes("Order changed due to");
-          
+
           if (!project.rationale || project.rationale.trim() === "" || isAutoRationale) {
             project.rationale = autoRationale;
           }
         }
       });
+
+      const newErrors = { ...rationaleErrors };
+      items.forEach((project, index) => {
+        if (index >= startIdx && index <= endIdx) {
+          delete newErrors[project._id];
+        }
+      });
+      setRationaleErrors(newErrors);
     }
 
     setProjectList(items);
-    setValidationError(""); // Clear any previous validation errors
-    setIsSaved(false); // Mark as unsaved when order changes
+    setValidationError("");
+    setIsSaved(false);
   };
 
   const handleRationaleSubmit = () => {
-    if (!tempRationale || tempRationale.trim() === "") {
-      alert("Rationale is required to reorder this project.");
+    const validation = validateRationale(tempRationale);
+
+    if (!validation.isValid) {
+      alert(validation.error);
       return;
     }
 
-    // Apply the drag with rationale
     applyDragResult(pendingDragResult, tempRationale);
-
-    // Close modal and reset
     setShowRationaleModal(false);
     setPendingDragResult(null);
     setTempRationale("");
@@ -180,19 +184,77 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   };
 
   const handleRationaleCancel = () => {
-    // Don't apply the drag, just close modal
     setShowRationaleModal(false);
     setPendingDragResult(null);
     setTempRationale("");
     setMovedProjectName("");
   };
 
+  const handleRationaleTextareaChange = (index, value) => {
+    const updated = [...projectList];
+    updated[index] = {
+      ...updated[index],
+      rationale: value
+    };
+    setProjectList(updated);
+    setValidationError("");
+
+    const project = updated[index];
+    const validation = validateRationale(value);
+    const newErrors = { ...rationaleErrors };
+
+    if (value.trim() !== "" && !validation.isValid) {
+      newErrors[project._id] = validation.error;
+    } else {
+      delete newErrors[project._id];
+    }
+
+    setRationaleErrors(newErrors);
+  };
+
+  const handleRationaleBlur = (index) => {
+    const project = projectList[index];
+    const positionChanged = hasPositionChanged(project._id, index);
+
+    if (!positionChanged) return;
+
+    const validation = validateRationale(project.rationale);
+
+    if (validation.isValid && project.rationale.trim() !== "") {
+      const items = [...projectList];
+      const currentProject = items[index];
+      const movedProjectName = currentProject.project_name;
+      const autoRationale = `Order changed due to "${movedProjectName}" being repositioned. ${currentProject.rationale}`;
+
+      const initialIndex = initialOrder.indexOf(currentProject._id);
+      const startIdx = Math.min(initialIndex, index);
+      const endIdx = Math.max(initialIndex, index);
+
+      items.forEach((proj, idx) => {
+        if (proj._id === currentProject._id) return;
+
+        if (idx >= startIdx && idx <= endIdx) {
+          const isAutoRationale = proj.rationale && proj.rationale.includes("Order changed due to");
+
+          if (!proj.rationale || proj.rationale.trim() === "" || isAutoRationale) {
+            proj.rationale = autoRationale;
+          }
+        }
+      });
+
+      setProjectList(items);
+
+      const newErrors = { ...rationaleErrors };
+      delete newErrors[project._id];
+      setRationaleErrors(newErrors);
+    }
+  };
+
   const handleSaveRankings = async () => {
-    // Validate rationales for reordered projects
     const missingRationales = validateRankings();
 
     if (missingRationales.length > 0) {
-      const errorMsg = `Please add rationale for reordered projects: ${missingRationales.join(", ")}`;
+      const errorMsg = `Please fix rationale issues:\n${missingRationales.join("\n")}`;
       setValidationError(errorMsg);
       alert(errorMsg);
       return;
@@ -207,7 +269,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           return {
             project_id: p._id,
             rank: index + 1,
-            rationals: p.rationale || "" // Use the rationale from the project state
+            rationals: p.rationale || ""
           };
         })
       };
@@ -226,8 +288,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       alert("Rankings saved successfully");
       setIsSaved(true);
       setValidationError("");
-      
-      // Update initial order after successful save
+
       setInitialOrder(projectList.map(p => p._id));
 
       if (onRankSaved) {
@@ -309,7 +370,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             >
               {projectList.map((item, index) => {
                 const positionChanged = hasPositionChanged(item._id, index);
-                const needsRationale = positionChanged && (!item.rationale || item.rationale.trim() === "");
+                const validation = validateRationale(item.rationale);
+                const needsRationale = positionChanged && !validation.isValid;
+                const errorMessage = rationaleErrors[item._id] || "";
 
                 return (
                   <Draggable
@@ -323,9 +386,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        className={`rank-project-card responsive-card ${
-                          snapshot.isDragging ? "dragging" : ""
-                        } ${needsRationale ? "needs-rationale" : ""}`}
+                        className={`rank-project-card responsive-card ${snapshot.isDragging ? "dragging" : ""
+                          } ${needsRationale ? "needs-rationale" : ""}`}
                       >
                         <Card.Body>
                           {/* ---------- TOP ---------- */}
@@ -360,7 +422,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                             <RationaleToggle eventKey={index.toString()}>
                               {positionChanged ? (
                                 <span style={{ color: needsRationale ? "#dc3545" : "#28a745" }}>
-                                  {item.rationale ? "Edit Rationale ▼" : "⚠️ Add Rationale (Required) ▼"}
+                                  {validation.isValid ? "Edit Rationale ▼" : "⚠️ Add Rationale (Required) ▼"}
                                 </span>
                               ) : (
                                 "Add Rationale ▼"
@@ -369,26 +431,25 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                           </div>
 
                           <Accordion.Collapse eventKey={index.toString()}>
-                            <textarea
-                              className={`rank-rationale-textarea responsive-textarea ${
-                                needsRationale ? "border-danger" : ""
-                              }`}
-                              placeholder={
-                                positionChanged
-                                  ? "Required: Why did you rank this project here?"
-                                  : "Why did you rank this project here?"
-                              }
-                              value={item.rationale || ""}
-                              onChange={(e) => {
-                                const updated = [...projectList];
-                                updated[index] = {
-                                  ...updated[index],
-                                  rationale: e.target.value
-                                };
-                                setProjectList(updated);
-                                setValidationError(""); // Clear error when user starts typing
-                              }}
-                            />
+                            <div>
+                              <textarea
+                                className={`rank-rationale-textarea responsive-textarea ${errorMessage ? "border-danger" : ""
+                                  }`}
+                                placeholder={
+                                  positionChanged
+                                    ? "Required: Why did you rank this project here?"
+                                    : "Why did you rank this project here?"
+                                }
+                                value={item.rationale || ""}
+                                onChange={(e) => handleRationaleTextareaChange(index, e.target.value)}
+                                onBlur={() => handleRationaleBlur(index)}
+                              />
+                              {errorMessage && (
+                                <small className="text-danger d-block mt-1">
+                                  ⚠️ {errorMessage}
+                                </small>
+                              )}
+                            </div>
                           </Accordion.Collapse>
                         </Card.Body>
                       </Card>
@@ -403,8 +464,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       </DragDropContext>
 
       {/* ---------- RATIONALE MODAL ---------- */}
-      <Modal 
-        show={showRationaleModal} 
+      <Modal
+        show={showRationaleModal}
         onHide={handleRationaleCancel}
         backdrop="static"
         keyboard={false}
@@ -447,8 +508,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           <Button variant="secondary" onClick={handleRationaleCancel}>
             Cancel
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleRationaleSubmit}
             disabled={!tempRationale || tempRationale.trim() === ""}
           >

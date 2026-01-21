@@ -8,8 +8,7 @@ import { useProjectOperations } from "../hooks/useProjectOperations";
 import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
-import { simulateMLRankingAPI } from "../utils/aiRankingGenerator";
-import { saveAIRankings } from "../services/aiRankingService";
+ import { callMLRankingAPI,saveAIRankings } from "../services/aiRankingService";
 
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
@@ -305,12 +304,12 @@ const ProjectsSection = ({
       }
 
       setIsGeneratingAIRankings(true);
-      const mlResponse = await simulateMLRankingAPI(selectedBusinessId, projects);
+
+      const mlResponse = await callMLRankingAPI(projects);
+
       const saveResponse = await saveAIRankings(
         selectedBusinessId,
-        mlResponse.rankings,
-        mlResponse.model_version,
-        mlResponse.metadata
+        mlResponse.rankings
       );
       setProjectCreationLocked(true);
       setShowAIRankingToast(true);
