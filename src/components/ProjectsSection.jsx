@@ -525,7 +525,7 @@ const ProjectsSection = ({
           businessId={selectedBusinessId}
           onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
           onRankSaved={refreshTeamRankings}
-          isAdmin={isEditor}
+          isAdmin={isSuperAdmin}
           isRankingLocked={isRankingLocked}
         />
 
