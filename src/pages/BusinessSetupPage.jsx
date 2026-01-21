@@ -1017,10 +1017,10 @@ const BusinessSetupPage = () => {
                       )}
                       {/*{activeTab === "executive" && (
                         <ExecutiveSummary/>
-                      )}
+                      )}*/}
                       {activeTab === "priorities" && (
                         <PrioritiesProjects />
-                      )}*/}
+                      )}
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
