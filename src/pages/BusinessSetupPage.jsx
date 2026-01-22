@@ -817,7 +817,7 @@ const BusinessSetupPage = () => {
               className={`mobile-tab ${activeTab === "priorities" ? "active" : ""}`}
               onClick={() => setActiveTab("priorities")}
             >
-              Priorities & Projects
+              {t("Priorities & Projects")}
             </button>
           )}
         </div>
@@ -907,7 +907,7 @@ const BusinessSetupPage = () => {
                           className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                           onClick={handlePrioritiesTabClick}
                         >
-                          Priorities & Projects
+                          {t("Priorities & Projects")}
                         </button>
                       )}
                     </div>

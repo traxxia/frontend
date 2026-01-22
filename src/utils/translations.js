@@ -261,6 +261,7 @@ export const staticTranslations = {
     "Here's what we discovered":"Here's what we discovered",
     "Based on your inputs":"Based on your inputs, here are four critical insights about your strategic position.",
     "Continue":"Continue",
+    "Priorities & Projects":"Priorities & Projects",
 
     // ===========================
     // BUSINESS DETAIL PAGE
@@ -975,6 +976,16 @@ export const staticTranslations = {
   'Estimated_Timeline':'Estimated Timeline',
   'Budget_Estimate':'Budget Estimate',
   'Projects':'Projects',
+
+  // ===========================
+  // Priorities & Projects
+  // ===========================
+  'What should I work on next':'What should I work on next',
+  'Ready to Start Project Planning':'Ready to Start Project Planning',
+  'Select one or more priorities below':'Select one or more priorities below, then kickstart your project workflow',
+  'Kickstart Projects':'Kickstart Projects',
+  'Note':'Note',
+  'Note_desc':'This is a strategic prioritization tool, not a project management system. Use it to decide what to work on, then manage execution in your PM tool of choice.',
   },
 
 
@@ -1155,6 +1166,7 @@ export const staticTranslations = {
     "Here's what we discovered":"Esto es lo que descubrimos",
     "Based on your inputs":"Según tus aportes, aquí hay cuatro insights críticos sobre tu posición estratégica.",
     "Continue":"Continuar",
+    "Priorities & Projects":"Prioridades y Proyectos",
     "geographies_max_3":"Geografías (máx 3)",
     "geographies_example":"p. ej., Lima, a nivel nacional",
     "strategic_objective":"Objetivo estratégico",
@@ -1965,6 +1977,16 @@ export const staticTranslations = {
   'Budget_Estimate':'Estimación del presupuesto',
   'Projects':'Proyectos',
   "is_editing": "está editando",
+
+  // ===========================
+  // Priorities & Projects
+  // ===========================
+  'What should I work on next':'En qué debería trabajar a continuación?',
+  'Ready to Start Project Planning':'Listo para comenzar la planificación del proyecto',
+  'Select one or more priorities below':'Seleccione una o más prioridades a continuación y luego inicie el flujo de trabajo de su proyecto',
+  'Kickstart Projects':'Kickstart Projects',
+  'Note':'Nota',
+  'Note_desc':'Esta es una herramienta de priorización estratégica, no un sistema de gestión de proyectos. Úsala para decidir en qué trabajar y luego gestiona la ejecución en la herramienta de gestión de proyectos de tu elección.',
 
   }
 };

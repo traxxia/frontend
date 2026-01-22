@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import { ChevronRight } from "react-bootstrap-icons";
 import { Folder } from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation";
 import "../styles/PrioritiesProjects.css";
 
 
@@ -53,6 +54,7 @@ const PRIORITIES = [
 ];
 
 const PrioritiesProjects = () => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -75,18 +77,18 @@ const PrioritiesProjects = () => {
   return (
     <div className="container my-4 priorities-container">
       {/* Header */}
-      <h4 className="priorities-title">Priorities & Projects</h4>
-      <p className="priorities-subtitle">What should I work on next?</p>
+      <h4 className="priorities-title">{t("Priorities & Projects")}</h4>
+      <p className="priorities-subtitle">{t("What should I work on next")}?</p>
 
       {/* Kickstart Card */}
       <Card className="kickstart-card mb-4">
         <Card.Body className="d-flex justify-content-between align-items-center">
           <div>
             <h6 className="kickstart-title mb-1">
-              Ready to Start Project Planning?
+              {t("Ready to Start Project Planning")}?
             </h6>
             <small className="text-muted">
-              Select one or more priorities below, then kickstart your project workflow
+              {t("Select one or more priorities below")}
             </small>
           </div>
           <Button
@@ -95,7 +97,7 @@ const PrioritiesProjects = () => {
             disabled={selected.length === 0}
             onClick={handleKickstart}
           >
-            🚀 Kickstart Projects
+            🚀 {t("Kickstart_Projects")}
           </Button>
         </Card.Body>
       </Card>
@@ -139,7 +141,7 @@ const PrioritiesProjects = () => {
                 <div className="projects-section mt-3">
                   <div className="projects-title mb-2 d-flex align-items-center gap-2">
                     <Folder size={16} className="projects-icon" />
-                    <span>Projects</span>
+                    <span>{t("Projects")}</span>
                   </div>
 
                   {item.projects.map((project, index) => (
@@ -162,9 +164,7 @@ const PrioritiesProjects = () => {
       <Card className="footer-note mt-4">
         <Card.Body>
           <small className="text-muted">
-            <strong>Note:</strong> This is a strategic prioritization tool, not a
-            project management system. Use it to decide what to work on, then
-            manage execution in your PM tool of choice.
+            <strong>{t("Note")}:</strong> {t("Note_desc")}
           </small>
         </Card.Body>
       </Card>
