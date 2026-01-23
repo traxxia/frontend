@@ -27,7 +27,8 @@ export const useProjectOperations = (selectedBusinessId, onProjectCountChange) =
 
       return {
         projects: fetched,
-        lockSummary: res.data?.ranking_lock_summary,
+        businessStatus: res.data?.business_status, // NEW: business-level status
+        lockSummary: res.data?.ranking_lock_summary, // Now includes locked_users array
       };
     } catch (err) {
       console.error("Error fetching projects:", err);

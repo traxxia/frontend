@@ -38,6 +38,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [initialOrder, setInitialOrder] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [hasEverSaved, setHasEverSaved] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -265,8 +266,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   };
 
   const handleSaveRankings = async () => {
-    // Check if rankings have changed
-    if (!hasRankingsChanged()) {
+    // Only check if rankings have changed if user has already saved in this session
+    if (hasEverSaved && !hasRankingsChanged()) {
       alert("No changes detected. Please reorder projects before saving.");
       return;
     }
@@ -309,6 +310,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
       alert("Rankings saved successfully");
       setIsSaved(true);
+      setHasEverSaved(true);
       setValidationError("");
 
       setInitialOrder(projectList.map(p => p._id));
@@ -352,7 +354,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             <Button
               className="btn-save-rank responsive-btn"
               onClick={handleSaveRankings}
-              disabled={!hasRankingsChanged() || isSaving}
+              disabled={isSaving || (isSaved && !hasRankingsChanged())}
             >
               {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>

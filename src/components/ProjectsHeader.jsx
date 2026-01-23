@@ -14,8 +14,7 @@ const ProjectsHeader = ({
   onNewProject,
   onToggleRankScreen,
 }) => {
-  const { t } = useTranslation();
-
+  const { t } = useTranslation(); 
   return (
     <div className="projects-header-container">
       <div className="projects-header-row">

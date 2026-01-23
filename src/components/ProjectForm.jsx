@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
 import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock } from "lucide-react";
@@ -104,10 +104,29 @@ const SelectField = ({
   onFieldFocus,
   onFieldEdit,
 }) => {
+  const dropdownRef = useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        if (open) {
+          setOpen();
+        }
+      }
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open, setOpen]);
+
   return (
-    <div className="sf-wrapper">
+    <div className="sf-wrapper" ref={dropdownRef}>
       {label && (
         <label className="sf-label">
           {icon} {label}

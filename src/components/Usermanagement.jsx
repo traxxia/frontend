@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown, Modal } from "react-bootstrap";
-import { Crown, UserCog, User, ShieldCheck, MoreVertical, Search, Plus } from "lucide-react";
+import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown, Modal, InputGroup } from "react-bootstrap";
+import { Crown, UserCog, User, ShieldCheck, MoreVertical, Search, Plus, Eye, EyeOff } from "lucide-react";
 import "../styles/usermanagement.css";
 import axios from "axios";
 import Pagination from "../components/Pagination";
@@ -31,6 +31,7 @@ const CustomToggle = React.forwardRef(({ onClick }, ref) => (
     <MoreVertical size={20} />
   </span>
 ));
+
 const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
@@ -45,7 +46,10 @@ const UserManagement = ({ onToast }) => {
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [newRole, setNewRole] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const token = sessionStorage.getItem("token");
 
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -79,13 +83,28 @@ const UserManagement = ({ onToast }) => {
     setNewName("");
     setNewEmail("");
     setNewPassword("");
+    setConfirmPassword("");
     setNewRole("");
     setSelectedCompanyId("");
     setErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setShowModal(true);
   };
 
-  const handleCloseModal = () => setShowModal(false);
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setNewName("");
+    setNewEmail("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setNewRole("");
+    setSelectedCompanyId("");
+    setErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
   const handleOpenAssignModal = () => setShowAssignModal(true);
   const handleCloseAssignModal = () => {
     setShowAssignModal(false);
@@ -96,35 +115,56 @@ const UserManagement = ({ onToast }) => {
   const validateForm = () => {
     const newErrors = {};
 
+    // Name validation
     if (!newName.trim()) {
-      newErrors.name = t("Name_is_required")
+      newErrors.name = t("Name_is_required");
+    } else if (!/^[A-Za-z]/.test(newName)) {
+      newErrors.name = t("Name_must_start_with_letter");
+    } else if (newName.trim().length < 3) {
+      newErrors.name = t("Name_must_be_atleast3_characters_long");
     }
-    else if (!/^[A-Za-z]/.test(newName)) {
-      newErrors.name = t("Name_must_start_with_letter")
-    }
-    else if (newName.trim().length < 3) {
-      newErrors.name = t("Name_must_be_atleast3_characters_long")
-    }
+
+    // Email validation
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!newEmail.trim() || !emailPattern.test(newEmail)) {
-      newErrors.email = t("Enter a valid email address")
+    if (!newEmail.trim()) {
+      newErrors.email = t("Email_is_required");
+    } else if (!emailPattern.test(newEmail)) {
+      newErrors.email = t("Enter a valid email address");
     }
 
-    if (
-      !newPassword ||
-      newPassword.length < 8 ||
-      !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/.test(newPassword)
-    ) {
-      newErrors.password =
-        t("Password_uppercase_lowercase_number_special character")
+    // Password validation
+    if (!newPassword) {
+      newErrors.password = t("Password_is_required");
+    } else if (newPassword.length < 8) {
+      newErrors.password = t("Password_must_be_at_least_8_characters");
+    } else if (!/(?=.*[a-z])/.test(newPassword)) {
+      newErrors.password = t("Password_must_contain_lowercase_letter");
+    } else if (!/(?=.*[A-Z])/.test(newPassword)) {
+      newErrors.password = t("Password_must_contain_uppercase_letter");
+    } else if (!/(?=.*\d)/.test(newPassword)) {
+      newErrors.password = t("Password_must_contain_number");
+    } else if (!/(?=.*[^A-Za-z0-9])/.test(newPassword)) {
+      newErrors.password = t("Password_must_contain_special_character");
     }
 
+    // Confirm password validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = t("Please_confirm_your_password");
+    } else if (newPassword !== confirmPassword) {
+      newErrors.confirmPassword = t("Passwords_do_not_match");
+    }
+
+    // Company validation for super admin
+    if (isSuperAdmin && !selectedCompanyId) {
+      newErrors.company = t("Company_is_required");
+    }
+
+    // Role validation
     if (!newRole) {
-      newErrors.role = t("Role_is_required")
+      newErrors.role = t("Role_is_required");
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
@@ -132,9 +172,10 @@ const UserManagement = ({ onToast }) => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsSubmitting(true);
+
     const payload = {
-      name: newName,
-      email: newEmail,
+      name: newName.trim(),
+      email: newEmail.trim(),
       password: newPassword,
       ...(isSuperAdmin && { company_id: selectedCompanyId }),
       role: newRole,
@@ -142,17 +183,8 @@ const UserManagement = ({ onToast }) => {
 
     try {
       await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
-
       onToast("User added successfully!", "success");
-
       await fetchUsers();
-
-      setNewName("");
-      setNewEmail("");
-      setNewPassword("");
-      setNewRole("");
-      setSelectedCompanyId("");
-
       handleCloseModal();
     } catch (error) {
       const message =
@@ -160,11 +192,7 @@ const UserManagement = ({ onToast }) => {
         error.response?.data?.error ||
         "Failed to add user";
 
-      if (message.toLowerCase().includes("exist")) {
-        onToast("User already exists!", "error");
-      } else {
-        onToast(message, "error");
-      }
+      onToast(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -746,97 +774,198 @@ const UserManagement = ({ onToast }) => {
         </Card.Body>
       </Card>
 
-      <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{t("Add_New_User")}</Modal.Title>
+      {/* IMPROVED ADD USER MODAL */}
+      <Modal show={showModal} onHide={handleCloseModal} centered size="lg">
+        <Modal.Header closeButton className="border-0 pb-2">
+          <Modal.Title className="fw-bold">{t("Add_New_User")}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="px-4">
           <Form onSubmit={handleAddUser}>
-            <Form.Group className="mb-3">
-              <Form.Label> {t("user_name")}<span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                placeholder={t("Enter_name")}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                disabled={isSubmitting}
-              />
-              {errors.name && <small className="text-danger">{errors.name}</small>}
-            </Form.Group>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    {t("user_name")} <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder={t("Enter_name")}
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    disabled={isSubmitting}
+                    isInvalid={!!errors.name}
+                    className="py-2"
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.name}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
 
-            <Form.Group className="mb-3">
-              <Form.Label>{t("email")} <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="email"
-                placeholder={t("Enter_email")}
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                disabled={isSubmitting}
-              />
-              {errors.email && (<small className="text-danger">{errors.email}</small>)}
-            </Form.Group>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    {t("email")} <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="email"
+                    placeholder={t("Enter_email")}
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    isInvalid={!!errors.email}
+                    className="py-2"
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.email}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
 
-            <Form.Group className="mb-3">
-              <Form.Label>{t("password")} <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="password"
-                placeholder={t("Enter_password")}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isSubmitting}
-              />
-              {errors.password && (<small className="text-danger">{errors.password}</small>)}
-            </Form.Group>
-            {isSuperAdmin && (
-              <Form.Group className="mb-3">
-                <Form.Label>
-                  Companies <span className="text-danger">*</span>
-                </Form.Label>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    {t("password")} <span className="text-danger">*</span>
+                  </Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      type={showPassword ? "text" : "password"}
+                      placeholder={t("Enter_password")}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={isSubmitting}
+                      isInvalid={!!errors.password}
+                      className="py-2"
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isSubmitting}
+                      style={{ borderColor: errors.password ? '#dc3545' : '#ced4da' }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </Button>
+                    <Form.Control.Feedback type="invalid">
+                      {errors.password}
+                    </Form.Control.Feedback>
+                  </InputGroup>
+                  <Form.Text className="text-muted">
+                    Must be 8+ characters with uppercase, lowercase, number & special character
+                  </Form.Text>
+                </Form.Group>
+              </Col>
 
-                <Form.Select
-                  value={selectedCompanyId}
-                  onChange={(e) => setSelectedCompanyId(e.target.value)}
-                  disabled={isSubmitting}
-                >
-                  <option value="">Select Company</option>
-                  {companies.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.company_name || c.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            )}
-            <Form.Group className="mb-3">
-              <Form.Label>{t("role")} <span className="text-danger">*</span></Form.Label>
-              <Form.Select
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value)}
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    {t("Confirm Password")} <span className="text-danger">*</span>
+                  </Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder={t("Re-enter password")}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={isSubmitting}
+                      isInvalid={!!errors.confirmPassword}
+                      className="py-2"
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      disabled={isSubmitting}
+                      style={{ borderColor: errors.confirmPassword ? '#dc3545' : '#ced4da' }}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </Button>
+                    <Form.Control.Feedback type="invalid">
+                      {errors.confirmPassword}
+                    </Form.Control.Feedback>
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              {isSuperAdmin && (
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold">
+                      {t("Company")} <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Select
+                      value={selectedCompanyId}
+                      onChange={(e) => setSelectedCompanyId(e.target.value)}
+                      disabled={isSubmitting}
+                      isInvalid={!!errors.company}
+                      className="py-2"
+                    >
+                      <option value="">{t("Select Company")}</option>
+                      {companies.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.company_name || c.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                    <Form.Control.Feedback type="invalid">
+                      {errors.company}
+                    </Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+              )}
+
+              <Col md={isSuperAdmin ? 6 : 12}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold">
+                    {t("role")} <span className="text-danger">*</span>
+                  </Form.Label>
+                  <Form.Select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value)}
+                    disabled={isSubmitting}
+                    isInvalid={!!errors.role}
+                    className="py-2"
+                  >
+                    <option value="">{t("Select_role")}</option>
+                    <option value="Collaborator">Collaborator</option>
+                    <option value="Viewer">Viewer</option>
+                    <option value="User">User</option>
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {errors.role}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <div className="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+              <Button 
+                variant="light" 
+                onClick={handleCloseModal} 
                 disabled={isSubmitting}
+                className="px-4"
               >
-                <option value="">{t("Select_role")}</option>
-                <option value="Collaborator">Collaborator</option>
-                <option value="Viewer">Viewer</option>
-                <option value="User">User</option>
-              </Form.Select>
-              <Form.Control.Feedback type="invalid">
-                {errors.role}
-              </Form.Control.Feedback>
-            </Form.Group>
-
-            <div className="d-flex justify-content-end">
-              <Button variant="secondary" className="me-2" onClick={handleCloseModal} disabled={isSubmitting}>
                 {t("cancel")}
               </Button>
 
-              <Button variant="primary" type="submit" disabled={isSubmitting}>
+              <Button 
+                variant="primary" 
+                type="submit" 
+                disabled={isSubmitting}
+                className="px-4"
+              >
                 {isSubmitting ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" />
                     Adding...
                   </>
                 ) : (
-                  t("Add_User")
+                  <>
+                    <Plus size={16} className="me-2" />
+                    {t("Add_User")}
+                  </>
                 )}
               </Button>
             </div>
