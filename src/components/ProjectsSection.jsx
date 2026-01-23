@@ -8,7 +8,7 @@ import { useProjectOperations } from "../hooks/useProjectOperations";
 import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
- import { callMLRankingAPI,saveAIRankings } from "../services/aiRankingService";
+import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
@@ -299,7 +299,8 @@ const ProjectsSection = ({
   const handleLockProjectCreation = async () => {
     try {
       if (!projects || projects.length === 0) {
-        alert("No projects available to rank. Please create projects first.");
+        setValidationMessage("No projects available to rank. Please create projects first.");
+        setShowValidationToast(true);
         return;
       }
 
@@ -324,7 +325,8 @@ const ProjectsSection = ({
 
     } catch (error) {
       console.error("Failed to lock project creation and generate AI rankings:", error);
-      alert("Failed to generate AI rankings. Please try again.");
+      setValidationMessage("Failed to generate AI rankings. Please try again.");
+      setShowValidationToast(true);
       setIsGeneratingAIRankings(false);
     } finally {
       setIsGeneratingAIRankings(false);
@@ -369,6 +371,7 @@ const ProjectsSection = ({
     if (!validation.isValid) {
       setValidationMessage(validation.firstError);
       setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 5000);
       return;
     }
 
@@ -377,18 +380,24 @@ const ProjectsSection = ({
 
     const success = await createProject(payload);
     if (success) {
-      alert("Project created successfully!");
+      setValidationMessage("Project created successfully!");
+      setShowValidationToast(true);
       await unlockAllFieldsSafe();
       await loadProjects();
       handleBackToList();
+      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      alert("Failed to create project.");
+      setValidationMessage("Failed to create project.");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
   const handleSave = async () => {
     if (!canEditProject(currentProject, isEditor, myUserId)) {
-      alert("You are not allowed to edit this project");
+      setValidationMessage("You are not allowed to edit this project");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
       return;
     }
 
@@ -397,17 +406,29 @@ const ProjectsSection = ({
       return;
     }
 
+    const validation = validateForm();
+    if (!validation.isValid) {
+      setValidationMessage(validation.firstError);
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 5000);
+      return;
+    }
+
     const userId = sessionStorage.getItem("userId");
     const payload = getPayload(userId, selectedBusinessId);
 
     const success = await updateProject(currentProject._id, payload);
     if (success) {
-      alert("Project updated successfully!");
+      setValidationMessage("Project updated successfully!");
+      setShowValidationToast(true);
       await unlockAllFieldsSafe();
       await loadProjects();
       handleBackToList();
+      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      alert("Failed to update project.");
+      setValidationMessage("Failed to update project.");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
@@ -416,14 +437,18 @@ const ProjectsSection = ({
 
     const success = await deleteProject(projectId);
     if (success) {
-      alert("Project deleted successfully!");
+      setValidationMessage("Project deleted successfully!");
+      setShowValidationToast(true);
       const updated = projects.filter((p) => p._id !== projectId);
       setProjects(updated);
       if (onProjectCountChange) {
         onProjectCountChange(updated.length);
       }
+      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      alert("Failed to delete project.");
+      setValidationMessage("Failed to delete project.");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
@@ -436,7 +461,9 @@ const ProjectsSection = ({
       refreshTeamRankings();
       setTimeout(() => setShowLockToast(false), 3000);
     } else {
-      alert("Failed to lock ranking");
+      setValidationMessage("Failed to lock ranking");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
@@ -500,11 +527,12 @@ const ProjectsSection = ({
               onLockProjectCreation={handleLockProjectCreation}
               onFinalizePrioritization={handleFinalizePrioritization}
               onLaunchProjects={handleLaunchProjects}
+              isGeneratingAIRankings={isGeneratingAIRankings}
             />
           </div>
         )}
 
-        <PortfolioOverview portfolioData={portfolioData} />
+        {/* <PortfolioOverview portfolioData={portfolioData} /> */}
 
         <ProjectsHeader
           totalProjects={portfolioData.totalProjects}

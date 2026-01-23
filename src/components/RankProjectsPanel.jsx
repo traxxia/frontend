@@ -39,6 +39,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [isLocked, setIsLocked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const [showRationaleModal, setShowRationaleModal] = useState(false);
   const [pendingDragResult, setPendingDragResult] = useState(null);
@@ -55,7 +56,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       return rankA - rankB;
     }).map(project => ({
       ...project,
-      rationale: project.rationale || project.rationals || ""
+      rationale: project.rationale || project.rationals || "",
+      description: project.description || project.project_description || ""
     }));
     setProjectList(sorted);
     setInitialOrder(sorted.map(p => p._id));
@@ -66,6 +68,14 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const hasPositionChanged = (projectId, currentIndex) => {
     const initialIndex = initialOrder.indexOf(projectId);
     return initialIndex !== -1 && initialIndex !== currentIndex;
+  };
+
+  const hasRankingsChanged = () => {
+    if (projectList.length !== initialOrder.length) return true;
+
+    return projectList.some((project, index) => {
+      return initialOrder[index] !== project._id;
+    });
   };
 
   const validateRankings = () => {
@@ -99,7 +109,10 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
     const willChangePosition = initialIndex !== destIndex;
 
-    if (willChangePosition && movedProject.rationale && movedProject.rationale.trim() !== "") {
+    // Check if the rationale is auto-generated
+    const isAutoRationale = movedProject.rationale && movedProject.rationale.includes("Order changed due to");
+
+    if (willChangePosition && movedProject.rationale && movedProject.rationale.trim() !== "" && !isAutoRationale) {
       const validation = validateRationale(movedProject.rationale);
 
       if (!validation.isValid) {
@@ -114,7 +127,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     if (willChangePosition) {
       setPendingDragResult(result);
       setMovedProjectName(movedProject.project_name);
-      setTempRationale(movedProject.rationale || "");
+      // Clear auto-generated rationale from the modal, require user to enter new one
+      setTempRationale(isAutoRationale ? "" : (movedProject.rationale || ""));
       setShowRationaleModal(true);
       return;
     }
@@ -137,7 +151,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
     if (rationale !== null && rationale.trim() !== "") {
       const movedProjectName = moved.project_name;
-      const autoRationale = `Order changed due to "${movedProjectName}" being repositioned. ${rationale}`;
+      const autoRationale = `Order changed due to "${movedProjectName}" being repositioned.Rationale: <strong>"${rationale}"</strong>`;
 
       const startIdx = Math.min(sourceIndex, destIndex);
       const endIdx = Math.max(sourceIndex, destIndex);
@@ -224,7 +238,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       const items = [...projectList];
       const currentProject = items[index];
       const movedProjectName = currentProject.project_name;
-      const autoRationale = `Order changed due to "${movedProjectName}" being repositioned. ${currentProject.rationale}`;
+      const autoRationale = `Order changed due to "${movedProjectName}" being repositioned. Rationale: <strong>"${currentProject.rationale}"</strong>`;
 
       const initialIndex = initialOrder.indexOf(currentProject._id);
       const startIdx = Math.min(initialIndex, index);
@@ -251,6 +265,12 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   };
 
   const handleSaveRankings = async () => {
+    // Check if rankings have changed
+    if (!hasRankingsChanged()) {
+      alert("No changes detected. Please reorder projects before saving.");
+      return;
+    }
+
     const missingRationales = validateRankings();
 
     if (missingRationales.length > 0) {
@@ -259,6 +279,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       alert(errorMsg);
       return;
     }
+
+    setIsSaving(true);
 
     try {
       const token = sessionStorage.getItem("token");
@@ -297,6 +319,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     } catch (err) {
       console.error("Save rankings failed", err);
       alert("Failed to save rankings");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -328,8 +352,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             <Button
               className="btn-save-rank responsive-btn"
               onClick={handleSaveRankings}
+              disabled={!hasRankingsChanged() || isSaving}
             >
-              {t("Save_Rankings")}
+              {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>
           )}
 
@@ -404,7 +429,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                                 )}
                               </div>
                               <p className="rank-project-desc">
-                                {item.description}
+                                {item.description || item.project_description || "No description provided"}
                               </p>
                             </div>
 
@@ -420,30 +445,56 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                           {/* ---------- RATIONALE ---------- */}
                           <div className="rank-rationale-btn-container responsive-rationale-btn">
                             <RationaleToggle eventKey={index.toString()}>
-                              {positionChanged ? (
-                                <span style={{ color: needsRationale ? "#dc3545" : "#28a745" }}>
-                                  {validation.isValid ? "Edit Rationale ▼" : "⚠️ Add Rationale (Required) ▼"}
-                                </span>
+                              {item.rationale && item.rationale.trim() !== "" ? (
+                                positionChanged ? (
+                                  <span style={{ color: needsRationale ? "#dc3545" : "#28a745" }}>
+                                    {validation.isValid ? "Edit Rationale ▼" : "⚠️ Edit Rationale (Invalid) ▼"}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: "#28a745" }}>
+                                    Edit Rationale ▼
+                                  </span>
+                                )
                               ) : (
-                                "Add Rationale ▼"
+                                positionChanged ? (
+                                  <span style={{ color: "#dc3545" }}>
+                                    ⚠️ Add Rationale (Required) ▼
+                                  </span>
+                                ) : (
+                                  "Add Rationale ▼"
+                                )
                               )}
                             </RationaleToggle>
                           </div>
 
                           <Accordion.Collapse eventKey={index.toString()}>
                             <div>
-                              <textarea
-                                className={`rank-rationale-textarea responsive-textarea ${errorMessage ? "border-danger" : ""
-                                  }`}
-                                placeholder={
-                                  positionChanged
-                                    ? "Required: Why did you rank this project here?"
-                                    : "Why did you rank this project here?"
-                                }
-                                value={item.rationale || ""}
-                                onChange={(e) => handleRationaleTextareaChange(index, e.target.value)}
-                                onBlur={() => handleRationaleBlur(index)}
-                              />
+                              {item.rationale && item.rationale.includes("<strong>") ? (
+                                <div
+                                  className="rank-rationale-display responsive-textarea"
+                                  dangerouslySetInnerHTML={{ __html: item.rationale }}
+                                  style={{
+                                    padding: "10px",
+                                    border: "1px solid #dee2e6",
+                                    borderRadius: "4px",
+                                    backgroundColor: "#f8f9fa",
+                                    minHeight: "80px",
+                                    whiteSpace: "pre-wrap"
+                                  }}
+                                />
+                              ) : (
+                                <textarea
+                                  className={`rank-rationale-textarea responsive-textarea ${errorMessage ? "border-danger" : ""}`}
+                                  placeholder={
+                                    positionChanged
+                                      ? "Required: Why did you rank this project here?"
+                                      : "Why did you rank this project here?"
+                                  }
+                                  value={item.rationale || ""}
+                                  onChange={(e) => handleRationaleTextareaChange(index, e.target.value)}
+                                  onBlur={() => handleRationaleBlur(index)}
+                                />
+                              )}
                               {errorMessage && (
                                 <small className="text-danger d-block mt-1">
                                   ⚠️ {errorMessage}

@@ -18,14 +18,28 @@ const ProjectsHeader = ({
 
   return (
     <div className="projects-header-container">
-      <h6 className="projects-small-title">{t("Projects")}</h6>
-
       <div className="projects-header-row">
-        <h2 className="projects-count">
-          {totalProjects} {t("total_projects")}
-        </h2>
+        <div className="d-flex align-items-center gap-3">
+          <h6 className="projects-small-title mb-0">{t("Projects")}</h6>
+          <div 
+            className="d-flex align-items-center gap-2 px-3 py-2"
+            style={{
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              border: '1px solid #e9ecef',
+              minWidth: '120px'
+            }}
+          >
+            <span className="fw-bold" style={{ color: '#212529', fontSize: '18px' }}>
+              {totalProjects}
+            </span>
+            <span className="text-muted" style={{ fontSize: '14px', fontWeight: '500' }}>
+              {totalProjects === 1 ? t("project") : t("total_projects")}
+            </span>
+          </div>
+        </div>
 
-        <div className="d-flex gap-2 flex-wrap justify-content-end">
+        <div className="d-flex gap-2 flex-wrap justify-content-end align-items-center">
           {isDraft && !isViewer && (
             <button onClick={onNewProject} className="btn-new-project">
               <Plus size={18} />
