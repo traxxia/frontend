@@ -66,7 +66,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -145,21 +144,13 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   const validateStep4 = () => {
-    const newErrors = {};
-    // At least one geography should be filled (optional but recommended)
-    const hasAtLeastOneGeography = formData.geography1.trim() ||
-      formData.geography2.trim() ||
-      formData.geography3.trim();
-    // This step seems optional based on the image, so we'll allow proceeding without validation
-    setErrors(newErrors);
-    return true; // Always allow proceeding, geographies are optional
+    return true; 
   };
 
   const validateStep5 = () => {
     const newErrors = {};
-    // Step 5 is optional - user can proceed without filling all fields
     setErrors(newErrors);
-    return true; // Always allow proceeding
+    return true;
   };
 
   const validateStep6 = () => {
@@ -261,7 +252,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // On last step, submit the form
       handleSubmit();
     }
   };
@@ -274,9 +264,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
 
   const handleSubmit = () => {
     if (onSubmit) {
-      onSubmit(formData); // pass answers to parent
+      onSubmit(formData); 
     }
-    handleClose(); // close modal
+    handleClose(); 
   };
 
 
@@ -592,7 +582,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               {t('your_best_estimate_enough') || 'Your best estimate is enough.'}
             </p>
 
-            {/* Customer Segments Section */}
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
                 {t('customer_segments_max_3') || 'Customer segments (max 3)'}
@@ -653,7 +642,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               </Form.Group>
             </div>
 
-            {/* Products / Services Section */}
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
                 {t('products_services_max_3') || 'Products / services (max 3)'}
@@ -713,7 +701,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 )}
               </Form.Group>
             </div>
-            {/* Channels Section */}
+            
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
                 {t('channels_max_3') || 'Channels (max 3)'}
@@ -756,7 +744,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               </Form.Group>
             </div>
 
-            {/* Geographies Section */}
             <div className="mb-2">
               <Form.Label className="pmf-form-label mb-2">
                 {t('geographies_max_3') || 'Geographies (max 3)'}
@@ -829,7 +816,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               </div>
             ))}
 
-            {/* Show input ONLY when Other is selected */}
             {formData.strategicObjective === 'Other' && (
               <Form.Group className="mt-3">
                 <Form.Control
@@ -884,7 +870,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               </div>
             ))}
 
-            {/* Other input */}
             {formData.keyChallenge === 'Other' && (
               <Form.Group className="mt-3">
                 <Form.Control
@@ -935,7 +920,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   className="pmf-checkbox-input"
                 />
 
-                {/* 👇 SHOW ONLY FOR OTHER */}
                 {option === 'Other' &&
                   formData.differentiation.includes('Other') && (
                     <Form.Control
@@ -998,7 +982,6 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
           </div>
         );
 
-      // Add more steps here as needed
       default:
         return (
           <div className="pmf-step-content">

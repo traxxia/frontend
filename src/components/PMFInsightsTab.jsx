@@ -11,7 +11,6 @@ const PMFInsightsTab = () => {
   return (
     <div className="bg-light py-5 min-vh-100">
       <Container style={{ maxWidth: "1080px" }}>
-        {/* Header */}
         <div className="text-center mb-5">
           <Badge
             bg="primary-subtle"
@@ -31,9 +30,7 @@ const PMFInsightsTab = () => {
           </p>
         </div>
 
-        {/* Cards */}
         <Row className="g-4">
-          {/* Card 1 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -68,7 +65,6 @@ const PMFInsightsTab = () => {
             </Card>
           </Col>
 
-          {/* Card 2 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -99,7 +95,6 @@ const PMFInsightsTab = () => {
             </Card>
           </Col>
 
-          {/* Card 3 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -133,7 +128,6 @@ const PMFInsightsTab = () => {
             </Card>
           </Col>
 
-          {/* Card 4 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">

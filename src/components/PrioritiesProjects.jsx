@@ -76,11 +76,10 @@ const PrioritiesProjects = () => {
 
   return (
     <div className="container my-4 priorities-container">
-      {/* Header */}
+      
       <h4 className="priorities-title">{t("Priorities & Projects")}</h4>
       <p className="priorities-subtitle">{t("What should I work on next")}?</p>
 
-      {/* Kickstart Card */}
       <Card className="kickstart-card mb-4">
         <Card.Body className="d-flex justify-content-between align-items-center">
           <div>
@@ -102,14 +101,12 @@ const PrioritiesProjects = () => {
         </Card.Body>
       </Card>
 
-      {/* Priority List */}
       {PRIORITIES.map((item) => {
         const isExpanded = expandedId === item.id;
 
         return (
           <Card key={item.id} className="priority-card mb-3">
             <Card.Body>
-              {/* Header Row */}
               <Row className="align-items-center">
                 <Col xs="auto">
                   <Form.Check
@@ -136,7 +133,6 @@ const PrioritiesProjects = () => {
                 </Col>
               </Row>
 
-              {/* Expanded Projects */}
               {isExpanded && item.projects.length > 0 && (
                 <div className="projects-section mt-3">
                   <div className="projects-title mb-2 d-flex align-items-center gap-2">
@@ -159,8 +155,6 @@ const PrioritiesProjects = () => {
         );
       })}
 
-
-      {/* Footer Note */}
       <Card className="footer-note mt-4">
         <Card.Body>
           <small className="text-muted">

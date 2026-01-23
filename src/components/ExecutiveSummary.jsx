@@ -18,9 +18,7 @@ const ExecutiveSummary = () => {
 
   return (
     <div className="exc-executive-summary-container">
-      {/* Content Sections */}
       <div className="exc-executive-content">
-        {/* WHERE TO COMPETE */}
         <div className="exc-section-card">
           <div
             className="exc-section-header"
@@ -48,7 +46,6 @@ const ExecutiveSummary = () => {
 
           {expandedSections.whereToCompete && (
             <div className="exc-section-body">
-              {/* Current Core */}
               <div className="exc-subsection exc-current-core">
                 <div className="exc-subsection-icon exc-blue">
                   <Target size={18} />
@@ -62,7 +59,6 @@ const ExecutiveSummary = () => {
                 </div>
               </div>
 
-              {/* Existing Adjacencies */}
               <div className="exc-subsection exc-existing-adjacencies">
                 <div className="exc-subsection-icon exc-orange">
                   <FileText size={18} />
@@ -76,7 +72,6 @@ const ExecutiveSummary = () => {
                 </div>
               </div>
 
-              {/* New Adjacencies to Explore */}
               <div className="exc-subsection exc-new-adjacencies">
                 <div className="exc-subsection-icon exc-green">
                   <ListChecks size={18} />
@@ -98,7 +93,6 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
-        {/* HOW TO COMPETE */}
         <div className="exc-section-card">
           <div
             className="exc-section-header"
@@ -156,7 +150,6 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
-        {/* TOP 3-5 PRIORITIES */}
         <div className="exc-section-card">
           <div
             className="exc-section-header"
@@ -184,7 +177,6 @@ const ExecutiveSummary = () => {
 
           {expandedSections.topPriorities && (
             <div className="exc-section-body">
-              {/* Priority 1 */}
               <div className="exc-priority-item">
                 <div className="exc-priority-header">
                   <span className="exc-priority-number">1.</span>
@@ -206,7 +198,6 @@ const ExecutiveSummary = () => {
                 </div>
               </div>
 
-              {/* Priority 2 */}
               <div className="exc-priority-item">
                 <div className="exc-priority-header">
                   <span className="exc-priority-number">2.</span>
@@ -228,7 +219,6 @@ const ExecutiveSummary = () => {
                 </div>
               </div>
 
-              {/* Priority 3 */}
               <div className="exc-priority-item">
                 <div className="exc-priority-header">
                   <span className="exc-priority-number">3.</span>
@@ -250,7 +240,6 @@ const ExecutiveSummary = () => {
                 </div>
               </div>
 
-              {/* Priority 4 */}
               <div className="exc-priority-item">
                 <div className="exc-priority-header">
                   <span className="exc-priority-number">4.</span>

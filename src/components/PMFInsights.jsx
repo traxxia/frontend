@@ -13,7 +13,6 @@ const PMFInsights = ({ onContinue }) => {
   return (
     <div className="bg-light py-5 min-vh-100">
       <Container style={{ maxWidth: "1080px" }}>
-        {/* Header */}
         <div className="text-center mb-5">
           <Badge
             bg="primary-subtle"
@@ -32,9 +31,7 @@ const PMFInsights = ({ onContinue }) => {
           </p>
         </div>
 
-        {/* Cards */}
         <Row className="g-4">
-          {/* Card 1 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -69,7 +66,6 @@ const PMFInsights = ({ onContinue }) => {
             </Card>
           </Col>
 
-          {/* Card 2 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -100,7 +96,6 @@ const PMFInsights = ({ onContinue }) => {
             </Card>
           </Col>
 
-          {/* Card 3 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -134,7 +129,6 @@ const PMFInsights = ({ onContinue }) => {
             </Card>
           </Col>
 
-          {/* Card 4 */}
           <Col md={6}>
             <Card className="h-100 border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
@@ -168,7 +162,6 @@ const PMFInsights = ({ onContinue }) => {
           </Col>
         </Row>
 
-        {/* Footer */}
         <div className="d-flex justify-content-center mt-5">
           <Button
             size="lg"
