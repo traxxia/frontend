@@ -161,6 +161,7 @@ const ProjectForm = ({
   mode,
   readOnly = false,
   projectName,
+  setProjectName,
   description,
   setDescription,
   importance,
@@ -203,6 +204,7 @@ const ProjectForm = ({
   const [showErrors, setShowErrors] = useState(false);
 
   // Refs for error fields
+  const projectNameRef = useRef(null);
   const descriptionRef = useRef(null);
   const importanceRef = useRef(null);
   const budgetRef = useRef(null);
@@ -264,6 +266,24 @@ const ProjectForm = ({
         ref.current.focus();
       }, 500);
     }
+  };
+
+  const handleProjectNameChange = (e) => {
+    const value = e.target.value;
+    setProjectName(value);
+    
+    if (showErrors) {
+      const validation = validateField('Project Name', value, {
+        required: true,
+        minLength: 3,
+        maxLength: 100
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        projectName: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("project_name");
   };
 
   const handleDescriptionChange = (e) => {
@@ -331,6 +351,15 @@ const ProjectForm = ({
   };
 
   const handleSubmit = () => {
+    // Validate project name only for new projects
+    const projectNameValidation = mode === "new" 
+      ? validateField('Project Name', projectName || '', {
+          required: true,
+          minLength: 3,
+          maxLength: 100
+        })
+      : { isValid: true, message: null };
+
     // Validate all required fields
     const descValidation = validateField('Description', description || '', {
       required: true,
@@ -351,6 +380,7 @@ const ProjectForm = ({
     });
 
     const errors = {
+      projectName: projectNameValidation.isValid ? null : projectNameValidation.message,
       description: descValidation.isValid ? null : descValidation.message,
       importance: impValidation.isValid ? null : impValidation.message,
       budget: budgetValidation.isValid ? null : budgetValidation.message,
@@ -364,7 +394,9 @@ const ProjectForm = ({
 
     if (hasErrors) {
       // Scroll to first error
-      if (errors.description) {
+      if (errors.projectName) {
+        scrollToError(projectNameRef);
+      } else if (errors.description) {
         scrollToError(descriptionRef);
       } else if (errors.importance) {
         scrollToError(importanceRef);
@@ -395,19 +427,44 @@ const ProjectForm = ({
         <div className="form-card">
           <h3 className="section-title">{t("Required_Information")}</h3>
 
-          {/* Project Name Display */}
-          {projectName && (
-            <div className="field-row">
-              <div className="field-label-row">
-                <label className="field-label">
-                  {t("Project_Name")} <span className="required">*</span>
-                </label>
-              </div>
-              <div className="project-name-display-inline">
-                {projectName}
-              </div>
+          {/* Project Name Field - Editable in new mode, readonly in edit mode */}
+          <div className="field-row">
+            <div className="field-label-row">
+              <label className="field-label">
+                {t("Project_Name")} <span className="required">*</span>
+              </label>
+              {mode !== "new" && renderLockBadge("project_name")}
             </div>
-          )}
+            {mode === "new" ? (
+              <>
+                <input
+                  ref={projectNameRef}
+                  type="text"
+                  value={projectName || ""}
+                  onChange={handleProjectNameChange}
+                  placeholder="Enter project name (minimum 3 characters)"
+                  className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`}
+                  readOnly={isReadOnly}
+                  onFocus={() => handleFieldFocus("project_name")}
+                  maxLength={100}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {showErrors && fieldErrors.projectName && (
+                    <small className="error-text">{fieldErrors.projectName}</small>
+                  )}
+                  <small className="text-muted" style={{ marginLeft: 'auto' }}>
+                    {(projectName || '').length}/100 characters
+                  </small>
+                </div>
+              </>
+            ) : (
+              projectName && (
+                <div className="project-name-display-inline">
+                  {projectName}
+                </div>
+              )
+            )}
+          </div>
 
           <div className="field-row">
             <div className="field-label-row">
