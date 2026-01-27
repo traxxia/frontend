@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
 import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock } from "lucide-react";
+import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
+
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
   { value: "Medium", label: "Medium - Significant", icon: <Circle size={14} color="gold" fill="gold" /> },
@@ -102,30 +104,52 @@ const SelectField = ({
   onFieldFocus,
   onFieldEdit,
 }) => {
+  const dropdownRef = useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        if (open) {
+          setOpen();
+        }
+      }
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open, setOpen]);
+
   return (
-    <div className="sf-wrapper">
-      <label className="sf-label">
-        {icon} {label}
-      </label>
+    <div className="sf-wrapper" ref={dropdownRef}>
+      {label && (
+        <label className="sf-label">
+          {icon} {label}
+        </label>
+      )}
 
       <div className="sf-dropdown-wrapper">
-        <div 
-          className="sf-dropdown-header" 
+        <div
+          className="sf-dropdown-header"
           onClick={() => {
             if (disabled) return;
             onFieldFocus?.(fieldName);
             onFieldEdit?.(fieldName);
             setOpen();
           }}
-          style={{ 
+          style={{
             cursor: disabled ? "not-allowed" : "pointer",
-            opacity: disabled ? 0.6 : 1 
+            opacity: disabled ? 0.6 : 1
           }}
         >
-          <span>
-            {selectedOption?.label || (label ? `Select ${label.toLowerCase()}` : "Select")}
+          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {selectedOption?.icon}
+            {selectedOption?.label || "Select option"}
           </span>
           <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
         </div>
@@ -153,15 +177,14 @@ const SelectField = ({
 };
 
 const ProjectForm = ({
-  mode, // 'new', 'edit', or 'view'
-   readOnly = false,
+  mode,
+  readOnly = false,
   projectName,
   setProjectName,
   description,
   setDescription,
   importance,
   setImportance,
-  errors,
   selectedImpact,
   setSelectedImpact,
   selectedEffort,
@@ -196,6 +219,14 @@ const ProjectForm = ({
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
 
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [showErrors, setShowErrors] = useState(false);
+
+  // Refs for error fields
+  const projectNameRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const importanceRef = useRef(null);
+  const budgetRef = useRef(null);
 
   const getTitle = () => {
     switch (mode) {
@@ -209,11 +240,12 @@ const ProjectForm = ({
         return t("Project");
     }
   };
-  const isFieldDisabled = (field) =>
-    isReadOnly || isLockedByOther?.(field);
+
+  const isFieldDisabled = (field) => isReadOnly || isLockedByOther?.(field);
 
   const handleFieldFocus = (field) => {
     if (isFieldDisabled(field)) return;
+    setOpenDropdown(null);
     onFieldFocus?.(field);
   };
 
@@ -231,6 +263,7 @@ const ProjectForm = ({
       </span>
     );
   };
+
   const getSubmitButtonText = () => {
     switch (mode) {
       case "new":
@@ -242,104 +275,275 @@ const ProjectForm = ({
     }
   };
 
+  const scrollToError = (ref) => {
+    if (ref?.current) {
+      ref.current.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "center" 
+      });
+      setTimeout(() => {
+        ref.current.focus();
+      }, 500);
+    }
+  };
+
+  const handleProjectNameChange = (e) => {
+    const value = e.target.value;
+    setProjectName(value);
+    
+    if (showErrors) {
+      const validation = validateField('Project Name', value, {
+        required: true,
+        minLength: 3,
+        maxLength: 100
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        projectName: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("project_name");
+  };
+
+  const handleDescriptionChange = (e) => {
+    const value = e.target.value;
+    setDescription(value);
+    
+    if (showErrors) {
+      const validation = validateField('Description', value, {
+        required: true,
+        minLength: 10,
+        maxLength: 500
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        description: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("project_description");
+  };
+
+  const handleImportanceChange = (e) => {
+    const value = e.target.value;
+    setImportance(value);
+    
+    if (showErrors) {
+      const validation = validateField('Why This Matters', value, {
+        required: true,
+        minLength: 10,
+        maxLength: 1000
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        importance: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("why_this_matters");
+  };
+
+  const handleBudgetChange = (e) => {
+    const value = e.target.value;
+    setBudget(value);
+    
+    if (showErrors) {
+      const validation = validateField('Budget Estimate', value, {
+        numeric: true,
+        min: 0,
+        allowSpecialChars: ['.', ',', '-', '$', 'K', 'M']
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        budget: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("budget_estimate");
+  };
+
+  const handleBudgetKeyPress = (e) => {
+    // Allow numbers, decimal point, comma, dash, dollar sign, K, M
+    const allowedChars = /[0-9.,\-$KMkm]/;
+    const controlKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+    
+    if (!allowedChars.test(e.key) && !controlKeys.includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleSubmit = () => {
+    // Validate project name only for new projects
+    const projectNameValidation = mode === "new" 
+      ? validateField('Project Name', projectName || '', {
+          required: true,
+          minLength: 3,
+          maxLength: 100
+        })
+      : { isValid: true, message: null };
+
+    // Validate all required fields
+    const descValidation = validateField('Description', description || '', {
+      required: true,
+      minLength: 10,
+      maxLength: 500
+    });
+
+    const impValidation = validateField('Why This Matters', importance || '', {
+      required: true,
+      minLength: 10,
+      maxLength: 1000
+    });
+
+    const budgetValidation = validateField('Budget Estimate', budget || '', {
+      numeric: true,
+      min: 0,
+      allowSpecialChars: ['.', ',', '-', '$', 'K', 'M']
+    });
+
+    const errors = {
+      projectName: projectNameValidation.isValid ? null : projectNameValidation.message,
+      description: descValidation.isValid ? null : descValidation.message,
+      importance: impValidation.isValid ? null : impValidation.message,
+      budget: budgetValidation.isValid ? null : budgetValidation.message,
+    };
+
+    setFieldErrors(errors);
+    setShowErrors(true);
+
+    // Check if there are any errors
+    const hasErrors = Object.values(errors).some(error => error !== null);
+
+    if (hasErrors) {
+      // Scroll to first error
+      if (errors.projectName) {
+        scrollToError(projectNameRef);
+      } else if (errors.description) {
+        scrollToError(descriptionRef);
+      } else if (errors.importance) {
+        scrollToError(importanceRef);
+      } else if (errors.budget) {
+        scrollToError(budgetRef);
+      }
+      return;
+    }
+
+    // All validations passed, submit the form
+    onSubmit();
+  };
+
   return (
     <div>
-      {/* Stylish Breadcrumb */}
+      {/* Breadcrumb */}
       <div className="projects-breadcrumb">
-        <Breadcrumb className="projects-breadcrumb">
-          <Breadcrumb.Item 
-            onClick={onBack}
-            style={{ cursor: "pointer" }}
-          >
+        <Breadcrumb>
+          <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
             {t("Projects")}
           </Breadcrumb.Item>
-          <Breadcrumb.Item active>
-            {getTitle()}
-          </Breadcrumb.Item>
+          <Breadcrumb.Item active>{getTitle()}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
 
-      {/* Required Information Card */}
+      {/* Required Information */}
       <div className="center-row">
         <div className="form-card">
           <h3 className="section-title">{t("Required_Information")}</h3>
 
+          {/* Project Name Field - Editable in new mode, readonly in edit mode */}
           <div className="field-row">
             <div className="field-label-row">
-              <label className="field-label">{t("Project_Name")}</label>
-              {renderLockBadge("project_name")} 
+              <label className="field-label">
+                {t("Project_Name")} <span className="required">*</span>
+              </label>
+              {mode !== "new" && renderLockBadge("project_name")}
             </div>
-            <input
-  type="text"
-  value={projectName}
-  onChange={(e) => {
-    setProjectName(e.target.value);
-    handleFieldEdit("project_name");
-  }}
-  placeholder="Digital Wallet Launch"
-  className={`field-input ${errors?.projectName ? "error" : ""}`}
-  readOnly={isFieldDisabled("project_name")}
-  onFocus={() => handleFieldFocus("project_name")}
-  style={{ opacity: isFieldDisabled("project_name") ? 0.6 : 1 }}
-/>
-
-{errors?.projectName && (
-  <small className="error-text">{errors.projectName}</small>
-)}
-
+            {mode === "new" ? (
+              <>
+                <input
+                  ref={projectNameRef}
+                  type="text"
+                  value={projectName || ""}
+                  onChange={handleProjectNameChange}
+                  placeholder="Enter project name (minimum 3 characters)"
+                  className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`}
+                  readOnly={isReadOnly}
+                  onFocus={() => handleFieldFocus("project_name")}
+                  maxLength={100}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {showErrors && fieldErrors.projectName && (
+                    <small className="error-text">{fieldErrors.projectName}</small>
+                  )}
+                  <small className="text-muted" style={{ marginLeft: 'auto' }}>
+                    {(projectName || '').length}/100 characters
+                  </small>
+                </div>
+              </>
+            ) : (
+              projectName && (
+                <div className="project-name-display-inline">
+                  {projectName}
+                </div>
+              )
+            )}
           </div>
 
           <div className="field-row">
             <div className="field-label-row">
-              <label className="field-label">{t("Project_Description")}</label>
-              {renderLockBadge("project_description")} 
+              <label className="field-label">
+                {t("Project_Description")} <span className="required">*</span>
+              </label>
+              {renderLockBadge("project_description")}
             </div>
             <textarea
-  value={description}
-  onChange={(e) => {
-    setDescription(e.target.value);
-    handleFieldEdit("project_description");
-  }}
-  placeholder="Launch digital wallet product and achieve market penetration"
-  rows={3}
-  className={`field-textarea ${errors?.description ? "error" : ""}`}
-  readOnly={isFieldDisabled("project_description")}
-  onFocus={() => handleFieldFocus("project_description")}
-/>
-
-{errors?.description && (
-  <small className="error-text">{errors.description}</small>
-)}
-
+              ref={descriptionRef}
+              value={description || ""}
+              onChange={handleDescriptionChange}
+              placeholder="Launch digital wallet product and achieve market penetration (minimum 10 characters)"
+              rows={3}
+              className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`}
+              readOnly={isFieldDisabled("project_description")}
+              onFocus={() => handleFieldFocus("project_description")}
+              maxLength={500}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {showErrors && fieldErrors.description && (
+                <small className="error-text">{fieldErrors.description}</small>
+              )}
+              <small className="text-muted" style={{ marginLeft: 'auto' }}>
+                {(description || '').length}/500 characters
+              </small>
+            </div>
           </div>
 
           <div className="field-row">
             <div className="field-label-row">
-              <label className="field-label">{t("Why_This_Matters")}</label>
-              {renderLockBadge("why_this_matters")} 
+              <label className="field-label">
+                {t("Why_This_Matters")} <span className="required">*</span>
+              </label>
+              {renderLockBadge("why_this_matters")}
             </div>
             <textarea
-  value={importance}
-  onChange={(e) => {
-    setImportance(e.target.value);
-    handleFieldEdit("why_this_matters");
-  }}
-  placeholder="Explain why this project is strategically important"
-  rows={3}
-  className={`field-textarea ${errors?.importance ? "error" : ""}`}
-  readOnly={isFieldDisabled("why_this_matters")}
-  onFocus={() => handleFieldFocus("why_this_matters")}
-/>
-
-{errors?.importance && (
-  <small className="error-text">{errors.importance}</small>
-)}
-
+              ref={importanceRef}
+              value={importance || ""}
+              onChange={handleImportanceChange}
+              placeholder="Explain why this project is strategically important to the business (minimum 10 characters)"
+              rows={3}
+              className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`}
+              readOnly={isFieldDisabled("why_this_matters")}
+              onFocus={() => handleFieldFocus("why_this_matters")}
+              maxLength={1000}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {showErrors && fieldErrors.importance && (
+                <small className="error-text">{fieldErrors.importance}</small>
+              )}
+              <small className="text-muted" style={{ marginLeft: 'auto' }}>
+                {(importance || '').length}/1000 characters
+              </small>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Strategic Context Card */}
+      {/* Strategic Context */}
       <div className="center-row">
         <div className="form-card">
           <div className="card-header-between">
@@ -348,63 +552,55 @@ const ProjectForm = ({
           </div>
 
           <div className="grid-3">
-            <div>
-              <SelectField
-                label={t("Impact")}
-                icon={<TrendingUp size={16} />}
-                options={impactOptions}
-                value={selectedImpact}
-                onChange={setSelectedImpact}
-                open={openDropdown === "impact"}
-                setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")}
-                disabled={isFieldDisabled("impact")}
-                fieldName="impact"
-                onFieldFocus={handleFieldFocus}
-                onFieldEdit={handleFieldEdit}
-              />
-            </div>
+            <SelectField
+              label={t("Impact")}
+              icon={<TrendingUp size={16} />}
+              options={impactOptions}
+              value={selectedImpact}
+              onChange={setSelectedImpact}
+              open={openDropdown === "impact"}
+              setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")}
+              disabled={isFieldDisabled("impact")}
+              fieldName="impact"
+              onFieldFocus={handleFieldFocus}
+              onFieldEdit={handleFieldEdit}
+            />
 
-            <div>
-              <SelectField
-                label={t("Effor")}
-                icon={<Zap size={16} />}
-                options={effortOptions}
-                value={selectedEffort}
-                onChange={setSelectedEffort}
-                open={openDropdown === "effort"}
-                setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")}
-                disabled={isFieldDisabled("effort")}
-                fieldName="effort"
-                onFieldFocus={handleFieldFocus}
-                onFieldEdit={handleFieldEdit}
-                
-              />
-            </div>
+            <SelectField
+              label={t("Effort")}
+              icon={<Zap size={16} />}
+              options={effortOptions}
+              value={selectedEffort}
+              onChange={setSelectedEffort}
+              open={openDropdown === "effort"}
+              setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")}
+              disabled={isFieldDisabled("effort")}
+              fieldName="effort"
+              onFieldFocus={handleFieldFocus}
+              onFieldEdit={handleFieldEdit}
+            />
 
-            <div>
-              <SelectField
-                label={t("Risk")}
-                icon={<AlertTriangle size={16} />}
-                options={riskOptions}
-                value={selectedRisk}
-                onChange={setSelectedRisk}
-                open={openDropdown === "risk"}
-                setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")}
-                disabled={isFieldDisabled("risk")}
-                fieldName="risk"
-                onFieldFocus={handleFieldFocus}
-                onFieldEdit={handleFieldEdit}
-              />
-            </div>
+            <SelectField
+              label={t("Risk")}
+              icon={<AlertTriangle size={16} />}
+              options={riskOptions}
+              value={selectedRisk}
+              onChange={setSelectedRisk}
+              open={openDropdown === "risk"}
+              setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")}
+              disabled={isFieldDisabled("risk")}
+              fieldName="risk"
+              onFieldFocus={handleFieldFocus}
+              onFieldEdit={handleFieldEdit}
+            />
           </div>
 
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">{t("Strategic_Theme_Horizon")}</label>
-              {renderLockBadge("theme")} 
+              {renderLockBadge("theme")}
             </div>
             <SelectField
-              label=""
               options={themeOptions}
               value={selectedTheme}
               onChange={setSelectedTheme}
@@ -420,26 +616,25 @@ const ProjectForm = ({
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">{t("Dependencies")}</label>
-              {renderLockBadge("dependencies")} 
+              {renderLockBadge("dependencies")}
             </div>
             <textarea
               placeholder="List dependencies (one per line)"
               rows={3}
               className="field-textarea transparent"
-              value={dependencies}
+              value={dependencies || ""}
               onChange={e => {
                 setDependencies(e.target.value);
                 handleFieldEdit("dependencies");
               }}
               readOnly={isFieldDisabled("dependencies")}
               onFocus={() => handleFieldFocus("dependencies")}
-              style={{ opacity: isFieldDisabled("dependencies") ? 0.6 : 1, cursor: isFieldDisabled("dependencies") ? "not-allowed" : "text" }}
             />
           </div>
         </div>
       </div>
 
-      {/* Detailed Planning Card */}
+      {/* Detailed Planning */}
       <div className="center-row">
         <div className="form-card">
           <div className="card-header-between">
@@ -450,103 +645,98 @@ const ProjectForm = ({
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">{t("High-Level_Requirements")}</label>
-              {renderLockBadge("high_level_requirements")} 
+              {renderLockBadge("high_level_requirements")}
             </div>
             <textarea
               placeholder="What are the main requirements?"
               rows={3}
               className="field-textarea"
-              value={highLevelReq}
+              value={highLevelReq || ""}
               onChange={e => {
                 setHighLevelReq(e.target.value);
                 handleFieldEdit("high_level_requirements");
               }}
               readOnly={isFieldDisabled("high_level_requirements")}
               onFocus={() => handleFieldFocus("high_level_requirements")}
-              style={{ opacity: isFieldDisabled("high_level_requirements") ? 0.6 : 1, cursor: isFieldDisabled("high_level_requirements") ? "not-allowed" : "text" }}
             />
           </div>
 
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">{t("Scope_Definition")}</label>
-              {renderLockBadge("scope_definition")} 
+              {renderLockBadge("scope_definition")}
             </div>
             <textarea
               placeholder="Define the project scope"
               rows={3}
               className="field-textarea"
-              value={scope}
+              value={scope || ""}
               onChange={e => {
                 setScope(e.target.value);
                 handleFieldEdit("scope_definition");
               }}
               readOnly={isFieldDisabled("scope_definition")}
               onFocus={() => handleFieldFocus("scope_definition")}
-              style={{ opacity: isFieldDisabled("scope_definition") ? 0.6 : 1, cursor: isFieldDisabled("scope_definition") ? "not-allowed" : "text" }}
             />
           </div>
 
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">{t("Expected_Outcome")}</label>
-              {renderLockBadge("expected_outcome")} 
+              {renderLockBadge("expected_outcome")}
             </div>
             <textarea
               placeholder="What is the end result?"
               rows={3}
               className="field-textarea"
-              value={outcome}
+              value={outcome || ""}
               onChange={e => {
                 setOutcome(e.target.value);
                 handleFieldEdit("expected_outcome");
               }}
               readOnly={isFieldDisabled("expected_outcome")}
               onFocus={() => handleFieldFocus("expected_outcome")}
-              style={{ opacity: isFieldDisabled("expected_outcome") ? 0.6 : 1, cursor: isFieldDisabled("expected_outcome") ? "not-allowed" : "text" }}
             />
           </div>
 
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">{t("Success_Metrics")}</label>
-              {renderLockBadge("success_metrics")} 
+              {renderLockBadge("success_metrics")}
             </div>
             <textarea
               placeholder="How will you measure success? (one metric per line)"
               rows={3}
               className="field-textarea"
-              value={successMetrics}
+              value={successMetrics || ""}
               onChange={e => {
                 setSuccessMetrics(e.target.value);
                 handleFieldEdit("success_metrics");
               }}
               readOnly={isFieldDisabled("success_metrics")}
               onFocus={() => handleFieldFocus("success_metrics")}
-              style={{ opacity: isFieldDisabled("success_metrics") ? 0.6 : 1, cursor: isFieldDisabled("success_metrics") ? "not-allowed" : "text" }}
             />
           </div>
 
-          <div className="grid-2" style={{ marginTop: 12 }}>
+          <div className="grid-2">
             <div>
               <div className="field-label-row">
                 <label className="field-label">
                   <Clock size={16} /> {t("Estimated_Timeline")}
                 </label>
-                {renderLockBadge("estimated_timeline")} 
+                {renderLockBadge("estimated_timeline")}
               </div>
-              <input 
-                type="text" 
-                placeholder="e.g., 3–6 months" 
-                className="field-input" 
-                value={timeline} 
+              <input
+                type="text"
+                placeholder="e.g., 3–6 months"
+                className="field-input"
+                value={timeline || ""}
                 onChange={e => {
                   setTimeline(e.target.value);
                   handleFieldEdit("estimated_timeline");
                 }}
                 readOnly={isFieldDisabled("estimated_timeline")}
                 onFocus={() => handleFieldFocus("estimated_timeline")}
-                style={{ opacity: isFieldDisabled("estimated_timeline") ? 0.6 : 1, cursor: isFieldDisabled("estimated_timeline") ? "not-allowed" : "text" }}
               />
             </div>
 
@@ -555,21 +745,22 @@ const ProjectForm = ({
                 <label className="field-label">
                   <DollarSign size={16} /> {t("Budget_Estimate")}
                 </label>
-                {renderLockBadge("budget_estimate")} 
+                {renderLockBadge("budget_estimate")}
               </div>
-              <input 
-                type="text" 
-                placeholder="e.g., $50K - $100K" 
-                className="field-input" 
-                value={budget} 
-                onChange={e => {
-                  setBudget(e.target.value);
-                  handleFieldEdit("budget_estimate");
-                }}
+              <input
+                ref={budgetRef}
+                type="text"
+                placeholder="e.g., $50K - $100K"
+                className={`field-input ${showErrors && fieldErrors.budget ? "error" : ""}`}
+                value={budget || ""}
+                onChange={handleBudgetChange}
+                onKeyPress={handleBudgetKeyPress}
                 readOnly={isFieldDisabled("budget_estimate")}
                 onFocus={() => handleFieldFocus("budget_estimate")}
-                style={{ opacity: isFieldDisabled("budget_estimate") ? 0.6 : 1, cursor: isFieldDisabled("budget_estimate") ? "not-allowed" : "text" }}
               />
+              {showErrors && fieldErrors.budget && (
+                <small className="error-text">{fieldErrors.budget}</small>
+              )}
             </div>
           </div>
         </div>
@@ -578,19 +769,10 @@ const ProjectForm = ({
       {/* Actions */}
       {!isReadOnly && (
         <div className="actions-row">
-          <button 
-            type="button" 
-            className="btn-cancel"
-            onClick={onBack}
-          >
+          <button type="button" className="btn-cancel" onClick={onBack}>
             {t("cancel")}
           </button>
-
-          <button 
-            type="button" 
-            className="btn-create" 
-            onClick={onSubmit}
-          >
+          <button type="button" className="btn-create" onClick={handleSubmit}>
             {getSubmitButtonText()}
           </button>
         </div>

@@ -200,51 +200,56 @@ const TeamRankingsView = ({
 
             {/* Consensus Mode Toggle */}
             {isSuperAdmin && (
-              <div className="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded">
-                <strong>Consensus View:</strong>
-                <div className="position-relative" style={{ minWidth: '320px' }}>
-                  <Form.Check
-                    type="switch"
-                    id="consensus-mode-switch"
-                    checked={consensusMode === "collaborator"}
-                    onChange={(e) => {
-                      setConsensusMode(e.target.checked ? "collaborator" : "ai");
+              <div className="mb-3">
+                <div className="d-flex align-items-center gap-3 mb-2">
+                  <strong className="text-muted" style={{ fontSize: '0.875rem' }}>
+                    Consensus View:
+                  </strong>
+                </div>
+                <div 
+                  className="btn-group w-100" 
+                  role="group" 
+                  aria-label="Consensus mode toggle"
+                  style={{ maxWidth: '400px' }}
+                >
+                  <button
+                    type="button"
+                    className={`btn ${consensusMode === "ai" ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => {
+                      setConsensusMode("ai");
                       setExpandedRows(new Set());
                     }}
-                  />
-                  <div
-                    className="position-absolute top-50 translate-middle-y d-flex align-items-center gap-2 pointer-events-none"
                     style={{
-                      left: '25px',
-                      fontSize: '0.9rem',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      zIndex: 1,
-                      opacity: consensusMode === "ai" ? 1 : 0.35,
-                      filter: consensusMode === "ai" ? 'blur(0px)' : 'blur(1px)',
-                      transform: consensusMode === "ai" ? 'scale(1)' : 'scale(0.95)'
+                      transition: 'all 0.3s ease',
+                      fontWeight: consensusMode === "ai" ? '600' : '400',
+                      borderTopLeftRadius: '8px',
+                      borderBottomLeftRadius: '8px',
                     }}
                   >
-                    <span className={consensusMode === "ai" ? "text-dark fw-bold" : "text-muted fw-normal"}>
-                      AI-Based
-                    </span>
-                  </div>
-
-                  <div
-                    className="position-absolute top-50 translate-middle-y d-flex align-items-center gap-2 pointer-events-none"
+                    <div className="d-flex align-items-center justify-content-center gap-2">
+                      <Sparkles size={16} />
+                      <span>AI-Based Consensus</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn ${consensusMode === "collaborator" ? "btn-primary" : "btn-outline-primary"}`}
+                    onClick={() => {
+                      setConsensusMode("collaborator");
+                      setExpandedRows(new Set());
+                    }}
                     style={{
-                      right: '25px',
-                      fontSize: '0.9rem',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      zIndex: 1,
-                      opacity: consensusMode === "collaborator" ? 1 : 0.35,
-                      filter: consensusMode === "collaborator" ? 'blur(0px)' : 'blur(1px)',
-                      transform: consensusMode === "collaborator" ? 'scale(1)' : 'scale(0.95)'
+                      transition: 'all 0.3s ease',
+                      fontWeight: consensusMode === "collaborator" ? '600' : '400',
+                      borderTopRightRadius: '8px',
+                      borderBottomRightRadius: '8px',
                     }}
                   >
-                    <span className={consensusMode === "collaborator" ? "text-dark fw-bold" : "text-muted fw-normal"}>
-                      Collaborator
-                    </span>
-                  </div>
+                    <div className="d-flex align-items-center justify-content-center gap-2">
+                      <Users size={16} />
+                      <span>Team Consensus</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             )}
