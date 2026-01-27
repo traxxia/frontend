@@ -8,8 +8,7 @@ import { useProjectOperations } from "../hooks/useProjectOperations";
 import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
-import { simulateMLRankingAPI } from "../utils/aiRankingGenerator";
-import { saveAIRankings } from "../services/aiRankingService";
+import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
@@ -42,15 +41,21 @@ const ProjectsSection = ({
   const [teamRankings, setTeamRankings] = useState([]);
   const [adminRanks, setAdminRanks] = useState([]);
 
+  // NEW: Business-level status
+  const [businessStatus, setBusinessStatus] = useState("draft");
+
+  // UPDATED: This should reflect if the CURRENT USER has locked their ranking
   const [rankingsLocked, setRankingsLocked] = useState(false);
   const [projectCreationLocked, setProjectCreationLocked] = useState(false);
   const [rankingLockedFirst, setRankingLockedFirst] = useState(false);
   const [finalizeCompleted, setFinalizeCompleted] = useState(false);
   const [launched, setLaunched] = useState(false);
 
+  // UPDATED: Lock summary now includes locked_users array
   const [lockSummary, setLockSummary] = useState({
     locked_users_count: 0,
     total_users: 0,
+    locked_users: [], // NEW: Array of locked user objects
   });
 
   const [showLockToast, setShowLockToast] = useState(false);
@@ -83,8 +88,8 @@ const ProjectsSection = ({
   } = useProjectForm();
 
   const isViewer = userRole === "viewer";
-  const isEditor = userRole === "super_admin" || userRole === "company_admin";
-  const isSuperAdmin = isEditor;
+  const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator";
+  const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
 
   const allCollaboratorsLocked =
     lockSummary.total_users > 0 &&
@@ -94,13 +99,9 @@ const ProjectsSection = ({
 
   const isFinalized =
     rankingsLocked && projectCreationLocked && rankingLockedFirst;
-  const status = launched
-    ? "launched"
-    : finalizeCompleted
-      ? "prioritized"
-      : projectCreationLocked
-        ? "prioritizing"
-        : "draft";
+
+  // UPDATED: Use businessStatus instead of derived status
+  const status = businessStatus;
 
   const isDraft = status === "draft";
   const isPrioritizing = status === "prioritizing";
@@ -208,6 +209,9 @@ const ProjectsSection = ({
         }
       );
 
+      // Update local business status
+      setBusinessStatus(newStatus);
+
       if (onBusinessStatusChange) {
         onBusinessStatusChange(newStatus);
       }
@@ -216,76 +220,97 @@ const ProjectsSection = ({
     }
   };
 
+  // NEW: Helper function to check if current user has locked their ranking
+  const checkIfCurrentUserLocked = (lockedUsers) => {
+    if (!Array.isArray(lockedUsers) || lockedUsers.length === 0) {
+      return false;
+    }
+    return lockedUsers.some(user => user.user_id.toString() === myUserId);
+  };
+
   const loadProjects = useCallback(async () => {
     const result = await fetchProjects();
     if (!result) return;
 
     const fetched = result.projects;
     setProjects(fetched);
-    setLockSummary((prev) => ({
-      locked_users_count:
-        result.lockSummary?.locked_users_count ?? prev.locked_users_count,
-      total_users: result.lockSummary?.total_users ?? prev.total_users,
-    }));
-    const statuses = fetched.map((p) => p.status).filter(Boolean);
 
-    let backendStatus = "draft";
-    if (statuses.includes("launched")) {
-      backendStatus = "launched";
-    } else if (statuses.includes("prioritized")) {
-      backendStatus = "prioritized";
-    } else if (statuses.includes("prioritizing")) {
-      backendStatus = "prioritizing";
+    // UPDATED: Set business status from API response
+    if (result.businessStatus) {
+      setBusinessStatus(result.businessStatus);
     }
+
+    // UPDATED: Set lock summary with locked_users array
+    const lockSummaryData = {
+      locked_users_count: result.lockSummary?.locked_users_count ?? 0,
+      total_users: result.lockSummary?.total_users ?? 0,
+      locked_users: result.lockSummary?.locked_users ?? [],
+    };
+    setLockSummary(lockSummaryData);
+
+    // UPDATED: Check if current user has locked their ranking
+    const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
+    setRankingsLocked(isCurrentUserLocked);
+
+    // UPDATED: Use business status from API instead of deriving from projects
+    const backendStatus = result.businessStatus || "draft";
+
     if (backendStatus === "draft") {
       setProjectCreationLocked(false);
-      setRankingsLocked(false);
       setRankingLockedFirst(false);
       setFinalizeCompleted(false);
       setLaunched(false);
     } else if (backendStatus === "prioritizing") {
       setProjectCreationLocked(true);
-      setRankingsLocked(false);
       setRankingLockedFirst(false);
       setFinalizeCompleted(false);
       setLaunched(false);
     } else if (backendStatus === "prioritized") {
       setProjectCreationLocked(true);
-      setRankingsLocked(true);
-      setRankingLockedFirst(true);
+      setRankingLockedFirst(isCurrentUserLocked);
       setFinalizeCompleted(true);
       setLaunched(false);
     } else if (backendStatus === "launched") {
       setProjectCreationLocked(true);
-      setRankingsLocked(true);
-      setRankingLockedFirst(true);
+      setRankingLockedFirst(isCurrentUserLocked);
       setFinalizeCompleted(true);
       setLaunched(true);
     }
+
     await checkBusinessAccess();
 
     if (backendStatus === "launched") {
-      const launchedProjectIds = fetched
-        .filter((p) => p.status === "launched")
-        .map((p) => p._id);
+      const launchedProjectIds = fetched.map((p) => p._id);
 
       if (launchedProjectIds.length > 0) {
         await checkProjectsAccess(launchedProjectIds);
       }
     }
-  }, [fetchProjects, checkBusinessAccess, checkProjectsAccess]);
+  }, [fetchProjects, checkBusinessAccess, checkProjectsAccess, myUserId]);
 
   const loadTeamRankings = useCallback(async () => {
     const result = await fetchTeamRankings();
     if (!result) return;
 
     setTeamRankings(result.rankings);
-    setLockSummary((prev) => ({
-      locked_users_count:
-        result.lockSummary?.locked_users_count ?? prev.locked_users_count,
-      total_users: result.lockSummary?.total_users ?? prev.total_users,
-    }));
-  }, [fetchTeamRankings]);
+
+    // UPDATED: Set business status from ranking response
+    if (result.businessStatus) {
+      setBusinessStatus(result.businessStatus);
+    }
+
+    // UPDATED: Set lock summary with locked_users array
+    const lockSummaryData = {
+      locked_users_count: result.lockSummary?.locked_users_count ?? 0,
+      total_users: result.lockSummary?.total_users ?? 0,
+      locked_users: result.lockSummary?.locked_users ?? [],
+    };
+    setLockSummary(lockSummaryData);
+
+    // UPDATED: Check if current user has locked their ranking
+    const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
+    setRankingsLocked(isCurrentUserLocked);
+  }, [fetchTeamRankings, myUserId]);
 
   const loadAdminRankings = useCallback(async () => {
     const rankings = await fetchAdminRankings();
@@ -300,17 +325,18 @@ const ProjectsSection = ({
   const handleLockProjectCreation = async () => {
     try {
       if (!projects || projects.length === 0) {
-        alert("No projects available to rank. Please create projects first.");
+        setValidationMessage("No projects available to rank. Please create projects first.");
+        setShowValidationToast(true);
         return;
       }
 
       setIsGeneratingAIRankings(true);
-      const mlResponse = await simulateMLRankingAPI(selectedBusinessId, projects);
+
+      const mlResponse = await callMLRankingAPI(projects);
+
       const saveResponse = await saveAIRankings(
         selectedBusinessId,
-        mlResponse.rankings,
-        mlResponse.model_version,
-        mlResponse.metadata
+        mlResponse.rankings
       );
       setProjectCreationLocked(true);
       setShowAIRankingToast(true);
@@ -325,7 +351,8 @@ const ProjectsSection = ({
 
     } catch (error) {
       console.error("Failed to lock project creation and generate AI rankings:", error);
-      alert("Failed to generate AI rankings. Please try again.");
+      setValidationMessage("Failed to generate AI rankings. Please try again.");
+      setShowValidationToast(true);
       setIsGeneratingAIRankings(false);
     } finally {
       setIsGeneratingAIRankings(false);
@@ -370,6 +397,7 @@ const ProjectsSection = ({
     if (!validation.isValid) {
       setValidationMessage(validation.firstError);
       setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 5000);
       return;
     }
 
@@ -378,18 +406,24 @@ const ProjectsSection = ({
 
     const success = await createProject(payload);
     if (success) {
-      alert("Project created successfully!");
+      setValidationMessage("Project created successfully!");
+      setShowValidationToast(true);
       await unlockAllFieldsSafe();
       await loadProjects();
       handleBackToList();
+      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      alert("Failed to create project.");
+      setValidationMessage("Failed to create project.");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
   const handleSave = async () => {
     if (!canEditProject(currentProject, isEditor, myUserId)) {
-      alert("You are not allowed to edit this project");
+      setValidationMessage("You are not allowed to edit this project");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
       return;
     }
 
@@ -398,17 +432,29 @@ const ProjectsSection = ({
       return;
     }
 
+    const validation = validateForm();
+    if (!validation.isValid) {
+      setValidationMessage(validation.firstError);
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 5000);
+      return;
+    }
+
     const userId = sessionStorage.getItem("userId");
     const payload = getPayload(userId, selectedBusinessId);
 
     const success = await updateProject(currentProject._id, payload);
     if (success) {
-      alert("Project updated successfully!");
+      setValidationMessage("Project updated successfully!");
+      setShowValidationToast(true);
       await unlockAllFieldsSafe();
       await loadProjects();
       handleBackToList();
+      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      alert("Failed to update project.");
+      setValidationMessage("Failed to update project.");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
@@ -417,14 +463,18 @@ const ProjectsSection = ({
 
     const success = await deleteProject(projectId);
     if (success) {
-      alert("Project deleted successfully!");
+      setValidationMessage("Project deleted successfully!");
+      setShowValidationToast(true);
       const updated = projects.filter((p) => p._id !== projectId);
       setProjects(updated);
       if (onProjectCountChange) {
         onProjectCountChange(updated.length);
       }
+      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      alert("Failed to delete project.");
+      setValidationMessage("Failed to delete project.");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
@@ -437,7 +487,9 @@ const ProjectsSection = ({
       refreshTeamRankings();
       setTimeout(() => setShowLockToast(false), 3000);
     } else {
-      alert("Failed to lock ranking");
+      setValidationMessage("Failed to lock ranking");
+      setShowValidationToast(true);
+      setTimeout(() => setShowValidationToast(false), 3000);
     }
   };
 
@@ -490,7 +542,7 @@ const ProjectsSection = ({
   const renderProjectList = () => {
     return (
       <>
-        {isEditor && !isViewer && (
+        {isSuperAdmin && !isViewer && (
           <div className="collaboration-card-wrapper">
             <CollaborationCard
               projectCreationLocked={projectCreationLocked}
@@ -501,11 +553,12 @@ const ProjectsSection = ({
               onLockProjectCreation={handleLockProjectCreation}
               onFinalizePrioritization={handleFinalizePrioritization}
               onLaunchProjects={handleLaunchProjects}
+              isGeneratingAIRankings={isGeneratingAIRankings}
             />
           </div>
         )}
 
-        <PortfolioOverview portfolioData={portfolioData} />
+        {/* <PortfolioOverview portfolioData={portfolioData} /> */}
 
         <ProjectsHeader
           totalProjects={portfolioData.totalProjects}
@@ -526,7 +579,7 @@ const ProjectsSection = ({
           businessId={selectedBusinessId}
           onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
           onRankSaved={refreshTeamRankings}
-          isAdmin={isEditor}
+          isAdmin={isSuperAdmin}
           isRankingLocked={isRankingLocked}
         />
 

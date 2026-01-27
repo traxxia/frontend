@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
 
 export const saveAIRankings = async (businessId, aiRankings, modelVersion, metadata) => {
   const token = sessionStorage.getItem("token");
@@ -84,3 +85,35 @@ export const clearAIRankings = async (businessId) => {
     throw error;
   }
 };
+export const callMLRankingAPI = async (projects) => {
+  try {
+    const projectList = projects.map(project => ({
+      name: project.project_name,
+      id: project._id
+    }));
+
+    const response = await axios.post(
+      `${ML_API_BASE_URL}/rerank`,
+      {
+        projects: projectList
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    return {
+      success: true,
+      rankings: response.data.rankings.map((item, index) => ({
+        project_id: item.id,
+        rank: item.rank,
+        score: parseFloat((1.0 - (item.rank - 1) / projects.length).toFixed(4)),
+        severity: item.severity,
+      }))
+    };
+  } catch (error) {
+    throw new Error('ML ranking service temporarily unavailable');
+  }
+};
+
