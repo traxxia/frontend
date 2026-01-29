@@ -1,6 +1,6 @@
  
 .project-name-display-inline {
-  padding: 14px 16px;   
+  padding: 0px 10px 25px;   
   font-size: 16px;
   font-weight: 700;
   border-radius: 8px;
@@ -50,7 +50,7 @@
   font-size: 18px;
   font-weight: 700;
   color: #1a202c;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -59,8 +59,7 @@
 .card-header-between {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: center; 
 }
 
 .optional-tag {
@@ -75,9 +74,9 @@
 }
 
 /* Field Styling */
-.field-row {
+/* .field-row {
   margin-bottom: 20px;
-}
+} */
 
 .field-label-row {
   display: flex;
@@ -278,7 +277,7 @@
 }
 
 .projects-breadcrumb .breadcrumb-item {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   color: #718096;
 }

@@ -26,28 +26,28 @@
 .open-collab-card {
   background-color: #E8F3FF;
   border-radius: 12px;
-  padding: 10px 15px;
-  margin-bottom: 10px; 
+  padding: 15px 20px;
+  margin-bottom: 10px;
   border: 1px solid #589be9ff;
 }
 
 .open-collab-title {
-  color: #589be9ff;
+  color: rgb(26, 115, 232);
   margin-bottom: 10px;
-  font-size: 21px;
+  font-size: 20px;
 }
 
 .open-collab-text {
   margin: 0;
-  font-size: 16px;
-  color: #589be9ff;
+  font-size: 14px;
+  color: rgb(26, 115, 232);
 }
 
 .open-collab-btn {
   background-color: #ffffff !important;
-  border: 1px solid #589be9ff !important;
+  border: 1px solid rgb(26, 115, 232) !important;
   border-radius: 15px !important;
-  color: #589be9ff !important;
+  color: rgb(26, 115, 232) !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   padding: 6px 14px !important;
@@ -315,13 +315,12 @@
 }
 
 
-.project-creation-locked-card {
-  margin-top: 12px !important;
+.project-creation-locked-card { 
   margin-bottom: 22px;
   /* keep nice spacing below */
-  padding: 28px 32px;
-  background: #fff7cc;
-  border: 1px solid #f5c26b;
+  padding: 15px 20px;
+  background: #E8F3FF;
+  border: 1px solid rgb(26, 115, 232);
   border-radius: 8px;
 }
 
@@ -339,23 +338,23 @@
 }
 
 .project-locked-icon {
-  color: #f59e0b;
+  color: rgb(26, 115, 232);
 }
 
 .project-locked-title {
-  font-weight: 600;
-  color: #f59e0b;
-  font-size: 15px;
+  font-weight: 700;
+  color: rgb(26, 115, 232);
+  font-size: 20px;
 }
 
 .project-locked-meta {
   font-size: 13px;
-  color: #f59e0b;
+  color: rgb(26, 115, 232);
 }
 
 .project-locked-subtitle {
   font-size: 14px;
-  color: #f59e0b;
+  color: rgb(26, 115, 232);
   margin: 0;
 }
 
@@ -837,4 +836,7 @@
 
 .validation-toast-body-success svg {
   color: #28a745;
+}
+.accordion-button{
+  background: #E8F3FF !important;
 }
