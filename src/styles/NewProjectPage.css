@@ -328,9 +328,8 @@
 }
 
 .btn-create {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  background: rgb(26, 115, 232);
+  color: #ffffff; 
 }
 
 .btn-create:hover {

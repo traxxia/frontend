@@ -1,6 +1,6 @@
 /* Wrapper */
 .projects-wrapper {
-  padding: 20px;  
+  padding: 20px;
 }
 
 .validation-toast-wrapper {
@@ -183,18 +183,6 @@
   font-weight: 500;
 }
 
-.btn-rank-projects {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #f59e0b;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 500;
-}
 
 /* --------------------- */
 /* PROJECTS LIST          */
@@ -241,9 +229,9 @@
   font-style: italic;
   font-size: 14px;
   margin-bottom: 16px;
-  border: 1px solid #589be9ff;
+  border: 1px solid rgb(26, 115, 232);
   background-color: #E8F3FF;
-  color: #589be9ff;
+  color: rgb(26, 115, 232);
 }
 
 .project-last-edited {
@@ -267,7 +255,8 @@
   align-items: center;
   gap: 6px;
 
-  background-color: #0f5328;       /* Green (Tailwind green-500) */
+  background-color: #0f5328;
+  /* Green (Tailwind green-500) */
   color: #ffffff;
 
   border: none;
@@ -278,7 +267,8 @@
   font-weight: 600;
 
   cursor: not-allowed;
-  opacity: 1;                      /* Keep strong green even when disabled */
+  opacity: 1;
+  /* Keep strong green even when disabled */
 }
 
 /* Icon color */
@@ -321,13 +311,15 @@
 
 /* Success icon */
 .rankings-toast-body svg {
-  color: #22c55e; /* green check */
+  color: #22c55e;
+  /* green check */
 }
 
 
 .project-creation-locked-card {
   margin-top: 12px !important;
-  margin-bottom: 22px; /* keep nice spacing below */
+  margin-bottom: 22px;
+  /* keep nice spacing below */
   padding: 28px 32px;
   background: #fff7cc;
   border: 1px solid #f5c26b;
@@ -367,6 +359,7 @@
   color: #f59e0b;
   margin: 0;
 }
+
 .project-lock-toast-wrapper {
   position: fixed;
   bottom: 24px;
@@ -383,7 +376,8 @@
 }
 
 .project-lock-toast-body svg {
-  color: #16a34a; /* green check */
+  color: #16a34a;
+  /* green check */
 }
 
 .project-locked-header-row {
@@ -409,7 +403,7 @@
   color: #f59e0b;
 
   border: 1px solid #f5c26b;
-  border-radius: 9999px; 
+  border-radius: 9999px;
 
   padding: 6px 14px;
   font-size: 13px;
@@ -484,6 +478,7 @@
 .projects-header-finalized .projects-count {
   color: #15803d;
 }
+
 .project-card {
   position: relative;
 }
@@ -496,7 +491,7 @@
   width: 32px;
   height: 32px;
 
-  background-color: #16a34a; 
+  background-color: #16a34a;
   color: #e9ecef;
 
   display: flex;
@@ -506,13 +501,15 @@
   font-size: 14px;
   font-weight: 600;
 
-  border-radius: 50%; 
+  border-radius: 50%;
 }
+
 .finalized-view .project-initiative {
-  padding-left: 37px; /* 32px circle + 12px gap */
+  padding-left: 37px;
+  /* 32px circle + 12px gap */
   display: flex;
   align-items: center;
-  min-height: 32px; 
+  min-height: 32px;
 }
 
 .finalize-toast-wrapper {
@@ -534,7 +531,7 @@
 }
 
 .finalize-toast-body svg {
-  color: #22c55e; 
+  color: #22c55e;
 }
 
 .launched-card {
@@ -559,11 +556,11 @@
   width: 100%;
   padding: 12px 0;
 
-  background: #f6fffb !important;   
+  background: #f6fffb !important;
   border: 1px solid #2fbf71 !important;
   border-radius: 10px;
 
-  color: #1f7a4f !important;        
+  color: #1f7a4f !important;
   font-size: 14px;
   font-weight: 500;
 
@@ -589,6 +586,7 @@
   outline: none !important;
   box-shadow: none !important;
 }
+
 /* Launch toast position */
 .launch-toast-wrapper {
   position: fixed;
@@ -616,7 +614,7 @@
 
 /* Icon color */
 .launch-toast-body svg {
-  color: #16a34a; 
+  color: #16a34a;
 }
 
 
@@ -750,8 +748,10 @@
   border-color: #ef4444 !important;
   color: #f87171 !important;
 }
+
 [data-theme="dark"] .portfolio-box h3.fw-bold {
-  color: #ffffff !important;   /* Bright white number */
+  color: #ffffff !important;
+  /* Bright white number */
 }
 
 [data-theme="dark"] .team-rankings-view .accordion-item {
@@ -781,14 +781,14 @@
 }
 
 [data-theme="dark"] .view-details-btn {
-  background: #2a2f3a !important;      
-  border-color: #22c55e !important;   
-  color: #86efac !important;   
+  background: #2a2f3a !important;
+  border-color: #22c55e !important;
+  color: #86efac !important;
 }
 
 [data-theme="dark"] .view-details-btn:hover {
-  background: #14532d !important;     
-  border-color: #16a34a !important; 
+  background: #14532d !important;
+  border-color: #16a34a !important;
 }
 
 [data-theme="dark"] .toast {
@@ -826,3 +826,16 @@
 }
 
 
+.validation-toast-body-success {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+  padding: 1rem;
+}
+
+.validation-toast-body-success svg {
+  color: #28a745;
+}
