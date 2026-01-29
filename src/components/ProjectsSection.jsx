@@ -66,7 +66,7 @@ const ProjectsSection = ({
   const [validationMessage, setValidationMessage] = useState("");
   const [showAIRankingToast, setShowAIRankingToast] = useState(false);
   const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
-  const [validationMessageType, setValidationMessageType] = useState("error"); 
+  const [validationMessageType, setValidationMessageType] = useState("error");
 
   const { locks } = useFieldLockPolling(currentProject?._id);
   const { fetchProjects, deleteProject, createProject, updateProject } =
@@ -421,7 +421,7 @@ const ProjectsSection = ({
   };
 
   const handleSave = async () => {
-    if (!canEditProject(currentProject, isEditor, myUserId)) {
+    if (!canEditProject(currentProject, isEditor, myUserId, businessStatus)) {
       setValidationMessage("You are not allowed to edit this project");
       setValidationMessageType("error"); // Add this
       setShowValidationToast(true);
@@ -530,7 +530,7 @@ const ProjectsSection = ({
         mode={activeView}
         readOnly={
           activeView === "view" ||
-          (currentProject && !canEditProject(currentProject, isEditor, myUserId))
+          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus))
         }
         {...formState}
         {...formSetters}
@@ -613,7 +613,7 @@ const ProjectsSection = ({
           projectCreationLocked={projectCreationLocked}
           isFinalizedView={isFinalizedView}
           canEditProject={(project) =>
-            canEditProject(project, isEditor, myUserId)
+            canEditProject(project, isEditor, myUserId, businessStatus)
           }
           onEdit={(project) => handleEditProject(project, "edit")}
           onView={(project) => handleEditProject(project, "view")}
