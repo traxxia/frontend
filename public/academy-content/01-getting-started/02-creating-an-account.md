@@ -63,7 +63,7 @@ You'll immediately access your dashboard and can start creating businesses!
 
 After your first successful login, you'll see:
 
-![Dashboard showing welcome message and create business button](/academy-screenshots/getting-started/registration-form-filled.png)
+![Dashboard showing welcome message and create business button](/academy-screenshots/getting-started/dashboard.png)
 
 The dashboard will display:
 - **Welcome message** with your name
