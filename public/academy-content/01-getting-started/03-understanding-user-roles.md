@@ -6,24 +6,30 @@ Traxxia uses a role-based access control system to ensure the right people have 
 
 Traxxia supports four distinct user roles, each with specific permissions and responsibilities:
 
-### 1. 🔱Super Admin (Org Admin)
+### 1. 🔱 Super Admin (Org Admin)
 
-The highest level of access in Traxxia. Super Admins have complete control over the entire organization.
+The highest level of organizational oversight in Traxxia. Super Admins have viewing privileges for all organizational data.
 
 **Key Permissions:**
-- Create and manage multiple companies
-- Access all company data across the organization
-- Manage all users across all companies
-- View and modify all businesses
-- Access the Super Admin Panel
-- Configure system-wide settings
+- **View** all businesses in the organization (read-only access)
+- Invite and manage users across the organization
+- Control organization-wide settings
+- Assign roles to users
 - View audit trails and user history
+- Access the Super Admin Panel
+
+**What they cannot do:**
+- Create new businesses
+- Modify or edit business information  
+- Delete businesses
+- Access business questionnaires or analyses
+- Upload financial documents
 
 **Typical Use Case:**  
-Organization owners, IT administrators, or executives who need oversight of the entire Traxxia deployment.
+Organization owners, IT administrators, or executives who need oversight of the entire Traxxia deployment without hands-on business management.
 
 > [!IMPORTANT]
-> Super Admins bypass most permission restrictions. This role should only be assigned to trusted individuals who need full system access.
+> Super Admins have **viewing privileges only** for business data. To create or manage businesses, users need the Org Admin, User, or Collaborator + User roles.
 
 ---
 
@@ -57,23 +63,33 @@ Contributors who work on specific businesses they've been invited to. They have 
 **Key Permissions:**
 - View and edit businesses they're assigned to
 - Answer AI questionnaire questions
-- Create and manage projects
+- Create and manage projects 
 - Participate in strategic planning
 - Rank and prioritize projects
 - Add comments and feedback
 - Upload documents to assigned businesses
 
+**Business Creation:**
+- Collaborators can create businesses **only if they also have the User role**
+- Users can have multiple roles simultaneously (e.g., User + Collaborator)
+- Check your assigned roles in the user menu to confirm business creation privileges
+- Can delete businesses they created (if they have User role)
+
 **Restrictions:**
-- Cannot create new businesses
+- Cannot create businesses with Collaborator role alone
 - Cannot invite other users
 - Cannot access businesses they're not assigned to
-- Cannot delete businesses
+- Cannot delete businesses created by others
 - Cannot access admin features
+- Cannot modify organization settings
 
 **Typical Use Case:**  
 Team members, consultants, analysts, or stakeholders who contribute to specific business initiatives.
 
 ![Collaborator view showing assigned businesses](/academy-screenshots/getting-started/registration-form-filled.png)
+
+> [!NOTE]
+> Business creation requires the **User**, **Org Admin**, or both roles. The Collaborator role alone does not grant business creation privileges. Contact your organization administrator if you need the User role added.
 
 ---
 
@@ -109,14 +125,14 @@ Stakeholders, board members, or external parties who need visibility but shouldn
 
 | Feature | Super Admin | Company Admin | Collaborator | Viewer |
 |---------|-------------|---------------|--------------|--------|
-| **Create Businesses** | ✅ All companies | ✅ Own company | ❌ No | ❌ No |
-| **Edit Businesses** | ✅ All | ✅ Own company | ✅ Assigned only | ❌ No |
-| **Delete Businesses** | ✅ All | ✅ Own company | ❌ No | ❌ No |
+| **Create Businesses** | ❌ No | ✅ Own company | ⚠️ Only with User role | ❌ No |
+| **Edit Businesses** | ❌ No | ✅ Own company | ✅ Assigned only | ❌ No |
+| **Delete Businesses** | ❌ No | ✅ Own company | ⚠️ Own (with User role) | ❌ No |
 | **Invite Users** | ✅ Yes | ✅ Own company | ❌ No | ❌ No |
-| **Answer AI Questions** | ✅ Yes | ✅ Yes | ✅ Assigned only | ❌ No |
-| **Create Projects** | ✅ Yes | ✅ Yes | ✅ Assigned only | ❌ No |
-| **Rank Projects** | ✅ Yes | ✅ Yes | ✅ Assigned only | ❌ No |
-| **Upload Financial Docs** | ✅ Yes | ✅ Yes | ✅ Assigned only | ❌ No |
+| **Answer AI Questions** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
+| **Create Projects** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
+| **Rank Projects** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
+| **Upload Financial Docs** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
 | **View Strategic Analysis** | ✅ All | ✅ Own company | ✅ Assigned only | ✅ Assigned only |
 | **Access Admin Panel** | ✅ Yes | ✅ Limited | ❌ No | ❌ No |
 | **Manage Users** | ✅ All companies | ✅ Own company | ❌ No | ❌ No |
@@ -200,8 +216,11 @@ Company Admins and Super Admins can invite users to specific businesses:
 2. Click "Invite Collaborators"
 3. Enter email addresses
 4. Assign role (Collaborator or Viewer)
-5. Users receive invitation emails
+5. Business appears in invited user's dashboard automatically
 ```
+
+> [!TIP]
+> Invited users will see the business in their dashboard immediately upon login. No email notification is sent, so make sure to inform team members directly when you've added them to a business.
 
 ---
 

@@ -31,41 +31,33 @@ Fill in the required fields:
 | **Password** | Secure password for your account | Minimum 8 characters |
 | **Company Name** | Your organization's name | Optional for individual users |
 
-### 3. Choose Your Account Type
+### 3. Create Your User Account
 
-During registration, you'll be assigned a role based on your organization's setup:
+When you register for Traxxia, you'll create a standard **User** account:
 
-- **Org Admin** - If you're the first user from your organization
-- **User** - Standard account with full business creation privileges
-- **Collaborator** - Invited to work on specific businesses
+- All new registrations create a User role by default
+- Your organization administrator can later upgrade your role if needed
+- Users have full business creation and management privileges
 
-![Account type selection screen](/academy-screenshots/getting-started/registration-form-filled.png)
+![Account registration form filled out](/academy-screenshots/getting-started/registration-form-filled.png)
 
-> [!IMPORTANT]
-> Your email domain may automatically associate you with an existing organization. If this happens, you'll need approval from an organization administrator.
+> [!TIP]
+> Learn more about different user roles and their permissions in [Understanding User Roles](./03-understanding-user-roles.md).
 
-### 4. Verify Your Email
+### 4. Log In to Your Account
 
-After submitting your registration:
+After registration completes successfully, you'll be automatically redirected to the login page:
 
-1. Check your email inbox
-2. Look for a message from Traxxia
-3. Click the verification link
-4. You'll be redirected to the login page
+1. Enter your email address
+2. Enter the password you just created
+3. Click "Sign In"
 
-> [!WARNING]
-> Verification links expire after 24 hours. If your link expires, request a new verification email from the login page.
+![Login page](/academy-screenshots/getting-started/login-page.png)
 
-### 5. Complete Your Profile
+You'll immediately access your dashboard and can start creating businesses!
 
-Once verified, log in and complete your profile:
-
-```
-- Upload a profile picture (optional)
-- Set your language preference (English/LATAM)
-- Configure notification settings
-- Review privacy and security options
-```
+> [!TIP]
+> Bookmark the login page for quick access: `https://yourdomain.traxxia.com/login`
 
 ## First Login Experience
 
@@ -88,10 +80,9 @@ The dashboard will display:
 **"Invalid email format"**
 - Check for typos and ensure you're using a valid email address.
 
-**"Verification email not received"**
-- Check your spam/junk folder
-- Ensure the email address is correct
-- Request a new verification email
+**"Password requirements not met"**
+- Ensure password is at least 8 characters
+- Try including numbers and special characters
 
 > [!NOTE]
 > If you continue experiencing issues, contact your organization administrator or Traxxia support.

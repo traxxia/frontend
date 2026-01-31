@@ -6,9 +6,9 @@ Congratulations on creating your Traxxia account! This guide walks you through y
 
 Your first login experience varies slightly depending on your role:
 
-- **Company Admin/Super Admin**: Dashboard with option to create your first business
-- **Collaborator/Viewer**: Dashboard showing businesses you've been invited to
-- **New Organization**: Setup wizard to configure your company
+- **Org Admin, User, Collaborator (with User role)**: Dashboard with option to create your first business
+- **Super Admin**: Dashboard with view-only access to all businesses
+- **Collaborator (without User role), Viewer**: Dashboard showing businesses you've been invited to
 
 ---
 
@@ -55,7 +55,7 @@ After successful authentication, you'll be redirected to your dashboard.
 
 ### What You'll See:
 
-**For Super Admin/Company Admin:**
+**For Org Admin/User:**
 ```
 ✓ Welcome message with your name
 ✓ "Create New Business" button (prominent)
@@ -66,11 +66,28 @@ After successful authentication, you'll be redirected to your dashboard.
 
 ![Dashboard for new admin user](/academy-screenshots/getting-started/dashboard-orgadmin-first-login.png)
 
-**For Collaborators:**
+**For Super Admin:**
+```
+✓ Welcome message with your name  
+✓ View-only dashboard showing all organization businesses
+✓ Admin and user management features
+✓ NO "Create New Business" button
+✓ User menu in top-right corner
+```
+
+**For Collaborators (with User role):**
 ```
 ✓ Welcome message
+✓ "Create New Business" button
 ✓ List of businesses you're assigned to
-✓ Limited navigation (no admin features)
+✓ Access to assigned business features
+```
+
+**For Collaborators (without User role):**
+```
+✓ Welcome message
+✓ List of businesses you're assigned to  
+✓ Limited navigation (no business creation)
 ✓ Access to assigned business features
 ```
 
@@ -109,54 +126,65 @@ Click your profile icon (top-right) to access:
 - **Admin**: Company management (Company Admins only)
 - **Logout**: End your session
 
+> [!NOTE]
+> Profile update features are planned for a future release. For now, contact your organization administrator if you need to update your account information.
+
 ---
 
 ## Step 6: Set Your Preferences
 
 Before diving in, configure your account:
 
-### 1. Language Preference
+### Language Preference
 
 Traxxia supports multiple languages:
 
-1. Click the **language icon** in the top navigation
-2. Select **English** or **LATAM** (Latin American Spanish)
-3. The interface updates immediately
-
 > [!IMPORTANT]
-> Language preference is saved to your browser session. If you log out, you may need to reselect your preference.
+> The language selector is **only available on the login page**. Choose your preferred language (English or LATAM Spanish) before signing in.
 
-### 2. Profile Information
+**To change language after login:**
+1. Log out of your account
+2. Return to the login page  
+3. Select your preferred language from the selector
+4. Log back in
 
-Update your profile details (when available):
-
-1. Go to **User Menu** → **Profile**
-2. Update your name, phone, etc.
-3. Upload a profile picture
-4. Save changes
+> [!TIP]
+> Your language preference is saved to your browser session and will persist until you log out.
 
 ---
 
 ## Step 7: Understand Your Dashboard
 
-Your dashboard is organized into sections:
+Your dashboard is organized by business status:
 
-### My Businesses
+### Business Organization
 
-Shows businesses you own or created:
-- **Green card background**: Business without projects (analysis phase)
-- **Blue card background**: Business with projects (execution phase)
-- **Progress indicator**: Shows AI questionnaire completion
-- **Status badges**: Current phase and progress
+Businesses are divided into two accordion sections:
+
+1. **Businesses Without Projects**
+   - Businesses still in strategic analysis phase
+   - Expand accordion to view all businesses in this category
+   - Focus on completing questionnaires and reviewing analyses
+   - Progress bars show AI questionnaire completion
+
+2. **Businesses in Project Phase**
+   - Businesses with created strategic projects
+   - Expand accordion to view all businesses in this category
+   - Focus on project prioritization and execution
+   - Project count shown for each business
 
 ![Business cards showing different statuses](/academy-screenshots/getting-started/dashboard-business-list.png)
 
-### Collaborating Businesses
+> [!TIP]
+> Click the accordion headers to expand/collapse each section. This keeps your dashboard organized as your business portfolio grows.
 
-Businesses you've been invited to work on:
-- Same visual indicators as "My Businesses"
-- Shows owner information
-- Limited actions (cannot delete)
+### Business Card Information
+
+Each business card displays:
+- **Business name and description**
+- **Progress indicator**: Shows AI questionnaire completion percentage
+- **Status badges**: Current phase (Prioritizing, Prioritized, etc.)
+- **Quick action buttons**: Open, edit, or delete (based on permissions)
 
 ### Quick Actions
 
@@ -169,9 +197,9 @@ Depending on your role:
 
 ## Common First-Login Tasks
 
-### Task 1: Create Your First Business (Admins)
+### Task 1: Create Your First Business
 
-If you're a Company Admin or Super Admin:
+If you have business creation privileges (Org Admin, User, or Collaborator with User role):
 
 1. Click **"Create New Business"** on the dashboard
 2. Fill in required information:
@@ -184,6 +212,9 @@ If you're a Company Admin or Super Admin:
 
 > [!TIP]
 > See our guide on [Creating Your First Business](../02-businesses/01-creating-your-first-business.md) for detailed instructions.
+
+> [!NOTE]
+> Super Admins do not have the "Create New Business" button as they have view-only access to business data.
 
 ### Task 2: Review Invited Businesses (Collaborators)
 

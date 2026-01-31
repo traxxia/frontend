@@ -88,15 +88,9 @@ Created: [Date created]
 
 ![Business card action buttons](/academy-screenshots/getting-started/registration-form-filled.png)
 
-### Card Color Coding
+### Business Organization
 
-| Background Color | Meaning | Phase |
-|------------------|---------|-------|
-| **Light Green** | Analysis phase | No projects yet, focus on strategic analysis |
-| **Light Blue** | Execution phase | Has projects, focus on implementation |
-
-> [!IMPORTANT]
-> Once you create projects for a business, the card changes from green to blue, indicating the shift from planning to execution.
+See the accordion-based organization in [First Login Experience](./04-first-login-experience.md#step-7-understand-your-dashboard) for details on how businesses are grouped and displayed.
 
 ---
 
@@ -118,7 +112,10 @@ Shows **businesses you've been invited to** by others.
 
 **Location**:  At the top of the "My Businesses" section
 
-**Availability**: Company Admin and Super Admin only
+**Availability**: Org Admin, User, and Collaborator (with User role)
+
+> [!NOTE]
+> Super Admins have view-only access and cannot create businesses. Viewers do not have creation privileges.
 
 **What It Does**:
 1. Opens a modal dialog
@@ -244,11 +241,11 @@ Progress % = (Answered Questions / Total Questions) × 100
 
 ### Super Admin
 ```
-✅ View all businesses (all companies)
-✅ Create businesses
-✅ Delete any business
-✅ Manage all users
+✅ View all businesses (read-only)
+✅ Invite and manage users
 ✅ Access Super Admin Panel
+❌ Cannot create businesses
+❌ Cannot modify business data
 ```
 
 ### Company Admin (Org Admin)
