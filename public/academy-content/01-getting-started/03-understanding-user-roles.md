@@ -6,7 +6,7 @@ Traxxia uses a role-based access control system to ensure the right people have 
 
 Traxxia supports four distinct user roles, each with specific permissions and responsibilities:
 
-### 1. 🔱 Super Admin (Org Admin)
+### 1. 🔱 Super Admin (Super Admin)
 
 The highest level of organizational oversight in Traxxia. Super Admins have viewing privileges for all organizational data.
 
@@ -76,7 +76,6 @@ Contributors who work on specific businesses they've been invited to. They have 
 - Can delete businesses they created (if they have User role)
 
 **Restrictions:**
-- Cannot create businesses with Collaborator role alone
 - Cannot invite other users
 - Cannot access businesses they're not assigned to
 - Cannot delete businesses created by others
@@ -116,6 +115,23 @@ Read-only access to assigned businesses. Viewers can see information but cannot 
 **Typical Use Case:**  
 Stakeholders, board members, or external parties who need visibility but shouldn't modify data.
 
+---
+
+### 5. 🧑‍💻 User
+
+Members of the organization. who can be promoted to any of the following roles.
+
+**Key Permissions:**
+- Can create and delete businesses
+- Have access to answer and analysis 
+- Can download analysis
+
+**Restrictions:**
+- cannot acccess or view other's business
+- cannot Kickstart the business to project phase
+- cannot access admin panel
+
+
 > [!NOTE]
 > Viewers will see a message indicating they have read-only access when attempting to perform restricted actions.
 
@@ -123,19 +139,19 @@ Stakeholders, board members, or external parties who need visibility but shouldn
 
 ## Role Comparison Matrix
 
-| Feature | Super Admin | Company Admin | Collaborator | Viewer |
-|---------|-------------|---------------|--------------|--------|
-| **Create Businesses** | ❌ No | ✅ Own company | ⚠️ Only with User role | ❌ No |
-| **Edit Businesses** | ❌ No | ✅ Own company | ✅ Assigned only | ❌ No |
-| **Delete Businesses** | ❌ No | ✅ Own company | ⚠️ Own (with User role) | ❌ No |
-| **Invite Users** | ✅ Yes | ✅ Own company | ❌ No | ❌ No |
-| **Answer AI Questions** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
-| **Create Projects** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
-| **Rank Projects** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
-| **Upload Financial Docs** | ❌ No | ✅ Yes | ✅ Assigned only | ❌ No |
-| **View Strategic Analysis** | ✅ All | ✅ Own company | ✅ Assigned only | ✅ Assigned only |
-| **Access Admin Panel** | ✅ Yes | ✅ Limited | ❌ No | ❌ No |
-| **Manage Users** | ✅ All companies | ✅ Own company | ❌ No | ❌ No |
+| Feature | Super Admin | Company Admin | Collaborator | Viewer | User |
+|---------|-------------|---------------|--------------|--------|------|
+| **Create Businesses** | ❌ No | ✅ Own company | ✅ Yes  | ❌ No | ✅ Yes |
+| **Edit Businesses** | ❌ No | ✅ Own company | ✅ Assigned only & ✅ Created | ❌ No | ✅ Yes |
+| **Delete Businesses** | ❌ No | ✅ Own company | ⚠️ Own (with User role) | ❌ No | ✅ Yes |
+| **Invite Users** | ✅ Yes | ✅ Own company | ❌ No | ❌ No | ❌ No | ❌ No |
+| **Answer AI Questions** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ✅ Yes |
+| **Create Projects** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ❌ No |
+| **Rank Projects** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ❌ No |
+| **Upload Financial Docs** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ✅ Yes |
+| **View Strategic Analysis** | ✅ All | ✅ Own company | ✅ Assigned only & ✅ Created | ✅ Assigned only | ✅ yes |
+| **Access Admin Panel** | ✅ Yes | ✅ Limited | ❌ No | ❌ No | ❌ No |
+| **Manage Users** | ✅ All companies | ✅ Own company | ❌ No | ❌ No | ❌ No |
 
 ---
 
