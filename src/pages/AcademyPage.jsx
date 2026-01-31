@@ -68,6 +68,41 @@ const AcademyPage = () => {
         loadArticle();
     }, [category, article]);
 
+    // Handle internal link clicks to use React Router instead of page reload
+    useEffect(() => {
+        const handleLinkClick = (e) => {
+            const target = e.target.closest('a');
+            if (!target) return;
+
+            const href = target.getAttribute('href');
+
+            // Check if it's an internal academy link
+            if (href && href.startsWith('/academy/')) {
+                e.preventDefault();
+
+                // Extract category and article from href
+                const pathParts = href.replace('/academy/', '').split('/');
+
+                if (pathParts.length === 2) {
+                    // Has category: /academy/category/article
+                    window.location.href = href; // Use window.location for now
+                } else if (pathParts.length === 1) {
+                    // No category - need to find it using findArticleById
+                    const articleData = findArticleById(pathParts[0]);
+                    if (articleData && articleData.categoryId) {
+                        window.location.href = `/academy/${articleData.categoryId}/${pathParts[0]}`;
+                    }
+                }
+            }
+        };
+
+        const contentDiv = document.querySelector('.academy-markdown-content');
+        if (contentDiv) {
+            contentDiv.addEventListener('click', handleLinkClick);
+            return () => contentDiv.removeEventListener('click', handleLinkClick);
+        }
+    }, [content]); // Re-attach when content changes
+
     const breadcrumbs = getBreadcrumbs(category, article);
 
     const renderWelcomePage = () => {

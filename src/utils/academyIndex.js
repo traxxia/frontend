@@ -66,6 +66,33 @@ export const academyStructure = {
                     roles: ["all"],
                     tags: ["beginner", "navigation"],
                     relatedArticles: ["dashboard-overview"]
+                },
+                {
+                    id: "changing-language-settings",
+                    title: "Changing Language Settings",
+                    path: "01-getting-started/07-changing-language-settings.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["settings", "localization"],
+                    relatedArticles: ["updating-your-profile", "dashboard-overview"]
+                },
+                {
+                    id: "updating-your-profile",
+                    title: "Updating Your Profile",
+                    path: "01-getting-started/08-updating-your-profile.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["profile", "settings"],
+                    relatedArticles: ["changing-language-settings", "help-and-support"]
+                },
+                {
+                    id: "help-and-support",
+                    title: "Help & Support Resources",
+                    path: "01-getting-started/09-help-and-support-resources.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["support", "reference"],
+                    relatedArticles: ["updating-your-profile", "what-is-traxxia"]
                 }
             ]
         },
@@ -92,6 +119,24 @@ export const academyStructure = {
                     roles: ["orgadmin", "user"],
                     tags: ["business", "howto"],
                     relatedArticles: ["what-is-a-business-profile", "ai-assistant-overview"]
+                },
+                {
+                    id: "editing-business-information",
+                    title: "Editing Business Information",
+                    path: "02-businesses/06-editing-business-information.md",
+                    phase: 3,
+                    roles: ["orgadmin", "user"],
+                    tags: ["business", "howto"],
+                    relatedArticles: ["business-statuses-explained", "creating-your-first-business"]
+                },
+                {
+                    id: "business-statuses-explained",
+                    title: "Business Statuses Explained",
+                    path: "02-businesses/08-business-statuses-explained.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["business", "concepts"],
+                    relatedArticles: ["creating-your-first-business", "tracking-your-progress"]
                 }
             ]
         },
@@ -127,6 +172,15 @@ export const academyStructure = {
                     roles: ["orgadmin", "user", "collaborator"],
                     tags: ["ai", "concepts"],
                     relatedArticles: ["ai-assistant-overview", "strategic-analysis-overview"]
+                },
+                {
+                    id: "tracking-your-progress",
+                    title: "Tracking Your Progress",
+                    path: "03-questionnaire/04-tracking-your-progress.md",
+                    phase: 3,
+                    roles: ["orgadmin", "user", "collaborator"],
+                    tags: ["ai", "progress"],
+                    relatedArticles: ["question-phases-in-depth", "business-statuses-explained"]
                 }
             ]
         },
@@ -153,6 +207,15 @@ export const academyStructure = {
                     roles: ["all"],
                     tags: ["strategy", "swot", "howto"],
                     relatedArticles: ["strategic-analysis-overview"]
+                },
+                {
+                    id: "porters-five-forces",
+                    title: "Porter's Five Forces Analysis",
+                    path: "04-strategic-analysis/04-porters-five-forces.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["strategy", "competitive", "framework"],
+                    relatedArticles: ["strategic-analysis-overview", "using-swot-analysis"]
                 }
             ]
         },
@@ -188,6 +251,15 @@ export const academyStructure = {
                     roles: ["all"],
                     tags: ["financial", "reference"],
                     relatedArticles: ["uploading-financial-documents"]
+                },
+                {
+                    id: "understanding-financial-reports",
+                    title: "Understanding Financial Reports",
+                    path: "05-financial-analysis/04-understanding-financial-reports.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["financial", "reports", "analysis"],
+                    relatedArticles: ["uploading-financial-documents", "financial-analysis-overview"]
                 }
             ]
         },

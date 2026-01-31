@@ -93,6 +93,83 @@ const MarkdownRenderer = ({ content, articleId }) => {
             return `<blockquote>${quote}</blockquote>`;
         };
 
+        // Custom renderer for links to convert .md paths to React Router paths
+        renderer.link = function (href, title, text) {
+            // Check if this is a markdown file link
+            if (href && href.endsWith('.md')) {
+                // Convert relative markdown paths to React Router paths
+                // Examples:
+                // ./02-creating-an-account.md -> /academy/getting-started/creating-an-account
+                // ../03-questionnaire/01-ai-assistant-overview.md -> /academy/questionnaire/ai-assistant-overview
+
+                let routerPath = href;
+
+                // Remove .md extension
+                routerPath = routerPath.replace(/\.md$/, '');
+
+                // Handle relative paths
+                if (routerPath.startsWith('./')) {
+                    // Same directory - remove ./ and extract filename
+                    routerPath = routerPath.substring(2);
+                } else if (routerPath.startsWith('../')) {
+                    // Parent directory - keep for category extraction
+                    routerPath = routerPath.substring(3);
+                }
+
+                // Extract category and article from path
+                // Format: "category/##-article-name" -> category/article-name
+                const parts = routerPath.split('/');
+                let category, articleId;
+
+                if (parts.length === 2) {
+                    // Cross-category link: category/file
+                    category = parts[0];
+                    articleId = parts[1];
+                } else {
+                    // Same category link: just filename
+                    // We need to infer category from current URL
+                    // For now, extract from articleId which is passed to component
+                    articleId = parts[0];
+                    category = null; // Will be set dynamically
+                }
+
+                // Remove number prefix (01-, 02-, etc.) from article ID
+                articleId = articleId.replace(/^\d+-/, '');
+
+                // Map directory names to actual category IDs
+                const categoryMap = {
+                    '01-getting-started': 'getting-started',
+                    '02-businesses': 'businesses',
+                    '03-questionnaire': 'questionnaire',
+                    '04-strategic-analysis': 'strategic-analysis',
+                    '05-financial-analysis': 'financial-analysis',
+                    '06-projects': 'projects',
+                    '07-collaboration': 'collaboration'
+                };
+
+                if (category && categoryMap[category]) {
+                    category = categoryMap[category];
+                }
+
+                // If no category in link, we need to find it from the article ID
+                // This will be handled on the client side via findArticleById
+                const finalHref = category ? `/academy/${category}/${articleId}` : `/academy/${articleId}`;
+
+                const titleAttr = title ? `title="${DOMPurify.sanitize(title)}"` : '';
+                const sanitizedText = DOMPurify.sanitize(text);
+
+                return `<a href="${finalHref}" class="academy-internal-link" ${titleAttr}>${sanitizedText}</a>`;
+            }
+
+            // External links or non-.md links
+            const titleAttr = title ? `title="${DOMPurify.sanitize(title)}"` : '';
+            const sanitizedText = DOMPurify.sanitize(text);
+            const isExternal = href && (href.startsWith('http://') || href.startsWith('https://'));
+            const targetAttr = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
+
+            return `<a href="${href}" ${titleAttr} ${targetAttr} class="academy-link">${sanitizedText}</a>`;
+        };
+
         // Parse markdown
         const rawHTML = marked(content, { renderer });
 
