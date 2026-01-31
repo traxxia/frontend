@@ -83,7 +83,7 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 5. Select role (if you're admin)
 6. Send invitation
 
-![Invite collaborators interface](ALT_TEXT_PLACEHOLDER)
+![Invite collaborators interface](/academy-screenshots/collaboration/add-user-collaborator.png)
 
 ---
 

@@ -11,7 +11,7 @@ The dashboard is organized into four main areas:
 3. **Section Headers**: "My Businesses" and "Collaborating Businesses"
 4. **Action Buttons**: Create business, filters, and more
 
-![Dashboard full view showing all sections](ALT_TEXT_PLACEHOLDER)
+![Dashboard full view showing all sections](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 
@@ -25,7 +25,7 @@ The dashboard is organized into four main areas:
 - **Language Selector**: Switch between English/LATAM
 - **Theme Toggle**: Light/dark mode (coming soon)
 
-![Top navigation bar detail](ALT_TEXT_PLACEHOLDER)
+![Top navigation bar detail](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 
@@ -66,7 +66,7 @@ Each business card displays:
   - Yellow (34-66%): In progress
   - Green (67-100%): Nearly complete
 
-![Business card showing progress indicator](ALT_TEXT_PLACEHOLDER)
+![Business card showing progress indicator](/academy-screenshots/getting-started/registration-form-filled.png)
 
 #### 3. Business Information
 ```
@@ -86,7 +86,7 @@ Created: [Date created]
 - Only available to business owners and adminsibraries
 - Requires confirmation
 
-![Business card action buttons](ALT_TEXT_PLACEHOLDER)
+![Business card action buttons](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### Card Color Coding
 
@@ -110,7 +110,7 @@ Shows **businesses you've been invited to** by others.
 - Same progress and information display
 - Full edit access (unless you're a Viewer)
 
-![Collaborating businesses section](ALT_TEXT_PLACEHOLDER)
+![Collaborating businesses section](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 
@@ -130,7 +130,7 @@ Shows **businesses you've been invited to** by others.
    - Country (optional)
 3. Creates the business and adds it to your dashboard
 
-![Create business modal](ALT_TEXT_PLACEHOLDER)
+![Create business modal](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### Business Name Rules
 
@@ -173,7 +173,7 @@ You haven't been invited to any businesses yet.
 - Wait for an invitation from your administrator
 - Check with your team lead
 
-![Empty state for new users](ALT_TEXT_PLACEHOLDER)
+![Empty state for new users](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 
@@ -296,7 +296,7 @@ Progress % = (Answered Questions / Total Questions) × 100
 > [!CAUTION]
 > Deleting a business cannot be undone. All associated data (questions, analyses, projects) will be permanently deleted.
 
-![Delete confirmation modal](ALT_TEXT_PLACEHOLDER)
+![Delete confirmation modal](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### Filter/Search Businesses (Future)
 

@@ -55,7 +55,7 @@ Project Management connects strategy to execution by:
 - **Priority**: High/Medium/Low
 - **Status**: Not Started/In Progress/Completed
 
-![Create Project form](ALT_TEXT_PLACEHOLDER)
+![Create Project form](/academy-screenshots/projects/project-creation-form.png)
 
 ---
 
@@ -113,7 +113,7 @@ Traxxia provides multiple ranking frameworks:
 4. Score each project on criteria
 5. View prioritized list
 
-![Project ranking interface](ALT_TEXT_PLACEHOLDER)
+![Project ranking interface](/academy-screenshots/projects/project-ranking-interface.png)
 
 ---
 
@@ -186,7 +186,7 @@ Traxxia provides multiple ranking frameworks:
 - Filter by priority
 - Sort by name, date, or rank
 
-![Projects dashboard view](ALT_TEXT_PLACEHOLDER)
+![Projects dashboard view](/academy-screenshots/projects/ai-assisted-ranking.png)
 
 ---
 

@@ -20,7 +20,7 @@ Your first login experience varies slightly depending on your role:
  the future
 3. **Click "Login"** or go directly to the login page
 
-![Traxxia login page](ALT_TEXT_PLACEHOLDER)
+![Traxxia login page](/academy-screenshots/getting-started/login-page.png)
 
 ---
 
@@ -64,7 +64,7 @@ After successful authentication, you'll be redirected to your dashboard.
 ✓ User menu in top-right corner
 ```
 
-![Dashboard for new admin user](ALT_TEXT_PLACEHOLDER)
+![Dashboard for new admin user](/academy-screenshots/getting-started/dashboard-orgadmin-first-login.png)
 
 **For Collaborators:**
 ```
@@ -97,7 +97,7 @@ The menubar at the top provides access to key features:
 | **Language Selector** | Switch between English and LATAM Spanish |
 | **Theme Toggle** | Switch between light and dark mode (coming soon) |
 
-![Top navigation bar showing logo and user menu](ALT_TEXT_PLACEHOLDER)
+![Top navigation bar showing logo and user menu](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### User Menu Options
 
@@ -149,7 +149,7 @@ Shows businesses you own or created:
 - **Progress indicator**: Shows AI questionnaire completion
 - **Status badges**: Current phase and progress
 
-![Business cards showing different statuses](ALT_TEXT_PLACEHOLDER)
+![Business cards showing different statuses](/academy-screenshots/getting-started/dashboard-business-list.png)
 
 ### Collaborating Businesses
 

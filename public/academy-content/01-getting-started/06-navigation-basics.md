@@ -29,7 +29,7 @@ The persistent menu bar at the top provides global navigation:
 - Language selector
 - Traxxia Academy link
 
-![Top menu bar navigation](ALT_TEXT_PLACEHOLDER)
+![Top menu bar navigation](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### 2. User Dropdown Menu
 
@@ -65,7 +65,7 @@ Within a business, use:
 **Method 2: Click Business Name** (if available)
 - Some views allow clicking the business name directly
 
-![Dashboard with business cards](ALT_TEXT_PLACEHOLDER)
+![Dashboard with business cards](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### What Happens When You Open a Business
 
@@ -113,7 +113,7 @@ Once inside a business, you'll see section tabs or links:
 - Activity feed
 - Permissions
 
-![Business section tabs navigation](ALT_TEXT_PLACEHOLDER)
+![Business section tabs navigation](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 
@@ -142,7 +142,7 @@ AI Questionnaire
 - Expandable accordion shows all modules
 - See progress per module
 
-![AI questionnaire navigation showing modules](ALT_TEXT_PLACEHOLDER)
+![AI questionnaire navigation showing modules](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### Saving Progress
 
@@ -164,7 +164,7 @@ Each framework has its own tab:
 - **Positioning Radar**: Visual competitive position
 - **And more**...
 
-![Strategic analysis framework tabs](ALT_TEXT_PLACEHOLDER)
+![Strategic analysis framework tabs](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ### Within Each Framework
 
@@ -199,7 +199,7 @@ The Projects area has several views:
 - Consensus visualization
 - Admin controls
 
-![Projects section navigation](ALT_TEXT_PLACEHOLDER)
+![Projects section navigation](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 
@@ -217,7 +217,7 @@ Dashboard > My Business > AI Questionnaire > Vision Module
 - Last item (current page) is not clickable
 - Breadcrumbs update automatically
 
-![Breadcrumb navigation example](ALT_TEXT_PLACEHOLDER)
+![Breadcrumb navigation example](/academy-screenshots/getting-started/registration-form-filled.png)
 
 > [!TIP]
 > Breadcrumbs are especially useful when you're deep in a workflow and need to quickly return to a higher level.
@@ -265,7 +265,7 @@ Multiple ways to get back to your dashboard:
 - Business Management
 - Collaborator Invitations
 
-![Admin panel navigation](ALT_TEXT_PLACEHOLDER)
+![Admin panel navigation](/academy-screenshots/getting-started/registration-form-filled.png)
 
 ---
 

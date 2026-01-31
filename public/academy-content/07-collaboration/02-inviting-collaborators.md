@@ -52,7 +52,7 @@ If you're a **Super Admin** or **Company Admin**, you can assign roles:
 3. Select "Collaborators" or "Team"
 4. Click "Invite" button
 
-![Invite collaborators button location](ALT_TEXT_PLACEHOLDER)
+![Invite collaborators button location](/academy-screenshots/collaboration/add-user-collaborator.png)
 
 ---
 
@@ -66,7 +66,7 @@ If you're a **Super Admin** or **Company Admin**, you can assign roles:
 - **Role**: Select Viewer, Collaborator, Company Admin
 - **Custom Message**: Personal note explaining why you're inviting them
 
-![Invite collaborator form](ALT_TEXT_PLACEHOLDER)
+![Invite collaborator form](/academy-screenshots/collaboration/add-user-collaborator.png)
 
 ---
 
@@ -106,7 +106,7 @@ Once invitee accepts:
 - They can immediately start contributing
 - Business shows in their "Collaborating Businesses" section
 
-![Collaborator active status](ALT_TEXT_PLACEHOLDER)
+![Collaborator active status](/academy-screenshots/collaboration/collaborators-list.png)
 
 ---
 

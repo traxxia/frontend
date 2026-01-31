@@ -41,7 +41,7 @@ Traxxia provides Excel templates for uploading financial data:
 > [!IMPORTANT]
 > Files must be based on Traxxia templates. The system validates template format before accepting uploads.
 
-![Financial template download interface](ALT_TEXT_PLACEHOLDER)
+![Financial template download interface](/academy-screenshots/financial-analysis/document-upload-interface.png)
 
 ---
 
@@ -64,7 +64,7 @@ After completing Essential questionnaire phase, you'll be prompted to upload fin
 - ✅ Identifies missing or malformed data
 - ❌ Rejects incompatible files
 
-![Financial data upload interface](ALT_TEXT_PLACEHOLDER)
+![Financial data upload interface](/academy-screenshots/financial-analysis/file-upload-prompt.png)
 
 ---
 
@@ -148,7 +148,7 @@ After completing Essential questionnaire phase, you'll be prompted to upload fin
 5. Wait for processing (15-30 seconds)
 6. Review metrics and visualizations
 
-![Financial Analysis generate button](ALT_TEXT_PLACEHOLDER)
+![Financial Analysis generate button](/academy-screenshots/financial-analysis/document-upload-interface.png)
 
 ---
 

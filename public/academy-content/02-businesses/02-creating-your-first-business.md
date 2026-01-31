@@ -25,7 +25,7 @@ Before you begin, ensure you have:
 2. **Navigate to the Dashboard** (click Traxxia logo if elsewhere)
 3. **Locate** the "Create New Business" button (top of "My Businesses" section)
 
-![Dashboard with Create New Business button](ALT_TEXT_PLACEHOLDER)
+![Dashboard with Create New Business button](/academy-screenshots/business-management/create-business-button.png)
 
 ---
 
@@ -33,7 +33,7 @@ Before you begin, ensure you have:
 
 A modal dialog will appear with a form.
 
-![Create Business modal form](ALT_TEXT_PLACEHOLDER)
+![Create Business modal form](/academy-screenshots/business-management/business-creation-modal.png)
 
 ---
 
@@ -123,7 +123,7 @@ Before clicking "Create":
 ✅ **Review** description for completeness  
 ✅ **Verify** location fields if provided
 
-![Completed create business form](ALT_TEXT_PLACEHOLDER)
+![Completed create business form](/academy-screenshots/business-management/business-creation-form.png)
 
 ---
 
@@ -133,7 +133,7 @@ Before clicking "Create":
 2. **Wait** for confirmation (usually instant)
 3. **Success Message** appears: "Business created successfully"
 
-![Success message after business creation](ALT_TEXT_PLACEHOLDER)
+![Success message after business creation](/academy-screenshots/business-management/business-creation-success.png)
 
 ---
 
@@ -145,7 +145,7 @@ Your new business will:
 - ✅ Have a **green background** (Analysis phase)
 - ✅ Display your Business Name, Purpose, and Location
 
-![New business card on dashboard showing 0% progress](ALT_TEXT_PLACEHOLDER)
+![New business card on dashboard showing 0% progress](/academy-screenshots/business-management/business-card-progress.png)
 
 ---
 
@@ -178,7 +178,7 @@ Your new business will:
 - Business appears at the top of your dashboard
 - Click "Open"
 
-![Business card with Open button highlighted](ALT_TEXT_PLACEHOLDER)
+![Business card with Open button highlighted](/academy-screenshots/business-management/delete-confirmation.png)
 
 ---
 
@@ -202,7 +202,7 @@ When you first open your business, you'll see:
 - Edit Business Details
 - Delete Business
 
-![Newly created business overview page](ALT_TEXT_PLACEHOLDER)
+![Newly created business overview page](/academy-screenshots/business-management/delete-confirmation.png)
 
 ---
 

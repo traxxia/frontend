@@ -15,7 +15,7 @@ Before you begin, make sure you have:
 
 Visit the Traxxia registration page. You'll see a clean, professional form ready for your information.
 
-![Registration page showing email, password, and company name fields](ALT_TEXT_PLACEHOLDER)
+![Registration page showing email, password, and company name fields](/academy-screenshots/getting-started/registration-page-full.png)
 
 > [!TIP]
 > Bookmark the Traxxia login page for quick access in the future!
@@ -39,7 +39,7 @@ During registration, you'll be assigned a role based on your organization's setu
 - **User** - Standard account with full business creation privileges
 - **Collaborator** - Invited to work on specific businesses
 
-![Account type selection screen](ALT_TEXT_PLACEHOLDER)
+![Account type selection screen](/academy-screenshots/getting-started/registration-form-filled.png)
 
 > [!IMPORTANT]
 > Your email domain may automatically associate you with an existing organization. If this happens, you'll need approval from an organization administrator.
@@ -71,7 +71,7 @@ Once verified, log in and complete your profile:
 
 After your first successful login, you'll see:
 
-![Dashboard showing welcome message and create business button](ALT_TEXT_PLACEHOLDER)
+![Dashboard showing welcome message and create business button](/academy-screenshots/getting-started/registration-form-filled.png)
 
 The dashboard will display:
 - **Welcome message** with your name

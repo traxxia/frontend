@@ -77,7 +77,7 @@ Each question appears as a chat message from the AI assistant.
 "What are the core products or services that your business offers?"
 ```
 
-![AI asking a question in chat interface](ALT_TEXT_PLACEHOLDER)
+![AI asking a question in chat interface](/academy-screenshots/questionnaire/chat-interface-fresh.png)
 
 ---
 
@@ -108,7 +108,7 @@ After you submit an answer, the AI validates it:
 - You provide additional information
 - Process repeats until answer is complete
 
-![AI follow-up question example](ALT_TEXT_PLACEHOLDER)
+![AI follow-up question example](/academy-screenshots/questionnaire/first-question.png)
 
 ---
 
@@ -169,7 +169,7 @@ After completing Essential questions, Traxxia asks if you want to upload financi
 
 **File Format**: Excel (.xlsx, .xls) only - based on Traxxia templates
 
-![Financial upload option dialog](ALT_TEXT_PLACEHOLDER)
+![Financial upload option dialog](/academy-screenshots/questionnaire/phase-unlock-toast.png)
 
 ---
 
@@ -203,7 +203,7 @@ Circular progress bar shows: `(Answered Questions / Total Questions) × 100%`
 - 🟡 Yellow (34-66%): Making progress
 - 🟢 Green (67-100%): Nearly complete
 
-![Progress indicator showing 45% completion](ALT_TEXT_PLACEHOLDER)
+![Progress indicator showing 45% completion](/academy-screenshots/questionnaire/progress-indicator.png)
 
 ---
 
@@ -248,7 +248,7 @@ Circular progress bar shows: `(Answered Questions / Total Questions) × 100%`
 - Strategic analysis may be less comprehensive
 - Can un-skip by providing an answer later
 
-![Skip button on question](ALT_TEXT_PLACEHOLDER)
+![Skip button on question](/academy-screenshots/questionnaire/phase-unlock-toast.png)
 
 ---
 

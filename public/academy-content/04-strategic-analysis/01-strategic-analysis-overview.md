@@ -31,7 +31,7 @@ Traxxia provides multiple analytical frameworks, each with a specific strategic 
 
 **Best For**: Overall strategic assessment and planning
 
-![SWOT Analysis framework example](ALT_TEXT_PLACEHOLDER)
+![SWOT Analysis framework example](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 ---
 
@@ -48,7 +48,7 @@ Traxxia provides multiple analytical frameworks, each with a specific strategic 
 
 **Best For**: Understanding external forces and long-term planning
 
-![PESTEL Analysis framework example](ALT_TEXT_PLACEHOLDER)
+![PESTEL Analysis framework example](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 ---
 
@@ -64,7 +64,7 @@ Traxxia provides multiple analytical frameworks, each with a specific strategic 
 
 **Best For**: Competitive strategy and market entry decisions
 
-![Porter's Five Forces analysis](ALT_TEXT_PLACEHOLDER)
+![Porter's Five Forces analysis](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 ---
 
@@ -81,7 +81,7 @@ Traxxia provides multiple analytical frameworks, each with a specific strategic 
 
 **Best For**: Quick visual comparison with competitors
 
-![Strategic Positioning Radar chart](ALT_TEXT_PLACEHOLDER)
+![Strategic Positioning Radar chart](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 ---
 
@@ -153,7 +153,7 @@ Review insights, refine answers if needed, regenerate
 3. Wait for AI processing (15-60 seconds)
 4. Review generated insights
 
-![Generate button on SWOT framework card](ALT_TEXT_PLACEHOLDER)
+![Generate button on SWOT framework card](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 > [!IMPORTANT]
 > You must complete the Essential phase of the questionnaire before generating most strategic analyses. Incomplete answers result in limited or generic insights.
@@ -210,7 +210,7 @@ Strategic frameworks are organized by category:
 - Opportunities to pursue
 - Risks to mitigate
 
-![Example strategic analysis output with text and visuals](ALT_TEXT_PLACEHOLDER)
+![Example strategic analysis output with text and visuals](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 ---
 
@@ -246,7 +246,7 @@ Strategic frameworks are organized by category:
 3. Select frameworks to include
 4. Download comprehensive report
 
-![PDF export button for strategic analysis](ALT_TEXT_PLACEHOLDER)
+![PDF export button for strategic analysis](/academy-screenshots/strategic-analysis/capability-heatmap.png)
 
 ---
 

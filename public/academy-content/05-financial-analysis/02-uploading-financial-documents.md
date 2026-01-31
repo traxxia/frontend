@@ -29,7 +29,7 @@ Uploading financial documents enables Traxxia to generate:
 - Balance Sheet
 - Cash Flow Statement
 
-![Template download button](ALT_TEXT_PLACEHOLDER)
+![Template download button](/academy-screenshots/financial-analysis/document-upload-interface.png)
 
 ### 2. Gather Your Data
 
@@ -70,7 +70,7 @@ After completing Essential phase:
 2. Click "Financial Analysis" tab
 3. Click "Upload Financial Document" button
 
-![Upload button location](ALT_TEXT_PLACEHOLDER)
+![Upload button location](/academy-screenshots/financial-analysis/document-upload-interface.png)
 
 ---
 
@@ -100,7 +100,7 @@ After completing Essential phase:
 
 **Success Message**: "✅ File uploaded successfully! Detected as [Template Name]"
 
-![Successful upload confirmation](ALT_TEXT_PLACEHOLDER)
+![Successful upload confirmation](/academy-screenshots/financial-analysis/document-upload-interface.png)
 
 ---
 
