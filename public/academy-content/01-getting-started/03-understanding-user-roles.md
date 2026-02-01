@@ -88,7 +88,7 @@ Team members, consultants, analysts, or stakeholders who contribute to specific 
 ![Collaborator view showing assigned businesses](/academy-content/01-getting-started/images/issue2-collaborator-business.png)
 
 > [!NOTE]
-> Business creation requires the **User**, **Org Admin**, or both roles. The Collaborator role alone does not grant business creation privileges. Contact your organization administrator if you need the User role added.
+> Business creation requires the **User**, **Org Admin**, or **Collaborator** roles. Contact your organization administrator if you need additional permissions.
 
 ---
 
@@ -269,15 +269,7 @@ Company Admins and Super Admins can invite users to specific businesses:
 ### 1. Principle of Least Privilege
 Assign the minimal role necessary for each user's responsibilities. You can always upgrade later if needed.
 
-### 2. Regular Audits
-Super Admins should periodically review user roles and access:
-- Verify roles match current responsibilities
-- Check for unused accounts
-
-### 3. Separation of Duties
-Use Company Admin for departmental autonomy while maintaining organizational oversight.
-
-### 4. Viewer for Sensitive Visibility
+### 2. Viewer for Sensitive Visibility
 When someone needs to see data but shouldn't modify it (compliance, auditing), always use Viewer role.
 
 ---

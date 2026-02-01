@@ -11,7 +11,7 @@ Dashboard (Home)
 └── Business Details
     ├── AI Questionnaire
     ├── Strategic Analysis
-    ├── Financial Analysis
+    ├── Insights 6 C's
     └── Projects
 ```
 

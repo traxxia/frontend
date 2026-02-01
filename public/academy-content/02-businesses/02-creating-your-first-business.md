@@ -178,7 +178,7 @@ Your new business will:
 - Business appears at the top of your dashboard
 - Click "Open"
 
-![Business card with Open button highlighted](/academy-screenshots/business-management/delete-confirmation.png)
+![Fresh questionnaire image](/academy-screenshots/questionnaire/chat-interface-fresh.png)
 
 ---
 

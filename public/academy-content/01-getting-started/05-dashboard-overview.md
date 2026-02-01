@@ -109,7 +109,7 @@ Shows **businesses you've been invited to** by others.
 
 **Location**:  At the top of the "My Businesses" section
 
-**Availability**: Org Admin, User, and Collaborator (with User role)
+**Availability**: Org Admin, User, and Collaborator
 
 > [!NOTE]
 > Super Admins have view-only access and cannot create businesses. Viewers do not have creation privileges.
@@ -411,7 +411,7 @@ The dashboard adapts to mobile devices:
 
 **Possible Causes**:
 - You don't have admin permissions
-- Your account role is Collaborator/Viewer
+- Your account role is Viewer
 - Network connectivity issue
 
 **Solution**:
