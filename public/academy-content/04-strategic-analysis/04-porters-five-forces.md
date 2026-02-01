@@ -27,7 +27,7 @@ Before you can view this analysis:
 ### Navigating to the Analysis
 
 1. Open your business from Dashboard
-2. Click on **"Strategic Analysis"** tab
+2. Click on **"Insight 6 C's"** tab
 3. Select **"Porter's Five Forces"** from the analysis menu
 4. View the comprehensive breakdown
 

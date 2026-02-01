@@ -47,7 +47,7 @@ SWOT Analysis helps you:
 
 ### Steps to Generate:
 1. Open your business
-2. Navigate to "Strategic Analysis" tab
+2. Navigate to **"Insight 6 C's"** tab
 3. Find "SWOT Analysis" card
 4. Click "Generate" button
 5. Wait 15-60 seconds for AI processing

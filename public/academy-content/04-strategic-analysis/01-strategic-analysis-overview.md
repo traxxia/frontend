@@ -144,7 +144,7 @@ Review insights, refine answers if needed, regenerate
 
 ### Access Strategic Analysis:
 1. Open your business
-2. Click "Strategic Analysis" tab
+2. Click **"Insight 6 C's"** tab
 3. Scroll through available frameworks
 
 ### Generate a Framework:
@@ -178,7 +178,6 @@ Strategic frameworks are organized by category:
 
 ### Competition
 - Competitive Landscape
-- Competitive Advantage
 
 ### Capabilities
 - Capability Heatmap
@@ -186,6 +185,14 @@ Strategic frameworks are organized by category:
 
 ### Current Strategy
 - Core vs. Adjacency Analysis
+
+### Cost/Financial
+1. Productivity Metrics
+2. Profitability analysis
+3. Growth tracking
+4. Liquidity metrics
+5. Investment performance
+6. Leverage & Risk
 
 ---
 
@@ -297,7 +304,7 @@ A: Yes, via PDF export or by inviting collaborators to your business who can vie
 
 | Role | Can Generate | Can View | Can Regenerate |
 |------|--------------|----------|----------------|
-| **Super Admin** | ✅ All | ✅ All | ✅ All |
+| **Super Admin** | ❌ No | ✅ All | ❌ No |
 | **Company Admin** | ✅ Company businesses | ✅ Company businesses | ✅ Company businesses |
 | **Collaborator** | ✅ Assigned businesses | ✅ Assigned businesses | ✅ Assigned businesses |
 | **Viewer** | ❌ No | ✅ Assigned businesses | ❌ No |
