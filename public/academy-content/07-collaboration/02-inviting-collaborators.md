@@ -52,53 +52,11 @@ If you're a **Super Admin** or **Company Admin**, you can assign roles:
 3. Select "Collaborators" or "Team"
 4. Click "Invite" button
 
-![Invite collaborators button location](/academy-screenshots/collaboration/add-user-collaborator.png)
+![Step 1 Screenshot Placeholder]()
 
 ---
 
-### Step 2: Enter Invitee Information
-
-**Required Fields**:
-- **Email Address**: Valid email of the person to invite
-- Must be one email at a time (no bulk invites currently)
-
-**Optional Fields** (if you have permission):
-- **Role**: Select Viewer, Collaborator, Company Admin
-- **Custom Message**: Personal note explaining why you're inviting them
-
-![Invite collaborator form](/academy-screenshots/collaboration/add-user-collaborator.png)
-
----
-
-### Step 3: Send Invitation
-
-1. Review information
-2. Click "Send Invitation" button
-3. Confirmation message appears
-
-**What Happens**:
-- Email sent to invitee immediately
-- Invitation recorded in system
-- Status shows as "Pending" until accepted
-
----
-
-### Step 4: Invitee Receives Email
-
-**Email Content**:
-- Notification that they've been invited
-- Business name and your name
-- Link to Traxxia
-- Instructions to log in or create account
-
-**Invitee Actions**:
-1. Click link in email
-2. Log in (or create Traxxia account if new user)
-3. Business automatically appears in their dashboard
-
----
-
-### Step 5: Confirmation
+### Step 2: Confirmation
 
 Once invitee accepts:
 - Their status changes from "Pending" to "Active"
@@ -106,7 +64,7 @@ Once invitee accepts:
 - They can immediately start contributing
 - Business shows in their "Collaborating Businesses" section
 
-![Collaborator active status](/academy-screenshots/collaboration/collaborators-list.png)
+![Step 2 Screenshot Placeholder]()
 
 ---
 
@@ -114,58 +72,29 @@ Once invitee accepts:
 
 ### Viewing Collaborator List:
 
-1. Open business
-2. Navigate to "Collaboration" or settings
-3. View all invited users
-4. See their role, status, and last activity
+You can view and manage all collaborators linked to your business:
+1. Open your business
+2. Go to Admin
+3. Select the User Management tab
+4. View the list of collaborators
+5. Check their role, status, and activity details
 
 **Information Displayed**:
-- Name and email
+- Name
 - Role (Viewer, Collaborator, Admin)
 - Status (Pending, Active)
 - Date invited
-- Last active (optional)
-
----
+- Last active (if available)
 
 ### Resending Invitations:
 
-If someone didn't receive the email:
-1. Find them in collaborators list
-2. Look for "Resend Invitation" button
-3. Click to send another email
+If a collaborator is unable to access the business:
 
-**When to Resend**:
-- Invitee says they didn't get email
-- Email went to spam
-- Invitation expired (if applicable)
-- Original email address was typo
-
----
-
-### Removing Collaborators:
-
-**When to Remove**:
-- Person leaves organization
-- No longer needs access
-- Invited by mistake
-- Role changing (re-invite with new role)
-
-**How to Remove**:
-1. Navigate to collaborators list
-2. Find user to remove
-3. Click "Remove" or trash icon
-4. Confirm removal
-
-**Impact of Removal**:
-✅ Immediate: Loses access to business  
-✅ Business disappears from their dashboard  
-✅ Can no longer view or edit  
-⚠ Their previous contributions remain (answers, projects)  
-⚠ If they own projects, you may need to reassign
-
-> [!WARNING]
-> Removing a collaborator is immediate and cannot be undone. They must be re-invited to regain access.
+**How to Re-send**:
+1. Open User Management
+2. Find the collaborator in the list
+3. Select Resend Access
+4. Save to reissue access
 
 ---
 
@@ -184,30 +113,7 @@ If someone didn't receive the email:
 
 ---
 
-### 2. Set Expectations
 
-When inviting, communicate:
-- **Why** they're being invited (expertise, ownership, review)
-- **What** you need from them (answer X questions, review SWOT, own Y project)
-- **When** you need their input (deadline)
-- **How** to get started (login, navigate to business)
-
-**Example Email**:
-```
-Hi Sarah,
-
-I've invited you to collaborate on our "EMEA Market Entry" business 
-in Traxxia. I need your expertise on the competitive landscape 
-questions (Module 3) and would love your input on the SWOT analysis.
-
-Please log in to Traxxia and you'll see the business in your dashboard. 
-Let's aim to have the questionnaire done by end of week so we can 
-review the analysis together next Monday.
-
-Thanks!
-```
-
----
 
 ### 3. Assign Responsibilities
 
@@ -290,16 +196,7 @@ Thanks!
 
 ## Troubleshooting
 
-### Issue: Invitee Didn't Receive Email
 
-**Solutions**:
-1. Check spam/junk folder
-2. Verify email address is correct
-3. Resend invitation
-4. Try alternative email address
-5. Manually share link (if supported)
-
----
 
 ### Issue: Can't Invite (No Button/Option)
 
@@ -317,27 +214,22 @@ Thanks!
 ### Issue: Wrong Role Assigned
 
 **Solution**:
-1. Remove collaborator
-2. Re-invite with correct role
-3. Or contact admin to change role
-
-> [!NOTE]
-> Exact role change capabilities depend on your permissions and Traxxia version.
+1. Contact admin
+2. Admin must repeat "Inviting Collaborators" steps to change the role
+3. Save changes
 
 ---
 
 ### Issue: Collaborator Can't See Business
 
 **Possible Causes**:
-- Invitation not yet accepted
 - Logged in with different email
 - Browser cache issue
 
 **Solutions**:
-1. Confirm they clicked email link
-2. Verify they're using invited email address
-3. Refresh browser or log out/in
-4. Check "Collaborating Businesses" section of dashboard
+1. Verify they're using invited email address
+2. Refresh browser or log out/in
+3. Check "Collaborating Businesses" section of dashboard
 
 ---
 

@@ -28,8 +28,8 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 
 **Permissions**:
 - Full edit access to business
-- Can invite/remove collaborators
-- Can delete business
+- Can invite collaborators
+- Can delete the business ONLY before moving to the project phase
 - Can manage all projects
 - Can regenerate analyses
 
@@ -44,12 +44,12 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 | Action | Super Admin | Company Admin | Collaborator | Viewer |
 |--------|-------------|---------------|--------------|--------|
 | View business | ✅ | ✅ | ✅ | ✅ |
-| Answer questionnaire | ✅ | ✅ | ✅ | ❌ |
-| Generate analyses | ✅ | ✅ | ✅ | ❌ |
-| Create projects | ✅ | ✅ | ✅ | ❌ |
-| Edit own projects | ✅ | ✅ | ✅ | ❌ |
-| Delete business | ✅ | ✅ | Owner only | ❌ |
-| Invite collaborators | ✅ | ✅ | ❌ | ❌ |
+| Answer questionnaire | ❌ | ✅ | ✅ | ❌ |
+| Generate analyses | ❌ | ✅ | ✅ | ❌ |
+| Create projects | ❌ | ✅ | ✅ | ❌ |
+| Edit own projects | ❌ | ✅ | ✅ | ❌ |
+| Delete business | ❌ | ✅ | Owner only (before project phase) | ❌ |
+| Invite collaborators | ❌ | ✅ | ❌ | ❌ |
 
 ---
 
@@ -76,12 +76,12 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 
 ### How to Invite:
 
-1. Open your business
-2. Click "Collaboration" or settings icon
-3. Click "Invite Collaborators"
-4. Enter email address
-5. Select role (if you're admin)
-6. Send invitation
+1. Login as Company Admin
+2. Open Admin page from dropdown
+3. Click User Management
+4. Click Collaborator
+5. Select person
+6. Assign business and save
 
 ![Invite collaborators interface](/academy-screenshots/collaboration/add-user-collaborator.png)
 
@@ -89,15 +89,13 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 
 ### Invitation Process:
 
-**Step 1**: You send invitation via email
+**Step 1**: Admin gives access to specific business profile
 
-**Step 2**: Invitee receives email notification
+**Step 2**: Collaborator logs in to Traxxia
 
-**Step 3**: They log into Traxxia (or create account)
+**Step 3**: Finds the business shared on the collaboration page
 
-**Step 4**: Business appears in their "Collaborating Businesses" section
-
-**Step 5**: They can immediately start contributing
+**Step 4**: They can immediately start contributing
 
 ---
 
@@ -205,18 +203,6 @@ If team feedback reveals gaps:
 2. Click "Collaboration" tab or settings
 3. See list of invited users
 4. View their roles and status
-
-### Removing Collaborators:
-1. Navigate to collaborators list
-2. Find user to remove
-3. Click "Remove" button
-4. Confirm removal
-
-**Impact of Removal**:
-- Loses access to business immediately
-- Business disappears from their dashboard
-- Their answers and contributions remain
-- Project ownership may need reassignment
 
 ---
 
