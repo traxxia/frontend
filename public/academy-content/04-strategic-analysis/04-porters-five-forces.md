@@ -31,7 +31,7 @@ Before you can view this analysis:
 3. Select **"Porter's Five Forces"** from the analysis menu
 4. View the comprehensive breakdown
 
-![Porter's Five Forces tab in Strategic Analysis](ALT_TEXT_PLACEHOLDER)
+![Porter's Five Forces tab in Strategic Analysis](/academy-screenshots/strategic-analysis/porter.png)
 
 ## Understanding Each Force
 
@@ -60,7 +60,7 @@ Before you can view this analysis:
 - Brand importance score
 - Technology requirements
 
-![Threat of New Entrants visualization](ALT_TEXT_PLACEHOLDER)
+![Threat of New Entrants visualization](/academy-screenshots/strategic-analysis/porter-threat.png)
 
 > [!TIP]
 > If your industry has low entry barriers, focus on building strong customer relationships and brand differentiation!
@@ -89,7 +89,7 @@ Before you can view this analysis:
 - Input uniqueness score
 - Volume leverage analysis
 
-![Supplier Power breakdown](ALT_TEXT_PLACEHOLDER)
+![Supplier Power breakdown](/academy-screenshots/strategic-analysis/porter-bargain.png)
 
 ### 3. Bargaining Power of Buyers
 
@@ -115,7 +115,7 @@ Before you can view this analysis:
 - Price sensitivity score
 - Differentiation strength
 
-![Buyer Power assessment chart](ALT_TEXT_PLACEHOLDER)
+![Buyer Power assessment chart](/academy-screenshots/strategic-analysis/porter-bargain.png)
 
 ###  4. Threat of Substitutes
 
@@ -141,7 +141,7 @@ Before you can view this analysis:
 - Switching ease rating
 - Trend analysis
 
-![Threat of Substitutes comparison](ALT_TEXT_PLACEHOLDER)
+![Threat of Substitutes comparison](/academy-screenshots/strategic-analysis/porter-threat.png)
 
 > [!IMPORTANT]
 > Don't just look at direct competitors—consider entirely different solutions to the same customer problem!
@@ -173,7 +173,7 @@ Before you can view this analysis:
 - Cost structure evaluation
 - Market maturity rating
 
-![Competitive Rivalry intensity gauge](ALT_TEXT_PLACEHOLDER)
+![Competitive Rivalry intensity gauge](/academy-screenshots/strategic-analysis/porter.png)
 
 ## How Traxxia Rates Each Force
 
@@ -211,7 +211,7 @@ Traxxia provides:
 - Opportunities for competitive advantage
 - Risk mitigation approaches
 
-![Strategic insights dashboard](ALT_TEXT_PLACEHOLDER)
+![Strategic insights dashboard](/academy-screenshots/strategic-analysis/porter-strategic.png)
 
 ### Common Patterns
 
@@ -300,7 +300,7 @@ Export Porter's Five Forces for presentations or planning:
 - Strategic recommendations
 - Your questionnaire responses (optional)
 
-![PDF export options dialog](ALT_TEXT_PLACEHOLDER)
+![PDF export options dialog](/academy-screenshots/strategic-analysis/analysis-tab-nav.png)
 
 ## Next Steps
 

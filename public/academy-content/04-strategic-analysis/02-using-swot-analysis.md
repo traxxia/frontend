@@ -53,7 +53,7 @@ SWOT Analysis helps you:
 5. Wait 15-60 seconds for AI processing
 6. Review generated SWOT
 
-![SWOT Analysis card with Generate button](/academy-screenshots/strategic-analysis/capability-heatmap.png)
+![SWOT Analysis card with Generate button](/academy-screenshots/strategic-analysis/full-swot.png)
 
 ---
 
@@ -75,7 +75,7 @@ SWOT Analysis helps you:
 - "Strong brand recognition in target market"
 - "Efficient operations with 40% lower costs than competitors"
 
-![SWOT Strengths section example](/academy-screenshots/strategic-analysis/capability-heatmap.png)
+![SWOT Strengths section example](/academy-screenshots/strategic-analysis/full-swot.png)
 
 ---
 
