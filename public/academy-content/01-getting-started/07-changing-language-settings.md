@@ -22,7 +22,7 @@ Traxxia currently supports:
 5. Choose your preferred language from the dropdown
 6. Click **"Save"** or **"Apply"**
 
-![Language selector in settings menu](ALT_TEXT_PLACEHOLDER)
+![Language selector in settings menu](/academy-screenshots/getting-started/language-selector.png)
 
 > [!TIP]
 > The language change takes effect immediately—no need to log out and back in!

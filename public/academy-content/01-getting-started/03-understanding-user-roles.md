@@ -49,7 +49,7 @@ Full administrative control within their specific company, but cannot access oth
 **Typical Use Case:**  
 Department heads, business unit managers, or company administrators who manage a specific organization within Traxxia.
 
-![Company Admin dashboard showing business management options](/academy-screenshots/getting-started/registration-form-filled.png)
+![Company Admin dashboard showing business management options](/academy-screenshots/getting-started/dashboard-orgadmin-first-login.png)
 
 > [!TIP]
 > Company Admins are sometimes referred to as "org admins" throughout the platform. These terms are interchangeable.
@@ -85,7 +85,7 @@ Contributors who work on specific businesses they've been invited to. They have 
 **Typical Use Case:**  
 Team members, consultants, analysts, or stakeholders who contribute to specific business initiatives.
 
-![Collaborator view showing assigned businesses](/academy-screenshots/getting-started/registration-form-filled.png)
+![Collaborator view showing assigned businesses](/academy-screenshots/getting-started/dashboard-collaborator-first-login.png)
 
 > [!NOTE]
 > Business creation requires the **User**, **Org Admin**, or both roles. The Collaborator role alone does not grant business creation privileges. Contact your organization administrator if you need the User role added.
@@ -164,7 +164,7 @@ You can view your current role in several places:
 2. Your role appears under your name and email
 3. The format shows: "Role: [Your Role]"
 
-![User menu showing role information](/academy-screenshots/getting-started/registration-form-filled.png)
+![User menu showing role information](/academy-screenshots/getting-started/role-indicator.png)
 
 ### 2. Dashboard Header
 Your role may be displayed in the dashboard header, depending on your account type.
@@ -221,7 +221,7 @@ Beyond roles, Traxxia controls access at the **business level**:
   - Cannot delete the business
   - Cannot remove other collaborators
 
-![Business collaborators panel showing owner and invited users](/academy-screenshots/getting-started/registration-form-filled.png)
+![Business collaborators panel showing owner and invited users](/academy-screenshots/getting-started/dashboard-collaborator-first-login.png)
 
 ### Invitation System
 
