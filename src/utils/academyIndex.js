@@ -250,17 +250,9 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["projects", "overview"],
-                    relatedArticles: ["creating-strategic-projects"]
+                    relatedArticles: []
                 },
-                {
-                    id: "creating-strategic-projects",
-                    title: "Creating Strategic Projects",
-                    path: "06-projects/02-creating-strategic-projects.md",
-                    phase: 2,
-                    roles: ["orgadmin", "collaborator"],
-                    tags: ["projects", "howto"],
-                    relatedArticles: ["project-management-overview", "collaboration-overview"]
-                }
+
             ]
         },
         {

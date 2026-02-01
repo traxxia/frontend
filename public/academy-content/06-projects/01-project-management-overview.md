@@ -18,13 +18,13 @@ Project Management connects strategy to execution by:
 
 ### Business Lifecycle:
 
-**Phase 1: Analysis (Green Card)**
+**Phase 1: Analysis (under business accordion)**
 - Complete questionnaire
 - Generate strategic analyses  
 - Upload financial data
 - **No projects yet** - focus on understanding the business
 
-**Phase 2: Projects (Blue Card)**
+**Phase 2: Projects (under project phase accordion)**
 - Create your first project
 - Business card automatically turns blue
 - Focus shifts from analysis to execution
@@ -36,10 +36,10 @@ Project Management connects strategy to execution by:
 
 ## Creating a Project
 
-### Access Projects Tab:
-1. Open your business
-2. Click "Projects" tab
-3. Click "Create New Project" button
+### Two methods to create a project:
+
+**Method 1:** Kickstart project button in strategic tab (first time only).
+**Method 2:** Create new project button in project tab.
 
 ### Project Information:
 
@@ -61,27 +61,22 @@ Project Management connects strategy to execution by:
 
 ## Project Examples
 
-### From SWOT Analysis:
+### From Strategic initiative:
 
-**Strength-Based Project**:
+**Long Term Project**:
 - SWOT Finding: "Strong AI expertise"
 - **Project**: "Launch AI Consulting Service"
 - **Description**: "Develop and market AI strategy consulting targeting mid-market companies"
 
-**Opportunity-Based Project**:
+**Short Term Project**:
 - SWOT Finding: "Competitor X exited mid-market"
 - **Project**: "Mid-Market Expansion Campaign"
 - **Description**: "Sales and marketing push to capture former Competitor X customers"
 
-**Weakness-Mitigation Project**:
+**Immediate Project**:
 - SWOT Finding: "High customer churn (15%)"
 - **Project**: "Customer Success Program"
 - **Description**: "Implement proactive onboarding and support to reduce churn to <8%"
-
-**Threat-Defense Project**:
-- SWOT Finding: "New competitor with $50M funding"
-- **Project**: "Product Feature Parity Initiative"
-- **Description**: "Develop 5 key features to match competitor capabilities within 6 months"
 
 ---
 
@@ -117,56 +112,9 @@ Traxxia provides multiple ranking frameworks:
 
 ---
 
-## Effort vs. Impact Matrix
 
-### Most Common Ranking Model:
 
-**Two Dimensions**:
-- **Effort**: Time, resources, complexity required (Low to High)
-- **Impact**: Expected business value (Low to High)
 
-**Four Quadrants**:
-
-| Impact | Effort: Low | Effort: High |
-|--------|-------------|--------------|
-| **High** | 🌟 **Quick Wins** - Do first! | 💎 **Major Projects** - Plan carefully |
-| **Low** | 🍎 **Fill-Ins** - Do when available | 💸 **Money Pits** - Avoid or reconsider |
-
-**Strategic Approach**:
-1. Start with Quick Wins (high impact, low effort)
-2. Plan Major Projects (high impact, high effort)
-3. Sprinkle in Fill-Ins when bandwidth allows
-4. Avoid or eliminate Money Pits
-
----
-
-## Project Status Tracking
-
-### Status Options:
-
-**Not Started** 🔵
-- Project defined but work hasn't begun
-- Resources not yet allocated
-
-**In Progress** 🟡
-- Actively working on project
-- Team members assigned
-- Milestones being tracked
-
-**Completed** ✅
-- Project finished
-- Deliverables achieved
-- Outcomes documented
-
-**On Hold** ⏸️
-- Paused temporarily
-- Awaiting resources, decisions, or conditions
-
-**Cancelled** ❌
-- No longer pursuing
-- Resources reallocated
-
----
 
 ## Projects Dashboard View
 
@@ -176,15 +124,7 @@ Traxxia provides multiple ranking frameworks:
 - Project name and description
 - Owner
 - Status badge
-- Priority indicator
-- Dates (if set)
 - Quick actions (edit, delete, view)
-
-**Sortable and Filterable**:
-- Filter by status
-- Filter by owner
-- Filter by priority
-- Sort by name, date, or rank
 
 ![Projects dashboard view](/academy-screenshots/projects/ai-assisted-ranking.png)
 
@@ -194,7 +134,7 @@ Traxxia provides multiple ranking frameworks:
 
 ### Project Roles:
 
-**Project Owner**:
+**Org Admin**:
 - Primary person responsible
 - Accountable for delivery
 - Updates status and progress
@@ -204,12 +144,7 @@ Traxxia provides multiple ranking frameworks:
 - Can comment and contribute
 - Cannot edit unless given permissions
 
-### Assigning Ownership:
-1. Select project
-2. Choose owner from dropdown (business collaborators)
-3. Save
 
----
 
 ## Project Best Practices
 
@@ -273,20 +208,7 @@ Focus beats diffusion.
 
 ---
 
-## Exporting Project Lists
 
-### Export Options:
-- **PDF**: Full project portfolio report
-- **Excel**: Spreadsheet with all project data
-- **Print**: Printable project summary
-
-### Use Cases:
-- Board presentations
-- Team meetings
-- Strategic planning sessions
-- Quarterly reviews
-
----
 
 ## Role-Based Access
 
@@ -294,7 +216,6 @@ Focus beats diffusion.
 
 | Role | Create Projects | View Projects | Edit Projects | Delete Projects |
 |------|----------------|---------------|---------------|-----------------|
-| **Super Admin** | ✅ | ✅ | ✅ | ✅ |
 | **Company Admin** | ✅ | ✅ | ✅ | ✅ |
 | **Collaborator** | ✅ | ✅ | ✅ Owner only | ✅ Owner only |
 | **Viewer** | ❌ | ✅ | ❌ | ❌ |
@@ -325,7 +246,7 @@ A: Not currently. Traxxia focuses on strategic project identification and priori
 ### What Changes:
 
 **Visual**:
-- Dashboard card color: Green → Blue
+- Transition happens when the **orgadmin** clicks the kickstart project button in the strategic tab.
 - "Projects" tab becomes primary focus
 
 **Mindset Shift**:
@@ -347,14 +268,14 @@ A: Not currently. Traxxia focuses on strategic project identification and priori
 
 After understanding project management:
 
-1. **[Learn project best practices](./02-creating-strategic-projects.md)** - Detailed project creation guide
-2. **[Review SWOT Analysis](../04-strategic-analysis/02-using-swot-analysis.md)** - Source of project ideas
-3. **[Invite collaborators](../07-collaboration/02-inviting-collaborators.md)** - Build your project team
+
+1. **[Review SWOT Analysis](../04-strategic-analysis/02-using-swot-analysis.md)** - Source of project ideas
+2. **[Invite collaborators](../07-collaboration/02-inviting-collaborators.md)** - Build your project team
 
 ---
 
 **Related Articles:**
-- [Creating Strategic Projects](./02-creating-strategic-projects.md)
+
 - [Using SWOT Analysis](../04-strategic-analysis/02-using-swot-analysis.md)
 - [What is a Business Profile?](../02-businesses/01-what-is-a-business-profile.md)
 - [Inviting Collaborators](../07-collaboration/02-inviting-collaborators.md)
