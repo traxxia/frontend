@@ -126,7 +126,7 @@ Traxxia provides multiple ranking frameworks:
 - Status badge
 - Quick actions (edit, delete, view)
 
-![Projects dashboard view](/academy-screenshots/projects/ai-assisted-ranking.png)
+![Projects dashboard view](/academy-screenshots/projects/project-list-view.png)
 
 ---
 

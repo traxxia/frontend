@@ -51,7 +51,7 @@ Traxxia generates several key reports based on your uploaded financial data:
 4. Select the report you want to view from the sidebar
 5. Review insights and visualizations
 
-![Financial Analysis dashboard showing available reports](ALT_TEXT_PLACEHOLDER)
+![Financial Analysis dashboard showing available reports](/academy-screenshots/financial-analysis/cost-financial.png)
 
 ## Reading the Reports
 
@@ -69,7 +69,7 @@ Traxxia generates several key reports based on your uploaded financial data:
 | **ROA** | Net Income / Total Assets | Asset utilization efficiency | >5% |
 | **ROE** | Net Income / Equity | Return to shareholders | >15% |
 
-![Profitability metrics dashboard with trend charts](ALT_TEXT_PLACEHOLDER)
+![Profitability metrics dashboard with trend charts](/academy-screenshots/financial-analysis/profitability.png)
 
 **Interpretation Tips**:
 - ✅ **Improving margins** → Business becoming more efficient
@@ -92,7 +92,7 @@ Traxxia generates several key reports based on your uploaded financial data:
 | **Expense Growth** | Year-over-year expense changes | Cost control |
 | **CAGR** | Compound Annual Growth Rate | Smoothed multi-year growth |
 
-![Revenue growth chart with year-over-year comparison](ALT_TEXT_PLACEHOLDER)
+![Revenue growth chart with year-over-year comparison](/academy-screenshots/financial-analysis/cost-financial.png)
 
 **What's Good?**:
 - Revenue growing faster than expenses
@@ -119,7 +119,7 @@ Traxxia generates several key reports based on your uploaded financial data:
 | **Cash Conversion** | Days to convert operations to cash | Lower is better | Operating efficiency |
 | **Inventory Turnover** | COGS / Average Inventory | Higher is better | Inventory efficiency |
 
-![Liquidity metrics gauge chart](ALT_TEXT_PLACEHOLDER)
+![Liquidity metrics gauge chart](/academy-screenshots/financial-analysis/cost-financial.png)
 
 **Interpretation**:
 - ✅ **Current Ratio > 1.5** → Can cover short-term debts
@@ -143,7 +143,7 @@ Traxxia generates several key reports based on your uploaded financial data:
 | **Debt-to-Equity** | Total Debt / Total Equity | >2.0 | High |
 | **Interest Coverage** | EBIT / Interest Expense | >3.0 | Comfortable |
 
-![Debt and risk assessment visualization](ALT_TEXT_PLACEHOLDER)
+![Debt and risk assessment visualization](/academy-screenshots/financial-analysis/cost-financial.png)
 
 **Interpretation**:
 - ✅ **Debt-to-Equity < 1.0** → Conservative capital structure
@@ -203,7 +203,7 @@ Based on your financial data, Traxxia provides:
 - Unsustainable debt levels
 - Declining profitability
 
-![Strategic insights panel with recommendations](ALT_TEXT_PLACEHOLDER)
+![Strategic insights panel with recommendations](/academy-screenshots/financial-analysis/cost-financial.png)
 
 ### Industry Benchmarking
 
@@ -277,7 +277,7 @@ Compare your metrics to industry averages:
 4. Choose sections to include
 5. Click **"Download"**
 
-![Export dialog with format options](ALT_TEXT_PLACEHOLDER)
+![Export dialog with format options](/academy-screenshots/financial-analysis/analysis-tab-nav.png)
 
 **PDF includes**:
 - Executive summary

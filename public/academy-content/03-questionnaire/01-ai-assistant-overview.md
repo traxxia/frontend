@@ -169,7 +169,7 @@ After completing Essential questions, Traxxia asks if you want to upload financi
 
 **File Format**: Excel (.xlsx, .xls) only - based on Traxxia templates
 
-![Financial upload option dialog](/academy-screenshots/questionnaire/phase-unlock-toast.png)
+![Financial upload option dialog](/academy-screenshots/financial-analysis/file-upload-prompt.png)
 
 ---
 
@@ -240,7 +240,7 @@ Horizontal progress bar shows: `(Answered Questions / Total Questions) × 100%`
 - Strategic analysis may be less comprehensive
 - Can un-skip by providing an answer later
 
-![Skip button on question](/academy-screenshots/questionnaire/phase-unlock-toast.png)
+![Skip button on question](/academy-screenshots/questionnaire/skipping-questions.png)
 
 ---
 
