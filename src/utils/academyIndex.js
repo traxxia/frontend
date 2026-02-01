@@ -111,24 +111,6 @@ export const academyStructure = {
                     roles: ["orgadmin", "user"],
                     tags: ["business", "howto"],
                     relatedArticles: ["what-is-a-business-profile", "ai-assistant-overview"]
-                },
-                {
-                    id: "editing-business-information",
-                    title: "Editing Business Information",
-                    path: "02-businesses/06-editing-business-information.md",
-                    phase: 3,
-                    roles: ["orgadmin", "user"],
-                    tags: ["business", "howto"],
-                    relatedArticles: ["business-statuses-explained", "creating-your-first-business"]
-                },
-                {
-                    id: "business-statuses-explained",
-                    title: "Business Statuses Explained",
-                    path: "02-businesses/08-business-statuses-explained.md",
-                    phase: 3,
-                    roles: ["all"],
-                    tags: ["business", "concepts"],
-                    relatedArticles: ["creating-your-first-business", "tracking-your-progress"]
                 }
             ]
         },

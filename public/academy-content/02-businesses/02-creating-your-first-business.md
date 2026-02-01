@@ -8,12 +8,10 @@ Creating your first Business Profile in Traxxia is straightforward. This guide w
 
 Before you begin, ensure you have:
 
-✅ **Admin Role**: Company Admin or Super Admin permissions  
-✅ **Logged In**: Active Traxxia session  
-✅ **Business Concept**: Clear idea of what you want to analyze
-
-> [!NOTE]
-> Collaborators and Viewers cannot create businesses. If you don't see the "Create New Business" button, check your [user role](../01-getting-started/03-understanding-user-roles.md).
+- ✅ **Admin Role**: Company Admin or Super Admin permissions
+- ✅ **Collaborator**: Can create businesses if permissions allow
+- ✅ **Logged In**: Active Traxxia session
+- ✅ **Business Concept**: Clear idea of what you want to analyze
 
 ---
 
@@ -140,10 +138,8 @@ Before clicking "Create":
 ### Step 6: Business Appears on Dashboard
 
 Your new business will:
-- ✅ Appear in "My Businesses" section
-- ✅ Show **0% progress** (no questions answered yet)
-- ✅ Have a **green background** (Analysis phase)
-- ✅ Display your Business Name, Purpose, and Location
+- ✅ Appear in "My Businesses" section under the Business Accordion
+- ✅ Display your Business Name and Progress
 
 ![New business card on dashboard showing 0% progress](/academy-screenshots/business-management/business-card-progress.png)
 
@@ -170,12 +166,11 @@ Your new business will:
 
 ### Method 1: From Dashboard
 1. Find your business card
-2. Click the blue **"Open"** button
+2. **Click the card to open**
 3. Business details page loads
 
 ### Method 2: Direct Navigation
 - If modal doesn't auto-close, close it manually
-- Business appears at the top of your dashboard
 - Click "Open"
 
 ![Fresh questionnaire image](/academy-screenshots/questionnaire/chat-interface-fresh.png)
@@ -189,7 +184,6 @@ When you first open your business, you'll see:
 ### Top Section
 - **Business Name** and details
 - **Progress Indicator**: 0%
-- **Status**: Analysis Phase
 
 ### Navigation Tabs
 - AI Questionnaire

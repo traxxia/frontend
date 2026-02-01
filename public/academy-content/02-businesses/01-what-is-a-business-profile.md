@@ -35,7 +35,6 @@ Every Business Profile contains:
 - **Business Purpose**: Why this business exists
 - **Description**: Detailed context
 - **Location**: City and country
-- **Status**: Current phase (active, launched, etc.)
 
 ### 2. Strategic Components
 - **AI Questionnaire**: Comprehensive business questions
@@ -57,7 +56,7 @@ Every Business Profile contains:
 
 ## Types of Business Profiles
 
-Business  Profiles can represent various strategic scenarios:
+Business Profiles can represent various strategic scenarios:
 
 ### 1. New Business Launch
 **Use Case**: You're starting a new company or venture
@@ -118,35 +117,15 @@ Business  Profiles can represent various strategic scenarios:
 
 ## Business Profile Lifecycle
 
-### Phase 1: Creation & Analysis (Green Card)
+### Phase 1: Creation & Analysis
+- **Focus**: Setting up the business structure and analyzing potential
+- **Key Activities**: Answering AI Questionnaire, Strategic Analysis
+- **Dashboard Appearance**: Located under **Businesses** accordion
 
-**Status**: Analysis Phase
-
-**What Happens**:
-1. Create the Business Profile
-2. Complete AI questionnaire
-3. Generate strategic analyses
-4. Upload financial documents
-5. Build comprehensive understanding
-
-**Dashboard Appearance**: Light green background
-
-**Focus**: Learning and analyzing
-
-### Phase 2: Execution (Blue Card)
-
-**Status**: Projects Phase
-
-**What Happens**:
-1. Create strategic projects
-2. Prioritize initiatives
-3. Assign team members
-4. Track implementation
-5. Measure progress
-
-**Dashboard Appearance**: Light blue background
-
-**Focus**: Doing and implementing
+### Phase 2: Execution
+- **Focus**: Implementing the strategy
+- **Key Activities**: Project management, detailed planning
+- **Dashboard Appearance**: Located under **Projects** accordion
 
 > [!IMPORTANT]
 > Creating your first project automatically transitions the business from Analysis to Projects phase. The dashboard card color changes from green to blue.
@@ -170,27 +149,28 @@ Business  Profiles can represent various strategic scenarios:
 The user who created the Business Profile is the **Owner**.
 
 **Owner Permissions**:
-- ✅ Full edit access
-- ✅ Can delete the business
-- ✅ Can invite collaborators
-- ✅ Can remove collaborators
+- ✅ **Can** create new businesses
+- ✅ **Can** edit business details
+- ❌ **Cannot** invite collaborators (Org Admin only)
+- ❌ **Cannot** remove collaborators (Org Admin only)
 - ✅ Can change business details
 
 ### Invited Collaborators
 
 Users invited to work on the business.
+> [!NOTE]
+> Collaborator permissions are based on their assigned role in the business. Super Admins cannot be added to the project phase.
 
 **Collaborator Permissions (based on role)**:
-- Company Admin/Super Admin: Full access
+- Company Admin: Full access
 - Collaborator: Edit access, cannot delete
 - Viewer: Read-only access
 
 **Invitation Process**:
 ```
-1. Owner/Admin invites via email
-2. Invitee receives notification
-3. Business appears in "Collaborating Businesses"
-4. Permissions apply based on role
+1. **Owner/Admin invites** user to the business
+2. **Invitee** sees the business appear in their dashboard
+3. **Collaborator** can access based on permissions
 ```
 
 ---
@@ -204,7 +184,7 @@ Users invited to work on the business.
 **Good Example**: "LATAM Market Entry 2024", "AI Consulting Service Launch", "Manufacturing Efficiency Initiative"
 
 > [!TIP]
-> Use names that clearly communicate what the business is about. You'll thank yourself when you have multiple businesses.
+> Use names that clearly communicate what the business is about. You'll
 
 ### 2. Comprehensive Purpose
 
@@ -239,17 +219,17 @@ Include:
 
 Create a new Business Profile when:
 
-✅ You're starting a new venture or product  
-✅ Entering a new market or geography  
-✅ Launching a major strategic initiative  
-✅ Need separate analysis for a department  
-✅ Different team will own the initiative  
+✅ You're starting a new venture or product
+✅ Entering a new market or geography
+✅ Launching a major strategic initiative
+✅ Need separate analysis for a department
+✅ Different team will own the initiative
 ✅ Requires distinct strategic planning
 
 **Don't create a new profile when:**
 
-❌ It's a minor update to existing business  
-❌ It's a task within a larger project  
+❌ It's a minor update to existing business
+❌ It's a task within a larger project
 ❌ Just need to update business information
 
 ---
@@ -261,16 +241,15 @@ Create a new Business Profile when:
 - Business data belongs to the owner's company
 - Super Admins can access all businesses
 - Company Admins can access company businesses
-- Collaborators see only assigned businesses
+- **Collaborators**: See only businesses they are assigned to or created
 
 ### Data Included
 
 **Stored in Business Profile**:
 - All questionnaire answers
-- Strategic analyses
-- Financial documents
+- Strategic analysis results
+- Financial projections
 - Projects and rankings
-- Team member activity
 
 **Not Stored**:
 - User passwords
@@ -293,35 +272,16 @@ There is no "undo" or recovery option.
 
 ## Managing Multiple Business Profiles
 
-### Organization Strategies
+### Organizing Your Portfolio
 
-If you have many businesses, organize them by:
+Traxxia helps you manage multiple businesses by:
 
-**1. Status/Phase**:
-- Active planning (green cards)
-- In execution (blue cards)
-- Completed/archived
-
-**2. Priority**:
-- High priority (active focus)
-- Medium priority (ongoing)
-- Low priority (future consideration)
-
-**3. Category**:
-- New ventures
-- Expansions
-- Transformations
-- Departmental plans
-
-**4. Timeline**:
-- Q1 2024 initiatives
-- 2024 strategic projects
-- Long-term planning
+1.  **Phase**: Analysis vs. Execution (Accordion separation)
+2.  **Collaboration**: See which businesses define you as a collaborator
 
 ### Workspace Management
 
 **Keep Dashboard Clean**:
-- Archive completed businesses
 - Delete test/demo profiles
 - Use consistent naming conventions
 
@@ -339,7 +299,7 @@ Traxxia tracks several metrics per business:
 | Metric | Description | Shown On |
 |--------|-------------|----------|
 | **Progress %** | Questionnaire completion | Dashboard card |
-| **Phase** | Analysis vs. Projects | Card background color |
+| Phase | Where business is in lifecycle | Accordion group |
 | **Projects Count** | Number of initiatives | Projects tab |
 | **Team Size** | Invited collaborators | Business settings |
 | **Last Updated** | Recent activity timestamp | Business details |
@@ -348,13 +308,13 @@ Traxxia tracks several metrics per business:
 
 ## Common Questions
 
-**Q: How many Business Profiles can I create?**  
-A: There's no hard limit. Create as many as you need for meaningful strategic analysis.
+**Q: How many Business Profiles can I create?**
+**A:** Currently, you can create up to **5 businesses** per user.
 
-**Q: Can I duplicate a Business Profile?**  
+**Q: Can I duplicate a Business Profile?**
 A: Not currently. You must create each business separately. This encourages unique, focused analysis.
 
-**Q: Can I move a business between companies?**  
+**Q: Can I move a business between companies?**
 A: No. Businesses belong to the creating company. Super Admins would need to recreate it.
 
 **Q: What happens if the business owner leaves the organization?**  
