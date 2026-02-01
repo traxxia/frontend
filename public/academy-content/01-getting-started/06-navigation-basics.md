@@ -26,10 +26,9 @@ The persistent menu bar at the top provides global navigation:
 **Always Visible**:
 - Traxxia logo (return to dashboard)
 - User menu (profile, settings, logout)
-- Language selector
 - Traxxia Academy link
 
-![Top menu bar navigation](/academy-screenshots/getting-started/dashboard.png)
+![Top menu bar navigation](/academy-content/01-getting-started/images/usermenu.png)
 
 ### 2. User Dropdown Menu
 
@@ -47,7 +46,6 @@ Click your profile icon (top-right) to access:
 
 Within a business, use:
 - **Tabs** to switch between sections
-- **Breadcrumbs** to track your location
 - **Back buttons** to return to previous views
 - **Sidebar menus** for subsections
 
@@ -65,7 +63,7 @@ Within a business, use:
 **Method 2: Click Business Name** (if available)
 - Some views allow clicking the business name directly
 
-![Dashboard with business cards](/academy-screenshots/getting-started/dashboard.png)
+![Dashboard with business cards](/academy-content/01-getting-started/images/business-list-view.png)
 
 ### What Happens When You Open a Business
 
@@ -73,7 +71,6 @@ You'll land on the **Business Overview** page, which shows:
 - Business details and metadata
 - Current progress status
 - Quick access to all sections
-- Collaborator information
 
 ---
 
@@ -108,12 +105,7 @@ Once inside a business, you'll see section tabs or links:
 - Team rankings
 - Consensus building
 
-### 6. **Collaboration**  (if available)
-- Team members
-- Activity feed
-- Permissions
-
-![Business section tabs navigation](/academy-screenshots/getting-started/dashboard-business-list.png)
+![Business section tabs navigation](/academy-content/01-getting-started/images/business-list-view.png)
 
 ---
 
@@ -133,8 +125,7 @@ AI Questionnaire
 ### Moving Between Questions
 
 **Sequential Navigation**:
-- **Next** button: Advance to next question
-- **Previous** button: Go back one question
+- **Next** button: Saves current answer and moves to next question
 - Progress bar shows your position
 
 **Module Selection**:
@@ -170,7 +161,6 @@ Each framework has its own tab:
 
 Navigate using:
 - **Sections**: Different components of the framework  
-- **Edit/View modes**: Toggle between editing and viewing
 - **Export options**: Download or print analyses
 
 ---
@@ -203,27 +193,6 @@ The Projects area has several views:
 
 ---
 
-## Breadcrumb Navigation
-
-Breadcrumbs show your current location and provide quick navigation back:
-
-### Example:
-```
-Dashboard > My Business > AI Questionnaire > Vision Module
-```
-
-**How to Use**:
-- Click any breadcrumb link to jump to that level
-- Last item (current page) is not clickable
-- Breadcrumbs update automatically
-
-![Breadcrumb navigation example](/academy-screenshots/getting-started/registration-form-filled.png)
-
-> [!TIP]
-> Breadcrumbs are especially useful when you're deep in a workflow and need to quickly return to a higher level.
-
----
-
 ## Returning to Dashboard
 
 Multiple ways to get back to your dashboard:
@@ -237,10 +206,6 @@ Multiple ways to get back to your dashboard:
 - Click profile icon
 - Select "Dashboard"
 - Alternative if logo isn't visible
-
-### Method 3: Breadcrumbs
-- Click "Dashboard" in breadcrumb trail
-- Available when inside a business
 
 ---
 
@@ -263,7 +228,6 @@ Multiple ways to get back to your dashboard:
 **Available Options**:
 - User Management (company-only)
 - Business Management
-- Collaborator Invitations
 
 ![Admin panel navigation](/academy-screenshots/getting-started/dashboard-orgadmin-first-login.png)
 
@@ -322,16 +286,13 @@ Planned search capabilities include:
 ### 1. Use the Logo for Quick Reset
 Clicked too deep into menus? Click the Traxxia logo to instantly return to your dashboard.
 
-### 2. Breadcrumbs Are Your Friend
-Don't rely on the browser's back button. Use breadcrumbs for cleaner, more predictable navigation.
-
-### 3. Right-Click to Open in New Tab
+### 2. Right-Click to Open in New Tab
 Want to compare two sections? Right-click business cards or links and "Open in new tab."
 
-### 4. Bookmark Frequently Used Pages
-If you work primarily in one business, bookmark that URL for direct access.
+### 3. Bookmark Frequently Used Pages
+If you work on the same business daily, bookmark that URL for direct access.
 
-### 5. Use Browser History Wisely
+### 4. Use Browser History Wisely
 Traxxia maintains clean URLs that work with browser history. The back button generally works as expected.
 
 ---
@@ -360,7 +321,7 @@ Traxxia maintains clean URLs that work with browser history. The back button gen
 4. Select "SWOT" framework
 5. Review strengths, weaknesses, etc.
 6. Switch to "PESTEL" tab
-7. Click breadcrumb "Business Name" to return to overview
+7. Click Insight 6's tab to return to analysis
 ```
 
 ### Example 3: Managing Projects
@@ -381,11 +342,11 @@ Traxxia maintains clean URLs that work with browser history. The back button gen
 
 ### Mistake 1: Using Browser Back Button Excessively
 **Problem**: Can lead to unexpected page states  
-**Solution**: Use breadcrumbs and in-app navigation
+**Solution**: Use the **in-app navigation** buttons (Next/Save) or Click on the tab.
 
 ### Mistake 2: Not Realizing You're in a Business
 **Problem**: Trying to access dashboard features while inside a business  
-**Solution**: Check breadcrumbs for your location; click logo to return
+**Solution**: Click logo to return
 
 ### Mistake  3: Losing Track of Changes
 **Problem**: Making edits and navigating away  
@@ -409,9 +370,10 @@ Traxxia maintains clean URLs that work with browser history. The back button gen
 ### Issue: Lost in the Interface
 
 **Solution**:
-1. Check the breadcrumbs to see where you are
-2. Click the Traxxia logo to return to dashboard
-3. Start your workflow again from a known location
+1. Use side navigation
+2. Check the tabs to see where you are
+3. Click the Traxxia logo to return to dashboard
+4. Start your workflow again from a known location
 
 ### Issue: Page Won't Load
 
@@ -477,7 +439,7 @@ If you work on the same business daily, bookmark it directly instead of always g
 | **Manage Projects** | Business → Projects tab |
 | **Invite Users** | Business → Collaboration OR Admin panel |
 | **Access Admin Features** | User Menu → Admin or Super Admin Panel |
-| **Change Language** | Language selector (top navigation) |
+| **Change Language** | Login page only |
 | **View User History** | Super Admin Panel → User History tab |
 
 ---

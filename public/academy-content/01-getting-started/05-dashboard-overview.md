@@ -22,8 +22,8 @@ The dashboard is organized into four main areas:
 
 ### Right Side
 - **User Profile Icon**: Access your account menu
-- **Language Selector**: Switch between English/LATAM
-- **Theme Toggle**: Light/dark mode (coming soon)
+### Right Side
+- **User Profile Icon**: Access your account menu
 
 ![Top navigation bar detail](/academy-screenshots/getting-started/dashboard.png)
 
@@ -56,14 +56,12 @@ Each business card displays:
 
 #### 1. Business Header
 - **Business Name**: Main identifier
-- **Location**: City, Country 
-- **Status Badge**: Current phase (Analysis/Projects)
 
 #### 2. Progress Indicator  
 - **Circular Progress Bar**: Shows AI questionnaire completion (0-100%)
 - **Color-coded**:
-  - Red (0-33%): Getting started
-  - Yellow (34-66%): In progress
+  - Blue (0-33%): Getting started
+  - Orange (34-66%): In progress
   - Green (67-100%): Nearly complete
 
 ![Business card showing progress indicator](/academy-screenshots/business-management/business-actions-menu.png)
@@ -72,7 +70,6 @@ Each business card displays:
 ```
 Purpose: [Business purpose you entered]
 Description: [Brief description]
-Created: [Date created]
 ```
 
 #### 4. Action Buttons
@@ -104,7 +101,7 @@ Shows **businesses you've been invited to** by others.
 - Same progress and information display
 - Full edit access (unless you're a Viewer)
 
-![Collaborating businesses section](/academy-screenshots/getting-started/dashboard-collaborator-first-login.png)
+![Collaborating businesses section](/academy-content/01-getting-started/images/issue2-collaborator-business.png)
 
 ---
 
@@ -193,8 +190,10 @@ Progress % = (Answered Questions / Total Questions) × 100
 
 | Percentage | Color | Status |
 |------------|-------|--------|
-| 0-33% | 🔴 Red | Just started |
-| 34-66% | 🟡 Yellow | Making progress |
+| Percentage | Color | Status |
+|------------|-------|--------|
+| 0-33% | Blue | Just started |
+| 34-66% | 🟡 Orange | Making progress |
 | 67-99% | 🟢 Green | Almost done |
 | 100% | ✅ Green | Complete |
 
@@ -261,8 +260,8 @@ Progress % = (Answered Questions / Total Questions) × 100
 ```
 ✅ View assigned businesses
 ✅ Open and edit assigned businesses
-❌ Cannot create businesses
-❌ Cannot delete businesses
+✅ Cannot create businesses
+✅ Cannot delete businesses they created
 ❌ Cannot access admin features
 ```
 
@@ -297,7 +296,9 @@ Progress % = (Answered Questions / Total Questions) × 100
 
 ### Filter/Search Businesses (Future)
 
-Currently, businesses are displayed in creation order. Filtering and search features are planned for future releases.
+### Filter/Search Businesses (Future)
+
+Currently, businesses are displayed in creation order. Search features are planned for future releases.
 
 ---
 

@@ -74,17 +74,9 @@ export const academyStructure = {
                     phase: 3,
                     roles: ["all"],
                     tags: ["settings", "localization"],
-                    relatedArticles: ["updating-your-profile", "dashboard-overview"]
+                    relatedArticles: ["dashboard-overview"]
                 },
-                {
-                    id: "updating-your-profile",
-                    title: "Updating Your Profile",
-                    path: "01-getting-started/08-updating-your-profile.md",
-                    phase: 3,
-                    roles: ["all"],
-                    tags: ["profile", "settings"],
-                    relatedArticles: ["changing-language-settings", "help-and-support"]
-                },
+
                 {
                     id: "help-and-support",
                     title: "Help & Support Resources",
@@ -92,7 +84,7 @@ export const academyStructure = {
                     phase: 3,
                     roles: ["all"],
                     tags: ["support", "reference"],
-                    relatedArticles: ["updating-your-profile", "what-is-traxxia"]
+                    relatedArticles: ["what-is-traxxia"]
                 }
             ]
         },

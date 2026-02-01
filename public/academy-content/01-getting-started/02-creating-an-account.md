@@ -29,7 +29,7 @@ Fill in the required fields:
 | **Full Name** | Your first and last name | Required |
 | **Email** | Your business email address | Must be unique, valid format |
 | **Password** | Secure password for your account | Minimum 8 characters |
-| **Company Name** | Your organization's name | Optional for individual users |
+| **Company Name** | Your organization's name | Mandatory for individual users |
 
 ### 3. Create Your User Account
 

@@ -49,7 +49,7 @@ Full administrative control within their specific company, but cannot access oth
 **Typical Use Case:**  
 Department heads, business unit managers, or company administrators who manage a specific organization within Traxxia.
 
-![Company Admin dashboard showing business management options](/academy-screenshots/getting-started/dashboard-orgadmin-first-login.png)
+![Company Admin dashboard showing business management options](/academy-content/01-getting-started/images/issue1-admin.png)
 
 > [!TIP]
 > Company Admins are sometimes referred to as "org admins" throughout the platform. These terms are interchangeable.
@@ -70,7 +70,7 @@ Contributors who work on specific businesses they've been invited to. They have 
 - Upload documents to assigned businesses
 
 **Business Creation:**
-- Collaborators can create businesses **only if they also have the User role**
+- Collaborators can create businesses
 - Users can have multiple roles simultaneously (e.g., User + Collaborator)
 - Check your assigned roles in the user menu to confirm business creation privileges
 - Can delete businesses they created (if they have User role)
@@ -85,7 +85,7 @@ Contributors who work on specific businesses they've been invited to. They have 
 **Typical Use Case:**  
 Team members, consultants, analysts, or stakeholders who contribute to specific business initiatives.
 
-![Collaborator view showing assigned businesses](/academy-screenshots/getting-started/dashboard-collaborator-first-login.png)
+![Collaborator view showing assigned businesses](/academy-content/01-getting-started/images/issue2-collaborator-business.png)
 
 > [!NOTE]
 > Business creation requires the **User**, **Org Admin**, or both roles. The Collaborator role alone does not grant business creation privileges. Contact your organization administrator if you need the User role added.
@@ -143,11 +143,11 @@ Members of the organization. who can be promoted to any of the following roles.
 |---------|-------------|---------------|--------------|--------|------|
 | **Create Businesses** | ❌ No | ✅ Own company | ✅ Yes  | ❌ No | ✅ Yes |
 | **Edit Businesses** | ❌ No | ✅ Own company | ✅ Assigned only & ✅ Created | ❌ No | ✅ Yes |
-| **Delete Businesses** | ❌ No | ✅ Own company | ⚠️ Own (with User role) | ❌ No | ✅ Yes |
-| **Invite Users** | ✅ Yes | ✅ Own company | ❌ No | ❌ No | ❌ No | ❌ No |
-| **Answer AI Questions** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ✅ Yes |
-| **Create Projects** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ❌ No |
-| **Rank Projects** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ❌ No |
+| **Delete Businesses** | ❌ No | ✅ Own company | ✅ Yes | ❌ No | ✅ Yes |
+| **Invite Users** | ✅ Yes | ✅ Own company | ❌ No | ❌ No | ❌ No |
+| **Answer AI Questions** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes |
+| **Create Projects** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes |
+| **Rank Projects** | ❌ No | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes |
 | **Upload Financial Docs** | ❌ No | ✅ Yes | ✅ Assigned only & ✅ Created | ❌ No | ✅ Yes |
 | **View Strategic Analysis** | ✅ All | ✅ Own company | ✅ Assigned only & ✅ Created | ✅ Assigned only | ✅ yes |
 | **Access Admin Panel** | ✅ Yes | ✅ Limited | ❌ No | ❌ No | ❌ No |
@@ -221,7 +221,7 @@ Beyond roles, Traxxia controls access at the **business level**:
   - Cannot delete the business
   - Cannot remove other collaborators
 
-![Business collaborators panel showing owner and invited users](/academy-screenshots/getting-started/dashboard-collaborator-first-login.png)
+![Business collaborators panel showing owner and invited users](/academy-content/01-getting-started/images/issue2-collaborator-business.png)
 
 ### Invitation System
 
@@ -245,7 +245,7 @@ Company Admins and Super Admins can invite users to specific businesses:
 ### Scenario 1: New Employee
 **Question**: A new analyst joins your team. What role should they have?
 
-**Answer**: Assign them the **Collaborator** role and invite them to specific businesses they'll work on. They'll have full edit access to those businesses without being able to create new ones or access sensitive admin features.
+**Answer**: Assign them the **Collaborator** role and invite them to specific businesses they'll work on. They can also create their own businesses if needed. They'll have full edit access to those businesses without being able to access sensitive admin features.
 
 ### Scenario 2: External Consultant
 **Question**: You're working with an external strategy consultant. What's appropriate?
@@ -271,12 +271,11 @@ Assign the minimal role necessary for each user's responsibilities. You can alwa
 
 ### 2. Regular Audits
 Super Admins should periodically review user roles and access:
-- Remove access for departed employees
 - Verify roles match current responsibilities
 - Check for unused accounts
 
 ### 3. Separation of Duties
-Don't assign Super Admin unnecessarily. Use Company Admin for departmental autonomy while maintaining organizational oversight.
+Use Company Admin for departmental autonomy while maintaining organizational oversight.
 
 ### 4. Viewer for Sensitive Visibility
 When someone needs to see data but shouldn't modify it (compliance, auditing), always use Viewer role.
@@ -294,8 +293,7 @@ A: The system will display a message indicating you have read-only access and pr
 **Q: Can a Collaborator see other businesses in the same company?**  
 A: No. Collaborators only see businesses they've been explicitly invited to.
 
-**Q: How do I know who has access to my business?**  
-A: Business owners and Company Admins can view the list of collaborators in the business settings.
+
 
 **Q: Can roles be changed after assignment?**  
 A: Yes. Super Admins and Company Admins can modify user roles at any time through the User Management interface.

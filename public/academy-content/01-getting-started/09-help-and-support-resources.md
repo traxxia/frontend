@@ -16,54 +16,6 @@ The Academy is your first stop for learning about Traxxia features:
 > [!TIP]
 > Bookmark frequently-used Academy articles for quick reference!
 
-### 2. In-App Help & Tooltips
-
-Traxxia provides contextual help throughout the application:
-
-- **Question mark icons** (?) next to complex features
-- **Hover tooltips** on buttons and form fields
-- **Inline help text** within forms and wizards
-- **Validation messages** that explain requirements
-
-![Help icon showing tooltip on hover](ALT_TEXT_PLACEHOLDER)
-
-### 3. Email Support
-
-For personalized assistance, contact our support team:
-
-**Support Email**: `support@traxxia.com`
-
-**When to use email support**:
-- Technical issues or bugs
-- Account-specific questions
-- Billing and subscription inquiries
-- Feature requests
-- Complex troubleshooting
-
-**Response time**: Within 24 hours on business days
-
-> [!IMPORTANT]
-> When emailing support, include:
-> - Your account email address
-> - Business name (if applicable)
-> - Screenshots of the issue
-> - Steps to reproduce the problem
-> - Browser and operating system information
-
-### 4. AI Assistant (In Questionnaire)
-
-While answering questionnaires, the AI assistant can help you:
-
-- Understand question context
-- Provide examples of good answers
-- Clarify terminology
-- Suggest improvements to your responses
-
-![AI assistant chat interface in questionnaire](ALT_TEXT_PLACEHOLDER)
-
-> [!NOTE]
-> The AI assistant is specifically trained to help with questionnaire completion, not general Traxxia support.
-
 ## Common Help Topics
 
 ### Getting Started
@@ -131,29 +83,6 @@ While answering questionnaires, the AI assistant can help you:
 4. Check for error messages
 5. Contact support if issue persists
 
-## Feature Requests & Feedback
-
-We love hearing from our users! Here's how to share feedback:
-
-### Submit Feature Requests
-
-Email us at `support@traxxia.com` with:
--  Clear description of the feature
-- Use case explaining why you need it
-- How it would improve your workflow
-
-### Report Bugs
-
-Help us improve by reporting bugs:
-1. **What happened**: Describe the unexpected behavior
-2. **What you expected**: What should have happened
-3. **Steps to reproduce**: How we can see the issue
-4. **Screenshots**: Visual proof is very helpful
-5. **Environment**: Browser, OS, account details
-
-> [!TIP]
-> Use "Was this helpful?" buttons throughout the Academy to provide quick feedback on documentation!
-
 ## Video Tutorials (Coming Soon)
 
 We're working on video content to supplement our written guides:
@@ -210,7 +139,6 @@ If you can't find the answer you're looking for:
 
 1. **Search the Academy** - Use the search bar at the top
 2. **Check related articles** - Links provided at the end of each guide
-3. **Email support** - `support@traxxia.com` for personalized help
 
 **Support Hours**:
 - Monday - Friday: 9 AM - 6 PM (ET)

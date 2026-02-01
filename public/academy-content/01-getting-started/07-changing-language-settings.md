@@ -13,29 +13,12 @@ Traxxia currently supports:
 
 ## Changing Your Language
 
-### Method 1: From the Dashboard
+### Method 1: From the Login Page
 
-1. Log in to your Traxxia account
-2. Navigate to your user profile menu (top-right corner)
-3. Click on your name or profile icon
-4. Select **"Settings"** or **"Language Preferences"**
-5. Choose your preferred language from the dropdown
-6. Click **"Save"** or **"Apply"**
-
-![Language selector in settings menu](/academy-screenshots/getting-started/language-selector.png)
-
-> [!TIP]
-> The language change takes effect immediately—no need to log out and back in!
-
-### Method 2: First-Time Setup
-
-During your first login, you may be prompted to select your preferred language:
-
-1. Look for the language selection prompt
-2. Choose either **English** or **LATAM**
-3. Click **"Continue"**
-
-![First-time language selection prompt](ALT_TEXT_PLACEHOLDER)
+1. Navigate to the login page
+2. Look for the **Language Preferences** dropdown in the top-right corner
+3. Choose your preferred language from the dropdown
+4. Click **"Apply"**
 
 ## What Changes When You Switch Languages?
 

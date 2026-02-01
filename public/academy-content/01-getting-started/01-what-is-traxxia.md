@@ -34,6 +34,7 @@ Upload financial documents (Excel format) to unlock powerful financial insights:
 - Growth tracking
 - Liquidity metrics
 - Investment performance
+- Leverage & Risk
 
 ### 👥 Collaboration Features
 Work seamlessly with your team:
