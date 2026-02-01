@@ -127,16 +127,7 @@ After completing Essential questionnaire phase, you'll be prompted to upload fin
 
 ---
 
-### 6. Productivity Metrics
-**Metrics**:
-- Revenue per Employee
-- Profit per Employee
-- Sales Efficiency
-- Cost per Acquisition (if data available)
 
-**What It Shows**: Operational productivity and team efficiency
-
----
 
 ## Generating Financial Analyses
 
@@ -244,6 +235,7 @@ Financial metrics + strategic context = powerful insights.
 | **Company Admin** | ✅ | ✅ | ✅ |
 | **Super Admin** | ✅ | ✅ | ✅ |
 | **Collaborator** | ✅ | ✅ | ✅ |
+| **User** | ✅ | ✅ | ✅ |
 | **Viewer** | ❌ | ✅ | ❌ |
 
 ---

@@ -46,9 +46,10 @@ Traxxia generates several key reports based on your uploaded financial data:
 ### Navigation
 
 1. Open your business from the Dashboard
-2. Click on **"Financial Analysis"** tab
-3. Select the report you want to view from the sidebar
-4. Review insights and visualizations
+2. Click on **"Insight 6 C's"** tab
+3. **Expand cost/financial tab.**
+4. Select the report you want to view from the sidebar
+5. Review insights and visualizations
 
 ![Financial Analysis dashboard showing available reports](ALT_TEXT_PLACEHOLDER)
 

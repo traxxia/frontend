@@ -36,14 +36,7 @@ While answering questions:
 
 ![Questionnaire interface showing progress indicators](ALT_TEXT_PLACEHOLDER)
 
-### 3. Phase Status Icons
 
-| Icon | Meaning |
-|------|---------|
-| 🔓 | Unlocked and available |
-| ✅ | Completed |
-| 🔒 | Locked (complete previous phases first) |
-| 🔄 | In progress |
 
 ## Detailed Progress Tracking
 
@@ -99,7 +92,7 @@ Phase 3: Operations & Resources
 
 **For entire questionnaire**:
 - ✅ All three phases complete
-- ✅ Business status changes to "Prioritized"
+- ✅ All three phases complete
 - ✅ Strategic analyses generated
 
 ### Required vs. Optional Questions
@@ -192,8 +185,7 @@ Real-time updates for:
 When you complete all three phases:
 
 **Immediate effects**:
-1. Business status → **"Prioritized"**
-2. Strategic analyses begin generating
+1. Strategic analyses begin generating
 3. Phase 3 unlocks additional features
 4. Project creation becomes available
 
@@ -215,8 +207,7 @@ You can always return to refine:
 
 1. Open business → "Questionnaire" tab
 2. Click **"Edit Answers"** or **"Revisit Questionnaire"**
-3. Business status → **"Reprioritizing"**
-4. Make your changes
+3. Make your changes
 5. Complete updated phases
 6. Analyses regenerate automatically
 

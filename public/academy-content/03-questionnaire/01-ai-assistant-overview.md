@@ -196,26 +196,18 @@ After completing Essential questions, Traxxia asks if you want to upload financi
 
 ### Progress Indicator
 
-Circular progress bar shows: `(Answered Questions / Total Questions) × 100%`
+Horizontal progress bar shows: `(Answered Questions / Total Questions) × 100%`
+
+**Display Rule**: The progress bar appears only after the first answer is saved.
 
 **Color Coding**:
-- 🔴 Red (0-33%): Just started
-- 🟡 Yellow (34-66%): Making progress
-- 🟢 Green (67-100%): Nearly complete
+- 🟢 Green (0–100%): Progress in all states
 
-![Progress indicator showing 45% completion](/academy-screenshots/questionnaire/progress-indicator.png)
+![Progress indicator](/academy-screenshots/questionnaire/progress-indicator.png)
 
 ---
 
-### Answer Navigation
 
-**Sequential Mode**: Next/Previous buttons move through questions in order
-
-**Module Selection**: Jump to specific topics by clicking module names
-
-**Resume Anywhere**: System remembers where you left off
-
----
 
 ## Auto-Save & Data Persistence
 

@@ -35,7 +35,7 @@ Establish basic understanding of your business concept, mission, and market posi
 - "Where is your business located?"
 
 ### Completion Time
-**Estimate**: 15-30 minutes
+**Estimate**: Based on user answers and understanding on the questions.
 
 ### Why These Questions Matter:
 These questions set the context for all subsequent analysis. They help the AI understand:
@@ -100,7 +100,7 @@ These questions directly feed into your strategic frameworks. Incomplete Essenti
 - "What are your biggest operational challenges?"
 
 ### Completion Time
-**Estimate**: 2-4 hours (can be done across multiple sessions)
+**Estimate**: Based on user answers and understanding on the questions.
 
 ### Unlock Condition:
 Complete all Initial phase questions
@@ -234,7 +234,7 @@ Gather **deep strategic insights** for optimization, innovation, and long-term c
 - "What strategic partnerships would accelerate your growth?"
 
 ### Completion Time
-**Estimate**: 1.5-3 hours
+**Estimate**: Based on user answers and understanding on the questions.
 
 ### Why Advanced Questions Matter:
 While Essential questions feed into immediate strategic frameworks, Advanced questions:
@@ -256,23 +256,16 @@ While Essential questions feed into immediate strategic frameworks, Advanced que
 
 Within each phase, questions have severity ratings:
 
-### 🔴 Critical
+### Mandatory
 **Impact**: Must answer for core analysis
-**Examples**: "What are your primary revenue streams?"
 **Recommendation**: Never skip unless truly not applicable
 
-### 🟡 Important
-**Impact**: Significantly enhances analysis quality
-**Examples**: "Describe your competitive advantages"
-**Recommendation**: Answer if at all possible
-
-### 🟢 Optional
+### Optional
 **Impact**: Provides additional context and depth
-**Examples**: "What awards or recognitions has your business received?"
 **Recommendation**: Answer if information is readily available
 
 > [!NOTE]
-> The AI doesn't currently display severity levels in the interface, but it uses them internally to prioritize which questions to ask first.
+> There are only Mandatory and optional as severity levels.
 
 ---
 
@@ -368,6 +361,7 @@ Assign questions by expertise:
 - Progress bar advances significantly
 - New phase questions appear
 - Completion message from AI
+- A 'Phase completed' animated pop-up is also present
 
 **System Behavior**:
 - Initial → Essential: "Great! Moving to Essential questions..."
