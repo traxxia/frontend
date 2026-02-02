@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import '../styles/academy.css';
+import { ACADEMY_CONFIG } from '../utils/academyConfig';
 
 /**
  * MarkdownRenderer Component
@@ -13,6 +14,19 @@ import '../styles/academy.css';
  * - Custom alert/callout styling
  * - Table support
  */
+// Helper to replace placeholders like {{SUPPORTED_LANGUAGES.SPANISH}}
+const replacePlaceholders = (text) => {
+    if (!text) return '';
+    return text.replace(/\{\{([\w\.]+)\}\}/g, (match, path) => {
+        const parts = path.split('.');
+        let value = ACADEMY_CONFIG;
+        for (const part of parts) {
+            value = value && value[part] ? value[part] : undefined;
+        }
+        return value !== undefined ? value : match;
+    });
+};
+
 const MarkdownRenderer = ({ content, articleId }) => {
     const [renderedHTML, setRenderedHTML] = useState('');
     const [tableOfContents, setTableOfContents] = useState([]);
@@ -170,8 +184,9 @@ const MarkdownRenderer = ({ content, articleId }) => {
             return `<a href="${href}" ${titleAttr} ${targetAttr} class="academy-link">${sanitizedText}</a>`;
         };
 
-        // Parse markdown
-        const rawHTML = marked(content, { renderer });
+        // Parse markdown with placeholder replacement
+        const contentWithReplacements = replacePlaceholders(content);
+        const rawHTML = marked(contentWithReplacements, { renderer });
 
         // Extract table of contents from headings
         const toc = [];

@@ -138,7 +138,7 @@ Before diving in, configure your account:
 Traxxia supports multiple languages:
 
 > [!IMPORTANT]
-> The language selector is **only available on the login page**. Choose your preferred language (English or LATAM Spanish) before signing in.
+> The language selector is **only available on the login page**. Choose your preferred language (English or {{SUPPORTED_LANGUAGES.SPANISH}}) before signing in.
 
 **To change language after login:**
 1. Log out of your account

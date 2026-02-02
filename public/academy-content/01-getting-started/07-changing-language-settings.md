@@ -6,7 +6,7 @@ Traxxia supports multiple languages to help you work in your preferred language.
 
 Traxxia currently supports:
 - **English** (Default)
-- **LATAM** (Latin American Spanish)
+- **{{SUPPORTED_LANGUAGES.SPANISH}}** (Latin American Spanish)
 
 > [!NOTE]
 > More languages will be added in future updates based on user demand.
@@ -39,7 +39,7 @@ When you change your language preference, the following elements will update:
 
 ## Language-Specific Features
 
-### LATAM (Spanish) Users
+### {{SUPPORTED_LANGUAGES.SPANISH}} Users
 
 - Date formats adapted to regional standards
 - Number formatting (decimals, thousands separators)
