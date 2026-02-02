@@ -70,7 +70,7 @@ const ProjectCard = ({
       )}
 
       <div className="project-header">
-        <h3 className="project-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h3 className={`project-title ${finalizeCompleted ? "with-rank" : ""}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* {getStatusIcon(project.status)} */}
           {project.project_name}
         </h3>
