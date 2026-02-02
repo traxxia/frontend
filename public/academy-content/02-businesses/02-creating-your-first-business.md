@@ -355,7 +355,7 @@ Begin with the first module or jump to any section
 
 ### Can I Create Multiple Businesses?
 
-**Yes!** There's no limit. Create as many as needed.
+There is a limit — you can create a maximum of **5 businesses**.
 
 ### When to Create Multiple
 
