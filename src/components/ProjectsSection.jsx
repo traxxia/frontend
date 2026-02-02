@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Container } from "react-bootstrap";
 import axios from "axios";
@@ -136,11 +136,22 @@ const ProjectsSection = ({
     return acc;
   }, {});
 
-  const sortedProjects = [...projects].sort((a, b) => {
-    const rankA = rankMap[String(a._id)] ?? Infinity;
-    const rankB = rankMap[String(b._id)] ?? Infinity;
-    return rankA - rankB;
-  });
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const rankA = rankMap[String(a._id)];
+      const rankB = rankMap[String(b._id)];
+
+      // Treat null/undefined as Infinity to push to bottom
+      const rA = (rankA === null || rankA === undefined) ? Infinity : rankA;
+      const rB = (rankB === null || rankB === undefined) ? Infinity : rankB;
+
+      if (rA === rB) {
+        // Secondary sort by modification date if ranks are equal (or both unranked)
+        return new Date(b.updated_at) - new Date(a.updated_at);
+      }
+      return rA - rB;
+    });
+  }, [projects, rankMap]);
 
   const rankedProjects = projects.map((p) => ({
     ...p,
