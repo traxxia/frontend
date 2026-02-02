@@ -117,10 +117,14 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
             <div className="academy-nav-footer">
                 <div className="nav-footer-links">
-                    <a href="/dashboard" className="footer-link">
-                        <LucideIcons.Home size={16} />
+                    <Link to="/dashboard" className="footer-link" style={{ marginBottom: '8px' }}>
+                        <LucideIcons.LayoutDashboard size={16} />
                         <span>Back to Dashboard</span>
-                    </a>
+                    </Link>
+                    <Link to="/academy" className="footer-link">
+                        <LucideIcons.Home size={16} />
+                        <span>Academy Home</span>
+                    </Link>
                 </div>
                 <div className="nav-footer-info">
                     <small>Version 1.0 • Phase 2</small>
