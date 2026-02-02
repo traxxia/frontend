@@ -190,6 +190,15 @@ export const academyStructure = {
                     roles: ["all"],
                     tags: ["strategy", "competitive", "framework"],
                     relatedArticles: ["strategic-analysis-overview", "using-swot-analysis"]
+                },
+                {
+                    id: "strategic-framework",
+                    title: "S.T.R.A.T.E.G.I.C Framework Guide",
+                    path: "04-strategic-analysis/05-strategic-framework.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["strategy", "framework", "guide"],
+                    relatedArticles: ["strategic-analysis-overview", "using-swot-analysis"]
                 }
             ]
         },
