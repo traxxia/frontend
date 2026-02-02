@@ -277,16 +277,7 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["collaboration", "overview"],
-                    relatedArticles: ["inviting-collaborators"]
-                },
-                {
-                    id: "inviting-collaborators",
-                    title: "Inviting Collaborators",
-                    path: "07-collaboration/02-inviting-collaborators.md",
-                    phase: 2,
-                    roles: ["orgadmin"],
-                    tags: ["collaboration", "howto"],
-                    relatedArticles: ["collaboration-overview", "understanding-user-roles"]
+                    relatedArticles: []
                 }
             ]
         }

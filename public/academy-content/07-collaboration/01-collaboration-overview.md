@@ -23,13 +23,16 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 
 ## Collaboration Roles
 
+### Org Admin
+**Permissions**:
+- Can invite collaborators
+
 ### Business Owner
 **Who**: Creator of the business profile
 
 **Permissions**:
 - Full edit access to business
-- Can invite collaborators
-- Can delete the business ONLY before moving to the project phase
+- Can delete the business before moving to the project phase
 - Can manage all projects
 - Can regenerate analyses
 
@@ -43,7 +46,7 @@ Teamwork makes strategic planning more effective. Traxxia's collaboration featur
 
 | Action | Super Admin | Company Admin | Collaborator | Viewer |
 |--------|-------------|---------------|--------------|--------|
-| View business | ✅ | ✅ | ✅ | ✅ |
+| View business | ❌ | ✅ | ✅ | ✅ |
 | Answer questionnaire | ❌ | ✅ | ✅ | ❌ |
 | Generate analyses | ❌ | ✅ | ✅ | ❌ |
 | Create projects | ❌ | ✅ | ✅ | ❌ |
@@ -199,9 +202,9 @@ If team feedback reveals gaps:
 ## Managing Collaborators
 
 ### Viewing Collaborators:
-1. Open business
-2. Click "Collaboration" tab or settings
-3. See list of invited users
+1. Open admin panel
+2. Navigate to user management tab
+3. Filter by roles
 4. View their roles and status
 
 ---
