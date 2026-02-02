@@ -151,36 +151,6 @@ Traxxia generates several key reports based on your uploaded financial data:
 - ✅ **Interest Coverage > 3.0** → Easily covering debt payments
 - ⚠️ **Interest Coverage < 1.5** → Debt servicing challenges
 
-## Visual Elements
-
-### Charts and Graphs
-
-Traxxia provides multiple visualization types:
-
-**Trend Lines**:
-- Revenue over time
-- Margin evolution
-- Growth trajectories
-
-**Bar Charts**:
-- Year-over-year comparisons
-- Quarter-over-quarter changes
-- Category breakdowns
-
-**Gauges**:
-- Current vs. target metrics
-- Industry benchmark comparisons
-- Risk level indicators
-
-**Data Tables**:
-- Detailed numerical data
-- Period-over-period comparisons
-- Drill-down capabilities
-
-![Example of multiple chart types in financial dashboard](ALT_TEXT_PLACEHOLDER)
-
-> [!TIP]
-> Click on any chart to expand it for detailed analysis and export options!
 
 ## Strategic Insights
 
