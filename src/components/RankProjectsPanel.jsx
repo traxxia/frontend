@@ -339,10 +339,10 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   };
 
   return (
-    <div className="rank-panel-container responsive-panel compact-mode">
+    <div className="rank-panel-container responsive-panel compact-mode" >
       <Row className="rank-panel-header">
         <Col xs={12} md={6}>
-          <h4 className="rank-title">{t("Rank_Your_Projects")}</h4>
+          <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
         </Col>
 
         <Col

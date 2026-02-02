@@ -822,7 +822,12 @@ export const staticTranslations = {
     'Detailed_Planning': 'Detailed Planning',
     'Create_Project': 'Create Project',
     'Rank_Your_Projects': 'Rank Your Projects',
-    'Projects': 'Projects',
+    'view_all_projects': 'View All Projects',
+    'project_details': 'Project Details',
+    'Hide_Rank_Projects': 'Hide Rank Projects',
+    'Hide_Rankings_View': 'Hide Rankings View',
+    'Rankings_View': 'Rankings View',
+    'Team_Rankings_View': 'Team Rankings View',
     'Save_Rankings': 'Save Rankings',
     'Lock_My_Rankings': 'Lock My Rankings',
     'Total_Users': 'Total Users',
@@ -1875,9 +1880,7 @@ export const staticTranslations = {
     'Explicitly_Out_of_Scope': 'Explícitamente fuera de alcance',
     'Expected_Outcome': 'Resultado esperado',
     'Success_Metrics': 'Métricas de éxito (KPIs)',
-    'Estimated_Timeline': 'Cronograma estimado',
     'Budget_Estimate': 'Estimación del presupuesto',
-    'Projects': 'Proyectos',
     "is_editing": "está editando",
 
   }

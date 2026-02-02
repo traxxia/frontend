@@ -35,6 +35,7 @@ const ProjectsSection = ({
   const [activeView, setActiveView] = useState("list");
   const [currentProject, setCurrentProject] = useState(null);
   const [showRankScreen, setShowRankScreen] = useState(false);
+  const [showTeamRankings, setShowTeamRankings] = useState(false); // New state for Team Rankings Panel
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
 
   const [projects, setProjects] = useState([]);
@@ -73,6 +74,10 @@ const ProjectsSection = ({
     useProjectOperations(selectedBusinessId, onProjectCountChange);
   const { fetchTeamRankings, fetchAdminRankings, lockRanking } =
     useRankingOperations(selectedBusinessId, companyAdminIds);
+
+  // ... (jumping to renderProjectList)
+
+
   const {
     userHasRerankAccess,
     checkBusinessAccess,
@@ -586,7 +591,17 @@ const ProjectsSection = ({
           showRankScreen={showRankScreen}
           userHasRerankAccess={userHasRerankAccess}
           onNewProject={handleNewProject}
-          onToggleRankScreen={() => setShowRankScreen(!showRankScreen)}
+          onToggleRankScreen={() => {
+            const newState = !showRankScreen;
+            setShowRankScreen(newState);
+            if (newState) setShowTeamRankings(false);
+          }}
+          showTeamRankings={showTeamRankings}
+          onToggleTeamRankings={() => {
+            const newState = !showTeamRankings;
+            setShowTeamRankings(newState);
+            if (newState) setShowRankScreen(false);
+          }}
         />
 
         <RankProjectsPanel
@@ -599,7 +614,7 @@ const ProjectsSection = ({
           isRankingLocked={isRankingLocked}
         />
 
-        {((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
+        {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
           <TeamRankingsView
             activeAccordionKey={activeAccordionKey}
             onAccordionSelect={handleAccordionSelect}
