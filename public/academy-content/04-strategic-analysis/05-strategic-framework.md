@@ -18,6 +18,8 @@ Each block contains 3 pillars, forming the acronym **S.T.R.A.T.E.G.I.C**.
 
 ## 1. Strategy Block: Direction & Positioning (S.T.R)
 
+![Execution Block](/academy-screenshots/strategic-analysis/strategy.png)
+
 This block sets the foundation for your competitive advantage.
 
 ### S – Strategy: Where to Compete
@@ -41,8 +43,6 @@ Ideally allocates your limited resources to support the strategy.
 ## 2. Execution Block: Implementation & Monitoring (A.T.E)
 
 This block converts your strategy into daily operations.
-
-![Execution Block](/academy-screenshots/strategic-analysis/strategy.png)
 
 ### A – Analysis: Data Strategy
 Ensures you are measuring what matters.

@@ -215,6 +215,7 @@
 .project-title {
   margin-bottom: 6px;
   font-weight: 600;
+  margin-left:30px;
 }
 
 .project-description {
@@ -503,7 +504,7 @@
 }
 
 .finalized-view .project-initiative {
-  padding-left: 37px;
+  /* padding-left: 37px; */
   /* 32px circle + 12px gap */
   display: flex;
   align-items: center;
