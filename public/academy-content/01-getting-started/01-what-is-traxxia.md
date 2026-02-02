@@ -39,7 +39,7 @@ Upload financial documents (Excel format) to unlock powerful financial insights:
 ### 👥 Collaboration Features
 Work seamlessly with your team:
 - Invite collaborators to specific businesses
-- Assign project ownership
+- Collabotative Editing on projects
 - Track team rankings and contributions
 - Role-based access control
 

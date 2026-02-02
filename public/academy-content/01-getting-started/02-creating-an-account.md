@@ -57,7 +57,7 @@ After registration completes successfully, you'll be automatically redirected to
 You'll immediately access your dashboard and can start creating businesses!
 
 > [!TIP]
-> Bookmark the login page for quick access: `https://yourdomain.traxxia.com/login`
+> Bookmark the login page for quick access: [Go to Login](/login)
 
 ## First Login Experience
 

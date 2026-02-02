@@ -96,8 +96,8 @@ const MenuBar = () => {
           <div className="navbar-center">
             <Navbar.Brand
               className="traxia-logo"
-              onClick={() => navigate('/dashboard')}
-              style={{ cursor: 'pointer' }}
+              onClick={!isSuperAdmin ? () => navigate('/dashboard') : undefined}
+              style={{ cursor: isSuperAdmin ? 'default' : 'pointer' }}
             >
               <img
                 src="/traxxia-logo.png"

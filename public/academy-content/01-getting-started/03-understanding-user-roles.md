@@ -228,7 +228,7 @@ Beyond roles, Traxxia controls access at the **business level**:
 Company Admins and Super Admins can invite users to specific businesses:
 
 ```
-1. Navigate to the business
+1. Navigate to the User Management in admin panel
 2. Click "Invite Collaborators"
 3. Enter email addresses
 4. Assign role (Collaborator or Viewer)

@@ -57,7 +57,7 @@ After successful authentication, you'll be redirected to your dashboard.
 
 **For Org Admin/User:**
 ```
-✓ Welcome message with your name
+✓ Welcome message
 ✓ "Create New Business" button (prominent)
 ✓ Empty state or existing businesses
 ✓ Navigation menu with all features
@@ -68,7 +68,7 @@ After successful authentication, you'll be redirected to your dashboard.
 
 **For Super Admin:**
 ```
-✓ Welcome message with your name  
+✓ Welcome message 
 ✓ View-only dashboard showing all organization businesses
 ✓ Admin and user management features
 ✓ NO "Create New Business" button
@@ -111,10 +111,8 @@ The menubar at the top provides access to key features:
 |---------|-------------|
 | **Traxxia Logo** | Click to return to dashboard |
 | **User Menu** | Profile, settings, logout |
-| **Language Selector** | Switch between English and LATAM Spanish |
-| **Theme Toggle** | Switch between light and dark mode (coming soon) |
 
-![Top navigation bar showing logo and user menu](/academy-screenshots/getting-started/registration-form-filled.png)
+![Top navigation bar showing logo and user menu](/academy-screenshots/getting-started/dashboard-with-menu-open.png)
 
 ### User Menu Options
 

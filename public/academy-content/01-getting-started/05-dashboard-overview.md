@@ -8,7 +8,7 @@ The dashboard is organized into four main areas:
 
 1. **Top Navigation**: Menu bar with user controls
 2. **Main Content Area**: Business cards and actions
-3. **Section Headers**: "My Businesses" and "Collaborating Businesses"
+3. **Section Headers**: "Businesses" and "Collaborating Businesses"
 4. **Action Buttons**: Create business, filters, and more
 
 ![Dashboard full view showing all sections](/academy-screenshots/getting-started/dashboard.png)
@@ -46,7 +46,7 @@ Click your profile icon to access:
 
 ---
 
-## My Businesses Section
+## Businesses Section
 
 This section shows **businesses you own or created**.
 
@@ -95,7 +95,7 @@ See the accordion-based organization in [First Login Experience](./04-first-logi
 
 Shows **businesses you've been invited to** by others.
 
-### Key Differences from "My Businesses":
+### Key Differences from "Businesses":
 - Shows "Owner: [Name]" label
 - Cannot delete these businesses
 - Same progress and information display
@@ -107,7 +107,7 @@ Shows **businesses you've been invited to** by others.
 
 ## Create New Business Button
 
-**Location**:  At the top of the "My Businesses" section
+**Location**:  At the top of the "Businesses" section
 
 **Availability**: Org Admin, User, and Collaborator
 
@@ -293,8 +293,6 @@ Progress % = (Answered Questions / Total Questions) × 100
 > Deleting a business cannot be undone. All associated data (questions, analyses, projects) will be permanently deleted.
 
 ![Delete confirmation modal](/academy-screenshots/business-management/delete-confirmation.png)
-
-### Filter/Search Businesses (Future)
 
 ### Filter/Search Businesses (Future)
 
