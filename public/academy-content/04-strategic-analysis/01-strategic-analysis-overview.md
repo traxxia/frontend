@@ -170,6 +170,7 @@ Strategic frameworks are organized by category:
 - PESTEL Analysis
 - Porter's Five Forces
 - Strategic Positioning Radar
+- **S.T.R.A.T.E.G.I.C Framework**
 
 ### Customer
 - Purchase Criteria Analysis
@@ -322,6 +323,7 @@ After generating strategic analyses:
 ---
 
 **Related Articles:**
+- [S.T.R.A.T.E.G.I.C Framework Guide](./05-strategic-framework.md)
 - [SWOT Analysis Guide](./02-using-swot-analysis.md)
 - [AI Questionnaire Overview](../03-questionnaire/01-ai-assistant-overview.md)
 - [Project Management Overview](../06-projects/01-project-management-overview.md)
