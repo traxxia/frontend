@@ -2,7 +2,7 @@
 
 The **S.T.R.A.T.E.G.I.C** tab in Traxxia Academy is your comprehensive command center for turning insights into action. While the "6 C's" provide the analysis, this framework provides the roadmap. It breaks down your business strategy into 9 actionable pillars across 3 core blocks.
 
-![Strategy Block Overview](/academy-screenshots/strategic-analysis/strategy-block.png)
+![Strategy Block Overview](/academy-screenshots/strategic-analysis/str.png)
 
 ## Overview
 
@@ -42,12 +42,14 @@ Ideally allocates your limited resources to support the strategy.
 
 This block converts your strategy into daily operations.
 
-![Execution Block Overview](/academy-screenshots/strategic-analysis/execution-block.png)
+![Execution Block](/academy-screenshots/strategic-analysis/strategy.png)
 
 ### A – Analysis: Data Strategy
 Ensures you are measuring what matters.
 *   **Data Strategy**: Defines how you will collect and use data.
 *   **Recommendations**: Specific analytical steps to take.
+
+![Execution Block Overview](/academy-screenshots/strategic-analysis/execution.png)
 
 ### T – Technology: Digitalization & Infrastructure
 Builds the digital backbone of your strategy.
@@ -69,7 +71,7 @@ The heartbeat of your project management.
 
 This block ensures your success isn't just a one-time event.
 
-![Sustainability Block Overview](/academy-screenshots/strategic-analysis/sustainability-block.png)
+![Sustainability Block Overview](/academy-screenshots/strategic-analysis/sustainability.png)
 
 ### G – Governance: Decision Rights & Accountability
 Clarifies who decides what.
@@ -92,7 +94,7 @@ The "soft" side that drives hard results.
 
 For **Company Admins**, the S.T.R.A.T.E.G.I.C tab includes a powerful **"Kickstart Projects"** feature.
 
-![Kickstart Projects Feature](/academy-screenshots/strategic-analysis/kickstart-projects.png)
+![Kickstart Projects Feature](/academy-screenshots/strategic-analysis/kickstart-project.png)
 
 Clicking this button automatically:
 1.  **Scans** your generated recommendations (from PESTEL, Porter's, etc.).
