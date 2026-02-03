@@ -4,6 +4,7 @@ import {
   Trash2,
   Users,
   Edit2,
+  Eye,
   AlertTriangle,
   TrendingUp,
   Target,
@@ -43,12 +44,10 @@ const ProjectCard = ({
 }) => {
   const { t } = useTranslation();
 
-  // Stale Logic (V2)
-  const lastReviewed = project.last_reviewed ? new Date(project.last_reviewed) : new Date(project.created_at || Date.now());
-  const daysSince = Math.floor((new Date() - lastReviewed) / (1000 * 60 * 60 * 24));
-  const cadenceDays = project.review_cadence === "Quarterly" ? 90 : project.review_cadence === "Milestone" ? 180 : 30; // Default Monthly
-  const isStale = daysSince > cadenceDays;
   const { impact, theme } = getStrategicSignal(project);
+
+  // Determine if user can edit this project
+  const userCanEdit = canEditProject ? canEditProject(project) : true;
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -86,9 +85,17 @@ const ProjectCard = ({
           </button>
           {showMenuId === project._id && (
             <div className="menu-dropdown">
-              <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
+              {/* Show View if user can't edit (launched without access), otherwise show Edit */}
+              {launched && !userCanEdit ? (
+                <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
+              ) : (
+                <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
+              )}
               {/* <div onClick={() => onManageTeam(project)} className="menu-item"><Users size={14} /> Team</div> */}
-              <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
+              {/* Only show Delete if project creation is not locked */}
+              {!projectCreationLocked && (
+                <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
+              )}
             </div>
           )}
         </div>
@@ -116,24 +123,12 @@ const ProjectCard = ({
             <Zap size={12} color={impact === 'High' ? 'orange' : '#9ca3af'} /> {impact} {t("Impact")}
           </span>
         </div>
-
-        {/* Row 3: Stale/Review Warning */}
-        {isStale ? (
-          <div style={{ color: "#ef4444", fontWeight: "600", marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <AlertTriangle size={12} /> {t("Needs_Review")} ({daysSince} {t("days_ago")})
-          </div>
-        ) : (
-          <div style={{ color: "#10b981", marginTop: "8px", fontSize: "11px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <CheckCircle size={12} /> {t("Reviewed_ago")} {daysSince} {t("days_ago")}
-          </div>
-        )}
-
       </div>
 
       {/* Footer / Actions - Keeping minimal as main actions are in menu now. Or we can restore the buttons if needed. 
           For clean V2 look, menu is better. 
       */}
-      <div className="project-card-footer" style={{ marginTop: "auto", fontSize: "11px", color: "#9ca3af" }}>
+      <div className="project-card-footer" style={{ marginTop: "auto", fontSize: "11px", color: "#635d5c" }}>
         {t("Created")} {new Date(project.created_at).toLocaleDateString()}
       </div>
 

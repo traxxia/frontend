@@ -518,14 +518,26 @@ const ProjectForm = ({
 
   return (
     <div>
-      {/* Breadcrumb */}
-      <div className="projects-breadcrumb">
-        <Breadcrumb>
+      {/* Breadcrumb & Actions Header */}
+      <div className="projects-breadcrumb" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Breadcrumb style={{ margin: 0 }}>
           <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
             {t("Projects")}
           </Breadcrumb.Item>
           <Breadcrumb.Item active>{getTitle()}</Breadcrumb.Item>
         </Breadcrumb>
+
+        {/* Actions - Moved to Top */}
+        {!isReadOnly && (
+          <div className="actions-row-top" style={{ display: "flex", gap: "12px" }}>
+            <button type="button" className="btn-cancel" onClick={onBack} style={{ padding: "8px 16px" }}>
+              {t("cancel")}
+            </button>
+            <button type="button" className="btn-create" onClick={handleSubmit} style={{ padding: "8px 16px" }}>
+              {getSubmitButtonText()}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Required Information */}
@@ -979,19 +991,7 @@ const ProjectForm = ({
         </div>
       </div>
 
-      {/* Actions */}
-      {
-        !isReadOnly && (
-          <div className="actions-row">
-            <button type="button" className="btn-cancel" onClick={onBack}>
-              {t("cancel")}
-            </button>
-            <button type="button" className="btn-create" onClick={handleSubmit}>
-              {getSubmitButtonText()}
-            </button>
-          </div>
-        )
-      }
+
     </div >
   );
 };

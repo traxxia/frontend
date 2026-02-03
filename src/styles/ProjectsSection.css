@@ -13,10 +13,35 @@
 .validation-toast-body {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #ffe5e5;
+  gap: 12px;
+  background: #ffffff;
   color: #b91c1c;
   font-weight: 500;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-left: 4px solid #ef4444;
+}
+
+.validation-toast-body-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  color: #15803d;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-left: 4px solid #22c55e;
+}
+
+.validation-toast-body svg {
+  color: #ef4444;
+}
+
+.validation-toast-body-success svg {
+  color: #22c55e;
 }
 
 
@@ -211,7 +236,7 @@
   border: none;
   font-size: 20px;
   line-height: 1;
-  color: #9ca3af;
+  color: #000;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -301,7 +326,6 @@
 
 .project-card-footer {
   margin-top: auto;
-  padding-top: 12px;
   border-top: 1px solid #f3f4f6;
 }
 
@@ -345,7 +369,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background-color: #f3f4f6;
-  color: #4b5563;
+  color: #635d5c;
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
@@ -448,7 +472,7 @@
 
 .project-last-edited {
   font-size: 13px;
-  color: #6b7280;
+  color: #635d5c;
 }
 
 .project-last-edited-name {

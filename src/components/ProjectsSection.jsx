@@ -17,6 +17,7 @@ import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
+import ProjectDetails from "../components/ProjectDetails";
 import ToastNotifications from "../components/ToastNotifications";
 import "../styles/ProjectsSection.css";
 
@@ -140,6 +141,13 @@ const ProjectsSection = ({
     acc[normalizeId(r.project_id)] = r.rank;
     return acc;
   }, {});
+
+  const handleShowToast = (message, type = "error", duration = 3000) => {
+    setValidationMessage(message);
+    setValidationMessageType(type);
+    setShowValidationToast(true);
+    setTimeout(() => setShowValidationToast(false), duration);
+  };
 
   const sortedProjects = useMemo(() => {
     return [...projects].sort((a, b) => {
@@ -342,8 +350,7 @@ const ProjectsSection = ({
   const handleLockProjectCreation = async () => {
     try {
       if (!projects || projects.length === 0) {
-        setValidationMessage("No projects available to rank. Please create projects first.");
-        setShowValidationToast(true);
+        handleShowToast("No projects available to rank. Please create projects first.", "error");
         return;
       }
 
@@ -368,8 +375,7 @@ const ProjectsSection = ({
 
     } catch (error) {
       console.error("Failed to lock project creation and generate AI rankings:", error);
-      setValidationMessage("Failed to generate AI rankings. Please try again.");
-      setShowValidationToast(true);
+      handleShowToast("Failed to generate AI rankings. Please try again.", "error");
       setIsGeneratingAIRankings(false);
     } finally {
       setIsGeneratingAIRankings(false);
@@ -412,9 +418,7 @@ const ProjectsSection = ({
   const handleCreate = async () => {
     const validation = validateForm();
     if (!validation.isValid) {
-      setValidationMessage(validation.firstError);
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 5000);
+      handleShowToast(validation.firstError, "error", 5000);
       return;
     }
 
@@ -423,25 +427,18 @@ const ProjectsSection = ({
 
     const success = await createProject(payload);
     if (success) {
-      setValidationMessage("Project created successfully!");
-      setShowValidationToast(true);
+      handleShowToast("Project created successfully!", "success");
       await unlockAllFieldsSafe();
       await loadProjects();
       handleBackToList();
-      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      setValidationMessage("Failed to create project.");
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 3000);
+      handleShowToast("Failed to create project.", "error");
     }
   };
 
   const handleSave = async () => {
     if (!canEditProject(currentProject, isEditor, myUserId, businessStatus)) {
-      setValidationMessage("You are not allowed to edit this project");
-      setValidationMessageType("error"); // Add this
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 3000);
+      handleShowToast("You are not allowed to edit this project", "error");
       return;
     }
 
@@ -452,10 +449,7 @@ const ProjectsSection = ({
 
     const validation = validateForm();
     if (!validation.isValid) {
-      setValidationMessage(validation.firstError);
-      setValidationMessageType("error"); // Add this
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 5000);
+      handleShowToast(validation.firstError, "error", 5000);
       return;
     }
 
@@ -464,18 +458,12 @@ const ProjectsSection = ({
 
     const success = await updateProject(currentProject._id, payload);
     if (success) {
-      setValidationMessage("Project updated successfully!");
-      setValidationMessageType("success"); // Add this
-      setShowValidationToast(true);
+      handleShowToast("Project updated successfully!", "success");
       await unlockAllFieldsSafe();
       await loadProjects();
       handleBackToList();
-      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      setValidationMessage("Failed to update project.");
-      setValidationMessageType("error"); // Add this
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 3000);
+      handleShowToast("Failed to update project.", "error");
     }
   };
 
@@ -484,18 +472,14 @@ const ProjectsSection = ({
 
     const success = await deleteProject(projectId);
     if (success) {
-      setValidationMessage("Project deleted successfully!");
-      setShowValidationToast(true);
+      handleShowToast("Project deleted successfully!", "success");
       const updated = projects.filter((p) => p._id !== projectId);
       setProjects(updated);
       if (onProjectCountChange) {
         onProjectCountChange(updated.length);
       }
-      setTimeout(() => setShowValidationToast(false), 3000);
     } else {
-      setValidationMessage("Failed to delete project.");
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 3000);
+      handleShowToast("Failed to delete project.", "error");
     }
   };
 
@@ -508,9 +492,7 @@ const ProjectsSection = ({
       refreshTeamRankings();
       setTimeout(() => setShowLockToast(false), 3000);
     } else {
-      setValidationMessage("Failed to lock ranking");
-      setShowValidationToast(true);
-      setTimeout(() => setShowValidationToast(false), 3000);
+      handleShowToast("Failed to lock ranking", "error");
     }
   };
 
@@ -541,6 +523,19 @@ const ProjectsSection = ({
   }, [selectedBusinessId, isPrioritizing, isPrioritized, loadTeamRankings, loadAdminRankings]);
 
   const renderProjectForm = () => {
+    // Use ProjectDetails component for view mode
+    if (activeView === "view") {
+      return (
+        <ProjectDetails
+          project={currentProject}
+          onBack={handleBackToList}
+          onEdit={(project) => handleEditProject(project, "edit")}
+          canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus)}
+        />
+      );
+    }
+
+    // Use ProjectForm for new and edit modes
     return (
       <ProjectForm
         mode={activeView}
@@ -612,6 +607,7 @@ const ProjectsSection = ({
           onRankSaved={refreshTeamRankings}
           isAdmin={isSuperAdmin}
           isRankingLocked={isRankingLocked}
+          onShowToast={handleShowToast}
         />
 
         {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (

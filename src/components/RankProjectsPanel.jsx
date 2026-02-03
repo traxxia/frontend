@@ -32,7 +32,7 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, onShowToast }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [initialOrder, setInitialOrder] = useState([]);
@@ -117,7 +117,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       const validation = validateRationale(movedProject.rationale);
 
       if (!validation.isValid) {
-        alert(`Cannot move project: ${validation.error}\n\nPlease fix the rationale before moving this project.`);
+        onShowToast(`Cannot move project: ${validation.error}\n\nPlease fix the rationale before moving this project.`, "error");
         return;
       }
 
@@ -187,7 +187,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     const validation = validateRationale(tempRationale);
 
     if (!validation.isValid) {
-      alert(validation.error);
+      onShowToast(validation.error, "error");
       return;
     }
 
@@ -268,7 +268,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const handleSaveRankings = async () => {
     // Only check if rankings have changed if user has already saved in this session
     if (hasEverSaved && !hasRankingsChanged()) {
-      alert("No changes detected. Please reorder projects before saving.");
+      onShowToast("No changes detected. Please reorder projects before saving.", "warning");
       return;
     }
 
@@ -277,7 +277,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     if (missingRationales.length > 0) {
       const errorMsg = `Please fix rationale issues:\n${missingRationales.join("\n")}`;
       setValidationError(errorMsg);
-      alert(errorMsg);
+      onShowToast(errorMsg, "error");
       return;
     }
 
@@ -308,7 +308,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         }
       );
 
-      alert("Rankings saved successfully");
+      onShowToast("Rankings saved successfully", "success");
       setIsSaved(true);
       setHasEverSaved(true);
       setValidationError("");
@@ -320,7 +320,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       }
     } catch (err) {
       console.error("Save rankings failed", err);
-      alert("Failed to save rankings");
+      onShowToast("Failed to save rankings", "error");
     } finally {
       setIsSaving(false);
     }
@@ -328,7 +328,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const handleLockRankings = () => {
     if (!isSaved) {
-      alert("Please save your rankings before locking.");
+      onShowToast("Please save your rankings before locking.", "warning");
       return;
     }
     setIsLocked(true);
