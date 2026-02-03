@@ -658,7 +658,7 @@ const UserManagement = ({ onToast }) => {
                   {t("Add_User")}
                 </Button>
 
-                {!isSuperAdmin && (
+                {!isSuperAdmin && (<>
                   <Button
                     className="add-user-btn d-flex align-items-center"
                     onClick={handleOpenAssignModal}
@@ -666,17 +666,16 @@ const UserManagement = ({ onToast }) => {
                     <User size={16} className="me-2" />
                     {t("Collaborator")}
                   </Button>
-                )}
-                <Button
-                  className="add-user-btn d-flex align-items-center"
-                  onClick={() => {
-                    loadLaunchedBusinessAndProjects();
-                    setShowGiveAccessModal(true);
-                  }}
-                >
-                  <ShieldCheck size={16} className="me-2" />
-                  {t("Add Project Access")}
-                </Button>
+                  <Button
+                    className="add-user-btn d-flex align-items-center"
+                    onClick={() => {
+                      loadLaunchedBusinessAndProjects();
+                      setShowGiveAccessModal(true);
+                    }}
+                  >
+                    <ShieldCheck size={16} className="me-2" />
+                    {t("Add Project Access")}
+                  </Button></>)}
               </div>
             </div>
           </Col>
