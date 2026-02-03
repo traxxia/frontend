@@ -1,7 +1,7 @@
 /* Outer Container */
 .rank-panel-container {
-  background: #fff7d1;
-  border: 1px solid #cc8f1c;
+  background: rgb(200, 225, 255);
+  border: 1px solid rgb(26, 115, 232);
   border-radius: 12px;
   padding: 24px;
   margin-top: 20px;
@@ -23,25 +23,12 @@
   display: flex;
   gap: 12px;
 }
-
-.btn-save-rank {
-  background-color: #2563eb !important;
-  color: white;
-  border: none;
-  padding: 6px 16px;
-}
-
-.btn-lock-rank {
-  background-color: #f59e0b !important;
-  color: white;
-  border: none;
-  padding: 6px 16px;
-}
+ 
 
 /* Description */
 .rank-description {
   font-size: 14px;
-  color: #995d25;
+  color: #000;
   margin-top: 12px;
 }
 
@@ -67,7 +54,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #fbbf24;
+  background: rgb(26, 115, 232);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,8 +85,8 @@
 
 /* Hover effect for each card */
 .rank-project-card:hover {
-  border-color: #d97706 !important;   /* orange border */
-  box-shadow: 0 0 6px rgba(217, 119, 6, 0.4) !important; /* soft glow */
+  border-color: rgb(26, 115, 232) !important;
+  box-shadow: 0 0 6px rgb(200, 225, 255) !important;
   transition: 0.2s ease-in-out;
   cursor: pointer;
 }
@@ -132,7 +119,7 @@
   border: none;
   padding: 0;
   font-size: 14px;
-  color: #d97706; 
+  color: rgb(26, 115, 232); 
   cursor: pointer;
 }
 
@@ -212,12 +199,7 @@
   font-size: 13px !important;
   padding: 8px !important;
 }
-
-.compact-mode .btn-save-rank,
-.compact-mode .btn-lock-rank {
-  padding: 9px 12px !important;
-  font-size: 13px !important;
-}
+ 
 
 .compact-mode .rank-description {
   font-size: 12px !important;
@@ -346,8 +328,8 @@
 }
 
 [data-theme="dark"] .rank-project-card:hover {
-  border-color: #fbbf24 !important;
-  box-shadow: 0 0 6px rgba(251, 191, 36, 0.5) !important;
+  border-color: rgb(26, 115, 232) !important;
+  box-shadow: 0 0 6px rgb(200, 225, 255) !important;
 }
 /* Add these styles to your existing RankProjectsPanel.css */
 
@@ -371,4 +353,41 @@
 .rank-project-card[aria-disabled="true"] {
   opacity: 0.6;
   cursor: not-allowed;
+}
+/* Save Rankings Button States */
+.btn-save-rank , .btn-lock-rank{
+  opacity: 1;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  background-color: rgb(26, 115, 232) !important;
+}
+
+.btn-save-rank:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+}
+
+.btn-save-rank:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+/* Lock Rankings Button States */
+.btn-rank-projects, .btn-lock-rank {
+background-color: rgb(26, 115, 232) !important;
+  opacity: 1;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-lock-rank:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+}
+
+.btn-lock-rank:not(:disabled):hover {
+  opacity: 0.9;
 }

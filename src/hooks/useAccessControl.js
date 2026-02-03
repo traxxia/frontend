@@ -74,14 +74,14 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const canEditProject = useCallback(
-    (project, isEditor, myUserId) => {
+    (project, isEditor, myUserId, businessStatus) => {
       if (!project) return false;
 
       // Admins can always edit (except truly locked launched projects)
-      if (isEditor && project.status !== "launched") return true;
+      if (isEditor && businessStatus !== "launched") return true;
 
       // For reprioritizing projects
-      if (project.status === "reprioritizing") {
+      if (businessStatus === "reprioritizing") {
         if (isEditor) return true;
 
         if (
@@ -91,9 +91,8 @@ export const useAccessControl = (selectedBusinessId) => {
           return true;
         }
       }
-
       // For launched projects, check if user has been granted access
-      if (project.status === "launched") {
+      if (businessStatus === "launched") {
         return userHasProjectEditAccess[project._id] === true;
       }
 

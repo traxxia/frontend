@@ -186,26 +186,9 @@ const TeamRankingsView = ({
               </div>
             </div>
           </Accordion.Header>
-          <Accordion.Body>
-            {hasAIRankings && consensusMode === "ai" && (
-              <div className="alert alert-info d-flex align-items-center gap-2 mb-3">
-                <Sparkles size={16} className="text-primary" />
-                <small>
-                  <strong>AI Rankings Available:</strong> Projects have been
-                  analyzed and ranked by AI based on impact, effort, risk, and
-                  strategic alignment.
-                </small>
-              </div>
-            )}
-
-            {/* Consensus Mode Toggle */}
+          <Accordion.Body>  
             {isSuperAdmin && (
-              <div className="mb-3">
-                <div className="d-flex align-items-center gap-3 mb-2">
-                  <strong className="text-muted" style={{ fontSize: '0.875rem' }}>
-                    Consensus View:
-                  </strong>
-                </div>
+              <div className="mb-3"> 
                 <div 
                   className="btn-group w-100" 
                   role="group" 

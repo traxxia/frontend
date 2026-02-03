@@ -25,14 +25,14 @@ const ProjectsHeader = ({
             style={{
               backgroundColor: '#f8f9fa',
               borderRadius: '8px',
-              border: '1px solid #e9ecef',
+              border: '1px solid rgb(26, 115, 232)',
               minWidth: '120px'
             }}
           >
-            <span className="fw-bold" style={{ color: '#212529', fontSize: '18px' }}>
+            <span className="fw-bold" style={{ color: '#2563eb', fontSize: '18px' }}>
               {totalProjects}
             </span>
-            <span className="text-muted" style={{ fontSize: '14px', fontWeight: '500' }}>
+            <span className="" style={{  color: '#2563eb', fontSize: '14px', fontWeight: '500' }}>
               {totalProjects === 1 ? t("project") : t("total_projects")}
             </span>
           </div>

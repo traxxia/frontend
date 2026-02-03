@@ -1,11 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Rocket } from "lucide-react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col, Button, Spinner } from "react-bootstrap";
 import "../styles/KickstartProjectsCard.css";
 
 const KickstartProjectsCard = ({ onKickstart }) => {
   const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleKickstart = async () => {
+    setIsLoading(true);
+    try {
+      await onKickstart();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Container fluid className="p-0 mb-3">
@@ -28,11 +38,27 @@ const KickstartProjectsCard = ({ onKickstart }) => {
           <Col xs={12} md="auto" className="ms-md-auto">
             <Button
               variant="primary"
-              onClick={onKickstart}
+              onClick={handleKickstart}
+              disabled={isLoading}
               className="d-flex align-items-center gap-2 w-100 w-md-auto kickstart-button"
             >
-              <Rocket size={18} />
-              {t("Kickstart_Projects")}
+              {isLoading ? (
+                <>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                  />
+                  {t("Processing")}...
+                </>
+              ) : (
+                <>
+                  <Rocket size={18} />
+                  {t("Kickstart_Projects")}
+                </>
+              )}
             </Button>
           </Col>
         </Row>
