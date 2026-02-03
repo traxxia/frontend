@@ -15,8 +15,13 @@ const ToastNotifications = ({
   showValidationToast,
   setShowValidationToast,
   validationMessage,
+  validationMessageType = "error", // Add this prop with default
+  showAIRankingToast,
+  setShowAIRankingToast,
 }) => {
   const { t } = useTranslation();
+
+  const isSuccess = validationMessageType === "success";
 
   return (
     <>
@@ -28,8 +33,8 @@ const ToastNotifications = ({
           delay={3000}
           autohide
         >
-          <Toast.Body className="validation-toast-body">
-            <AlertTriangle size={18} />
+          <Toast.Body className={isSuccess ? "validation-toast-body-success" : "validation-toast-body"}>
+            {isSuccess ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
             <span>{validationMessage}</span>
           </Toast.Body>
         </Toast>
@@ -77,6 +82,19 @@ const ToastNotifications = ({
           <Toast.Body className="launch-toast-body">
             <CheckCircle size={18} />
             <span>{t("Projects_launched_Ready_for_execution.")}</span>
+          </Toast.Body>
+        </Toast>
+      </div>
+
+      {/* AI Ranking Toast */}
+      <div className="ai-ranking-toast-wrapper">
+        <Toast
+          show={showAIRankingToast}
+          onClose={() => setShowAIRankingToast(false)}
+        >
+          <Toast.Body className="ai-ranking-toast-body">
+            <CheckCircle size={18} />
+            <span>{t("AI_rankings_generated_successfully")}</span>
           </Toast.Body>
         </Toast>
       </div>

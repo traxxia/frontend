@@ -278,3 +278,10 @@
   color: #fcd34d;
 }
 
+.table-responsive {
+  overflow: visible !important;
+}
+
+.card-body {
+  overflow: visible !important;
+}

@@ -386,6 +386,7 @@ const CompanyManagement = ({ onToast }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const [userRole, setUserRole] = useState('');
   const { t } = useTranslation();
 
@@ -500,8 +501,19 @@ const CompanyManagement = ({ onToast }) => {
   };
 
   const filteredCompanies = companies.filter(company =>
-    company.company_name.toLowerCase().startsWith(searchTerm.toLowerCase())
+    company.company_name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    if (!searchTerm) return; 
+    const maxPage = Math.max(1, Math.ceil(filteredCompanies.length / pageSize));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [filteredCompanies.length, searchTerm]);
+
 
   const paginatedCompanies = filteredCompanies.slice(
     (currentPage - 1) * pageSize,
@@ -534,8 +546,16 @@ const CompanyManagement = ({ onToast }) => {
                 placeholder={t('search_companies')}
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
+                  const value = e.target.value;
+                  // store page only when starting search
+                  if (searchTerm === '' && value !== '') {
+                    setLastPageBeforeSearch(currentPage);
+                  }
+                  // restore page when clearing search
+                  if (searchTerm !== '' && value === '') {
+                    setCurrentPage(lastPageBeforeSearch);
+                  }
+                  setSearchTerm(value);
                 }}
               />
             </div>

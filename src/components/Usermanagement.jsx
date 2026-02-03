@@ -38,6 +38,7 @@ const UserManagement = ({ onToast }) => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageBeforeFilter, setPageBeforeFilter] = useState(1);
   const itemsPerPage = 10;
   const { t } = useTranslation();
   const [errors, setErrors] = useState({});
@@ -431,8 +432,9 @@ const UserManagement = ({ onToast }) => {
   const applyFilters = (search, role) => {
     const result = users.filter((user) => {
       const matchSearch =
-        user.name?.toLowerCase().startsWith(search.toLowerCase()) ||
-        user.email?.toLowerCase().startsWith(search.toLowerCase());
+        user.name?.toLowerCase().includes(search.toLowerCase()) ||
+        user.email?.toLowerCase().includes(search.toLowerCase()) ||
+        user.company_name?.toLowerCase().includes(search.toLowerCase());
 
       const uiRole = formatRole(user.role_name || user.role);
 
@@ -440,8 +442,17 @@ const UserManagement = ({ onToast }) => {
 
       return matchSearch && matchRole;
     });
-
     setFilteredUsers(result);
+
+    const isFiltering = search.trim() !== "" || role !== "All Roles";
+    if (isFiltering) {
+      if (searchTerm === "" && selectedRole === "All Roles") {
+        setPageBeforeFilter(currentPage);
+      }
+      setCurrentPage(1);
+    } else {
+      setCurrentPage(pageBeforeFilter);
+    }
   };
 
   const totalItems = filteredUsers.length;
@@ -663,7 +674,6 @@ const UserManagement = ({ onToast }) => {
                 <th>{t("Role")}</th>
                 <th>{t("status")}</th>
                 <th>{t("joined")}</th>
-                <th>{t("Last_Active")}</th>
                 <th className="text-end">{t("Action")}</th>
               </tr>
             </thead>
@@ -718,7 +728,6 @@ const UserManagement = ({ onToast }) => {
                         </span>
                       </td>
                       <td className="text-muted">{formatDate(user.created_at)}</td>
-                      <td className="text-muted">-</td>
                       <td className="text-end">
                         <Dropdown>
                           <Dropdown.Toggle as={CustomToggle} />
@@ -941,18 +950,18 @@ const UserManagement = ({ onToast }) => {
             </Row>
 
             <div className="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
-              <Button 
-                variant="light" 
-                onClick={handleCloseModal} 
+              <Button
+                variant="light"
+                onClick={handleCloseModal}
                 disabled={isSubmitting}
                 className="px-4"
               >
                 {t("cancel")}
               </Button>
 
-              <Button 
-                variant="primary" 
-                type="submit" 
+              <Button
+                variant="primary"
+                type="submit"
                 disabled={isSubmitting}
                 className="px-4"
               >

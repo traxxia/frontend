@@ -13,7 +13,7 @@ import {
   Shield,
   Activity,
   CircleUserRound,
-  Key, // NEW ICON
+  Key,
 } from "lucide-react";
 import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
@@ -21,7 +21,7 @@ import UserOverview from "./UserOverview";
 import UserHistory from "./UserHistory";
 import AuditTrail from "./AuditTrail";
 import Usermanagement from "./Usermanagement";
-import AccessManagement from "./AccessManagement"; // NEW IMPORT
+import AccessManagement from "./AccessManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -98,7 +98,7 @@ const SuperAdminPanel = () => {
         return <AuditTrail onToast={showToastMessage} />;
       case "user_management":
         return <Usermanagement onToast={showToastMessage} />;
-      case "access_management": // NEW CASE
+      case "access_management":
         return <AccessManagement onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
@@ -125,9 +125,11 @@ const SuperAdminPanel = () => {
       <div className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
-            <button className="back-button" onClick={handleBack}>
-              <ArrowLeft size={18} />
-            </button>
+            {!isSuperAdmin && (
+              <button className="back-button" onClick={handleBack}>
+                <ArrowLeft size={18} />
+              </button>
+            )}
             <div className="header-title">
               <HeaderIcon size={24} className="header-icon" />
               <h1>{panelTitle}</h1>

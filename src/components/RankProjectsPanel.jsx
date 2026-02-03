@@ -527,7 +527,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         <Modal.Header>
           <Modal.Title>
             <div className="d-flex align-items-center gap-2">
-              <AlertTriangle size={20} color="#ff9500" />
+              <AlertTriangle size={20} color="rgb(26, 115, 232)" />
               Rationale Required
             </div>
           </Modal.Title>

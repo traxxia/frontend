@@ -66,6 +66,7 @@ const ProjectsSection = ({
   const [validationMessage, setValidationMessage] = useState("");
   const [showAIRankingToast, setShowAIRankingToast] = useState(false);
   const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
+  const [validationMessageType, setValidationMessageType] = useState("error");
 
   const { locks } = useFieldLockPolling(currentProject?._id);
   const { fetchProjects, deleteProject, createProject, updateProject } =
@@ -420,8 +421,9 @@ const ProjectsSection = ({
   };
 
   const handleSave = async () => {
-    if (!canEditProject(currentProject, isEditor, myUserId)) {
+    if (!canEditProject(currentProject, isEditor, myUserId, businessStatus)) {
       setValidationMessage("You are not allowed to edit this project");
+      setValidationMessageType("error"); // Add this
       setShowValidationToast(true);
       setTimeout(() => setShowValidationToast(false), 3000);
       return;
@@ -435,6 +437,7 @@ const ProjectsSection = ({
     const validation = validateForm();
     if (!validation.isValid) {
       setValidationMessage(validation.firstError);
+      setValidationMessageType("error"); // Add this
       setShowValidationToast(true);
       setTimeout(() => setShowValidationToast(false), 5000);
       return;
@@ -446,6 +449,7 @@ const ProjectsSection = ({
     const success = await updateProject(currentProject._id, payload);
     if (success) {
       setValidationMessage("Project updated successfully!");
+      setValidationMessageType("success"); // Add this
       setShowValidationToast(true);
       await unlockAllFieldsSafe();
       await loadProjects();
@@ -453,6 +457,7 @@ const ProjectsSection = ({
       setTimeout(() => setShowValidationToast(false), 3000);
     } else {
       setValidationMessage("Failed to update project.");
+      setValidationMessageType("error"); // Add this
       setShowValidationToast(true);
       setTimeout(() => setShowValidationToast(false), 3000);
     }
@@ -525,7 +530,7 @@ const ProjectsSection = ({
         mode={activeView}
         readOnly={
           activeView === "view" ||
-          (currentProject && !canEditProject(currentProject, isEditor, myUserId))
+          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus))
         }
         {...formState}
         {...formSetters}
@@ -608,7 +613,7 @@ const ProjectsSection = ({
           projectCreationLocked={projectCreationLocked}
           isFinalizedView={isFinalizedView}
           canEditProject={(project) =>
-            canEditProject(project, isEditor, myUserId)
+            canEditProject(project, isEditor, myUserId, businessStatus)
           }
           onEdit={(project) => handleEditProject(project, "edit")}
           onView={(project) => handleEditProject(project, "view")}
@@ -632,6 +637,7 @@ const ProjectsSection = ({
         showValidationToast={showValidationToast}
         setShowValidationToast={setShowValidationToast}
         validationMessage={validationMessage}
+        validationMessageType={validationMessageType}
         showAIRankingToast={showAIRankingToast}
         setShowAIRankingToast={setShowAIRankingToast}
       />

@@ -277,9 +277,9 @@ const ProjectForm = ({
 
   const scrollToError = (ref) => {
     if (ref?.current) {
-      ref.current.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "center" 
+      ref.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
       });
       setTimeout(() => {
         ref.current.focus();
@@ -290,7 +290,7 @@ const ProjectForm = ({
   const handleProjectNameChange = (e) => {
     const value = e.target.value;
     setProjectName(value);
-    
+
     if (showErrors) {
       const validation = validateField('Project Name', value, {
         required: true,
@@ -308,7 +308,7 @@ const ProjectForm = ({
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
     setDescription(value);
-    
+
     if (showErrors) {
       const validation = validateField('Description', value, {
         required: true,
@@ -326,7 +326,7 @@ const ProjectForm = ({
   const handleImportanceChange = (e) => {
     const value = e.target.value;
     setImportance(value);
-    
+
     if (showErrors) {
       const validation = validateField('Why This Matters', value, {
         required: true,
@@ -344,7 +344,7 @@ const ProjectForm = ({
   const handleBudgetChange = (e) => {
     const value = e.target.value;
     setBudget(value);
-    
+
     if (showErrors) {
       const validation = validateField('Budget Estimate', value, {
         numeric: true,
@@ -363,7 +363,7 @@ const ProjectForm = ({
     // Allow numbers, decimal point, comma, dash, dollar sign, K, M
     const allowedChars = /[0-9.,\-$KMkm]/;
     const controlKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-    
+
     if (!allowedChars.test(e.key) && !controlKeys.includes(e.key)) {
       e.preventDefault();
     }
@@ -371,12 +371,12 @@ const ProjectForm = ({
 
   const handleSubmit = () => {
     // Validate project name only for new projects
-    const projectNameValidation = mode === "new" 
+    const projectNameValidation = mode === "new"
       ? validateField('Project Name', projectName || '', {
-          required: true,
-          minLength: 3,
-          maxLength: 100
-        })
+        required: true,
+        minLength: 3,
+        maxLength: 100
+      })
       : { isValid: true, message: null };
 
     // Validate all required fields
@@ -546,11 +546,7 @@ const ProjectForm = ({
       {/* Strategic Context */}
       <div className="center-row">
         <div className="form-card">
-          <div className="card-header-between">
-            <h3 className="section-title">{t("Strategic_Context")}</h3>
-            <span className="optional-tag">{t("Optional")}</span>
-          </div>
-
+          <h3 className="section-title">{t("Strategic_Context")}</h3>
           <div className="grid-3">
             <SelectField
               label={t("Impact")}
@@ -580,7 +576,10 @@ const ProjectForm = ({
               onFieldEdit={handleFieldEdit}
             />
 
-            <SelectField
+          </div> <br></br>
+
+           <div className="grid-3">
+             <SelectField
               label={t("Risk")}
               icon={<AlertTriangle size={16} />}
               options={riskOptions}
@@ -593,14 +592,10 @@ const ProjectForm = ({
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
             />
-          </div>
 
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">{t("Strategic_Theme_Horizon")}</label>
-              {renderLockBadge("theme")}
-            </div>
             <SelectField
+             label={t("Strategic_Theme_Horizon")}
+              icon={<Lock size={16} />}
               options={themeOptions}
               value={selectedTheme}
               onChange={setSelectedTheme}
@@ -611,7 +606,8 @@ const ProjectForm = ({
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
             />
-          </div>
+
+          </div> <br></br> 
 
           <div className="field-row">
             <div className="field-label-row">
@@ -637,10 +633,7 @@ const ProjectForm = ({
       {/* Detailed Planning */}
       <div className="center-row">
         <div className="form-card">
-          <div className="card-header-between">
-            <h3 className="section-title">{t("Detailed_Planning")}</h3>
-            <span className="optional-tag">{t("Optional")}</span>
-          </div>
+          <h3 className="section-title">{t("Detailed_Planning")}</h3>
 
           <div className="field-row">
             <div className="field-label-row">

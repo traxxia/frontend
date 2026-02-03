@@ -19,7 +19,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useContext(ThemeContext);
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL; 
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
@@ -31,13 +31,13 @@ const Login = () => {
         email,
         password,
       });
- 
+
       sessionStorage.setItem("token", res.data.token);
       sessionStorage.setItem("userId", res.data.user.id);
       sessionStorage.setItem("userName", res.data.user.name);
       sessionStorage.setItem("userEmail", res.data.user.email);
       sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("userCompany", res.data.user.company?.name || ""); 
+      sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
       if (res.data.user.company) {
         sessionStorage.setItem("companyName", res.data.user.company.name || "");
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
@@ -48,7 +48,7 @@ const Login = () => {
         "isAdmin",
         ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"
       );
- 
+
       const currentLang = window.getCurrentLanguage
         ? window.getCurrentLanguage()
         : "en";
@@ -60,7 +60,7 @@ const Login = () => {
         navigate("/dashboard");
       }
     } catch (err) {
-      console.error(err.response?.data || err.message); 
+      console.error(err.response?.data || err.message);
       const errorMessage = err.response?.data?.error || t("login_failed");
       alert(errorMessage);
     } finally {
@@ -73,7 +73,7 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container"> 
+    <div className="login-container">
       <LanguageTranslator isLoginPage={true} />
 
       <div className="login-left-section">
@@ -152,6 +152,9 @@ const Login = () => {
           <div className="login-footer">
             <p>
               {t("not_member")} <a href="/register">{t("register_now")}</a>
+            </p>
+            <p>
+              <a href="/academy">📚 Explore Traxxia Academy</a>
             </p>
           </div>
           <hr className="divider" />

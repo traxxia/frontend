@@ -42,20 +42,18 @@ const ProjectCard = ({
           {rankMap[String(project._id)] ?? index + 1}
         </div>
       )}
-      
+      <h5 className="project-title">{project.project_name}</h5>
       <p className="project-initiative">
         from&nbsp;
         <span className="project-initiative-highlight">
           {project.project_type || "Created project"}
         </span>
       </p>
-
-      <h5 className="project-title">{project.project_name}</h5>
       <p className="project-description">{project.description}</p>
-
+      {/* 
       <div className="project-quote">
         "{project.quote || "Generate using AI"}"
-      </div>
+      </div> */}
 
       <p className="project-last-edited">
         Created by{" "}
@@ -64,7 +62,7 @@ const ProjectCard = ({
         </span>
       </p>
 
-      <hr />
+      {/* <hr /> */}
 
       <div className="project-actions">
         {launched ? (

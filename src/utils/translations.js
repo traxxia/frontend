@@ -861,7 +861,7 @@ export const staticTranslations = {
   // ===========================
   'User_Management':'User Management',
   'Add_and_manage_organization_collaborators_and_viewers':'Add and manage organization collaborators and viewers',
-  'Search_by_name_or_email':'Search by name or email...',
+  'Search_by_name_or_email':'Search by name or email or company...',
   'All_Roles':'All Roles',
   'Add_User':'Add User',
   'Assign_User':'Assign User',
@@ -1805,7 +1805,7 @@ export const staticTranslations = {
   'Active_Users':'Usuarios activos',
   'Collaborators':'Colaboradores',
   'Pending_Invites':'Invitaciones pendientes',
-  'Search_by_name_or_email':'Buscar por nombre o correo ...',
+  'Search_by_name_or_email':'Buscar por nombre o correo o compañía...',
   'All_Roles':'Todos los roles',
   'Add_User':'Agregar usuario',
   'Assign_User':'Asignar usuario',

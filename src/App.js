@@ -11,34 +11,35 @@ import SuperAdminPage from './pages/SuperAdminPage'; // NEW: Import Super Admin 
 import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
+import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
 
 
 const App = () => {
   useEffect(() => {
     // Initialize translations when app starts
     initializeTranslations();
-    
+
     // Check if user has a session language preference and apply it
     const sessionLang = sessionStorage.getItem('appLanguage');
     const localLang = localStorage.getItem('appLanguage');
-    
+
     // Priority: session storage > local storage > default 'en'
     const preferredLang = sessionLang || localLang || 'en';
-    
+
     // Set the language if it's different from current
     if (window.currentAppLanguage !== preferredLang) {
       window.currentAppLanguage = preferredLang;
-      
+
       // Update the global translation function
       if (window.appTranslations) {
-        window.getTranslation = function(key) {
+        window.getTranslation = function (key) {
           const result = window.appTranslations[window.currentAppLanguage][key] || key;
           return typeof result === 'string' ? result : String(key);
         };
       }
-      
+
       // Dispatch language change event for components
-      window.dispatchEvent(new CustomEvent('languageChanged', { 
+      window.dispatchEvent(new CustomEvent('languageChanged', {
         detail: { language: preferredLang }
       }));
     }
@@ -52,7 +53,13 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/businesspage" element={<BusinessSetupPage />} /> 
+          <Route path="/businesspage" element={<BusinessSetupPage />} />
+
+          {/* Traxxia Academy Routes */}
+          <Route path="/academy" element={<AcademyPage />} />
+          <Route path="/academy/:category" element={<AcademyPage />} />
+          <Route path="/academy/:category/:article" element={<AcademyPage />} />
+
           {/* Regular Admin Route - kept for potential future use */}
           <Route
             path="/admin"
@@ -62,7 +69,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          
+
           {/* Super Admin Route - accessible by both admins and super admins */}
           <Route
             path="/super-admin"
@@ -72,7 +79,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          
+
         </Routes>
       </div>
     </Router>

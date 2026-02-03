@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Container, Dropdown } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Settings, Home, User, Archive, FileText, Shield } from 'lucide-react';
+import { LogOut, Settings, Home, User, Archive, FileText, Shield, BookOpen } from 'lucide-react';
 import "../styles/menubar.css";
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -26,7 +26,7 @@ const MenuBar = () => {
     setUserRole(userRoleStored || '');
     setIsSuperAdmin(userRoleStored === 'super_admin');
   }, []);
-  
+
   const logout = async () => {
     try {
       const token = sessionStorage.getItem('token');
@@ -47,7 +47,7 @@ const MenuBar = () => {
       navigate('/login');
     }
   };
-  
+
   const handleLogout = () => {
     logout();
   };
@@ -57,6 +57,7 @@ const MenuBar = () => {
   const handleAdminClick = () => navigate('/super-admin');
   const handleDashboardClick = () => navigate('/dashboard');
   const handleSuperAdminClick = () => navigate('/super-admin');
+  const handleAcademyClick = () => navigate('/academy');
 
   // Handler for audit trail navigation
   const handleAuditTrailClick = () => navigate('/audit-trail');
@@ -95,8 +96,8 @@ const MenuBar = () => {
           <div className="navbar-center">
             <Navbar.Brand
               className="traxia-logo"
-              onClick={() => navigate('/dashboard')}
-              style={{ cursor: 'pointer' }}
+              onClick={!isSuperAdmin ? () => navigate('/dashboard') : undefined}
+              style={{ cursor: isSuperAdmin ? 'default' : 'pointer' }}
             >
               <img
                 src="/traxxia-logo.png"
@@ -135,13 +136,22 @@ const MenuBar = () => {
                 {/* Dashboard Link */}
                 {!isSuperAdmin && (
                   <Dropdown.Item
-                  onClick={handleDashboardClick}
-                  className={`dropdown-item-traxia ${isCurrentPage('/dashboard') ? 'active' : ''}`}
-                >
-                  <Home size={16} className="me-2" />
-                  {t('dashboard')}
-                </Dropdown.Item>
+                    onClick={handleDashboardClick}
+                    className={`dropdown-item-traxia ${isCurrentPage('/dashboard') ? 'active' : ''}`}
+                  >
+                    <Home size={16} className="me-2" />
+                    {t('dashboard')}
+                  </Dropdown.Item>
                 )}
+
+                {/* Traxxia Academy Link */}
+                <Dropdown.Item
+                  onClick={handleAcademyClick}
+                  className={`dropdown-item-traxia ${isCurrentPage('/academy') || location.pathname.startsWith('/academy/') ? 'active' : ''}`}
+                >
+                  <BookOpen size={16} className="me-2" />
+                  Traxxia Academy
+                </Dropdown.Item>
 
                 {/* NEW: Super Admin Panel (only for super admin) */}
                 {isSuperAdmin && (
