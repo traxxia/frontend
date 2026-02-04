@@ -696,3 +696,44 @@
     height: 30px;
   }
 }
+/* Disable Safari's native password reveal button */
+.form-group input[type="password"]::-webkit-credentials-auto-fill-button,
+.form-group input[type="password"]::-webkit-contacts-auto-fill-button {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
+/* Remove Safari's password reveal button */
+.form-group input[type="password"]::-webkit-textfield-decoration-container {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Additional Safari-specific fixes */
+.form-group input[type="password"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Ensure toggle button stays visible and positioned correctly */
+.input-container {
+  position: relative;
+  isolation: isolate; /* Creates a new stacking context */
+}
+
+.toggle-password {
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10; /* Ensure it's above Safari's buttons */
+}
