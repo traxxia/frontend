@@ -150,7 +150,6 @@ export const useProjectForm = () => {
     const newErrors = {};
 
     const isEmpty = (val) => !val || val.trim().length === 0;
-    const hasLetter = (val) => /[a-zA-Z]/.test(val);
 
     if (isEmpty(projectName)) {
       newErrors.projectName = "Project name is required";
@@ -158,6 +157,10 @@ export const useProjectForm = () => {
 
     if (isEmpty(description)) {
       newErrors.description = "Description is required";
+    }
+
+    if (isEmpty(importance)) {
+      newErrors.importance = "Why This Matters is required";
     }
 
     if (isEmpty(strategicDecision)) {
@@ -182,7 +185,7 @@ export const useProjectForm = () => {
       isValid: Object.keys(newErrors).length === 0,
       firstError: Object.values(newErrors)[0] || null,
     };
-  }, [projectName, description, strategicDecision, accountableOwner, successCriteria, killCriteria]);
+  }, [projectName, description, importance, strategicDecision, accountableOwner, successCriteria, killCriteria]);
 
   return {
     formState: {

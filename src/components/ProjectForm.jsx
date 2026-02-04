@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
 import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock } from "lucide-react";
@@ -168,7 +168,7 @@ const SelectField = ({
 };
 
 // Reusable Input Field Component
-const InputField = ({
+const InputField = forwardRef(({
   label,
   value,
   onChange,
@@ -180,7 +180,7 @@ const InputField = ({
   required = false,
   maxLength,
   type = "text"
-}) => {
+}, ref) => {
   return (
     <div className="field-row">
       <div className="field-label-row">
@@ -194,6 +194,7 @@ const InputField = ({
         )}
       </div>
       <input
+        ref={ref}
         type={type}
         value={value || ""}
         onChange={onChange}
@@ -205,10 +206,10 @@ const InputField = ({
       {error && <small className="error-text">{error}</small>}
     </div>
   );
-};
+});
 
 // Reusable Text Area Component
-const TextAreaField = ({
+const TextAreaField = forwardRef(({
   label,
   value,
   onChange,
@@ -221,7 +222,7 @@ const TextAreaField = ({
   rows = 3,
   maxLength,
   transparent = false
-}) => {
+}, ref) => {
   return (
     <div className="field-row">
       <div className="field-label-row">
@@ -235,6 +236,7 @@ const TextAreaField = ({
         )}
       </div>
       <textarea
+        ref={ref}
         value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
@@ -246,7 +248,7 @@ const TextAreaField = ({
       {error && <small className="error-text">{error}</small>}
     </div>
   );
-};
+});
 
 const ProjectForm = ({
   mode,
@@ -314,6 +316,10 @@ const ProjectForm = ({
   const descriptionRef = useRef(null);
   const importanceRef = useRef(null);
   const budgetRef = useRef(null);
+  const strategicDecisionRef = useRef(null);
+  const accountableOwnerRef = useRef(null);
+  const successCriteriaRef = useRef(null);
+  const killCriteriaRef = useRef(null);
 
   const getTitle = () => {
     switch (mode) {
@@ -509,6 +515,14 @@ const ProjectForm = ({
     const hasErrors = Object.values(errors).some(error => error !== null);
 
     if (hasErrors) {
+      if (errors.projectName) scrollToError(projectNameRef);
+      else if (errors.description) scrollToError(descriptionRef);
+      else if (errors.importance) scrollToError(importanceRef);
+      else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
+      else if (errors.accountableOwner) scrollToError(accountableOwnerRef);
+      else if (errors.successCriteria) scrollToError(successCriteriaRef);
+      else if (errors.killCriteria) scrollToError(killCriteriaRef);
+      else if (errors.budget) scrollToError(budgetRef);
       return;
     }
 
@@ -651,6 +665,7 @@ const ProjectForm = ({
 
           {/* Strategic Decision */}
           <TextAreaField
+            ref={strategicDecisionRef}
             label={t("Strategic_Decision_Bet")}
             value={strategicDecision}
             onChange={(e) => {
@@ -667,6 +682,7 @@ const ProjectForm = ({
 
           {/* Accountable Owner */}
           <InputField
+            ref={accountableOwnerRef}
             label={t("Accountable_Owner")}
             value={accountableOwner}
             onChange={(e) => {
@@ -712,6 +728,7 @@ const ProjectForm = ({
           {/* Success & Kill Criteria */}
           <div className="grid-2">
             <TextAreaField
+              ref={successCriteriaRef}
               label={t("Success_Criteria")}
               value={successCriteria}
               onChange={(e) => {
@@ -726,6 +743,7 @@ const ProjectForm = ({
               required
             />
             <TextAreaField
+              ref={killCriteriaRef}
               label={t("Kill_Criteria")}
               value={killCriteria}
               onChange={(e) => {
