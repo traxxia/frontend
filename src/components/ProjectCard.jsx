@@ -18,7 +18,7 @@ import { useTranslation } from "../hooks/useTranslation";
 
 // Helper to get strategic signal
 const getStrategicSignal = (project) => {
-  const impact = project.impact || "Low";
+  const impact = project.impact;
   const theme = project.strategic_theme || "None";
   return { impact, theme };
 };
@@ -120,7 +120,7 @@ const ProjectCard = ({
             {t("State")}: <strong style={{ color: "#374151" }}>{project.learning_state ? t(project.learning_state) : t("Testing")}</strong>
           </span> */}
           <span title={t("Impact")} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Zap size={12} color={impact === 'High' ? 'orange' : '#9ca3af'} /> {impact} {t("Impact")}
+            <Zap size={12} color={impact === 'High' ? 'orange' : '#9ca3af'} /> {impact} {impact ? t("Impact") : "No Impact"}
           </span>
         </div>
       </div>
