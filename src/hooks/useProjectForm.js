@@ -84,7 +84,18 @@ export const useProjectForm = () => {
     setKillCriteria(project.kill_criteria || "");
     setReviewCadence(project.review_cadence || "Monthly");
     setLearningState(project.learning_state || "Testing");
-    setStatus(project.status || "Draft");
+
+    // Normalize status string to match UI options (capitalized)
+    const rawStatus = (project.status || "Draft").toLowerCase();
+    let normalizedStatus = "Draft";
+    if (rawStatus === "active") normalizedStatus = "Active";
+    else if (rawStatus === "at risk" || rawStatus === "at_risk") normalizedStatus = "At Risk";
+    else if (rawStatus === "paused") normalizedStatus = "Paused";
+    else if (rawStatus === "killed") normalizedStatus = "Killed";
+    else if (rawStatus === "scaled") normalizedStatus = "Scaled";
+    else if (rawStatus === "draft") normalizedStatus = "Draft";
+
+    setStatus(normalizedStatus);
     setLastReviewed(project.last_reviewed || null);
   }, []);
 
