@@ -54,7 +54,7 @@ const MenuBar = () => {
 
   const isCurrentPage = (path) => location.pathname === path;
 
-  const handleAdminClick = () => navigate('/super-admin');
+  const handleAdminClick = () => navigate('/admin');
   const handleDashboardClick = () => navigate('/dashboard');
   const handleSuperAdminClick = () => navigate('/super-admin');
   const handleAcademyClick = () => navigate('/academy');
@@ -183,7 +183,7 @@ const MenuBar = () => {
                 {isAdmin && !isSuperAdmin && (
                   <Dropdown.Item
                     onClick={handleAdminClick}
-                    className={`dropdown-item-traxia ${isCurrentPage('/super-admin') ? 'active' : ''}`}
+                    className={`dropdown-item-traxia ${isCurrentPage('/admin') ? 'active' : ''}`}
                   >
                     <Settings size={16} className="me-2" />
                     {t('admin')}
@@ -217,7 +217,7 @@ const MenuBar = () => {
           </div>
         </div>
       </Container>
-    </Navbar>
+    </Navbar >
   );
 };
 

@@ -1746,7 +1746,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0px;
 }
 
 .section-header h2 {
@@ -2873,14 +2873,16 @@
 
 
 [data-theme="dark"] .section-header {
-  background-color: #181c24; /* deep dark background to separate from page */
+  background-color: #181c24;
+  /* deep dark background to separate from page */
   margin-bottom: 20px;
   padding: 1rem 1.25rem;
   border-radius: 8px 8px 0 0;
 }
 
 [data-theme="dark"] .section-header h2 {
-  color: #ffffff; /* white text for dark mode */
+  color: #ffffff;
+  /* white text for dark mode */
   font-size: 24px;
   font-weight: 700;
 }
@@ -2895,20 +2897,25 @@
 }
 
 [data-theme="dark"] .company-table {
-  background-color: #23272f; /* dark gray */
-  color: #e0e0e0; /* light gray text */
+  background-color: #23272f;
+  /* dark gray */
+  color: #e0e0e0;
+  /* light gray text */
 }
 
 [data-theme="dark"] .company-table thead tr {
-  background-color: #23272f; /* matches header in your image */
+  background-color: #23272f;
+  /* matches header in your image */
   color: #ffffff;
 }
 
 [data-theme="dark"] .company-table tbody tr {
   background-color: #23272f;
-  border-bottom: 1px solid #374151; /* lighter border for dark mode */
+  border-bottom: 1px solid #374151;
+  /* lighter border for dark mode */
 }
 
 [data-theme="dark"] .company-table tbody tr:nth-child(even) {
-  background-color: #293042; /* slight variation for alternate rows */
+  background-color: #293042;
+  /* slight variation for alternate rows */
 }

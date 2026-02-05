@@ -53,6 +53,7 @@ const StrategicAnalysis = ({
   onKickstartProjects,
   hasProjectsTab = false,
   onToastMessage,
+  hideKickstart = false,
 }) => {
   const [userRole, setUserRole] = useState("");
 
@@ -181,7 +182,7 @@ const StrategicAnalysis = ({
             high_level_requirements: '',
             scope_definition: '',
             expected_outcome: item.expected_outcome,
-            success_metrics:  item.success_metrics || item.metrics,
+            success_metrics: item.success_metrics || item.metrics,
             estimated_timeline: item.estimated_timeline,
             budget_estimate: '',
           };
@@ -197,23 +198,23 @@ const StrategicAnalysis = ({
                 }
               }
             );
-            } catch (postErr) {
-              console.error("Kickstart project creation failed", postErr);
-              serverErrorMessage = postErr?.response?.data?.error ||
-                      postErr?.response?.data?.message ||
-                      postErr?.message ||
-                      "Failed to kickstart projects.";
-                      
-              hasServerError = true;
-               break; 
-            }
+          } catch (postErr) {
+            console.error("Kickstart project creation failed", postErr);
+            serverErrorMessage = postErr?.response?.data?.error ||
+              postErr?.response?.data?.message ||
+              postErr?.message ||
+              "Failed to kickstart projects.";
+
+            hasServerError = true;
+            break;
+          }
         }
-      
-      if (hasServerError) { 
-        setKickstartError(serverErrorMessage);
-        onToastMessage?.(serverErrorMessage, "error");
-        return; 
-      }
+
+        if (hasServerError) {
+          setKickstartError(serverErrorMessage);
+          onToastMessage?.(serverErrorMessage, "error");
+          return;
+        }
       }
     } catch (e) {
       console.error("Kickstart processing failed", e);
@@ -242,7 +243,7 @@ const StrategicAnalysis = ({
     try {
       sessionStorage.setItem('showProjectsTab', 'true');
       sessionStorage.setItem('activeTab', 'projects');
-    } catch {}
+    } catch { }
   };
   useEffect(() => {
     try {
@@ -250,7 +251,7 @@ const StrategicAnalysis = ({
       if (active === 'projects' && hasProjectsTab && !hasKickstarted) {
         setHasKickstarted(true);
       }
-    } catch {}
+    } catch { }
   }, [hasKickstarted, hasProjectsTab]);
 
   useEffect(() => {
@@ -874,9 +875,9 @@ const StrategicAnalysis = ({
                 </div>
               </div>
             )}
-            {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
-              strategy.how_to_compete[0] !== 'N/A' && (
-                <div className="subsection">
+          {strategy.how_to_compete && strategy.how_to_compete.length > 0 &&
+            strategy.how_to_compete[0] !== 'N/A' && (
+              <div className="subsection">
                 <h4 className="subsection-title">
                   <ArrowRight size={16} className="strategy-icon" />
                   How to Compete
@@ -888,7 +889,7 @@ const StrategicAnalysis = ({
                         const rowIndex = rowIndices.howToCompete?.[idx];
                         const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
                         const isLast = rowIndex === visibleRows - 1;
- 
+
                         return (
                           <StreamingRow
                             key={idx}
@@ -907,7 +908,7 @@ const StrategicAnalysis = ({
                   </table>
                 </div>
               </div>
- 
+
             )}
         </div>
       </div>
@@ -2566,7 +2567,7 @@ const StrategicAnalysis = ({
       data-analysis-name="Strategic Analysis"
       data-analysis-order="10"
     >
-      {canShowKickstart && !hasKickstarted && !hasProjectsTab && (
+      {!hideKickstart && canShowKickstart && !hasKickstarted && !hasProjectsTab && (
         <KickstartProjectsCard onKickstart={handleKickstart} />
       )}
       <div className="dashboard-container">
