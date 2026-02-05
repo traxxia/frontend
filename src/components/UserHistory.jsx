@@ -183,7 +183,8 @@ const useSortedFilteredUsers = (users, searchTerm) => {
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
-    return user.name.toLowerCase().startsWith(searchLower)
+    return user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower);
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {
@@ -611,6 +612,10 @@ const UserHistory = ({ onToast }) => {
       setCurrentPage(1);
     }
   }, [selectedCompany, isInitialized, loadUsers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleUserSelect = async (userId) => {
     setSelectedUser(userId);

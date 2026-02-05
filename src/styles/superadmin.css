@@ -544,6 +544,7 @@
   justify-content: space-between;
   padding: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0px;
 }
 
 .modal-header h3 {
@@ -570,10 +571,6 @@
 .company-form,
 .question-form {
   padding: 1.5rem;
-}
-
-.form-section {
-  margin-bottom: 2rem;
 }
 
 .form-section h4 {
