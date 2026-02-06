@@ -51,10 +51,6 @@
   transition: background-color 0.2s;
 }
 
-.back-button:hover {
-  background: #e5e7eb;
-}
-
 .header-stats {
   display: flex;
   gap: 2rem;

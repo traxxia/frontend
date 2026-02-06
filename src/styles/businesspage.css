@@ -2398,7 +2398,7 @@ body {
   width: 100%;
   box-sizing: border-box;
   scroll-behavior: auto !important;
-  position: relative; 
+  position: relative;
 }
 
 .phase-tabs-nav {
@@ -2643,7 +2643,7 @@ body {
 }
 
 .back-button:hover {
-  background-color: #f3f4f6;
+  background-color: transparent;
 }
 
 .back-button:not(:hover) {
@@ -2834,7 +2834,7 @@ body {
 .analysis-section-mobile-controls {
   padding: 0rem;
   background: #ffffffff;
-} 
+}
 
 /*Dark Mode*/
 
