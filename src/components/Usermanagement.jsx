@@ -119,8 +119,8 @@ const UserManagement = ({ onToast }) => {
     // Name validation
     if (!newName.trim()) {
       newErrors.name = t("Name_is_required");
-    } else if (!/^[A-Za-z]/.test(newName)) {
-      newErrors.name = t("Name_must_start_with_letter");
+    } else if (!/[a-zA-Z]/.test(newName)) {
+      newErrors.name = t("Name_must_contain_alphabetic_characters") || "Name must contain at least some alphabetic characters";
     } else if (newName.trim().length < 3) {
       newErrors.name = t("Name_must_be_atleast3_characters_long");
     }
@@ -791,194 +791,161 @@ const UserManagement = ({ onToast }) => {
           </Modal.Header>
           <Modal.Body className="px-4">
             <Form onSubmit={handleAddUser}>
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">
-                      {t("user_name")} <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder={t("Enter_name")}
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      disabled={isSubmitting}
-                      isInvalid={!!errors.name}
-                      className="py-2"
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.name}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">
-                      {t("email")} <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="email"
-                      placeholder={t("Enter_email")}
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      disabled={isSubmitting}
-                      isInvalid={!!errors.email}
-                      className="py-2"
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {errors.email}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">
-                      {t("password")} <span className="text-danger">*</span>
-                    </Form.Label>
-                    <InputGroup>
-                      <Form.Control
-                        type={showPassword ? "text" : "password"}
-                        placeholder={t("Enter_password")}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={isSubmitting}
-                        isInvalid={!!errors.password}
-                        className="py-2"
-                      />
-                      <Button
-                        variant="outline-secondary"
-                        onClick={() => setShowPassword(!showPassword)}
-                        disabled={isSubmitting}
-                        style={{ borderColor: errors.password ? '#dc3545' : '#ced4da' }}
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </Button>
-                      <Form.Control.Feedback type="invalid">
-                        {errors.password}
-                      </Form.Control.Feedback>
-                    </InputGroup>
-                    <Form.Text className="text-muted">
-                      Must be 8+ characters with uppercase, lowercase, number & special character
-                    </Form.Text>
-                  </Form.Group>
-                </Col>
-
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">
-                      {t("Confirm Password")} <span className="text-danger">*</span>
-                    </Form.Label>
-                    <InputGroup>
-                      <Form.Control
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder={t("Re-enter password")}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        disabled={isSubmitting}
-                        isInvalid={!!errors.confirmPassword}
-                        className="py-2"
-                      />
-                      <Button
-                        variant="outline-secondary"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        disabled={isSubmitting}
-                        style={{ borderColor: errors.confirmPassword ? '#dc3545' : '#ced4da' }}
-                      >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </Button>
-                      <Form.Control.Feedback type="invalid">
-                        {errors.confirmPassword}
-                      </Form.Control.Feedback>
-                    </InputGroup>
-                  </Form.Group>
-                </Col>
-              </Row>
-
-              <Row>
-                {isSuperAdmin && (
+              <fieldset disabled={isSubmitting} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+                <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label className="fw-semibold">
-                        {t("Company")} <span className="text-danger">*</span>
+                        {t("user_name")} <span className="text-danger">*</span>
                       </Form.Label>
-                      <Form.Select
-                        value={selectedCompanyId}
-                        onChange={(e) => setSelectedCompanyId(e.target.value)}
-                        disabled={isSubmitting}
-                        isInvalid={!!errors.company}
-                        className="py-2"
-                      >
-                        <option value="">{t("Select Company")}</option>
-                        {companies.map((c) => (
-                          <option key={c._id} value={c._id}>
-                            {c.company_name || c.name}
-                          </option>
-                        ))}
-                      </Form.Select>
-                      <Form.Control.Feedback type="invalid">
-                        {errors.company}
-                      </Form.Control.Feedback>
+                      <Form.Control
+                        type="text"
+                        placeholder={t("Enter_user_name")}
+                        className={`minimal-input ${errors.name ? "is-invalid" : ""}`}
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                      />
+                      {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                     </Form.Group>
                   </Col>
-                )}
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold">
+                        {t("email_address")} <span className="text-danger">*</span>
+                      </Form.Label>
+                      <Form.Control
+                        type="email"
+                        placeholder={t("Enter_email_address")}
+                        className={`minimal-input ${errors.email ? "is-invalid" : ""}`}
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                      />
+                      {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                    </Form.Group>
+                  </Col>
+                </Row>
 
-                <Col md={isSuperAdmin ? 6 : 12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">
-                      {t("role")} <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Select
-                      value={newRole}
-                      onChange={(e) => setNewRole(e.target.value)}
-                      disabled={isSubmitting}
-                      isInvalid={!!errors.role}
-                      className="py-2"
-                    >
-                      <option value="">{t("Select_role")}</option>
-                      <option value="Collaborator">Collaborator</option>
-                      <option value="Viewer">Viewer</option>
-                      <option value="User">User</option>
-                    </Form.Select>
-                    <Form.Control.Feedback type="invalid">
-                      {errors.role}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-              </Row>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold">
+                        {t("password")} <span className="text-danger">*</span>
+                      </Form.Label>
+                      <InputGroup className="minimal-input-group">
+                        <Form.Control
+                          type={showPassword ? "text" : "password"}
+                          placeholder={t("Enter_password")}
+                          className={`minimal-input ${errors.password ? "is-invalid" : ""}`}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <Button
+                          variant="outline-secondary"
+                          className="toggle-password-btn"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </Button>
+                        {errors.password && <div className="invalid-feedback">{errors.password}</div>}
+                      </InputGroup>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold">
+                        {t("confirm_password")} <span className="text-danger">*</span>
+                      </Form.Label>
+                      <InputGroup className="minimal-input-group">
+                        <Form.Control
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder={t("Confirm_password")}
+                          className={`minimal-input ${errors.confirmPassword ? "is-invalid" : ""}`}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                        <Button
+                          variant="outline-secondary"
+                          className="toggle-password-btn"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </Button>
+                        {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
+                      </InputGroup>
+                    </Form.Group>
+                  </Col>
+                </Row>
 
-              <div className="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
-                <Button
-                  variant="light"
-                  onClick={handleCloseModal}
-                  disabled={isSubmitting}
-                  className="px-4"
-                >
-                  {t("cancel")}
-                </Button>
+                <Row>
+                  <Col md={isSuperAdmin ? 6 : 12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold">
+                        {t("role")} <span className="text-danger">*</span>
+                      </Form.Label>
+                      <Form.Select
+                        className={`minimal-input ${errors.role ? "is-invalid" : ""}`}
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value)}
+                      >
+                        <option value="">{t("Select_Role")}</option>
+                        {/* <option value="company_admin">Org Admin</option> */}
+                        <option value="collaborator">Collaborator</option>
+                        <option value="user">User</option>
+                        <option value="viewer">Viewer</option>
+                      </Form.Select>
+                      {errors.role && <div className="invalid-feedback">{errors.role}</div>}
+                    </Form.Group>
+                  </Col>
 
-                <Button
-                  variant="primary"
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={16} className="me-2" />
-                      {t("Add_User")}
-                    </>
+                  {isSuperAdmin && (
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="fw-semibold">
+                          {t("company")} <span className="text-danger">*</span>
+                        </Form.Label>
+                        <Form.Select
+                          className={`minimal-input ${errors.company ? "is-invalid" : ""}`}
+                          value={selectedCompanyId}
+                          onChange={(e) => setSelectedCompanyId(e.target.value)}
+                        >
+                          <option value="">{t("Select_Company")}</option>
+                          {companies.map((company) => (
+                            <option key={company._id} value={company._id}>
+                              {company.company_name}
+                            </option>
+                          ))}
+                        </Form.Select>
+                        {errors.company && <div className="invalid-feedback">{errors.company}</div>}
+                      </Form.Group>
+                    </Col>
                   )}
-                </Button>
-              </div>
+                </Row>
+
+                <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                  <Button
+                    variant="link"
+                    className="cancel-link text-decoration-none"
+                    onClick={handleCloseModal}
+                    disabled={isSubmitting}
+                  >
+                    {t("cancel")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="add-user-submit-btn"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        {t("Adding...")}
+                      </>
+                    ) : (
+                      t("Add_User")
+                    )}
+                  </Button>
+                </div>
+              </fieldset>
             </Form>
           </Modal.Body>
         </Modal>
@@ -1279,8 +1246,8 @@ const UserManagement = ({ onToast }) => {
             </Button>
           </Modal.Footer>
         </Modal>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
