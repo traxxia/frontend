@@ -27,11 +27,11 @@ import CoreAdjacency from './CoreAdjacency';
 import CompetitiveLandscape from './CompetitiveLandscape';
 import MissingMetricsDisplay from './MissingMetricsDisplay'; // Added import for MissingMetricsDisplay
 
-const AnalysisDataModal = ({ 
-  isOpen, 
-  onClose, 
-  analysisType, 
-  analysisData, 
+const AnalysisDataModal = ({
+  isOpen,
+  onClose,
+  analysisType,
+  analysisData,
   analysisName,
   businessName = "Business",
   auditId,
@@ -66,13 +66,13 @@ const AnalysisDataModal = ({
   const hasDocumentUploaded = documentInfo && documentInfo.has_document;
 
   // Create effective document info if needed for financial analyses
-  const effectiveDocumentInfo = isFinancialAnalysis 
+  const effectiveDocumentInfo = isFinancialAnalysis
     ? (documentInfo || {
-        has_document: hasDocumentUploaded || true, // Assume true for financial if not specified
-        filename: documentInfo?.filename || 'Financial Document',
-        template_name: documentInfo?.template_name || 'Standard',
-        upload_date: documentInfo?.upload_date || new Date().toISOString()
-      })
+      has_document: hasDocumentUploaded || true, // Assume true for financial if not specified
+      filename: documentInfo?.filename || 'Financial Document',
+      template_name: documentInfo?.template_name || 'Standard',
+      upload_date: documentInfo?.upload_date || new Date().toISOString()
+    })
     : documentInfo;
 
   const renderAnalysisComponent = () => {
@@ -81,15 +81,15 @@ const AnalysisDataModal = ({
       questions: [],
       userAnswers: {},
       businessName: businessName,
-      onDataGenerated: () => {},
-      onRegenerate: () => {},
+      onDataGenerated: () => { },
+      onRegenerate: () => { },
       isRegenerating: false,
       canRegenerate: false,
       selectedBusinessId: null,
-      onRedirectToBrief: () => {},
-      onRedirectToChat: () => {},
+      onRedirectToBrief: () => { },
+      onRedirectToChat: () => { },
       isMobile: false,
-      setActiveTab: () => {},
+      setActiveTab: () => { },
       hasUploadedDocument: hasDocumentUploaded,
       uploadedFile: null,
       // Disable all interactive features
@@ -153,7 +153,7 @@ const AnalysisDataModal = ({
             strategicData={analysisData}
             readOnly={false}
             hideDownload={true}
-      
+            hideKickstart={true}
           />
         );
 
@@ -343,7 +343,7 @@ const AnalysisDataModal = ({
             <p className="analysis-modal-subtitle">
               Business: {businessName}
             </p>
-          </div> 
+          </div>
         </div>
 
         {/* Modal Body */}

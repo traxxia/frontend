@@ -189,7 +189,7 @@ const AuditTrail = ({ onToast }) => {
 
       if (response.ok) {
         const data = await response.json();
-        return data.analysis_result;
+        return data; // Return the full data object, not just analysis_result
       } else {
         onToast('Failed to fetch analysis data', 'error');
         return null;
@@ -203,17 +203,27 @@ const AuditTrail = ({ onToast }) => {
   };
 
   const openAnalysisModal = async (entry) => {
-    const analysisData = entry.event_data?.analysis_result || await fetchAnalysisData(entry._id);
+    const eventData = entry.event_data_summary || entry.event_data || {};
+
+    let analysisData = entry.event_data?.analysis_result;
+    let businessName = eventData.business_name || entry.business_name || 'Business';
+
+    // If analysis data is not in the entry, fetch it
+    if (!analysisData) {
+      const fetchedData = await fetchAnalysisData(entry._id);
+      if (fetchedData) {
+        analysisData = fetchedData.analysis_result;
+        businessName = fetchedData.business_name || businessName;
+      }
+    }
 
     if (analysisData) {
-      const eventData = entry.event_data_summary || entry.event_data || {};
-
       setModalData({
         isOpen: true,
         analysisType: eventData.analysis_type || 'analysis',
         analysisData: analysisData,
         analysisName: eventData.analysis_name || `${eventData.analysis_type} Analysis`,
-        businessName: eventData.business_name || 'Business',
+        businessName: businessName,
         auditId: entry._id
       });
     }
@@ -674,7 +684,7 @@ const AuditTrail = ({ onToast }) => {
                       handleFilterChange('include_analysis_data', e.target.checked);
                     }}
                   />
-                  <span className='span-text' style={{marginLeft: '2px'}}>Include full analysis data (slower loading)</span>
+                  <span className='span-text' style={{ marginLeft: '2px' }}>Include full analysis data (slower loading)</span>
                   <span
                     className="info-tooltip"
                     tabIndex={0}

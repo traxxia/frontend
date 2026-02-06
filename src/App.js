@@ -60,12 +60,12 @@ const App = () => {
           <Route path="/academy/:category" element={<AcademyPage />} />
           <Route path="/academy/:category/:article" element={<AcademyPage />} />
 
-          {/* Regular Admin Route - kept for potential future use */}
+          {/* Admin Route - renders unified SuperAdminPage */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute adminOnly={true}>
-                <Admin />
+                <SuperAdminPage />
               </ProtectedRoute>
             }
           />

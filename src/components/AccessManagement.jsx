@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Table, Badge, Spinner, Form, Button, Modal } from "react-bootstrap";
-import { Shield, Lock, Pencil, Users, AlertCircle, Trash2, AlertTriangle } from "lucide-react";
+import { Table, Badge, Spinner, Form, Button, Modal } from "react-bootstrap";
+import { Shield, Lock, Pencil, Users, AlertCircle, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/accessmanagement.css";
@@ -119,364 +119,261 @@ const AccessManagement = ({ onToast }) => {
 
     if (businesses.length === 0) {
         return (
-            <Container fluid className="p-4">
-                <Card className="text-center p-5">
-                    <AlertCircle size={48} className="mx-auto mb-3 text-muted" />
-                    <h5>{t("No Launched Businesses")}</h5>
-                    <p className="text-muted">
-                        {t('No businesses have been launched yet. Access management is only available for launched businesses.')}
-                    </p>
-                </Card>
-            </Container>
+            <div className="access-management-container minimal">
+                <div className="access-content">
+                    <div className="empty-state minimal-empty text-center p-5 border rounded">
+                        <AlertCircle size={48} className="text-muted mb-3" />
+                        <h4 className="fw-bold">{t("No Launched Businesses")}</h4>
+                        <p className="text-muted mb-0">
+                            {t('No businesses have been launched yet. Access management is only available for launched businesses.')}
+                        </p>
+                    </div>
+                </div>
+            </div>
         );
     }
 
     return (
-        <Container fluid className="p-4">
-            <div className="access-header">
-            <h2 className="page-title">{t("access_management")}</h2>
-            </div>
-
+        <div className="access-management-container minimal">
             <div className="access-content">
-                
-                {/* Business Selector */}
-                <Card className="business-selector-card mb-4">
-                <Card.Body>
-                    <Form.Group>
-                    <Form.Label className="selector-label">
-                        {t("Select_Business")}
-                    </Form.Label>
-                    <Form.Select
-                        value={selectedBusinessId}
-                        onChange={(e) => setSelectedBusinessId(e.target.value)}
-                        className="business-select"
-                    >
-                        <option value="">Select a business</option>
-                        {businesses.map((b) => (
-                        <option key={b._id} value={b._id}>
-                            {b.business_name || b.name}
-                        </option>
-                        ))}
-                    </Form.Select>
-                    </Form.Group>
-                </Card.Body>
-                </Card>
-
-
-            {loading ? (
-                <div className="text-center p-5">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3 text-muted">Loading access data...</p>
+                {/* Minimal Header */}
+                <div className="access-header-minimal">
+                    <h2 className="minimal-page-title">{t("access_management")}</h2>
+                    <p className="minimal-page-subtitle text-muted">
+                        {t("Manage user permissions and access levels.")}
+                    </p>
                 </div>
-            ) : accessData ? (
-                <>
-                    {/* Summary Cards */}
-                    <Row className="mb-4 g-3">
-                        <Col md={4}>
-                            <Card body className="summary-card">
-                                <div className="d-flex align-items-center gap-3">
-                                    <div className="summary-icon bg-primary-light">
-                                        <Users size={24} className="text-primary" />
-                                    </div>
-                                    <div>
-                                        <h6 className="mb-0 text-muted">{t("Total Users with Access")}</h6>
-                                        <h3 className="mb-0 fw-bold">{accessData.total_users_with_access}</h3>
-                                    </div>
+
+                {loading ? (
+                    <div className="loading-container p-5 text-center">
+                        <Spinner animation="border" variant="secondary" size="md" />
+                        <p className="loading-text mt-3 text-muted">{t("Loading...")}</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Compact Summary Row */}
+                        {accessData && (
+                            <div className="compact-summary-row mb-4">
+                                <div className="summary-item">
+                                    <span className="summary-label">{t("Total Users")}:</span>
+                                    <span className="summary-value-minimal">{accessData.total_users_with_access}</span>
                                 </div>
-                            </Card>
-                        </Col>
-
-                        <Col md={4}>
-                            <Card body className="summary-card">
-                                <div className="d-flex align-items-center gap-3">
-                                    <div className="summary-icon bg-warning-light">
-                                        <Lock size={24} className="text-warning" />
-                                    </div>
-                                    <div>
-                                        <h6 className="mb-0 text-muted">{t('Reranking Access')}</h6>
-                                        <h3 className="mb-0 fw-bold">
-                                            {accessData.access_list.filter(u => u.has_rerank_access).length}
-                                        </h3>
-                                    </div>
+                                <div className="summary-item">
+                                    <span className="summary-label">{t("Reranking Access")}:</span>
+                                    <span className="summary-value-minimal">
+                                        {accessData.access_list.filter(u => u.has_rerank_access).length}
+                                    </span>
                                 </div>
-                            </Card>
-                        </Col>
-
-                        <Col md={4}>
-                            <Card body className="summary-card">
-                                <div className="d-flex align-items-center gap-3">
-                                    <div className="summary-icon bg-success-light">
-                                        <Pencil size={24} className="text-success" />
-                                    </div>
-                                    <div>
-                                        <h6 className="mb-0 text-muted">{t('Project Edit Access')}</h6>
-                                        <h3 className="mb-0 fw-bold">
-                                            {accessData.access_list.filter(u => u.has_project_edit_access).length}
-                                        </h3>
-                                    </div>
-                                </div>
-                            </Card>
-                        </Col>
-                    </Row>
-
-                    {/* Access List Table */}
-                    <Card>
-                        <Card.Body>
-                            <h5 className="fw-semibold mb-3">
-                                {t('Users with Granted Access')} ({accessData.access_list.length})
-                            </h5>
-
-                            {accessData.access_list.length === 0 ? (
-                                <div className="text-center p-5">
-                                    <Shield size={48} className="text-muted mb-3" />
-                                    <p className="text-muted">
-                                        No users have been granted access yet.
-                                    </p>
-                                </div>
-                            ) : (
-                                <Table hover responsive className="align-middle">
-                                    <thead className="table-heading">
-                                        <tr>
-                                            <th>{t('user')}</th>
-                                            <th className="text-center">{t("Rerank Access")}</th>
-                                            <th className="text-center">{t("Project Edit Access")}</th>
-                                            <th>{t("Projects with Access")}</th>
-                                            <th className="text-center">{t('actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {accessData.access_list.map((user) => (
-                                            <tr key={user.user_id}>
-                                                {/* User Column */}
-                                                <td>
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <div
-                                                            style={{
-                                                                width: "35px",
-                                                                height: "35px",
-                                                                backgroundColor: "#e6f1ff",
-                                                                borderRadius: "50%",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontWeight: "bold",
-                                                                color: "#3f51b5",
-                                                            }}
-                                                        >
-                                                            {user.user_name?.[0] || "U"}
-                                                        </div>
-                                                        <div>
-                                                            <div className="fw-semibold">{user.user_name}</div>
-                                                            <small className="text-muted">{user.user_email}</small>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                {/* Rerank Access Column */}
-                                                <td className="text-center">
-                                                    {user.has_rerank_access ? (
-                                                        <Badge bg="warning" className="d-flex align-items-center gap-1 justify-content-center" style={{ width: "fit-content", margin: "0 auto" }}>
-                                                            <Lock size={14} />
-                                                            Yes
-                                                        </Badge>
-                                                    ) : (
-                                                        <span className="text-muted">—</span>
-                                                    )}
-                                                </td>
-
-                                                {/* Project Edit Access Column */}
-                                                <td className="text-center">
-                                                    {user.has_project_edit_access ? (
-                                                        <Badge bg="success" className="d-flex align-items-center gap-1 justify-content-center" style={{ width: "fit-content", margin: "0 auto" }}>
-                                                            <Pencil size={14} />
-                                                            Yes
-                                                        </Badge>
-                                                    ) : (
-                                                        <span className="text-muted">—</span>
-                                                    )}
-                                                </td>
-
-                                                {/* Projects with Access Column */}
-                                                <td>
-                                                    {user.projects_with_access.length > 0 ? (
-                                                        <div className="d-flex flex-wrap gap-1">
-                                                            {user.projects_with_access.map((project) => (
-                                                                <Badge
-                                                                    key={project.project_id}
-                                                                    bg="light"
-                                                                    text="dark"
-                                                                    className="project-badge"
-                                                                    title={project.project_name}
-                                                                >
-                                                                    {project.project_name}
-                                                                </Badge>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-muted">—</span>
-                                                    )}
-                                                </td>
-
-                                                {/* Actions Column */}
-                                                <td className="text-center">
-                                                    <div className="d-flex gap-2 justify-content-center">
-                                                        {user.has_rerank_access && (
-                                                            <Button
-                                                                variant="outline-warning"
-                                                                size="sm"
-                                                                onClick={() => handleOpenRevokeModal(user, "rerank")}
-                                                                className="revoke-btn"
-                                                                title="Revoke Rerank Access"
-                                                            >
-                                                                <Lock size={14} />
-                                                            </Button>
-                                                        )}
-                                                        {user.has_project_edit_access && (
-                                                            <Button
-                                                                variant="outline-success"
-                                                                size="sm"
-                                                                onClick={() => handleOpenRevokeModal(user, "project_edit")}
-                                                                className="revoke-btn"
-                                                                title="Revoke Project Edit Access"
-                                                            >
-                                                                <Pencil size={14} />
-                                                            </Button>
-                                                        )}
-                                                        {(user.has_rerank_access || user.has_project_edit_access) && (
-                                                            <Button
-                                                                variant="outline-danger"
-                                                                size="sm"
-                                                                onClick={() => handleOpenRevokeModal(user, "all")}
-                                                                className="revoke-btn"
-                                                                title="Revoke All Access"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </Table>
-                            )}
-                        </Card.Body>
-                    </Card>
-                </>
-            ) : (
-                <Card className="text-center p-5">
-                    <p className="text-muted">Select a business to view access data</p>
-                </Card>
-            )}
-
-            {/* Revoke Access Confirmation Modal */}
-            <Modal
-                show={showRevokeModal}
-                onHide={() => setShowRevokeModal(false)}
-                centered
-                backdrop="static"
-            >
-                <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title className="d-flex align-items-center gap-2">
-                        <AlertTriangle size={24} className="text-warning" />
-                        Confirm Revoke Access
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="pt-2">
-                    {revokeDetails && (
-                        <div>
-                            <div className="alert alert-warning d-flex align-items-start gap-2 mb-3">
-                                <AlertTriangle size={20} className="mt-1 flex-shrink-0" />
-                                <div>
-                                    <strong>Warning:</strong> This action will immediately remove access permissions.
+                                <div className="summary-item">
+                                    <span className="summary-label">{t("Project Edit Access")}:</span>
+                                    <span className="summary-value-minimal">
+                                        {accessData.access_list.filter(u => u.has_project_edit_access).length}
+                                    </span>
                                 </div>
                             </div>
-
-                            <div className="revoke-details">
-                                <p className="mb-2">
-                                    <strong>User:</strong> {revokeDetails.user.user_name} ({revokeDetails.user.user_email})
-                                </p>
-                                <p className="mb-2">
-                                    <strong>Access to Revoke:</strong>{" "}
-                                    <Badge
-                                        bg={
-                                            revokeDetails.accessType === "all"
-                                                ? "danger"
-                                                : revokeDetails.accessType === "rerank"
-                                                    ? "warning"
-                                                    : "success"
-                                        }
-                                    >
-                                        {revokeDetails.accessType === "all"
-                                            ? "All Access"
-                                            : revokeDetails.accessType === "rerank"
-                                                ? "Reranking Access"
-                                                : "Project Edit Access"}
-                                    </Badge>
-                                </p>
-
-                                {revokeDetails.accessType === "all" && (
-                                    <div className="mt-3 p-3 bg-light rounded">
-                                        <p className="mb-2"><strong>This will revoke:</strong></p>
-                                        <ul className="mb-0">
-                                            {revokeDetails.user.has_rerank_access && (
-                                                <li>Reranking access for this business</li>
-                                            )}
-                                            {revokeDetails.user.has_project_edit_access && (
-                                                <li>
-                                                    Edit access for {revokeDetails.user.projects_with_access.length} project(s)
-                                                </li>
-                                            )}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {revokeDetails.accessType === "project_edit" && revokeDetails.user.projects_with_access.length > 0 && (
-                                    <div className="mt-3 p-3 bg-light rounded">
-                                        <p className="mb-2"><strong>Projects affected:</strong></p>
-                                        <div className="d-flex flex-wrap gap-1">
-                                            {revokeDetails.user.projects_with_access.map((project) => (
-                                                <Badge key={project.project_id} bg="secondary">
-                                                    {project.project_name}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </Modal.Body>
-                <Modal.Footer className="border-0 pt-0">
-                    <Button
-                        variant="light"
-                        onClick={() => setShowRevokeModal(false)}
-                        disabled={revoking}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={handleRevokeAccess}
-                        disabled={revoking}
-                        className="d-flex align-items-center gap-2"
-                    >
-                        {revoking ? (
-                            <>
-                                <Spinner animation="border" size="sm" />
-                                Revoking...
-                            </>
-                        ) : (
-                            <>
-                                <Trash2 size={16} />
-                                Revoke Access
-                            </>
                         )}
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+
+                        {/* Main Interaction Area */}
+                        <div className="table-controls-compact d-flex justify-content-between align-items-end mb-3">
+                            <div className="business-selector-minimal">
+                                <Form.Label className="minimal-label mb-1">
+                                    {t("Select_Business")}
+                                </Form.Label>
+                                <Form.Select
+                                    value={selectedBusinessId}
+                                    onChange={(e) => setSelectedBusinessId(e.target.value)}
+                                    className="minimal-select"
+                                >
+                                    {businesses.map((b) => (
+                                        <option key={b._id} value={b._id}>
+                                            {b.business_name || b.name}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            </div>
+                            {accessData && (
+                                <div className="table-info-minimal">
+                                    <span className="text-muted small">
+                                        {t('Showing')} <strong>{accessData.access_list.length}</strong> {t('users')}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {accessData ? (
+                            <div className="table-card border-0 mt-2">
+                                {accessData.access_list.length === 0 ? (
+                                    <div className="empty-state p-5 text-center">
+                                        <Shield size={64} className="empty-icon text-muted mb-3" />
+                                        <p className="text-muted fs-5">
+                                            No users have been granted access yet for this business.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="table-responsive">
+                                        <Table hover className="access-table mb-0 align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>{t('user')}</th>
+                                                    <th className="text-center">{t("Permissions")}</th>
+                                                    <th>{t("Projects with Access")}</th>
+                                                    <th className="text-end px-4">{t('actions')}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {accessData.access_list.map((user) => (
+                                                    <tr key={user.user_id}>
+                                                        {/* User Column */}
+                                                        <td>
+                                                            <div className="user-cell">
+
+                                                                <div className="user-info">
+                                                                    <div className="user-name">{user.user_name}</div>
+                                                                    <div className="user-email">{user.user_email}</div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Permissions Column */}
+                                                        <td className="text-center">
+                                                            <div className="access-badges">
+                                                                {user.has_rerank_access && (
+                                                                    <Badge className="access-badge rerank">
+                                                                        <Lock size={12} />
+                                                                        {t("Rerank")}
+                                                                    </Badge>
+                                                                )}
+                                                                {user.has_project_edit_access && (
+                                                                    <Badge className="access-badge edit">
+                                                                        <Pencil size={12} />
+                                                                        {t("Edit")}
+                                                                    </Badge>
+                                                                )}
+                                                                {!user.has_rerank_access && !user.has_project_edit_access && (
+                                                                    <span className="text-muted italic small">No special access</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Projects Column */}
+                                                        <td>
+                                                            <div className="projects-cell">
+                                                                {user.projects_with_access.length > 0 ? (
+                                                                    <div className="projects-preview">
+                                                                        {user.projects_with_access.slice(0, 3).map((project) => (
+                                                                            <Badge
+                                                                                key={project.project_id}
+                                                                                className="project-badge text-truncate"
+                                                                                title={project.project_name}
+                                                                            >
+                                                                                {project.project_name}
+                                                                            </Badge>
+                                                                        ))}
+                                                                        {user.projects_with_access.length > 3 && (
+                                                                            <Badge className="project-count-badge bg-light text-dark border">
+                                                                                +{user.projects_with_access.length - 3}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-muted small">—</span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+
+                                                        {/* Actions Column */}
+                                                        <td className="text-end px-4">
+                                                            <div className="d-flex gap-2 justify-content-end">
+                                                                {user.has_rerank_access && (
+                                                                    <Button
+                                                                        variant="outline-warning"
+                                                                        size="sm"
+                                                                        onClick={() => handleOpenRevokeModal(user, "rerank")}
+                                                                        className="revoke-btn"
+                                                                        title="Revoke Rerank Access"
+                                                                    >
+                                                                        <Lock size={14} />
+                                                                    </Button>
+                                                                )}
+                                                                {user.has_project_edit_access && (
+                                                                    <Button
+                                                                        variant="outline-success"
+                                                                        size="sm"
+                                                                        onClick={() => handleOpenRevokeModal(user, "project_edit")}
+                                                                        className="revoke-btn"
+                                                                        title="Revoke Project Edit Access"
+                                                                    >
+                                                                        <Pencil size={14} />
+                                                                    </Button>
+                                                                )}
+                                                                {(user.has_rerank_access || user.has_project_edit_access) && (
+                                                                    <Button
+                                                                        variant="outline-danger"
+                                                                        size="sm"
+                                                                        onClick={() => handleOpenRevokeModal(user, "all")}
+                                                                        className="revoke-btn btn-danger-hover"
+                                                                        title="Revoke All Access"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="minimal-select-notice border p-5 text-center bg-white rounded">
+                                <Users size={48} className="text-light mb-3" />
+                                <p className="text-muted mb-0">Please select a business above to view access list.</p>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* Revoke Modal - Kept Minimalist */}
+                <Modal
+                    show={showRevokeModal}
+                    onHide={() => setShowRevokeModal(false)}
+                    centered
+                    backdrop="static"
+                    className="minimal-modal"
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title className="fs-5 fw-bold">{t("Confirm Revocation")}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="p-4">
+                        {revokeDetails && (
+                            <div>
+                                <p className="mb-4">
+                                    Are you sure you want to revoke <strong>
+                                        {revokeDetails.accessType === "all" ? "all access" :
+                                            revokeDetails.accessType === "rerank" ? "reranking access" : "edit access"}
+                                    </strong> for <strong>{revokeDetails.user.user_name}</strong>?
+                                </p>
+
+                                <div className="user-preview-minimal p-3 border rounded bg-light mb-3">
+                                    <div className="fw-bold">{revokeDetails.user.user_name}</div>
+                                    <div className="text-muted small">{revokeDetails.user.user_email}</div>
+                                </div>
+                            </div>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer className="border-0 pt-0">
+                        <Button variant="link" className="text-muted text-decoration-none" onClick={() => setShowRevokeModal(false)} disabled={revoking}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={handleRevokeAccess} disabled={revoking} className="px-4">
+                            {revoking ? t("Revoking...") : t("Revoke Access")}
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
-        </Container>
+        </div>
     );
 };
 
