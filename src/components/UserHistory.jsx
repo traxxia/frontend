@@ -184,7 +184,8 @@ const useSortedFilteredUsers = (users, searchTerm) => {
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
-    return user.name.toLowerCase().startsWith(searchLower) 
+    return user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower);
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {
@@ -613,6 +614,10 @@ const UserHistory = ({ onToast }) => {
     }
   }, [selectedCompany, isInitialized, loadUsers]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleUserSelect = async (userId) => {
     setSelectedUser(userId);
     await loadUserHistory(userId);
@@ -756,7 +761,6 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, style, className }
 const UserRow = ({ user, onUserSelect, t }) => (
   <tr>
     <td className="cell-user">
-      <div className="avatar">{user.name.charAt(0).toUpperCase()}</div>
       <div className="user-info">
         <div className="user-name">{user.name}</div>
       </div>
@@ -1056,7 +1060,7 @@ const BusinessesTab = ({ businesses }) => {
 };
 
 const BusinessCard = ({ business }) => {
-  const { t } = useTranslation();   
+  const { t } = useTranslation();
 
   return (
     <div className="business-item">
@@ -1574,6 +1578,7 @@ const StrategicTab = ({
           phaseManager={safePhaseManager}
           hideDownload={true} // Hide the original download button since we have our custom one
           hideImproveButton={true}
+          hideKickstart={true}
         />
       </div>
     </div>

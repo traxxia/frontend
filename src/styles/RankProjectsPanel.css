@@ -1,10 +1,10 @@
 /* Outer Container */
 .rank-panel-container {
-  background: rgb(200, 225, 255);
-  border: 1px solid rgb(26, 115, 232);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 24px;
-  margin-top: 20px;
+  padding: 10px 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 /* Header */
@@ -12,34 +12,38 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .rank-title {
   margin: 0;
   font-weight: 700;
+  color: #1f2937;
 }
 
 .rank-header-buttons {
   display: flex;
   gap: 12px;
 }
- 
+
 
 /* Description */
 .rank-description {
   font-size: 14px;
-  color: #000;
-  margin-top: 12px;
+  color: #6b7280;
+  margin-top: 0;
+  margin-bottom: 16px;
 }
 
 /* Project Cards */
 .rank-project-card {
   background: white;
-  padding: 18px;
-  border-radius: 10px;
-  border: 1px solid #f3e6b6;
-  padding: 10px !important;        /* reduce inner spacing */
-  margin-bottom: 10px !important;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 12px !important;
+  margin-bottom: 8px !important;
+  transition: all 0.2s;
 }
 
 /* Top Row */
@@ -60,7 +64,7 @@
   justify-content: center;
   font-weight: 700;
   color: #fff;
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 /* Title + Description */
@@ -119,7 +123,7 @@
   border: none;
   padding: 0;
   font-size: 14px;
-  color: rgb(26, 115, 232); 
+  color: rgb(26, 115, 232);
   cursor: pointer;
 }
 
@@ -173,7 +177,7 @@
 }
 
 .compact-mode .rank-project-card {
-  padding: 12px !important;
+  padding: 0px !important;
   margin-bottom: 10px !important;
 }
 
@@ -199,12 +203,14 @@
   font-size: 13px !important;
   padding: 8px !important;
 }
- 
+
 
 .compact-mode .rank-description {
   font-size: 12px !important;
-  margin-top: 4px !important;      /* was 12px */
-  margin-bottom: 8px !important;   /* add small buffer, no big gap */
+  margin-top: 4px !important;
+  /* was 12px */
+  margin-bottom: 8px !important;
+  /* add small buffer, no big gap */
   line-height: 1.2 !important;
 }
 
@@ -214,7 +220,8 @@
 }
 
 .rank-project-card .card-body {
-  padding: 8px !important;     /* compress the inside area */
+  padding: 8px !important;
+  /* compress the inside area */
 }
 
 
@@ -281,6 +288,7 @@
     min-height: 80px;
   }
 }
+
 /* ----------------------------- */
 /*          DARK MODE            */
 /* ----------------------------- */
@@ -331,6 +339,7 @@
   border-color: rgb(26, 115, 232) !important;
   box-shadow: 0 0 6px rgb(200, 225, 255) !important;
 }
+
 /* Add these styles to your existing RankProjectsPanel.css */
 
 /* Highlight cards that need rationale */
@@ -354,8 +363,10 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 /* Save Rankings Button States */
-.btn-save-rank , .btn-lock-rank{
+.btn-save-rank,
+.btn-lock-rank {
   opacity: 1;
   cursor: pointer;
   transition: opacity 0.2s ease, background-color 0.2s ease;
@@ -374,8 +385,9 @@
 }
 
 /* Lock Rankings Button States */
-.btn-rank-projects, .btn-lock-rank {
-background-color: rgb(26, 115, 232) !important;
+.btn-rank-projects,
+.btn-lock-rank {
+  background-color: rgb(26, 115, 232) !important;
   opacity: 1;
   cursor: pointer;
   transition: opacity 0.2s ease, background-color 0.2s ease;

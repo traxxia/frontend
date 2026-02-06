@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Accordion, Table, Badge, Spinner, Form, Collapse, Card } from "react-bootstrap";
-import { Users, Sparkles, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { Table, Badge, Spinner, Collapse, Card } from "react-bootstrap";
+import { Users, Sparkles, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { fetchConsensusAnalysis, fetchCollaboratorConsensus } from "../services/consensusService";
 
@@ -11,8 +11,6 @@ const TeamRankingsView = ({
   user,
   sortedProjects,
   rankMap,
-  adminRankMap,
-  userRole,
   businessId,
 }) => {
   const { t } = useTranslation();
@@ -23,15 +21,20 @@ const TeamRankingsView = ({
   const [consensusMode, setConsensusMode] = useState("ai");
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  const hasAIRankings = sortedProjects.some(
-    (p) => p.ai_rank !== undefined && p.ai_rank !== null
-  );
-
+  // Load data immediately on mount (or when businessId changes), as parent now controls visibility
   useEffect(() => {
-    if (activeAccordionKey === "0" && businessId) {
+    if (businessId) {
       loadConsensusData();
     }
-  }, [activeAccordionKey, businessId, consensusMode]);
+  }, [businessId]);
+
+  // Reload if mode changes
+  useEffect(() => {
+    if (businessId) {
+      loadConsensusData();
+    }
+  }, [consensusMode]);
+
 
   const loadConsensusData = async () => {
     if (!businessId) return;
@@ -39,14 +42,11 @@ const TeamRankingsView = ({
     setLoadingConsensus(true);
     try {
       let response;
-
       if (consensusMode === "ai") {
         response = await fetchConsensusAnalysis(businessId);
       } else {
         response = await fetchCollaboratorConsensus(businessId);
       }
-
-      console.log(`${consensusMode} Consensus Data:`, response);
 
       const consensusMap = {};
       if (response.consensus_data && Array.isArray(response.consensus_data)) {
@@ -68,79 +68,37 @@ const TeamRankingsView = ({
   const toggleRowExpansion = (projectId) => {
     setExpandedRows(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(projectId)) {
-        newSet.delete(projectId);
-      } else {
-        newSet.add(projectId);
-      }
+      if (newSet.has(projectId)) newSet.delete(projectId);
+      else newSet.add(projectId);
       return newSet;
     });
   };
 
-  const getConsensusColor = (consensusScore) => {
-    switch (consensusScore) {
-      case "green":
-        return "success";
-      case "yellow":
-        return "warning";
-      case "red":
-        return "danger";
-      default:
-        return "secondary";
-    }
-  };
-
   const getConsensusEmoji = (consensusScore) => {
     switch (consensusScore) {
-      case "green":
-        return "🟢";
-      case "yellow":
-        return "🟡";
-      case "red":
-        return "🔴";
-      default:
-        return "⚪";
-    }
-  };
-
-  const getConsensusLabel = (level) => {
-    switch (level) {
-      case "high":
-        return "High Agreement";
-      case "medium":
-        return "Medium Agreement";
-      case "low":
-        return "Low Agreement";
-      default:
-        return "No Data";
+      case "green": return "🟢";
+      case "yellow": return "🟡";
+      case "red": return "🔴";
+      default: return "⚪";
     }
   };
 
   // Render collaborator rankings details
   const renderCollaboratorDetails = (consensus) => {
     if (!consensus || !consensus.collaborator_rankings || consensus.collaborator_rankings.length === 0) {
-      return (
-        <div className="text-center text-muted py-2">
-          <small>No rankings available</small>
-        </div>
-      );
+      return <div className="text-center text-muted py-2"><small>No rankings available</small></div>;
     }
 
     return (
-      <Card className="border-0 bg-light">
-        <Card.Body className="p-3">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <strong>Team Rankings Summary</strong>
-            </div>
-          </div>
-
-          <Table size="sm" bordered hover className="mb-0 bg-white">
-            <thead className="table-light">
+      <div className="collaborator-details-panel">
+        <h6 className="collab-header">Team Rankings Summary</h6>
+        <div className="table-responsive">
+          <Table size="sm" className="collab-table mb-0">
+            <thead>
               <tr>
-                <th style={{ width: '30%' }}>Collaborator</th>
-                <th style={{ width: '10%' }} className="text-center">Rank</th>
-                <th style={{ width: '45%' }}>Rationale</th>
+                <th style={{ width: '25%' }}>Collaborator</th>
+                <th style={{ width: '15%' }} className="text-center">Rank</th>
+                <th>Rationale</th>
               </tr>
             </thead>
             <tbody>
@@ -148,261 +106,162 @@ const TeamRankingsView = ({
                 <tr key={idx}>
                   <td>
                     <div className="d-flex align-items-center gap-2">
-                      <span style={{ fontSize: '0.9rem' }}>{collab.user_name}</span>
+                      <div className="collab-avatar-small">{collab.user_name.charAt(0)}</div>
+                      <span className="fw-medium">{collab.user_name}</span>
                     </div>
                   </td>
                   <td className="text-center">
-                    <Badge bg="primary" pill>{collab.rank}</Badge>
+                    <Badge bg="light" text="dark" className="border">#{collab.rank}</Badge>
                   </td>
-                  <td>
-                    {collab.rationale ? (
-                      <div className="d-flex align-items-start gap-2">
-                        <small className="text-muted" style={{ lineHeight: '1.4' }}>
-                          {collab.rationale}
-                        </small>
-                      </div>
-                    ) : (
-                      <small className="text-muted fst-italic">No rationale provided</small>
-                    )}
+                  <td className="text-muted small">
+                    {collab.rationale || "No rationale"}
                   </td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        </Card.Body>
-      </Card>
+        </div>
+      </div>
     );
   };
 
   return (
-    <div className="rank-list mt-4">
-      <Accordion activeKey={activeAccordionKey} onSelect={onAccordionSelect}>
-        <Accordion.Item eventKey="0">
-          <Accordion.Header>
-            <div className="d-flex flex-column">
-              <div className="d-flex align-items-center gap-2">
-                <Users size={18} className="text-info" />
-                <strong>{t("Team_Rankings_View")}</strong>
-              </div>
+    <div className="ranking-panel-container expanded-view">
+
+      {/* Panel Header */}
+      <div
+        className="ranking-header-bar open"
+        style={{ cursor: 'default' }} // No longer togglable by clicking header, handled by parent button
+      >
+        <div className="header-left">
+          <div className="header-icon-box">
+            <Users size={18} className="text-primary" />
+          </div>
+          <h5 className="header-title">{t("Team_Rankings_View")}</h5>
+
+          {/* Always show summary if available and in AI mode */}
+          {isSuperAdmin && consensusSummary && consensusMode === "ai" && (
+            <div className="mini-summary">
+              <span className="dot green" title="High Agreement"></span> {consensusSummary.high_consensus || 0}
+              <span className="dot yellow" title="Medium Agreement"></span> {consensusSummary.medium_consensus || 0}
+              <span className="dot red" title="Low Agreement"></span> {consensusSummary.low_consensus || 0}
             </div>
-          </Accordion.Header>
-          <Accordion.Body>  
-            {isSuperAdmin && (
-              <div className="mb-3"> 
-                <div 
-                  className="btn-group w-100" 
-                  role="group" 
-                  aria-label="Consensus mode toggle"
-                  style={{ maxWidth: '400px' }}
-                >
-                  <button
-                    type="button"
-                    className={`btn ${consensusMode === "ai" ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => {
-                      setConsensusMode("ai");
-                      setExpandedRows(new Set());
-                    }}
-                    style={{
-                      transition: 'all 0.3s ease',
-                      fontWeight: consensusMode === "ai" ? '600' : '400',
-                      borderTopLeftRadius: '8px',
-                      borderBottomLeftRadius: '8px',
-                    }}
-                  >
-                    <div className="d-flex align-items-center justify-content-center gap-2">
-                      <Sparkles size={16} />
-                      <span>AI-Based Consensus</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn ${consensusMode === "collaborator" ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => {
-                      setConsensusMode("collaborator");
-                      setExpandedRows(new Set());
-                    }}
-                    style={{
-                      transition: 'all 0.3s ease',
-                      fontWeight: consensusMode === "collaborator" ? '600' : '400',
-                      borderTopRightRadius: '8px',
-                      borderBottomRightRadius: '8px',
-                    }}
-                  >
-                    <div className="d-flex align-items-center justify-content-center gap-2">
-                      <Users size={16} />
-                      <span>Team Consensus</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            )}
+          )}
+        </div>
 
-            {isSuperAdmin && consensusSummary && consensusMode === "ai" && (
-              <div className="d-flex gap-4 mb-3 align-items-center">
-                <span>🟢 High Agreement ({consensusSummary.high_consensus})</span>
-                <span>🟡 Medium Agreement ({consensusSummary.medium_consensus})</span>
-                <span>🔴 Low Agreement ({consensusSummary.low_consensus})</span>
-              </div>
-            )}
+        {/* Optional: Add a close button here if requested, but user said "make it like rank projects button" which usually implies the header button toggles it. 
+            We can leave the right side empty or add a refresh button?
+        */}
+      </div>
 
-            {loadingConsensus && (
-              <div className="text-center py-2 mb-3">
-                <Spinner animation="border" size="sm" className="me-2" />
-                <small>Loading consensus analysis...</small>
-              </div>
-            )}
+      {/* Content Body - Always Visible since this component is only rendered when open */}
+      <div className="ranking-content-body">
 
-            <div className="table-responsive">
-              <Table hover className="mb-0">
-                <thead>
-                  <tr>
-                    {consensusMode === "collaborator" && isSuperAdmin && <th style={{ width: '50px' }}></th>}
-                    {consensusMode === "collaborator" && isSuperAdmin && (
-                      <th className="text-center" style={{ width: '80px' }}>Rank</th>
-                    )}
-                    <th>{t("Project_Name")}</th>
-                    {!isSuperAdmin && <th className="text-center">{user}</th>}
-                    {consensusMode === "ai" && (
-                      <th className="text-center" style={{ width: '150px' }}>
-                        <div className="d-flex align-items-center justify-content-center gap-1">
-                          <Sparkles size={14} className="text-warning" />
-                          <span>AI Score</span>
-                        </div>
-                      </th>
-                    )}
-                    {isSuperAdmin && consensusMode === "ai" && (
-                      <th className="text-center" style={{ width: '200px' }}>
-                        <div className="d-flex flex-column align-items-center">
-                          <span>Consensus</span>
-                          <small className="text-muted" style={{ fontSize: "0.75rem" }}>
-                            (AI vs Team)
-                          </small>
-                        </div>
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    // Sort projects by average rank in collaborator mode
-                    const projectsToDisplay = consensusMode === "collaborator"
-                      ? [...sortedProjects].sort((a, b) => {
-                        const aConsensus = consensusData[String(a._id)];
-                        const bConsensus = consensusData[String(b._id)];
-                        const aAvgRank = aConsensus?.average_rank || 999;
-                        const bAvgRank = bConsensus?.average_rank || 999;
-                        return aAvgRank - bAvgRank;
-                      })
-                      : sortedProjects;
+        {/* Toolbar: Consensus Mode Toggle */}
+        {isSuperAdmin && (
+          <div className="ranking-toolbar">
+            <div className="consensus-toggle-group">
+              <button
+                className={`toggle-btn ${consensusMode === "ai" ? "active" : ""}`}
+                onClick={() => setConsensusMode("ai")}
+              >
+                <Sparkles size={14} /> AI Consensus
+              </button>
+              <button
+                className={`toggle-btn ${consensusMode === "collaborator" ? "active" : ""}`}
+                onClick={() => setConsensusMode("collaborator")}
+              >
+                <Users size={14} /> Team Consensus
+              </button>
+            </div>
+          </div>
+        )}
 
-                    return projectsToDisplay.map((p, index) => {
-                      const key = String(p._id);
-                      const userRank = rankMap[key];
-                      const aiRank = p.ai_rank;
-                      const consensus = consensusData[key];
-                      const isExpanded = expandedRows.has(key);
-                      const hasCollaboratorData = consensus && consensus.collaborator_rankings && consensus.collaborator_rankings.length > 0;
+        {loadingConsensus ? (
+          <div className="loading-state">
+            <Spinner animation="border" size="sm" />
+            <span>Analyzing...</span>
+          </div>
+        ) : (
+          <div className="compact-table-wrapper">
+            <Table hover size="sm" className="ranking-table">
+              {consensusMode === "collaborator" && isSuperAdmin && (
+                <colgroup>
+                  <col style={{ width: "30px" }} />
+                  <col style={{ width: "auto" }} />
+                </colgroup>
+              )}
+              <thead>
+                <tr>
+                  {consensusMode === "collaborator" && isSuperAdmin ? (
+                    <th colSpan={2} style={{ paddingLeft: '8px' }}>Project Name</th>
+                  ) : (
+                    <th>Project Name</th>
+                  )}
+                  {!isSuperAdmin && <th className="text-center">My Rank</th>}
+                  {consensusMode === "ai" && <th className="text-center">AI Rank</th>}
+                  {isSuperAdmin && consensusMode === "ai" && <th className="text-center">Consensus</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedProjects.map((p, index) => {
+                  const key = String(p._id);
+                  const userRank = rankMap[key];
+                  const aiRank = p.ai_rank;
+                  const consensus = consensusData[key];
+                  const isExpanded = expandedRows.has(key);
+                  const hasCollaboratorData = consensus?.collaborator_rankings?.length > 0;
 
-                      return (
-                        <React.Fragment key={p._id}>
-                          <tr className={isExpanded ? "table-active" : ""}>
-                            {consensusMode === "collaborator" && isSuperAdmin && (
-                              <td className="text-center">
-                                {hasCollaboratorData && (
-                                  <button
-                                    className="btn btn-sm btn-link p-0 text-decoration-none"
-                                    onClick={() => toggleRowExpansion(key)}
-                                    style={{ minWidth: '30px' }}
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronUp size={18} className="text-primary" />
-                                    ) : (
-                                      <ChevronDown size={18} className="text-muted" />
-                                    )}
-                                  </button>
-                                )}
-                              </td>
-                            )}
-                            {consensusMode === "collaborator" && isSuperAdmin && (
-                              <td className="text-center">
-                                <Badge pill bg="info" text="white" style={{ minWidth: "35px" }}>
-                                  {index + 1}
-                                </Badge>
-                              </td>
-                            )}
-                            <td>
-                              <div className="d-flex flex-column">
-                                <span>{p.project_name}</span>
-                              </div>
+                  return (
+                    <React.Fragment key={p._id}>
+                      <tr className={`ranking-row ${isExpanded ? 'expanded' : ''}`} onClick={() => hasCollaboratorData && consensusMode === 'collaborator' && toggleRowExpansion(key)}>
+                        {consensusMode === "collaborator" && isSuperAdmin && (
+                          hasCollaboratorData ? (
+                            <td className="text-center toggle-cell">
+                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                             </td>
+                          ) : null
+                        )}
+                        <td
+                          className="project-name-cell"
+                          colSpan={consensusMode === "collaborator" && isSuperAdmin && !hasCollaboratorData ? 2 : 1}
+                        >
+                          <div className="name-wrapper" style={{ fontSize: '0.95rem' }}>
+                            {p.project_name}
+                          </div>
+                        </td>     {!isSuperAdmin && (
+                          <td className="text-center">
+                            {userRank ? <Badge bg="primary" className="rank-badge">{userRank}</Badge> : <span className="text-muted">-</span>}
+                          </td>
+                        )}
 
-                            {!isSuperAdmin && (
-                              <td className="text-center">
-                                <Badge pill bg="primary">
-                                  {userRank ?? "-"}
-                                </Badge>
-                              </td>
-                            )}
+                        {consensusMode === "ai" && (
+                          <td className="text-center">
+                            {aiRank ? <Badge bg="warning" text="dark" className="rank-badge ai">{aiRank}</Badge> : <span className="text-muted">-</span>}
+                          </td>
+                        )}
 
-                            {consensusMode === "ai" && (
-                              <td className="text-center">
-                                {aiRank ? (
-                                  <div className="d-flex flex-column align-items-center gap-1">
-                                    <Badge
-                                      pill
-                                      bg="warning"
-                                      text="dark"
-                                      style={{ minWidth: "35px" }}
-                                    >
-                                      {aiRank}
-                                    </Badge>
-                                  </div>
-                                ) : (
-                                  <Badge pill bg="secondary">
-                                    -
-                                  </Badge>
-                                )}
-                              </td>
-                            )}
-
-                            {isSuperAdmin && consensusMode === "ai" && (
-                              <td className="text-center">
-                                {consensus ? (
-                                  <div className="d-flex flex-column align-items-center gap-1">
-                                    <div className="d-flex align-items-center gap-2">
-                                      {getConsensusEmoji(consensus.consensus_score)}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <Badge pill bg="secondary">
-                                    No Data
-                                  </Badge>
-                                )}
-                              </td>
-                            )}
-                          </tr>
-
-                          {consensusMode === "collaborator" && isSuperAdmin && hasCollaboratorData && (
-                            <tr>
-                              <td colSpan={3} className="p-0 border-0">
-                                <Collapse in={isExpanded}>
-                                  <div className="p-3 bg-light">
-                                    {renderCollaboratorDetails(consensus)}
-                                  </div>
-                                </Collapse>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })
-                  })()}
-                </tbody>
-              </Table>
-            </div>
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
+                        {isSuperAdmin && consensusMode === "ai" && (
+                          <td className="text-center">
+                            {consensus ? getConsensusEmoji(consensus.consensus_score) : "-"}
+                          </td>
+                        )}
+                      </tr>
+                      {consensusMode === "collaborator" && isSuperAdmin && hasCollaboratorData && isExpanded && (
+                        <tr className="details-row">
+                          <td colSpan={10}>
+                            {renderCollaboratorDetails(consensus)}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  )
+                })}
+              </tbody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
