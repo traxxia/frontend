@@ -161,7 +161,6 @@ const BusinessOverview = ({ onToast }) => {
                                                     <tr key={biz._id}>
                                                         <td title={biz.business_name}>
                                                             <div className="d-flex align-items-center gap-2">
-                                                                <Building2 size={18} className="text-primary" />
                                                                 <span className="fw-semibold">{biz.business_name}</span>
                                                             </div>
                                                         </td>

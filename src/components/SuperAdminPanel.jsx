@@ -22,6 +22,7 @@ import UserHistory from "./UserHistory";
 import AuditTrail from "./AuditTrail";
 import Usermanagement from "./Usermanagement";
 import AccessManagement from "./AccessManagement";
+import BusinessOverview from "./BusinessOverview";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -55,13 +56,13 @@ const SuperAdminPanel = () => {
 
   const allTabs = [
     { id: "companies", label: isSuperAdmin ? t('companies') : t('company'), icon: Building2 },
-    { id: "businesses", label: t('businesses') || "Businesses", icon: Building2 }, 
+    { id: "businesses", label: t('businesses') || "Businesses", icon: Building2 },
     { id: "user_management", label: t('user_management'), icon: CircleUserRound },
     {
       id: "access_management",
       label: t('access_management'),
       icon: Key,
-      adminOnly: true  
+      adminOnly: true
     },
 
     { id: "history", label: t('user_history'), icon: History },
@@ -102,6 +103,8 @@ const SuperAdminPanel = () => {
         return <Usermanagement onToast={showToastMessage} />;
       case "access_management":
         return <AccessManagement onToast={showToastMessage} />;
+      case "businesses":
+        return <BusinessOverview onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
