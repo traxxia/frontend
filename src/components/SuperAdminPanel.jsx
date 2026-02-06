@@ -54,9 +54,8 @@ const SuperAdminPanel = () => {
   const isSuperAdmin = userRole === "super_admin";
 
   const allTabs = [
-    { id: "companies", label: t('companies'), icon: Building2 },
-    { id: "history", label: t('user_history'), icon: History },
-    { id: "audit", label: t('audit_trail'), icon: Activity },
+    { id: "companies", label: isSuperAdmin ? t('companies') : t('company'), icon: Building2 },
+    { id: "businesses", label: t('businesses') || "Businesses", icon: Building2 }, 
     { id: "user_management", label: t('user_management'), icon: CircleUserRound },
     {
       id: "access_management",
@@ -64,12 +63,15 @@ const SuperAdminPanel = () => {
       icon: Key,
       adminOnly: true  
     },
+
+    { id: "history", label: t('user_history'), icon: History },
+    { id: "audit", label: t('audit_trail'), icon: Activity },
     {
       id: "questions",
       label: t('questions'),
       icon: HelpCircle,
       superAdminOnly: true,
-    },
+    }
   ];
 
   const tabs = allTabs.filter((tab) => {

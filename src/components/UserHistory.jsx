@@ -90,7 +90,8 @@ const useUserData = (onToast) => {
   const loadInitialData = async () => {
     try {
       const userInfo = getUserInfo();
-      setUserRole(userInfo.role || '');
+      const storedRole = sessionStorage.getItem("userRole");
+      setUserRole(storedRole || userInfo.role || '');
 
       const token = getAuthToken();
       const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
@@ -656,7 +657,7 @@ const UserHistory = ({ onToast }) => {
             />
           </div>
 
-          {companies.length > 0 && (
+          {companies.length > 0 && userRole === 'super_admin' && (
             <div className="company-filter-container">
               <select
                 value={selectedCompany}
