@@ -304,6 +304,7 @@ const ProjectForm = ({
   setReviewCadence,
   status,
   setStatus,
+  isSubmitting = false,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -334,7 +335,7 @@ const ProjectForm = ({
     }
   };
 
-  const isFieldDisabled = (field) => isReadOnly || isLockedByOther?.(field);
+  const isFieldDisabled = (field) => isReadOnly || isSubmitting || isLockedByOther?.(field);
 
   const handleFieldFocus = (field) => {
     if (isFieldDisabled(field)) return;
@@ -358,6 +359,16 @@ const ProjectForm = ({
   };
 
   const getSubmitButtonText = () => {
+    if (isSubmitting) {
+      switch (mode) {
+        case "new":
+          return t("Creating...");
+        case "edit":
+          return t("Saving_Changes...");
+        default:
+          return t("Submitting...");
+      }
+    }
     switch (mode) {
       case "new":
         return t("Create_Project");
@@ -388,7 +399,8 @@ const ProjectForm = ({
       const validation = validateField('Project Name', value, {
         required: true,
         minLength: 3,
-        maxLength: 100
+        maxLength: 100,
+        requiresText: true
       });
       setFieldErrors(prev => ({
         ...prev,
@@ -406,7 +418,8 @@ const ProjectForm = ({
       const validation = validateField('Description', value, {
         required: true,
         minLength: 10,
-        maxLength: 500
+        maxLength: 500,
+        requiresText: true
       });
       setFieldErrors(prev => ({
         ...prev,
@@ -424,7 +437,8 @@ const ProjectForm = ({
       const validation = validateField('Why This Matters', value, {
         required: true,
         minLength: 10,
-        maxLength: 1000
+        maxLength: 1000,
+        requiresText: true
       });
       setFieldErrors(prev => ({
         ...prev,
@@ -432,6 +446,75 @@ const ProjectForm = ({
       }));
     }
     handleFieldEdit("why_this_matters");
+  };
+
+  const handleStrategicDecisionChange = (e) => {
+    const value = e.target.value;
+    setStrategicDecision(value);
+
+    if (showErrors) {
+      const validation = validateField('Strategic Decision', value, {
+        required: true,
+        minLength: 10,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        strategicDecision: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("strategic_decision");
+  };
+
+  const handleAccountableOwnerChange = (e) => {
+    const value = e.target.value;
+    setAccountableOwner(value);
+
+    if (showErrors) {
+      const validation = validateField('Accountable Owner', value, {
+        required: true,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        accountableOwner: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("accountable_owner");
+  };
+
+  const handleSuccessCriteriaChange = (e) => {
+    const value = e.target.value;
+    setSuccessCriteria(value);
+
+    if (showErrors) {
+      const validation = validateField('Success Criteria', value, {
+        required: true,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        successCriteria: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("success_criteria");
+  };
+
+  const handleKillCriteriaChange = (e) => {
+    const value = e.target.value;
+    setKillCriteria(value);
+
+    if (showErrors) {
+      const validation = validateField('Kill Criteria', value, {
+        required: true,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        killCriteria: validation.isValid ? null : validation.message
+      }));
+    }
+    handleFieldEdit("kill_criteria");
   };
 
   const handleBudgetChange = (e) => {
@@ -468,7 +551,8 @@ const ProjectForm = ({
       ? validateField('Project Name', projectName || '', {
         required: true,
         minLength: 3,
-        maxLength: 100
+        maxLength: 100,
+        requiresText: true
       })
       : { isValid: true, message: null };
 
@@ -476,20 +560,22 @@ const ProjectForm = ({
     const descValidation = validateField('Description', description || '', {
       required: true,
       minLength: 10,
-      maxLength: 500
+      maxLength: 500,
+      requiresText: true
     });
 
     const impValidation = validateField('Why This Matters', importance || '', {
       required: true,
       minLength: 10,
-      maxLength: 1000
+      maxLength: 1000,
+      requiresText: true
     });
 
     // Strategic Core Validation
-    const decisionValidation = validateField('Strategic Decision', strategicDecision || '', { required: true, minLength: 10 });
-    const ownerValidation = validateField('Accountable Owner', accountableOwner || '', { required: true });
-    const successValidation = validateField('Success Criteria', successCriteria || '', { required: true });
-    const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true });
+    const decisionValidation = validateField('Strategic Decision', strategicDecision || '', { required: true, minLength: 10, requiresText: true });
+    const ownerValidation = validateField('Accountable Owner', accountableOwner || '', { required: true, requiresText: true });
+    const successValidation = validateField('Success Criteria', successCriteria || '', { required: true, requiresText: true });
+    const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true, requiresText: true });
 
     const budgetValidation = validateField('Budget Estimate', budget || '', {
       numeric: true,
@@ -531,7 +617,7 @@ const ProjectForm = ({
   };
 
   return (
-    <div>
+    <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
       {/* Breadcrumb & Actions Header */}
       <div className="projects-breadcrumb" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Breadcrumb style={{ margin: 0 }}>
@@ -547,7 +633,13 @@ const ProjectForm = ({
             <button type="button" className="btn-cancel" onClick={onBack} style={{ padding: "8px 16px" }}>
               {t("cancel")}
             </button>
-            <button type="button" className="btn-create" onClick={handleSubmit} style={{ padding: "8px 16px" }}>
+            <button
+              type="button"
+              className="btn-create"
+              onClick={handleSubmit}
+              style={{ padding: "8px 16px" }}
+              disabled={isSubmitting}
+            >
               {getSubmitButtonText()}
             </button>
           </div>
@@ -579,6 +671,7 @@ const ProjectForm = ({
                   readOnly={isReadOnly}
                   onFocus={() => handleFieldFocus("project_name")}
                   maxLength={100}
+                  disabled={isSubmitting}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   {showErrors && fieldErrors.projectName && (
@@ -668,13 +761,10 @@ const ProjectForm = ({
             ref={strategicDecisionRef}
             label={t("Strategic_Decision_Bet")}
             value={strategicDecision}
-            onChange={(e) => {
-              setStrategicDecision(e.target.value);
-              handleFieldEdit("strategic_decision");
-            }}
+            onChange={handleStrategicDecisionChange}
             placeholder={t("Strategic_Decision_Placeholder")}
             error={showErrors && fieldErrors.strategicDecision}
-            readOnly={isReadOnly}
+            readOnly={isFieldDisabled("strategic_decision")}
             onFocus={handleFieldFocus}
             fieldName="strategic_decision"
             required
@@ -685,13 +775,10 @@ const ProjectForm = ({
             ref={accountableOwnerRef}
             label={t("Accountable_Owner")}
             value={accountableOwner}
-            onChange={(e) => {
-              setAccountableOwner(e.target.value);
-              handleFieldEdit("accountable_owner");
-            }}
+            onChange={handleAccountableOwnerChange}
             placeholder={t("Owner_Placeholder")}
             error={showErrors && fieldErrors.accountableOwner}
-            readOnly={isReadOnly}
+            readOnly={isFieldDisabled("accountable_owner")}
             onFocus={handleFieldFocus}
             fieldName="accountable_owner"
             required
@@ -718,7 +805,7 @@ const ProjectForm = ({
                   }}
                   placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
                   className="field-input"
-                  readOnly={isReadOnly}
+                  readOnly={isFieldDisabled("key_assumptions")}
                   onFocus={() => handleFieldFocus("key_assumptions")}
                 />
               ))}
@@ -731,31 +818,27 @@ const ProjectForm = ({
               ref={successCriteriaRef}
               label={t("Success_Criteria")}
               value={successCriteria}
-              onChange={(e) => {
-                setSuccessCriteria(e.target.value);
-                handleFieldEdit("success_criteria");
-              }}
+              onChange={handleSuccessCriteriaChange}
               placeholder={t("Success_Criteria_Placeholder")}
               error={showErrors && fieldErrors.successCriteria}
-              readOnly={isReadOnly}
+              readOnly={isFieldDisabled("success_criteria") || isSubmitting}
               onFocus={handleFieldFocus}
               fieldName="success_criteria"
               required
+              isSubmitting={isSubmitting}
             />
             <TextAreaField
               ref={killCriteriaRef}
               label={t("Kill_Criteria")}
               value={killCriteria}
-              onChange={(e) => {
-                setKillCriteria(e.target.value);
-                handleFieldEdit("kill_criteria");
-              }}
+              onChange={handleKillCriteriaChange}
               placeholder={t("Kill_Criteria_Placeholder")}
               error={showErrors && fieldErrors.killCriteria}
-              readOnly={isReadOnly}
+              readOnly={isFieldDisabled("kill_criteria") || isSubmitting}
               onFocus={handleFieldFocus}
               fieldName="kill_criteria"
               required
+              isSubmitting={isSubmitting}
             />
           </div>
 
@@ -776,7 +859,7 @@ const ProjectForm = ({
               }}
               open={openDropdown === "reviewCadence"}
               setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")}
-              disabled={isReadOnly}
+              disabled={isFieldDisabled("review_cadence") || isSubmitting}
               fieldName="review_cadence"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
@@ -1010,7 +1093,7 @@ const ProjectForm = ({
       </div>
 
 
-    </div >
+    </fieldset >
   );
 };
 

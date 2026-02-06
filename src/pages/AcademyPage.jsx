@@ -173,6 +173,69 @@ const AcademyPage = () => {
                                 Learn How →
                             </Link>
                         </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">⚡</div>
+                            <h3>Kickstart the Project</h3>
+                            <p>Step-by-step guide to kicking off your project</p>
+                            <Link to="/academy/kickstart/kickstart-the-project" className="feature-link">
+                                Start Now →
+                            </Link>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🔒</div>
+                            <h3>Lock Project Creation</h3>
+                            <p>Understand project locking policies</p>
+                            <Link to="/academy/lock-project/lock-project-creation" className="feature-link">
+                                View Guide →
+                            </Link>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">✅</div>
+                            <h3>Finalize Prioritization</h3>
+                            <p>Finalizing a project's prioritization</p>
+                            <Link to="/academy/finalize/finalize-prioritization" className="feature-link">
+                                View Guide →
+                            </Link>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🚀</div>
+                            <h3>Launch Project</h3>
+                            <p>Launching your project</p>
+                            <Link to="/academy/launch/launch-project" className="feature-link">
+                                View Guide →
+                            </Link>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🔢</div>
+                            <h3>Ranking View</h3>
+                            <p>Understanding ranking & consensus</p>
+                            <Link to="/academy/ranking/ranking-view" className="feature-link">
+                                View Guide →
+                            </Link>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🤖</div>
+                            <h3>AI Ranking</h3>
+                            <p>Leveraging AI for analysis</p>
+                            <Link to="/academy/ai-ranking/ai-ranking-ui" className="feature-link">
+                                View Guide →
+                            </Link>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🔄</div>
+                            <h3>Reprioritization</h3>
+                            <p>Managing updates and edits</p>
+                            <Link to="/academy/reprioritization/reprioritization-process" className="feature-link">
+                                View Guide →
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="welcome-footer">

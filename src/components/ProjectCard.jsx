@@ -85,15 +85,15 @@ const ProjectCard = ({
           </button>
           {showMenuId === project._id && (
             <div className="menu-dropdown">
-              {/* Show View if user can't edit (launched without access), otherwise show Edit */}
-              {launched && !userCanEdit ? (
+              {/* Show View if user can't edit (launched without access) or is a Viewer, otherwise show Edit */}
+              {(launched && !userCanEdit) || isViewer ? (
                 <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (
                 <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
               )}
               {/* <div onClick={() => onManageTeam(project)} className="menu-item"><Users size={14} /> Team</div> */}
-              {/* Only show Delete if project creation is not locked */}
-              {!projectCreationLocked && (
+              {/* Only show Delete if project creation is not locked and user is NOT a viewer */}
+              {!projectCreationLocked && !isViewer && (
                 <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
               )}
             </div>

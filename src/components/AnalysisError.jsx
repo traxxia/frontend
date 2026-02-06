@@ -11,7 +11,7 @@ const AnalysisError = ({
     // Prevent default behavior and event bubbling
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (onRetry) {
       onRetry();
     }
@@ -24,8 +24,8 @@ const AnalysisError = ({
       </div>
       <h3>{title}</h3>
       <p>{error}</p>
-      {showRetryButton && onRetry && (
-        <button 
+      {showRetryButton && onRetry && sessionStorage.getItem("userRole") !== "viewer" && (
+        <button
           type="button"
           onClick={handleRetry}
           className="retry-button"

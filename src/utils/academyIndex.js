@@ -280,6 +280,125 @@ export const academyStructure = {
                     relatedArticles: []
                 }
             ]
+        },
+        {
+            id: "kickstart",
+            title: "Kickstart the Project",
+            icon: "Zap",
+            description: "Step-by-step guide to kicking off your project",
+            articles: [
+                {
+                    id: "kickstart-the-project",
+                    title: "Kickstart the Project",
+                    path: "08-kickstart/01-kickstart-the-project.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["guide", "kickoff"],
+                    relatedArticles: []
+                }
+            ]
+        },
+        {
+            id: "lock-project",
+            title: "Lock Project Creation",
+            icon: "Lock",
+            description: "Understand project locking policies and procedures",
+            articles: [
+                {
+                    id: "lock-project-creation",
+                    title: "Lock Project Creation",
+                    path: "09-lock-project/01-lock-project-creation.md",
+                    phase: 2,
+                    roles: ["orgadmin", "owner"],
+                    tags: ["guide", "security", "admin"],
+                    relatedArticles: ["kickstart-the-project"]
+                }
+            ]
+        },
+        {
+            id: "finalize",
+            title: "Finalize Prioritization",
+            icon: "CheckCircle",
+            description: "Finalizing a project's prioritization",
+            articles: [
+                {
+                    id: "finalize-prioritization",
+                    title: "Finalize Prioritization",
+                    path: "10-finalize/01-finalize-prioritization.md",
+                    phase: 2,
+                    roles: ["orgadmin", "owner"],
+                    tags: ["guide", "workflow"],
+                    relatedArticles: []
+                }
+            ]
+        },
+        {
+            id: "launch",
+            title: "Launch Project",
+            icon: "Send",
+            description: "Launching your project to the organization",
+            articles: [
+                {
+                    id: "launch-project",
+                    title: "Launch Project",
+                    path: "11-launch/01-launch-project.md",
+                    phase: 2,
+                    roles: ["orgadmin", "owner"],
+                    tags: ["guide", "launch"],
+                    relatedArticles: ["finalize-prioritization"]
+                }
+            ]
+        },
+        {
+            id: "ranking",
+            title: "Ranking Analysis",
+            icon: "ListOrdered",
+            description: "Understanding ranking views and consensus",
+            articles: [
+                {
+                    id: "ranking-view",
+                    title: "Ranking View Explained",
+                    path: "12-ranking/01-ranking-view.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["guide", "analysis", "ranking"],
+                    relatedArticles: ["ai-ranking"]
+                }
+            ]
+        },
+        {
+            id: "ai-ranking",
+            title: "AI Ranking",
+            icon: "Cpu",
+            description: "Leveraging AI for comparative analysis",
+            articles: [
+                {
+                    id: "ai-ranking-ui",
+                    title: "AI Ranking in the UI",
+                    path: "13-ai-ranking/01-ai-ranking.md",
+                    phase: 2,
+                    roles: ["orgadmin", "owner", "collaborator"],
+                    tags: ["guide", "ai", "ranking"],
+                    relatedArticles: ["ranking-view"]
+                }
+            ]
+        },
+        {
+            id: "reprioritization",
+            title: "Reprioritization",
+            icon: "Edit3",
+            description: "Managing project updates and edits",
+            articles: [
+                {
+                    id: "reprioritization-process",
+                    title: "Reprioritization & Re-editing",
+                    path: "14-reprioritization/01-reprioritization.md",
+                    phase: 3,
+                    roles: ["orgadmin"],
+                    tags: ["guide", "workflow", "admin"],
+                    relatedArticles: ["finalize-prioritization"]
+                }
+            ]
         }
     ]
 };

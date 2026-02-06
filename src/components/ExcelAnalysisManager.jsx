@@ -76,13 +76,13 @@ const ExcelAnalysisManager = ({
 
   const isExcelAnalysisDataIncomplete = (data) => {
     if (!data) return true;
-    
+
     // Check if we have data for at least one analysis component
-    return !data.profitability && 
-           !data.growth_trends && 
-           !data.liquidity && 
-           !data.investment && 
-           !data.leverage;
+    return !data.profitability &&
+      !data.growth_trends &&
+      !data.liquidity &&
+      !data.investment &&
+      !data.leverage;
   };
 
   const handleRegenerate = async () => {
@@ -279,12 +279,14 @@ const ExcelAnalysisManager = ({
           <div className="error-icon">⚠️</div>
           <h3>Analysis Error</h3>
           <p>{error}</p>
-          <button onClick={() => {
-            setError(null);
-            generateExcelAnalysis();
-          }} className="retry-button">
-            Retry Analysis
-          </button>
+          {sessionStorage.getItem("userRole") !== "viewer" && (
+            <button onClick={() => {
+              setError(null);
+              generateExcelAnalysis();
+            }} className="retry-button">
+              Retry Analysis
+            </button>
+          )}
         </div>
       </div>
     );
@@ -303,7 +305,7 @@ const ExcelAnalysisManager = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          
+
           showFileUpload={true}
           onFileUpload={handleFileUpload}
           onGenerateWithFile={() => generateExcelAnalysis()}
