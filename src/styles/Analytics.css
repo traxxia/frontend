@@ -6112,9 +6112,10 @@
  .section-header {
    display: flex;
    align-items: center;
+   justify-content: space-between;
    gap: 12px;
    margin-bottom: 24px;
-   padding-bottom: 12px;
+   padding: 12px 20px;
    border-bottom: 2px solid #e2e8f0;
  }
 
@@ -6962,6 +6963,9 @@
  }
 
  .section-header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
    padding: 16px 20px;
    cursor: pointer;
    transition: background-color 0.2s ease;
@@ -6982,7 +6986,7 @@
  }
 
  .section-title svg {
-   color: #6b7280;
+   color: #1f2937;
  }
 
  .table-content {
@@ -7364,6 +7368,10 @@
    color: #333;
  }
 
+ .section-header svg {
+   color: #1f2937;
+   flex-shrink: 0;
+ }
 
  /* Data Table */
  .data-table {

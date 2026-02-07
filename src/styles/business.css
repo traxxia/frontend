@@ -216,7 +216,7 @@
 }
 
 .modern-card-header {
-  padding: 10px 0px 10px 20px;
+  padding: 10px 20px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -382,7 +382,13 @@
 }
 
 .modern-status-icon.loading {
-  color: #1e40af;
+  color: #1d4ed8;
+}
+
+/* Ensure visibility when card is in loading state */
+.modern-analysis-card.loading .modern-status-icon.loading {
+  color: #2c1b55;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.2));
 }
 
 .modern-status-icon.locked {

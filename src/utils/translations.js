@@ -15,6 +15,8 @@ export const staticTranslations = {
     'hide_password': 'Hide password',
     'show_password': 'Show password',
     'login_failed': 'Login failed',
+    'login_email_required': 'Email is required',
+    'login_password_required': 'Password is required',
 
     // ===========================
     // REGISTRATION
@@ -141,7 +143,7 @@ export const staticTranslations = {
     "previous": "Previous",
     "next": "Next",
     "got_it": "Got It!",
-    "business_name_cannot_be_empty": "Please enter a valid, visible business name.",
+    "business_name_cannot_be_empty": "Business Name is required",
     "business_name_invalid_start": "Business name cannot start with a space.",
     "business_name_max_length": "Business name cannot exceed 20 characters.",
     "business_name_invalid_start": "Business name cannot start with a symbol or number.",
@@ -151,7 +153,7 @@ export const staticTranslations = {
     "country_max_length": "Country name cannot exceed 20 characters.",
     "city_cannot_contain_special_characters": "City cannot contain special characters.",
     "country_cannot_contain_special_characters": "Country cannot contain special characters.",
-    "business_purpose_required": "Business purpose is required.",
+    "business_purpose_required": "Business Purpose is required",
     "description_no_continuous_spaces": "Description cannot contain continuous spaces.",
     "country_cannot_contain_only_spaces": "empty spaces not allowed",
     "city_cannot_contain_only_spaces": "empty spaces not allowed",
@@ -902,6 +904,9 @@ export const staticTranslations = {
     'Assign_Collaborator': 'Assign Collaborator',
     'Select_collaborator': 'Select collaborator',
     'Select_Business': 'Select Business',
+    'select_collaborator_required': 'Please select a collaborator',
+    'select_business_required': 'Please select a business',
+    'select_project_required': 'Please select a project',
     'Name_is_required': 'Name is required.',
     'Name_must_start_with_letter': 'Name must start with a letter.',
     'Name_must_be_atleast3_characters_long': 'Name must be at least 3 characters long.',
@@ -1022,6 +1027,8 @@ export const staticTranslations = {
     'hide_password': 'Ocultar contraseña',
     'show_password': 'Mostrar contraseña',
     'login_failed': 'Error al iniciar sesión',
+    'login_email_required': 'Se requiere usuario/correo electrónico',
+    'login_password_required': 'Se requiere contraseña',
 
     // ===========================
     // REGISTRO
@@ -1914,6 +1921,9 @@ export const staticTranslations = {
     'Assign_Collaborator': 'Asignar colaborador',
     'Select_collaborator': 'Seleccionar colaborador',
     'Select_Business': 'Seleccionar negocio',
+    'select_collaborator_required': 'Por favor seleccione un colaborador',
+    'select_business_required': 'Por favor seleccione un negocio',
+    'select_project_required': 'Por favor seleccione un proyecto',
     'Name_is_required': 'el nombre es requerido.',
     'Name_must_start_with_letter': 'El nombre debe comenzar con una letra.',
     'Name_must_be_atleast3_characters_long': 'El nombre debe tener al menos 3 caracteres.',

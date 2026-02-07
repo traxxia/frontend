@@ -777,22 +777,34 @@ const UserRow = ({ user, onUserSelect, t }) => (
   </tr>
 );
 
-const UserDetailsModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => (
-  <div className="user-details-modal">
-    <div className="modal-overlayas" onClick={onClose} />
-    <div className="modal-content">
-      <UserDetailsPanel
-        user={user}
-        userDetails={userDetails}
-        isLoading={isLoading}
-        onClose={onClose}
-        onExport={onExport}
-        onToast={onToast}
-        loadUserHistory={loadUserHistory}
-      />
+const UserDetailsModal = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
+  useEffect(() => {
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+
+    // Restore body scroll on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
+  return (
+    <div className="user-details-modal">
+      <div className="modal-overlayas" onClick={onClose} />
+      <div className="modal-content">
+        <UserDetailsPanel
+          user={user}
+          userDetails={userDetails}
+          isLoading={isLoading}
+          onClose={onClose}
+          onExport={onExport}
+          onToast={onToast}
+          loadUserHistory={loadUserHistory}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Enhanced UserDetailsPanel with Strategic Analysis Tab
 const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onToast, loadUserHistory }) => {
