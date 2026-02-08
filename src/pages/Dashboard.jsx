@@ -1039,7 +1039,7 @@ const Dashboard = () => {
         <div className="success-popup-overlay">
           <div className="success-popup">
             <div className="success-popup-content">
-              <div className="success-icon">
+              <div className="dashboard-success-icon">
                 ✅
               </div>
               <h5 className="mb-2">{t('success')}</h5>

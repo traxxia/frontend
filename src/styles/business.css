@@ -382,13 +382,14 @@
 }
 
 .modern-status-icon.loading {
-  color: #1d4ed8;
+  color: #000206;
+  filter: drop-shadow(0 0 2px rgba(37, 99, 235, 0.3));
 }
 
 /* Ensure visibility when card is in loading state */
 .modern-analysis-card.loading .modern-status-icon.loading {
-  color: #2c1b55;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.2));
+  color: #000206;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
 }
 
 .modern-status-icon.locked {
@@ -831,7 +832,7 @@
 }
 
 .category-toggle {
-  color: #6b7280;
+  color: #000000;
   transition: transform 0.2s ease;
 }
 

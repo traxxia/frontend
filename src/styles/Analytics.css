@@ -7369,7 +7369,7 @@
  }
 
  .section-header svg {
-   color: #1f2937;
+   color: #000000;
    flex-shrink: 0;
  }
 
@@ -7513,7 +7513,7 @@
 
  .factor-desc {
    font-size: 0.85rem;
-   color: #555;
+   color: #1f2937;
  }
 
  /* Timeline and Frequency Badges */
