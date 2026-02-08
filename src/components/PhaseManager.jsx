@@ -181,6 +181,7 @@ const PhaseManager = ({
                         }
                     });
 
+                    /*
                     try {
                         const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
                         if (newAnalysisData && Array.isArray(newAnalysisData)) {
@@ -189,6 +190,7 @@ const PhaseManager = ({
                     } catch (analysisErr) {
                         console.warn("Failed to load from Analysis API", analysisErr);
                     }
+                    */
 
                     if (onAnalysisDataLoad && analysisArray.length > 0) {
                         onAnalysisDataLoad(analysisArray);
@@ -387,6 +389,7 @@ const PhaseManager = ({
     };
 
     const loadAnalysisByPhase = async (phase) => {
+        /*
         try {
             const token = getAuthToken();
             const data = await AnalysisService.getAnalysisByPhase(API_BASE_URL, token, selectedBusinessId, phase);
@@ -395,9 +398,12 @@ const PhaseManager = ({
             console.error(`Error loading analysis for phase ${phase}:`, error);
             return [];
         }
+        */
+        return [];
     };
 
     const loadAnalysisByFilter = async (filter) => {
+        /*
         try {
             const token = getAuthToken();
             const data = await AnalysisService.getAnalysisByFilter(API_BASE_URL, token, selectedBusinessId, filter);
@@ -406,6 +412,8 @@ const PhaseManager = ({
             console.error(`Error loading analysis by filter:`, error);
             return [];
         }
+        */
+        return [];
     };
     return {
         completedPhases,

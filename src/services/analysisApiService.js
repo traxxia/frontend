@@ -718,6 +718,7 @@ export class AnalysisApiService {
 
       await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
 
+      /*
       console.log("--- VERIFICATION START: Calling other Analysis APIs ---");
       try {
         const allAnalysis = await AnalysisService.getAnalysis(this.API_BASE_URL, token, selectedBusinessId);
@@ -733,6 +734,7 @@ export class AnalysisApiService {
         console.warn("VERIFICATION ERROR:", verErr);
       }
       console.log("--- VERIFICATION END ---");
+      */
 
       return true;
     } catch (error) {
