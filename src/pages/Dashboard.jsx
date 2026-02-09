@@ -23,6 +23,8 @@ import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 
+const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -216,11 +218,11 @@ const Dashboard = () => {
         await fetchBusinesses();
         setShowCreateModal(false);
 
-        // Show PMF Onboarding modal after successful business creation
+        // Show PMF Onboarding modal after successful business creation (only if enabled)
         setTimeout(() => {
           setShowSuccessPopup(false);
           setSuccessMessage('');
-          setShowPMFOnboarding(true);
+          if (ENABLE_PMF) setShowPMFOnboarding(true);
         }, 2000);
       } else {
         console.error('Create business error:', data);
@@ -532,12 +534,14 @@ const Dashboard = () => {
 
   {/* FULL PAGE PMF INSIGHTS */}
   {showInsights ? (
-    <PMFInsights
-      onContinue={() => {
-        setShowInsights(false);
-        navigate("/businesspage");
-      }}
-    />
+    ENABLE_PMF ? (
+      <PMFInsights
+        onContinue={() => {
+          setShowInsights(false);
+          navigate("/businesspage");
+        }}
+      />
+    ) : null
   ) : (
     <>
       <MenuBar />
@@ -909,17 +913,16 @@ const Dashboard = () => {
       )}
 
       {/* PMF Onboarding Modal */}
-      <PMFOnboardingModal
-        show={showPMFOnboarding}
-        onHide={() => setShowPMFOnboarding(false)}
-        onSubmit={(pmfFormData) => {
-          // PMF Onboarding completed - business is already created
-          // You can add additional logic here if needed to process pmfFormData
-          console.log('PMF Onboarding completed:', pmfFormData);
-          setShowPMFOnboarding(false);
-          setShowInsights(true);
-        }}
-      />
+      {ENABLE_PMF && (
+        <PMFOnboardingModal
+          show={showPMFOnboarding}
+          onHide={() => setShowPMFOnboarding(false)}
+          onSubmit={(pmfFormData) => {
+            setShowPMFOnboarding(false);
+            setShowInsights(true);
+          }}
+        />
+      )}
 
       {/* Create Business Modal */}
       <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">

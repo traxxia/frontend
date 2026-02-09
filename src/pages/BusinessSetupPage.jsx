@@ -64,6 +64,8 @@ const CARD_ID_MAP = {
   "Core": "core-adjacency",
 };
 
+const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+
 const BusinessSetupPage = () => {
   const location = useLocation();
   const business = location.state?.business;
@@ -787,21 +789,22 @@ const BusinessSetupPage = () => {
           <button className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
             {t("brief")}
           </button>
-          <button
-            className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
-            onClick={handleAhaTabClick}
-
-          >
-            AHA
-          </button>
+          {ENABLE_PMF && (
+            <button
+              className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
+              onClick={handleAhaTabClick}
+            >
+              AHA
+            </button>
+          )}
           {unlockedFeatures.analysis && (
             <button className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-              {t("analysis")}
+              {ENABLE_PMF ? t("analysis") : "Insights (6 Cs)"}
             </button>
           )}
           {unlockedFeatures.analysis && (
             <button className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-              {t("strategic")}
+              {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
             </button>
           )}
           {showProjectsTab && (
@@ -812,7 +815,7 @@ const BusinessSetupPage = () => {
               {t("Projects")}
             </button>
           )}
-          {showProjectsTab && (
+          {ENABLE_PMF && showProjectsTab && (
             <button
               className={`mobile-tab ${activeTab === "priorities" ? "active" : ""}`}
               onClick={() => setActiveTab("priorities")}
@@ -873,13 +876,14 @@ const BusinessSetupPage = () => {
                         <ArrowLeft size={18} />
                         {t("backToOverview")}
                       </button>
-                      <button
-                        className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
-                        onClick={handleAhaTabClick}
-
-                      >
-                        AHA
-                      </button>
+                      {ENABLE_PMF && (
+                        <button
+                          className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
+                          onClick={handleAhaTabClick}
+                        >
+                          AHA
+                        </button>
+                      )}
                       {/*<button
                         className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                         onClick={handleExecutiveTabClick}
@@ -889,12 +893,12 @@ const BusinessSetupPage = () => {
 
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
-                          {t("analysis")}
+                          {ENABLE_PMF ? t("analysis") : "Insights (6 Cs)"}
                         </button>
                       )}
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
-                          {t("strategic")}
+                          {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
                         </button>
                       )}
                       {showProjectsTab && (
@@ -902,7 +906,7 @@ const BusinessSetupPage = () => {
                           {t("Projects")}
                         </button>
                       )}
-                      {showProjectsTab && (
+                      {ENABLE_PMF && showProjectsTab && (
                         <button
                           className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                           onClick={handlePrioritiesTabClick}
@@ -1022,8 +1026,8 @@ const BusinessSetupPage = () => {
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
-                      {activeTab === "aha" && (
-                        <PMFInsightsTab/>
+                      {ENABLE_PMF && activeTab === "aha" && (
+                        <PMFInsightsTab />
                       )}
                       {/*{activeTab === "executive" && (
                         <ExecutiveSummary/>
@@ -1065,7 +1069,7 @@ const BusinessSetupPage = () => {
                           companyAdminIds={companyAdminIds}
                         />
                       )}
-                      {showProjectsTab && activeTab === "priorities" && (
+                      {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
                         <PrioritiesProjects
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
@@ -1084,27 +1088,29 @@ const BusinessSetupPage = () => {
                     <button className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`} onClick={() => setActiveTab("brief")}>
                       {t("brief")}
                     </button>
-                    <button
-                      className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
-                      onClick={handleAhaTabClick}
-                    >
-                      AHA
-                    </button>
+                    {ENABLE_PMF && (
+                      <button
+                        className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
+                        onClick={handleAhaTabClick}
+                      >
+                        AHA
+                      </button>
+                    )}
                     {/*<button
                       className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                       onClick={handleExecutiveTabClick}
                     >
                       Executive Summary
-                    </button>*/}            
+                    </button>*/}
 
                     {unlockedFeatures.analysis && (
                       <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                        {t("analysis")}
+                        {ENABLE_PMF ? t("analysis") : "Insights (6 Cs)"}
                       </button>
                     )}
                     {unlockedFeatures.analysis && (
                       <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                        {t("strategic")}
+                        {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
                       </button>
                     )}
                   </div>
@@ -1216,7 +1222,7 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {showProjectsTab && activeTab === "priorities" && (
+                  {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
                     <PrioritiesProjects
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
@@ -1261,8 +1267,8 @@ const BusinessSetupPage = () => {
                     />
                   </div>
                 )}
-                {activeTab === "aha" && (
-                  <PMFInsightsTab/>
+                {ENABLE_PMF && activeTab === "aha" && (
+                  <PMFInsightsTab />
                 )}
                 {activeTab === "analysis" && (
                   <div className="analysis-section">
@@ -1327,7 +1333,7 @@ const BusinessSetupPage = () => {
                     companyAdminIds={companyAdminIds}
                   />
                 )}
-                {showProjectsTab && activeTab === "priorities" && (
+                {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
                   <PrioritiesProjects
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
