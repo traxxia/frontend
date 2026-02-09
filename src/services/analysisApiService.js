@@ -1,3 +1,4 @@
+import { AnalysisService } from './analysisService';
 export const PHASE_API_CONFIG = {
   initial: [
     'swot',
@@ -689,30 +690,52 @@ export class AnalysisApiService {
       const phase = analysisPhaseMap[analysisType] || 'initial';
       const displayName = displayNames[analysisType] || `${analysisType.toUpperCase()} Analysis`;
 
-      const response = await fetch(`${this.API_BASE_URL}/api/conversations/phase-analysis`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const analysisPayload = {
+        phase: phase,
+        analysis_type: analysisType,
+        analysis_name: displayName,
+        analysis_data: analysisData,
+        business_id: selectedBusinessId,
+        metadata: {
+          generated_at: new Date().toISOString(),
           phase: phase,
-          analysis_type: analysisType,
-          analysis_name: displayName,
-          analysis_data: analysisData,
-          business_id: selectedBusinessId,
-          metadata: {
-            generated_at: new Date().toISOString(),
-            phase: phase,
-            generation_context: 'regular_generation'
-          }
-        })
-      });
+          generation_context: 'regular_generation'
+        }
+      };
 
-      if (!response.ok) {
-        console.error(`Failed to save ${analysisType} analysis:`, response.statusText);
-        return false;
+      try {
+        await fetch(`${this.API_BASE_URL}/api/conversations/phase-analysis`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(analysisPayload)
+        });
+      } catch (legacyError) {
+        console.warn('Legacy analysis save failed:', legacyError);
       }
+
+      await AnalysisService.upsertAnalysis(this.API_BASE_URL, token, analysisPayload);
+
+      /*
+      console.log("--- VERIFICATION START: Calling other Analysis APIs ---");
+      try {
+        const allAnalysis = await AnalysisService.getAnalysis(this.API_BASE_URL, token, selectedBusinessId);
+        console.log("VERIFICATION: Get All Analysis result:", allAnalysis);
+
+        const phaseAnalysis = await AnalysisService.getAnalysisByPhase(this.API_BASE_URL, token, selectedBusinessId, phase);
+        console.log(`VERIFICATION: Get Analysis by Phase (${phase}) result:`, phaseAnalysis);
+
+        const filterAnalysis = await AnalysisService.getAnalysisByFilter(this.API_BASE_URL, token, selectedBusinessId, { type: analysisType });
+        console.log(`VERIFICATION: Get Analysis by Filter (type=${analysisType}) result:`, filterAnalysis);
+
+      } catch (verErr) {
+        console.warn("VERIFICATION ERROR:", verErr);
+      }
+      console.log("--- VERIFICATION END ---");
+      */
+
       return true;
     } catch (error) {
       console.error(`Error saving ${analysisType} analysis:`, error);
@@ -721,134 +744,134 @@ export class AnalysisApiService {
   }
 
   createSimpleRegenerationHandler(
-  analysisType, 
-  questions, 
-  userAnswers, 
-  selectedBusinessId, 
-  stateSetters, 
-  showToastMessage,
-  streamingCallbacks = {}  // ✅ NEW: Added streaming callbacks parameter
-) {
-  return async () => {
-    try {
-      showToastMessage(`Regenerating ${analysisType}...`, "info");
+    analysisType,
+    questions,
+    userAnswers,
+    selectedBusinessId,
+    stateSetters,
+    showToastMessage,
+    streamingCallbacks = {}  // ✅ NEW: Added streaming callbacks parameter
+  ) {
+    return async () => {
+      try {
+        showToastMessage(`Regenerating ${analysisType}...`, "info");
 
-      const setterName = this.getStateSetterName(analysisType);
-      const setter = stateSetters[setterName];
-      if (setter) {
-        setter(null);
-      }
+        const setterName = this.getStateSetterName(analysisType);
+        const setter = stateSetters[setterName];
+        if (setter) {
+          setter(null);
+        }
 
-      // ✅ NEW: Handle streaming setup for Porter's
-      if (analysisType === 'porters' && streamingCallbacks.setIsStreaming && streamingCallbacks.setStreamingText) {
-        streamingCallbacks.setIsStreaming(true);
-        streamingCallbacks.setStreamingText('');
-      }
+        // ✅ NEW: Handle streaming setup for Porter's
+        if (analysisType === 'porters' && streamingCallbacks.setIsStreaming && streamingCallbacks.setStreamingText) {
+          streamingCallbacks.setIsStreaming(true);
+          streamingCallbacks.setStreamingText('');
+        }
 
-      // Clear cache if regenerating any excel-analysis type
-      if (this.isExcelAnalysisType(analysisType)) {
-        this.excelAnalysisCache = null;
-      }
+        // Clear cache if regenerating any excel-analysis type
+        if (this.isExcelAnalysisType(analysisType)) {
+          this.excelAnalysisCache = null;
+        }
 
-      const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+        const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
 
-      const payload = {
-        questions,
-        userAnswers: { ...userAnswers, ...freshAnswers },
-        selectedBusinessId,
-        stateSetters
-      };
+        const payload = {
+          questions,
+          userAnswers: { ...userAnswers, ...freshAnswers },
+          selectedBusinessId,
+          stateSetters
+        };
 
-      // ✅ NEW: Create streaming callback for Porter's
-      const onStreamChunk = (analysisType === 'porters' && streamingCallbacks.setStreamingText) 
-        ? (buffer) => {
+        // ✅ NEW: Create streaming callback for Porter's
+        const onStreamChunk = (analysisType === 'porters' && streamingCallbacks.setStreamingText)
+          ? (buffer) => {
             streamingCallbacks.setStreamingText(buffer);
           }
-        : null;
+          : null;
 
-      // ✅ NEW: Use streaming-aware endpoint call
-      const response = await this.callAnalysisEndpointWithStreaming(
-  analysisType, 
-  payload, 
-  onStreamChunk
-);
+        // ✅ NEW: Use streaming-aware endpoint call
+        const response = await this.callAnalysisEndpointWithStreaming(
+          analysisType,
+          payload,
+          onStreamChunk
+        );
 
 
-      if (setter) {
-        setter(response.data);
+        if (setter) {
+          setter(response.data);
+        }
+
+        await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
+
+        // ✅ NEW: Clean up streaming state
+        if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
+          streamingCallbacks.setIsStreaming(false);
+        }
+
+        showToastMessage(`${analysisType} regenerated successfully!`, "success");
+      } catch (error) {
+        console.error(`Error regenerating ${analysisType}:`, error);
+
+        // ✅ NEW: Clean up streaming state on error
+        if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
+          streamingCallbacks.setIsStreaming(false);
+        }
+
+        showToastMessage(`Failed to regenerate ${analysisType}.`, "error");
       }
-
-      await this.saveAnalysisToBackend(response.data, analysisType, selectedBusinessId);
-
-      // ✅ NEW: Clean up streaming state
-      if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
-        streamingCallbacks.setIsStreaming(false);
-      }
-
-      showToastMessage(`${analysisType} regenerated successfully!`, "success");
-    } catch (error) {
-      console.error(`Error regenerating ${analysisType}:`, error);
-      
-      // ✅ NEW: Clean up streaming state on error
-      if (analysisType === 'porters' && streamingCallbacks.setIsStreaming) {
-        streamingCallbacks.setIsStreaming(false);
-      }
-      
-      showToastMessage(`Failed to regenerate ${analysisType}.`, "error");
-    }
-  };
-}
-
-// ============================================================================
-// NEW METHOD: callAnalysisEndpointWithStreaming
-// Add this method right after callAnalysisEndpoint (around line 420)
-// ============================================================================
-
-async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = null) {
-  const endpoint = API_ENDPOINTS[analysisType];
-  if (!endpoint) {
-    throw new Error(`Unknown analysis type: ${analysisType}`);
+    };
   }
-  // For excel-analysis types, call with specific metric_type
-  if (this.isExcelAnalysisType(analysisType)) {
+
+  // ============================================================================
+  // NEW METHOD: callAnalysisEndpointWithStreaming
+  // Add this method right after callAnalysisEndpoint (around line 420)
+  // ============================================================================
+
+  async callAnalysisEndpointWithStreaming(analysisType, payload, onStreamChunk = null) {
+    const endpoint = API_ENDPOINTS[analysisType];
+    if (!endpoint) {
+      throw new Error(`Unknown analysis type: ${analysisType}`);
+    }
+    // For excel-analysis types, call with specific metric_type
+    if (this.isExcelAnalysisType(analysisType)) {
+      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
+        payload.questions,
+        payload.userAnswers
+      );
+
+      const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
+
+      const result = await this.makeAPICall(
+        'excel-analysis',
+        questionsArray,
+        answersArray,
+        payload.selectedBusinessId,
+        payload.stateSetters?.uploadedFile || null,
+        metricType,
+        onStreamChunk  // ✅ Pass streaming callback
+      );
+
+      return { data: result };
+    }
+
+    // For other analyses (including Porter's with streaming)
     const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
       payload.questions,
       payload.userAnswers
     );
 
-    const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
-
     const result = await this.makeAPICall(
-      'excel-analysis',
+      endpoint,
       questionsArray,
       answersArray,
       payload.selectedBusinessId,
-      payload.stateSetters?.uploadedFile || null,
-      metricType,
-      onStreamChunk  // ✅ Pass streaming callback
+      null,
+      null,
+      onStreamChunk  // ✅ Pass streaming callback for Porter's
     );
 
     return { data: result };
   }
-
-  // For other analyses (including Porter's with streaming)
-  const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-    payload.questions,
-    payload.userAnswers
-  );
-
-  const result = await this.makeAPICall(
-    endpoint,
-    questionsArray,
-    answersArray,
-    payload.selectedBusinessId,
-    null,
-    null,
-    onStreamChunk  // ✅ Pass streaming callback for Porter's
-  );
-
-  return { data: result };
-}
 
   // Strategic Analysis (kept for compatibility)
   async generateStrategicAnalysis(questions, answers, selectedBusinessId) {

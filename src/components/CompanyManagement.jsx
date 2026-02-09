@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Building2, Loader, Eye, Upload, X, Image, Edit, Search, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Plus, Building2, Loader, Eye, EyeOff, Upload, X, Image, Edit, Search, ChevronRight, ChevronLeft } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils'; // Import the utility function
 import '../styles/CompanyManagement.css';
 import { useTranslation } from '../hooks/useTranslation';
@@ -15,23 +15,23 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     admin_email: '',
     admin_password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const { t } = useTranslation();
   const validateForm = () => {
     const errors = {};
 
 
-    // Regex for letters + single spaces
-    const nameRegex = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+
 
     // Company name validation
     if (!formData.company_name.trim()) {
       errors.company_name = t('Company_name_is_required');
-    } else if (!nameRegex.test(formData.company_name.trim())) {
-      errors.company_name = t('Company_name_can_only_contain_letters_and_single_spaces');
+    } else if (!/[a-zA-Z]/.test(formData.company_name)) {
+      errors.company_name = t('Company_name_must_contain_alphabetic_characters') || 'Company name must contain at least some alphabetic characters';
     } else if (formData.company_name.trim().length < 2) {
       errors.company_name = t('Company_name_must_be_at_least_2_characters_long');
-    } else if (formData.company_name.trim().length > 20) {
-      errors.company_name = t('Company_name_must_be_at_most_20_characters_long');
+    } else if (formData.company_name.trim().length > 50) {
+      errors.company_name = t('Company_name_must_be_at_most_50_characters_long') || 'Company name must be at most 50 characters long';
     }
 
     if (!formData.industry) {
@@ -41,12 +41,12 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     // Admin name validation
     if (!formData.admin_name.trim()) {
       errors.admin_name = t('Admin_name_is_required');
-    } else if (!nameRegex.test(formData.admin_name.trim())) {
-      errors.admin_name = t('Admin_name_can_only_contain_letters_and_single_spaces');
+    } else if (!/[a-zA-Z]/.test(formData.admin_name)) {
+      errors.admin_name = t('Admin_name_must_contain_alphabetic_characters') || 'Admin name must contain at least some alphabetic characters';
     } else if (formData.admin_name.trim().length < 2) {
       errors.admin_name = t('Admin_name_must_be_at_least_2_characters_long');
-    } else if (formData.admin_name.trim().length > 20) {
-      errors.admin_name = t('Admin_name_must_be_at_most_20_characters_long');
+    } else if (formData.admin_name.trim().length > 50) {
+      errors.admin_name = t('Admin_name_must_be_at_most_50_characters_long') || 'Admin name must be at most 50 characters long';
     }
 
     // Email validation
@@ -90,26 +90,26 @@ const CreateCompanyForm = ({ onSubmit, onCancel, isLoading }) => {
     onSubmit(submitData);
   };
 
-const handleChange = (e) => {
-  const { name, value } = e.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  setFormData(prev => ({
-    ...prev,
-    [name]: value
-  }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
 
-  // Only clear email error when valid
-  if (name === "admin_email") {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(value.trim())) {
-      setErrors(prev => {
-        const updated = { ...prev };
-        delete updated.admin_email;
-        return updated;
-      });
+    // Only clear email error when valid
+    if (name === "admin_email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(value.trim())) {
+        setErrors(prev => {
+          const updated = { ...prev };
+          delete updated.admin_email;
+          return updated;
+        });
+      }
     }
-  }
-};
+  };
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
@@ -148,121 +148,133 @@ const handleChange = (e) => {
         </div>
 
         <form onSubmit={handleSubmit} className="company-form">
-          {/* Existing form fields */}
-          <div className="form-section">
-            <div className="form-grid">
-              <div className="form-field">
-                <label>{t('company_name')} *</label>
-                <input
-                  type="text"
-                  name="company_name"
-                  className='form-control'
-                  value={formData.company_name}
-                  onChange={handleChange}
-                  required
-                  placeholder="TechCorp Solutions"
-                />
-                {errors.company_name && <div className="error-message">{errors.company_name}</div>}
-              </div>
-
-              <div className="form-field">
-                <label>{t('industry')} *</label>
-                <select name="industry" value={formData.industry} onChange={handleChange} required>
-                  <option value="">{t('select_industry')}</option>
-                  <option value="Technology">{t('technology')}</option>
-                  <option value="Healthcare">{t('healthcare')}</option>
-                  <option value="Finance">{t('finance')}</option>
-                  <option value="Retail">{t('retail')}</option>
-                  <option value="Education">{t('education')}</option>
-                  <option value="Other">{t('other')}</option>
-                </select>
-                {errors.industry && <div className="error-message">{errors.industry}</div>}
-              </div>
-
-              <div className="form-field">
-                <label>{t('company_size')}</label>
-                <select name="size" value={formData.size} onChange={handleChange}>
-                  <option value="">{t('select_size')}</option>
-                  <option value="startup">{t('startup')} (1-10)</option>
-                  <option value="small">{t('small')} (11-50)</option>
-                  <option value="medium">{t('medium')} (51-200)</option>
-                  <option value="large">{t('large')} (201-1000)</option>
-                  <option value="enterprise">{t('enterprise')} (1000+)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Simple Logo Upload Section */}
-          <div className="form-section">
-            <h4>{t('company_logo')} (Optional)</h4>
-            <div className="form-field">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-                style={{ marginBottom: '10px' }}
-              />
-              {logoPreview && (
-                <div style={{ marginTop: '10px' }}>
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    style={{ maxWidth: '150px', maxHeight: '80px', objectFit: 'contain' }}
+          <fieldset disabled={isLoading} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+            {/* Existing form fields */}
+            <div className="form-section">
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>{t('company_name')} *</label>
+                  <input
+                    type="text"
+                    name="company_name"
+                    className='form-control'
+                    value={formData.company_name}
+                    onChange={handleChange}
+                    required
+                    placeholder="TechCorp Solutions"
                   />
+                  {errors.company_name && <div className="error-message">{errors.company_name}</div>}
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Admin fields */}
-          <div className="form-section">
-            <h4>{t('company_admin_user')}</h4>
-            <div className="form-grid">
-              <div className="form-field">
-                <label>{t('admin_name')} *</label>
-                <input
-                  type="text"
-                  name="admin_name"
-                  className='form-control'
-                  value={formData.admin_name}
-                  onChange={handleChange}
-                  required
-                  placeholder="John Smith"
-                />
-                {errors.admin_name && <div className="error-message">{errors.admin_name}</div>}
-              </div>
+                <div className="form-field">
+                  <label>{t('industry')} *</label>
+                  <select name="industry" value={formData.industry} onChange={handleChange} required>
+                    <option value="">{t('select_industry')}</option>
+                    <option value="Technology">{t('technology')}</option>
+                    <option value="Healthcare">{t('healthcare')}</option>
+                    <option value="Finance">{t('finance')}</option>
+                    <option value="Retail">{t('retail')}</option>
+                    <option value="Education">{t('education')}</option>
+                    <option value="Other">{t('other')}</option>
+                  </select>
+                  {errors.industry && <div className="error-message">{errors.industry}</div>}
+                </div>
 
-              <div className="form-field">
-                <label>{t('admin_email')} *</label>
-                <input
-                  type="email"
-                  name="admin_email"
-                  className='form-control'
-                  value={formData.admin_email}
-                  onChange={handleChange}
-                  required
-                  placeholder="admin@techcorp.com"
-                />
-                {errors.admin_email && <div className="error-message">{errors.admin_email}</div>}
-              </div>
-
-              <div className="form-field full-width">
-                <label>{t('admin_password')} *</label>
-                <input
-                  type="password"
-                  name="admin_password"
-                  className='form-control'
-                  value={formData.admin_password}
-                  onChange={handleChange}
-                  required
-                  placeholder={t('Minimum_8_characters')}
-                  minLength="8"
-                />
-                {errors.admin_password && <div className="error-message">{errors.admin_password}</div>}
+                <div className="form-field">
+                  <label>{t('company_size')}</label>
+                  <select name="size" value={formData.size} onChange={handleChange}>
+                    <option value="">{t('select_size')}</option>
+                    <option value="startup">{t('startup')} (1-10)</option>
+                    <option value="small">{t('small')} (11-50)</option>
+                    <option value="medium">{t('medium')} (51-200)</option>
+                    <option value="large">{t('large')} (201-1000)</option>
+                    <option value="enterprise">{t('enterprise')} (1000+)</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Simple Logo Upload Section */}
+            <div className="form-section">
+              <h4>{t('company_logo')} (Optional)</h4>
+              <div className="form-field">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  style={{ marginBottom: '10px' }}
+                />
+                {logoPreview && (
+                  <div style={{ marginTop: '10px' }}>
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      style={{ maxWidth: '150px', maxHeight: '80px', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Admin fields */}
+            <div className="form-section">
+              <h4>{t('company_admin_user')}</h4>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>{t('admin_name')} *</label>
+                  <input
+                    type="text"
+                    name="admin_name"
+                    className='form-control'
+                    value={formData.admin_name}
+                    onChange={handleChange}
+                    required
+                    placeholder="John Smith"
+                  />
+                  {errors.admin_name && <div className="error-message">{errors.admin_name}</div>}
+                </div>
+
+                <div className="form-field">
+                  <label>{t('admin_email')} *</label>
+                  <input
+                    type="email"
+                    name="admin_email"
+                    className='form-control'
+                    value={formData.admin_email}
+                    onChange={handleChange}
+                    required
+                    placeholder="admin@techcorp.com"
+                  />
+                  {errors.admin_email && <div className="error-message">{errors.admin_email}</div>}
+                </div>
+
+                <div className="form-field full-width">
+                  <label>{t('admin_password')} *</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="admin_password"
+                      className='form-control'
+                      value={formData.admin_password}
+                      onChange={handleChange}
+                      required
+                      placeholder={t('Minimum_8_characters')}
+                      minLength="8"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex="-1"
+                    >
+                      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                  </div>
+                  {errors.admin_password && <div className="error-message">{errors.admin_password}</div>}
+                </div>
+              </div>
+            </div>
+          </fieldset>
 
           <div className="form-actions">
             <button type="button" className="secondary-btn" onClick={onCancel} disabled={isLoading}>
@@ -280,8 +292,8 @@ const handleChange = (e) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
@@ -507,7 +519,7 @@ const CompanyManagement = ({ onToast }) => {
   );
 
   useEffect(() => {
-    if (!searchTerm) return; 
+    if (!searchTerm) return;
     const maxPage = Math.max(1, Math.ceil(filteredCompanies.length / pageSize));
     if (currentPage > maxPage) {
       setCurrentPage(maxPage);
@@ -530,7 +542,7 @@ const CompanyManagement = ({ onToast }) => {
       </div>
     );
   }
-  
+
 
   return (
     <div className="company-management">

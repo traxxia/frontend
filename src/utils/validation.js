@@ -1,78 +1,78 @@
 export const validateRationale = (text) => {
-    const trimmedText = (text || "").trim();
+  const trimmedText = (text || "").trim();
 
-    if (trimmedText.length === 0) {
-        return {
-            isValid: false,
-            error: "Rationale is required"
-        };
-    }
-
-    const leadingSpaces = text.match(/^\s+/);
-    if (leadingSpaces && leadingSpaces[0].length >= 3) {
-        return {
-            isValid: false,
-            error: `Too many spaces before content (${leadingSpaces[0].length} spaces). Please reduce leading spaces.`
-        };
-    }
-
-    const totalLength = trimmedText.length;
-    const numbersCount = (trimmedText.match(/\d/g) || []).length;
-    const specialCharsCount = (trimmedText.match(/[^a-zA-Z0-9\s]/g) || []).length;
-
-    const numberRatio = numbersCount / totalLength;
-    const specialRatio = specialCharsCount / totalLength;
-
-    if (numberRatio > 0.4 || specialRatio > 0.3) {
-        return {
-            isValid: false,
-            error: `Please use meaningful text.`
-        };
-    }
-
-    const lettersOnly = trimmedText.replace(/[^a-zA-Z]/g, '');
-
-    if (lettersOnly.length === 0) {
-        return {
-            isValid: false,
-            error: "Rationale must contain letters (no numbers/special chars only)"
-        };
-    }
-
-    if (lettersOnly.length < 5) {
-        return {
-            isValid: false,
-            error: "Rationale must contain at least 5 letters of meaningful text"
-        };
-    }
-
+  if (trimmedText.length === 0) {
     return {
-        isValid: true,
-        error: ""
+      isValid: false,
+      error: "Rationale is required"
     };
+  }
+
+  const leadingSpaces = text.match(/^\s+/);
+  if (leadingSpaces && leadingSpaces[0].length >= 3) {
+    return {
+      isValid: false,
+      error: `Too many spaces before content (${leadingSpaces[0].length} spaces). Please reduce leading spaces.`
+    };
+  }
+
+  const totalLength = trimmedText.length;
+  const numbersCount = (trimmedText.match(/\d/g) || []).length;
+  const specialCharsCount = (trimmedText.match(/[^a-zA-Z0-9\s]/g) || []).length;
+
+  const numberRatio = numbersCount / totalLength;
+  const specialRatio = specialCharsCount / totalLength;
+
+  if (numberRatio > 0.4 || specialRatio > 0.3) {
+    return {
+      isValid: false,
+      error: `Please use meaningful text.`
+    };
+  }
+
+  const lettersOnly = trimmedText.replace(/[^a-zA-Z]/g, '');
+
+  if (lettersOnly.length === 0) {
+    return {
+      isValid: false,
+      error: "Rationale must contain letters (no numbers/special chars only)"
+    };
+  }
+
+  if (lettersOnly.length < 5) {
+    return {
+      isValid: false,
+      error: "Rationale must contain at least 5 letters of meaningful text"
+    };
+  }
+
+  return {
+    isValid: true,
+    error: ""
+  };
 };
 
 export const validateRequiredText = (text, fieldName, minLength = 2) => {
-    if (!text || text.trim().length < minLength) {
-        return {
-            isValid: false,
-            error: `${fieldName} must be at least ${minLength} characters`
-        };
-    }
-    return { isValid: true, error: "" };
+  if (!text || text.trim().length < minLength) {
+    return {
+      isValid: false,
+      error: `${fieldName} must be at least ${minLength} characters`
+    };
+  }
+  return { isValid: true, error: "" };
 };
 
 export const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return {
-            isValid: false,
-            error: "Please enter a valid email address"
-        };
-    }
-    return { isValid: true, error: "" };
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return {
+      isValid: false,
+      error: "Please enter a valid email address"
+    };
+  }
+  return { isValid: true, error: "" };
 };
- 
+
 export const validateField = (fieldName, value, rules = {}) => {
   const {
     required = false,
@@ -105,19 +105,18 @@ export const validateField = (fieldName, value, rules = {}) => {
   if (numeric) {
     const allowedChars = allowSpecialChars || ['.', ','];
     const numericPattern = new RegExp(`^[0-9${allowedChars.map(c => '\\' + c).join('')}]+$`);
-    
+
     if (!numericPattern.test(stringValue)) {
       return {
         isValid: false,
-        message: `${fieldName} must contain only numbers${
-          allowedChars.length > 0 ? ` and ${allowedChars.join(', ')}` : ''
-        }`,
+        message: `${fieldName} must contain only numbers${allowedChars.length > 0 ? ` and ${allowedChars.join(', ')}` : ''
+          }`,
       };
     }
 
     // Validate numeric value
     const numValue = parseFloat(stringValue.replace(/,/g, ''));
-    
+
     if (isNaN(numValue)) {
       return {
         isValid: false,
@@ -171,9 +170,17 @@ export const validateField = (fieldName, value, rules = {}) => {
     };
   }
 
+  // Text requirement (must contain at least one letter)
+  if (rules.requiresText && !/[a-zA-Z]/.test(stringValue)) {
+    return {
+      isValid: false,
+      message: `${fieldName} must contain at least some alphabetic characters`,
+    };
+  }
+
   return { isValid: true, message: '' };
 };
- 
+
 export const validateFields = (fieldsConfig) => {
   const errors = {};
   let firstError = '';
@@ -181,7 +188,7 @@ export const validateFields = (fieldsConfig) => {
   Object.entries(fieldsConfig).forEach(([fieldName, config]) => {
     const { value, label, rules } = config;
     const validation = validateField(label || fieldName, value, rules);
-    
+
     if (!validation.isValid) {
       errors[fieldName] = validation.message;
       if (!firstError) {

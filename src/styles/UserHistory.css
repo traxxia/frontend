@@ -311,14 +311,7 @@
   background: #f8fafc;
 }
 
-.loading-details {
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #718096;
-}
+
 
 .no-details {
   padding: 24px;
@@ -958,13 +951,18 @@
 }
 
 /* Loading States */
-.user-history-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
-  gap: 12px;
-  color: #718096;
+.user-history-loading,
+.loading-details {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 300px !important;
+  gap: 16px !important;
+  color: #718096 !important;
+  margin: 0 auto !important;
+  text-align: center !important;
 }
 
 .loading-spinner {
@@ -1192,24 +1190,6 @@
 
 .view-button:hover {
   color: #1f2937;
-}
-
-/* Loader */
-.user-history-loading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  padding: 20px;
-  color: #6b7280;
-}
-
-.loading-details {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #6b7280;
-  font-size: 14px;
 }
 
 /* Popup Modal */
@@ -1523,15 +1503,6 @@
 .user-expanded-content {
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
-}
-
-.loading-details {
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #718096;
 }
 
 .no-details {
@@ -2148,18 +2119,6 @@
 }
 
 /* Loading States */
-.user-history-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
-  gap: 12px;
-  color: #718096;
-}
-
-.loading-spinner {
-  animation: spin 1s linear infinite;
-}
 
 @keyframes spin {
   from {
@@ -2335,23 +2294,6 @@
 
 
 
-/* Loader */
-.user-history-loading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  padding: 20px;
-  color: #6b7280;
-}
-
-.loading-details {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #6b7280;
-  font-size: 14px;
-}
 
 /* Popup Modal */
 .user-popup-overlay {
@@ -2598,6 +2540,7 @@
   min-height: 100% !important;
   max-height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 12px;
   padding: 0px;
   position: relative;
@@ -2610,6 +2553,7 @@
   max-width: 1360px !important;
   max-height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 12px;
   padding: 0px;
   position: relative;
@@ -3448,7 +3392,9 @@
 }
 
 .conversation-list {
-  space-y: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .conversation-phase {
@@ -3489,26 +3435,73 @@
 }
 
 .question-item {
-  padding: 10px 20px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 24px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.question-item:last-child {
-  border-bottom: none;
-}
-
-.question-header {
+.flow-turn {
+  display: grid;
+  grid-template-columns: 55px 1fr;
+  gap: 16px;
   margin-bottom: 12px;
+  align-items: start;
 }
 
-.answer-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: Green;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+.flow-turn:last-child {
+  margin-bottom: 0;
 }
+
+.turn-label {
+  font-weight: 700;
+  font-size: 13px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  padding-top: 2px;
+  text-align: right;
+}
+
+.turn-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.flow-turn.main-question {
+  margin-bottom: 16px;
+}
+
+.flow-turn.main-question .turn-label {
+  color: #1e293b;
+  font-size: 14px;
+  text-align: right;
+}
+
+.flow-turn.main-question .turn-content {
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.flow-turn.question .turn-label {
+  color: #3b82f6;
+}
+
+.flow-turn.answer .turn-label {
+  color: #10b981;
+}
+
+.flow-turn.followup {
+  margin-left: 20px;
+  grid-template-columns: 35px 1fr;
+  /* Narrower label column for indented turns */
+}
+
+.conversation-turns {
+  display: flex;
+  flex-direction: column;
+}
+
 
 /* Result Tab Styles */
 .result-tab {
@@ -3600,19 +3593,6 @@
 }
 
 /* Loading Details Enhancement */
-.loading-details {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: #6b7280;
-}
-
-.loading-details .loading-spinner {
-  margin-bottom: 12px;
-  animation: spin 1s linear infinite;
-}
 
 @keyframes spin {
   from {

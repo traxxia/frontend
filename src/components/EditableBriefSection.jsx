@@ -2,8 +2,190 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Check, X, Loader, AlertCircle } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import '../styles/CompanyManagement.css';
- 
- 
+
+
+
+const EditableField = ({
+  field,
+  editingField,
+  editedFields,
+  isQuestionHighlighted,
+  canEdit,
+  handleEdit,
+  isAnalysisRegenerating,
+  isSaving,
+  isEssentialPhaseGenerating,
+  isLaunchedStatus,
+  inputRefs,
+  fieldRefs,
+  handleSave,
+  handleCancel,
+  handleAutoSave
+}) => {
+  const isEditing = editingField === field.key;
+  const isEdited = editedFields.has(field.key);
+  const isHighlighted = isQuestionHighlighted(field.questionId);
+
+  return (
+    <div
+      ref={el => fieldRefs.current[field.key] = el}
+      className={`brief-item ${isEdited ? 'edited' : ''}`}
+      style={{
+        border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
+        backgroundColor: isHighlighted ? '#fef3c7' : 'white',
+        borderRadius: '8px',
+        padding: isHighlighted ? '12px' : '8px',
+        margin: '8px 0',
+        transition: 'all 0.3s ease',
+        position: 'relative'
+      }}
+    >
+      {isHighlighted && (
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px'
+        }}>
+          <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+        </div>
+      )}
+
+      <div className="item-row">
+        <span className="item-label" style={{
+          color: isHighlighted ? '#92400e' : 'inherit',
+          fontWeight: isHighlighted ? '600' : '500'
+        }}>
+          <span style={{
+            fontSize: '14px',
+            fontWeight: 'bold',
+            padding: '2px 6px',
+            borderRadius: '4px',
+          }}>
+            {field.sequentialNumber}.
+          </span>
+          {field.label}
+
+          {isHighlighted && (
+            <span style={{
+              fontSize: '12px',
+              color: '#dc2626',
+              fontWeight: '500',
+              marginLeft: '8px'
+            }}>
+              (Required for analysis)
+            </span>
+          )}
+        </span>
+        {!isEditing && canEdit && (
+          <button
+            className="edit-button"
+            onClick={() => handleEdit(field)}
+            type="button"
+            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+            title="Edit answer"
+          >
+            <Edit3 size={14} />
+          </button>
+        )}
+      </div>
+
+      {isEditing && canEdit ? (
+        <div className="edit-container">
+          <textarea
+            ref={el => inputRefs.current[field.key] = el}
+            className="edit-textarea"
+            defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
+            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+            style={{ minHeight: '100px', resize: 'vertical' }}
+            placeholder={`Enter your answer for: ${field.label}`}
+            onChange={(e) => handleAutoSave(field, e.target.value)}
+          />
+          <div className="edit-actions">
+            <button
+              onClick={() => handleSave(field)}
+              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+              className="save-button enhanced"
+              title="Save changes"
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                minWidth: '70px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                backgroundColor: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => {
+                if (!e.target.disabled) {
+                  e.target.style.backgroundColor = '#059669';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!e.target.disabled) {
+                  e.target.style.backgroundColor = '#10b981';
+                }
+              }}
+            >
+              {isSaving ? <Loader size={16} className="spinner" /> : <Check size={16} />}
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+              className="cancel-button enhanced"
+              title="Cancel changes"
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                minWidth: '70px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: (isSaving || isEssentialPhaseGenerating) ? 'not-allowed' : 'pointer',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => {
+                if (!e.target.disabled) {
+                  e.target.style.backgroundColor = '#4b5563';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!e.target.disabled) {
+                  e.target.style.backgroundColor = '#6b7280';
+                }
+              }}
+            >
+              <X size={16} />
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="item-text"
+          onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating) && handleEdit(field)}
+          style={{ cursor: (!canEdit || isSaving || isEssentialPhaseGenerating) ? 'default' : 'pointer' }}
+        >
+          {field.value || `Add ${field.label.toLowerCase()}...`}
+          {isEdited && <span className="edited-indicator" title="Modified"> ✏️</span>}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const EditableBriefSection = ({
   questions = [],
@@ -24,7 +206,7 @@ const EditableBriefSection = ({
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
@@ -44,7 +226,7 @@ const EditableBriefSection = ({
 
   useEffect(() => {
     if (questions.length > 0 && Object.keys(userAnswers).length > 0) {
-       generateBriefFields();
+      generateBriefFields();
     }
   }, [questions, userAnswers]);
 
@@ -55,15 +237,6 @@ const EditableBriefSection = ({
       }
     };
   }, []);
-
-  useEffect(() => {
-  if (briefFields.length > 0 && fieldRefs.current[briefFields[briefFields.length - 1].key]) {
-    fieldRefs.current[briefFields[briefFields.length - 1].key].scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'end' 
-    });
-  }
-}, [briefFields.length]);
 
   const isQuestionHighlighted = (questionId) => {
     if (!highlightedMissingQuestions?.missing_questions) return false;
@@ -119,7 +292,7 @@ const EditableBriefSection = ({
         <div>
           {highlightedMissingQuestions.message ||
             `To generate <strong>${highlightedMissingQuestions.analysis_type}</strong> analysis, 
-        please answer the highlighted questions below.`}
+            please answer the highlighted questions below.`}
         </div>
         <div style={{ fontSize: '12px', color: '#78350f', marginTop: '4px' }}>
           Questions highlighted: {highlightedMissingQuestions.missing_questions.map(q => q.order).join(', ')}
@@ -276,177 +449,11 @@ const EditableBriefSection = ({
     setEditingField(null);
   };
 
-  const EditableField = ({ field }) => {
-    const isEditing = editingField === field.key;
-    const isEdited = editedFields.has(field.key);
-    const isHighlighted = isQuestionHighlighted(field.questionId);
-
-    return (
-      <div 
-        ref={el => fieldRefs.current[field.key] = el}
-        className={`brief-item ${isEdited ? 'edited' : ''}`} 
-        style={{
-          border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
-          backgroundColor: isHighlighted ? '#fef3c7' : 'white',
-          borderRadius: '8px',
-          padding: isHighlighted ? '12px' : '8px',
-          margin: '8px 0',
-          transition: 'all 0.3s ease',
-          position: 'relative'
-        }}
-      >
-        {isHighlighted && (
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px'
-          }}>
-            <AlertCircle size={16} style={{ color: '#f59e0b' }} />
-          </div>
-        )}
-
-        <div className="item-row">
-          <span className="item-label" style={{
-            color: isHighlighted ? '#92400e' : 'inherit',
-            fontWeight: isHighlighted ? '600' : '500'
-          }}>
-            <span style={{
-              fontSize: '14px',
-              fontWeight: 'bold',
-              padding: '2px 6px',
-              borderRadius: '4px',
-            }}>
-              {field.sequentialNumber}.
-            </span>
-            {field.label}
-
-            {isHighlighted && (
-              <span style={{
-                fontSize: '12px',
-                color: '#dc2626',
-                fontWeight: '500',
-                marginLeft: '8px'
-              }}>
-                (Required for analysis)
-              </span>
-            )}
-          </span>
-          {!isEditing && canEdit &&  (
-            <button
-              className="edit-button"
-              onClick={() => handleEdit(field)}
-              type="button"
-              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
-              title="Edit answer"
-            >
-              <Edit3 size={14} />
-            </button>
-          )}
-        </div>
-
-        {isEditing && canEdit ? (
-          <div className="edit-container">
-            <textarea
-              ref={el => inputRefs.current[field.key] = el}
-              className="edit-textarea"
-              defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
-              disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
-              style={{ minHeight: '100px', resize: 'vertical' }}
-              placeholder={`Enter your answer for: ${field.label}`}
-              onChange={(e) => handleAutoSave(field, e.target.value)}
-            />
-            <div className="edit-actions">
-              <button
-                onClick={() => handleSave(field)}
-                disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
-                className="save-button enhanced"
-                title="Save changes"
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  minWidth: '70px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  fontWeight: '500'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#059669';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#10b981';
-                  }
-                }}
-              >
-                {isSaving ? <Loader size={16} className="spinner" /> : <Check size={16} />}
-                Save
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
-                className="cancel-button enhanced"
-                title="Cancel changes"
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  minWidth: '70px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: (isSaving || isEssentialPhaseGenerating) ? 'not-allowed' : 'pointer',
-                  fontWeight: '500'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#4b5563';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.target.disabled) {
-                    e.target.style.backgroundColor = '#6b7280';
-                  }
-                }}
-              >
-                <X size={16} />
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div
-            className="item-text"
-            onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating) && handleEdit(field)}
-            style={{ cursor: (!canEdit || isSaving || isEssentialPhaseGenerating) ? 'default' : 'pointer' }}
-          >
-            {field.value || `Add ${field.label.toLowerCase()}...`}
-            {isEdited && <span className="edited-indicator" title="Modified"> ✏️</span>}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const totalQuestions = questions.length;
   const answeredQuestions = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].trim()).length;
   const progressPercentage = totalQuestions > 0
-  ? Math.round((answeredQuestions / totalQuestions) * 100)
-  : 0;
+    ? Math.round((answeredQuestions / totalQuestions) * 100)
+    : 0;
 
   const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
   const essentialQuestions = questions.filter(q => q.phase === 'essential');
@@ -534,7 +541,26 @@ const EditableBriefSection = ({
               <p>Loading your business information...</p>
             </div>
           ) : briefFields.length > 0 ? (
-            briefFields.map(field => <EditableField key={field.key} field={field} />)
+            briefFields.map(field => (
+              <EditableField
+                key={field.key}
+                field={field}
+                editingField={editingField}
+                editedFields={editedFields}
+                isQuestionHighlighted={isQuestionHighlighted}
+                canEdit={canEdit}
+                handleEdit={handleEdit}
+                isAnalysisRegenerating={isAnalysisRegenerating}
+                isSaving={isSaving}
+                isEssentialPhaseGenerating={isEssentialPhaseGenerating}
+                isLaunchedStatus={isLaunchedStatus}
+                inputRefs={inputRefs}
+                fieldRefs={fieldRefs}
+                handleSave={handleSave}
+                handleCancel={handleCancel}
+                handleAutoSave={handleAutoSave}
+              />
+            ))
           ) : (
             <div className="no-data">
               <p>{t('businessInfoMessage') || 'Your business info will show here once you answer questions.'}</p>

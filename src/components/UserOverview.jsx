@@ -419,10 +419,10 @@ const UserOverview = ({ onToast }) => {
                   <tr>
                     <th>{t('name')}</th>
                     <th>{t('email')}</th>
-                    <th>{t('company')}</th>
                     <th>{t('role')}</th>
+                    <th>{t('company')}</th>
                     <th>{t('status')}</th>
-                    <th>{t('created_date')}</th>
+                    <th>{t('created_at')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -430,18 +430,18 @@ const UserOverview = ({ onToast }) => {
                     <tr key={user.id}>
                       <td>{user.name}</td>
                       <td>{user.email}</td>
-                      <td>{user.company_name || 'N/A'}</td>
                       <td>
-                        <span className="role-badge">
-                          {user.role === 'user' ? 'User' :
-                            user.role === 'company_admin' ? 'Company Admin' :
-                              user.role === 'super_admin' ? 'Super Admin' : user.role}
+                        <span className={`role-badge role-${user.role.toLowerCase()}`}>
+                          {t(user.role.toLowerCase())}
                         </span>
                       </td>
+                      <td>{user.company_name}</td>
                       <td>
-                        <span className={`status-badge ${user.status}`}>{user.status}</span>
+                        <span className={`status-badge status-${user.status.toLowerCase()}`}>
+                          {t(user.status.toLowerCase())}
+                        </span>
                       </td>
-                      <td>{formatDate(user.created_at)}</td>
+                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>

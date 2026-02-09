@@ -29,15 +29,15 @@ const StrategicGoals = ({
     };
 
     const handleMissingQuestionsCheck = async () => {
-        const analysisConfig = ANALYSIS_TYPES.strategicGoals; 
-        
+        const analysisConfig = ANALYSIS_TYPES.strategicGoals;
+
         await checkMissingQuestionsAndRedirect(
-            'strategicGoals', 
+            'strategicGoals',
             selectedBusinessId,
             handleRedirectToBrief,
             {
-            displayName: analysisConfig.displayName,
-            customMessage: analysisConfig.customMessage
+                displayName: analysisConfig.displayName,
+                customMessage: analysisConfig.customMessage
             }
         );
     };
@@ -45,21 +45,21 @@ const StrategicGoals = ({
     // Check if the strategic goals data is empty/incomplete
     const isStrategicGoalsDataIncomplete = (data) => {
         if (!data) return true;
-        
+
         // Handle nested structure - check if data is nested under 'strategicGoals' key
         const actualData = data.strategicGoals || data;
-        
+
         // Check if objectives array is empty or null
         if (!actualData.objectives || !Array.isArray(actualData.objectives) || actualData.objectives.length === 0) {
             return true;
         }
-        
+
         // Check if objectives have essential data
-        const hasValidObjectives = actualData.objectives.some(objective => 
-            objective.objective && 
+        const hasValidObjectives = actualData.objectives.some(objective =>
+            objective.objective &&
             (objective.priority !== undefined || objective.keyResults)
         );
-        
+
         return !hasValidObjectives;
     };
 
@@ -85,7 +85,7 @@ const StrategicGoals = ({
         if (strategicGoalsData) {
             // Handle nested structure - check if data is nested under 'strategicGoals' key
             const actualData = strategicGoalsData.strategicGoals || strategicGoalsData;
-            
+
             setData(actualData);
             setHasGenerated(true);
         }
@@ -141,8 +141,8 @@ const StrategicGoals = ({
         const objectivesWithTimeline = objectives.map((objective, index) => {
             // Create more realistic timeline based on priority
             let startMonth, duration;
-            
-            switch(objective.priority) {
+
+            switch (objective.priority) {
                 case 1: // High priority - start early, longer duration
                     startMonth = 1;
                     duration = 12;
@@ -159,7 +159,7 @@ const StrategicGoals = ({
                     startMonth = index * 2 + 1;
                     duration = 6;
             }
-            
+
             return {
                 ...objective,
                 startMonth: objective.startMonth || startMonth,
@@ -270,9 +270,9 @@ const StrategicGoals = ({
                                     <td>{progress}%</td>
                                     <td>
                                         <span className={`status-badge ${getProgressColor(progress)}`}>
-                                            {progress >= 75 ? 'Excellent' : 
-                                             progress >= 50 ? 'Good' : 
-                                             progress >= 25 ? 'Fair' : 'Needs Attention'}
+                                            {progress >= 75 ? 'Excellent' :
+                                                progress >= 50 ? 'Good' :
+                                                    progress >= 25 ? 'Fair' : 'Needs Attention'}
                                         </span>
                                     </td>
                                 </tr>
@@ -319,7 +319,7 @@ const StrategicGoals = ({
                     <h3>Strategic Objectives & OKRs</h3>
                     {expandedSections.objectives ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
-                
+
                 {expandedSections.objectives !== false && (
                     <div className="table-container">
                         <table className="data-table">
@@ -385,7 +385,7 @@ const StrategicGoals = ({
     };
 
     const renderKeyResultsDetailTable = (objectives) => {
-        const allKeyResults = objectives.flatMap((objective, objIndex) => 
+        const allKeyResults = objectives.flatMap((objective, objIndex) =>
             (objective.keyResults || []).map((kr, krIndex) => ({
                 ...kr,
                 objectiveTitle: objective.objective,
@@ -402,7 +402,7 @@ const StrategicGoals = ({
                     <h3>Key Results Details</h3>
                     {expandedSections.keyresults ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                 </div>
-                
+
                 {expandedSections.keyresults !== false && (
                     <div className="table-container">
                         <table className="data-table">
@@ -446,9 +446,9 @@ const StrategicGoals = ({
                                         </td>
                                         <td>
                                             <span className={`status-badge ${getProgressColor(kr.progress)}`}>
-                                                {kr.progress >= 75 ? 'On Track' : 
-                                                 kr.progress >= 50 ? 'Progressing' : 
-                                                 kr.progress >= 25 ? 'Behind' : 'Critical'}
+                                                {kr.progress >= 75 ? 'On Track' :
+                                                    kr.progress >= 50 ? 'Progressing' :
+                                                        kr.progress >= 25 ? 'Behind' : 'Critical'}
                                             </span>
                                         </td>
                                     </tr>
@@ -481,18 +481,20 @@ const StrategicGoals = ({
     // Error state
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
-            <div className="strategic-goals-container">                
+            <div className="strategic-goals-container">
                 <div className="error-state">
                     <div className="error-icon">⚠️</div>
                     <h3>Analysis Error</h3>
                     <p>Unable to generate strategic goals. Please try regenerating or check your inputs.</p>
-                    <button onClick={() => {
-                        if (onRegenerate) {
-                            onRegenerate();
-                        }
-                    }} className="retry-button">
-                        Retry Analysis
-                    </button>
+                    {sessionStorage.getItem("userRole") !== "viewer" && (
+                        <button onClick={() => {
+                            if (onRegenerate) {
+                                onRegenerate();
+                            }
+                        }} className="retry-button">
+                            Retry Analysis
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -501,7 +503,7 @@ const StrategicGoals = ({
     // Check if data is incomplete and show missing questions checker
     if (!strategicGoalsData || isStrategicGoalsDataIncomplete(strategicGoalsData)) {
         return (
-            <div className="strategic-goals-container"> 
+            <div className="strategic-goals-container">
 
                 {/* Replace the entire empty-state div with the common component */}
                 <AnalysisEmptyState
@@ -514,13 +516,13 @@ const StrategicGoals = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                /> 
+                />
             </div>
         );
     }
 
     return (
-        <div className="strategic-goals-container"> 
+        <div className="strategic-goals-container">
 
             <div className="goals-content">
                 {/* Overall Progress Section */}

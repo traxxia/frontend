@@ -51,10 +51,6 @@
   transition: background-color 0.2s;
 }
 
-.back-button:hover {
-  background: #e5e7eb;
-}
-
 .header-stats {
   display: flex;
   gap: 2rem;
@@ -544,6 +540,7 @@
   justify-content: space-between;
   padding: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0px;
 }
 
 .modal-header h3 {
@@ -570,10 +567,6 @@
 .company-form,
 .question-form {
   padding: 1.5rem;
-}
-
-.form-section {
-  margin-bottom: 2rem;
 }
 
 .form-section h4 {
@@ -1193,14 +1186,7 @@
   padding: 0;
 }
 
-.loading-details {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: #6b7280;
-}
+
 
 .no-details {
   padding: 2rem;

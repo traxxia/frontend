@@ -4,6 +4,7 @@ import { useTranslation } from "../hooks/useTranslation";
 
 const ProjectsHeader = ({
   totalProjects,
+  isLoading,
   isDraft,
   isPrioritizing,
   launched,
@@ -31,12 +32,20 @@ const ProjectsHeader = ({
               minWidth: '120px'
             }}
           >
-            <span className="fw-bold" style={{ color: '#2563eb', fontSize: '18px' }}>
-              {totalProjects}
-            </span>
-            <span className="" style={{ color: '#2563eb', fontSize: '14px', fontWeight: '500' }}>
-              {totalProjects === 1 ? t("project") : t("total_projects")}
-            </span>
+            {isLoading ? (
+              <span className="fw-bold" style={{ color: '#2563eb', fontSize: '14px' }}>
+                {t("loading")}
+              </span>
+            ) : (
+              <>
+                <span className="fw-bold" style={{ color: '#2563eb', fontSize: '18px' }}>
+                  {totalProjects}
+                </span>
+                <span className="" style={{ color: '#2563eb', fontSize: '14px', fontWeight: '500' }}>
+                  {totalProjects === 1 ? t("project") : t("total_projects")}
+                </span>
+              </>
+            )}
           </div>
         </div>
 

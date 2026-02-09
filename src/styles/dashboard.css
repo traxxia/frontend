@@ -12,22 +12,24 @@
     left: 0%;
 
   }
-.create-button {
-  background-color: #217aff !important;
-  border-radius: 8px !important;
-  /* padding: 10px 16px !important; */
-  font-weight: 600 !important;
-}
 
-.cancel-button {
-  background-color: #ff0000 !important;
-  color: #fffefe !important;
-  border-radius: 8px !important;
-   padding: 10px 16px !important; 
-  font-weight: 600 !important;
+  .create-button {
+    background-color: #217aff !important;
+    border-radius: 8px !important;
+    /* padding: 10px 16px !important; */
+    font-weight: 600 !important;
+  }
+
+  .cancel-button {
+    background-color: #ff0000 !important;
+    color: #fffefe !important;
+    border-radius: 8px !important;
+    padding: 10px 16px !important;
+    font-weight: 600 !important;
 
 
-}
+  }
+
   .main-content {
     flex: 1;
     overflow-x: hidden;
@@ -820,192 +822,199 @@
     outline: 2px solid #007bff;
     outline-offset: 2px;
   }
+
   /* ==============================
    BUSINESS ACCORDION – DESKTOP
    ============================== */
 
-.businesses-section .accordion {
-  border-radius: 12px;
-  overflow: hidden;
-}
+  .businesses-section .accordion {
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-/* Individual accordion item */
-.businesses-section .accordion-item {
-  border: 1px solid #e6e6e6;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  overflow: hidden;
-  background: #ffffff;
-}
+  /* Individual accordion item */
+  .businesses-section .accordion-item {
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: #ffffff;
+  }
 
-/* Remove double borders */
-.businesses-section .accordion-item:not(:first-of-type) {
-  border-top: 1px solid #e6e6e6;
-}
+  /* Remove double borders */
+  .businesses-section .accordion-item:not(:first-of-type) {
+    border-top: 1px solid #e6e6e6;
+  }
 
-/* Header */
-.businesses-section .accordion-header {
-  font-size: 15px;
-  font-weight: 600;
-}
+  /* Header */
+  .businesses-section .accordion-header {
+    font-size: 15px;
+    font-weight: 600;
+  }
 
-/* Accordion button */
-.businesses-section .accordion-button {
-  background-color: #f8f9fb;
-  color: #1f2937;
-  padding: 14px 18px;
-  border-radius: 10px;
-  box-shadow: none;
-  transition: background-color 0.2s ease;
-}
-
-/* Expanded state */
-.businesses-section .accordion-button:not(.collapsed) {
-  background-color: #eef2ff;
-  color: #1d4ed8;
-  font-weight: 600;
-}
-
-/* Hover effect */
-.businesses-section .accordion-button:hover {
-  background-color: #eef2ff;
-}
-
-/* Remove default focus outline */
-.businesses-section .accordion-button:focus {
-  box-shadow: none;
-}
-
-/* Body */
-.businesses-section .accordion-body {
-  padding: 16px 18px;
-  background-color: #ffffff;
-}
-
-/* Business list spacing inside accordion */
-.businesses-section .accordion-body > *:not(:last-child) {
-  margin-bottom: 12px;
-}
-
-/* Smooth animation */
-.businesses-section .accordion-collapse {
-  transition: height 0.25s ease;
-}
-
-/* Chevron icon smooth rotation */
-.businesses-section .accordion-button::after {
-  transition: transform 0.2s ease;
-}
-
-/* Header content layout */
-.accordion-header-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding-right: 12px; /* space before chevron */
-}
-
-/* Title text */
-.accordion-title-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: #111827; /* dashboard dark */
-}
-
-/* Subtle count pill */
-.accordion-count-pill {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;          /* gray-500 */
-  background-color: #f3f4f6; /* gray-100 */
-  padding: 2px 8px;
-  border-radius: 999px;
-  line-height: 1.2;
-}
-
-/* Active accordion */
-.accordion-button:not(.collapsed) .accordion-count-pill {
-  background-color: #e5e7eb; /* gray-200 */
-  color: #374151;
-}
-
-
-/* Active accordion color tweak */
-.accordion-button:not(.collapsed) .accordion-count {
-  background-color: #c7d2fe;
-}
-
-/* Mobile safety */
-@media (max-width: 768px) {
+  /* Accordion button */
   .businesses-section .accordion-button {
-    padding: 12px 14px;
-    font-size: 14px;
+    background-color: #f8f9fb;
+    color: #1f2937;
+    padding: 14px 18px;
+    border-radius: 10px;
+    box-shadow: none;
+    transition: background-color 0.2s ease;
   }
 
-  .businesses-section .accordion-body {
-    padding: 14px;
+  /* Expanded state */
+  .businesses-section .accordion-button:not(.collapsed) {
+    background-color: #eef2ff;
+    color: #1d4ed8;
+    font-weight: 600;
   }
-  /* ==============================
+
+  /* Hover effect */
+  .businesses-section .accordion-button:hover {
+    background-color: #eef2ff;
+  }
+
+  /* Remove default focus outline */
+  .businesses-section .accordion-button:focus {
+    box-shadow: none;
+  }
+
+  /* Body */
+  .businesses-section .accordion-body {
+    padding: 16px 18px;
+    background-color: #ffffff;
+  }
+
+  /* Business list spacing inside accordion */
+  .businesses-section .accordion-body>*:not(:last-child) {
+    margin-bottom: 12px;
+  }
+
+  /* Smooth animation */
+  .businesses-section .accordion-collapse {
+    transition: height 0.25s ease;
+  }
+
+  /* Chevron icon smooth rotation */
+  .businesses-section .accordion-button::after {
+    transition: transform 0.2s ease;
+  }
+
+  /* Header content layout */
+  .accordion-header-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-right: 12px;
+    /* space before chevron */
+  }
+
+  /* Title text */
+  .accordion-title-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    /* dashboard dark */
+  }
+
+  /* Subtle count pill */
+  .accordion-count-pill {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    /* gray-500 */
+    background-color: #f3f4f6;
+    /* gray-100 */
+    padding: 2px 8px;
+    border-radius: 999px;
+    line-height: 1.2;
+  }
+
+  /* Active accordion */
+  .accordion-button:not(.collapsed) .accordion-count-pill {
+    background-color: #e5e7eb;
+    /* gray-200 */
+    color: #374151;
+  }
+
+
+  /* Active accordion color tweak */
+  .accordion-button:not(.collapsed) .accordion-count {
+    background-color: #c7d2fe;
+  }
+
+  /* Mobile safety */
+  @media (max-width: 768px) {
+    .businesses-section .accordion-button {
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .businesses-section .accordion-body {
+      padding: 14px;
+    }
+
+    /* ==============================
    BUSINESS ACCORDION – MOBILE
    Same as Desktop
    ============================== */
 
-.accordion-button {
-  background-color: #f8f9fb;
-  color: #1f2937;
-  box-shadow: none;
-  transition: background-color 0.2s ease;
-}
+    .accordion-button {
+      background-color: #f8f9fb;
+      color: #1f2937;
+      box-shadow: none;
+      transition: background-color 0.2s ease;
+    }
 
-.accordion-button:not(.collapsed) {
-  background-color: #eef2ff;
-  color: #1d4ed8;
-  font-weight: 600;
-}
+    .accordion-button:not(.collapsed) {
+      background-color: #eef2ff;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
 
-.accordion-button:hover {
-  background-color: #eef2ff;
-}
+    .accordion-button:hover {
+      background-color: #eef2ff;
+    }
 
-.accordion-button:focus {
-  box-shadow: none;
-}
+    .accordion-button:focus {
+      box-shadow: none;
+    }
 
-/* Header content layout */
-.accordion-header-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding-right: 12px;
-}
+    /* Header content layout */
+    .accordion-header-content {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding-right: 12px;
+    }
 
-/* Title text */
-.accordion-title-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: #111827;
-}
+    /* Title text */
+    .accordion-title-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #111827;
+    }
 
-/* Count pill */
-.accordion-count-pill {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-  background-color: #f3f4f6;
-  padding: 2px 8px;
-  border-radius: 999px;
-  line-height: 1.2;
-}
+    /* Count pill */
+    .accordion-count-pill {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      background-color: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 999px;
+      line-height: 1.2;
+    }
 
-/* Active count */
-.accordion-button:not(.collapsed) .accordion-count-pill {
-  background-color: #e5e7eb;
-  color: #374151;
-}
+    /* Active count */
+    .accordion-button:not(.collapsed) .accordion-count-pill {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
 
-}
+  }
 
 
   /* Animations */
@@ -1084,7 +1093,7 @@
 
   @media (max-width: 767px) {
     .modal-body {
-      padding-top: 0.5rem !important; 
+      padding-top: 0.5rem !important;
     }
 
     .text-danger {
@@ -1092,10 +1101,10 @@
       align-items: unset !important;
       padding: 0 !important;
       font-size: inherit !important;
-      color: red !important; 
+      color: red !important;
       background: none !important;
       transition: none !important;
-      margin-left: 2px !important; 
+      margin-left: 2px !important;
     }
 
     .text-danger:hover {
@@ -1200,10 +1209,14 @@
     text-align: center;
   }
 
-  .success-icon {
-    font-size: 3rem;
+  .dashboard-success-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 1rem;
     animation: bounce 0.6s ease-out;
+    background: transparent !important;
+    /* Ensure no background icon from Register.css */
   }
 
   .success-popup h5 {
@@ -1217,7 +1230,7 @@
     margin-bottom: 1.5rem;
     line-height: 1.4;
   }
- 
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -1263,7 +1276,7 @@
       transform: translate3d(0, -1px, 0);
     }
   }
- 
+
   @media (max-width: 576px) {
     .success-popup {
       max-width: 350px;
@@ -1279,7 +1292,7 @@
   }
 
   .dropdown-menu.show {
-    z-index: 2000 !important; 
+    z-index: 2000 !important;
   }
 
   [data-theme='dark'] .delete-popup-purpose {
@@ -1309,7 +1322,7 @@
     transform: scale(1.1);
     color: #dc3545 !important;
   }
- 
+
   .custom-menu-container {
     z-index: 10;
   }
@@ -1354,7 +1367,7 @@
   .custom-menu-item:hover {
     background-color: #f8f9fa;
   }
- 
+
   [data-theme="dark"] .custom-dropdown-menu {
     background: var(--color-bg-secondary);
     border-color: var(--color-border-light);
@@ -1363,7 +1376,7 @@
   [data-theme="dark"] .custom-menu-item:hover {
     background-color: var(--color-bg-primary);
   }
- 
+
   #howItWorksCarousel .carousel-inner {
     border-radius: 8px;
     overflow: hidden;
@@ -1375,7 +1388,7 @@
     object-fit: contain;
     max-height: 70vh;
   }
- 
+
   @media (max-width: 768px) {
     #howItWorksCarousel .carousel-item img {
       max-height: 45vh;
@@ -1445,7 +1458,7 @@
     transform: scale(1.1);
     color: #dc3545 !important;
   }
- 
+
   .custom-menu-container {
     z-index: 10;
   }
@@ -1490,7 +1503,7 @@
   .custom-menu-item:hover {
     background-color: #f8f9fa;
   }
- 
+
   [data-theme="dark"] .custom-dropdown-menu {
     background: var(--color-bg-secondary);
     border-color: var(--color-border-light);
@@ -1499,7 +1512,7 @@
   [data-theme="dark"] .custom-menu-item:hover {
     background-color: var(--color-bg-primary);
   }
- 
+
   @keyframes fadeIn {
     from {
       opacity: 0;

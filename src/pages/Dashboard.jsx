@@ -65,12 +65,12 @@ const Dashboard = () => {
   const [showCustomMenu, setShowCustomMenu] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
   const myBusinesses = businesses.filter(
-  b => Boolean(b.has_projects) === false
-);
+    b => Boolean(b.has_projects) === false
+  );
 
-const projectPhaseBusinesses = businesses.filter(
-  b => Boolean(b.has_projects) === true
-);
+  const projectPhaseBusinesses = businesses.filter(
+    b => Boolean(b.has_projects) === true
+  );
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -119,7 +119,7 @@ const projectPhaseBusinesses = businesses.filter(
     } catch (error) {
       console.error('Error fetching businesses:', error);
       setBusinessError(t('network_error'));
-    }finally {
+    } finally {
       setIsLoadingBusinesses(false);
     }
   };
@@ -250,6 +250,8 @@ const projectPhaseBusinesses = businesses.filter(
       errors.business_name = t('business_name_cannot_be_empty');
     } else if (businessName.length > 20) {
       errors.business_name = t('business_name_max_length');
+    } else if (!/[a-zA-Z]/.test(businessName)) {
+      errors.business_name = t('business_name_must_contain_alphabetic_characters') || 'Business name must contain at least some alphabetic characters';
     } else if (startsWithSymbolOrNumber(businessName)) {
       errors.business_name = t('business_name_invalid_start');
     }
@@ -258,6 +260,8 @@ const projectPhaseBusinesses = businesses.filter(
     const businessPurpose = businessFormData.business_purpose.trim();
     if (!businessPurpose) {
       errors.business_purpose = t('business_purpose_required');
+    } else if (!/[a-zA-Z]/.test(businessPurpose)) {
+      errors.business_purpose = t('business_purpose_must_contain_alphabetic_characters') || 'Business purpose must contain at least some alphabetic characters';
     }
 
     // City validation (optional but if provided, must be valid)
@@ -290,8 +294,8 @@ const projectPhaseBusinesses = businesses.filter(
 
 
     if (businessFormData.description && /\s{3,}/.test(businessFormData.description)) {
-    errors.description = t('description_no_continuous_spaces');
-  }
+      errors.description = t('description_no_continuous_spaces');
+    }
 
 
     setFormErrors(errors);
@@ -425,21 +429,21 @@ const projectPhaseBusinesses = businesses.filter(
 
     // Alternative 1: Simple Delete Button (Always Visible)
     const SimpleDeleteButton = () => {
-  if (isViewer) return null; // 👈 HIDE FOR VIEWER
+      if (isViewer) return null; // 👈 HIDE FOR VIEWER
 
-  return (
-    <button
-      className="btn btn-outline-danger btn-sm delete-btn-simple"
-      onClick={(e) => {
-        e.stopPropagation();
-        handleShowDeleteModal(business);
-      }}
-      title={t('delete_business')}
-    >
-      <Trash2 size={16} />
-    </button>
-  );
-};
+      return (
+        <button
+          className="btn btn-outline-danger btn-sm delete-btn-simple"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleShowDeleteModal(business);
+          }}
+          title={t('delete_business')}
+        >
+          <Trash2 size={16} />
+        </button>
+      );
+    };
 
     return (
       <div
@@ -488,11 +492,11 @@ const projectPhaseBusinesses = businesses.filter(
   const BusinessList = ({ businesses, viewType, canDelete = true }) => (
     <div className={`business-list ${viewType}`}>
       {isLoadingBusinesses && (
-      <div className="d-flex justify-content-center align-items-center py-5">
-        <Spinner animation="border" role="status" variant="primary" />
-        <span className="ms-2 text-muted">{t('loading_businesses')}</span>
-      </div>
-    )}
+        <div className="d-flex justify-content-center align-items-center py-5">
+          <Spinner animation="border" role="status" variant="primary" />
+          <span className="ms-2 text-muted">{t('loading_businesses')}</span>
+        </div>
+      )}
       {!isLoadingBusinesses && businesses.length === 0 && (
         <div className="text-center text-muted py-5">
           <p className="mb-2">{t('no_businesses_yet')}</p>
@@ -549,7 +553,7 @@ const projectPhaseBusinesses = businesses.filter(
                       <h5 className="mb-0">{t('welcome_dashboard')}</h5>
                     </div>
                     {!isViewer && (
-                    <p className="text-muted small mb-4">{t('create_business_plans')}</p>
+                      <p className="text-muted small mb-4">{t('create_business_plans')}</p>
                     )}
                   </div>
                   <Accordion className="px-4 mb-4" defaultActiveKey="0">
@@ -658,7 +662,7 @@ const projectPhaseBusinesses = businesses.filter(
                           </div>
                         </div>
                         {!isViewer && (
-                        <p className="text-muted mb-4">{t('create_business_plans')}</p>
+                          <p className="text-muted mb-4">{t('create_business_plans')}</p>
                         )}
                         {!isViewer && (
                           <div className="d-flex flex-wrap gap-2">
@@ -922,149 +926,140 @@ const projectPhaseBusinesses = businesses.filter(
         <Modal.Header closeButton>
           <Modal.Title>{t('create_new_business')}</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={handleSubmitBusiness}>
-          <Modal.Body>
-           
-
-            <Form.Group className="mb-3">
-              <Form.Label>{t('business_name')} <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                name="business_name"
-                value={businessFormData.business_name}
-                onChange={handleFormChange}
-                placeholder={t('enter_your_business_name')}
-                required
-                disabled={isCreatingBusiness}
-                isInvalid={!!formErrors.business_name}
-                maxLength={20}
-              />
-              <div className="d-flex justify-content-between align-items-center mt-1">
-                <div>
-                  {formErrors.business_name && (
-                    <Form.Text className="text-danger">
-                      {formErrors.business_name}
-                    </Form.Text>
-                  )}
+        <Form onSubmit={handleSubmitBusiness} noValidate>
+          <fieldset disabled={isCreatingBusiness} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+            <Modal.Body>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('business_name')} <span className="text-danger">*</span></Form.Label>
+                <Form.Control
+                  type="text"
+                  name="business_name"
+                  value={businessFormData.business_name}
+                  onChange={handleFormChange}
+                  placeholder={t('enter_your_business_name')}
+                  isInvalid={!!formErrors.business_name}
+                  maxLength={20}
+                />
+                <div className="d-flex justify-content-between align-items-center mt-1">
+                  <div>
+                    {formErrors.business_name && (
+                      <Form.Text className="text-danger">
+                        {formErrors.business_name}
+                      </Form.Text>
+                    )}
+                  </div>
+                  <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>
+                    {businessNameLength}/20
+                  </Form.Text>
                 </div>
-                <Form.Text className={businessNameLength > 20 ? 'text-danger' : 'text-muted'}>
-                  {businessNameLength}/20
-                </Form.Text>
-              </div>
-            </Form.Group>
+              </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>{t('business_purpose')} <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                name="business_purpose"
-                value={businessFormData.business_purpose}
-                onChange={handleFormChange}
-                placeholder={t('brief_description_of_what')}
-                required
-                disabled={isCreatingBusiness}
-                isInvalid={!!formErrors.business_purpose}
-              />
-              {formErrors.business_purpose && (
-                <Form.Text className="text-danger">
-                  {formErrors.business_purpose}
-                </Form.Text>
-              )}
-            </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('business_purpose')} <span className="text-danger">*</span></Form.Label>
+                <Form.Control
+                  type="text"
+                  name="business_purpose"
+                  value={businessFormData.business_purpose}
+                  onChange={handleFormChange}
+                  placeholder={t('brief_description_of_what')}
+                  isInvalid={!!formErrors.business_purpose}
+                />
+                {formErrors.business_purpose && (
+                  <Form.Text className="text-danger">
+                    {formErrors.business_purpose}
+                  </Form.Text>
+                )}
+              </Form.Group>
 
-            {/* City and Country Fields Row */}
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>{t('city')} ({t('optional')})</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="city"
-                    value={businessFormData.city}
-                    onChange={handleFormChange}
-                    placeholder={t('enter_city')}
-                    disabled={isCreatingBusiness}
-                    isInvalid={!!formErrors.city}
-                  />
-                  {formErrors.city && (
-                    <Form.Text className="text-danger">
-                      {formErrors.city}
-                    </Form.Text>
-                  )}
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>{t('country')} ({t('optional')})</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="country"
-                    value={businessFormData.country}
-                    onChange={handleFormChange}
-                    placeholder={t('enter_country')}
-                    disabled={isCreatingBusiness}
-                    isInvalid={!!formErrors.country}
-                  />
-                  {formErrors.country && (
-                    <Form.Text className="text-danger">
-                      {formErrors.country}
-                    </Form.Text>
-                  )}
-                </Form.Group>
-              </Col>
-            </Row>
+              {/* City and Country Fields Row */}
+              <Row className="mb-3">
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('city')} ({t('optional')})</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="city"
+                      value={businessFormData.city}
+                      onChange={handleFormChange}
+                      placeholder={t('enter_city')}
+                      isInvalid={!!formErrors.city}
+                    />
+                    {formErrors.city && (
+                      <Form.Text className="text-danger">
+                        {formErrors.city}
+                      </Form.Text>
+                    )}
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('country')} ({t('optional')})</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="country"
+                      value={businessFormData.country}
+                      onChange={handleFormChange}
+                      placeholder={t('enter_country')}
+                      isInvalid={!!formErrors.country}
+                    />
+                    {formErrors.country && (
+                      <Form.Text className="text-danger">
+                        {formErrors.country}
+                      </Form.Text>
+                    )}
+                  </Form.Group>
+                </Col>
+              </Row>
 
-            <Form.Group className="mb-3">
-              <Form.Label>{t('description')} ({t('optional')})</Form.Label>
-              <Form.Control
-                as="textarea"
-                className="dark-textarea"
-                rows={3}
-                name="description"
-                value={businessFormData.description}
-                onChange={handleFormChange}
-                placeholder={t('detailed_description_of_your_business')}
-                disabled={isCreatingBusiness}
-                isInvalid={!!formErrors.description}
-              />
-              {formErrors.description && (
-                <Form.Text className="text-danger">
-                  {formErrors.description}
-                </Form.Text>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('description')} ({t('optional')})</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  className="dark-textarea"
+                  rows={3}
+                  name="description"
+                  value={businessFormData.description}
+                  onChange={handleFormChange}
+                  placeholder={t('detailed_description_of_your_business')}
+                  isInvalid={!!formErrors.description}
+                />
+                {formErrors.description && (
+                  <Form.Text className="text-danger">
+                    {formErrors.description}
+                  </Form.Text>
+                )}
+
+              </Form.Group>
+              {businessError && (
+                <Alert variant="danger" className="mb-3">
+                  {businessError}
+                </Alert>
               )}
-              
-            </Form.Group>
-             {businessError && (
-              <Alert variant="danger" className="mb-3">
-                {businessError}
-              </Alert>
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              className="cancel-button"
-              onClick={handleCloseCreateModal}
-              disabled={isCreatingBusiness}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              variant="primary"
-              type="submit"
-              className="create-button"
-              disabled={isCreatingBusiness}
-            >
-              {isCreatingBusiness ? (
-                <>
-                  <Spinner size="sm" className="me-2" />
-                  {t('creating')}...
-                </>
-              ) : (
-                t('create_business')
-              )}
-            </Button>
-          </Modal.Footer>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                className="cancel-button"
+                onClick={handleCloseCreateModal}
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                className="create-button"
+              >
+                {isCreatingBusiness ? (
+                  <>
+                    <Spinner size="sm" className="me-2" />
+                    {t('creating')}...
+                  </>
+                ) : (
+                  t('create_business')
+                )}
+              </Button>
+            </Modal.Footer>
+          </fieldset>
         </Form>
       </Modal>
 
@@ -1073,7 +1068,7 @@ const projectPhaseBusinesses = businesses.filter(
         <div className="success-popup-overlay">
           <div className="success-popup">
             <div className="success-popup-content">
-              <div className="success-icon">
+              <div className="dashboard-success-icon">
                 ✅
               </div>
               <h5 className="mb-2">{t('success')}</h5>

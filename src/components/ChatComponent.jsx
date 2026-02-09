@@ -92,7 +92,7 @@ const ChatComponent = ({
     let newMessages = [...messages];
     let messageChanged = false;
 
-    questions.forEach((q) => {
+    questions.forEach((q, index) => {
       const qId = q._id || q.question_id;
       const newAnswerText = userAnswers[qId];
 
@@ -107,12 +107,16 @@ const ChatComponent = ({
         );
 
         if (existingUserMessageIndex !== -1) {
-          if (newMessages[existingUserMessageIndex].text !== newAnswerText) {
+          const hasFollowUpsInMessages = newMessages.some(
+            (msg) => msg.questionId === qId && msg.isFollowUp
+          );
+
+          if (!hasFollowUpsInMessages && newMessages[existingUserMessageIndex].text !== newAnswerText) {
             newMessages[existingUserMessageIndex].text = newAnswerText;
-            newMessages[existingUserMessageIndex].timestamp = new Date();
             messageChanged = true;
           }
         } else {
+          // Remove any skip indicator for this question if it now has an answer
           newMessages = newMessages.filter(
             (msg) =>
               !(
@@ -122,17 +126,18 @@ const ChatComponent = ({
               )
           );
 
-          const relatedBotQuestion = newMessages.find(
-            (msg) => msg.questionId === qId && msg.type === "bot"
+          const relatedBotQuestion = [...newMessages].reverse().find(
+            (msg) => msg.questionId === qId && msg.type === "bot" && !msg.isFollowUp
           );
 
           const newMsg = {
-            id: `${Date.now()}_${Math.random()}`,
+            id: `sync_${qId}_${Date.now()}`,
             type: "user",
             text: newAnswerText,
             timestamp: new Date(),
             questionId: qId,
             phase: q.phase,
+            order: (q.order || 0) + index * 0.01 + 0.0001,
             isFollowUp: false,
             isSkipped: false,
           };
@@ -442,7 +447,8 @@ const ChatComponent = ({
           ),
           questionId,
           phase: question.phase,
-          order: question.order,
+          // Add a small offset based on conversation index to handle duplicate orders
+          order: (question.order || 0) + index * 0.01,
           isFollowUp: false,
         };
         messagesArray.push(mainMsg);
@@ -455,6 +461,13 @@ const ChatComponent = ({
         );
 
         sortedFlow.forEach((interaction, idx) => {
+          // Deduplicate: If it's a bot question identical to the main question text, skip it
+          if (interaction.type === "question" &&
+            interaction.text?.trim() === question.question_text?.trim() &&
+            !interaction.is_followup) {
+            return;
+          }
+
           const messageId = `${questionId}_${interaction.timestamp}_${idx}`;
           const msg = {
             id: messageId,
@@ -464,7 +477,8 @@ const ChatComponent = ({
             questionId,
             phase: question.phase,
             isFollowUp: !!interaction.is_followup,
-            order: question.order + (idx + 1) * 0.0001,
+            // Keep the interaction within high-level question order
+            order: (question.order || 0) + index * 0.01 + (idx + 1) * 0.0001,
           };
           messagesArray.push(msg);
         });
@@ -489,7 +503,7 @@ const ChatComponent = ({
             timestamp: new Date(skippedTs),
             questionId,
             phase: question.phase,
-            order: question.order + 0.0002,
+            order: (question.order || 0) + index * 0.01 + 0.0002,
             isFollowUp: false,
             isSkipped: true,
           };
@@ -500,13 +514,13 @@ const ChatComponent = ({
     });
 
     const sortByOrderThenTime = (a, b) => {
-      if (a.order === undefined || b.order === undefined) {
-        return new Date(a.timestamp) - new Date(b.timestamp);
+      const orderA = a.order !== undefined ? a.order : 999999;
+      const orderB = b.order !== undefined ? b.order : 999999;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
       }
-      if (a.order === b.order) {
-        return new Date(a.timestamp) - new Date(b.timestamp);
-      }
-      return a.order - b.order;
+      return new Date(a.timestamp) - new Date(b.timestamp);
     };
 
     initialMessages.sort(sortByOrderThenTime);
@@ -680,18 +694,30 @@ const ChatComponent = ({
       }
     }
 
-    if (isDuplicate) return null;
+    // Attempt to determine order if not provided
+    let order = metadata.order;
+    if (order === undefined && metadata.questionId) {
+      const qIndex = questions.findIndex(qu => qu._id === metadata.questionId);
+      const q = questions[qIndex];
+      if (q) {
+        order = (q.order || 0) + qIndex * 0.01 + (type === 'user' ? 0.0001 : 0);
+        if (metadata.isFollowUp) order += 0.0002;
+      }
+    }
 
-    const messageData = {
+    const newMessage = {
       id: `${Date.now()}_${Math.random()}`,
       type,
       text,
       timestamp: new Date(),
+      order,
       ...metadata
     };
 
-    setMessages(prev => [...prev, messageData]);
-    return messageData;
+    if (isDuplicate) return null;
+
+    setMessages(prev => [...prev, newMessage]);
+    return newMessage;
   };
 
 
@@ -997,7 +1023,7 @@ const ChatComponent = ({
         },
         body: JSON.stringify({
           question_id: questionId,
-          followup_question_text: followupText,
+          message_text: followupText,
           business_id: selectedBusinessId,
           metadata: { generated_by_ml: true }
         })
@@ -1484,7 +1510,8 @@ const ChatComponent = ({
           originalQuestionText: questionText,
           followupQuestion,
           phase: nextQuestion.phase,
-          severity: nextQuestion.severity
+          severity: nextQuestion.severity,
+          order: nextQuestion.order
         });
 
         setFollowupAttempts(0);
@@ -1642,7 +1669,7 @@ const ChatComponent = ({
                 !messages.slice(index + 1).some(m => m.phase === 'essential' || m.questionId === 'upload_option' || m.questionId === 'upload_skipped'))
             );
 
-            return (              
+            return (
               <React.Fragment key={message.id}>
                 <div className={`message-wrapper ${message.type}`}>
                   {message.type === 'bot' && (
@@ -1743,7 +1770,7 @@ const ChatComponent = ({
                 </div>
 
                 {!isViewer && shouldShowFileCardAfter && <UploadedFileCard />}
-              </React.Fragment> 
+              </React.Fragment>
             );
           })}
 
@@ -1783,8 +1810,8 @@ const ChatComponent = ({
                 pendingValidation
                   ? "Please provide more details..."
                   : nextQuestion
-                  ? t("typeYourAnswer")
-                  : t("All_questions_completed!")
+                    ? t("typeYourAnswer")
+                    : t("All_questions_completed!")
               }
               disabled={isInputDisabled}
               className="message-input"

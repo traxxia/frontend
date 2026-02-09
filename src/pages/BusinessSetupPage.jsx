@@ -177,7 +177,7 @@ const BusinessSetupPage = () => {
       if (stored === 'true') {
         setShowProjectsTab(true);
       }
-    } catch {}
+    } catch { }
   }, [selectedBusinessId]);
 
   // Ensure Projects tab button appears once projects is active
@@ -188,7 +188,7 @@ const BusinessSetupPage = () => {
         if (selectedBusinessId) {
           sessionStorage.setItem(`showProjectsTab_${selectedBusinessId}`, 'true');
         }
-      } catch {}
+      } catch { }
     }
   }, [activeTab, showProjectsTab, selectedBusinessId]);
 
@@ -225,7 +225,7 @@ const BusinessSetupPage = () => {
               sessionStorage.removeItem(key);
             }
           }
-        } catch {}
+        } catch { }
       } catch (err) {
         console.error('Failed to check existing projects for business:', err);
       }
@@ -745,7 +745,7 @@ const BusinessSetupPage = () => {
     createSimpleRegenerationHandler, highlightedCard, expandedCards, setExpandedCards,
     onRedirectToChat: handleRedirectToChat, isMobile, setActiveTab,
     hasUploadedDocument, documentInfo, collapsedCategories, setCollapsedCategories,
-    readOnly: false,isCardExpanded: (cardId) => expandedCards.has(cardId),
+    readOnly: false, isCardExpanded: (cardId) => expandedCards.has(cardId),
   };
 
   const handleProjectCountChange = (count) => {
@@ -759,7 +759,7 @@ const BusinessSetupPage = () => {
       } else {
         sessionStorage.removeItem(key);
       }
-    } catch {}
+    } catch { }
   };
 
   return (
@@ -1031,7 +1031,7 @@ const BusinessSetupPage = () => {
                       {activeTab === "analysis" && 
                         <AnalysisContentManager 
                           {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons}  />}
+                          canRegenerate={canShowRegenerateButtons} />}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -1050,7 +1050,7 @@ const BusinessSetupPage = () => {
                             onRedirectToChat={handleRedirectToChat}
                             onRedirectToBrief={handleRedirectToBrief}
                             streamingManager={streamingManager}  // ADD THIS LINE
-                            isExpanded={true} 
+                            isExpanded={true}
                             onKickstartProjects={() => setActiveTab("projects")}
                             hasProjectsTab={showProjectsTab}
                             onToastMessage={showToastMessage}
@@ -1178,9 +1178,9 @@ const BusinessSetupPage = () => {
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
                       <div className="analysis-content">
-                        <AnalysisContentManager 
+                        <AnalysisContentManager
                           {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons}  />
+                          canRegenerate={canShowRegenerateButtons} />
                       </div>
                     </div>
                   )}
@@ -1206,7 +1206,7 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                {activeTab === "projects" && (
+                  {activeTab === "projects" && (
                     <div className="projects-container">
                       <ProjectsSection
                         selectedBusinessId={selectedBusinessId}
@@ -1290,9 +1290,9 @@ const BusinessSetupPage = () => {
                       </div>
                     )}
                     <div className="analysis-content">
-                      <AnalysisContentManager 
+                      <AnalysisContentManager
                         {...analysisProps}
-                        canRegenerate={canShowRegenerateButtons}  />
+                        canRegenerate={canShowRegenerateButtons} />
                     </div>
                   </div>
                 )}
@@ -1313,8 +1313,8 @@ const BusinessSetupPage = () => {
                       phaseAnalysisArray={phaseAnalysisArray}
                       onRedirectToBrief={handleRedirectToBrief}
                       streamingManager={streamingManager}  // ADD THIS LINE
-                      isExpanded={true}    
-                      onKickstartProjects={() => setActiveTab("projects")}     
+                      isExpanded={true}
+                      onKickstartProjects={() => setActiveTab("projects")}
                       hasProjectsTab={showProjectsTab}
                     />
                   </div>
