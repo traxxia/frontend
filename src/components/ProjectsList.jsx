@@ -114,7 +114,7 @@ const ProjectsList = ({
             {count === 0 ? (
               <div className="empty-category-v2">
                 <FolderOpen size={48} className="empty-icon-v2" />
-                <p>{t("No projects in category", { category: t(status) })}</p>
+                <p>{t("No_projects_found")}</p>
               </div>
             ) : (
               <Row className="g-4">

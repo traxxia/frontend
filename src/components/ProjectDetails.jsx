@@ -37,9 +37,9 @@ const ProjectDetails = ({
         return (
             <div className="project-details-container">
                 <div className="no-project-message">
-                    <p>No project data available.</p>
+                    <p>{t("No_project_data")}</p>
                     <button className="btn-back" onClick={onBack}>
-                        <ArrowLeft size={16} /> Back to Projects
+                        <ArrowLeft size={16} /> {t("Back_to_Projects")}
                     </button>
                 </div>
             </div>
@@ -150,11 +150,11 @@ const ProjectDetails = ({
                 <div className="details-grid">
                     <div className="detail-item">
                         <label className="detail-label">{t("Project_Description")}</label>
-                        <p className="detail-value">{project.description || "N/A"}</p>
+                        <p className="detail-value">{project.description || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Why_This_Matters")}</label>
-                        <p className="detail-value">{project.importance || "N/A"}</p>
+                        <p className="detail-value">{project.importance || t("Not_Available")}</p>
                     </div>
                 </div>
             </div>
@@ -165,17 +165,29 @@ const ProjectDetails = ({
                 <div className="details-grid">
                     <div className="detail-item full-width">
                         <label className="detail-label">{t("Strategic_Decision_Bet")}</label>
-                        <p className="detail-value">{project.strategic_decision || "N/A"}</p>
+                        <p className="detail-value">{project.strategic_decision || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Accountable_Owner")}</label>
-                        <p className="detail-value">{project.accountable_owner || "N/A"}</p>
+                        <p className="detail-value">{project.accountable_owner || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Status")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
+                                {getStatusIcon(project.status || "Draft")}
                                 <span>{project.status ? t(project.status) : t("Draft")}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="detail-item">
+                        <label className="detail-label">{t("Learning_State")}</label>
+                        <div className="detail-value">
+                            <div className="detail-value-with-icon">
+                                {project.learning_state === "Validated" && <CheckCircle size={16} color="green" />}
+                                {project.learning_state === "Disproven" && <XCircle size={16} color="red" />}
+                                {project.learning_state === "Testing" && <Clock size={16} color="blue" />}
+                                <span>{project.learning_state ? t(project.learning_state) : t("Testing")}</span>
                             </div>
                         </div>
                     </div>
@@ -191,17 +203,17 @@ const ProjectDetails = ({
                     )}
                     <div className="detail-item">
                         <label className="detail-label">{t("Success_Criteria")}</label>
-                        <p className="detail-value">{project.success_criteria || "N/A"}</p>
+                        <p className="detail-value">{project.success_criteria || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Kill_Criteria")}</label>
-                        <p className="detail-value">{project.kill_criteria || "N/A"}</p>
+                        <p className="detail-value">{project.kill_criteria || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Review_Cadence")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.review_cadence ? t(project.review_cadence) : "N/A"}</span>
+                                <span>{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
@@ -216,7 +228,7 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Impact")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.impact || "N/A"}</span>
+                                <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
@@ -224,7 +236,7 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Effort")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.effort || "N/A"}</span>
+                                <span>{project.effort ? t(project.effort) : t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
@@ -232,7 +244,7 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Risk")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.risk || "N/A"}</span>
+                                <span>{project.risk ? t(project.risk) : t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
@@ -241,7 +253,7 @@ const ProjectDetails = ({
                             <label className="detail-label">{t("Strategic_Theme")}</label>
                             <div className="detail-value">
                                 <div className="detail-value-with-icon">
-                                    <span>{project.strategic_theme || "N/A"}</span>
+                                    <span>{project.strategic_theme ? t(project.strategic_theme) : t("Not_Available")}</span>
                                 </div>
                             </div>
                         </div>
@@ -254,34 +266,34 @@ const ProjectDetails = ({
                 <h3 className="card-title">{t("Additional_Details")}</h3>
                 <div className="details-grid">
                     <div className="detail-item">
-                        <label className="detail-label">{t("High_Level_Requirements")}</label>
-                        <p className="detail-value">{project.high_level_req || "N/A"}</p>
+                        <label className="detail-label">{t("Constraints_Non_Negotiables")}</label>
+                        <p className="detail-value">{project.constraints_non_negotiables || project.high_level_requirements || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Dependencies")}</label>
-                        <p className="detail-value">{project.dependencies || "N/A"}</p>
+                        <p className="detail-value">{project.dependencies || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
-                        <label className="detail-label">{t("Scope")}</label>
-                        <p className="detail-value">{project.scope || "N/A"}</p>
+                        <label className="detail-label">{t("Explicitly_Out_of_Scope")}</label>
+                        <p className="detail-value">{project.explicitly_out_of_scope || project.scope_definition || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Expected_Outcome")}</label>
-                        <p className="detail-value">{project.outcome || "N/A"}</p>
+                        <p className="detail-value">{project.outcome || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Success_Metrics")}</label>
-                        <p className="detail-value">{project.success_metrics || "N/A"}</p>
+                        <p className="detail-value">{project.success_metrics || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Estimated_Timeline")}</label>
-                        <p className="detail-value">{project.timeline || "N/A"}</p>
+                        <p className="detail-value">{project.timeline || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Budget_Estimate")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.budget || "N/A"}</span>
+                                <span>{project.budget || t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
