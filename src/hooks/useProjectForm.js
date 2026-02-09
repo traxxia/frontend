@@ -77,7 +77,8 @@ export const useProjectForm = () => {
     setBudget(project.budget_estimate || "");
 
     // Load Strategic Core
-    setStrategicDecision(project.strategic_decision || "");
+    // Ensure strategic decision field shows the project name for consistency in v2
+    setStrategicDecision(project.strategic_decision || project.project_name || "");
     setAccountableOwner(project.accountable_owner || "");
     setKeyAssumptions(project.key_assumptions && project.key_assumptions.length > 0 ? project.key_assumptions : ["", "", ""]);
     setSuccessCriteria(project.success_criteria || "");

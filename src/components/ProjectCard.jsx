@@ -7,14 +7,15 @@ import {
   Eye,
   AlertTriangle,
   TrendingUp,
-  Target,
   Zap,
   CheckCircle,
   XCircle,
   PauseCircle,
   PlayCircle,
   HelpCircle,
-  Clock
+  Clock,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -23,18 +24,39 @@ const getStrategicSignal = (project) => {
   const impact = project.impact;
   const theme = project.strategic_theme || "None";
 
-  // Normalize status for display
-  const rawStatus = (project.status || "Draft").toLowerCase();
+  // Valid project statuses only
+  const validProjectStatuses = ["draft", "active", "at risk", "at-risk", "paused", "killed", "scaled"];
+  const rawStatus = (project.status || "").toLowerCase();
+
+  // Check if status is valid, otherwise default to Draft
   let status = "Draft";
-  if (rawStatus === "active" || rawStatus === "launched") status = "Active";
-  else if (rawStatus === "at risk" || rawStatus === "at-risk") status = "At Risk";
-  else if (rawStatus === "paused") status = "Paused";
-  else if (rawStatus === "killed") status = "Killed";
-  else if (rawStatus === "scaled") status = "Scaled";
-  else if (rawStatus === "prioritizing" || rawStatus === "prioritized" || rawStatus === "draft") status = "Draft";
-  else status = "Draft";
+  if (validProjectStatuses.includes(rawStatus)) {
+    if (rawStatus === "active") status = "Active";
+    else if (rawStatus === "at risk" || rawStatus === "at-risk") status = "At Risk";
+    else if (rawStatus === "paused") status = "Paused";
+    else if (rawStatus === "killed") status = "Killed";
+    else if (rawStatus === "scaled") status = "Scaled";
+    else if (rawStatus === "draft") status = "Draft";
+  }
 
   return { impact, theme, normalizedStatus: status };
+};
+
+// Helper for relative time (e.g., "2 weeks ago")
+const getRelativeTime = (date, t) => {
+  if (!date) return null;
+  const now = new Date();
+  const past = new Date(date);
+  const diffInMs = now - past;
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays < 1) return t("today");
+  if (diffInDays === 1) return t("yesterday");
+  if (diffInDays < 7) return `${diffInDays} ${t("days_ago")}`;
+
+  const weeks = Math.floor(diffInDays / 7);
+  if (weeks === 1) return `1 ${t("week_ago")}`;
+  return `${weeks} ${t("weeks_ago")}`;
 };
 
 const ProjectCard = ({
@@ -63,30 +85,19 @@ const ProjectCard = ({
 
   return (
     <div className={`project-card-v2 status-${normalizedStatus.toLowerCase().replace(" ", "-")}`}>
-      {finalizeCompleted && (
-        <div className="project-rank-badge">
-          {rankMap[String(project._id)] ?? index + 1}
-        </div>
-      )}
 
-      <div className="project-card-header">
-        <div className="project-title-section">
+      <div className="project-card-header-new">
+        <div className="project-title-row">
           <h3 className="project-name-v2">
+            {rankMap[String(project._id)] && (
+              <span className="project-rank-inline">{rankMap[String(project._id)]}</span>
+            )}
             {project.project_name}
           </h3>
-          <p className="project-owner-v2">
-            {t("Owner")}: <span>{project.accountable_owner || project.created_by || t("Unassigned")}</span>
-          </p>
-        </div>
 
-        <div className="project-status-and-menu">
-          <div className={`status-tag status-${normalizedStatus.toLowerCase().replace(" ", "-")}`}>
-            {t(normalizedStatus)}
-          </div>
-
-          <div className="project-menu-wrapper">
+          <div className="project-menu-wrapper-v2">
             <button
-              className="project-menu-btn"
+              className="project-menu-btn-v2"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenuId && setShowMenuId(showMenuId === project._id ? null : project._id);
@@ -115,47 +126,61 @@ const ProjectCard = ({
             )}
           </div>
         </div>
-      </div>
 
-      <div className="project-card-body">
-        <p className="project-desc-v2">
-          {project.description || t("No_description_provided")}
-        </p>
-      </div>
+        <div className="project-subheader-row">
+          <span className="project-owner-name">Owner :&nbsp; 
+            {project.accountable_owner || project.created_by || t("Unassigned")}
+          </span> 
+        </div>
 
-      <div className="project-card-footer-v2">
-        <div className="project-learning-state">
+        <div className="project-subheader-row"> 
           {project.learning_state && (
-            <span className={`learning-pill ${project.learning_state.toLowerCase()}`}>
+            <span className={`learning-pill-v2 ${project.learning_state.toLowerCase()}`}>
               {project.learning_state === "Validated" && <CheckCircle size={12} />}
               {project.learning_state === "Disproven" && <XCircle size={12} />}
               {project.learning_state === "Testing" && <HelpCircle size={12} />}
               {t(project.learning_state)}
             </span>
           )}
-          {project.strategic_theme && (
-            <span className="theme-pill">
-              <Target size={12} />
-              {t(project.strategic_theme)}
-            </span>
-          )}
-        </div>
-        <div className="project-meta-pills">
-          <span className={`impact-pill impact-${impact?.toLowerCase() || 'none'}`}>
-            <Zap size={12} />
+
+          <div className={`status-pill-v2 status-${normalizedStatus.toLowerCase().replace(" ", "-")}`}>
+            {t(normalizedStatus)}
+          </div>
+
+          <div className={`impact-pill-new impact-${impact?.toLowerCase() || 'none'}`}>
+            {impact === 'High' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             {impact ? t(impact) : t("No_Impact")}
-          </span>
-          {project.last_reviewed ? (
-            <span className="date-pill reviewed" title={t("Last Reviewed")}>
-              <Clock size={12} />
-              {new Date(project.last_reviewed).toLocaleDateString()}
-            </span>
-          ) : (
-            <span className="date-pill">
-              {new Date(project.created_at).toLocaleDateString()}
-            </span>
-          )}
+          </div>
+
         </div>
+
+        <div className="project-reviewed-row">
+          <span className="reviewed-text">
+            {t("Last_Reviewed")}: <strong>{getRelativeTime(project.last_reviewed || project.updated_at, t)}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div className="project-card-body-new">
+        <p className="project-desc-v2">
+          {project.description || t("No_description_provided")}
+        </p>
+
+        {project.key_assumptions && project.key_assumptions.length > 0 && (
+          <div className="project-assumptions-preview">
+            <h4 className="assumptions-title">{t("Key_Assumptions")}:</h4>
+            <ul className="assumptions-bullets">
+              {project.key_assumptions.slice(0, 3).map((a, i) => a && (
+                <li key={i}>{a}</li>
+              ))}
+              {project.key_assumptions.length > 3 && (
+                <li className="more-assumptions">
+                  + {project.key_assumptions.length - 3} {t("more")}
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

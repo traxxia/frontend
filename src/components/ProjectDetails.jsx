@@ -144,9 +144,10 @@ const ProjectDetails = ({
                 </Breadcrumb>
             </div>
 
-            {/* Required Information */}
+
+            {/* Strategic Core */}
             <div className="details-card">
-                <h3 className="card-title">{t("Required_Information")}</h3>
+                <h3 className="card-title">🎯 {t("Strategic_Core")}</h3>
                 <div className="details-grid">
                     <div className="detail-item">
                         <label className="detail-label">{t("Project_Description")}</label>
@@ -156,66 +157,111 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Why_This_Matters")}</label>
                         <p className="detail-value">{project.importance || t("Not_Available")}</p>
                     </div>
-                </div>
-            </div>
-
-            {/* Strategic Core */}
-            <div className="details-card">
-                <h3 className="card-title">{t("Strategic_Core")}</h3>
-                <div className="details-grid">
                     <div className="detail-item full-width">
-                        <label className="detail-label">{t("Strategic_Decision_Bet")}</label>
+                        <label className="detail-label">
+                            {t("Strategic_Decision_Bet")}
+                            <small className="field-sub-label">{t("Strategic_Decision_Sublabel")}</small>
+                        </label>
                         <p className="detail-value">{project.strategic_decision || t("Not_Available")}</p>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Accountable_Owner")}</label>
-                        <p className="detail-value">{project.accountable_owner || t("Not_Available")}</p>
-                    </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Status")}</label>
-                        <div className="detail-value">
-                            <div className="detail-value-with-icon">
-                                {getStatusIcon(project.status || "Draft")}
-                                <span>{project.status ? t(project.status) : t("Draft")}</span>
+
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Accountable_Owner")}</label>
+                            <p className="detail-value">{project.accountable_owner || t("Not_Available")}</p>
+                        </div>
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Impact")}</label>
+                            <div className="detail-value">
+                                <div className="detail-value-with-icon"> 
+                                    <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Learning_State")}</label>
-                        <div className="detail-value">
-                            <div className="detail-value-with-icon">
-                                {project.learning_state === "Validated" && <CheckCircle size={16} color="green" />}
-                                {project.learning_state === "Disproven" && <XCircle size={16} color="red" />}
-                                {project.learning_state === "Testing" && <Clock size={16} color="blue" />}
-                                <span>{project.learning_state ? t(project.learning_state) : t("Testing")}</span>
-                            </div>
-                        </div>
-                    </div>
-                    {project.key_assumptions && project.key_assumptions.length > 0 && (
-                        <div className="detail-item full-width">
-                            <label className="detail-label">{t("Key_Assumptions")}</label>
-                            <ul className="assumptions-list">
+
+                    <div className="detail-item full-width">
+                        <label className="detail-label">
+                            {t("Key_Assumptions_Tested")}
+                            <small className="field-sub-label">{t("Key_Assumptions_Sublabel")}</small>
+                        </label>
+                        {project.key_assumptions && project.key_assumptions.length > 0 ? (
+                            <ul className="assumptions-list" style={{ marginTop: '8px' }}>
                                 {project.key_assumptions.filter(a => a).map((assumption, idx) => (
                                     <li key={idx}>{assumption}</li>
                                 ))}
                             </ul>
+                        ) : (
+                            <p className="detail-value">{t("Not_Available")}</p>
+                        )}
+                    </div>
+
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">
+                                {t("Continue_If_Label")}
+                                <small className="field-sub-label">{t("Continue_If_Sublabel")}</small>
+                            </label>
+                            <p className="detail-value">{project.success_criteria || t("Not_Available")}</p>
                         </div>
-                    )}
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Success_Criteria")}</label>
-                        <p className="detail-value">{project.success_criteria || t("Not_Available")}</p>
+                        <div className="detail-item">
+                            <label className="detail-label">
+                                {t("Stop_If_Label")}
+                                <small className="field-sub-label">{t("Stop_If_Sublabel")}</small>
+                            </label>
+                            <p className="detail-value">{project.kill_criteria || t("Not_Available")}</p>
+                        </div>
                     </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Kill_Criteria")}</label>
-                        <p className="detail-value">{project.kill_criteria || t("Not_Available")}</p>
-                    </div>
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Review_Cadence")}</label>
-                        <div className="detail-value">
-                            <div className="detail-value-with-icon">
-                                <span>{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</span>
+
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Status")}</label>
+                            <div className="detail-value">
+                                <div className="detail-value-with-icon">
+                                    {(() => {
+                                        // Valid project statuses (case-insensitive check)
+                                        const validProjectStatuses = ["draft", "active", "at risk", "paused", "killed", "scaled"];
+                                        const statusLower = (project.status || "").toLowerCase();
+                                        const isValidStatus = validProjectStatuses.includes(statusLower);
+
+                                        // Normalize to proper case for display
+                                        const statusMap = {
+                                            "draft": "Draft",
+                                            "active": "Active",
+                                            "at risk": "At Risk",
+                                            "paused": "Paused",
+                                            "killed": "Killed",
+                                            "scaled": "Scaled"
+                                        };
+                                        
+                                        // If no status or invalid status, default to Draft
+                                        const displayStatus = isValidStatus ? statusMap[statusLower] : "Draft";
+
+                                        return (
+                                            <> 
+                                                <span>{t(displayStatus)}</span>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         </div>
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Learning_State")}</label>
+                            <div className="detail-value">
+                                <div className="detail-value-with-icon">
+                                    {project.learning_state === "Validated" && <CheckCircle size={16} color="green" />}
+                                    {project.learning_state === "Disproven" && <XCircle size={16} color="red" />}
+                                    {project.learning_state === "Testing" && <Clock size={16} color="blue" />}
+                                    <span>{project.learning_state ? t(project.learning_state) : t("Testing")}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="detail-item">
+                        <label className="detail-label">{t("Review_Cadence")}</label>
+                        <p className="detail-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</p>
                     </div>
                 </div>
             </div>
@@ -227,7 +273,7 @@ const ProjectDetails = ({
                     <div className="detail-item">
                         <label className="detail-label">{t("Impact")}</label>
                         <div className="detail-value">
-                            <div className="detail-value-with-icon">
+                            <div className="detail-value-with-icon"> 
                                 <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
                             </div>
                         </div>
@@ -236,6 +282,7 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Effort")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
+                                {getEffortIcon(project.effort)}
                                 <span>{project.effort ? t(project.effort) : t("Not_Available")}</span>
                             </div>
                         </div>
@@ -243,7 +290,7 @@ const ProjectDetails = ({
                     <div className="detail-item">
                         <label className="detail-label">{t("Risk")}</label>
                         <div className="detail-value">
-                            <div className="detail-value-with-icon">
+                            <div className="detail-value-with-icon"> 
                                 <span>{project.risk ? t(project.risk) : t("Not_Available")}</span>
                             </div>
                         </div>
@@ -253,6 +300,7 @@ const ProjectDetails = ({
                             <label className="detail-label">{t("Strategic_Theme")}</label>
                             <div className="detail-value">
                                 <div className="detail-value-with-icon">
+                                    {getThemeIcon(project.strategic_theme)}
                                     <span>{project.strategic_theme ? t(project.strategic_theme) : t("Not_Available")}</span>
                                 </div>
                             </div>
@@ -279,7 +327,7 @@ const ProjectDetails = ({
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Expected_Outcome")}</label>
-                        <p className="detail-value">{project.outcome || t("Not_Available")}</p>
+                        <p className="detail-value">{project.expected_outcome || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Success_Metrics")}</label>
@@ -287,13 +335,13 @@ const ProjectDetails = ({
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Estimated_Timeline")}</label>
-                        <p className="detail-value">{project.timeline || t("Not_Available")}</p>
+                        <p className="detail-value">{project.estimated_timeline || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Budget_Estimate")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.budget || t("Not_Available")}</span>
+                                <span>{project.budget_estimate || t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
