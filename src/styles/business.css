@@ -216,7 +216,7 @@
 }
 
 .modern-card-header {
-  padding: 10px 0px 10px 20px;
+  padding: 10px 20px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -382,7 +382,14 @@
 }
 
 .modern-status-icon.loading {
-  color: #1e40af;
+  color: #000206;
+  filter: drop-shadow(0 0 2px rgba(37, 99, 235, 0.3));
+}
+
+/* Ensure visibility when card is in loading state */
+.modern-analysis-card.loading .modern-status-icon.loading {
+  color: #000206;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
 }
 
 .modern-status-icon.locked {
@@ -825,7 +832,7 @@
 }
 
 .category-toggle {
-  color: #6b7280;
+  color: #000000;
   transition: transform 0.2s ease;
 }
 

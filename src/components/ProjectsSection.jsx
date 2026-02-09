@@ -70,6 +70,7 @@ const ProjectsSection = ({
   const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
   const [validationMessageType, setValidationMessageType] = useState("error");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { locks } = useFieldLockPolling(currentProject?._id);
   const { fetchProjects, deleteProject, createProject, updateProject } =
@@ -255,8 +256,12 @@ const ProjectsSection = ({
   };
 
   const loadProjects = useCallback(async () => {
+    setIsLoading(true);
     const result = await fetchProjects();
-    if (!result) return;
+    if (!result) {
+      setIsLoading(false);
+      return;
+    }
 
     const fetched = result.projects;
     setProjects(fetched);
@@ -312,6 +317,7 @@ const ProjectsSection = ({
         await checkProjectsAccess(launchedProjectIds);
       }
     }
+    setIsLoading(false);
   }, [fetchProjects, checkBusinessAccess, checkProjectsAccess, myUserId]);
 
   const loadTeamRankings = useCallback(async () => {
@@ -598,6 +604,7 @@ const ProjectsSection = ({
 
         <ProjectsHeader
           totalProjects={portfolioData.totalProjects}
+          isLoading={isLoading}
           isDraft={isDraft}
           isPrioritizing={isPrioritizing}
           launched={launched}
