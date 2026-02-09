@@ -491,11 +491,12 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 /* Hover effects */
 .floating-skip-button:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  background: #5a67d8;
   transform: translateY(-3px) scale(1.02);
   box-shadow:
     0 12px 35px rgba(102, 126, 234, 0.5),

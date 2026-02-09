@@ -897,7 +897,7 @@ const Dashboard = () => {
         <Modal.Header closeButton>
           <Modal.Title>{t('create_new_business')}</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={handleSubmitBusiness}>
+        <Form onSubmit={handleSubmitBusiness} noValidate>
           <fieldset disabled={isCreatingBusiness} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
             <Modal.Body>
               <Form.Group className="mb-3">
@@ -908,7 +908,6 @@ const Dashboard = () => {
                   value={businessFormData.business_name}
                   onChange={handleFormChange}
                   placeholder={t('enter_your_business_name')}
-                  required
                   isInvalid={!!formErrors.business_name}
                   maxLength={20}
                 />
@@ -934,7 +933,6 @@ const Dashboard = () => {
                   value={businessFormData.business_purpose}
                   onChange={handleFormChange}
                   placeholder={t('brief_description_of_what')}
-                  required
                   isInvalid={!!formErrors.business_purpose}
                 />
                 {formErrors.business_purpose && (
@@ -1041,7 +1039,7 @@ const Dashboard = () => {
         <div className="success-popup-overlay">
           <div className="success-popup">
             <div className="success-popup-content">
-              <div className="success-icon">
+              <div className="dashboard-success-icon">
                 ✅
               </div>
               <h5 className="mb-2">{t('success')}</h5>

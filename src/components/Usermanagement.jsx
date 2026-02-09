@@ -73,6 +73,8 @@ const UserManagement = ({ onToast }) => {
   const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState(false);
   const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
+  const [assignErrors, setAssignErrors] = useState({});
+  const [accessErrors, setAccessErrors] = useState({});
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
@@ -106,11 +108,15 @@ const UserManagement = ({ onToast }) => {
     setShowConfirmPassword(false);
   };
 
-  const handleOpenAssignModal = () => setShowAssignModal(true);
+  const handleOpenAssignModal = () => {
+    setAssignErrors({});
+    setShowAssignModal(true);
+  };
   const handleCloseAssignModal = () => {
     setShowAssignModal(false);
     setAssignUserId("");
     setAssignBusinessId("");
+    setAssignErrors({});
   };
 
   const validateForm = () => {
@@ -251,18 +257,13 @@ const UserManagement = ({ onToast }) => {
   };
 
   const handleProceedToConfirmation = () => {
-    if (!accessBusinessId) {
-      onToast("Please select business", "error");
-      return;
-    }
+    const newErrors = {};
+    if (!accessBusinessId) newErrors.business = t("select_business_required");
+    if (selectedCollaboratorIds.length === 0) newErrors.collaborators = t("select_collaborators_at_least_one") || "Please select at least one collaborator";
+    if (accessType === "projectEdit" && !selectedProjectId) newErrors.project = t("select_project_required");
 
-    if (selectedCollaboratorIds.length === 0) {
-      onToast("Please select at least one collaborator", "error");
-      return;
-    }
-
-    if (accessType === "projectEdit" && !selectedProjectId) {
-      onToast("Please select project", "error");
+    if (Object.keys(newErrors).length > 0) {
+      setAccessErrors(newErrors);
       return;
     }
 
@@ -344,8 +345,12 @@ const UserManagement = ({ onToast }) => {
   const handleAssign = async (e) => {
     e.preventDefault();
 
-    if (!assignUserId || !assignBusinessId) {
-      onToast("Select user and business");
+    const newErrors = {};
+    if (!assignUserId) newErrors.collaborator = t("select_collaborator_required");
+    if (!assignBusinessId) newErrors.business = t("select_business_required");
+
+    if (Object.keys(newErrors).length > 0) {
+      setAssignErrors(newErrors);
       return;
     }
 
@@ -535,6 +540,7 @@ const UserManagement = ({ onToast }) => {
       setProjects([]);
       setSelectedProjectId("");
       setSelectedCollaboratorIds([]);
+      setAccessErrors({});
     } catch (err) {
       console.error("Failed to load launched data", err);
     } finally {
@@ -956,13 +962,18 @@ const UserManagement = ({ onToast }) => {
           </Modal.Header>
 
           <Modal.Body>
-            <Form onSubmit={handleAssign}>
+            <Form onSubmit={handleAssign} noValidate>
               <Form.Group className="mb-3">
                 <Form.Label>{t("Collaborator")}</Form.Label>
                 <Form.Select
                   value={assignUserId}
-                  onChange={(e) => setAssignUserId(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setAssignUserId(e.target.value);
+                    if (e.target.value) {
+                      setAssignErrors(prev => ({ ...prev, collaborator: null }));
+                    }
+                  }}
+                  isInvalid={!!assignErrors.collaborator}
                 >
                   <option value="">{t("Select_collaborator")}</option>
                   {collaboratorUsers.map((u) => (
@@ -971,14 +982,22 @@ const UserManagement = ({ onToast }) => {
                     </option>
                   ))}
                 </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {assignErrors.collaborator}
+                </Form.Control.Feedback>
               </Form.Group>
 
               <Form.Group className="mb-3">
                 <Form.Label>{t("business")}</Form.Label>
                 <Form.Select
                   value={assignBusinessId}
-                  onChange={(e) => setAssignBusinessId(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setAssignBusinessId(e.target.value);
+                    if (e.target.value) {
+                      setAssignErrors(prev => ({ ...prev, business: null }));
+                    }
+                  }}
+                  isInvalid={!!assignErrors.business}
                 >
                   <option value="">{t("Select_Business")}</option>
                   {allBusinesses.map((b) => (
@@ -987,6 +1006,9 @@ const UserManagement = ({ onToast }) => {
                     </option>
                   ))}
                 </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {assignErrors.business}
+                </Form.Control.Feedback>
               </Form.Group>
 
               <div className="d-flex justify-content-end">
@@ -1012,7 +1034,7 @@ const UserManagement = ({ onToast }) => {
           </Modal.Header>
 
           <Modal.Body>
-            <Form onSubmit={(e) => e.preventDefault()}>
+            <Form onSubmit={(e) => e.preventDefault()} noValidate>
               <Form.Group className="mb-3">
                 <Form.Label className="fw-bold">{t("Access Type")}</Form.Label>
                 <div className="mt-2 ms-3">
@@ -1041,8 +1063,13 @@ const UserManagement = ({ onToast }) => {
                 <Form.Label>{t("business")}</Form.Label>
                 <Form.Select
                   value={accessBusinessId}
-                  onChange={(e) => setAccessBusinessId(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setAccessBusinessId(e.target.value);
+                    if (e.target.value) {
+                      setAccessErrors(prev => ({ ...prev, business: null }));
+                    }
+                  }}
+                  isInvalid={!!accessErrors.business}
                 >
                   <option value="">{t("Select_Business")}</option>
                   {launchedBusinesses.map((b) => (
@@ -1051,6 +1078,9 @@ const UserManagement = ({ onToast }) => {
                     </option>
                   ))}
                 </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {accessErrors.business}
+                </Form.Control.Feedback>
               </Form.Group>
 
               {accessType === "projectEdit" && (
@@ -1058,9 +1088,14 @@ const UserManagement = ({ onToast }) => {
                   <Form.Label>{t("Project")}</Form.Label>
                   <Form.Select
                     value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedProjectId(e.target.value);
+                      if (e.target.value) {
+                        setAccessErrors(prev => ({ ...prev, project: null }));
+                      }
+                    }}
                     disabled={!accessBusinessId || loadingProjects}
-                    required
+                    isInvalid={!!accessErrors.project}
                   >
                     <option value="">
                       {loadingProjects ? t("Loading projects") : t("Select Project")}
@@ -1071,6 +1106,9 @@ const UserManagement = ({ onToast }) => {
                       </option>
                     ))}
                   </Form.Select>
+                  <Form.Control.Feedback type="invalid">
+                    {accessErrors.project}
+                  </Form.Control.Feedback>
                 </Form.Group>
               )}
 
@@ -1103,6 +1141,11 @@ const UserManagement = ({ onToast }) => {
                     ))
                   )}
                 </div>
+                {accessErrors.collaborators && (
+                  <div className="text-danger small mt-1">
+                    {accessErrors.collaborators}
+                  </div>
+                )}
                 {selectedCollaboratorIds.length > 0 && (
                   <small className="text-muted">
                     {selectedCollaboratorIds.length} collaborator(s) selected

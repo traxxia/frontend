@@ -17,6 +17,20 @@
   border-radius: 6px;
 }
 
+/* Custom Secondary Button Hover Fix */
+.btn-secondary:hover {
+  background-color: #5a6268 !important;
+  /* Standard darker gray for secondary hover */
+  color: #ffffff !important;
+  /* Explicitly ensure white text */
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background-color: #4b5563 !important;
+  /* Slightly lighter gray for dark mode hover contrast */
+  color: #ffffff !important;
+}
+
 .crown-purple {
 
   color: purple;

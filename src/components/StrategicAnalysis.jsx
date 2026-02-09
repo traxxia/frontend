@@ -777,7 +777,7 @@ const StrategicAnalysis = ({
               {description && (
                 <p style={{
                   fontSize: '13px',
-                  color: '#6b7280',
+                  color: '#000000',
                   margin: '4px 0 0 0',
                   fontWeight: '500'
                 }}>

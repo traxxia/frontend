@@ -1186,14 +1186,7 @@
   padding: 0;
 }
 
-.loading-details {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: #6b7280;
-}
+
 
 .no-details {
   padding: 2rem;

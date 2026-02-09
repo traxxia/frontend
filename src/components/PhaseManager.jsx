@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { AnalysisService } from '../services/analysisService';
 
 const PhaseManager = ({
     questions,
@@ -179,6 +180,17 @@ const PhaseManager = ({
                             analysisArray.push(...phaseData.analyses);
                         }
                     });
+
+                    /*
+                    try {
+                        const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
+                        if (newAnalysisData && Array.isArray(newAnalysisData)) {
+                            analysisArray.push(...newAnalysisData);
+                        }
+                    } catch (analysisErr) {
+                        console.warn("Failed to load from Analysis API", analysisErr);
+                    }
+                    */
 
                     if (onAnalysisDataLoad && analysisArray.length > 0) {
                         onAnalysisDataLoad(analysisArray);
@@ -375,6 +387,34 @@ const PhaseManager = ({
         }
         return null;
     };
+
+    const loadAnalysisByPhase = async (phase) => {
+        /*
+        try {
+            const token = getAuthToken();
+            const data = await AnalysisService.getAnalysisByPhase(API_BASE_URL, token, selectedBusinessId, phase);
+            return data;
+        } catch (error) {
+            console.error(`Error loading analysis for phase ${phase}:`, error);
+            return [];
+        }
+        */
+        return [];
+    };
+
+    const loadAnalysisByFilter = async (filter) => {
+        /*
+        try {
+            const token = getAuthToken();
+            const data = await AnalysisService.getAnalysisByFilter(API_BASE_URL, token, selectedBusinessId, filter);
+            return data;
+        } catch (error) {
+            console.error(`Error loading analysis by filter:`, error);
+            return [];
+        }
+        */
+        return [];
+    };
     return {
         completedPhases,
         PHASES,
@@ -388,6 +428,8 @@ const PhaseManager = ({
         loadExistingAnalysis,
         regeneratePhase,
         createSimpleRegenerationHandler,
+        loadAnalysisByPhase,
+        loadAnalysisByFilter,
         isRegeneratingRef,
         unlockedPhase,
         showUnlockToast,

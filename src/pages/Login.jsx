@@ -17,13 +17,29 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const { theme, toggleTheme } = useContext(ThemeContext);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const { t } = useTranslation();
 
+  const validate = () => {
+    const newErrors = {};
+    if (!email.trim()) {
+      newErrors.email = t("login_email_required");
+    }
+    if (!password.trim()) {
+      newErrors.password = t("login_password_required");
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validate()) return;
+
     setIsLoading(true);
 
     try {
@@ -101,27 +117,34 @@ const Login = () => {
         <div className="login-box">
           <h2>{t("welcome")}</h2>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div className="form-group">
               <div className="input-container">
                 <input
                   type="email"
+                  className={errors.email ? "error" : ""}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                  }}
                   placeholder={t("email_address")}
-                  required
                 />
               </div>
+              {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
 
             <div className="form-group">
               <div className="input-container">
                 <input
                   type={showPassword ? "text" : "password"}
+                  className={errors.password ? "error" : ""}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
+                  }}
                   placeholder={t("password")}
-                  required
                 />
                 <button
                   type="button"
@@ -138,6 +161,7 @@ const Login = () => {
                   />
                 </button>
               </div>
+              {errors.password && <span className="error-message">{errors.password}</span>}
             </div>
 
             <button
