@@ -69,6 +69,7 @@ const ProjectsSection = ({
   const [showAIRankingToast, setShowAIRankingToast] = useState(false);
   const [isGeneratingAIRankings, setIsGeneratingAIRankings] = useState(false);
   const [validationMessageType, setValidationMessageType] = useState("error");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { locks } = useFieldLockPolling(currentProject?._id);
   const { fetchProjects, deleteProject, createProject, updateProject } =
@@ -408,6 +409,14 @@ const ProjectsSection = ({
     setActiveView(mode);
   };
 
+  const handleFieldFocus = (fieldName) => {
+    lockFieldSafe(fieldName);
+  };
+
+  const handleFieldEdit = () => {
+    heartbeatSafe();
+  };
+
   const handleBackToList = () => {
     unlockAllFieldsSafe();
     setActiveView("list");
@@ -422,17 +431,22 @@ const ProjectsSection = ({
       return;
     }
 
-    const userId = sessionStorage.getItem("userId");
-    const payload = getPayload(userId, selectedBusinessId);
+    setIsSubmitting(true);
+    try {
+      const userId = sessionStorage.getItem("userId");
+      const payload = getPayload(userId, selectedBusinessId);
 
-    const success = await createProject(payload);
-    if (success) {
-      handleShowToast("Project created successfully!", "success");
-      await unlockAllFieldsSafe();
-      await loadProjects();
-      handleBackToList();
-    } else {
-      handleShowToast("Failed to create project.", "error");
+      const success = await createProject(payload);
+      if (success) {
+        handleShowToast("Project created successfully!", "success");
+        await unlockAllFieldsSafe();
+        await loadProjects();
+        handleBackToList();
+      } else {
+        handleShowToast("Failed to create project.", "error");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -453,17 +467,22 @@ const ProjectsSection = ({
       return;
     }
 
-    const userId = sessionStorage.getItem("userId");
-    const payload = getPayload(userId, selectedBusinessId);
+    setIsSubmitting(true);
+    try {
+      const userId = sessionStorage.getItem("userId");
+      const payload = getPayload(userId, selectedBusinessId);
 
-    const success = await updateProject(currentProject._id, payload);
-    if (success) {
-      handleShowToast("Project updated successfully!", "success");
-      await unlockAllFieldsSafe();
-      await loadProjects();
-      handleBackToList();
-    } else {
-      handleShowToast("Failed to update project.", "error");
+      const success = await updateProject(currentProject._id, payload);
+      if (success) {
+        handleShowToast("Project updated successfully!", "success");
+        await unlockAllFieldsSafe();
+        await loadProjects();
+        handleBackToList();
+      } else {
+        handleShowToast("Failed to update project.", "error");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -549,8 +568,9 @@ const ProjectsSection = ({
         onSubmit={activeView === "new" ? handleCreate : handleSave}
         isLockedByOther={isLockedByOther}
         getLockOwnerForField={getLockOwnerForField}
-        onFieldFocus={lockFieldSafe}
-        onFieldEdit={heartbeatSafe}
+        onFieldFocus={handleFieldFocus}
+        onFieldEdit={handleFieldEdit}
+        isSubmitting={isSubmitting}
       />
     );
   };

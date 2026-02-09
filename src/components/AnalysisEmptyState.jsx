@@ -9,7 +9,7 @@ const AnalysisEmptyState = ({
   icon: IconComponent,
   onImproveAnswers,
   onRegenerate,
-  
+
   // Optional props
   isRegenerating = false,
   canRegenerate = true,
@@ -18,7 +18,7 @@ const AnalysisEmptyState = ({
   customMessage = null,
   showRegenerateButton = true,
   showImproveButton = true,
-  
+
   // File upload props
   showFileUpload = false,
   onFileUpload = null,
@@ -29,7 +29,7 @@ const AnalysisEmptyState = ({
   isUploading = false,
   fileUploadMessage = "Upload documents for detailed analysis",
   acceptedFileTypes = ".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png",
-  
+
   // Styling props
   iconSize = 48,
   buttonGap = '12px',
@@ -37,25 +37,32 @@ const AnalysisEmptyState = ({
 }) => {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
-  
+
+  const userRole = sessionStorage.getItem("userRole");
+  const isViewer = userRole === "viewer";
+
   const answeredCount = Object.keys(userAnswers).length;
   const hasEnoughAnswers = answeredCount >= minimumAnswersRequired;
-  
+
+  // Override visibility flags if user is a viewer
+  const effectiveShowImproveButton = isViewer ? false : showImproveButton;
+  const effectiveShowRegenerateButton = isViewer ? false : showRegenerateButton;
+  const effectiveShowFileUpload = isViewer ? false : showFileUpload;
 
   // Determine what message and buttons to show
   const getMessage = () => {
     if (customMessage) {
       return customMessage;
     }
-    
+
     if (!hasEnoughAnswers) {
       return `Answer more questions to generate ${analysisDisplayName.toLowerCase()} insights.`;
     }
-    
+
     return `You answered the required questions, but the responses need more detail to generate meaningful ${analysisDisplayName.toLowerCase()}.`;
   };
 
-  const shouldShowButtons = hasEnoughAnswers && (showImproveButton || showRegenerateButton);
+  const shouldShowButtons = hasEnoughAnswers && (effectiveShowImproveButton || effectiveShowRegenerateButton);
 
   const handleFileUploadClick = () => {
     fileInputRef.current?.click();
@@ -78,21 +85,21 @@ const AnalysisEmptyState = ({
   };
 
   return (
-    <div className="empty-state"> 
-      <p>{getMessage()}</p> 
-      
+    <div className="empty-state">
+      <p>{getMessage()}</p>
+
       {/* Regular Action Buttons */}
       {shouldShowButtons && (
-        <div style={{ 
-          display: 'flex', 
-          gap: buttonGap, 
+        <div style={{
+          display: 'flex',
+          gap: buttonGap,
           marginTop: marginTop,
           justifyContent: 'center',
           flexWrap: 'wrap'
         }}>
 
-          {showImproveButton && (
-            <button 
+          {effectiveShowImproveButton && (
+            <button
               onClick={onImproveAnswers}
               className="redirect-button"
               style={{
@@ -119,7 +126,7 @@ const AnalysisEmptyState = ({
               Improve Your Answers
             </button>
           )}
-          
+
 
         </div>
       )}

@@ -1,5 +1,3 @@
-
-
 /* Table Container */
 .users-table {
   width: 100%;
@@ -206,7 +204,7 @@ body {
 .table-container {
   background: white;
   border-radius: var(--radius);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow-x: auto;
   margin-bottom: 10px;
 }
@@ -217,7 +215,7 @@ body {
 }
 
 .company-table thead {
- background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
 .company-table th,
@@ -240,48 +238,62 @@ body {
 .company-table tbody tr:nth-child(even) {
   background: #f9fafb;
 }
+
 [data-theme="dark"] .company-table tbody tr:nth-child(even) {
   background: var(--text-light);
 }
-[data-theme="dark"] label  {
+
+[data-theme="dark"] label {
   color: var(--color-text-dark) !important;
 }
-[data-theme="dark"] .business-filter-select{
+
+[data-theme="dark"] .business-filter-select {
   background-image: none;
 }
+
 [data-theme="dark"] h4 {
   color: var(--color-text-dark) !important;
 }
+
 [data-theme="dark"] input::placeholder {
-  color: var(--color-text-dark); /* or use a specific color like #aaa */
-  opacity: 0.3; /* optional: makes it slightly faded */
+  color: var(--color-text-dark);
+  /* or use a specific color like #aaa */
+  opacity: 0.3;
+  /* optional: makes it slightly faded */
 }
+
 [data-theme="dark"] select {
-  background-color: var(--color-form-control); /* Darker background for dark mode */
-  color:var(--color-text-dark);
+  background-color: var(--color-form-control);
+  /* Darker background for dark mode */
+  color: var(--color-text-dark);
   appearance: none;
-   background-image: url("data:image/svg+xml,%3Csvg fill='%23f0f0f0' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-   background-repeat: no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg fill='%23f0f0f0' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
 }
+
 [data-theme="dark"] .form-field select {
   color: var(--color-text-dark);
-  
+
 }
-[data-theme="dark"] .select-company-dropdown{
+
+[data-theme="dark"] .select-company-dropdown {
   background-image: none;
 }
+
 [data-theme="dark"] .filters-section select {
- 
+
   color: var(--color-text-dark);
 }
+
 [data-theme="dark"] option {
   color: var(--color-text-dark);
 }
+
 [data-theme="dark"] .company-table th {
-  color: #ffffff; 
-  border-bottom: 2px solid #374151; 
+  color: #ffffff;
+  border-bottom: 2px solid #374151;
 }
 
 
@@ -307,6 +319,7 @@ body {
   background: rgba(239, 68, 68, 0.1);
   color: var(--error-color);
 }
+
 /* Simple Pagination CSS */
 .pagination-container {
   display: flex;
@@ -365,6 +378,7 @@ body {
   align-items: center;
   gap: 8px;
 }
+
 /* -------------------------
    Company Details Styles
 -------------------------- */
@@ -442,17 +456,31 @@ body {
    Animations
 -------------------------- */
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 
@@ -478,7 +506,7 @@ body {
 /* Common Styles for Inputs */
 .filters-section input,
 .filters-section select {
-  height: 38px; 
+  height: 38px;
   padding: 0 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -495,7 +523,7 @@ body {
 
 
 .search-box input {
-  padding-left: 30px; 
+  padding-left: 30px;
 }
 
 /* Hover & Focus States */
@@ -536,14 +564,14 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 23, 42, 0.5); 
+  background: rgba(15, 23, 42, 0.5);
 
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 
@@ -553,8 +581,13 @@ body.modal-open {
 
 /* Fade-in animation for overlay */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Large variant */
@@ -601,6 +634,7 @@ body.modal-open {
 .modal-content::-webkit-scrollbar {
   width: 6px;
 }
+
 .modal-content::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 4px;
@@ -614,7 +648,8 @@ body.modal-open {
   margin-top: 8px;
 }
 
-.primary-btn, .secondary-btn {
+.primary-btn,
+.secondary-btn {
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -653,9 +688,15 @@ body.modal-open {
 .spinner {
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ---------- Company Details Styling ---------- */
@@ -742,11 +783,12 @@ body.modal-open {
 }
 
 
-.modal-content{
-    /* margin-top: 60px;
+.modal-content {
+  /* margin-top: 60px;
     height: 80vh; */
-    width: 120vh !important;
+  width: 120vh !important;
 }
+
 /* Logo Upload Styles */
 .logo-upload-container {
   margin-top: 10px;
@@ -834,7 +876,7 @@ body.modal-open {
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .remove-logo-btn:hover {
@@ -885,7 +927,7 @@ body.modal-open {
 /* Table Logo Styles */
 .table-logo {
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .no-logo-placeholder {
@@ -934,22 +976,22 @@ body.modal-open {
     align-items: center;
     text-align: center;
   }
-  
+
   .logo-preview {
     width: 100px;
     height: 60px;
   }
-  
+
   .company-logo-display {
     max-width: 150px;
     max-height: 75px;
   }
-  
+
   .table-logo {
     width: 24px !important;
     height: 24px !important;
   }
-  
+
   .no-logo-placeholder {
     width: 24px;
     height: 24px;
@@ -957,8 +999,10 @@ body.modal-open {
 }
 
 [data-theme="dark"] .brief-list .brief-item {
-  background: #3f3f3f  !important;        /* deep dark navy */
-  color: #eaf1fb !important;             /* soft cool white */
+  background: #3f3f3f !important;
+  /* deep dark navy */
+  color: #eaf1fb !important;
+  /* soft cool white */
   border: 1px solid #303346 !important;
 }
 
@@ -968,7 +1012,8 @@ body.modal-open {
 }
 
 [data-theme="dark"] .brief-item .edited-indicator {
-  color: #81cfff !important;             /* pale blue for edited/markers */
+  color: #81cfff !important;
+  /* pale blue for edited/markers */
 }
 
 [data-theme="dark"] .brief-item .edit-button {
@@ -978,7 +1023,8 @@ body.modal-open {
 }
 
 [data-theme="dark"] .brief-item[style*="background-color: #fef3c7"] {
-  background-color: #3d3507 !important;  /* gold highlight, muted for dark */
+  background-color: #3d3507 !important;
+  /* gold highlight, muted for dark */
   color: #ffe888 !important;
   border-color: #d4b65e !important;
 }
@@ -990,9 +1036,12 @@ body.modal-open {
 
 /* Darkmode Pagination CSS */
 [data-theme="dark"] .pagination button {
-  background: #374151; /* dark button bg */
-  border: 1px solid #4b5563; /* muted border */
-  color: #e0e0e0; /* light text */
+  background: #374151;
+  /* dark button bg */
+  border: 1px solid #4b5563;
+  /* muted border */
+  color: #e0e0e0;
+  /* light text */
 }
 
 
@@ -1015,6 +1064,45 @@ body.modal-open {
 }
 
 
+
+/* Password Visibility Toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px !important;
+  width: 100%;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: #3b82f6;
+}
+
+[data-theme="dark"] .password-toggle-btn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .password-toggle-btn:hover {
+  color: #60a5fa;
+}
 
 /* @media (max-width: 1024px) { 
   h2 {

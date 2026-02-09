@@ -90,7 +90,8 @@ const useUserData = (onToast) => {
   const loadInitialData = async () => {
     try {
       const userInfo = getUserInfo();
-      setUserRole(userInfo.role || '');
+      const storedRole = sessionStorage.getItem("userRole");
+      setUserRole(storedRole || userInfo.role || '');
 
       const token = getAuthToken();
       const companiesResponse = await fetch(`${API_BASE_URL}/api/admin/companies`, {
@@ -183,7 +184,8 @@ const useSortedFilteredUsers = (users, searchTerm) => {
 
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
-    return user.name.toLowerCase().startsWith(searchLower)
+    return user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower);
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {
@@ -612,6 +614,10 @@ const UserHistory = ({ onToast }) => {
     }
   }, [selectedCompany, isInitialized, loadUsers]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleUserSelect = async (userId) => {
     setSelectedUser(userId);
     await loadUserHistory(userId);
@@ -656,7 +662,7 @@ const UserHistory = ({ onToast }) => {
             />
           </div>
 
-          {companies.length > 0 && (
+          {companies.length > 0 && userRole === 'super_admin' && (
             <div className="company-filter-container">
               <select
                 value={selectedCompany}
@@ -1216,7 +1222,7 @@ const ConversationTab = ({
       severity: phase.severity
     })) || [];
     return [...questions, ...phaseQuestions];
-  }, []);
+  }, []).sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const totalCompletedQuestions = allQuestions.length;
 
@@ -1264,14 +1270,41 @@ const ConversationTab = ({
   );
 };
 
-const QuestionItem = ({ question, questionNumber }) => (
-  <div className="question-item">
-    <div className="question-text">Q{questionNumber}: {question.question}</div>
-    <div className="answer-section">
-      <div className="answer-text">A: {question.answer}</div>
+const QuestionItem = ({ question, questionNumber }) => {
+  const hasFlow = question.conversation_flow && question.conversation_flow.length > 0;
+
+  return (
+    <div className="question-item">
+      {/* Main Question - Always shown as the anchor */}
+      <div className="flow-turn main-question">
+        <div className="turn-label">Q{questionNumber}:</div>
+        <div className="turn-content">{question.question}</div>
+      </div>
+
+      <div className="conversation-turns">
+        {hasFlow ? (
+          question.conversation_flow.map((turn, idx) => {
+            // Skip the first turn if it's identical to the main question to avoid redundancy
+            if (idx === 0 && turn.type === 'question' && turn.text === question.question) {
+              return null;
+            }
+            return (
+              <div key={idx} className={`flow-turn ${turn.type} ${turn.is_followup ? 'followup' : ''}`}>
+                <div className="turn-label">{turn.type === 'question' ? 'FQ:' : 'A:'}</div>
+                <div className="turn-content">{turn.text}</div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="flow-turn answer">
+            <div className="turn-label">A:</div>
+            <div className="turn-content">{question.answer}</div>
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AnalysisTab = ({
   analysisData,
