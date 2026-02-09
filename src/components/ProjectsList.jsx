@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Row, Col } from "react-bootstrap";
+import { ChevronRight, ChevronDown, FolderOpen } from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation";
 import ProjectCard from "./ProjectCard";
 
 const ProjectsList = ({
@@ -17,13 +19,14 @@ const ProjectsList = ({
   onView,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const [showMenuId, setShowMenuId] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If the click is inside a menu-button or menu-dropdown, ignore
-      if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown")) {
+      if (event.target.closest(".project-menu-btn") || event.target.closest(".project-dropdown-menu")) {
         return;
       }
       setShowMenuId(null);
@@ -37,81 +40,124 @@ const ProjectsList = ({
     };
   }, [showMenuId]);
 
-  // Group projects by v2 Status
+  // Group projects by Status
   const groupedProjects = useMemo(() => {
     const groups = {
-      "Active Bets": [],
-      "Parked / Paused": [],
-      "Learned & Killed": [],
-      "Drafts": []
+      "Draft": [],
+      "Active": [],
+      "At Risk": [],
+      "Paused": [],
+      "Killed": [],
+      "Scaled": []
     };
 
     sortedProjects.forEach(p => {
-      const status = p.status || "Draft";
-      if (status === "Active" || status === "At Risk" || status === "Scaled") {
-        groups["Active Bets"].push(p);
-      } else if (status === "Paused") {
-        groups["Parked / Paused"].push(p);
-      } else if (status === "Killed") {
-        groups["Learned & Killed"].push(p);
+      // Normalize and map API status to UI categories
+      const apiStatus = (p.status || "Draft").toLowerCase().trim();
+
+      let mappedStatus = "Draft";
+      if (apiStatus === "active") {
+        mappedStatus = "Active";
+      } else if (apiStatus === "at risk" || apiStatus === "at-risk") {
+        mappedStatus = "At Risk";
+      } else if (apiStatus === "paused") {
+        mappedStatus = "Paused";
+      } else if (apiStatus === "killed") {
+        mappedStatus = "Killed";
+      } else if (apiStatus === "scaled") {
+        mappedStatus = "Scaled";
+      } else if (apiStatus === "draft" || apiStatus === "prioritizing" || apiStatus === "prioritized") {
+        mappedStatus = "Draft";
       } else {
-        groups["Drafts"].push(p);
+        // Default fallback
+        mappedStatus = "Draft";
+      }
+
+      if (groups[mappedStatus]) {
+        groups[mappedStatus].push(p);
+      } else {
+        groups["Draft"].push(p);
       }
     });
 
     return groups;
   }, [sortedProjects]);
 
-  const renderGroup = (title, projects) => {
-    if (projects.length === 0) return null;
+  const toggleSection = (status) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [status]: !prev[status]
+    }));
+  };
+
+  const renderGroup = (status, projects) => {
+    const isExpanded = !!expandedSections[status];
+    const count = projects.length;
+
     return (
-      <div key={title} className="project-group mb-5">
-        {/* <h4 className="group-title mb-3" style={{ borderBottom: "1px solid #333", paddingBottom: "8px", color: "#888" }}>
-          {title} <span style={{ fontSize: "0.8em", opacity: 0.6 }}>({projects.length})</span>
-        </h4> */}
-        <Row className="g-4">
-          {projects.map((project, index) => (
-            <Col
-              xs={12}
-              sm={12}
-              md={isFinalizedView ? 12 : 6}
-              lg={4}
-              key={project._id}
-            >
-              <ProjectCard
-                project={project}
-                index={index}
-                rankMap={rankMap}
-                finalizeCompleted={finalizeCompleted}
-                launched={launched}
-                isViewer={isViewer}
-                isEditor={isEditor}
-                isDraft={isDraft}
-                projectCreationLocked={projectCreationLocked}
-                canEditProject={canEditProject}
-                onEdit={onEdit}
-                onView={onView}
-                onDelete={onDelete}
-                showMenuId={showMenuId}
-                setShowMenuId={setShowMenuId}
-              />
-            </Col>
-          ))}
-        </Row>
+      <div key={status} className={`project-status-group-v2 ${count === 0 ? 'empty-group' : ''} mb-3`}>
+        <div
+          className="project-status-header-v2"
+          onClick={() => toggleSection(status)}
+        >
+          <div className="status-header-left-v2">
+            <span className="expand-icon-wrapper-v2">
+              {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+            </span>
+            <span className="status-title-v2">{t(status)}</span>
+            <span className="status-count-v2">{count}</span>
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className="status-group-content-v2">
+            {count === 0 ? (
+              <div className="empty-category-v2">
+                <FolderOpen size={48} className="empty-icon-v2" />
+                <p>{t("No projects in category", { category: t(status) })}</p>
+              </div>
+            ) : (
+              <Row className="g-4">
+                {projects.map((project, index) => (
+                  <Col
+                    xs={12}
+                    sm={12}
+                    md={isFinalizedView ? 12 : 6}
+                    lg={4}
+                    key={project._id}
+                  >
+                    <ProjectCard
+                      project={project}
+                      index={index}
+                      rankMap={rankMap}
+                      finalizeCompleted={finalizeCompleted}
+                      launched={launched}
+                      isViewer={isViewer}
+                      isEditor={isEditor}
+                      isDraft={isDraft}
+                      projectCreationLocked={projectCreationLocked}
+                      canEditProject={canEditProject}
+                      onEdit={onEdit}
+                      onView={onView}
+                      onDelete={onDelete}
+                      showMenuId={showMenuId}
+                      setShowMenuId={setShowMenuId}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </div>
+        )}
       </div>
     );
   };
 
-  return (
-    <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
-      {renderGroup("Active Bets", groupedProjects["Active Bets"])}
-      {renderGroup("Drafts", groupedProjects["Drafts"])}
-      {renderGroup("Parked / Paused", groupedProjects["Parked / Paused"])}
-      {renderGroup("Learned & Killed", groupedProjects["Learned & Killed"])}
+  const statusOrder = ["Draft", "Active", "At Risk", "Paused", "Killed", "Scaled"];
 
-      {/* Fallback if all empty but logic implies we should show something? 
-          sortedProjects will handle empty state usually in parent. 
-      */}
+  return (
+    <div className={`projects-list-v2 ${isFinalizedView ? "finalized-view" : ""}`}>
+      {statusOrder.map(status => renderGroup(status, groupedProjects[status]))}
     </div>
   );
 };
