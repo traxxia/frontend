@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -103,6 +103,9 @@ const SelectField = ({
   fieldName,
   onFieldFocus,
   onFieldEdit,
+  placeholder = "Select option",
+  required = false,
+  error = false
 }) => {
   const dropdownRef = useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
@@ -121,12 +124,12 @@ const SelectField = ({
     <div className="sf-wrapper" ref={dropdownRef}>
       {label && (
         <label className="sf-label">
-          {icon} {label}
+          {icon} {label} {required && <span className="required">*</span>}
         </label>
       )}
       <div className="sf-dropdown-wrapper">
         <div
-          className="sf-dropdown-header"
+          className={`sf-dropdown-header ${error ? "error" : ""}`}
           onClick={() => {
             if (disabled) return;
             onFieldFocus?.(fieldName);
@@ -141,7 +144,7 @@ const SelectField = ({
         >
           <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {selectedOption?.icon}
-            {selectedOption?.label || "Select option"}
+            {selectedOption?.label || placeholder}
           </span>
           <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
         </div>
@@ -179,7 +182,8 @@ const InputField = forwardRef(({
   fieldName,
   required = false,
   maxLength,
-  type = "text"
+  type = "text",
+  subLabel
 }, ref) => {
   return (
     <div className="field-row">
@@ -193,6 +197,7 @@ const InputField = forwardRef(({
           </small>
         )}
       </div>
+      {subLabel && <small className="field-sub-label">{subLabel}</small>}
       <input
         ref={ref}
         type={type}
@@ -221,7 +226,8 @@ const TextAreaField = forwardRef(({
   required = false,
   rows = 3,
   maxLength,
-  transparent = false
+  transparent = false,
+  subLabel
 }, ref) => {
   return (
     <div className="field-row">
@@ -235,6 +241,7 @@ const TextAreaField = forwardRef(({
           </small>
         )}
       </div>
+      {subLabel && <small className="field-sub-label">{subLabel}</small>}
       <textarea
         ref={ref}
         value={value || ""}
@@ -300,6 +307,8 @@ const ProjectForm = ({
   setSuccessCriteria,
   killCriteria,
   setKillCriteria,
+  learningState,
+  setLearningState,
   reviewCadence,
   setReviewCadence,
   status,
@@ -313,7 +322,6 @@ const ProjectForm = ({
   const [showErrors, setShowErrors] = useState(false);
 
   // Refs for error fields
-  const projectNameRef = useRef(null);
   const descriptionRef = useRef(null);
   const importanceRef = useRef(null);
   const budgetRef = useRef(null);
@@ -325,11 +333,11 @@ const ProjectForm = ({
   const getTitle = () => {
     switch (mode) {
       case "new":
-        return t("New_Project");
+        return t("New_Strategic_Bet");
       case "view":
-        return t("View_Project");
+        return t("View_Strategic_Bet");
       case "edit":
-        return t("Edit_Project");
+        return t("Edit_Strategic_Bet");
       default:
         return t("Project");
     }
@@ -391,24 +399,6 @@ const ProjectForm = ({
     }
   };
 
-  const handleProjectNameChange = (e) => {
-    const value = e.target.value;
-    setProjectName(value);
-
-    if (showErrors) {
-      const validation = validateField('Project Name', value, {
-        required: true,
-        minLength: 3,
-        maxLength: 100,
-        requiresText: true
-      });
-      setFieldErrors(prev => ({
-        ...prev,
-        projectName: validation.isValid ? null : validation.message
-      }));
-    }
-    handleFieldEdit("project_name");
-  };
 
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
@@ -451,19 +441,29 @@ const ProjectForm = ({
   const handleStrategicDecisionChange = (e) => {
     const value = e.target.value;
     setStrategicDecision(value);
+    setProjectName(value); // Sync Project Name with Strategic Decision
 
     if (showErrors) {
-      const validation = validateField('Strategic Decision', value, {
+      const decisionValidation = validateField('Strategic Decision', value, {
         required: true,
         minLength: 10,
         requiresText: true
       });
+      const nameValidation = validateField('Project Name', value, {
+        required: true,
+        minLength: 3,
+        maxLength: 100,
+        requiresText: true
+      });
+
       setFieldErrors(prev => ({
         ...prev,
-        strategicDecision: validation.isValid ? null : validation.message
+        strategicDecision: decisionValidation.isValid ? null : decisionValidation.message,
+        projectName: nameValidation.isValid ? null : nameValidation.message
       }));
     }
     handleFieldEdit("strategic_decision");
+    handleFieldEdit("project_name");
   };
 
   const handleAccountableOwnerChange = (e) => {
@@ -546,15 +546,6 @@ const ProjectForm = ({
   };
 
   const handleSubmit = () => {
-    // Validate project name only for new projects
-    const projectNameValidation = mode === "new"
-      ? validateField('Project Name', projectName || '', {
-        required: true,
-        minLength: 3,
-        maxLength: 100,
-        requiresText: true
-      })
-      : { isValid: true, message: null };
 
     // Validate all required fields
     const descValidation = validateField('Description', description || '', {
@@ -576,6 +567,9 @@ const ProjectForm = ({
     const ownerValidation = validateField('Accountable Owner', accountableOwner || '', { required: true, requiresText: true });
     const successValidation = validateField('Success Criteria', successCriteria || '', { required: true, requiresText: true });
     const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true, requiresText: true });
+    
+    // Status Validation
+    const statusValidation = validateField('Status', status || '', { required: true, requiresText: true });
 
     const budgetValidation = validateField('Budget Estimate', budget || '', {
       numeric: true,
@@ -584,13 +578,13 @@ const ProjectForm = ({
     });
 
     const errors = {
-      projectName: projectNameValidation.isValid ? null : projectNameValidation.message,
       description: descValidation.isValid ? null : descValidation.message,
       importance: impValidation.isValid ? null : impValidation.message,
       strategicDecision: decisionValidation.isValid ? null : decisionValidation.message,
       accountableOwner: ownerValidation.isValid ? null : ownerValidation.message,
       successCriteria: successValidation.isValid ? null : successValidation.message,
       killCriteria: killValidation.isValid ? null : killValidation.message,
+      status: statusValidation.isValid ? null : statusValidation.message,
       budget: budgetValidation.isValid ? null : budgetValidation.message,
     };
 
@@ -601,8 +595,7 @@ const ProjectForm = ({
     const hasErrors = Object.values(errors).some(error => error !== null);
 
     if (hasErrors) {
-      if (errors.projectName) scrollToError(projectNameRef);
-      else if (errors.description) scrollToError(descriptionRef);
+      if (errors.description) scrollToError(descriptionRef);
       else if (errors.importance) scrollToError(importanceRef);
       else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
       else if (errors.accountableOwner) scrollToError(accountableOwnerRef);
@@ -615,6 +608,12 @@ const ProjectForm = ({
     // All validations passed, submit the form
     onSubmit();
   };
+
+  const learningStateOptions = [
+    { value: "Testing", label: t("Testing"), icon: <HelpCircle size={14} /> },
+    { value: "Validated", label: t("Validated"), icon: <CheckCircle size={14} color="green" /> },
+    { value: "Disproven", label: t("Disproven"), icon: <XCircle size={14} color="red" /> },
+  ];
 
   return (
     <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
@@ -646,51 +645,41 @@ const ProjectForm = ({
         )}
       </div>
 
-      {/* Required Information */}
+
       <div className="center-row">
         <div className="form-card">
-          <h3 className="section-title">{t("Required_Information")}</h3>
+          <h3 className="section-title">🎯 {t("Strategic_Core")} <span className="required">*</span></h3>
 
-          {/* Project Name Field - Editable in new mode, readonly in edit mode */}
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">
-                {t("Project_Name")} <span className="required">*</span>
-              </label>
-              {mode !== "new" && renderLockBadge("project_name")}
-            </div>
-            {mode === "new" ? (
-              <>
-                <input
-                  ref={projectNameRef}
-                  type="text"
-                  value={projectName || ""}
-                  onChange={handleProjectNameChange}
-                  placeholder="Enter project name (minimum 3 characters)"
-                  className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`}
-                  readOnly={isReadOnly}
-                  onFocus={() => handleFieldFocus("project_name")}
-                  maxLength={100}
-                  disabled={isSubmitting}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {showErrors && fieldErrors.projectName && (
-                    <small className="error-text">{fieldErrors.projectName}</small>
-                  )}
-                  <small className="text-muted" style={{ marginLeft: 'auto' }}>
-                    {(projectName || '').length}/100 characters
-                  </small>
-                </div>
-              </>
-            ) : (
-              projectName && (
-                <div className="project-name-display-inline">
-                  {projectName}
-                </div>
-              )
-            )}
-          </div>
+          {/* Strategic Decision */}
+          <TextAreaField
+            ref={strategicDecisionRef}
+            label={t("Strategic_Decision_Bet")}
+            value={strategicDecision}
+            onChange={handleStrategicDecisionChange}
+            placeholder={t("Strategic_Decision_Placeholder")}
+            error={showErrors && fieldErrors.strategicDecision}
+            readOnly={isFieldDisabled("strategic_decision")}
+            onFocus={handleFieldFocus}
+            fieldName="strategic_decision"
+            required
+            rows={2}
+          />
 
+          <InputField
+            ref={accountableOwnerRef}
+            label={t("Accountable_Owner")}
+            value={accountableOwner}
+            onChange={handleAccountableOwnerChange}
+            placeholder={t("Owner_Placeholder")}
+            error={showErrors && fieldErrors.accountableOwner}
+            readOnly={isFieldDisabled("accountable_owner")}
+            onFocus={handleFieldFocus}
+            fieldName="accountable_owner"
+            required
+          />
+
+
+          {/* Project Description */}
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">
@@ -702,8 +691,8 @@ const ProjectForm = ({
               ref={descriptionRef}
               value={description || ""}
               onChange={handleDescriptionChange}
-              placeholder="Launch digital wallet product and achieve market penetration (minimum 10 characters)"
-              rows={3}
+              placeholder={t("Project_Description_Placeholder")}
+              rows={2}
               className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`}
               readOnly={isFieldDisabled("project_description")}
               onFocus={() => handleFieldFocus("project_description")}
@@ -719,6 +708,7 @@ const ProjectForm = ({
             </div>
           </div>
 
+          {/* Why This Matters */}
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">
@@ -730,8 +720,8 @@ const ProjectForm = ({
               ref={importanceRef}
               value={importance || ""}
               onChange={handleImportanceChange}
-              placeholder="Explain why this project is strategically important to the business (minimum 10 characters)"
-              rows={3}
+              placeholder={t("Why_This_Matters_Placeholder")}
+              rows={2}
               className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`}
               readOnly={isFieldDisabled("why_this_matters")}
               onFocus={() => handleFieldFocus("why_this_matters")}
@@ -746,68 +736,45 @@ const ProjectForm = ({
               </small>
             </div>
           </div>
-        </div>
-      </div>
-
-
-
-      {/* Strategic Core (Start of New V2 Section) */}
-      <div className="center-row">
-        <div className="form-card">
-          <h3 className="section-title">{t("Strategic_Core")}</h3>
-
-          {/* Strategic Decision */}
-          <TextAreaField
-            ref={strategicDecisionRef}
-            label={t("Strategic_Decision_Bet")}
-            value={strategicDecision}
-            onChange={handleStrategicDecisionChange}
-            placeholder={t("Strategic_Decision_Placeholder")}
-            error={showErrors && fieldErrors.strategicDecision}
-            readOnly={isFieldDisabled("strategic_decision")}
-            onFocus={handleFieldFocus}
-            fieldName="strategic_decision"
-            required
-          />
-
-          {/* Accountable Owner */}
-          <InputField
-            ref={accountableOwnerRef}
-            label={t("Accountable_Owner")}
-            value={accountableOwner}
-            onChange={handleAccountableOwnerChange}
-            placeholder={t("Owner_Placeholder")}
-            error={showErrors && fieldErrors.accountableOwner}
-            readOnly={isFieldDisabled("accountable_owner")}
-            onFocus={handleFieldFocus}
-            fieldName="accountable_owner"
-            required
-          />
 
           {/* Key Assumptions */}
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">
-                {t("Key_Assumptions")} (Max 3)
+                {t("Key_Assumptions_Tested")} <span className="required">*</span>
               </label>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: '8px' }}>
               {[0, 1, 2].map((idx) => (
-                <input
-                  key={idx}
-                  type="text"
-                  value={keyAssumptions[idx] || ""}
-                  onChange={(e) => {
-                    const newAssumptions = [...keyAssumptions];
-                    newAssumptions[idx] = e.target.value;
-                    setKeyAssumptions(newAssumptions);
-                    handleFieldEdit("key_assumptions");
-                  }}
-                  placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
-                  className="field-input"
-                  readOnly={isFieldDisabled("key_assumptions")}
-                  onFocus={() => handleFieldFocus("key_assumptions")}
-                />
+                <div key={idx} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={keyAssumptions[idx] || ""}
+                    onChange={(e) => {
+                      const newAssumptions = [...keyAssumptions];
+                      newAssumptions[idx] = e.target.value;
+                      setKeyAssumptions(newAssumptions);
+                      handleFieldEdit("key_assumptions");
+                    }}
+                    placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
+                    className="field-input"
+                    readOnly={isFieldDisabled("key_assumptions")}
+                    onFocus={() => handleFieldFocus("key_assumptions")}
+                  />
+                  {keyAssumptions[idx] && !isFieldDisabled("key_assumptions") && (
+                    <XCircle
+                      size={16}
+                      className="assumption-remove-icon"
+                      style={{ position: 'absolute', right: '12px', cursor: 'pointer', color: '#94a3b8' }}
+                      onClick={() => {
+                        const newAssumptions = [...keyAssumptions];
+                        newAssumptions[idx] = "";
+                        setKeyAssumptions(newAssumptions);
+                        handleFieldEdit("key_assumptions");
+                      }}
+                    />
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -816,7 +783,7 @@ const ProjectForm = ({
           <div className="grid-2">
             <TextAreaField
               ref={successCriteriaRef}
-              label={t("Success_Criteria")}
+              label={t("Continue_If_Label")}
               value={successCriteria}
               onChange={handleSuccessCriteriaChange}
               placeholder={t("Success_Criteria_Placeholder")}
@@ -829,7 +796,7 @@ const ProjectForm = ({
             />
             <TextAreaField
               ref={killCriteriaRef}
-              label={t("Kill_Criteria")}
+              label={t("Stop_If_Label")}
               value={killCriteria}
               onChange={handleKillCriteriaChange}
               placeholder={t("Kill_Criteria_Placeholder")}
@@ -842,54 +809,66 @@ const ProjectForm = ({
             />
           </div>
 
-          {/* Review Cadence & Status */}
-          <div className="grid-2" style={{ marginTop: "16px" }}>
-            <SelectField
-              label={t("Review_Cadence")}
-              icon={<Clock size={16} />}
-              options={[
-                { value: "Monthly", label: t("Monthly"), icon: <Clock size={14} /> },
-                { value: "Quarterly", label: t("Quarterly"), icon: <Clock size={14} /> },
-                { value: "Milestone", label: t("Milestone_based"), icon: <Clock size={14} /> },
-              ]}
-              value={reviewCadence}
-              onChange={(val) => {
-                setReviewCadence(val);
-                handleFieldEdit("review_cadence");
-              }}
-              open={openDropdown === "reviewCadence"}
-              setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")}
-              disabled={isFieldDisabled("review_cadence") || isSubmitting}
-              fieldName="review_cadence"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
+          <div className="grid-2">
+            {/* STATUS - Now first and prominently positioned */}
+            <div className="sf-wrapper">
+              <SelectField
+                label={t("Status")}
+                icon={<TrendingUp size={16} />}
+                options={[
+                  { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
+                  { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
+                  { value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
+                  { value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
+                  { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
+                  { value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
+                ]}
+                value={status}
+                onChange={(val) => {
+                  setStatus(val);
+                  handleFieldEdit("status");
+                  // Clear status error when selected
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      status: null
+                    }));
+                  }
+                }}
+                open={openDropdown === "status"}
+                setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
+                disabled={isReadOnly}
+                fieldName="status"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
+                placeholder={t("Select_Status")}
+                required
+                error={showErrors && fieldErrors.status}
+              />
+              {showErrors && fieldErrors.status && (
+                <small className="error-text" style={{ display: 'block', marginTop: '4px' }}>{fieldErrors.status}</small>
+              )}
+            </div>
 
+            {/* LEARNING STATE - Now second */}
             <SelectField
-              label={t("Status")}
+              label={t("Learning_State")}
               icon={<TrendingUp size={16} />}
-              options={[
-                { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
-                { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
-                { value: "At Risk", label: t("At_Risk"), icon: <Circle size={14} color="red" fill="red" /> },
-                { value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
-                { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
-                { value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
-              ]}
-              value={status}
+              options={learningStateOptions}
+              value={learningState}
               onChange={(val) => {
-                setStatus(val);
-                handleFieldEdit("status");
+                setLearningState(val);
+                handleFieldEdit("learning_state");
               }}
-              open={openDropdown === "status"}
-              setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
+              open={openDropdown === "learningState"}
+              setOpen={() => setOpenDropdown(openDropdown === "learningState" ? null : "learningState")}
               disabled={isReadOnly}
-              fieldName="status"
+              fieldName="learning_state"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
+              placeholder={t("Select_Learning_State")}
             />
           </div>
-
         </div>
       </div>
 
@@ -898,7 +877,9 @@ const ProjectForm = ({
       <div className="center-row">
         <div className="form-card">
           <h3 className="section-title">{t("Strategic_Context")}</h3>
-          <div className="grid-3">
+          
+          {/* First Row: Impact and Effort */}
+          <div className="grid-2">
             <SelectField
               label={t("Impact")}
               icon={<TrendingUp size={16} />}
@@ -911,6 +892,7 @@ const ProjectForm = ({
               fieldName="impact"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
+              placeholder={t("Select_Impact")}
             />
 
             <SelectField
@@ -925,11 +907,12 @@ const ProjectForm = ({
               fieldName="effort"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
+              placeholder={t("Select_Effort")}
             />
+          </div>
 
-          </div> <br></br>
-
-          <div className="grid-3">
+          {/* Second Row: Risk and Strategic Theme */}
+          <div className="grid-2">
             <SelectField
               label={t("Risk")}
               icon={<AlertTriangle size={16} />}
@@ -942,6 +925,7 @@ const ProjectForm = ({
               fieldName="risk"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
+              placeholder={t("Select_Risk")}
             />
 
             <SelectField
@@ -956,28 +940,10 @@ const ProjectForm = ({
               fieldName="theme"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
-            />
-
-          </div> <br></br>
-
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">{t("Dependencies")}</label>
-              {renderLockBadge("dependencies")}
-            </div>
-            <textarea
-              placeholder="List dependencies (one per line)"
-              rows={3}
-              className="field-textarea transparent"
-              value={dependencies || ""}
-              onChange={e => {
-                setDependencies(e.target.value);
-                handleFieldEdit("dependencies");
-              }}
-              readOnly={isFieldDisabled("dependencies")}
-              onFocus={() => handleFieldFocus("dependencies")}
+              placeholder={t("Select_Strategic_Theme")}
             />
           </div>
+
         </div>
       </div>
 
@@ -986,65 +952,90 @@ const ProjectForm = ({
         <div className="form-card">
           <h3 className="section-title">{t("Detailed_Planning")}</h3>
 
-          <TextAreaField
-            label={t("Constraints_Non_Negotiables")}
-            value={highLevelReq}
-            onChange={(e) => {
-              setHighLevelReq(e.target.value);
-              handleFieldEdit("high_level_requirements");
-            }}
-            placeholder={t("what_are_the_main_requirements_or_constraints")}
-            readOnly={isFieldDisabled("high_level_requirements")}
-            onFocus={handleFieldFocus}
-            fieldName="high_level_requirements"
-          />
-
-          <TextAreaField
-            label={t("Explicitly_Out_of_Scope")}
-            value={scope}
-            onChange={(e) => {
-              setScope(e.target.value);
-              handleFieldEdit("scope_definition");
-            }}
-            placeholder={t("define_what_is_not_included_in_this_project")}
-            readOnly={isFieldDisabled("scope_definition")}
-            onFocus={handleFieldFocus}
-            fieldName="scope_definition"
-          />
-
-          <TextAreaField
-            label={t("Expected_Outcome")}
-            value={outcome}
-            onChange={(e) => {
-              setOutcome(e.target.value);
-              handleFieldEdit("expected_outcome");
-            }}
-            placeholder={t("what_is_the_end_result_use_outcome_based_wording")}
-            readOnly={isFieldDisabled("expected_outcome")}
-            onFocus={handleFieldFocus}
-            fieldName="expected_outcome"
-          />
-
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">{t("Success_Metrics")}</label>
-              {renderLockBadge("success_metrics")}
-            </div>
-            <textarea
-              placeholder="How will you measure success? (one metric per line)"
-              rows={3}
-              className="field-textarea"
-              value={successMetrics || ""}
-              onChange={e => {
-                setSuccessMetrics(e.target.value);
-                handleFieldEdit("success_metrics");
+          <div className="grid-2">
+            <TextAreaField
+              label={t("Constraints_Non-Negotiables")}
+              value={highLevelReq}
+              onChange={(e) => {
+                setHighLevelReq(e.target.value);
+                handleFieldEdit("constraints_non_negotiables");
               }}
-              readOnly={isFieldDisabled("success_metrics")}
-              onFocus={() => handleFieldFocus("success_metrics")}
+              placeholder={t("Constraints_Placeholder")}
+              readOnly={isFieldDisabled("constraints_non_negotiables")}
+              onFocus={handleFieldFocus}
+              fieldName="constraints_non_negotiables"
+              rows={2}
+            />
+
+            <div className="field-row">
+              <div className="field-label-row">
+                <label className="field-label">{t("Dependencies")}</label>
+                {renderLockBadge("dependencies")}
+              </div>
+              <textarea
+                placeholder={t("Dependencies_Placeholder")}
+                rows={2}
+                className="field-textarea transparent"
+                value={dependencies || ""}
+                onChange={e => {
+                  setDependencies(e.target.value);
+                  handleFieldEdit("dependencies");
+                }}
+                readOnly={isFieldDisabled("dependencies")}
+                onFocus={() => handleFieldFocus("dependencies")}
+              />
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <TextAreaField
+              label={t("Explicitly_Out_of_Scope")}
+              value={scope}
+              onChange={(e) => {
+                setScope(e.target.value);
+                handleFieldEdit("explicitly_out_of_scope");
+              }}
+              placeholder={t("Scope_Placeholder")}
+              readOnly={isFieldDisabled("explicitly_out_of_scope")}
+              onFocus={handleFieldFocus}
+              fieldName="explicitly_out_of_scope"
+              rows={2}
+            />
+
+            <TextAreaField
+              label={t("Expected_Outcome")}
+              value={outcome}
+              onChange={(e) => {
+                setOutcome(e.target.value);
+                handleFieldEdit("expected_outcome");
+              }}
+              placeholder={t("Outcome_Placeholder")}
+              readOnly={isFieldDisabled("expected_outcome")}
+              onFocus={handleFieldFocus}
+              fieldName="expected_outcome"
+              rows={2}
             />
           </div>
 
           <div className="grid-2">
+            <div className="field-row">
+              <div className="field-label-row">
+                <label className="field-label">{t("Success_Metrics")}</label>
+                {renderLockBadge("success_metrics")}
+              </div>
+              <textarea
+                placeholder={t("Success_Metrics_Placeholder")}
+                rows={2}
+                className="field-textarea"
+                value={successMetrics || ""}
+                onChange={e => {
+                  setSuccessMetrics(e.target.value);
+                  handleFieldEdit("success_metrics");
+                }}
+                readOnly={isFieldDisabled("success_metrics")}
+                onFocus={() => handleFieldFocus("success_metrics")}
+              />
+            </div>
             <div>
               <div className="field-label-row">
                 <label className="field-label">
@@ -1054,7 +1045,7 @@ const ProjectForm = ({
               </div>
               <input
                 type="text"
-                placeholder="e.g., 3–6 months"
+                placeholder={t("Timeline_Placeholder")}
                 className="field-input"
                 value={timeline || ""}
                 onChange={e => {
@@ -1076,7 +1067,7 @@ const ProjectForm = ({
               <input
                 ref={budgetRef}
                 type="text"
-                placeholder="e.g., $50K - $100K"
+                placeholder={t("Budget_Placeholder")}
                 className={`field-input ${showErrors && fieldErrors.budget ? "error" : ""}`}
                 value={budget || ""}
                 onChange={handleBudgetChange}
