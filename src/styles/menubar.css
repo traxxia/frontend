@@ -1,114 +1,364 @@
-/* TRAXIA MenuBar Styles */
-/* Import the CSS variables file before using this */
-/* @import 'path/to/css-variables.css'; */
-/* Add these styles to your menubar.css file */
+/* ========== HORIZONTAL NAVIGATION LAYOUT ========== */
+.traxia-navbar-horizontal {
+  background: var(--color-bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  font-family: var(--font-primary);
+}
 
-.traxia-navbar .container-fluid > div {
+[data-theme="dark"] .traxia-navbar-horizontal {
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.horizontal-nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  background: transparent;
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: none;
+}
+
+.mobile-menu-toggle .navbar-toggler-icon {
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background-color: var(--color-text-primary);
   position: relative;
 }
-[data-theme="dark"] .traxia-navbar {
-  background: var(--color-bg-dark);
-  border-bottom: 1px solid var(--color-border-dark);
-}
-[data-theme="dark"] {
-  --color-text-white: #ffffff;
-}
 
-/* Left section - Company Logo */
-.navbar-left {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  min-width: 120px; /* Reserve space for company logo */
-}
-
-.company-logo {
-  display: flex;
-  align-items: center;
-  transition: opacity 0.2s ease;
-}
-
-.company-logo:hover {
-  opacity: 0.8;
-}
-
-.company-logo img {
-  border-radius: 4px; /* Optional: slight rounding for company logos */
-}
-
-/* Center section - Traxxia Logo */
-.navbar-center {
+.mobile-menu-toggle .navbar-toggler-icon::before,
+.mobile-menu-toggle .navbar-toggler-icon::after {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 2px;
+  background-color: var(--color-text-primary);
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
+  left: 0;
 }
 
-.traxia-logo {
-  margin: 0 !important;
+.mobile-menu-toggle .navbar-toggler-icon::before {
+  top: -6px;
+}
+
+.mobile-menu-toggle .navbar-toggler-icon::after {
+  top: 6px;
+}
+
+/* Navigation Links Container */
+.nav-links-container {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+/* Navigation Link Items */
+.nav-link-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  white-space: nowrap;
 }
 
-.traxia-logo:hover {
-  opacity: 0.8;
-  text-decoration: none;
+.nav-link-item:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-primary);
 }
 
-/* Right section - User Menu */
-.navbar-right {
-  flex: 0 0 auto;
+.nav-link-item.active {
+  background: #1a73e8;
+  color: white;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .nav-link-item {
+  color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .nav-link-item:hover {
+  background: var(--color-bg-tertiary);
+  color: #4a9eff;
+}
+
+[data-theme="dark"] .nav-link-item.active {
+  background: #4a9eff;
+  color: white;
+}
+
+/* User Section */
+.nav-user-section {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  min-width: 120px; /* Reserve space for user menu */
+  gap: 12px;
+  margin-left: auto;
+  border-left: 1px solid var(--color-border-light);
 }
 
-/* Responsive adjustments */
+[data-theme="dark"] .nav-user-section {
+  border-left-color: var(--color-border-dark);
+}
+
+.nav-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0px 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.user-avatar {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0px !important;
+}
+
+.nav-user-info .user-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.nav-user-info .user-role {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-left: 0 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .nav-user-info {
+  background: var(--color-bg-tertiary);
+}
+
+[data-theme="dark"] .user-avatar {
+  background: rgba(255, 255, 255, 0.1);
+  color: #4a9eff;
+}
+
+/* Logout Button */
+.nav-logout-btn {
+  background: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.nav-logout-btn:hover {
+  background: #dc3545;
+  color: white;
+}
+
+/* Business Dropdown Styles */
+.nav-dropdown-business {
+  margin-right: 12px;
+}
+
+.nav-dropdown-business .dropdown-toggle {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  background: transparent;
+  color: #3c4043;
+}
+
+.nav-dropdown-business .dropdown-toggle.active {
+  background: #1a73e8 !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.nav-dropdown-business .dropdown-toggle:after {
+  display: inline-block !important;
+  /* Show default arrow */
+  vertical-align: middle !important;
+  margin-left: 8px !important;
+}
+ 
+.business-dropdown-menu {
+  min-width: 250px !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 8px 0 !important;
+  z-index: 1050 !important;
+  margin-top: 5px !important;
+}
+
+.dropdown-group-header {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  color: #5f6368 !important;
+  padding: 12px 16px 4px !important;
+  letter-spacing: 0.8px;
+  opacity: 0.7;
+}
+
+.business-dropdown-menu .dropdown-item {
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  color: #3c4043 !important;
+  transition: all 0.2s ease;
+}
+
+.business-dropdown-menu .dropdown-item:hover {
+  background-color: #f1f3f4 !important;
+  color: #1a73e8 !important;
+}
+
+.business-dropdown-menu .dropdown-item.active {
+  background-color: #e8f0fe !important;
+  color: #1a73e8 !important;
+  font-weight: 600;
+}
+
+.empty-group-text {
+  font-size: 13px !important;
+  color: #9aa0a6 !important;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 768px) {
-  .navbar-left {
-    min-width: 80px;
+  .mobile-menu-toggle {
+    display: block;
   }
-  
-  .navbar-right {
-    min-width: 80px;
+
+  .nav-links-container {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--color-bg-primary);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 16px;
+    box-shadow: var(--shadow-lg);
+    border-bottom: 1px solid var(--color-border-light);
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 99;
   }
-  
-  .company-logo img {
-    max-width: 80px;
-    height: 28px;
+
+  [data-theme="dark"] .nav-links-container {
+    background: var(--color-bg-dark);
+    border-bottom-color: var(--color-border-dark);
   }
-  
-  .traxia-logo img {
-    height: 20px;
+
+  .nav-links-container.mobile-open {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav-link-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 12px 16px;
+  }
+
+  .nav-user-section {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-top: 12px;
+    border-left: none;
+    border-top: 1px solid var(--color-border-light);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  [data-theme="dark"] .nav-user-section {
+    border-top-color: var(--color-border-dark);
+  }
+
+  .nav-user-info {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .nav-logout-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-logout-btn span {
+    display: inline !important;
   }
 }
 
-@media (max-width: 480px) {
-  .navbar-left {
-    min-width: 60px;
+@media (min-width: 769px) and (max-width: 992px) {
+  .nav-link-item span {
+    display: none;
   }
-  
-  .navbar-right {
-    min-width: 60px;
+
+  .nav-link-item {
+    padding: 8px 12px;
   }
-  
-  .company-logo img {
-    max-width: 60px;
-    height: 24px;
-  }
-  
-  .traxia-logo img {
-    height: 18px;
+
+  .nav-user-info .user-role {
+    display: none;
   }
 }
+
+/* Keep old styles for backward compatibility */
 .traxia-navbar {
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border-light);
@@ -123,201 +373,15 @@
   max-height: var(--navbar-height);
 }
 
-/* Hamburger Menu */
-.hamburger-menu {
-  background: none !important;
-  color: var(--color-text-secondary) !important;
-  text-decoration: none !important;
-  padding: var(--spacing-sm) !important;
-  border-radius: var(--border-radius-sm);
-  transition: var(--transition-normal);
-  font-size: var(--font-size-base);
-}
-
-.hamburger-menu:hover {
-  background: var(--color-bg-secondary) !important;
-  color: var(--color-primary) !important;
-}
-
-.hamburger-menu:focus {
-  box-shadow: none !important;
-}
-
-/* TRAXIA Logo */
-.traxia-logo {
-  font-weight: var(--font-weight-bold) !important;
-  font-size: var(--font-size-lg) !important;
-  letter-spacing: var(--letter-spacing-widest);
-  color: var(--color-traxia-blue) !important;
-  text-decoration: none !important;
-  margin: 0 !important;
-  transition: var(--transition-normal);
-  font-family: var(--font-primary);
-  width: 169px;
-  height: 20x;
-}
-
-.traxia-logo:hover {
-  color: var(--color-primary) !important;
-  transform: scale(1.02);
-}
-
-/* User Menu */
-.user-menu {
-  background: none !important;
-  color: var(--color-text-secondary) !important;
-  text-decoration: none !important;
-  padding: var(--spacing-sm) !important;
-  border-radius: var(--border-radius-sm);
-  transition: var(--transition-normal);
-  font-size: var(--font-size-base);
-}
-
-.user-menu:hover {
-  background: var(--color-bg-secondary) !important;
-  color: var(--color-primary) !important;
-}
-
-.user-menu:focus {
-  box-shadow: none !important;
-}
-
-/* Dropdown Styles */
-.traxia-dropdown {
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-lg);
-  padding: var(--spacing-sm) 0;
-  margin-top: var(--spacing-sm);
-  min-width: 180px;
-  background: var(--color-bg-primary);
-  font-family: var(--font-primary);
-}
-
-.dropdown-item-traxia {
-  padding: var(--spacing-md) var(--spacing-lg);
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  border-radius: var(--border-radius-sm);
-  margin: var(--spacing-xs) var(--spacing-sm);
-  transition: var(--transition-normal);
+.traxia-navbar .container-fluid>div {
   display: flex;
   align-items: center;
-  font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-normal);
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
 }
 
-.dropdown-item-traxia:hover {
-  background: var(--color-bg-secondary);
-  color: var(--color-primary);
-}
-
-.dropdown-item-traxia.active {
-  background: var(--color-primary);
-  color: var(--color-text-white);
-  font-weight: var(--font-weight-medium);
-}
-
-.dropdown-item-traxia.text-danger:hover {
-  background: #f8d7da;
-  color: var(--color-danger);
-}
-
-/* Navbar Layout */
-.navbar-left,
-.navbar-right {
-  min-width: 60px;
-  display: flex;
-  align-items: center;
-}
-
-.navbar-left {
-  justify-content: flex-start;
-}
-
-.navbar-right {
-  justify-content: flex-end;
-}
-
-.navbar-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 68px;
-}
-
-/* Dropdown Toggle Arrows - Hide them */
-.hamburger-menu::after,
-.user-menu::after {
-  display: none !important;
-}
-
-/* Dropdown Header */
-.traxia-dropdown .dropdown-header {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  font-weight: var(--font-weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-}
-[data-theme="dark"] .traxia-dropdown {
-
-  border: 1px solid var(--color-border-dark);
-}
-
-[data-theme="dark"] .text-muted {
-  color: var(--color-text-white) !important;
-}
-
-/* Dropdown Divider */
-.traxia-dropdown .dropdown-divider {
-  margin: var(--spacing-sm) var(--spacing-lg);
-  border-color: var(--color-border-light);
-}
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .traxia-logo {
-    font-size: var(--font-size-md) !important;
-    letter-spacing: var(--letter-spacing-wide);
-  }
-  
-  .traxia-dropdown {
-    min-width: 160px;
-  }
-  
-  .dropdown-item-traxia {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
-  }
-}
-
-/* Animation for dropdown */
-.traxia-dropdown {
-  animation: fadeInDown var(--transition-fast) ease-out;
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Focus states for accessibility */
-.hamburger-menu:focus-visible,
-.user-menu:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.dropdown-item-traxia:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+[data-theme="dark"] .traxia-navbar {
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border-dark);
 }

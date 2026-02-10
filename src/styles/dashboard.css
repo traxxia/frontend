@@ -5,6 +5,488 @@
     overflow-x: hidden;
   }
 
+  /* ========== DASHBOARD HEADER ========== */
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 25px;
+    background: white;
+    border-bottom: 2px solid #e1e5e9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  [data-theme="dark"] .dashboard-header {
+    background: var(--color-bg-primary);
+    border-bottom-color: var(--color-border-secondary);
+  }
+
+  .dashboard-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dashboard-logo {
+    height: 30px;
+    width: auto;
+  }
+
+  .dashboard-brand-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a73e8;
+    letter-spacing: -0.5px;
+  }
+
+  [data-theme="dark"] .dashboard-brand-name {
+    color: #4a9eff;
+  }
+
+  .dashboard-header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .dashboard-nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .dashboard-nav .nav-link {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #5f6368;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .dashboard-nav .nav-link:hover {
+    background: #f1f3f4;
+    color: #1a73e8;
+  }
+
+  .dashboard-nav .nav-link.active {
+    background: #1a73e8;
+    color: white;
+    font-weight: 600;
+  }
+
+  [data-theme="dark"] .dashboard-nav .nav-link {
+    color: var(--color-text-dark);
+  }
+
+  [data-theme="dark"] .dashboard-nav .nav-link:hover {
+    background: var(--color-bg-secondary);
+    color: #4a9eff;
+  }
+
+  [data-theme="dark"] .dashboard-nav .nav-link.active {
+    background: #4a9eff;
+    color: white;
+  }
+
+  .dashboard-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-name-display {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+    padding: 6px 12px;
+    background: #f1f3f4;
+    border-radius: 6px;
+  }
+
+  [data-theme="dark"] .user-name-display {
+    color: var(--color-text-dark);
+    background: var(--color-bg-secondary);
+  }
+
+  /* ========== TOGGLE NAVIGATION ========== */
+  .business-toggle-nav {
+    display: flex;
+    gap: 12px;
+    padding: 24px 40px 16px;
+    background: var(--color-bg-primary);
+    border-bottom: 2px solid #e1e5e9;
+  }
+
+  [data-theme="dark"] .business-toggle-nav {
+    border-bottom-color: var(--color-border-secondary);
+  }
+
+  .toggle-btn-dashboard {
+    flex: 1;
+    padding: 12px 20px;
+    background: white;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .toggle-btn-dashboard:hover {
+    border-color: #1a73e8;
+    background: #f8f9fa;
+    color: #1a73e8;
+  }
+
+  .toggle-btn-dashboard.active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: white;
+    font-weight: 600;
+  }
+
+  [data-theme="dark"] .toggle-btn-dashboard {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-secondary);
+    color: var(--color-text-dark);
+  }
+
+  [data-theme="dark"] .toggle-btn-dashboard:hover {
+    border-color: #4a9eff;
+    background: var(--color-bg-tertiary);
+    color: #4a9eff;
+  }
+
+  [data-theme="dark"] .toggle-btn-dashboard.active {
+    background: #4a9eff;
+    border-color: #4a9eff;
+    color: white;
+  }
+
+  .toggle-count {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .toggle-btn-dashboard.active .toggle-count {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* ========== HERO SECTION ========== */
+  .dashboard-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px;
+    text-align: center;
+    color: white;
+  }
+
+  .hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .hero-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: white;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+    margin-bottom: 32px;
+    opacity: 0.95;
+    color: white;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .info-btn {
+    background: white !important;
+    color: #667eea !important;
+    border: 2px solid white !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .info-btn:hover {
+    background: transparent !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* ========== BUSINESS GRID SECTION ========== */
+  .businesses-grid-section {
+    padding: 24px 40px 40px;
+    background: var(--color-bg-primary);
+    min-height: 400px;
+  }
+
+  .business-grid-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .business-sections {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .business-category {
+    margin-bottom: 48px;
+  }
+
+  .business-category:last-child {
+    margin-bottom: 0;
+  }
+
+  .category-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .category-count {
+    background: #e8f0fe;
+    color: #1a73e8;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  [data-theme="dark"] .category-count {
+    background: rgba(74, 158, 255, 0.15);
+    color: #4a9eff;
+  }
+
+  /* ========== BUSINESS GRID/CARD LAYOUT ========== */
+  .business-list-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 1400px) {
+    .business-list-grid {
+      grid-template-columns: repeat(4, 1fr);
+      /* Keep 4 for as long as possible */
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .business-list-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 992px) {
+    .business-list-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .business-list-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Business Card Item */
+  .business-card-item {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 200px;
+  }
+
+  .business-card-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #1a73e8;
+  }
+
+  [data-theme="dark"] .business-card-item {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-secondary);
+  }
+
+  [data-theme="dark"] .business-card-item:hover {
+    border-color: #4a9eff;
+  }
+
+  /* Business Card Content */
+  .business-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    flex: 1;
+  }
+
+  .business-card-progress {
+    width: 80px;
+    height: 80px;
+  }
+
+  .business-card-name {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text-primary);
+    word-break: break-word;
+  }
+
+  .business-card-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .business-card-stats small {
+    font-size: 13px;
+  }
+
+  /* Business Card Delete Button */
+  .business-card-delete {
+    background: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+  }
+
+  .business-card-delete:hover {
+    background: #dc3545;
+    color: white;
+  }
+
+  /* Old grid styles for backward compatibility */
+  .business-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 1400px) {
+    .business-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .business-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 992px) {
+    .business-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .business-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Update business-item for grid layout */
+  .business-grid .business-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 140px;
+  }
+
+  .business-grid .business-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #1a73e8;
+  }
+
+  [data-theme="dark"] .business-grid .business-item {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border-secondary);
+  }
+
+  [data-theme="dark"] .business-grid .business-item:hover {
+    border-color: #4a9eff;
+  }
+
+  /* Business item content layout for grid */
+  .business-grid .business-item .progress-circle {
+    align-self: center;
+  }
+
+  .business-grid .business-item h6 {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .business-grid .business-item small {
+    text-align: center;
+    font-size: 13px;
+  }
+
+  .business-grid .delete-btn-simple {
+    align-self: center;
+    margin-top: auto;
+  }
+
   .preview-button {
 
     position: relative;
@@ -1292,6 +1774,8 @@
   }
 
   .dropdown-menu.show {
+    height: 250px;
+    overflow-y: scroll;
     z-index: 2000 !important;
   }
 

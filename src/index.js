@@ -7,6 +7,7 @@ import './styles/variables.css';
 import './styles/menubar.css';
 import './styles/dashboard.css';
 import { ThemeProvider } from './components/ThemeComponent';
+import { BusinessProvider } from './context/BusinessContext';
 
 // Create the root once
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -15,7 +16,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ThemeProvider>
-      <App />
+      <BusinessProvider>
+        <App />
+      </BusinessProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

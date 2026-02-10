@@ -1,11 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export const useBusinessSetup = (business, selectedBusinessId) => {
   // UI State
-  const [activeTab, setActiveTab] = useState(() => {
-    const isMobileView = window.innerWidth <= 768;
-    return isMobileView ? "chat" : "brief";
-  });
+  const [activeTab, setActiveTab] = useState("chat");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
@@ -47,7 +44,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [investmentPerformanceData, setInvestmentPerformanceData] = useState(null);
   const [leverageRiskData, setLeverageRiskData] = useState(null);
 
-  // Individual component regenerating states - Active ones only
+  // Individual component regenerating states
   const [isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating] = useState(false);
   const [isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating] = useState(false);
   const [isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating] = useState(false);
@@ -71,11 +68,11 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [coreAdjacencyData, setCoreAdjacencyData] = useState(null);
   const [isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating] = useState(false);
   const coreAdjacencyRef = useRef(null);
-  
-  // ✅ NEW: Streaming states for Porter's
+
+  // Streaming states
   const [portersStreamingText, setPortersStreamingText] = useState('');
   const [isPortersStreaming, setIsPortersStreaming] = useState(false);
-  
+
   // Other states
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
   const [selectedPhase, setSelectedPhase] = useState('initial');
@@ -91,7 +88,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     type: "success",
   });
 
-  // Refs - Active ones only
+  // Refs
   const swotRef = useRef(null);
   const purchaseCriteriaRef = useRef(null);
   const loyaltyNpsRef = useRef(null);
@@ -106,113 +103,91 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const strategicRadarRef = useRef(null);
   const expandedCapabilityRef = useRef(null);
   const competitiveLandscapeRef = useRef(null);
-
-  // Financial analysis refs
   const profitabilityRef = useRef(null);
   const growthTrackerRef = useRef(null);
   const liquidityEfficiencyRef = useRef(null);
   const investmentPerformanceRef = useRef(null);
   const leverageRiskRef = useRef(null);
 
+  // Effect to reset state when business ID changes
+  useEffect(() => {
+    if (!selectedBusinessId) return;
+
+    // Reset Questions and Answers
+    setQuestions([]);
+    setQuestionsLoaded(false);
+    setUserAnswers({});
+    setCompletedQuestions(new Set());
+
+    // Reset Business Data
+    setBusinessData({
+      name: business?.business_name || "",
+      whatWeDo: business?.business_purpose || "",
+      products: "",
+      targetAudience: "",
+      uniqueValue: "",
+    });
+
+    // Reset Analysis Data
+    setHasAnalysisData(false);
+    setSwotAnalysisResult("");
+    setPurchaseCriteriaData(null);
+    setLoyaltyNPSData(null);
+    setPortersData(null);
+    setPestelData(null);
+    setFullSwotData(null);
+    setCompetitiveAdvantageData(null);
+    setStrategicData(null);
+    setExpandedCapabilityData(null);
+    setStrategicRadarData(null);
+    setProductivityData(null);
+    setMaturityData(null);
+    setCompetitiveLandscapeData(null);
+    setProfitabilityData(null);
+    setGrowthTrackerData(null);
+    setLiquidityEfficiencyData(null);
+    setInvestmentPerformanceData(null);
+    setLeverageRiskData(null);
+    setCoreAdjacencyData(null);
+
+    // Reset Streaming
+    setPortersStreamingText('');
+    setIsPortersStreaming(false);
+
+  }, [selectedBusinessId]);
+
   return {
-    // UI State
-    activeTab, setActiveTab,
-    isMobile, setIsMobile,
-    isAnalysisExpanded, setIsAnalysisExpanded,
-    isSliding, setIsSliding,
-
-    // Data State
-    questions, setQuestions,
-    questionsLoaded, setQuestionsLoaded,
-    userAnswers, setUserAnswers,
-    completedQuestions, setCompletedQuestions,
-    businessData, setBusinessData,
-
-    // Analysis State
-    hasAnalysisData, setHasAnalysisData,
-    isAnalysisRegenerating, setIsAnalysisRegenerating,
-    swotAnalysisResult, setSwotAnalysisResult,
-    purchaseCriteriaData, setPurchaseCriteriaData,
-    loyaltyNPSData, setLoyaltyNPSData,
-    strategicData, setStrategicData, 
-    portersData, setPortersData,
-    pestelData, setPestelData,
-    fullSwotData, setFullSwotData,
-    competitiveAdvantageData, setCompetitiveAdvantageData,
-    expandedCapabilityData, setExpandedCapabilityData,
-    strategicRadarData, setStrategicRadarData,
-    productivityData, setProductivityData,
-    maturityData, setMaturityData,
-    competitiveLandscapeData, setCompetitiveLandscapeData,
-    coreAdjacencyData, setCoreAdjacencyData,
-
-    // Financial analysis states
-    profitabilityData, setProfitabilityData,
-    growthTrackerData, setGrowthTrackerData,
-    liquidityEfficiencyData, setLiquidityEfficiencyData,
-    investmentPerformanceData, setInvestmentPerformanceData,
-    leverageRiskData, setLeverageRiskData,
-
-    // Regenerating states - ✅ ALL SETTERS INCLUDED
-    isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
-    isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating,
-    isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating,
-    isPortersRegenerating, setIsPortersRegenerating,  // ✅ SETTER INCLUDED
-    isPestelRegenerating, setIsPestelRegenerating,
-    isFullSwotRegenerating, setIsFullSwotRegenerating,
-    isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating,
-    isExpandedCapabilityRegenerating, setIsExpandedCapabilityRegenerating,
-    isStrategicRadarRegenerating, setIsStrategicRadarRegenerating,
-    isProductivityRegenerating, setIsProductivityRegenerating,
-    isMaturityRegenerating, setIsMaturityRegenerating,
-    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating,
-    isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
-    isStrategicRegenerating, setIsStrategicRegenerating,
-    
-    // Financial analysis regenerating states
-    isProfitabilityRegenerating, setIsProfitabilityRegenerating,
-    isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
-    isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
-    isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
-    isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
-
-    // ✅ NEW: Streaming states for Porter's
-    portersStreamingText, setPortersStreamingText,
-    isPortersStreaming, setIsPortersStreaming,
-
-    // Other states
-    highlightedMissingQuestions, setHighlightedMissingQuestions,
-    selectedPhase, setSelectedPhase,
-
-    // Dropdown State
-    showDropdown, setShowDropdown,
-    selectedOption, setSelectedOption,
-
-    // Toast State
-    showToast, setShowToast,
-
-    // Refs - Active ones only
-    swotRef,
-    purchaseCriteriaRef,
-    loyaltyNpsRef,
-    dropdownRef,
-    isRegeneratingRef,
-    portersRef,
-    pestelRef,
-    fullSwotRef,
-    competitiveAdvantageRef,
-    productivityRef,
-    maturityScoreRef,
-    strategicRadarRef,
-    expandedCapabilityRef,
-    competitiveLandscapeRef,
-    coreAdjacencyRef,
-
-    // Financial analysis refs
-    profitabilityRef,
-    growthTrackerRef,
-    liquidityEfficiencyRef,
-    investmentPerformanceRef,
-    leverageRiskRef
+    activeTab, setActiveTab, isMobile, setIsMobile,
+    isAnalysisExpanded, setIsAnalysisExpanded, isSliding, setIsSliding,
+    questions, setQuestions, questionsLoaded, setQuestionsLoaded,
+    userAnswers, setUserAnswers, completedQuestions, setCompletedQuestions,
+    businessData, setBusinessData, hasAnalysisData, setHasAnalysisData,
+    isAnalysisRegenerating, setIsAnalysisRegenerating, swotAnalysisResult, setSwotAnalysisResult,
+    purchaseCriteriaData, setPurchaseCriteriaData, loyaltyNPSData, setLoyaltyNPSData,
+    strategicData, setStrategicData, portersData, setPortersData, pestelData, setPestelData,
+    fullSwotData, setFullSwotData, competitiveAdvantageData, setCompetitiveAdvantageData,
+    expandedCapabilityData, setExpandedCapabilityData, strategicRadarData, setStrategicRadarData,
+    productivityData, setProductivityData, maturityData, setMaturityData,
+    competitiveLandscapeData, setCompetitiveLandscapeData, coreAdjacencyData, setCoreAdjacencyData,
+    profitabilityData, setProfitabilityData, growthTrackerData, setGrowthTrackerData,
+    liquidityEfficiencyData, setLiquidityEfficiencyData, investmentPerformanceData, setInvestmentPerformanceData,
+    leverageRiskData, setLeverageRiskData, isSwotAnalysisRegenerating, setIsSwotAnalysisRegenerating,
+    isPurchaseCriteriaRegenerating, setIsPurchaseCriteriaRegenerating, isLoyaltyNPSRegenerating, setIsLoyaltyNPSRegenerating,
+    isPortersRegenerating, setIsPortersRegenerating, isPestelRegenerating, setIsPestelRegenerating,
+    isFullSwotRegenerating, setIsFullSwotRegenerating, isCompetitiveAdvantageRegenerating, setIsCompetitiveAdvantageRegenerating,
+    isExpandedCapabilityRegenerating, setIsExpandedCapabilityRegenerating, isStrategicRadarRegenerating, setIsStrategicRadarRegenerating,
+    isProductivityRegenerating, setIsProductivityRegenerating, isMaturityRegenerating, setIsMaturityRegenerating,
+    isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating, isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
+    isStrategicRegenerating, setIsStrategicRegenerating, isProfitabilityRegenerating, setIsProfitabilityRegenerating,
+    isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
+    isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating, isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
+    portersStreamingText, setPortersStreamingText, isPortersStreaming, setIsPortersStreaming,
+    highlightedMissingQuestions, setHighlightedMissingQuestions, selectedPhase, setSelectedPhase,
+    showDropdown, setShowDropdown, selectedOption, setSelectedOption, showToast, setShowToast,
+    swotRef, purchaseCriteriaRef, loyaltyNpsRef, dropdownRef, isRegeneratingRef,
+    portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef, productivityRef,
+    maturityScoreRef, strategicRadarRef, expandedCapabilityRef, competitiveLandscapeRef,
+    coreAdjacencyRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
+    investmentPerformanceRef, leverageRiskRef
   };
 };

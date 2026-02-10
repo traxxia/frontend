@@ -34,101 +34,78 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
     const renderCategoryIcon = (iconName) => {
         const IconComponent = LucideIcons[iconName];
-        return IconComponent ? <IconComponent size={20} /> : <LucideIcons.BookOpen size={20} />;
+        return IconComponent ? <IconComponent size={18} /> : <LucideIcons.BookOpen size={18} />;
     };
 
     return (
-        <div className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-            <div className="academy-nav-header">
-                <Link to="/academy" className="academy-home-link">
-                    <LucideIcons.BookOpen size={24} />
-                    <span>Traxxia Academy</span>
+        <div className={`academy-sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+            <div className="academy-sidebar-nav">
+                <div className="academy-nav-search-v2">
+                    <div className="search-input-wrapper-v2">
+                        <LucideIcons.Search size={14} className="search-icon-v2" />
+                        <input
+                            type="text"
+                            placeholder="Search academy..."
+                            className="academy-search-input-v2"
+                            disabled
+                        />
+                    </div>
+                </div>
+
+                <div className="academy-nav-categories-v2">
+                    {academyStructure.categories.map((category) => {
+                        const isExpanded = expandedCategories.includes(category.id);
+                        const isActive = activeCategory === category.id;
+
+                        return (
+                            <div key={category.id} className={`category-section-v2 ${isActive ? 'active-category' : ''}`}>
+                                <button
+                                    className="category-header-v2"
+                                    onClick={() => toggleCategory(category.id)}
+                                >
+                                    <div className="category-title-v2">
+                                        {renderCategoryIcon(category.icon)}
+                                        <span>{category.title}</span>
+                                    </div>
+                                    <LucideIcons.ChevronDown
+                                        size={14}
+                                        className={`category-chevron-v2 ${isExpanded ? 'expanded' : ''}`}
+                                    />
+                                </button>
+
+                                {isExpanded && (
+                                    <ul className="category-articles-v2">
+                                        {category.articles.map((article) => {
+                                            const isArticleActive = activeCategory === category.id && activeArticle === article.id;
+
+                                            return (
+                                                <li key={article.id} className={isArticleActive ? 'active-article' : ''}>
+                                                    <button
+                                                        className="article-link-v2"
+                                                        onClick={() => handleArticleClick(category.id, article.id)}
+                                                    >
+                                                        {article.title}
+                                                    </button>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="academy-sidebar-footer">
+                <Link to="/dashboard" className="sidebar-footer-link">
+                    <LucideIcons.LayoutDashboard size={14} />
+                    <span>Dashboard</span>
                 </Link>
-                {onCloseMobileMenu && (
-                    <button className="mobile-close-btn" onClick={onCloseMobileMenu}>
-                        <LucideIcons.X size={24} />
-                    </button>
-                )}
-            </div>
-
-            <div className="academy-nav-search">
-                <div className="search-input-wrapper">
-                    <LucideIcons.Search size={16} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Search documentation..."
-                        className="academy-search-input"
-                        disabled
-                        title="Search coming in future update"
-                    />
-                </div>
-                <div className="search-hint">
-                    <LucideIcons.Sparkles size={14} />
-                    <span>Academy Assistant coming soon!</span>
-                </div>
-            </div>
-
-            <nav className="academy-nav-categories">
-                {academyStructure.categories.map((category) => {
-                    const isExpanded = expandedCategories.includes(category.id);
-                    const isActive = activeCategory === category.id;
-
-                    return (
-                        <div key={category.id} className={`category-section ${isActive ? 'active-category' : ''}`}>
-                            <button
-                                className="category-header"
-                                onClick={() => toggleCategory(category.id)}
-                            >
-                                <div className="category-title">
-                                    {renderCategoryIcon(category.icon)}
-                                    <span>{category.title}</span>
-                                </div>
-                                <LucideIcons.ChevronDown
-                                    size={16}
-                                    className={`category-chevron ${isExpanded ? 'expanded' : ''}`}
-                                />
-                            </button>
-
-                            {isExpanded && (
-                                <ul className="category-articles">
-                                    {category.articles.map((article) => {
-                                        const isArticleActive = activeCategory === category.id && activeArticle === article.id;
-
-                                        return (
-                                            <li key={article.id} className={isArticleActive ? 'active-article' : ''}>
-                                                <button
-                                                    className="article-link"
-                                                    onClick={() => handleArticleClick(category.id, article.id)}
-                                                >
-                                                    {article.title}
-                                                    {isArticleActive && (
-                                                        <LucideIcons.ChevronRight size={14} className="active-indicator" />
-                                                    )}
-                                                </button>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                        </div>
-                    );
-                })}
-            </nav>
-
-            <div className="academy-nav-footer">
-                <div className="nav-footer-links">
-                    <Link to="/dashboard" className="footer-link" style={{ marginBottom: '8px' }}>
-                        <LucideIcons.LayoutDashboard size={16} />
-                        <span>Back to Dashboard</span>
-                    </Link>
-                    <Link to="/academy" className="footer-link">
-                        <LucideIcons.Home size={16} />
-                        <span>Academy Home</span>
-                    </Link>
-                </div>
-                <div className="nav-footer-info">
-                    <small>Version 1.0 • Phase 2</small>
-                </div>
+                <Link to="/academy" className="sidebar-footer-link">
+                    <LucideIcons.Home size={14} />
+                    <span>Academy Home</span>
+                </Link>
             </div>
         </div>
     );

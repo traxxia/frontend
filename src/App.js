@@ -15,6 +15,8 @@ import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
 
 
 const App = () => {
+  const useNewUI = process.env.REACT_APP_USE_NEW_UI === 'true';
+
   useEffect(() => {
     // Initialize translations when app starts
     initializeTranslations();
@@ -47,7 +49,7 @@ const App = () => {
 
   return (
     <Router>
-      <div className="App">
+      <div className={`App ${useNewUI ? 'new-ui' : ''}`}>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />

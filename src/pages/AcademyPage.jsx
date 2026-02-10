@@ -6,6 +6,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';
 import { findArticleById, findCategoryById, getBreadcrumbs } from '../utils/academyIndex';
 import '../styles/academy.css';
+import MenuBar from '../components/MenuBar';
 
 /**
  * AcademyPage Component
@@ -312,80 +313,92 @@ const AcademyPage = () => {
     };
 
     return (
-        <div className="academy-page">
-            <button
-                className="mobile-menu-toggle"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle navigation"
-            >
-                <Menu size={24} />
-            </button>
-
-            <AcademyNavigation
-                isMobileMenuOpen={isMobileMenuOpen}
-                onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
-            />
-
-            <main className="academy-content">
-                {breadcrumbs.length > 1 && (
-                    <nav className="academy-breadcrumbs">
-                        {breadcrumbs.map((crumb, index) => (
-                            <span key={crumb.path} className="breadcrumb-item">
-                                {index > 0 && <span className="breadcrumb-separator">/</span>}
-                                {index === breadcrumbs.length - 1 ? (
-                                    <span className="breadcrumb-current">{crumb.label}</span>
-                                ) : (
-                                    <Link to={crumb.path} className="breadcrumb-link">
-                                        {crumb.label}
-                                    </Link>
-                                )}
-                            </span>
-                        ))}
-                    </nav>
-                )}
-
-                <div className="academy-article">
-                    {!category || !article ? (
-                        renderWelcomePage()
-                    ) : loading ? (
-                        <div className="academy-loading">
-                            <div className="loading-spinner"></div>
-                            <p>Loading article...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="academy-error">
-                            <h2>Error Loading Article</h2>
-                            <p>{error}</p>
-                            <Link to="/academy" className="error-home-link">
-                                Return to Academy Home
-                            </Link>
-                        </div>
-                    ) : (
-                        <>
-                            {currentArticle && (
-                                <div className="article-header">
-                                    <h1>{currentArticle.title}</h1>
-                                    <div className="article-meta">
-                                        {currentArticle.roles.includes('all') ? (
-                                            <span className="role-badge">All Users</span>
-                                        ) : (
-                                            currentArticle.roles.map((role) => (
-                                                <span key={role} className="role-badge">{role}</span>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            <MarkdownRenderer content={content} articleId={article} />
-
-                            <AcademyFeedback articleId={article} />
-
-                            {renderRelatedArticles()}
-                        </>
-                    )}
+        <div className="academy-page-container">
+            {/* Top Header */}
+            <div className="academy-page-header">
+                <div className="academy-header-left">
+                    <img src="/traxxia-logo.png" alt="Traxxia" className="dashboard-logo" />
                 </div>
-            </main>
+                <div className="academy-header-right">
+                    <MenuBar />
+                </div>
+            </div>
+
+            <div className="academy-page-layout">
+                <button
+                    className="mobile-menu-toggle"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    aria-label="Toggle navigation"
+                >
+                    <Menu size={24} />
+                </button>
+
+                <AcademyNavigation
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+                />
+
+                <main className="academy-content">
+                    {breadcrumbs.length > 1 && (
+                        <nav className="academy-breadcrumbs">
+                            {breadcrumbs.map((crumb, index) => (
+                                <span key={crumb.path} className="breadcrumb-item">
+                                    {index > 0 && <span className="breadcrumb-separator">/</span>}
+                                    {index === breadcrumbs.length - 1 ? (
+                                        <span className="breadcrumb-current">{crumb.label}</span>
+                                    ) : (
+                                        <Link to={crumb.path} className="breadcrumb-link">
+                                            {crumb.label}
+                                        </Link>
+                                    )}
+                                </span>
+                            ))}
+                        </nav>
+                    )}
+
+                    <div className="academy-article">
+                        {!category || !article ? (
+                            renderWelcomePage()
+                        ) : loading ? (
+                            <div className="academy-loading">
+                                <div className="loading-spinner"></div>
+                                <p>Loading article...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="academy-error">
+                                <h2>Error Loading Article</h2>
+                                <p>{error}</p>
+                                <Link to="/academy" className="error-home-link">
+                                    Return to Academy Home
+                                </Link>
+                            </div>
+                        ) : (
+                            <>
+                                {currentArticle && (
+                                    <div className="article-header">
+                                        <h1>{currentArticle.title}</h1>
+                                        <div className="article-meta">
+                                            {currentArticle.roles.includes('all') ? (
+                                                <span className="role-badge">All Users</span>
+                                            ) : (
+                                                currentArticle.roles.map((role) => (
+                                                    <span key={role} className="role-badge">{role}</span>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <MarkdownRenderer content={content} articleId={article} />
+
+                                <AcademyFeedback articleId={article} />
+
+                                {renderRelatedArticles()}
+                            </>
+                        )}
+                    </div>
+                </main>
+            </div>
         </div>
     );
 };

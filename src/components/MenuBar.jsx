@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Container, Dropdown } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Settings, Home, User, Archive, FileText, Shield, BookOpen } from 'lucide-react';
+import { LogOut, Settings, Home, User, Archive, FileText, Shield, BookOpen, Briefcase } from 'lucide-react';
 import "../styles/menubar.css";
 import { useTranslation } from '../hooks/useTranslation';
+import { useBusiness } from '../context/BusinessContext';
 
-const MenuBar = () => {
+const MenuBar = ({ selectedBusinessName }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userName, setUserName] = useState('User');
   const [userRole, setUserRole] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   const { t } = useTranslation();
+  const { businesses, collaboratingBusinesses, selectedBusiness, selectBusiness, fetchBusinesses } = useBusiness();
+
+  useEffect(() => {
+    // Only fetch if not already loaded, though Provider handles its own fetch usually
+    // but here we can ensure dashboard data is fresh if needed
+    if (businesses.length === 0) {
+      fetchBusinesses();
+    }
+  }, [fetchBusinesses, businesses.length]);
+
+  const handleBusinessSelect = (business) => {
+    selectBusiness(business);
+    navigate('/businesspage', { state: { business } });
+  };
 
   useEffect(() => {
     const isAdminStored = sessionStorage.getItem('isAdmin');
@@ -53,171 +69,163 @@ const MenuBar = () => {
   };
 
   const isCurrentPage = (path) => location.pathname === path;
+  const isBusinessPage = location.pathname.startsWith('/business/') || location.pathname === '/businesspage';
 
   const handleAdminClick = () => navigate('/admin');
   const handleDashboardClick = () => navigate('/dashboard');
   const handleSuperAdminClick = () => navigate('/super-admin');
   const handleAcademyClick = () => navigate('/academy');
 
-  // Handler for audit trail navigation
-  const handleAuditTrailClick = () => navigate('/audit-trail');
+  // Debug logging
+  useEffect(() => {
+    console.log('MenuBar - selectedBusinessName:', selectedBusinessName);
+    console.log('MenuBar - isBusinessPage:', isBusinessPage);
+  }, [selectedBusinessName, isBusinessPage]);
 
   return (
-    <Navbar className="traxia-navbar p-0">
+    <Navbar className="traxia-navbar-horizontal p-0">
       <Container fluid className="px-3 py-2">
-        <div className="d-flex align-items-center justify-content-between w-100">
+        <div className="horizontal-nav-container">
+          {/* Mobile Menu Toggle */}
+          <button
+            className="mobile-menu-toggle d-md-none"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
 
-          {/* Left side - Company Logo */}
-          <div className="navbar-left">
-            {/* {companyLogo && (
-              <div
-                className="company-logo"
-                onClick={() => navigate('/dashboard')}
-                style={{ cursor: 'pointer' }}
+          {/* Navigation Links */}
+          <div className={`nav-links-container ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            {/* Dashboard Link */}
+            {!isSuperAdmin && (
+              <a
+                onClick={handleDashboardClick}
+                className={`nav-link-item ${isCurrentPage('/dashboard') ? 'active' : ''}`}
               >
-                <img
-                  src={companyLogo}
-                  alt={companyName ? `${companyName} Logo` : t('company_logo_alt') || "Company Logo"}
-                  style={{
-                    height: '50px',
-                    maxWidth: '100px',
-                    marginLeft: '20px',
-                    objectFit: 'contain'
-                  }}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-              </div>
-            )} */}
-          </div>
+                <Home size={18} />
+                <span>{t('dashboard')}</span>
+              </a>
+            )}
 
-          {/* Center - Traxxia Logo */}
-          <div className="navbar-center">
-            <Navbar.Brand
-              className="traxia-logo"
-              onClick={!isSuperAdmin ? () => navigate('/dashboard') : undefined}
-              style={{ cursor: isSuperAdmin ? 'default' : 'pointer' }}
-            >
-              <img
-                src="/traxxia-logo.png"
-                alt={t('traxia_logo_alt') || "Traxia Logo"}
-                style={{ height: '24px' }}
-              />
-            </Navbar.Brand>
-          </div>
-
-          {/* Right side - User Menu */}
-          <div className="navbar-right">
-            <Dropdown>
-              <Dropdown.Toggle
-                variant="link"
-                id="dropdown-user"
-                className="user-menu p-0 border-0 shadow-none"
-              >
-                <User size={20} className="navbar_icon" />
+            {/* Business Dropdown */}
+            <Dropdown className="nav-dropdown-business">
+              <Dropdown.Toggle as="a" className={`nav-link-item ${isBusinessPage ? 'active' : ''}`} id="business-dropdown">
+                <Briefcase size={18} />
+                <span>{isBusinessPage ? (selectedBusiness?.business_name || selectedBusinessName || t('select_business')) : t('select_business')}</span>
               </Dropdown.Toggle>
-              <Dropdown.Menu align="end" className="traxia-dropdown">
-                <Dropdown.Header className="text-muted small">
-                  {t('signed_in_as')}: <strong>{userName}</strong>
-                  {userRole && (
-                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                      {t('role')}: {userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </div>
-                  )}
-                  {/* {companyName && (
-                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                      Company: {companyName}
-                    </div>
-                  )} */}
-                </Dropdown.Header>
-                <Dropdown.Divider />
 
-                {/* Dashboard Link */}
-                {!isSuperAdmin && (
-                  <Dropdown.Item
-                    onClick={handleDashboardClick}
-                    className={`dropdown-item-traxia ${isCurrentPage('/dashboard') ? 'active' : ''}`}
-                  >
-                    <Home size={16} className="me-2" />
-                    {t('dashboard')}
-                  </Dropdown.Item>
+              <Dropdown.Menu className="business-dropdown-menu">
+                {/* Business Group (No Projects) */}
+                <Dropdown.Header className="dropdown-group-header">Business</Dropdown.Header>
+                {businesses.filter(b => !b.has_projects).length > 0 ? (
+                  businesses.filter(b => !b.has_projects).map(b => (
+                    <Dropdown.Item
+                      key={b._id}
+                      onClick={() => handleBusinessSelect(b)}
+                      className={selectedBusiness?._id === b._id ? 'active' : ''}
+                    >
+                      {b.business_name}
+                    </Dropdown.Item>
+                  ))
+                ) : (
+                  <Dropdown.Item disabled className="empty-group-text">No businesses yet</Dropdown.Item>
                 )}
-
-                {/* Traxxia Academy Link */}
-                <Dropdown.Item
-                  onClick={handleAcademyClick}
-                  className={`dropdown-item-traxia ${isCurrentPage('/academy') || location.pathname.startsWith('/academy/') ? 'active' : ''}`}
-                >
-                  <BookOpen size={16} className="me-2" />
-                  Traxxia Academy
-                </Dropdown.Item>
-
-                {/* NEW: Super Admin Panel (only for super admin) */}
-                {isSuperAdmin && (
-                  <Dropdown.Item
-                    onClick={handleSuperAdminClick}
-                    className={`dropdown-item-traxia ${isCurrentPage('/super-admin') ? 'active' : ''}`}
-                    style={{
-                      background: isCurrentPage('/super-admin') ? '#fef3c7' : 'transparent',
-                      color: isCurrentPage('/super-admin') ? '#92400e' : '#495057'
-                    }}
-                  >
-                    <Shield size={16} className="me-2" style={{ color: '#f59e0b' }} />
-                    {t('super_admin_panel')}
-                  </Dropdown.Item>
-                )}
-
-                {/* Audit Trail / Saved Analyses Link */}
-                {/* <Dropdown.Item
-                  onClick={handleAuditTrailClick}
-                  className={`dropdown-item-traxia ${
-                    isCurrentPage('/audit-trail') || isCurrentPage('/saved-analyses') ? 'active' : ''
-                  }`}
-                >
-                  <Archive size={16} className="me-2" />
-                  {t('saved_analyses') || 'Saved Analyses'}
-                </Dropdown.Item> */}
-
-                {/* Admin Link (only for regular admins, not super admin) */}
-                {isAdmin && !isSuperAdmin && (
-                  <Dropdown.Item
-                    onClick={handleAdminClick}
-                    className={`dropdown-item-traxia ${isCurrentPage('/admin') ? 'active' : ''}`}
-                  >
-                    <Settings size={16} className="me-2" />
-                    {t('admin')}
-                  </Dropdown.Item>
-                )}
-
-                {/* Future: Reports Section (commented out, ready for future use) */}
-                {/*
-                <Dropdown.Item
-                  className="dropdown-item-traxia text-muted"
-                  disabled
-                >
-                  <FileText size={16} className="me-2" />
-                  {t('reports') || 'Reports'} 
-                  <small className="ms-auto text-muted">{t('coming_soon') || 'Soon'}</small>
-                </Dropdown.Item>
-                */}
 
                 <Dropdown.Divider />
 
-                {/* Logout */}
-                <Dropdown.Item
-                  onClick={handleLogout}
-                  className="dropdown-item-traxia text-danger"
-                >
-                  <LogOut size={16} className="me-2" />
-                  {t('logout')}
-                </Dropdown.Item>
+                {/* Project Phase Group (With Projects) */}
+                <Dropdown.Header className="dropdown-group-header">Project Phase</Dropdown.Header>
+                {businesses.filter(b => b.has_projects).length > 0 ? (
+                  businesses.filter(b => b.has_projects).map(b => (
+                    <Dropdown.Item
+                      key={b._id}
+                      onClick={() => handleBusinessSelect(b)}
+                      className={selectedBusiness?._id === b._id ? 'active' : ''}
+                    >
+                      {b.business_name}
+                    </Dropdown.Item>
+                  ))
+                ) : (
+                  <Dropdown.Item disabled className="empty-group-text">No projects in phase</Dropdown.Item>
+                )}
+
+                <Dropdown.Divider />
+
+                {/* Collaborate Group */}
+                <Dropdown.Header className="dropdown-group-header">Collaborate</Dropdown.Header>
+                {collaboratingBusinesses.length > 0 ? (
+                  collaboratingBusinesses.map(b => (
+                    <Dropdown.Item
+                      key={b._id}
+                      onClick={() => handleBusinessSelect(b)}
+                      className={selectedBusiness?._id === b._id ? 'active' : ''}
+                    >
+                      {b.business_name}
+                    </Dropdown.Item>
+                  ))
+                ) : (
+                  <Dropdown.Item disabled className="empty-group-text">No collaborating businesses</Dropdown.Item>
+                )}
               </Dropdown.Menu>
             </Dropdown>
+
+            {/* Super Admin Panel */}
+            {isSuperAdmin && (
+              <a
+                onClick={handleSuperAdminClick}
+                className={`nav-link-item ${isCurrentPage('/super-admin') ? 'active' : ''}`}
+              >
+                <Shield size={18} />
+                <span>{t('super_admin_panel')}</span>
+              </a>
+            )}
+
+            {/* Admin Link */}
+            {isAdmin && !isSuperAdmin && (
+              <a
+                onClick={handleAdminClick}
+                className={`nav-link-item ${isCurrentPage('/admin') ? 'active' : ''}`}
+              >
+                <Settings size={18} />
+                <span>{t('admin')}</span>
+              </a>
+            )}
+
+            {/* Academy Link */}
+            <a
+              onClick={handleAcademyClick}
+              className={`nav-link-item ${isCurrentPage('/academy') || location.pathname.startsWith('/academy/') ? 'active' : ''}`}
+            >
+              <BookOpen size={18} />
+              <span>Academy</span>
+            </a>
+
+            {/* User Info & Logout */}
+            <div className="nav-user-section">
+              <div className="nav-user-info">
+                <div className="user-avatar">
+                  <User size={20} />
+                </div>
+                <div className="user-details">
+                  <span className="user-name">{userName}</span>
+                  {userRole && (
+                    <span className="user-role">{userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="nav-logout-btn"
+                title={t('logout')}
+              >
+                <LogOut size={18} />
+                <span className="d-md-none">{t('logout')}</span>
+              </button>
+            </div>
           </div>
         </div>
       </Container>
-    </Navbar >
+    </Navbar>
   );
 };
 

@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Check, X, Loader, AlertCircle } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
-import '../styles/CompanyManagement.css';
-
-
+import '../styles/businesspage.css';
 
 const EditableField = ({
   field,
@@ -179,8 +177,31 @@ const EditableField = ({
           onClick={() => canEdit && !(isSaving || isEssentialPhaseGenerating) && handleEdit(field)}
           style={{ cursor: (!canEdit || isSaving || isEssentialPhaseGenerating) ? 'default' : 'pointer' }}
         >
-          {field.value || `Add ${field.label.toLowerCase()}...`}
+          {field.value ? (
+            field.value
+          ) : (
+            <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>
+              Click to add {field.label.toLowerCase()}...
+            </span>
+          )}
           {isEdited && <span className="edited-indicator" title="Modified"> ✏️</span>}
+          {!field.value && canEdit && (
+            <div className="action-required-badge" style={{
+              marginTop: '8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: '#fff1f2',
+              color: '#e11d48',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              border: '1px solid #fecdd3',
+              textTransform: 'uppercase'
+            }}>
+              Action Required
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -225,7 +246,7 @@ const EditableBriefSection = ({
   const getAuthToken = () => sessionStorage.getItem('token');
 
   useEffect(() => {
-    if (questions.length > 0 && Object.keys(userAnswers).length > 0) {
+    if (questions.length > 0) {
       generateBriefFields();
     }
   }, [questions, userAnswers]);
@@ -308,21 +329,22 @@ const EditableBriefSection = ({
     let sequentialNumber = 1; // Add sequential counter
 
     sortedQuestions.forEach(question => {
-      const qId = question._id || question.question_id;
-      const answer = userAnswers[qId];
+      // Skip the 'good' phase questions as requested
+      if (question.phase === 'good') return;
 
-      if (answer && answer.trim()) {
-        fields.push({
-          key: `question_${qId}`,
-          label: question.question_text,
-          value: answer,
-          questionId: qId,
-          phase: question.phase,
-          severity: question.severity,
-          order: question.order,
-          sequentialNumber: sequentialNumber++ // Use sequential number instead of question.order
-        });
-      }
+      const qId = question._id || question.question_id;
+      const answer = userAnswers[qId] || '';
+
+      fields.push({
+        key: `question_${qId}`,
+        label: question.question_text,
+        value: answer,
+        questionId: qId,
+        phase: question.phase || 'initial',
+        severity: question.severity,
+        order: question.order,
+        sequentialNumber: sequentialNumber++
+      });
     });
 
     setBriefFields(fields);
@@ -449,27 +471,13 @@ const EditableBriefSection = ({
     setEditingField(null);
   };
 
+  // Progress Calculation logic
+  const answeredQuestionsCount = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].trim()).length;
   const totalQuestions = questions.length;
-  const answeredQuestions = Object.keys(userAnswers).filter(key => userAnswers[key] && userAnswers[key].trim()).length;
-  const progressPercentage = totalQuestions > 0
-    ? Math.round((answeredQuestions / totalQuestions) * 100)
-    : 0;
+  const progressPercentage = totalQuestions > 0 ? Math.round((answeredQuestionsCount / totalQuestions) * 100) : 0;
 
-  const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
-  const essentialQuestions = questions.filter(q => q.phase === 'essential');
 
-  const completedInitialQuestions = initialQuestions.filter(q => {
-    const qId = q._id || q.question_id;
-    return userAnswers[qId] && userAnswers[qId].trim();
-  });
-
-  const completedEssentialQuestions = essentialQuestions.filter(q => {
-    const qId = q._id || q.question_id;
-    return userAnswers[qId] && userAnswers[qId].trim();
-  });
-
-  const isInitialPhaseComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
-  const isEssentialPhaseComplete = completedEssentialQuestions.length === essentialQuestions.length && essentialQuestions.length > 0;
+  const isAllComplete = answeredQuestionsCount === totalQuestions && totalQuestions > 0;
 
   return (
     <div className="editable-brief-section">
@@ -492,45 +500,46 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      <div className="brief-progress">
-        <div className="progress-info">
-          {isLoading ? (
-            <span className="progress-text">
-              <Loader size={16} className="spinner" style={{ display: 'inline', marginRight: '8px' }} />
-              Loading progress...
+      <div className="brief-progress-header">
+        <div className="progress-main">
+          <div className="progress-info">
+            <h3 className="progress-title">Brief Progress</h3>
+            <p className="progress-subtitle">
+              {answeredQuestionsCount} of {totalQuestions} questions answered
+            </p>
+          </div>
+          <div className="progress-percentage-box" style={{
+            backgroundColor: isAllComplete ? '#10b981' : '#f1f5f9',
+            color: isAllComplete ? 'white' : 'inherit'
+          }}>
+            <span className="percentage-value" style={{ color: isAllComplete ? 'white' : 'inherit' }}>
+              {progressPercentage}%
             </span>
-          ) : (
-            <>
-              {answeredQuestions > 0 && (
-                <span className="progress-text">
-                  Progress: {progressPercentage}% completed
-                </span>
-              )}
-            </>
-          )}
+            <span className="percentage-label" style={{ color: isAllComplete ? 'rgba(255,255,255,0.8)' : 'inherit' }}>
+              Overall
+            </span>
+          </div>
         </div>
 
-        {!isLoading && answeredQuestions > 0 && (
-          <div className="progress-bar-container" style={{
-            width: '100%',
+        <div className="brief-progress-bar-container">
+          <div className="progress-bar-bg" style={{
             height: '8px',
             backgroundColor: '#e5e7eb',
             borderRadius: '4px',
-            marginTop: '8px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            marginTop: '12px'
           }}>
             <div
               className="progress-bar-fill"
               style={{
-                width: `${(answeredQuestions / totalQuestions) * 100}%`,
+                width: `${progressPercentage}%`,
                 height: '100%',
-                backgroundColor: isInitialPhaseComplete ? '#10b981' : '#3b82f6',
-                borderRadius: '4px',
-                transition: 'width 0.3s ease-in-out'
+                backgroundColor: '#3b82f6',
+                transition: 'width 0.5s ease-out'
               }}
             />
           </div>
-        )}
+        </div>
       </div>
 
       <div className="brief-content">

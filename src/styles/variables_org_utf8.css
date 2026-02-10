@@ -1,4 +1,4 @@
-/* variables.css - Centralized CSS variables for light and dark themes */
+﻿/* variables.css - Centralized CSS variables for light and dark themes */
 
 :root {
   /* Font Families */
@@ -335,55 +335,6 @@
   /* From Register.css circle-1 */
 }
 
-/* New UI Overrides */
-.new-ui {
-  /* Font Families */
-  --font-primary: 'Manrope', 'Segoe UI', Roboto, sans-serif;
-  --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
-  --font-register: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
-
-  /* Font Sizes */
-  --font-size-xs: 12px;
-  --font-size-sm: 13px;
-  --font-size-base: 14px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 20px;
-  --font-size-2xl: 24px;
-  --font-size-3xl: 28px;
-  --font-size-4xl: 32px;
-
-  /* Font Weights */
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --font-weight-extra-bold: 800;
-
-  /* Colors */
-  --color-primary: #4864a1;
-  --color-primary-dark: #3a56d4;
-  --color-primary-light: #9D96E8;
-  --color-secondary: #7209b7;
-  --color-success: #06d6a0;
-  --color-danger: #ef476f;
-  --color-accent: #4cc9f0;
-
-  /* Text Colors */
-  --color-text-primary: #333333;
-  --color-text-secondary: #6e7191;
-
-  /* Background Colors */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f8f9fa;
-  --color-bg-light: #f0f3f5;
-  --color-bg-item: #F8F9FE;
-
-  /* Border Radius */
-  --border-radius-card: 24px;
-}
-
 /* Base font settings */
 * {
   font-family: var(--font-primary);
@@ -469,11 +420,6 @@ button {
   border: none;
   cursor: pointer;
   transition: var(--transition-normal);
-}
-
-/* Override for new-ui button (keeping original behavior for original UI) */
-.new-ui button {
-  /* If new UI needs different button styles, they can go here */
 }
 
 input[type="password"]::-ms-reveal,

@@ -1,0 +1,204 @@
+/* ========== VERTICAL SIDEBAR NAVIGATION ========== */
+.business-sidebar {
+    position: fixed;
+    left: 0;
+    top: 55px;
+    width: 220px;
+    height: calc(100vh - 68px);
+    background: white;
+    border-right: 2px solid #e1e5e9;
+    display: flex;
+    flex-direction: column;
+    z-index: 90;
+    overflow-y: auto;
+}
+
+[data-theme="dark"] .business-sidebar {
+    background: var(--color-bg-primary);
+    border-right-color: var(--color-border-secondary);
+}
+
+.business-sidebar-header {
+    padding: 20px 16px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #f8f9fa;
+}
+
+[data-theme="dark"] .business-sidebar-header {
+    background: var(--color-bg-secondary);
+    border-bottom-color: var(--color-border-secondary);
+}
+
+.business-sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .business-sidebar-title {
+    color: var(--color-text-dark);
+}
+
+.business-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 1px 0;
+}
+
+.business-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+    text-align: left;
+    width: 100%;
+    border-radius: 0px;
+}
+
+.business-sidebar-item:hover {
+    background: #f1f3f4;
+    color: #1a73e8;
+}
+
+[data-theme="dark"] .business-sidebar-item {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .business-sidebar-item:hover {
+    background: var(--color-bg-secondary);
+    color: #4a9eff;
+}
+
+.business-sidebar-item.active {
+    background: linear-gradient(135deg, rgba(26, 115, 232, 0.15) 0%, rgba(74, 158, 255, 0.1) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(26, 115, 232, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    position: relative;
+}
+
+.business-sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(26, 115, 232, 0.3) 50%,
+            transparent 100%);
+}
+
+[data-theme="dark"] .business-sidebar-item.active {
+    background: linear-gradient(135deg, rgba(74, 158, 255, 0.2) 0%, rgba(26, 115, 232, 0.15) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #4a9eff;
+    border-bottom-color: #4a9eff;
+    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .business-sidebar-item.active::before {
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(74, 158, 255, 0.4) 50%,
+            transparent 100%);
+}
+
+.sidebar-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.sidebar-label {
+    flex: 1;
+}
+
+/* Update main container to account for sidebar */
+.main-container {
+    margin-left: 220px !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .business-sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        max-height: 60px;
+        flex-direction: row;
+        border-right: none;
+        border-top: 2px solid #e1e5e9;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    [data-theme="dark"] .business-sidebar {
+        border-top-color: var(--color-border-secondary);
+    }
+
+    .business-sidebar-header {
+        display: none;
+    }
+
+    .business-sidebar-nav {
+        flex-direction: row;
+        padding: 0;
+        width: 100%;
+    }
+
+    .business-sidebar-item {
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 12px;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        flex: 1;
+        min-width: 70px;
+        font-size: 11px;
+    }
+
+    .business-sidebar-item.active {
+        border-left-color: transparent;
+        border-bottom-color: #1a73e8;
+    }
+
+    [data-theme="dark"] .business-sidebar-item.active {
+        border-bottom-color: #4a9eff;
+    }
+
+    .sidebar-icon {
+        font-size: 20px;
+    }
+
+    .sidebar-label {
+        font-size: 11px;
+    }
+
+    .main-container {
+        margin-left: 0 !important;
+        margin-bottom: 60px;
+    }
+}

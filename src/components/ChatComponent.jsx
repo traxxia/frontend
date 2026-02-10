@@ -71,8 +71,15 @@ const ChatComponent = ({
 
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    if (!selectedBusinessId) return;
+
+    // Reset local state for fresh load
+    setMessages([]);
+    setQuestions([]);
+    setCompletedQuestions(new Set());
+    setNextQuestion(null);
+    setPendingValidation(null);
+
     loadQuestionsAndConversations();
   }, [selectedBusinessId]);
 
@@ -1585,53 +1592,21 @@ const ChatComponent = ({
       uploadDate: 'Previously uploaded'
     };
 
-    return (<div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-      <div ref={uploadedFileCardRef}
-        style={{
-          backgroundColor: '#f0f9ff',
-          border: '1px solid rgb(26, 115, 232)',
-          borderRadius: '8px',
-          padding: '5px',
-          margin: '5px 0',
-          width: 'max-content',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FileText size={20} color="rgb(26, 115, 232)" />
-          <div>
-            <div style={{ fontWeight: '500', color: '#0f172a' }}>
-              {displayInfo.name}
-            </div>
-            <div style={{ fontSize: '12px', color: '#64748b' }}>
-              Uploaded: {displayInfo.uploadDate}
-            </div>
+    return (
+      <div className="file-card-wrapper">
+        <div ref={uploadedFileCardRef} className="uploaded-file-card">
+          <div className="bot-avatar" style={{ width: '30px', height: '30px' }}>
+            <FileText size={16} color="white" />
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={handleFileReplace}
-            style={{
-              backgroundColor: 'rgb(26, 115, 232)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              cursor: 'pointer',
-              fontWeight: '500',
-              margin: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <Upload size={14} />
+          <div className="file-info-content">
+            <div className="file-info-main">{displayInfo.name}</div>
+            <div className="file-info-sub">Uploaded: {displayInfo.uploadDate}</div>
+          </div>
+          <button onClick={handleFileReplace} className="btn-change-file">
             Change
           </button>
         </div>
-      </div></div>
+      </div>
     );
   };
 
@@ -1685,28 +1660,11 @@ const ChatComponent = ({
                     </div>
 
                     {!isViewer && message.showUploadButtons && !hasUploadedDocument && (
-                      <div className="upload-decision-buttons" style={{
-                        display: 'flex',
-                        gap: '12px',
-                        marginTop: '12px',
-                        flexWrap: 'wrap'
-                      }}>
+                      <div className="upload-decision-buttons">
                         <button
                           onClick={() => handleUploadDecision('upload')}
                           disabled={isFileUploading}
-                          style={{
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
+                          className="btn-upload"
                         >
                           <Database size={16} />
                           Upload Financial Data
@@ -1714,16 +1672,7 @@ const ChatComponent = ({
                         <button
                           onClick={() => handleUploadDecision('skip')}
                           disabled={isFileUploading}
-                          style={{
-                            backgroundColor: '#6b7280',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                          }}
+                          className="btn-skip"
                         >
                           Skip & Continue
                         </button>
@@ -1731,26 +1680,11 @@ const ChatComponent = ({
                     )}
 
                     {!isViewer && message.showUploadButton && !hasUploadedDocument && (
-                      <div style={{
-                        display: 'flex',
-                        marginTop: '12px'
-                      }}>
+                      <div className="upload-decision-buttons">
                         <button
                           onClick={() => setShowTemplatesPopup(true)}
                           disabled={isFileUploading}
-                          style={{
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
+                          className="btn-upload"
                         >
                           <Database size={16} />
                           Upload Financial Data
@@ -1759,11 +1693,10 @@ const ChatComponent = ({
                     )}
 
                     <div className="message-timestamp">
+                      <Sparkles size={10} style={{ opacity: 0.5 }} />
                       {formatDate(message.timestamp)}
                       {message.type === 'bot' && message.phase && (
-                        <span style={{ fontStyle: 'italic' }}>
-                          - {message.phase} phase{message.isFollowUp && ' followup'}
-                        </span>
+                        <span>• {message.phase} phase</span>
                       )}
                     </div>
                   </div>
@@ -1859,41 +1792,6 @@ const ChatComponent = ({
         onFileUploaded={handleFileUploadFromPopup}
         isFileUploading={isFileUploading}
       />
-      {showSuccessAlert && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#10b981',
-          color: 'white',
-          padding: '16px 24px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          zIndex: 10000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          fontSize: '16px',
-          fontWeight: '500'
-        }}>
-          <span style={{ fontSize: '24px' }}>🎉</span>
-          Financial document uploaded successfully!
-          <button
-            onClick={() => setShowSuccessAlert(false)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '18px',
-              marginLeft: '8px'
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
     </div>
   );
 };

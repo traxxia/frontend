@@ -26,15 +26,19 @@ import BusinessOverview from "./BusinessOverview";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
-const SuperAdminPanel = () => {
+const SuperAdminPanel = ({ activeTab: propActiveTab }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("companies");
+  const [internalActiveTab, setInternalActiveTab] = useState("companies");
   const [showToast, setShowToast] = useState({
     show: false,
     message: "",
     type: "success",
   });
   const [userRole, setUserRole] = useState("");
+
+  // Use the activeTab from props if provided, otherwise fallback to internal state
+  const activeTab = propActiveTab || internalActiveTab;
+  const setActiveTab = propActiveTab ? () => { } : setInternalActiveTab;
 
   useEffect(() => {
     const userRoleStored = sessionStorage.getItem("userRole");
@@ -48,40 +52,7 @@ const SuperAdminPanel = () => {
     }, 4000);
   };
 
-  const handleBack = () => {
-    window.history.back();
-  };
-
   const isSuperAdmin = userRole === "super_admin";
-
-  const allTabs = [
-    { id: "companies", label: isSuperAdmin ? t('companies') : t('company'), icon: Building2 },
-    { id: "businesses", label: t('businesses') || "Businesses", icon: Building2 },
-    { id: "user_management", label: t('user_management'), icon: CircleUserRound },
-    {
-      id: "access_management",
-      label: t('access_management'),
-      icon: Key,
-      adminOnly: true
-    },
-
-    { id: "history", label: t('user_history'), icon: History },
-    { id: "audit", label: t('audit_trail'), icon: Activity },
-    {
-      id: "questions",
-      label: t('questions'),
-      icon: HelpCircle,
-      superAdminOnly: true,
-    }
-  ];
-
-  const tabs = allTabs.filter((tab) => {
-    if (tab.superAdminOnly && !isSuperAdmin) return false;
-
-    if (tab.adminOnly && userRole !== 'company_admin') return false;
-
-    return true;
-  });
 
   const renderContent = () => {
     switch (activeTab) {
@@ -110,65 +81,21 @@ const SuperAdminPanel = () => {
     }
   };
 
-  const panelTitle = isSuperAdmin ? t("super_admin_panel") : t("Admin_Panel");
-  const HeaderIcon = isSuperAdmin ? Shield : Settings;
-
   useEffect(() => {
-    if (activeTab === "questions" && !isSuperAdmin) {
-      setActiveTab("companies");
+    if (activeTab === "questions" && !isSuperAdmin && !propActiveTab) {
+      setInternalActiveTab("companies");
     }
-  }, [activeTab, isSuperAdmin]);
+  }, [activeTab, isSuperAdmin, propActiveTab]);
 
   return (
-    <div className="super-admin-container">
+    <div className="super-admin-panel-v2">
       {showToast.show && (
         <div className={`simple-toast ${showToast.type}`}>
           {showToast.message}
         </div>
       )}
 
-      <div className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            {!isSuperAdmin && (
-              <button className="back-button" onClick={handleBack}>
-                <ArrowLeft size={18} />
-              </button>
-            )}
-            <div className="header-title">
-              <HeaderIcon size={24} className="header-icon" />
-              <h1>{panelTitle}</h1>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="admin-nav"
-        style={{
-          display: "flex",
-          gap: "10px",
-          overflowX: "auto",
-          whiteSpace: "nowrap",
-          scrollbarWidth: "thin",
-        }}
-      >
-        {tabs.map((tab) => {
-          const IconComponent = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <IconComponent size={20} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="admin-content">{renderContent()}</div>
+      <div className="admin-content-v2">{renderContent()}</div>
     </div>
   );
 };
