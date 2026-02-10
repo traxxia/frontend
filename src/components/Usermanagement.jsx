@@ -225,6 +225,12 @@ const UserManagement = ({ onToast }) => {
   }, [isSuperAdmin]);
 
   const handleRoleUpdate = async (userId, role) => {
+    const userPlan = sessionStorage.getItem("userPlan");
+    if (userPlan === 'essential' && role.toLowerCase() === 'collaborator') {
+      onToast("Your plan doesn't support collaborators. Upgrade to Advanced to assign team members.", "error");
+      return;
+    }
+
     try {
       await axios.put(
         `${BACKEND_URL}/api/admin/users/${userId}/role`,
@@ -659,7 +665,17 @@ const UserManagement = ({ onToast }) => {
                   <option>Viewer</option>
                 </Form.Select>
 
-                <Button className="add-user-btn d-flex align-items-center" onClick={handleOpenModal}>
+                <Button
+                  className="add-user-btn d-flex align-items-center"
+                  onClick={() => {
+                    const userPlan = sessionStorage.getItem("userPlan");
+                    if (userPlan === 'essential') {
+                      onToast("Your current plan doesn't support adding more users. Upgrade to Advanced to expand your team.", "error");
+                    } else {
+                      handleOpenModal();
+                    }
+                  }}
+                >
                   <Plus size={16} className="me-2" />
                   {t("Add_User")}
                 </Button>
@@ -667,7 +683,14 @@ const UserManagement = ({ onToast }) => {
                 {!isSuperAdmin && (<>
                   <Button
                     className="add-user-btn d-flex align-items-center"
-                    onClick={handleOpenAssignModal}
+                    onClick={() => {
+                      const userPlan = sessionStorage.getItem("userPlan");
+                      if (userPlan === 'essential') {
+                        onToast("Your plan doesn't support collaborators. Upgrade to Advanced to assign team members in this panel.", "error");
+                      } else {
+                        handleOpenAssignModal();
+                      }
+                    }}
                   >
                     <User size={16} className="me-2" />
                     {t("Collaborator")}

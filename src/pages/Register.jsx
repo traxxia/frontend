@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaTimes, FaAngleLeft, FaSpinner } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTimes, FaAngleLeft, FaSpinner, FaCheckCircle, FaBuilding, FaUserPlus } from 'react-icons/fa';
 import '../styles/Register.css';
 import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
 
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import RegistrationToggle from '../components/RegistrationToggle';
+import PricingPlanCard from '../components/PricingPlanCard';
+
 
 const Register = () => {
   const navigate = useNavigate();
@@ -17,9 +20,15 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     company_id: '',
+    company_name: '',
     job_title: '',
     terms: false,
   });
+  const [isNewCompany, setIsNewCompany] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [loadingPlans, setLoadingPlans] = useState(true);
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +48,25 @@ const Register = () => {
 
   useEffect(() => {
     fetchCompanies();
+    fetchPlans();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchPlans = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/plans`);
+      if (response.data.plans) {
+        setPlans(response.data.plans);
+        // Default select Essential if available
+        const essential = response.data.plans.find(p => p.name === 'Essential');
+        if (essential) setSelectedPlanId(essential._id);
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
 
   const fetchCompanies = async () => {
     setLoadingCompanies(true);
@@ -112,9 +139,17 @@ const Register = () => {
     }
 
     // Company validation
-    if (!form.company_id) {
+    if (isNewCompany) {
+      if (!form.company_name.trim()) {
+        newErrors.company_name = 'Company name is required';
+      }
+      if (!selectedPlanId) {
+        newErrors.selectedPlanId = 'Please select a pricing plan';
+      }
+    } else if (!form.company_id) {
       newErrors.company_id = t('Company_selection_is_required');
     }
+
 
     // Password validation
     if (!form.password) {
@@ -164,7 +199,8 @@ const Register = () => {
     try {
       // Double-check all mandatory fields are filled before API call
       if (!form.name.trim() || !form.email.trim() || !form.password ||
-        !form.confirmPassword || !form.company_id || !form.terms) {
+        !form.confirmPassword || (!isNewCompany && !form.company_id) ||
+        (isNewCompany && (!form.company_name.trim() || !selectedPlanId)) || !form.terms) {
         throw new Error('All mandatory fields must be completed including terms acceptance');
       }
 
@@ -173,10 +209,17 @@ const Register = () => {
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
-        company_id: form.company_id,
-        terms_accepted: form.terms, // Required by backend API
-        job_title: form.job_title.trim() || undefined // Optional field
+        terms_accepted: form.terms,
+        job_title: form.job_title.trim() || undefined
       };
+
+      if (isNewCompany) {
+        userData.company_name = form.company_name.trim();
+        userData.plan_id = selectedPlanId;
+      } else {
+        userData.company_id = form.company_id;
+      }
+
 
       // Call registration API
       const response = await axios.post(`${API_BASE_URL}/api/register`, userData);
@@ -193,9 +236,12 @@ const Register = () => {
         password: '',
         confirmPassword: '',
         company_id: '',
+        company_name: '',
         job_title: '',
         terms: false,
       });
+      setIsNewCompany(false);
+
 
       // Redirect to login page after showing success message
       setTimeout(() => {
@@ -314,43 +360,89 @@ const Register = () => {
                 {errors.email && <div className="error-message">{errors.email}</div>}
               </div>
 
-              <div className="form-group1">
-                <label>{t('company')} *</label>
-                {loadingCompanies ? (
-                  <div className="loading-select">
-                    <FaSpinner className="spinner" />
-                    Loading companies...
+              {isNewCompany ? (
+                <div className="form-group1">
+                  <div className="field-header">
+                    <label>Company Name *</label>
+                    <RegistrationToggle isNewCompany={isNewCompany} setIsNewCompany={setIsNewCompany} />
                   </div>
-                ) : companiesError ? (
-                  <div className="company-error">
-                    <div className="error-message">{companiesError}</div>
-                    <button
-                      type="button"
-                      onClick={retryFetchCompanies}
-                      className="retry-button"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                ) : (
-                  <select
-                    name="company_id"
-                    value={form.company_id}
+                  <input
+                    type="text"
+                    name="company_name"
+                    placeholder="Enter your company name"
+                    value={form.company_name}
                     onChange={handleChange}
-                    className={errors.company_id ? 'error' : ''}
+                    className={errors.company_name ? 'error' : ''}
                     required
-                  >
-                    <option value="">{t('select_a_company')}</option>
-                    {companies.map((company) => (
-                      <option key={company._id} value={company._id}>
-                        {company.company_name}
-                        {company.industry && ` - ${company.industry}`}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {errors.company_id && <div className="error-message">{errors.company_id}</div>}
-              </div>
+                  />
+                  {errors.company_name && <div className="error-message">{errors.company_name}</div>}
+                </div>
+              ) : (
+                <div className="form-group1">
+                  <div className="field-header">
+                    <label>{t('company')} *</label>
+                    <RegistrationToggle isNewCompany={isNewCompany} setIsNewCompany={setIsNewCompany} />
+                  </div>
+                  {loadingCompanies ? (
+                    <div className="loading-select">
+                      <FaSpinner className="spinner" />
+                      Loading companies...
+                    </div>
+                  ) : companiesError ? (
+                    <div className="company-error">
+                      <div className="error-message">{companiesError}</div>
+                      <button
+                        type="button"
+                        onClick={retryFetchCompanies}
+                        className="retry-button"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      name="company_id"
+                      value={form.company_id}
+                      onChange={handleChange}
+                      className={errors.company_id ? 'error' : ''}
+                      required
+                    >
+                      <option value="">{t('select_a_company')}</option>
+                      {companies.map((company) => (
+                        <option key={company._id} value={company._id}>
+                          {company.company_name}
+                          {company.industry && ` - ${company.industry}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {errors.company_id && <div className="error-message">{errors.company_id}</div>}
+                </div>
+              )}
+
+              {isNewCompany && (
+                <div className="pricing-strategy-section">
+                  <label className="section-label">Pricing Strategy *</label>
+                  {loadingPlans ? (
+                    <div className="loading-plans">
+                      <FaSpinner className="spinner" /> Loading plans...
+                    </div>
+                  ) : (
+                    <div className="plans-grid">
+                      {plans.map((plan) => (
+                        <PricingPlanCard
+                          key={plan._id}
+                          plan={plan}
+                          isSelected={selectedPlanId === plan._id}
+                          onSelect={setSelectedPlanId}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
+                </div>
+              )}
+
 
               <div className="form-group1">
                 <label>{t('job_title')} ({t('optional')})</label>

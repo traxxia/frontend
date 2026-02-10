@@ -81,6 +81,17 @@ const StrategicAnalysis = ({
       const token = sessionStorage.getItem("token");
       const userId = sessionStorage.getItem("userId");
 
+      const userPlan = sessionStorage.getItem("userPlan");
+
+      if (userPlan === 'essential') {
+        const msg = "If you need to create / initiate projects, upgrade to advanced";
+        setKickstartError(msg);
+        if (onToastMessage) {
+          onToastMessage(msg, 'error');
+        }
+        return;
+      }
+
       setKickstartError('');
 
       if (!token || !selectedBusinessId || !userId || !localStrategicData) {
