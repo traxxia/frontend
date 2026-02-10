@@ -16,16 +16,22 @@ import {
   Info, X, Trash2
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
+import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import PMFInsights from "../components/PMFInsights";
 import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
+
+const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
@@ -212,10 +218,12 @@ const Dashboard = () => {
         await fetchBusinesses();
         setShowCreateModal(false);
 
+        // Show PMF Onboarding modal after successful business creation (only if enabled)
         setTimeout(() => {
           setShowSuccessPopup(false);
           setSuccessMessage('');
-        }, 4000);
+          if (ENABLE_PMF) setShowPMFOnboarding(true);
+        }, 2000);
       } else {
         console.error('Create business error:', data);
 
@@ -523,8 +531,20 @@ const Dashboard = () => {
   // Main render
   return (
     <div className="dashboard-layout">
-      <MenuBar />
 
+  {/* FULL PAGE PMF INSIGHTS */}
+  {showInsights ? (
+    ENABLE_PMF ? (
+      <PMFInsights
+        onContinue={() => {
+          setShowInsights(false);
+          navigate("/businesspage");
+        }}
+      />
+    ) : null
+  ) : (
+    <>
+      <MenuBar />
       <Container fluid className="p-0 main-content">
         <div className="responsive-view-container">
           <Row className="h-100 justify-content-center">
@@ -892,6 +912,18 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* PMF Onboarding Modal */}
+      {ENABLE_PMF && (
+        <PMFOnboardingModal
+          show={showPMFOnboarding}
+          onHide={() => setShowPMFOnboarding(false)}
+          onSubmit={(pmfFormData) => {
+            setShowPMFOnboarding(false);
+            setShowInsights(true);
+          }}
+        />
+      )}
+
       {/* Create Business Modal */}
       <Modal show={showCreateModal} onHide={handleCloseCreateModal} centered size="lg" backdrop="static">
         <Modal.Header closeButton>
@@ -1126,7 +1158,12 @@ const Dashboard = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+          </>
+  )}
+
     </div>
+    
+
   );
 };
 
