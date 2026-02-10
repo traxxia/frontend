@@ -15,7 +15,7 @@ const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
                 <span className="plan-name">{plan.name}</span>
                 <div className="plan-price">
                     <span className="currency">$</span>
-                    <span className="amount">{plan.price}</span>
+                    <span className="amount">{plan.price || plan.price_usd}</span>
                     <span className="period">/mo</span>
                 </div>
             </div>

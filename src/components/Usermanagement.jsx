@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown, Modal, InputGroup } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Search, Plus, Eye, EyeOff } from "lucide-react";
 import "../styles/usermanagement.css";
+import UpgradeModal from "./UpgradeModal";
 import axios from "axios";
 import Pagination from "../components/Pagination";
 import { useTranslation } from '../hooks/useTranslation';
@@ -35,6 +36,7 @@ const CustomToggle = React.forwardRef(({ onClick }, ref) => (
 const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -670,7 +672,7 @@ const UserManagement = ({ onToast }) => {
                   onClick={() => {
                     const userPlan = sessionStorage.getItem("userPlan");
                     if (userPlan === 'essential') {
-                      onToast("Your current plan doesn't support adding more users. Upgrade to Advanced to expand your team.", "error");
+                      setShowUpgradeModal(true);
                     } else {
                       handleOpenModal();
                     }
@@ -686,7 +688,7 @@ const UserManagement = ({ onToast }) => {
                     onClick={() => {
                       const userPlan = sessionStorage.getItem("userPlan");
                       if (userPlan === 'essential') {
-                        onToast("Your plan doesn't support collaborators. Upgrade to Advanced to assign team members in this panel.", "error");
+                        setShowUpgradeModal(true);
                       } else {
                         handleOpenAssignModal();
                       }
@@ -1312,6 +1314,13 @@ const UserManagement = ({ onToast }) => {
             </Button>
           </Modal.Footer>
         </Modal>
+        <UpgradeModal
+          show={showUpgradeModal}
+          onHide={() => setShowUpgradeModal(false)}
+          onUpgradeSuccess={(updatedSub) => {
+            onToast(`Successfully upgraded to ${updatedSub.plan} plan!`, 'success');
+          }}
+        />
       </div >
     </div >
   );
