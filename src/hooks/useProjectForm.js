@@ -24,9 +24,9 @@ export const useProjectForm = () => {
   const [keyAssumptions, setKeyAssumptions] = useState(["", "", ""]); // Max 3
   const [successCriteria, setSuccessCriteria] = useState("");
   const [killCriteria, setKillCriteria] = useState("");
-  const [reviewCadence, setReviewCadence] = useState("Monthly");
-  const [learningState, setLearningState] = useState("Testing");
-  const [status, setStatus] = useState("Draft");
+  const [reviewCadence, setReviewCadence] = useState("");
+  const [learningState, setLearningState] = useState("");
+  const [status, setStatus] = useState("");
   const [lastReviewed, setLastReviewed] = useState(null);
 
   const resetForm = useCallback(() => {
@@ -51,9 +51,9 @@ export const useProjectForm = () => {
     setKeyAssumptions(["", "", ""]);
     setSuccessCriteria("");
     setKillCriteria("");
-    setReviewCadence("Monthly");
-    setLearningState("Testing");
-    setStatus("Draft");
+    setReviewCadence("");
+    setLearningState("");
+    setStatus("");
     setLastReviewed(null);
 
     setOpenDropdown(null);
@@ -77,17 +77,18 @@ export const useProjectForm = () => {
     setBudget(project.budget_estimate || "");
 
     // Load Strategic Core
-    setStrategicDecision(project.strategic_decision || "");
+    // Ensure strategic decision field shows the project name for consistency in v2
+    setStrategicDecision(project.strategic_decision || project.project_name || "");
     setAccountableOwner(project.accountable_owner || "");
     setKeyAssumptions(project.key_assumptions && project.key_assumptions.length > 0 ? project.key_assumptions : ["", "", ""]);
     setSuccessCriteria(project.success_criteria || "");
     setKillCriteria(project.kill_criteria || "");
-    setReviewCadence(project.review_cadence || "Monthly");
-    setLearningState(project.learning_state || "Testing");
+    setReviewCadence(project.review_cadence || "");
+    setLearningState(project.learning_state || "");
 
     // Normalize status string to match UI options (capitalized)
-    const rawStatus = (project.status || "Draft").toLowerCase();
-    let normalizedStatus = "Draft";
+    const rawStatus = (project.status || "").toLowerCase();
+    let normalizedStatus = "";
     if (rawStatus === "active") normalizedStatus = "Active";
     else if (rawStatus === "at risk" || rawStatus === "at_risk") normalizedStatus = "At Risk";
     else if (rawStatus === "paused") normalizedStatus = "Paused";
