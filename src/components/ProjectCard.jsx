@@ -61,7 +61,7 @@ const ProjectCard = ({
   };
 
   return (
-    <div className={`project-card ${project.status?.toLowerCase().replace(" ", "-") || "draft"}-border`}>
+    <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       {finalizeCompleted && (
         <div className="project-serial-number">
           {rankMap[String(project._id)] ?? index + 1}
@@ -114,7 +114,7 @@ const ProjectCard = ({
         {/* Row 1: Status & Learning State */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
           <span className="status-badge">
-            {project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft"))}
+            {project.status?.toLowerCase() === "launched" ? t("Draft") : (project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft")))}
           </span>
           {/* <span style={{ color: "#6b7280" }}>
             {t("State")}: <strong style={{ color: "#374151" }}>{project.learning_state ? t(project.learning_state) : t("Testing")}</strong>

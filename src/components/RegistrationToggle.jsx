@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const RegistrationToggle = ({ isNewCompany, setIsNewCompany }) => {
     return (
@@ -10,7 +11,11 @@ const RegistrationToggle = ({ isNewCompany, setIsNewCompany }) => {
                 onClick={() => setIsNewCompany(!isNewCompany)}
                 aria-label="Toggle between join and create"
             >
-                <span className="switch-knob"></span>
+                <motion.span
+                    className="switch-knob"
+                    animate={{ left: isNewCompany ? 16 : 2 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
             </button>
             <span className={isNewCompany ? 'active-label' : ''}>Create</span>
         </div>

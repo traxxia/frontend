@@ -45,6 +45,22 @@ const ProjectsSection = ({
 
   // NEW: Business-level status
   const [businessStatus, setBusinessStatus] = useState("draft");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const categories = [
+    { id: "All", label: t("all") || "All" },
+    { id: "Draft", label: t("Draft") || "Draft" },
+    { id: "Active", label: t("Active") || "Active" },
+    { id: "At Risk", label: t("At Risk") || "At Risk" },
+    { id: "Paused", label: t("Paused") || "Paused" },
+    { id: "Killed", label: t("Killed") || "Killed" },
+  ];
+
+  const onToggleTeamRankings = () => {
+    const newState = !showTeamRankings;
+    setShowTeamRankings(newState);
+    if (newState) setShowRankScreen(false);
+  };
 
   // UPDATED: This should reflect if the CURRENT USER has locked their ranking
   const [rankingsLocked, setRankingsLocked] = useState(false);
@@ -497,14 +513,10 @@ const ProjectsSection = ({
 
     const success = await deleteProject(projectId);
     if (success) {
-      handleShowToast("Project deleted successfully!", "success");
-      const updated = projects.filter((p) => p._id !== projectId);
-      setProjects(updated);
-      if (onProjectCountChange) {
-        onProjectCountChange(updated.length);
-      }
+      handleShowToast("Project killed successfully!", "success");
+      await loadProjects(); // Reload to get updated status/sorting
     } else {
-      handleShowToast("Failed to delete project.", "error");
+      handleShowToast("Failed to kill project.", "error");
     }
   };
 
@@ -619,12 +631,21 @@ const ProjectsSection = ({
             if (newState) setShowTeamRankings(false);
           }}
           showTeamRankings={showTeamRankings}
-          onToggleTeamRankings={() => {
-            const newState = !showTeamRankings;
-            setShowTeamRankings(newState);
-            if (newState) setShowRankScreen(false);
-          }}
+          onToggleTeamRankings={onToggleTeamRankings}
         />
+
+        <div className="projects-tabs-container">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              className={`projects-tab ${selectedCategory === cat.id ? "active" : ""}`}
+              onClick={() => setSelectedCategory(cat.id)}
+            >
+              {cat.label}
+              {selectedCategory === cat.id && <div className="tab-indicator" />}
+            </button>
+          ))}
+        </div>
 
         <RankProjectsPanel
           show={showRankScreen}
@@ -667,6 +688,7 @@ const ProjectsSection = ({
           onEdit={(project) => handleEditProject(project, "edit")}
           onView={(project) => handleEditProject(project, "view")}
           onDelete={handleDelete}
+          selectedCategory={selectedCategory}
         />
       </>
     );

@@ -871,7 +871,7 @@ const ProjectForm = ({
               options={[
                 { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
                 { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
-                { value: "At Risk", label: t("At_Risk"), icon: <Circle size={14} color="red" fill="red" /> },
+                { value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
                 { value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
                 { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
                 { value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
