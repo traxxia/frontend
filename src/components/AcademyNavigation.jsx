@@ -39,32 +39,34 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
     return (
         <div className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-            <div className="academy-nav-header">
-                <Link to="/academy" className="academy-home-link">
-                    <LucideIcons.BookOpen size={24} />
-                    <span>Traxxia Academy</span>
-                </Link>
-                {onCloseMobileMenu && (
-                    <button className="mobile-close-btn" onClick={onCloseMobileMenu}>
-                        <LucideIcons.X size={24} />
-                    </button>
-                )}
-            </div>
-
-            <div className="academy-nav-search">
-                <div className="search-input-wrapper">
-                    <LucideIcons.Search size={16} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Search documentation..."
-                        className="academy-search-input"
-                        disabled
-                        title="Search coming in future update"
-                    />
+            <div className="academy-nav-sticky-top">
+                <div className="academy-nav-header">
+                    <Link to="/academy" className="academy-home-link">
+                        <LucideIcons.BookOpen size={24} />
+                        <span>Traxxia Academy</span>
+                    </Link>
+                    {onCloseMobileMenu && (
+                        <button aria-label="Close navigation menu" className="mobile-close-btn" onClick={onCloseMobileMenu}>
+                            <LucideIcons.X size={24} />
+                        </button>
+                    )}
                 </div>
-                <div className="search-hint">
-                    <LucideIcons.Sparkles size={14} />
-                    <span>Academy Assistant coming soon!</span>
+
+                <div className="academy-nav-search">
+                    <div className="search-input-wrapper">
+                        <LucideIcons.Search size={16} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search documentation..."
+                            className="academy-search-input"
+                            disabled
+                            title="Search coming in future update"
+                        />
+                    </div>
+                    <div className="search-hint">
+                        <LucideIcons.Sparkles size={14} />
+                        <span>Academy Assistant coming soon!</span>
+                    </div>
                 </div>
             </div>
 

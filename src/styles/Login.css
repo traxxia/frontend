@@ -6,6 +6,7 @@
   position: absolute;
   top: var(--spacing-xl);
   right: var(--spacing-xl);
+  z-index: 10;
 }
 
 
@@ -666,6 +667,7 @@
 
   .theme-icon-toggle {
     left: 20px;
+    right: auto;
   }
 
   .login-box {
@@ -701,8 +703,9 @@
     height: 18px;
   }
 
-   .company-branding {
-    padding-top: 40px; /* space for language dropdown */
+  .company-branding {
+    padding-top: 40px;
+    /* space for language dropdown */
   }
 
   .logo {
