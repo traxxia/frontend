@@ -70,6 +70,8 @@ const StrategicAnalysis = ({
   const cardId = 'strategic-analysis';
   const isExpanded = true;
 
+  const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+
   const [localStrategicData, setLocalStrategicData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -2576,9 +2578,11 @@ const StrategicAnalysis = ({
       data-analysis-name="Strategic Analysis"
       data-analysis-order="10"
     >
-      {!hideKickstart && canShowKickstart && !hasKickstarted && !hasProjectsTab && (
+      {ENABLE_PMF ? null : (
+      !hideKickstart && canShowKickstart && !hasKickstarted && !hasProjectsTab && (
         <KickstartProjectsCard onKickstart={handleKickstart} />
-      )}
+      )
+    )}
       <div className="dashboard-container">
         {renderStrategicContent()}
       </div>

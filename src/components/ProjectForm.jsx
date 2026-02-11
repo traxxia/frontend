@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -90,8 +90,7 @@ const themeOptions = [
     icon: <Boxes size={16} color="#fb923c" />,
   },
 ];
-
-const SelectField = ({
+const SelectField = forwardRef(({
   label,
   icon,
   options,
@@ -103,7 +102,9 @@ const SelectField = ({
   fieldName,
   onFieldFocus,
   onFieldEdit,
-}) => {
+  required = false,
+  error = null,
+}, ref) => {
   const dropdownRef = useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -117,16 +118,21 @@ const SelectField = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, setOpen]);
 
+  // Combine refs if needed, but here we just need ref for scrolling
   return (
-    <div className="sf-wrapper" ref={dropdownRef}>
+    <div className="sf-wrapper" ref={(node) => {
+      dropdownRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+    }} tabIndex={-1}>
       {label && (
         <label className="sf-label">
-          {icon} {label}
+          {icon} {label} {required && <span className="required">*</span>}
         </label>
       )}
       <div className="sf-dropdown-wrapper">
         <div
-          className="sf-dropdown-header"
+          className={`sf-dropdown-header ${error ? "error" : ""}`}
           onClick={() => {
             if (disabled) return;
             onFieldFocus?.(fieldName);
@@ -163,13 +169,15 @@ const SelectField = ({
           </div>
         )}
       </div>
+      {error && <small className="error-text" style={{ display: 'block', marginTop: '4px' }}>{error}</small>}
     </div>
   );
-};
+});
 
 // Reusable Input Field Component
 const InputField = forwardRef(({
   label,
+  subLabel,
   value,
   onChange,
   placeholder,
@@ -186,6 +194,7 @@ const InputField = forwardRef(({
       <div className="field-label-row">
         <label className="field-label">
           {label} {required && <span className="required">*</span>}
+          {subLabel && <small className="field-sub-label" style={{ display: 'block', fontWeight: 'normal', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{subLabel}</small>}
         </label>
         {maxLength && (
           <small className="text-muted" style={{ marginLeft: 'auto', fontSize: '10px' }}>
@@ -211,6 +220,7 @@ const InputField = forwardRef(({
 // Reusable Text Area Component
 const TextAreaField = forwardRef(({
   label,
+  subLabel,
   value,
   onChange,
   placeholder,
@@ -228,6 +238,7 @@ const TextAreaField = forwardRef(({
       <div className="field-label-row">
         <label className="field-label">
           {label} {required && <span className="required">*</span>}
+          {subLabel && <small className="field-sub-label" style={{ display: 'block', fontWeight: 'normal', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{subLabel}</small>}
         </label>
         {maxLength && (
           <small className="text-muted" style={{ marginLeft: 'auto', fontSize: '10px' }}>
@@ -304,6 +315,8 @@ const ProjectForm = ({
   setReviewCadence,
   status,
   setStatus,
+  learningState,
+  setLearningState,
   isSubmitting = false,
 }) => {
   const { t } = useTranslation();
@@ -321,6 +334,7 @@ const ProjectForm = ({
   const accountableOwnerRef = useRef(null);
   const successCriteriaRef = useRef(null);
   const killCriteriaRef = useRef(null);
+  const statusRef = useRef(null);
 
   const getTitle = () => {
     switch (mode) {
@@ -592,8 +606,8 @@ const ProjectForm = ({
       successCriteria: successValidation.isValid ? null : successValidation.message,
       killCriteria: killValidation.isValid ? null : killValidation.message,
       budget: budgetValidation.isValid ? null : budgetValidation.message,
+      status: (status && status.trim()) ? null : t("Status_is_required"),
     };
-
     setFieldErrors(errors);
     setShowErrors(true);
 
@@ -608,6 +622,7 @@ const ProjectForm = ({
       else if (errors.accountableOwner) scrollToError(accountableOwnerRef);
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
+      else if (errors.status) scrollToError(statusRef);
       else if (errors.budget) scrollToError(budgetRef);
       return;
     }
@@ -719,33 +734,18 @@ const ProjectForm = ({
             </div>
           </div>
 
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">
-                {t("Why_This_Matters")} <span className="required">*</span>
-              </label>
-              {renderLockBadge("why_this_matters")}
-            </div>
-            <textarea
-              ref={importanceRef}
-              value={importance || ""}
-              onChange={handleImportanceChange}
-              placeholder="Explain why this project is strategically important to the business (minimum 10 characters)"
-              rows={3}
-              className={`field-textarea ${showErrors && fieldErrors.importance ? "error" : ""}`}
-              readOnly={isFieldDisabled("why_this_matters")}
-              onFocus={() => handleFieldFocus("why_this_matters")}
-              maxLength={1000}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {showErrors && fieldErrors.importance && (
-                <small className="error-text">{fieldErrors.importance}</small>
-              )}
-              <small className="text-muted" style={{ marginLeft: 'auto' }}>
-                {(importance || '').length}/1000 characters
-              </small>
-            </div>
-          </div>
+          <TextAreaField
+            ref={importanceRef}
+            label={t("Why_This_Matters")}
+            value={importance}
+            onChange={handleImportanceChange}
+            placeholder={t("Why_This_Matters_Placeholder")}
+            error={showErrors && fieldErrors.importance}
+            readOnly={isFieldDisabled("why_this_matters")}
+            onFocus={handleFieldFocus}
+            fieldName="why_this_matters"
+            required
+          />
         </div>
       </div>
 
@@ -788,7 +788,7 @@ const ProjectForm = ({
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">
-                {t("Key_Assumptions")} (Max 3)
+                {t("Key_Assumptions_Tested")} <span className="required">*</span>
               </label>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -816,7 +816,7 @@ const ProjectForm = ({
           <div className="grid-2">
             <TextAreaField
               ref={successCriteriaRef}
-              label={t("Success_Criteria")}
+              label={t("Continue_If_Label")}
               value={successCriteria}
               onChange={handleSuccessCriteriaChange}
               placeholder={t("Success_Criteria_Placeholder")}
@@ -829,7 +829,7 @@ const ProjectForm = ({
             />
             <TextAreaField
               ref={killCriteriaRef}
-              label={t("Kill_Criteria")}
+              label={t("Stop_If_Label")}
               value={killCriteria}
               onChange={handleKillCriteriaChange}
               placeholder={t("Kill_Criteria_Placeholder")}
@@ -842,15 +842,15 @@ const ProjectForm = ({
             />
           </div>
 
-          {/* Review Cadence & Status */}
-          <div className="grid-2" style={{ marginTop: "16px" }}>
+          {/* Review Cadence, Status & Learning State */}
+          <div className="grid-3" style={{ marginTop: "16px" }}>
             <SelectField
               label={t("Review_Cadence")}
               icon={<Clock size={16} />}
               options={[
+                { value: "Weekly", label: t("Weekly"), icon: <Clock size={14} /> }, 
                 { value: "Monthly", label: t("Monthly"), icon: <Clock size={14} /> },
                 { value: "Quarterly", label: t("Quarterly"), icon: <Clock size={14} /> },
-                { value: "Milestone", label: t("Milestone_based"), icon: <Clock size={14} /> },
               ]}
               value={reviewCadence}
               onChange={(val) => {
@@ -866,6 +866,7 @@ const ProjectForm = ({
             />
 
             <SelectField
+              ref={statusRef}
               label={t("Status")}
               icon={<TrendingUp size={16} />}
               options={[
@@ -880,11 +881,40 @@ const ProjectForm = ({
               onChange={(val) => {
                 setStatus(val);
                 handleFieldEdit("status");
+                if (showErrors) {
+                  setFieldErrors(prev => ({
+                    ...prev,
+                    status: (val && val.trim()) ? null : t("Status_is_required")
+                  }));
+                }
               }}
               open={openDropdown === "status"}
               setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
               disabled={isReadOnly}
               fieldName="status"
+              onFieldFocus={handleFieldFocus}
+              onFieldEdit={handleFieldEdit}
+              required
+              error={showErrors && fieldErrors.status}
+            />
+
+            <SelectField
+              label={t("Learning_State")}
+              icon={<Zap size={16} />}
+              options={[
+                { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" /> },
+                { value: "Validated", label: t("Validated"), icon: <CheckCircle size={14} color="green" /> },
+                { value: "Disproven", label: t("Disproven"), icon: <XCircle size={14} color="red" /> },
+              ]}
+              value={learningState}
+              onChange={(val) => {
+                setLearningState(val);
+                handleFieldEdit("learning_state");
+              }}
+              open={openDropdown === "learning_state"}
+              setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
+              disabled={isFieldDisabled("learning_state") || isSubmitting}
+              fieldName="learning_state"
               onFieldFocus={handleFieldFocus}
               onFieldEdit={handleFieldEdit}
             />
