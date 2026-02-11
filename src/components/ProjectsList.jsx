@@ -1,7 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Row, Col } from "react-bootstrap";
-import { ChevronRight, ChevronDown, FolderOpen } from "lucide-react";
-import { useTranslation } from "../hooks/useTranslation";
 import ProjectCard from "./ProjectCard";
 
 const ProjectsList = ({
@@ -18,15 +16,15 @@ const ProjectsList = ({
   onEdit,
   onView,
   onDelete,
+  selectedCategory,
 }) => {
-  const { t } = useTranslation();
   const [showMenuId, setShowMenuId] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({});
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (event.target.closest(".project-menu-btn") || event.target.closest(".project-dropdown-menu")) {
+      // If the click is inside a menu-button or menu-dropdown, ignore
+      if (event.target.closest(".menu-button") || event.target.closest(".menu-dropdown")) {
         return;
       }
       setShowMenuId(null);
@@ -40,42 +38,28 @@ const ProjectsList = ({
     };
   }, [showMenuId]);
 
-  // Group projects by Status
+  // Group projects by v2 Status (case-insensitive)
   const groupedProjects = useMemo(() => {
     const groups = {
       "Draft": [],
       "Active": [],
       "At Risk": [],
       "Paused": [],
-      "Killed": [],
-      "Scaled": []
+      "Killed": []
     };
 
     sortedProjects.forEach(p => {
-      // Normalize and map API status to UI categories
-      const apiStatus = (p.status || "Draft").toLowerCase().trim();
-
-      let mappedStatus = "Draft";
-      if (apiStatus === "active") {
-        mappedStatus = "Active";
-      } else if (apiStatus === "at risk" || apiStatus === "at-risk") {
-        mappedStatus = "At Risk";
-      } else if (apiStatus === "paused") {
-        mappedStatus = "Paused";
-      } else if (apiStatus === "killed") {
-        mappedStatus = "Killed";
-      } else if (apiStatus === "scaled") {
-        mappedStatus = "Scaled";
-      } else if (apiStatus === "draft" || apiStatus === "prioritizing" || apiStatus === "prioritized") {
-        mappedStatus = "Draft";
+      const statusValue = (p.status || "Draft").toLowerCase();
+      if (statusValue === "active" ) {
+        groups["Active"].push(p);
+      } else if (statusValue === "at risk" || statusValue === "at_risk") {
+        groups["At Risk"].push(p);
+      } else if (statusValue === "paused") {
+        groups["Paused"].push(p);
+      } else if (statusValue === "killed") {
+        groups["Killed"].push(p);
       } else {
-        // Default fallback
-        mappedStatus = "Draft";
-      }
-
-      if (groups[mappedStatus]) {
-        groups[mappedStatus].push(p);
-      } else {
+        // Includes 'draft', 'launched', and any unknown fallback
         groups["Draft"].push(p);
       }
     });
@@ -83,81 +67,62 @@ const ProjectsList = ({
     return groups;
   }, [sortedProjects]);
 
-  const toggleSection = (status) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [status]: !prev[status]
-    }));
-  };
-
-  const renderGroup = (status, projects) => {
-    const isExpanded = !!expandedSections[status];
-    const count = projects.length;
-
+  const renderProjectGrid = (projects) => {
+    if (!projects || projects.length === 0) return null;
     return (
-      <div key={status} className={`project-status-group-v2 ${count === 0 ? 'empty-group' : ''} mb-3`}>
-        <div
-          className="project-status-header-v2"
-          onClick={() => toggleSection(status)}
-        >
-          <div className="status-header-left-v2">
-            <span className="expand-icon-wrapper-v2">
-              {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-            </span>
-            <span className="status-title-v2">{t(status)}</span>
-            <span className="status-count-v2">{count}</span>
-          </div>
-        </div>
-
-        {isExpanded && (
-          <div className="status-group-content-v2">
-            {count === 0 ? (
-              <div className="empty-category-v2">
-                <FolderOpen size={48} className="empty-icon-v2" />
-                <p>{t("No_projects_found")}</p>
-              </div>
-            ) : (
-              <Row className="g-4">
-                {projects.map((project, index) => (
-                  <Col
-                    xs={12}
-                    sm={12}
-                    md={isFinalizedView ? 12 : 6}
-                    lg={4}
-                    key={project._id}
-                  >
-                    <ProjectCard
-                      project={project}
-                      index={index}
-                      rankMap={rankMap}
-                      finalizeCompleted={finalizeCompleted}
-                      launched={launched}
-                      isViewer={isViewer}
-                      isEditor={isEditor}
-                      isDraft={isDraft}
-                      projectCreationLocked={projectCreationLocked}
-                      canEditProject={canEditProject}
-                      onEdit={onEdit}
-                      onView={onView}
-                      onDelete={onDelete}
-                      showMenuId={showMenuId}
-                      setShowMenuId={setShowMenuId}
-                    />
-                  </Col>
-                ))}
-              </Row>
-            )}
-          </div>
-        )}
-      </div>
+      <Row className="g-4">
+        {projects.map((project, index) => (
+          <Col
+            xs={12}
+            sm={12}
+            md={isFinalizedView ? 12 : 6}
+            lg={4}
+            key={project._id}
+          >
+            <ProjectCard
+              project={project}
+              index={index}
+              rankMap={rankMap}
+              finalizeCompleted={finalizeCompleted}
+              launched={launched}
+              isViewer={isViewer}
+              isEditor={isEditor}
+              isDraft={isDraft}
+              projectCreationLocked={projectCreationLocked}
+              canEditProject={canEditProject}
+              onEdit={onEdit}
+              onView={onView}
+              onDelete={onDelete}
+              showMenuId={showMenuId}
+              setShowMenuId={setShowMenuId}
+            />
+          </Col>
+        ))}
+      </Row>
     );
   };
 
-  const statusOrder = ["Draft", "Active", "At Risk", "Paused", "Killed", "Scaled"];
+  const getFilteredGroups = () => {
+    // Show flat rank-ordered list for "All"
+    if (!selectedCategory || selectedCategory === "All") {
+      return renderProjectGrid(sortedProjects);
+    }
+
+    // Show filtered group for specific status
+    const projects = groupedProjects[selectedCategory] || [];
+    if (projects.length === 0) {
+      return (
+        <div className="empty-category-message text-center py-5">
+          <p className="text-muted">No projects found in "{selectedCategory}" category.</p>
+        </div>
+      );
+    }
+    return renderProjectGrid(projects);
+  };
 
   return (
-    <div className={`projects-list-v2 ${isFinalizedView ? "finalized-view" : ""}`}>
-      {statusOrder.map(status => renderGroup(status, groupedProjects[status]))}
+    <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
+      {getFilteredGroups()}
     </div>
   );
 };
