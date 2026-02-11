@@ -259,7 +259,16 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["projects", "overview"],
-                    relatedArticles: []
+                    relatedArticles: ["project-category"]
+                },
+                {
+                    id: "project-category",
+                    title: "Project Category",
+                    path: "06-projects/02-project-category.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["projects", "status", "category"],
+                    relatedArticles: ["project-management-overview"]
                 },
 
             ]
