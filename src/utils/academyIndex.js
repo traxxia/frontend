@@ -399,6 +399,23 @@ export const academyStructure = {
                     relatedArticles: ["finalize-prioritization"]
                 }
             ]
+        },
+        {
+            id: "pricing",
+            title: "Pricing Strategy",
+            icon: "DollarSign",
+            description: "Understand Traxxia's SaaS model and tier features",
+            articles: [
+                {
+                    id: "pricing-strategy",
+                    title: "Pricing Strategy & Features",
+                    path: "15-pricing/01-pricing-strategy.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["pricing", "saas", "tiers"],
+                    relatedArticles: ["creating-an-account"]
+                }
+            ]
         }
     ]
 };
