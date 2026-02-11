@@ -16,6 +16,7 @@ const ProjectsList = ({
   onEdit,
   onView,
   onDelete,
+  selectedCategory,
 }) => {
   const [showMenuId, setShowMenuId] = useState(null);
 
@@ -37,81 +38,91 @@ const ProjectsList = ({
     };
   }, [showMenuId]);
 
-  // Group projects by v2 Status
+  // Group projects by v2 Status (case-insensitive)
   const groupedProjects = useMemo(() => {
     const groups = {
-      "Active Bets": [],
-      "Parked / Paused": [],
-      "Learned & Killed": [],
-      "Drafts": []
+      "Draft": [],
+      "Active": [],
+      "At Risk": [],
+      "Paused": [],
+      "Killed": []
     };
 
     sortedProjects.forEach(p => {
-      const status = p.status || "Draft";
-      if (status === "Active" || status === "At Risk" || status === "Scaled") {
-        groups["Active Bets"].push(p);
-      } else if (status === "Paused") {
-        groups["Parked / Paused"].push(p);
-      } else if (status === "Killed") {
-        groups["Learned & Killed"].push(p);
+      const statusValue = (p.status || "Draft").toLowerCase();
+      if (statusValue === "active" || statusValue === "scaled") {
+        groups["Active"].push(p);
+      } else if (statusValue === "at risk" || statusValue === "at_risk") {
+        groups["At Risk"].push(p);
+      } else if (statusValue === "paused") {
+        groups["Paused"].push(p);
+      } else if (statusValue === "killed") {
+        groups["Killed"].push(p);
       } else {
-        groups["Drafts"].push(p);
+        // Includes 'draft', 'launched', and any unknown fallback
+        groups["Draft"].push(p);
       }
     });
 
     return groups;
   }, [sortedProjects]);
 
-  const renderGroup = (title, projects) => {
-    if (projects.length === 0) return null;
+  const renderProjectGrid = (projects) => {
+    if (!projects || projects.length === 0) return null;
     return (
-      <div key={title} className="project-group mb-5">
-        {/* <h4 className="group-title mb-3" style={{ borderBottom: "1px solid #333", paddingBottom: "8px", color: "#888" }}>
-          {title} <span style={{ fontSize: "0.8em", opacity: 0.6 }}>({projects.length})</span>
-        </h4> */}
-        <Row className="g-4">
-          {projects.map((project, index) => (
-            <Col
-              xs={12}
-              sm={12}
-              md={isFinalizedView ? 12 : 6}
-              lg={4}
-              key={project._id}
-            >
-              <ProjectCard
-                project={project}
-                index={index}
-                rankMap={rankMap}
-                finalizeCompleted={finalizeCompleted}
-                launched={launched}
-                isViewer={isViewer}
-                isEditor={isEditor}
-                isDraft={isDraft}
-                projectCreationLocked={projectCreationLocked}
-                canEditProject={canEditProject}
-                onEdit={onEdit}
-                onView={onView}
-                onDelete={onDelete}
-                showMenuId={showMenuId}
-                setShowMenuId={setShowMenuId}
-              />
-            </Col>
-          ))}
-        </Row>
-      </div>
+      <Row className="g-4">
+        {projects.map((project, index) => (
+          <Col
+            xs={12}
+            sm={12}
+            md={isFinalizedView ? 12 : 6}
+            lg={4}
+            key={project._id}
+          >
+            <ProjectCard
+              project={project}
+              index={index}
+              rankMap={rankMap}
+              finalizeCompleted={finalizeCompleted}
+              launched={launched}
+              isViewer={isViewer}
+              isEditor={isEditor}
+              isDraft={isDraft}
+              projectCreationLocked={projectCreationLocked}
+              canEditProject={canEditProject}
+              onEdit={onEdit}
+              onView={onView}
+              onDelete={onDelete}
+              showMenuId={showMenuId}
+              setShowMenuId={setShowMenuId}
+            />
+          </Col>
+        ))}
+      </Row>
     );
+  };
+
+  const getFilteredGroups = () => {
+    // Show flat rank-ordered list for "All"
+    if (!selectedCategory || selectedCategory === "All") {
+      return renderProjectGrid(sortedProjects);
+    }
+
+    // Show filtered group for specific status
+    const projects = groupedProjects[selectedCategory] || [];
+    if (projects.length === 0) {
+      return (
+        <div className="empty-category-message text-center py-5">
+          <p className="text-muted">No projects found in "{selectedCategory}" category.</p>
+        </div>
+      );
+    }
+    return renderProjectGrid(projects);
   };
 
   return (
     <div className={`projects-list-wrapper ${isFinalizedView ? "finalized-view" : ""}`}>
-      {renderGroup("Active Bets", groupedProjects["Active Bets"])}
-      {renderGroup("Drafts", groupedProjects["Drafts"])}
-      {renderGroup("Parked / Paused", groupedProjects["Parked / Paused"])}
-      {renderGroup("Learned & Killed", groupedProjects["Learned & Killed"])}
-
-      {/* Fallback if all empty but logic implies we should show something? 
-          sortedProjects will handle empty state usually in parent. 
-      */}
+      {getFilteredGroups()}
     </div>
   );
 };

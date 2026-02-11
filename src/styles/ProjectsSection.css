@@ -192,6 +192,67 @@
   font-weight: 600;
   margin-bottom: 6px;
 }
+.field-row {
+  margin-top: 10px;
+}
+/* --------------------- */
+/* PROJECTS TABS          */
+/* --------------------- */
+.projects-tabs-container {
+  display: flex;
+  gap: 30px;
+  margin: 20px 0 30px 15px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0;
+}
+
+.projects-tab {
+  background: none;
+  border: none;
+  padding: 10px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.projects-tab:hover {
+  color: #2563eb;
+}
+
+.projects-tab.active {
+  color: #2563eb;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #2563eb;
+  border-radius: 3px 3px 0 0;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.empty-category-message {
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+}
 
 /* Buttons */
 .btn-new-project {
@@ -322,6 +383,11 @@
 .project-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.project-card.killed {
+  opacity: 0.6;
+  filter: grayscale(1);
 }
 
 .project-card-footer {
