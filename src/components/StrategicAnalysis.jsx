@@ -2579,10 +2579,13 @@ const StrategicAnalysis = ({
       data-analysis-order="10"
     >
       {ENABLE_PMF ? null : (
-      !hideKickstart && canShowKickstart && !hasKickstarted && !hasProjectsTab && (
-        <KickstartProjectsCard onKickstart={handleKickstart} />
-      )
-    )}
+        !hideKickstart && canShowKickstart && !hasKickstarted && !hasProjectsTab && (
+          <KickstartProjectsCard
+            onKickstart={handleKickstart}
+            isLocked={sessionStorage.getItem("userPlan") === 'essential'}
+          />
+        )
+      )}
       <div className="dashboard-container">
         {renderStrategicContent()}
       </div>

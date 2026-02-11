@@ -1026,8 +1026,17 @@ export const staticTranslations = {
     'State': 'State',
     'Testing': 'Testing',
     'Needs_Review': 'Needs Review',
-    'Reviewed_ago': 'Reviewed',
     'days_ago': 'days ago',
+
+    // ===========================
+    // SUBSCRIPTION
+    // ===========================
+    'subscription': 'Subscription',
+    'loading_subscription_details': 'Loading subscription details...',
+    'renews_on': 'Renews on',
+    'no_expiration': 'No expiration',
+    'upgrade_now': 'Upgrade Now',
+    'upgrade_successful': 'Upgrade successful!',
   },
 
 
@@ -2064,6 +2073,15 @@ export const staticTranslations = {
     'Reviewed_ago': 'Revisado hace',
     'days_ago': 'días',
 
+    // ===========================
+    // SUBSCRIPTION
+    // ===========================
+    'subscription': 'Suscripción',
+    'loading_subscription_details': 'Cargando detalles de suscripción...',
+    'renews_on': 'Se renueva el',
+    'no_expiration': 'Sin vencimiento',
+    'upgrade_now': 'Actualizar ahora',
+    'upgrade_successful': '¡Actualización exitosa!',
   }
 };
 

@@ -139,11 +139,40 @@
     cursor: pointer;
     padding: var(--spacing-xl);
     background-color: var(--color-bg-item);
-    margin-bottom: var(--spacing-lg);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--color-border-light);
     overflow: visible !important;
+    display: flex;
+    align-items: center;
+  }
+
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .status-badge.status-active {
+    background-color: #ecfdf5 !important;
+    color: #059669 !important;
+    border: 1px solid #10b981 !important;
+  }
+
+  .status-badge.status-archived {
+    background-color: #fffbeb !important;
+    color: #d97706 !important;
+    border: 1px solid #f59e0b !important;
+  }
+
+  .status-badge.status-deleted {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #ef4444 !important;
   }
 
   .business-item:hover {

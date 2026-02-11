@@ -50,7 +50,7 @@ const ProjectsHeader = ({
         </div>
 
         <div className="d-flex gap-2 flex-wrap justify-content-end align-items-center">
-          {isDraft && !isViewer && (
+          {isDraft && !isViewer && sessionStorage.getItem("userPlan") !== 'essential' && (
             <button onClick={onNewProject} className="btn-new-project">
               <Plus size={18} />
               {t("New_Project")}

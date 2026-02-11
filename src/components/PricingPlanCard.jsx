@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 
 const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
     const features = plan.name === 'Essential'
-        ? ['Full Strategic Insights', 'PMF Validation Flow', 'Unlimited Initiatives', '1 Workspace Limit']
-        : ['Everything in Essential', 'Up to 3 Workspaces', 'Initiative to Project Conversion', '3 Collaborator Seats'];
+        ? ['Full Strategic Insights', 'PMF Validation Flow', 'Unlimited Initiatives', '1 Workspace Limit (Single Business)']
+        : ['Everything in Essential', 'Up to 3 Workspaces', 'Convert Initiatives to Projects', '3 Collaborator Seats included', 'Execution Monitoring & Health Tracking'];
 
     return (
         <motion.div

@@ -81,7 +81,7 @@ const Dashboard = () => {
   // Fetch businesses on component mount
   useEffect(() => {
     fetchBusinesses();
-    fetchSubscriptionDetails();
+    //fetchSubscriptionDetails();
   }, []);
 
   const fetchSubscriptionDetails = async () => {
@@ -354,6 +354,11 @@ const Dashboard = () => {
 
   // Business Modal Functions
   const handleShowCreateModal = () => {
+    const userPlan = sessionStorage.getItem("userPlan");
+    if (userPlan === 'essential' && myBusinesses.length >= 1) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setShowCreateModal(true);
     setBusinessError('');
     setFormErrors({});
@@ -459,6 +464,14 @@ const Dashboard = () => {
     const totalQuestions = stats.total_questions || 0;
     const remainingQuestions = stats.pending_questions || 0;
 
+    const getStatusInfo = () => {
+      if (business.status === 'deleted') return { label: 'Deleted', className: 'status-deleted' };
+      if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
+      return { label: 'Active', className: 'status-active' };
+    };
+
+    const statusInfo = getStatusInfo();
+
     // Alternative 1: Simple Delete Button (Always Visible)
     const SimpleDeleteButton = () => {
       if (isViewer) return null; // 👈 HIDE FOR VIEWER
@@ -516,7 +529,12 @@ const Dashboard = () => {
             )}
           </small>
         </div>
-        {canDelete && <SimpleDeleteButton />}
+        <div className="d-flex align-items-center gap-2">
+          <span className={`status-badge ${statusInfo.className}`}>
+            {statusInfo.label}
+          </span>
+          {canDelete && <SimpleDeleteButton />}
+        </div>
       </div>
     );
   };
@@ -537,18 +555,14 @@ const Dashboard = () => {
       )}
       {!isLoadingBusinesses && businesses.length > 0 && businesses.map((business, index) => {
         const isDeleted = business.status === 'deleted';
+        const isArchived = business.access_mode === 'archived' || business.access_mode === 'hidden';
         return (
           <div key={business._id || index} className={isDeleted ? 'opacity-50' : ''} style={isDeleted ? { pointerEvents: isDeleted ? 'none' : 'auto' } : {}}>
             <DeleteButtonAlternatives
               business={business}
               viewType={viewType}
-              canDelete={canDelete && !isDeleted}
+              canDelete={canDelete && !isDeleted && !isArchived}
             />
-            {isDeleted && (
-              <div className="ps-3 pb-2">
-                <span className="badge bg-secondary">Deleted</span>
-              </div>
-            )}
           </div>
         );
       })}
