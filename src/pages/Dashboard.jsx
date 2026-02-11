@@ -60,6 +60,10 @@ const Dashboard = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [collaboratingBusinesses, setCollaboratingBusinesses] = useState([]);
 
+  // Deletion cooldown state
+  const [showCooldownModal, setShowCooldownModal] = useState(false);
+  const [cooldownMessage, setCooldownMessage] = useState('');
+
 
   // Tour modal state
   const [showHowModal, setShowHowModal] = useState(false);
@@ -192,7 +196,14 @@ const Dashboard = () => {
       } else {
         console.error('Delete business error:', data);
 
-        if (response.status === 401 || response.status === 403) {
+        if (response.status === 401) {
+          sessionStorage.clear();
+          navigate('/login');
+        } else if (response.status === 403 && data.error && data.error.includes('30 days')) {
+          setCooldownMessage(data.error);
+          setShowCooldownModal(true);
+          setShowDeleteModal(false);
+        } else if (response.status === 403) {
           sessionStorage.clear();
           navigate('/login');
         } else {
@@ -1211,6 +1222,33 @@ const Dashboard = () => {
               </Button>
             </Modal.Footer>
           </Modal>
+
+          {/* Deletion Cooldown Error Modal */}
+          <Modal show={showCooldownModal} onHide={() => setShowCooldownModal(false)} centered>
+            <Modal.Header closeButton>
+              <Modal.Title className="text-warning">
+                <Info size={20} className="me-2" />
+                {t('Action Restricted')}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Alert variant="warning">
+                {cooldownMessage || t('You cannot delete by 30 days. Please wait 30 more day(s).')}
+              </Alert>
+              <p>
+                {t('For security and policy reasons, you can only delete one business every 30 days.')}
+              </p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="primary"
+                onClick={() => setShowCooldownModal(false)}
+              >
+                {t('ok')}
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
           <UpgradeModal
             show={showUpgradeModal}
             onHide={() => setShowUpgradeModal(false)}
