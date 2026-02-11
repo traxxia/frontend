@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaCheckCircle } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 
 const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
     const features = plan.name === 'Essential'
@@ -7,9 +8,11 @@ const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
         : ['Everything in Essential', 'Up to 3 Workspaces', 'Initiative to Project Conversion', '3 Collaborator Seats'];
 
     return (
-        <div
+        <motion.div
             className={`plan-card ${isSelected ? 'selected' : ''}`}
             onClick={() => onSelect(plan._id)}
+            whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+            whileTap={{ scale: 0.98 }}
         >
             <div className="plan-header">
                 <span className="plan-name">{plan.name}</span>
@@ -29,7 +32,7 @@ const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
                 ))}
             </ul>
             {isSelected && <div className="selected-indicator">Selected</div>}
-        </div>
+        </motion.div>
     );
 };
 
