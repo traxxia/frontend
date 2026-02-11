@@ -22,6 +22,7 @@ import "../styles/dashboard.css";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
+import UpgradeModal from '../components/UpgradeModal';
 
 const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
 
@@ -66,6 +67,7 @@ const Dashboard = () => {
   // Custom menu state for alternatives
   const [showCustomMenu, setShowCustomMenu] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const myBusinesses = businesses.filter(
     b => Boolean(b.has_projects) === false
   );
@@ -79,7 +81,33 @@ const Dashboard = () => {
   // Fetch businesses on component mount
   useEffect(() => {
     fetchBusinesses();
+    fetchSubscriptionDetails();
   }, []);
+
+  const fetchSubscriptionDetails = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Show success popup with subscription info
+        const expiryDate = data.expires_at ? new Date(data.expires_at).toLocaleDateString() : 'N/A';
+        setSuccessMessage(`Welcome! Your ${data.plan} plan is active until ${expiryDate}.`);
+        setShowSuccessPopup(true);
+        setTimeout(() => setShowSuccessPopup(false), 5000);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription details:', error);
+    }
+  };
 
   // API Functions
   const fetchBusinesses = async () => {
@@ -227,9 +255,11 @@ const Dashboard = () => {
       } else {
         console.error('Create business error:', data);
 
-        if (response.status === 401 || response.status === 403) {
+        if (response.status === 401) {
           sessionStorage.clear();
           navigate('/login');
+        } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
+          setShowUpgradeModal(true);
         } else {
           setBusinessError(data.error || t('failed_to_create_business'));
         }
@@ -505,14 +535,23 @@ const Dashboard = () => {
           <small>{t('get_started_by_creating')}</small>
         </div>
       )}
-      {!isLoadingBusinesses && businesses.length > 0 && businesses.map((business, index) => (
-        <DeleteButtonAlternatives
-          key={business._id || index}
-          business={business}
-          viewType={viewType}
-          canDelete={canDelete}
-        />
-      ))}
+      {!isLoadingBusinesses && businesses.length > 0 && businesses.map((business, index) => {
+        const isDeleted = business.status === 'deleted';
+        return (
+          <div key={business._id || index} className={isDeleted ? 'opacity-50' : ''} style={isDeleted ? { pointerEvents: isDeleted ? 'none' : 'auto' } : {}}>
+            <DeleteButtonAlternatives
+              business={business}
+              viewType={viewType}
+              canDelete={canDelete && !isDeleted}
+            />
+            {isDeleted && (
+              <div className="ps-3 pb-2">
+                <span className="badge bg-secondary">Deleted</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -1158,9 +1197,16 @@ const Dashboard = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-          </>
-  )}
-
+      <UpgradeModal
+        show={showUpgradeModal}
+        onHide={() => setShowUpgradeModal(false)}
+        onUpgradeSuccess={(updatedSub) => {
+          setShowUpgradeModal(false);
+          setSuccessMessage(`Plan upgraded to ${updatedSub.plan} successfully!`);
+          setShowSuccessPopup(true);
+          setTimeout(() => setShowSuccessPopup(false), 3000);
+        }}
+      />
     </div>
     
 

@@ -31,6 +31,7 @@ import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import KickstartProjectsCard from "../components/KickstartProjectsCard";
+import UpgradeModal from "./UpgradeModal";
 import '../styles/StrategicAnalysis.css';
 
 const StrategicAnalysis = ({
@@ -78,10 +79,18 @@ const StrategicAnalysis = ({
   const [kickstartError, setKickstartError] = useState('');
   const [isFreshGeneration, setIsFreshGeneration] = useState(false);
   const [hasKickstarted, setHasKickstarted] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const handleKickstart = async () => {
     try {
       const token = sessionStorage.getItem("token");
       const userId = sessionStorage.getItem("userId");
+
+      const userPlan = sessionStorage.getItem("userPlan");
+
+      if (userPlan === 'essential') {
+        setShowUpgradeModal(true);
+        return;
+      }
 
       setKickstartError('');
 
@@ -2577,6 +2586,16 @@ const StrategicAnalysis = ({
       <div className="dashboard-container">
         {renderStrategicContent()}
       </div>
+      <UpgradeModal
+        show={showUpgradeModal}
+        onHide={() => setShowUpgradeModal(false)}
+        onUpgradeSuccess={(updatedSub) => {
+          if (onToastMessage) {
+            onToastMessage(`Successfully upgraded to ${updatedSub.plan} plan!`, 'success');
+          }
+          // Optionally refresh data or simply allow re-trying handleKickstart
+        }}
+      />
     </div>
   );
 };

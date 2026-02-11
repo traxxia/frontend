@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Form, Button, Table, Badge, Dropdown, Modal, InputGroup } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Search, Plus, Eye, EyeOff } from "lucide-react";
 import "../styles/usermanagement.css";
+import UpgradeModal from "./UpgradeModal";
 import axios from "axios";
 import Pagination from "../components/Pagination";
 import { useTranslation } from '../hooks/useTranslation';
@@ -35,6 +36,7 @@ const CustomToggle = React.forwardRef(({ onClick }, ref) => (
 const UserManagement = ({ onToast }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All Roles");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -225,6 +227,12 @@ const UserManagement = ({ onToast }) => {
   }, [isSuperAdmin]);
 
   const handleRoleUpdate = async (userId, role) => {
+    const userPlan = sessionStorage.getItem("userPlan");
+    if (userPlan === 'essential' && role.toLowerCase() === 'collaborator') {
+      onToast("Your plan doesn't support collaborators. Upgrade to Advanced to assign team members.", "error");
+      return;
+    }
+
     try {
       await axios.put(
         `${BACKEND_URL}/api/admin/users/${userId}/role`,
@@ -659,7 +667,17 @@ const UserManagement = ({ onToast }) => {
                   <option>Viewer</option>
                 </Form.Select>
 
-                <Button className="add-user-btn d-flex align-items-center" onClick={handleOpenModal}>
+                <Button
+                  className="add-user-btn d-flex align-items-center"
+                  onClick={() => {
+                    const userPlan = sessionStorage.getItem("userPlan");
+                    if (userPlan === 'essential') {
+                      setShowUpgradeModal(true);
+                    } else {
+                      handleOpenModal();
+                    }
+                  }}
+                >
                   <Plus size={16} className="me-2" />
                   {t("Add_User")}
                 </Button>
@@ -667,7 +685,14 @@ const UserManagement = ({ onToast }) => {
                 {!isSuperAdmin && (<>
                   <Button
                     className="add-user-btn d-flex align-items-center"
-                    onClick={handleOpenAssignModal}
+                    onClick={() => {
+                      const userPlan = sessionStorage.getItem("userPlan");
+                      if (userPlan === 'essential') {
+                        setShowUpgradeModal(true);
+                      } else {
+                        handleOpenAssignModal();
+                      }
+                    }}
                   >
                     <User size={16} className="me-2" />
                     {t("Collaborator")}
@@ -1289,6 +1314,13 @@ const UserManagement = ({ onToast }) => {
             </Button>
           </Modal.Footer>
         </Modal>
+        <UpgradeModal
+          show={showUpgradeModal}
+          onHide={() => setShowUpgradeModal(false)}
+          onUpgradeSuccess={(updatedSub) => {
+            onToast(`Successfully upgraded to ${updatedSub.plan} plan!`, 'success');
+          }}
+        />
       </div >
     </div >
   );
