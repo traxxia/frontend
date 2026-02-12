@@ -341,15 +341,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   return (
     <div className="rank-panel-container responsive-panel compact-mode" >
       <Row className="rank-panel-header">
-        <Col xs={12} md={6}>
+        <Col xs={12} md={8} className="d-flex align-items-center gap-3">
           <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
-        </Col>
-
-        <Col
-          xs={12}
-          md={6}
-          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
-        >
           {(isAdmin || !isRankingLocked) && (
             <Button
               className="btn-save-rank responsive-btn"
@@ -359,7 +352,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>
           )}
+        </Col>
 
+        <Col
+          xs={12}
+          md={4}
+          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
+        >
           {!isAdmin && (
             <Button
               className="btn-lock-rank responsive-btn"
