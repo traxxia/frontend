@@ -9,6 +9,7 @@ const ProjectsHeader = ({
   isPrioritizing,
   launched,
   isViewer,
+  isArchived,
   rankingsLocked,
   showRankScreen,
   userHasRerankAccess,
@@ -50,7 +51,7 @@ const ProjectsHeader = ({
         </div>
 
         <div className="d-flex gap-2 flex-wrap justify-content-end align-items-center">
-          {isDraft && !isViewer && sessionStorage.getItem("userPlan") !== 'essential' && (
+          {isDraft && !isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
             <button onClick={onNewProject} className="btn-new-project">
               <Plus size={18} />
               {t("New_Project")}
@@ -59,7 +60,7 @@ const ProjectsHeader = ({
 
           {((isPrioritizing && !rankingsLocked) ||
             (launched && userHasRerankAccess)) &&
-            !isViewer && (
+            !isViewer && !isArchived && (
               <div className="consensus-toggle-group" style={{ marginLeft: '8px' }}>
                 <button
                   onClick={onToggleRankScreen}

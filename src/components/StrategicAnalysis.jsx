@@ -2594,7 +2594,7 @@ const StrategicAnalysis = ({
         onHide={() => setShowUpgradeModal(false)}
         onUpgradeSuccess={(updatedSub) => {
           if (onToastMessage) {
-            onToastMessage(`Successfully upgraded to ${updatedSub.plan} plan!`, 'success');
+            onToastMessage(t('plan_updated_success') || 'Plan updated successfully!', 'success');
           }
           // Optionally refresh data or simply allow re-trying handleKickstart
         }}

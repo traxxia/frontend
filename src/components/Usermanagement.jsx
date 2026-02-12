@@ -11,23 +11,27 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const statusStyles = {
   Active: { bg: "#d1fae5", color: "#047857" },
   Pending: { bg: "#fef3c7", color: "#b45309" },
+  Archived: { bg: "#f3f4f6", color: "#4b5563" },
+  Inactive: { bg: "#f3f4f6", color: "#4b5563" },
 };
 
-const CustomToggle = React.forwardRef(({ onClick }, ref) => (
+const CustomToggle = React.forwardRef(({ onClick, disabled }, ref) => (
   <span
     ref={ref}
     onClick={(e) => {
+      if (disabled) return;
       e.preventDefault();
       onClick(e);
     }}
     style={{
-      cursor: "pointer",
+      cursor: disabled ? "not-allowed" : "pointer",
       padding: "6px",
       borderRadius: "6px",
       display: "inline-flex",
       alignItems: "center",
+      opacity: disabled ? 0.5 : 1
     }}
-    className="action-btn"
+    className={`action-btn ${disabled ? "disabled" : ""}`}
   >
     <MoreVertical size={20} />
   </span>
@@ -80,7 +84,9 @@ const UserManagement = ({ onToast }) => {
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
+  const userPlan = sessionStorage.getItem("userPlan");
   const isSuperAdmin = currentRole === "super_admin";
+  const hasPlan = userPlan === 'essential' || userPlan === 'advanced';
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
 
@@ -695,7 +701,7 @@ const UserManagement = ({ onToast }) => {
                     }}
                   >
                     <User size={16} className="me-2" />
-                    {t("Collaborator")}
+                    {t("Assign_Collaborator")}
                   </Button>
                   <Button
                     className="add-user-btn d-flex align-items-center"
@@ -722,7 +728,7 @@ const UserManagement = ({ onToast }) => {
                   <th>{t("Role")}</th>
                   <th>{t("status")}</th>
                   <th>{t("joined")}</th>
-                  <th className="text-end">{t("Action")}</th>
+                  {(!hasPlan || isSuperAdmin) && <th className="text-end">{t("Action")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -730,7 +736,18 @@ const UserManagement = ({ onToast }) => {
                   paginatedUsers.map((user, index) => {
                     const uiRole = formatRole(user.role_name);
                     const roleStyle = roleStyles[uiRole] || roleStyles["Viewer"];
-                    const statusValue = "Active";
+
+                    // Determine Status Value
+                    let statusValue = "Active";
+                    if (user.access_mode === 'archived') {
+                      statusValue = "Archived";
+                    } else if (user.status === 'inactive') {
+                      statusValue = "Inactive";
+                    } else if (user.status) {
+                      // Capitalize first letter of status (e.g., 'active' -> 'Active')
+                      statusValue = user.status.charAt(0).toUpperCase() + user.status.slice(1);
+                    }
+
                     const s = statusStyles[statusValue] || {
                       bg: "#e5e7eb",
                       color: "#374151"
@@ -760,46 +777,48 @@ const UserManagement = ({ onToast }) => {
                           </span>
                         </td>
                         <td className="text-muted">{formatDate(user.created_at)}</td>
-                        <td className="text-end">
-                          <Dropdown>
-                            <Dropdown.Toggle as={CustomToggle} />
+                        {(!hasPlan || isSuperAdmin) && (
+                          <td className="text-end">
+                            <Dropdown>
+                              <Dropdown.Toggle as={CustomToggle} disabled={statusValue === "Archived" || statusValue === "Inactive"} />
 
-                            <Dropdown.Menu align="end">
-                              <Dropdown.Item
-                                onClick={() => {
-                                  setPendingUserId(user._id);
-                                  setPendingRole("collaborator");
-                                  setShowConfirm(true);
-                                }}
-                              >
-                                <UserCog className="me-2" />
-                                Collaborator
-                              </Dropdown.Item>
+                              <Dropdown.Menu align="end">
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setPendingUserId(user._id);
+                                    setPendingRole("collaborator");
+                                    setShowConfirm(true);
+                                  }}
+                                >
+                                  <UserCog className="me-2" />
+                                  Collaborator
+                                </Dropdown.Item>
 
-                              <Dropdown.Item
-                                onClick={() => {
-                                  setPendingUserId(user._id);
-                                  setPendingRole("viewer");
-                                  setShowConfirm(true);
-                                }}
-                              >
-                                <User className="me-2" />
-                                Viewer
-                              </Dropdown.Item>
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setPendingUserId(user._id);
+                                    setPendingRole("viewer");
+                                    setShowConfirm(true);
+                                  }}
+                                >
+                                  <User className="me-2" />
+                                  Viewer
+                                </Dropdown.Item>
 
-                              <Dropdown.Item
-                                onClick={() => {
-                                  setPendingUserId(user._id);
-                                  setPendingRole("user");
-                                  setShowConfirm(true);
-                                }}
-                              >
-                                <ShieldCheck className="me-2" />
-                                User
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown>
-                        </td>
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setPendingUserId(user._id);
+                                    setPendingRole("user");
+                                    setShowConfirm(true);
+                                  }}
+                                >
+                                  <ShieldCheck className="me-2" />
+                                  User
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
@@ -919,10 +938,13 @@ const UserManagement = ({ onToast }) => {
                         onChange={(e) => setNewRole(e.target.value)}
                       >
                         <option value="">{t("Select_Role")}</option>
-                        {/* <option value="company_admin">Org Admin</option> */}
                         <option value="collaborator">Collaborator</option>
-                        <option value="user">User</option>
-                        <option value="viewer">Viewer</option>
+                        {!hasPlan && (
+                          <>
+                            <option value="user">User</option>
+                            <option value="viewer">Viewer</option>
+                          </>
+                        )}
                       </Form.Select>
                       {errors.role && <div className="invalid-feedback">{errors.role}</div>}
                     </Form.Group>
@@ -1318,7 +1340,7 @@ const UserManagement = ({ onToast }) => {
           show={showUpgradeModal}
           onHide={() => setShowUpgradeModal(false)}
           onUpgradeSuccess={(updatedSub) => {
-            onToast(`Successfully upgraded to ${updatedSub.plan} plan!`, 'success');
+            onToast(t('plan_updated_success') || 'Plan updated successfully!', 'success');
           }}
         />
       </div >

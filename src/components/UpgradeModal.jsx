@@ -3,6 +3,7 @@ import { Modal, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { ArrowRight, Zap } from 'lucide-react';
 import PricingPlanCard from './PricingPlanCard';
 import DowngradeSelectionModal from './DowngradeSelectionModal';
+import UpgradeReactivationModal from './UpgradeReactivationModal';
 import '../styles/UpgradeModal.css';
 
 const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
@@ -17,13 +18,22 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
     const [showSelectionModal, setShowSelectionModal] = useState(false);
     const [selectionData, setSelectionData] = useState(null);
 
+    // Reactivation selection state
+    const [showReactivationModal, setShowReactivationModal] = useState(false);
+    const [reactivationData, setReactivationData] = useState(null);
+
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
     useEffect(() => {
         if (show) {
             fetchData();
+            if (typeof show === 'object' && show.mode === 'downgrade') {
+                // We'll handle this in fetchData once plans are loaded
+            }
         }
     }, [show]);
+
+    const isDowngradeMode = typeof show === 'object' && show.mode === 'downgrade';
 
     const fetchData = async () => {
         try {
@@ -44,10 +54,17 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
             setPlans(plansData.plans || []);
             setSubscription(subData);
 
-            // Auto-select the next plan if current is essential
-            const currentPlanName = subData.plan.toLowerCase();
-            const nextPlan = plansData.plans.find(p => p.name.toLowerCase() !== currentPlanName);
-            if (nextPlan) setSelectedPlanId(nextPlan._id);
+            if (isDowngradeMode) {
+                const essentialPlan = plansData.plans.find(p => p.name.toLowerCase() === 'essential');
+                if (essentialPlan) {
+                    setSelectedPlanId(essentialPlan._id);
+                }
+            } else {
+                // Auto-select the next plan if current is essential
+                const currentPlanName = subData.plan.toLowerCase();
+                const nextPlan = plansData.plans.find(p => p.name.toLowerCase() !== currentPlanName);
+                if (nextPlan) setSelectedPlanId(nextPlan._id);
+            }
 
         } catch (err) {
             setError(err.message);
@@ -86,9 +103,49 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
                 return;
             }
 
+            // Check if selection is required for reactivation (Moving to Advanced)
+            if (data.requires_reactivation_selection) {
+                setReactivationData({ ...data, plan_id: selectedPlanId });
+                setShowReactivationModal(true);
+                return;
+            }
+
             // Success case
             sessionStorage.setItem('userPlan', data.plan);
             if (onUpgradeSuccess) onUpgradeSuccess(data);
+            onHide();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleProcessReactivation = async (selection) => {
+        try {
+            setSubmitting(true);
+            setError(null);
+            const token = sessionStorage.getItem('token');
+
+            const response = await fetch(`${API_BASE_URL}/api/subscription/process-reactivation`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(selection)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Reactivation failed');
+            }
+
+            // Success
+            sessionStorage.setItem('userPlan', data.plan);
+            if (onUpgradeSuccess) onUpgradeSuccess(data);
+            setShowReactivationModal(false);
             onHide();
         } catch (err) {
             setError(err.message);
@@ -123,14 +180,8 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
             }
 
             // Success
-            // Refetch details to get updated plan
-            const subRes = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const updatedSub = await subRes.json();
-
-            sessionStorage.setItem('userPlan', updatedSub.plan);
-            if (onUpgradeSuccess) onUpgradeSuccess(updatedSub);
+            sessionStorage.setItem('userPlan', data.plan);
+            if (onUpgradeSuccess) onUpgradeSuccess(data);
             setShowSelectionModal(false);
             onHide();
         } catch (err) {
@@ -227,6 +278,16 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
                 data={selectionData}
                 onConfirm={handleProcessDowngrade}
                 submitting={submitting}
+                externalError={error}
+            />
+
+            <UpgradeReactivationModal
+                show={showReactivationModal}
+                onHide={() => setShowReactivationModal(false)}
+                data={reactivationData}
+                onConfirm={handleProcessReactivation}
+                submitting={submitting}
+                externalError={error}
             />
         </>
     );

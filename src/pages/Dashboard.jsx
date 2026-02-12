@@ -13,7 +13,7 @@ import {
   Accordion
 } from "react-bootstrap";
 import {
-  Info, X, Trash2
+  Info, X, Trash2, AlertTriangle
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -370,6 +370,17 @@ const Dashboard = () => {
       setShowUpgradeModal(true);
       return;
     }
+
+    if (userPlan === 'advanced' && myBusinesses.length >= 3) { // Assuming 10 is the limit for advanced based on standard patterns, but I should check tierService.
+      setBusinessError("Your plan has been utilized, please contact admin support");
+      setShowSuccessPopup(true); // Using common popup but now it will show as error
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        setBusinessError('');
+      }, 5000);
+      return;
+    }
+
     setShowCreateModal(true);
     setBusinessError('');
     setFormErrors({});
@@ -1130,22 +1141,25 @@ const Dashboard = () => {
             </Form>
           </Modal>
 
-          {/* Success Popup */}
+          {/* Success/Alert Popup */}
           {showSuccessPopup && (
             <div className="success-popup-overlay">
               <div className="success-popup">
                 <div className="success-popup-content">
-                  <div className="dashboard-success-icon">
-                    ✅
+                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger shadow-sm' : ''}`}>
+                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : '✅'}
                   </div>
-                  <h5 className="mb-2">{t('success')}</h5>
-                  <p className="mb-3">{successMessage}</p>
+                  <h5 className={`mb-2 ${businessError ? 'text-danger' : ''}`}>
+                    {businessError ? t('alert') : t('success')}
+                  </h5>
+                  <p className="mb-3">{businessError || successMessage}</p>
                   <Button
-                    variant="primary"
+                    variant={businessError ? "danger" : "primary"}
                     size="sm"
                     onClick={() => {
                       setShowSuccessPopup(false);
                       setSuccessMessage('');
+                      setBusinessError('');
                     }}
                   >
                     {t('ok')}
@@ -1254,7 +1268,7 @@ const Dashboard = () => {
             onHide={() => setShowUpgradeModal(false)}
             onUpgradeSuccess={(updatedSub) => {
               setShowUpgradeModal(false);
-              setSuccessMessage(`Plan upgraded to ${updatedSub.plan} successfully!`);
+              setSuccessMessage(`Plan updated to ${updatedSub.plan} successfully!`);
               setShowSuccessPopup(true);
               setTimeout(() => setShowSuccessPopup(false), 3000);
             }}

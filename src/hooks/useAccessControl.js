@@ -74,10 +74,10 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const canEditProject = useCallback(
-    (project, isEditor, myUserId, businessStatus) => {
+    (project, isEditor, myUserId, businessStatus, isArchived) => {
       // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
       const userPlan = sessionStorage.getItem("userPlan");
-      if (userPlan === 'essential') return false;
+      if (userPlan === 'essential' || isArchived) return false;
 
       if (!project) return false;
 

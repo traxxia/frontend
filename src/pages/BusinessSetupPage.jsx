@@ -95,13 +95,11 @@ const BusinessSetupPage = () => {
   };
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-
+  const userPlan = sessionStorage.getItem("userPlan");
   const loggedInRole = getLoggedInRole();
   const canRegenerate = !["viewer"].includes(loggedInRole);
   const [businessStatus, setBusinessStatus] = useState(business?.status || "");
   const isLaunchedStatus = businessStatus === "launched";
-  const isArchived = business?.access_mode === 'archived' || business?.access_mode === 'hidden';
-  const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus && !isArchived;
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
@@ -159,6 +157,9 @@ const BusinessSetupPage = () => {
     investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
     showDropdown, setShowDropdown
   } = state;
+
+  const isArchived = (business?.access_mode === 'archived' || business?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
+  const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus && !isArchived;
 
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
@@ -780,12 +781,36 @@ const BusinessSetupPage = () => {
             This workspace is in <strong>Read-Only</strong> mode.
             Upgrade to the Advanced plan to restore editing capabilities.
           </span>
-          <button
-            className="btn btn-warning btn-sm ms-3 fw-bold border-dark"
-            onClick={() => setShowUpgradeModal(true)}
-          >
-            Upgrade Now
-          </button>
+          <div className="ms-3 d-flex gap-2">
+            {userPlan?.toLowerCase() === 'essential' && (
+              <button
+                className="btn btn-warning btn-sm fw-bold border-dark"
+                onClick={() => {
+                  if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
+                    setShowUpgradeModal(true);
+                  } else {
+                    showToastMessage("Contact admin for upgradation", "warning");
+                  }
+                }}
+              >
+                Upgrade Now
+              </button>
+            )}
+            {userPlan?.toLowerCase() === 'advanced' && (
+              <button
+                className="btn btn-outline-dark btn-sm fw-bold"
+                onClick={() => {
+                  if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
+                    setShowUpgradeModal({ mode: 'downgrade' });
+                  } else {
+                    showToastMessage("Contact admin for downgradation", "warning");
+                  }
+                }}
+              >
+                Downgrade
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -1241,6 +1266,7 @@ const BusinessSetupPage = () => {
                         onProjectCountChange={handleProjectCountChange}
                         onBusinessStatusChange={setBusinessStatus}
                         companyAdminIds={companyAdminIds}
+                        isArchived={isArchived}
                       />
                     </div>
                   )}
@@ -1353,6 +1379,7 @@ const BusinessSetupPage = () => {
                     onProjectCountChange={handleProjectCountChange}
                     onBusinessStatusChange={setBusinessStatus}
                     companyAdminIds={companyAdminIds}
+                    isArchived={isArchived}
                   />
                 )}
                 {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
