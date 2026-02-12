@@ -236,6 +236,15 @@ const AcademyPage = () => {
                                 View Guide →
                             </Link>
                         </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🏷️</div>
+                            <h3>Pricing Strategy</h3>
+                            <p>Understand Traxxia's SaaS model and tiers</p>
+                            <Link to="/academy/pricing/pricing-strategy" className="feature-link">
+                                View Strategy →
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="welcome-footer">
