@@ -155,7 +155,7 @@ const ProjectDetails = ({
                     </div>
                     <div className="detail-item">
                         <label className="detail-label">{t("Why_This_Matters")}</label>
-                        <p className="detail-value">{project.importance || t("Not_Available")}</p>
+                        <p className="detail-value">{project.why_this_matters || t("Not_Available")}</p>
                     </div>
                     <div className="detail-item full-width">
                         <label className="detail-label">
@@ -173,7 +173,7 @@ const ProjectDetails = ({
                         <div className="detail-item">
                             <label className="detail-label">{t("Impact")}</label>
                             <div className="detail-value">
-                                <div className="detail-value-with-icon"> 
+                                <div className="detail-value-with-icon">
                                     <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
                                 </div>
                             </div>
@@ -233,12 +233,12 @@ const ProjectDetails = ({
                                             "killed": "Killed",
                                             "scaled": "Scaled"
                                         };
-                                        
+
                                         // If no status or invalid status, default to Draft
                                         const displayStatus = isValidStatus ? statusMap[statusLower] : "Draft";
 
                                         return (
-                                            <> 
+                                            <>
                                                 <span>{t(displayStatus)}</span>
                                             </>
                                         );
@@ -273,7 +273,7 @@ const ProjectDetails = ({
                     <div className="detail-item">
                         <label className="detail-label">{t("Impact")}</label>
                         <div className="detail-value">
-                            <div className="detail-value-with-icon"> 
+                            <div className="detail-value-with-icon">
                                 <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
                             </div>
                         </div>
@@ -290,7 +290,7 @@ const ProjectDetails = ({
                     <div className="detail-item">
                         <label className="detail-label">{t("Risk")}</label>
                         <div className="detail-value">
-                            <div className="detail-value-with-icon"> 
+                            <div className="detail-value-with-icon">
                                 <span>{project.risk ? t(project.risk) : t("Not_Available")}</span>
                             </div>
                         </div>
