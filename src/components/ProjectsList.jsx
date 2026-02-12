@@ -17,6 +17,7 @@ const ProjectsList = ({
   onView,
   onDelete,
   selectedCategory,
+  isArchived,
 }) => {
   const [showMenuId, setShowMenuId] = useState(null);
 
@@ -50,7 +51,7 @@ const ProjectsList = ({
 
     sortedProjects.forEach(p => {
       const statusValue = (p.status || "Draft").toLowerCase();
-      if (statusValue === "active" ) {
+      if (statusValue === "active") {
         groups["Active"].push(p);
       } else if (statusValue === "at risk" || statusValue === "at_risk") {
         groups["At Risk"].push(p);
@@ -95,6 +96,7 @@ const ProjectsList = ({
               onDelete={onDelete}
               showMenuId={showMenuId}
               setShowMenuId={setShowMenuId}
+              isArchived={isArchived}
             />
           </Col>
         ))}

@@ -74,7 +74,11 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const canEditProject = useCallback(
-    (project, isEditor, myUserId, businessStatus) => {
+    (project, isEditor, myUserId, businessStatus, isArchived) => {
+      // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
+      const userPlan = sessionStorage.getItem("userPlan");
+      if (userPlan === 'essential' || isArchived) return false;
+
       if (!project) return false;
 
       // Admins can always edit (except truly locked launched projects)

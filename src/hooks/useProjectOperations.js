@@ -28,6 +28,7 @@ export const useProjectOperations = (selectedBusinessId, onProjectCountChange) =
       return {
         projects: fetched,
         businessStatus: res.data?.business_status, // NEW: business-level status
+        businessAccessMode: res.data?.business_access_mode,
         lockSummary: res.data?.ranking_lock_summary, // Now includes locked_users array
       };
     } catch (err) {

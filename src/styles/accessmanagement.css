@@ -26,37 +26,267 @@
 /* Compact Summary Row */
 .compact-summary-row {
     display: flex;
-    gap: 2rem;
-    padding: 1rem;
-    background: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #eee;
+    gap: 3rem;
+    padding: 1.25rem 2rem;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .summary-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 .summary-label {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    color: #666;
-    letter-spacing: 0.02em;
+    color: #64748b;
+    letter-spacing: 0.05em;
 }
 
 .summary-value-minimal {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #111;
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: #0f172a;
 }
 
 .summary-divider {
     width: 1px;
+    height: 32px;
+    background: #e2e8f0;
+}
+
+.usage-progress-container {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.usage-metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.usage-label-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.usage-value-text {
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.usage-value-group {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.usage-current {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.usage-limit {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* Mockup-based Subscription Redesign - Simplified */
+.subscription-redesign-wrapper {
+    padding: 0px;
+    background-color: #fcfcfd;
+    min-height: 80vh;
+}
+
+.plan-cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.plan-card-mockup {
+    position: relative;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.plan-card-mockup.active {
+    border: 2px solid #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+
+.plan-card-mockup.premium-type {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25);
+}
+
+.plan-card-mockup.premium-type .plan-subtitle-mockup,
+.plan-card-mockup.premium-type .plan-price-period {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.check-badge-corner {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #3b82f6;
+    color: #fff;
+    width: 24px;
     height: 24px;
-    background: #ddd;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.plan-header-mockup {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.plan-name-mockup {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.plan-price-mockup {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.plan-price-period {
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+.plan-subtitle-mockup {
+    font-size: 0.8125rem;
+    margin-top: 0.35rem;
+}
+
+.plan-card-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn-plan-white {
+    background-color: #fff !important;
+    color: #2563eb;
+    border: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-plan-white:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.btn-plan-primary {
+    background-color: #2563eb !important;
+    color: #fff !important;
+    border: 1px solid #3b82f6;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-plan-primary:hover:not(:disabled) {
+    background-color: #2563eb !important;
+    border-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-plan-outline-white {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+}
+
+.learn-more-link {
+    font-size: 0.8125rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Billing History Table - Simplified */
+.billing-history-table {
+    width: 100%;
+    margin-top: 1.5rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.billing-history-table th {
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    padding: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.billing-history-table td {
+    padding: 1.5rem 1rem;
+    font-size: 0.9375rem;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.billing-date {
+    font-weight: 500;
+}
+
+.billing-amount {
+    font-weight: 700;
+}
+
+.invoice-link {
+    color: #22c55e;
+    text-decoration: none;
+    font-weight: 600;
 }
 
 /* Table Controls - Compact */

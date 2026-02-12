@@ -259,7 +259,16 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["projects", "overview"],
-                    relatedArticles: []
+                    relatedArticles: ["project-category"]
+                },
+                {
+                    id: "project-category",
+                    title: "Project Category",
+                    path: "06-projects/02-project-category.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["projects", "status", "category"],
+                    relatedArticles: ["project-management-overview"]
                 },
 
             ]
@@ -397,6 +406,23 @@ export const academyStructure = {
                     roles: ["orgadmin"],
                     tags: ["guide", "workflow", "admin"],
                     relatedArticles: ["finalize-prioritization"]
+                }
+            ]
+        },
+        {
+            id: "pricing",
+            title: "Pricing Strategy",
+            icon: "DollarSign",
+            description: "Understand Traxxia's SaaS model and tier features",
+            articles: [
+                {
+                    id: "pricing-strategy",
+                    title: "Pricing Strategy & Features",
+                    path: "15-pricing/01-pricing-strategy.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["pricing", "saas", "tiers"],
+                    relatedArticles: ["creating-an-account"]
                 }
             ]
         }

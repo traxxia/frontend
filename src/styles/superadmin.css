@@ -63,7 +63,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 1.5rem;
+  padding:10px;
   background: none;
   border: none;
   color: #6b7280;
@@ -526,7 +526,7 @@
   border-radius: 0.75rem;
   width: 90%;
   max-width: 600px;
-  max-height: 90vh;
+  min-height: 90vh;
   overflow-y: auto;
 }
 
@@ -1031,12 +1031,7 @@
   .header-stats {
     display: none;
   }
-
-
-  .nav-tab {
-    padding: 0.75rem 1rem;
-  }
-
+ 
   .section-header {
     flex-direction: column;
     gap: 1rem;
@@ -1668,21 +1663,7 @@
   display: flex;
   gap: 0;
 }
-
-.nav-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  background: none;
-  border: none;
-  color: #6b7280;
-  font-weight: 500;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
+ 
 
 .nav-tab:hover {
   color: #3b82f6;
@@ -2689,11 +2670,7 @@
   .admin-nav {
     padding: 0 1rem;
   }
-
-  .nav-tab {
-    padding: 0.75rem 1rem;
-  }
-
+ 
   .section-header {
     flex-direction: column;
     gap: 1rem;
@@ -2904,4 +2881,4 @@
 [data-theme="dark"] .company-table tbody tr:nth-child(even) {
   background-color: #293042;
   /* slight variation for alternate rows */
-}
+} 

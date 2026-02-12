@@ -110,6 +110,12 @@
   color: #b45309;
 }
 
+.status-archived,
+.status-inactive {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
 /* ============================= */
 /*        TOAST COLOR FIX        */
 /* ============================= */
@@ -348,6 +354,12 @@
 [data-theme="dark"] .status-pending {
   background-color: rgba(245, 158, 11, 0.2);
   color: #fcd34d;
+}
+
+[data-theme="dark"] .status-archived,
+[data-theme="dark"] .status-inactive {
+  background-color: rgba(75, 85, 99, 0.2);
+  color: #9ca3af;
 }
 
 .table-responsive {

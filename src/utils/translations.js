@@ -60,6 +60,7 @@ export const staticTranslations = {
     'super_admin_panel': 'Super Admin Panel',
     'signed_in_as': 'Signed in as',
     'role': 'Role',
+    'admin': 'Admin',
     'user_name': 'User Name',
     'job_title': 'Job Title',
     'enter_job_title': 'Enter your job title',
@@ -157,6 +158,9 @@ export const staticTranslations = {
     "description_no_continuous_spaces": "Description cannot contain continuous spaces.",
     "country_cannot_contain_only_spaces": "empty spaces not allowed",
     "city_cannot_contain_only_spaces": "empty spaces not allowed",
+    "Action Restricted": "Action Restricted",
+    "For security and policy reasons, you can only delete one business every 30 days.": "For security and policy reasons, you can only delete one business every 30 days.",
+    "You cannot delete by 30 days. Please wait 30 more day(s).": "You cannot delete by 30 days. Please wait 30 more day(s).",
     'create_new_company': 'Create New Company',
     'company_name': 'Company Name',
     'industry': 'Industry',
@@ -848,7 +852,7 @@ export const staticTranslations = {
     'Project_creation_locked_Continue_ranking': 'Project creation locked. Continue ranking.',
     'Prioritization_complete_Add_detailed_planning': 'Prioritization complete! Add detailed planning.',
     'Projects_launched_Ready_for_execution.': 'Projects launched! Ready for execution.',
-    'Launched': 'Draft',
+    'Launched': 'Launched',
     'Projects_ready_for_execution': 'Projects ready for execution',
     'View_Details': 'View Details',
 
@@ -886,7 +890,7 @@ export const staticTranslations = {
     'prioritization': 'Prioritization',
     'prioritizing': 'Prioritizing',
     'prioritized': 'Prioritized',
-    'launched': 'Draft',
+    'launched': 'Launched',
     'total_businesses': 'Total Businesses',
     'Add_User': 'Add User',
     'Assign_User': 'Assign User',
@@ -1026,8 +1030,34 @@ export const staticTranslations = {
     'State': 'State',
     'Testing': 'Testing',
     'Needs_Review': 'Needs Review',
-    'Reviewed_ago': 'Reviewed',
     'days_ago': 'days ago',
+
+    // ===========================
+    // SUBSCRIPTION
+    // ===========================
+    'subscription': 'Subscription',
+    'loading_subscription_details': 'Loading subscription details...',
+    'renews_on': 'Renews on',
+    'no_expiration': 'No expiration',
+    'upgrade_now': 'Upgrade Now',
+    'upgrade': 'Upgrade',
+    'downgrade': 'Downgrade',
+    'upgrade_successful': 'Upgrade successful!',
+    'subscription_plans': 'Subscription Plans',
+    'days_remaining': 'days remaining',
+    'full_access': 'Full access',
+    'current_plan': 'Current Plan',
+    'learn_more': 'Learn more',
+    'billing_history': 'Billing History',
+    'no_billing_history': 'No billing history found',
+    'usage_metrics': 'Usage Metrics',
+    'plan_updated_success': 'Plan updated successfully!',
+    'workspaces': 'Workspaces',
+    'collaborators': 'Collaborators',
+    'projects': 'Projects',
+    'essential': 'Essential',
+    'advanced': 'Advanced',
+    'professional': 'Professional',
   },
 
 
@@ -1290,6 +1320,7 @@ export const staticTranslations = {
     'bcg_matrix': 'Matriz BCG',
     'strategic_framework': 'ESTRATÉGICO',
     'super_admin_panel': 'Panel de Super Administrador',
+    'admin': 'Administrador',
     'signed_in_as': 'Iniciar sesión como',
     'role': 'Rol',
 
@@ -2064,6 +2095,32 @@ export const staticTranslations = {
     'Reviewed_ago': 'Revisado hace',
     'days_ago': 'días',
 
+    // ===========================
+    // SUBSCRIPTION
+    // ===========================
+    'subscription': 'Suscripción',
+    'loading_subscription_details': 'Cargando detalles de suscripción...',
+    'renews_on': 'Se renueva el',
+    'no_expiration': 'Sin vencimiento',
+    'upgrade_now': 'Actualizar ahora',
+    'upgrade_successful': '¡Actualización exitosa!',
+    'subscription_plans': 'Planes de Suscripción',
+    'days_remaining': 'días restantes',
+    'full_access': 'Acceso total',
+    'current_plan': 'Plan Actual',
+    'learn_more': 'Saber más',
+    'no_billing_history': 'No se encontró historial de facturación',
+    'usage_metrics': 'Métricas de Uso',
+    'plan_updated_success': '¡Plan actualizado con éxito!',
+    'workspaces': 'Espacios de trabajo',
+    'collaborators': 'Colaboradores',
+    'projects': 'Proyectos',
+    'essential': 'Esencial',
+    'advanced': 'Avanzado',
+    'professional': 'Profesional',
+    'upgrade': 'Mejorar',
+    'downgrade': 'Degradar',
+    'billing_history': 'Historial de Facturación',
   }
 };
 

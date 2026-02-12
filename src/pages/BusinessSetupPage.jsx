@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { ArrowLeft, Loader, RefreshCw, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 import ChatComponent from "../components/ChatComponent";
@@ -21,6 +21,7 @@ import ProjectsSection from "../components/ProjectsSection";
 import PMFInsightsTab from "../components/PMFInsightsTab";
 //import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
+import UpgradeModal from "../components/UpgradeModal";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -93,11 +94,12 @@ const BusinessSetupPage = () => {
     ).toLowerCase();
   };
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const userPlan = sessionStorage.getItem("userPlan");
   const loggedInRole = getLoggedInRole();
   const canRegenerate = !["viewer"].includes(loggedInRole);
   const [businessStatus, setBusinessStatus] = useState(business?.status || "");
   const isLaunchedStatus = businessStatus === "launched";
-  const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus;
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [highlightedCard, setHighlightedCard] = useState(null);
@@ -155,6 +157,9 @@ const BusinessSetupPage = () => {
     investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
     showDropdown, setShowDropdown
   } = state;
+
+  const isArchived = (business?.access_mode === 'archived' || business?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
+  const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus && !isArchived;
 
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
@@ -591,16 +596,16 @@ const BusinessSetupPage = () => {
   };
 
   const handleAhaTabClick = () => {
-  if (isMobile) {
-    setActiveTab("aha");
-  } else {
-    if (!isAnalysisExpanded) {
-      setIsAnalysisExpanded(true);
+    if (isMobile) {
       setActiveTab("aha");
     } else {
-      setActiveTab("aha");
+      if (!isAnalysisExpanded) {
+        setIsAnalysisExpanded(true);
+        setActiveTab("aha");
+      } else {
+        setActiveTab("aha");
+      }
     }
-  }
   };
 
   /*const handleExecutiveTabClick = () => {
@@ -768,6 +773,47 @@ const BusinessSetupPage = () => {
     <div className="business-setup-container">
       <MenuBar />
 
+      {/* Read-Only Banner for Archived Workspaces */}
+      {(business?.access_mode === 'archived' || business?.access_mode === 'hidden') && (
+        <div className="alert alert-warning mb-0 border-0 rounded-0 text-center py-2 d-flex align-items-center justify-content-center shadow-sm" style={{ zIndex: 1000, position: 'relative' }}>
+          <AlertTriangle size={18} className="me-2 text-warning" />
+          <span>
+            This workspace is in <strong>Read-Only</strong> mode.
+            Upgrade to the Advanced plan to restore editing capabilities.
+          </span>
+          <div className="ms-3 d-flex gap-2">
+            {userPlan?.toLowerCase() === 'essential' && (
+              <button
+                className="btn btn-warning btn-sm fw-bold border-dark"
+                onClick={() => {
+                  if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
+                    setShowUpgradeModal(true);
+                  } else {
+                    showToastMessage("Contact admin for upgradation", "warning");
+                  }
+                }}
+              >
+                Upgrade Now
+              </button>
+            )}
+            {userPlan?.toLowerCase() === 'advanced' && (
+              <button
+                className="btn btn-outline-dark btn-sm fw-bold"
+                onClick={() => {
+                  if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
+                    setShowUpgradeModal({ mode: 'downgrade' });
+                  } else {
+                    showToastMessage("Contact admin for downgradation", "warning");
+                  }
+                }}
+              >
+                Downgrade
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <PhaseUnlockToast
         phase={phaseManager.unlockedPhase}
         show={phaseManager.showUnlockToast}
@@ -843,6 +889,7 @@ const BusinessSetupPage = () => {
             userAnswers={userAnswers}
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
+            isArchived={business?.access_mode === 'archived' || business?.access_mode === 'hidden'}
             onQuestionsLoaded={(loadedQuestions) => {
               setQuestions(loadedQuestions);
               setQuestionsLoaded(true);
@@ -1032,8 +1079,8 @@ const BusinessSetupPage = () => {
                       {/*{activeTab === "executive" && (
                         <ExecutiveSummary/>
                       )}*/}
-                      {activeTab === "analysis" && 
-                        <AnalysisContentManager 
+                      {activeTab === "analysis" &&
+                        <AnalysisContentManager
                           {...analysisProps}
                           canRegenerate={canShowRegenerateButtons} />}
                       {activeTab === "strategic" && (
@@ -1176,7 +1223,7 @@ const BusinessSetupPage = () => {
                     </div>
                   )}
                   {activeTab === "aha" && (
-                    <PMFInsightsTab/>
+                    <PMFInsightsTab />
                   )}
                   {/*{activeTab === "executive" && (
                     <ExecutiveSummary/>
@@ -1219,6 +1266,7 @@ const BusinessSetupPage = () => {
                         onProjectCountChange={handleProjectCountChange}
                         onBusinessStatusChange={setBusinessStatus}
                         companyAdminIds={companyAdminIds}
+                        isArchived={isArchived}
                       />
                     </div>
                   )}
@@ -1331,6 +1379,7 @@ const BusinessSetupPage = () => {
                     onProjectCountChange={handleProjectCountChange}
                     onBusinessStatusChange={setBusinessStatus}
                     companyAdminIds={companyAdminIds}
+                    isArchived={isArchived}
                   />
                 )}
                 {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
@@ -1344,6 +1393,11 @@ const BusinessSetupPage = () => {
           </div>
         )}
       </div>
+      <UpgradeModal
+        show={showUpgradeModal}
+        onHide={() => setShowUpgradeModal(false)}
+        onUpgradeSuccess={() => window.location.reload()}
+      />
     </div>
   );
 };

@@ -32,7 +32,7 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, onShowToast }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, onShowToast, isArchived }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [initialOrder, setInitialOrder] = useState([]);
@@ -405,7 +405,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                     key={item._id}
                     draggableId={item._id}
                     index={index}
-                    isDragDisabled={isRankingLocked && !isAdmin}
+                    isDragDisabled={(isRankingLocked && !isAdmin) || isArchived}
                   >
                     {(provided, snapshot) => (
                       <Card
