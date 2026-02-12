@@ -170,7 +170,9 @@ const SubscriptionTab = ({ onToast }) => {
                             <tbody>
                                 {billing_history.length > 0 ? billing_history.map((bh, idx) => (
                                     <tr key={idx}>
-                                        <td className="billing-date">{new Date(bh.date).toLocaleDateString()}</td>
+                                        <td className="billing-date">
+                                            {new Date(bh.date).toLocaleDateString()} &nbsp;<span>{new Date(bh.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </td>
                                         <td className="text-capitalize">{bh.plan_name} plan</td>
                                         <td className="billing-amount">${bh.amount}</td>
                                     </tr>
