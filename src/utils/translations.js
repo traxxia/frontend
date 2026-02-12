@@ -1041,6 +1041,7 @@ export const staticTranslations = {
     'no_expiration': 'No expiration',
     'upgrade_now': 'Upgrade Now',
     'upgrade': 'Upgrade',
+    'downgrade': 'Downgrade',
     'upgrade_successful': 'Upgrade successful!',
     'subscription_plans': 'Subscription Plans',
     'days_remaining': 'days remaining',
