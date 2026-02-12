@@ -6,6 +6,7 @@
   position: absolute;
   top: var(--spacing-xl);
   right: var(--spacing-xl);
+  z-index: 10;
 }
 
 
@@ -361,11 +362,12 @@
 }
 
 .converter {
-  margin-left: 85%;
-  position: relative;
-  bottom: 40px;
+  position: absolute;
+  top: 16px;
+  right: 16px;
   cursor: pointer;
   color: var(--color-text-primary);
+  z-index: 5;
 }
 
 .dropdown1 {
@@ -665,6 +667,7 @@
 
   .theme-icon-toggle {
     left: 20px;
+    right: auto;
   }
 
   .login-box {
@@ -698,6 +701,15 @@
   .eye-icon {
     width: 18px;
     height: 18px;
+  }
+
+  .company-branding {
+    padding-top: 40px;
+    /* space for language dropdown */
+  }
+
+  .logo {
+    width: 70%;
   }
 }
 
