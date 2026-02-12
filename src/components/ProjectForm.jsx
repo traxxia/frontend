@@ -788,7 +788,7 @@ const ProjectForm = ({
           <div className="field-row">
             <div className="field-label-row">
               <label className="field-label">
-                {t("Key_Assumptions_Tested")} <span className="required">*</span>
+                {t("Key_Assumptions_Tested")}
               </label>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -848,7 +848,7 @@ const ProjectForm = ({
               label={t("Review_Cadence")}
               icon={<Clock size={16} />}
               options={[
-                { value: "Weekly", label: t("Weekly"), icon: <Clock size={14} /> }, 
+                { value: "Weekly", label: t("Weekly"), icon: <Clock size={14} /> },
                 { value: "Monthly", label: t("Monthly"), icon: <Clock size={14} /> },
                 { value: "Quarterly", label: t("Quarterly"), icon: <Clock size={14} /> },
               ]}

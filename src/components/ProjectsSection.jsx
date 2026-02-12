@@ -10,6 +10,7 @@ import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 
+import { MdArrowDownward } from "react-icons/md";
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
 import ProjectsHeader from "../components/ProjectsHeader";
@@ -26,6 +27,7 @@ const ProjectsSection = ({
   onProjectCountChange,
   onBusinessStatusChange,
   companyAdminIds,
+  isArchived,
 }) => {
   const { t } = useTranslation();
 
@@ -45,7 +47,13 @@ const ProjectsSection = ({
 
   // NEW: Business-level status
   const [businessStatus, setBusinessStatus] = useState("draft");
+  const [apiIsArchived, setApiIsArchived] = useState(isArchived);
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Sync prop to internal state
+  useEffect(() => {
+    setApiIsArchived(isArchived);
+  }, [isArchived]);
 
   const categories = [
     { id: "All", label: t("all") || "All" },
@@ -184,6 +192,28 @@ const ProjectsSection = ({
     });
   }, [projects, rankMap]);
 
+  const categoryCounts = useMemo(() => {
+    const counts = {
+      All: projects.length,
+      Draft: 0,
+      Active: 0,
+      "At Risk": 0,
+      Paused: 0,
+      Killed: 0
+    };
+
+    projects.forEach(p => {
+      const status = p.status || "Draft";
+      if (counts[status] !== undefined) {
+        counts[status]++;
+      } else if (status === "Draft") {
+        counts.Draft++;
+      }
+    });
+
+    return counts;
+  }, [projects]);
+
   const rankedProjects = projects.map((p) => ({
     ...p,
     rank: rankMap[String(p._id)],
@@ -299,6 +329,12 @@ const ProjectsSection = ({
     const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
     setRankingsLocked(isCurrentUserLocked);
 
+    // UPDATED: Set archival status from API response
+    if (result.businessAccessMode) {
+      const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
+      setApiIsArchived(apiArchived);
+    }
+
     // UPDATED: Use business status from API instead of deriving from projects
     const backendStatus = result.businessStatus || "draft";
 
@@ -345,6 +381,10 @@ const ProjectsSection = ({
     // UPDATED: Set business status from ranking response
     if (result.businessStatus) {
       setBusinessStatus(result.businessStatus);
+    }
+    if (result.businessAccessMode) {
+      const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
+      setApiIsArchived(apiArchived);
     }
 
     // UPDATED: Set lock summary with locked_users array
@@ -567,7 +607,7 @@ const ProjectsSection = ({
           project={currentProject}
           onBack={handleBackToList}
           onEdit={(project) => handleEditProject(project, "edit")}
-          canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus)}
+          canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)}
         />
       );
     }
@@ -578,7 +618,7 @@ const ProjectsSection = ({
         mode={activeView}
         readOnly={
           activeView === "view" ||
-          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus))
+          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived))
         }
         {...formState}
         {...formSetters}
@@ -621,6 +661,7 @@ const ProjectsSection = ({
           isPrioritizing={isPrioritizing}
           launched={launched}
           isViewer={isViewer}
+          isArchived={apiIsArchived}
           rankingsLocked={rankingsLocked}
           showRankScreen={showRankScreen}
           userHasRerankAccess={userHasRerankAccess}
@@ -634,15 +675,15 @@ const ProjectsSection = ({
           onToggleTeamRankings={onToggleTeamRankings}
         />
 
-        <div className="projects-tabs-container">
+        <div className="status-tabs-container">
           {categories.map((cat) => (
             <button
               key={cat.id}
-              className={`projects-tab ${selectedCategory === cat.id ? "active" : ""}`}
+              className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
               onClick={() => setSelectedCategory(cat.id)}
             >
-              {cat.label}
-              {selectedCategory === cat.id && <div className="tab-indicator" />}
+              <span className="status-name">{cat.label}</span>
+              <span className="status-count">{categoryCounts[cat.id] || 0}</span>
             </button>
           ))}
         </div>
@@ -656,6 +697,7 @@ const ProjectsSection = ({
           isAdmin={isSuperAdmin}
           isRankingLocked={isRankingLocked}
           onShowToast={handleShowToast}
+          isArchived={apiIsArchived}
         />
 
         {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
@@ -683,12 +725,13 @@ const ProjectsSection = ({
           projectCreationLocked={projectCreationLocked}
           isFinalizedView={isFinalizedView}
           canEditProject={(project) =>
-            canEditProject(project, isEditor, myUserId, businessStatus)
+            canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
           }
           onEdit={(project) => handleEditProject(project, "edit")}
           onView={(project) => handleEditProject(project, "view")}
           onDelete={handleDelete}
           selectedCategory={selectedCategory}
+          isArchived={apiIsArchived}
         />
       </>
     );

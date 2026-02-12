@@ -200,9 +200,16 @@ const BusinessOverview = ({ onToast }) => {
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <span className={`status-badge ${statusInfo.className}`}>
-                                                                {statusInfo.label}
-                                                            </span>
+                                                            <div className="d-flex flex-column gap-1">
+                                                                <span className={`status-badge ${statusInfo.className}`}>
+                                                                    {statusInfo.label}
+                                                                </span>
+                                                                {(biz.access_mode === 'archived' || biz.access_mode === 'hidden') && (
+                                                                    <span className="badge bg-warning text-dark" style={{ width: 'fit-content', fontSize: '0.7rem' }}>
+                                                                        Archived
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                         <td className="text-muted">{formatDate(biz.created_at)}</td>
                                                     </tr>
