@@ -40,7 +40,8 @@ const ProjectCard = ({
   onManageTeam,
   showMenuId,
   setShowMenuId,
-  isDark
+  isDark,
+  isArchived
 }) => {
   const { t } = useTranslation();
 
@@ -85,15 +86,15 @@ const ProjectCard = ({
           </button>
           {showMenuId === project._id && (
             <div className="menu-dropdown">
-              {/* Show View if user can't edit (launched without access) or is a Viewer, otherwise show Edit */}
-              {(launched && !userCanEdit) || isViewer ? (
+              {/* Show View if user can't edit (launched without access), is a Viewer, OR business is archived. Otherwise show Edit */}
+              {(launched && !userCanEdit) || isViewer || isArchived ? (
                 <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (
                 <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
               )}
               {/* <div onClick={() => onManageTeam(project)} className="menu-item"><Users size={14} /> Team</div> */}
-              {/* Only show Delete if project creation is not locked and user is NOT a viewer */}
-              {!projectCreationLocked && !isViewer && (
+              {/* Only show Delete if project creation is not locked, user is NOT a viewer, AND business is NOT archived */}
+              {!projectCreationLocked && !isViewer && !isArchived && (
                 <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
               )}
             </div>

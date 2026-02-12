@@ -192,59 +192,89 @@
   font-weight: 600;
   margin-bottom: 6px;
 }
+
 .field-row {
   margin-top: 10px;
 }
+
 /* --------------------- */
-/* PROJECTS TABS          */
+/* STATUS TABS (Pill)    */
 /* --------------------- */
-.projects-tabs-container {
-  display: flex;
-  gap: 30px;
-  margin: 20px 0 30px 15px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0;
+.status-tabs-container {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  background: #ffffff;
+  padding: 6px;
+  border-radius: 100px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  overflow-x: auto;
+  max-width: calc(100% - 30px);
 }
 
-.projects-tab {
-  background: none;
+.status-tab {
+  background: transparent;
   border: none;
-  padding: 10px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #6b7280;
+  padding: 8px 16px;
   cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
+  border-radius: 100px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   white-space: nowrap;
+  color: #64748b;
+  font-weight: 650;
+  font-size: 15px;
 }
 
-.projects-tab:hover {
-  color: #2563eb;
+.status-tab:hover:not(.active) {
+  background-color: #f8fafc;
+  color: #1e293b;
 }
 
-.projects-tab.active {
-  color: #2563eb;
+.status-tab.active {
+  background-color: #f0f4ff;
+  color: #4f46e5;
 }
 
-.tab-indicator {
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #2563eb;
-  border-radius: 3px 3px 0 0;
-  animation: slideIn 0.3s ease-out;
+.status-count {
+  font-size: 11px;
+  color: #ffffff;
+  font-weight: 700;
+  background: #4f46e5;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+
+.status-tab.active .status-count {
+  background: #4f46e5;
+  opacity: 1;
+}
+
+/* Fallback for non-active counts */
+.status-tab:not(.active) .status-count {
+  background: #cbd5e1;
+  color: #64748b;
 }
 
 @keyframes slideIn {
   from {
-    transform: scaleX(0);
+    transform: scale(0.9);
+    opacity: 0;
   }
 
   to {
-    transform: scaleX(1);
+    transform: scale(1);
+    opacity: 1;
   }
 }
 

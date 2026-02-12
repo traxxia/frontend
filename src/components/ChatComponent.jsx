@@ -15,7 +15,8 @@ const ChatComponent = ({
   onPhaseCompleted,
   onFileUploaded,
   scrollToUploadCard = false,
-  onScrollCompleted = null
+  onScrollCompleted = null,
+  isArchived = false
 }) => {
   const [currentInput, setCurrentInput] = useState('');
   const [messages, setMessages] = useState([]);
@@ -1548,14 +1549,7 @@ const ChatComponent = ({
     );
   }
 
-  const isInputDisabled = (!nextQuestion && !pendingValidation) ||
-    isSaving ||
-    isValidatingAnswer ||
-    processingAnswer.current ||
-    isSkipping ||
-    isFileUploading;
-
-  const isSubmitDisabled = !currentInput.trim() ||
+  const isInputDisabled = isArchived ||
     (!nextQuestion && !pendingValidation) ||
     isSaving ||
     isValidatingAnswer ||
@@ -1563,7 +1557,17 @@ const ChatComponent = ({
     isSkipping ||
     isFileUploading;
 
-  const isSkipDisabled = (!nextQuestion && !pendingValidation) ||
+  const isSubmitDisabled = isArchived ||
+    !currentInput.trim() ||
+    (!nextQuestion && !pendingValidation) ||
+    isSaving ||
+    isValidatingAnswer ||
+    processingAnswer.current ||
+    isSkipping ||
+    isFileUploading;
+
+  const isSkipDisabled = isArchived ||
+    (!nextQuestion && !pendingValidation) ||
     isSaving ||
     isValidatingAnswer ||
     processingAnswer.current ||
@@ -1800,7 +1804,13 @@ const ChatComponent = ({
         </button>
       )}
       <div className="input-area">
-        {!isViewer && (
+        {isArchived ? (
+          <div className="input-wrapper archived-notice" style={{ backgroundColor: '#fef3c7', padding: '12px', borderRadius: '8px', border: '1px solid #fcd34d', textAlign: 'center' }}>
+            <span style={{ color: '#92400e', fontSize: '14px', fontWeight: '500' }}>
+              Chat is disabled because this workspace is Archived (Read-Only).
+            </span>
+          </div>
+        ) : !isViewer && (
           <div className="input-wrapper">
             <textarea
               value={currentInput}

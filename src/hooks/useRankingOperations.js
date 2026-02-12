@@ -20,6 +20,7 @@ export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
       return {
         rankings: res.data.projects || [],
         businessStatus: res.data?.business_status, // NEW: business-level status
+        businessAccessMode: res.data?.business_access_mode,
         lockSummary: res.data?.ranking_lock_summary, // Now includes locked_users array
       };
     } catch (err) {
@@ -40,7 +41,7 @@ export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
             admin_user_id: companyAdminIds[0],
           },
         }
-      ); 
+      );
       return res.data.projects || [];
     } catch (err) {
       console.error("Failed to fetch admin rankings", err);
