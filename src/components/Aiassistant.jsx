@@ -6,7 +6,6 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [context] = useState("Enhance digital product offerings");
   const [credits] = useState(25);
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Hi! How can I help with your project?" },
@@ -108,18 +107,6 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
           </div>
         </div>
 
-        {/* Context */}
-        <div
-          style={{
-            background: "#E9F5FF",
-            borderBottom: "1px solid #90c5e4ff",
-            padding: "10px 14px 12px 14px",
-            margin: 0,
-          }}
-        >
-          <div style={{ fontSize: 12, color: "#6b7280" }}>Context: Analyzing</div>
-          <div style={{ fontWeight: 600, marginTop: 4 }}>{context}</div>
-        </div>
         <div className="ai-content">
           {/* Chat Window */}
           <div className="chat-wrapper">
