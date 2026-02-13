@@ -579,7 +579,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  gap: 10px;
 }
 
 .form-field {
@@ -2249,9 +2249,9 @@
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 10px;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: none;
 }
 
 /* Question Management Styles */
