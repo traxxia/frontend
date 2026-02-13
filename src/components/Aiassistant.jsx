@@ -48,7 +48,7 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:4111/api/chat", {
+      const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,13 +108,13 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
           </div>
         </div>
 
-          {/* Context */}
+        {/* Context */}
         <div
           style={{
             background: "#E9F5FF",
             borderBottom: "1px solid #90c5e4ff",
             padding: "10px 14px 12px 14px",
-            margin: 0,      
+            margin: 0,
           }}
         >
           <div style={{ fontSize: 12, color: "#6b7280" }}>Context: Analyzing</div>
