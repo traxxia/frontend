@@ -12,7 +12,14 @@ import {
   CheckCircle,
   XCircle,
   PauseCircle,
-  PlayCircle
+  PlayCircle,
+  Rocket,
+  Bolt,
+  Lightbulb,
+  Heart,
+  Shield,
+  Boxes,
+  Clock,
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -61,6 +68,18 @@ const ProjectCard = ({
     }
   };
 
+  const getThemeIcon = (themeName) => {
+    switch (themeName) {
+      case "Growth": return <Rocket size={14} />;
+      case "Efficiency": return <Bolt size={14} />;
+      case "Innovation": return <Lightbulb size={14} />;
+      case "CustomerExperience": return <Heart size={14} />;
+      case "RiskMitigation": return <Shield size={14} />;
+      case "Platform": return <Boxes size={14} />;
+      default: return <Target size={14} />;
+    }
+  };
+
   return (
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       {finalizeCompleted && (
@@ -71,7 +90,6 @@ const ProjectCard = ({
 
       <div className="project-header">
         <h3 className={`project-title ${finalizeCompleted ? "with-rank" : ""}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* {getStatusIcon(project.status)} */}
           {project.project_name}
         </h3>
         <div className="project-menu-container">
@@ -86,53 +104,68 @@ const ProjectCard = ({
           </button>
           {showMenuId === project._id && (
             <div className="menu-dropdown">
-              {/* Show View if user can't edit (launched without access), is a Viewer, OR business is archived. Otherwise show Edit */}
               {(launched && !userCanEdit) || isViewer || isArchived ? (
                 <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (
                 <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
               )}
-              {/* <div onClick={() => onManageTeam(project)} className="menu-item"><Users size={14} /> Team</div> */}
-              {/* Only show Delete if project creation is not locked, user is NOT a viewer, AND business is NOT archived */}
               {!projectCreationLocked && !isViewer && !isArchived && (
                 <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
               )}
             </div>
           )}
         </div>
-      </div>
+      </div> 
 
-      <p className="project-last-edited" style={{ marginBottom: "8px" }}>
-        {t("Project_Description")}: <span className="project-last-edited-name">{project.description ? project.description : "None"}</span>
-      </p>
-      <p className="project-last-edited" style={{ marginBottom: "8px" }}>
-        {t("Owner")}: <span className="project-last-edited-name">{project.accountable_owner || project.created_by || t("Unassigned")}</span>
+      <p className="project-last-edited" style={{ marginBottom: "8px", fontSize: "12px" }}>
+        {t("Project_Description")}: <span className="project-last-edited-name" style={{ color: "#475569" }}>{project.description ? project.description : "None"}</span>
       </p>
 
-      {/* Strategic V2 Info */}
-      <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "12px", fontSize: "12px" }}>
-
-        {/* Row 1: Status & Learning State */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
-          <span className="status-badge">
-            {project.status?.toLowerCase() === "launched" ? t("Draft") : (project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft")))}
+      {/* Grid for Impact, Effort, Risk */}
+      <div className="card-grid-details">
+        <div>
+          <span className="details-label">{t("Impact")}</span>
+          <span className={`property-badge impact-${project.impact?.toLowerCase() || 'low'}`}>
+            <Zap size={10} /> {project.impact || 'None'}
           </span>
-          {/* <span style={{ color: "#6b7280" }}>
-            {t("State")}: <strong style={{ color: "#374151" }}>{project.learning_state ? t(project.learning_state) : t("Testing")}</strong>
-          </span> */}
-          <span title={t("Impact")} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Zap size={12} color={impact === 'High' ? 'orange' : '#9ca3af'} /> {impact} {impact ? t("Impact") : "No Impact"}
+        </div>
+        <div>
+          <span className="details-label">{t("Effort")}</span>
+          <span className={`property-badge effort-${project.selected_effort?.toLowerCase() || 'medium'}`}>
+            <Clock size={10} /> {project.selected_effort || 'Medium'}
+          </span>
+        </div>
+        <div>
+          <span className="details-label">{t("Risk")}</span>
+          <span className={`property-badge risk-${project.selected_risk?.toLowerCase() || 'low'}`}>
+            <AlertTriangle size={10} /> {project.selected_risk || 'Low'}
+          </span>
+        </div>
+        <div>
+          <span className="details-label">{t("Owner")}</span>
+          <span className="project-last-edited-name" style={{ fontSize: "12px", fontWeight: "600" }}>
+            {project.accountable_owner || project.created_by || t("Unassigned")}
           </span>
         </div>
       </div>
 
-      {/* Footer / Actions - Keeping minimal as main actions are in menu now. Or we can restore the buttons if needed. 
-          For clean V2 look, menu is better. 
-      */}
-      <div className="project-card-footer" style={{ marginTop: "auto", fontSize: "11px", color: "#635d5c" }}>
-        {t("Created")} {new Date(project.created_at).toLocaleDateString()}
-      </div>
+      {/* Strategic Decision / Bet */}
+      {project.strategic_decision && (
+        <div className="strategic-bet-container">
+          <span className="strategic-bet-label">{t("Strategic Bet")}</span>
+          <div className="strategic-bet-text">"{project.strategic_decision}"</div>
+        </div>
+      )}
 
+      {/* Footer Info */}
+      <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span className="status-badge">
+          {project.status?.toLowerCase() === "launched" ? t("Draft") : (project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft")))}
+        </span>
+        <div className="project-card-footer" style={{ borderTop: "none", fontSize: "10px", color: "#94a3b8" }}>
+          {t("Created")} {new Date(project.created_at).toLocaleDateString()}
+        </div>
+      </div>
     </div>
   );
 };
