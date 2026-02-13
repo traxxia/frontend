@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sparkles, Send, ChevronDown } from "lucide-react";
+import axios from "axios";
 import "../styles/Ai.css";
 
-const Aiassistant = ({ businessId: propBusinessId }) => {
+const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [context] = useState("Enhance digital product offerings");
   const [credits] = useState(25);
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Hi! How can I help with your project?" },
@@ -38,13 +40,70 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
     return propBusinessId || sessionStorage.getItem("activeBusinessId"); // Fallback to hardcoded ID if none found
   };
 
+  const getToken = () => sessionStorage.getItem("token");
+
+  // Fetch history when projectId changes
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!projectId) {
+        setMessages([{ role: "assistant", text: "Hi! How can I help with your project?" }]);
+        return;
+      }
+
+      const token = getToken();
+      if (!token) return;
+
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (response.data.history && response.data.history.length > 0) {
+          setMessages(response.data.history.map(msg => ({
+            role: msg.role,
+            text: msg.text
+          })));
+        } else {
+          setMessages([{ role: "assistant", text: "Hi! How can I help with your project?" }]);
+        }
+      } catch (error) {
+        console.error("Error fetching AI chat history:", error);
+      }
+    };
+
+    fetchHistory();
+  }, [projectId]);
+
+  const saveMessageToHistory = async (role, text) => {
+    if (!projectId) return;
+
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/ai-chat/history`, {
+        project_id: projectId,
+        role,
+        text
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error("Error saving AI chat message to history:", error);
+    }
+  };
+
   const handleSend = async () => {
     if (!query.trim() || isLoading) return;
 
-    const userMessage = { role: "user", text: query };
+    const userText = query;
+    const userMessage = { role: "user", text: userText };
     setMessages((prev) => [...prev, userMessage]);
     setQuery("");
     setIsLoading(true);
+
+    // Save user message to history
+    await saveMessageToHistory("user", userText);
 
     try {
       const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
@@ -53,7 +112,7 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
           "Content-Type": "application/json",
           "x-business-id": getBusinessId(),
         },
-        body: JSON.stringify({ message: query }),
+        body: JSON.stringify({ message: userText }),
       });
 
       if (!response.ok) {
@@ -69,6 +128,10 @@ const Aiassistant = ({ businessId: propBusinessId }) => {
         ...prev,
         { role: "assistant", text: assistantText },
       ]);
+
+      // Save assistant message to history
+      await saveMessageToHistory("assistant", assistantText);
+
     } catch (error) {
       console.error("AI Assistant API Error:", error);
       setMessages((prev) => [

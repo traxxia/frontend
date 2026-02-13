@@ -630,6 +630,7 @@ const ProjectsSection = ({
         onFieldEdit={handleFieldEdit}
         isSubmitting={isSubmitting}
         selectedBusinessId={selectedBusinessId}
+        projectId={currentProject?._id}
       />
     );
   };

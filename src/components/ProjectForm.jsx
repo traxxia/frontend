@@ -320,6 +320,7 @@ const ProjectForm = ({
   setLearningState,
   isSubmitting = false,
   selectedBusinessId,
+  projectId,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -1127,7 +1128,7 @@ const ProjectForm = ({
 
 
       </fieldset>
-      <Aiassistant businessId={selectedBusinessId} />
+      <Aiassistant businessId={selectedBusinessId} projectId={projectId} />
     </>
   );
 };
