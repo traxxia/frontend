@@ -32,16 +32,48 @@ const Aiassistant = () => {
     setSources((s) => ({ ...s, [key]: !s[key] }));
   };
 
-  const handleSend = () => {
-    if (!query.trim()) return;
-    // Placeholder: integrate with backend/LLM later
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: query },
-      // Placeholder assistant reply; replace with real LLM response
-      { role: "assistant", text: "Got it! I'll analyze and respond shortly." },
-    ]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = async () => {
+    if (!query.trim() || isLoading) return;
+
+    const userMessage = { role: "user", text: query };
+    setMessages((prev) => [...prev, userMessage]);
     setQuery("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:4111/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-business-id": "698ab3fb36154464bbd4a6ce",
+        },
+        body: JSON.stringify({ message: query }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response from AI assistant");
+      }
+
+      const data = await response.json();
+
+      // Look for response or text field in the API reply
+      const assistantText = data.response || data.text || "I'm sorry, I couldn't process that request.";
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: assistantText },
+      ]);
+    } catch (error) {
+      console.error("AI Assistant API Error:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "Sorry, I encountered an error. Please try again later." },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -175,7 +207,8 @@ const Aiassistant = () => {
           <button
             className="ai-send-button"
             onClick={handleSend}
-            disabled={!query.trim()}
+            disabled={!query.trim() || isLoading}
+            style={{ opacity: (!query.trim() || isLoading) ? 0.5 : 1 }}
           >
             <Send size={16} color="#fff" />
           </button>
