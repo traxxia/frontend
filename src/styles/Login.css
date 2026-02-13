@@ -178,11 +178,7 @@
   margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-sm);
 }
-
-.form-group {
-  margin-bottom: var(--spacing-lg);
-}
-
+ 
 .form-group label {
   display: block;
   font-size: var(--font-size-sm);
@@ -231,6 +227,7 @@
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
   box-sizing: border-box;
+  margin:10px 0px;
   /* Ensure padding doesn't affect width */
 }
 
@@ -498,9 +495,8 @@
 .terms-modal {
   background: var(--color-bg-primary);
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-2xl);
-  max-width: 500px;
-  width: 90%;
+  padding: 10px; 
+  width: auto;
   box-shadow: var(--shadow-2xl);
   animation: fadeIn 0.2s ease-in-out;
 }
@@ -594,13 +590,7 @@
 [data-theme="dark"] .eye-icon:hover {
   color: var(--color-text-primary);
 }
-
-/* Field labels */
-.form-group:nth-child(1) label,
-.form-group:nth-child(2) .password-header label {
-  color: var(--color-secondary);
-}
-
+ 
 /* Responsive Design */
 @media (max-width: 1024px) {
   .login-container {
@@ -733,7 +723,7 @@
 .form-group input[type="password"]::-webkit-credentials-auto-fill-button,
 .form-group input[type="password"]::-webkit-contacts-auto-fill-button,
 .form-group input[type="password"]::-webkit-caps-lock-indicator {
-  display: none !important;
+  display: none;
   visibility: hidden;
   pointer-events: none;
 }
