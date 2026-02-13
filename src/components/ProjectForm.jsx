@@ -319,6 +319,7 @@ const ProjectForm = ({
   learningState,
   setLearningState,
   isSubmitting = false,
+  selectedBusinessId,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -634,499 +635,499 @@ const ProjectForm = ({
 
   return (
     <>
-    <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
-      {/* Breadcrumb & Actions Header */}
-      <div className="projects-breadcrumb" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Breadcrumb style={{ margin: 0 }}>
-          <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
-            {t("Projects")}
-          </Breadcrumb.Item>
-          <Breadcrumb.Item active>{getTitle()}</Breadcrumb.Item>
-        </Breadcrumb>
+      <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+        {/* Breadcrumb & Actions Header */}
+        <div className="projects-breadcrumb" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Breadcrumb style={{ margin: 0 }}>
+            <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
+              {t("Projects")}
+            </Breadcrumb.Item>
+            <Breadcrumb.Item active>{getTitle()}</Breadcrumb.Item>
+          </Breadcrumb>
 
-        {/* Actions - Moved to Top */}
-        {!isReadOnly && (
-          <div className="actions-row-top" style={{ display: "flex", gap: "12px" }}>
-            <button type="button" className="btn-cancel" onClick={onBack} style={{ padding: "8px 16px" }}>
-              {t("cancel")}
-            </button>
-            <button
-              type="button"
-              className="btn-create"
-              onClick={handleSubmit}
-              style={{ padding: "8px 16px" }}
-              disabled={isSubmitting}
-            >
-              {getSubmitButtonText()}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Required Information */}
-      <div className="center-row">
-        <div className="form-card">
-          <h3 className="section-title">{t("Required_Information")}</h3>
-
-          {/* Project Name Field - Editable in new mode, readonly in edit mode */}
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">
-                {t("Project_Name")} <span className="required">*</span>
-              </label>
-              {mode !== "new" && renderLockBadge("project_name")}
+          {/* Actions - Moved to Top */}
+          {!isReadOnly && (
+            <div className="actions-row-top" style={{ display: "flex", gap: "12px" }}>
+              <button type="button" className="btn-cancel" onClick={onBack} style={{ padding: "8px 16px" }}>
+                {t("cancel")}
+              </button>
+              <button
+                type="button"
+                className="btn-create"
+                onClick={handleSubmit}
+                style={{ padding: "8px 16px" }}
+                disabled={isSubmitting}
+              >
+                {getSubmitButtonText()}
+              </button>
             </div>
-            {mode === "new" ? (
-              <>
-                <input
-                  ref={projectNameRef}
-                  type="text"
-                  value={projectName || ""}
-                  onChange={handleProjectNameChange}
-                  placeholder="Enter project name (minimum 3 characters)"
-                  className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`}
-                  readOnly={isReadOnly}
-                  onFocus={() => handleFieldFocus("project_name")}
-                  maxLength={100}
-                  disabled={isSubmitting}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {showErrors && fieldErrors.projectName && (
-                    <small className="error-text">{fieldErrors.projectName}</small>
-                  )}
-                  <small className="text-muted" style={{ marginLeft: 'auto' }}>
-                    {(projectName || '').length}/100 characters
-                  </small>
-                </div>
-              </>
-            ) : (
-              projectName && (
-                <div className="project-name-display-inline">
-                  {projectName}
-                </div>
-              )
-            )}
-          </div>
-
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">
-                {t("Project_Description")} <span className="required">*</span>
-              </label>
-              {renderLockBadge("project_description")}
-            </div>
-            <textarea
-              ref={descriptionRef}
-              value={description || ""}
-              onChange={handleDescriptionChange}
-              placeholder="Launch digital wallet product and achieve market penetration (minimum 10 characters)"
-              rows={3}
-              className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`}
-              readOnly={isFieldDisabled("project_description")}
-              onFocus={() => handleFieldFocus("project_description")}
-              maxLength={500}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {showErrors && fieldErrors.description && (
-                <small className="error-text">{fieldErrors.description}</small>
-              )}
-              <small className="text-muted" style={{ marginLeft: 'auto' }}>
-                {(description || '').length}/500 characters
-              </small>
-            </div>
-          </div>
-
-          <TextAreaField
-            ref={importanceRef}
-            label={t("Why_This_Matters")}
-            value={importance}
-            onChange={handleImportanceChange}
-            placeholder={t("Why_This_Matters_Placeholder")}
-            error={showErrors && fieldErrors.importance}
-            readOnly={isFieldDisabled("why_this_matters")}
-            onFocus={handleFieldFocus}
-            fieldName="why_this_matters"
-            required
-          />
+          )}
         </div>
-      </div>
 
+        {/* Required Information */}
+        <div className="center-row">
+          <div className="form-card">
+            <h3 className="section-title">{t("Required_Information")}</h3>
 
-
-      {/* Strategic Core (Start of New V2 Section) */}
-      <div className="center-row">
-        <div className="form-card">
-          <h3 className="section-title">{t("Strategic_Core")}</h3>
-
-          {/* Strategic Decision */}
-          <TextAreaField
-            ref={strategicDecisionRef}
-            label={t("Strategic_Decision_Bet")}
-            value={strategicDecision}
-            onChange={handleStrategicDecisionChange}
-            placeholder={t("Strategic_Decision_Placeholder")}
-            error={showErrors && fieldErrors.strategicDecision}
-            readOnly={isFieldDisabled("strategic_decision")}
-            onFocus={handleFieldFocus}
-            fieldName="strategic_decision"
-            required
-          />
-
-          {/* Accountable Owner */}
-          <InputField
-            ref={accountableOwnerRef}
-            label={t("Accountable_Owner")}
-            value={accountableOwner}
-            onChange={handleAccountableOwnerChange}
-            placeholder={t("Owner_Placeholder")}
-            error={showErrors && fieldErrors.accountableOwner}
-            readOnly={isFieldDisabled("accountable_owner")}
-            onFocus={handleFieldFocus}
-            fieldName="accountable_owner"
-            required
-          />
-
-          {/* Key Assumptions */}
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">
-                {t("Key_Assumptions_Tested")}
-              </label>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {[0, 1, 2].map((idx) => (
-                <input
-                  key={idx}
-                  type="text"
-                  value={keyAssumptions[idx] || ""}
-                  onChange={(e) => {
-                    const newAssumptions = [...keyAssumptions];
-                    newAssumptions[idx] = e.target.value;
-                    setKeyAssumptions(newAssumptions);
-                    handleFieldEdit("key_assumptions");
-                  }}
-                  placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
-                  className="field-input"
-                  readOnly={isFieldDisabled("key_assumptions")}
-                  onFocus={() => handleFieldFocus("key_assumptions")}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Success & Kill Criteria */}
-          <div className="grid-2">
-            <TextAreaField
-              ref={successCriteriaRef}
-              label={t("Continue_If_Label")}
-              value={successCriteria}
-              onChange={handleSuccessCriteriaChange}
-              placeholder={t("Success_Criteria_Placeholder")}
-              error={showErrors && fieldErrors.successCriteria}
-              readOnly={isFieldDisabled("success_criteria") || isSubmitting}
-              onFocus={handleFieldFocus}
-              fieldName="success_criteria"
-              required
-              isSubmitting={isSubmitting}
-            />
-            <TextAreaField
-              ref={killCriteriaRef}
-              label={t("Stop_If_Label")}
-              value={killCriteria}
-              onChange={handleKillCriteriaChange}
-              placeholder={t("Kill_Criteria_Placeholder")}
-              error={showErrors && fieldErrors.killCriteria}
-              readOnly={isFieldDisabled("kill_criteria") || isSubmitting}
-              onFocus={handleFieldFocus}
-              fieldName="kill_criteria"
-              required
-              isSubmitting={isSubmitting}
-            />
-          </div>
-
-          {/* Review Cadence, Status & Learning State */}
-          <div className="grid-3" style={{ marginTop: "16px" }}>
-            <SelectField
-              label={t("Review_Cadence")}
-              icon={<Clock size={16} />}
-              options={[
-                { value: "Weekly", label: t("Weekly"), icon: <Clock size={14} /> },
-                { value: "Monthly", label: t("Monthly"), icon: <Clock size={14} /> },
-                { value: "Quarterly", label: t("Quarterly"), icon: <Clock size={14} /> },
-              ]}
-              value={reviewCadence}
-              onChange={(val) => {
-                setReviewCadence(val);
-                handleFieldEdit("review_cadence");
-              }}
-              open={openDropdown === "reviewCadence"}
-              setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")}
-              disabled={isFieldDisabled("review_cadence") || isSubmitting}
-              fieldName="review_cadence"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
-
-            <SelectField
-              ref={statusRef}
-              label={t("Status")}
-              icon={<TrendingUp size={16} />}
-              options={[
-                { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
-                { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
-                { value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
-                { value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
-                { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
-                { value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
-              ]}
-              value={status}
-              onChange={(val) => {
-                setStatus(val);
-                handleFieldEdit("status");
-                if (showErrors) {
-                  setFieldErrors(prev => ({
-                    ...prev,
-                    status: (val && val.trim()) ? null : t("Status_is_required")
-                  }));
-                }
-              }}
-              open={openDropdown === "status"}
-              setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
-              disabled={isReadOnly}
-              fieldName="status"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-              required
-              error={showErrors && fieldErrors.status}
-            />
-
-            <SelectField
-              label={t("Learning_State")}
-              icon={<Zap size={16} />}
-              options={[
-                { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" /> },
-                { value: "Validated", label: t("Validated"), icon: <CheckCircle size={14} color="green" /> },
-                { value: "Disproven", label: t("Disproven"), icon: <XCircle size={14} color="red" /> },
-              ]}
-              value={learningState}
-              onChange={(val) => {
-                setLearningState(val);
-                handleFieldEdit("learning_state");
-              }}
-              open={openDropdown === "learning_state"}
-              setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
-              disabled={isFieldDisabled("learning_state") || isSubmitting}
-              fieldName="learning_state"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
-          </div>
-
-        </div>
-      </div>
-
-
-      {/* Strategic Context */}
-      <div className="center-row">
-        <div className="form-card">
-          <h3 className="section-title">{t("Strategic_Context")}</h3>
-          <div className="grid-3">
-            <SelectField
-              label={t("Impact")}
-              icon={<TrendingUp size={16} />}
-              options={impactOptions}
-              value={selectedImpact}
-              onChange={setSelectedImpact}
-              open={openDropdown === "impact"}
-              setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")}
-              disabled={isFieldDisabled("impact")}
-              fieldName="impact"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
-
-            <SelectField
-              label={t("Effort")}
-              icon={<Zap size={16} />}
-              options={effortOptions}
-              value={selectedEffort}
-              onChange={setSelectedEffort}
-              open={openDropdown === "effort"}
-              setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")}
-              disabled={isFieldDisabled("effort")}
-              fieldName="effort"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
-
-          </div> <br></br>
-
-          <div className="grid-3">
-            <SelectField
-              label={t("Risk")}
-              icon={<AlertTriangle size={16} />}
-              options={riskOptions}
-              value={selectedRisk}
-              onChange={setSelectedRisk}
-              open={openDropdown === "risk"}
-              setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")}
-              disabled={isFieldDisabled("risk")}
-              fieldName="risk"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
-
-            <SelectField
-              label={t("Strategic_Theme_Horizon")}
-              icon={<Lock size={16} />}
-              options={themeOptions}
-              value={selectedTheme}
-              onChange={setSelectedTheme}
-              open={openDropdown === "theme"}
-              setOpen={() => setOpenDropdown(openDropdown === "theme" ? null : "theme")}
-              disabled={isFieldDisabled("theme")}
-              fieldName="theme"
-              onFieldFocus={handleFieldFocus}
-              onFieldEdit={handleFieldEdit}
-            />
-
-          </div> <br></br>
-
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">{t("Dependencies")}</label>
-              {renderLockBadge("dependencies")}
-            </div>
-            <textarea
-              placeholder="List dependencies (one per line)"
-              rows={3}
-              className="field-textarea transparent"
-              value={dependencies || ""}
-              onChange={e => {
-                setDependencies(e.target.value);
-                handleFieldEdit("dependencies");
-              }}
-              readOnly={isFieldDisabled("dependencies")}
-              onFocus={() => handleFieldFocus("dependencies")}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Planning */}
-      <div className="center-row">
-        <div className="form-card">
-          <h3 className="section-title">{t("Detailed_Planning")}</h3>
-
-          <TextAreaField
-            label={t("Constraints_Non_Negotiables")}
-            value={highLevelReq}
-            onChange={(e) => {
-              setHighLevelReq(e.target.value);
-              handleFieldEdit("high_level_requirements");
-            }}
-            placeholder={t("what_are_the_main_requirements_or_constraints")}
-            readOnly={isFieldDisabled("high_level_requirements")}
-            onFocus={handleFieldFocus}
-            fieldName="high_level_requirements"
-          />
-
-          <TextAreaField
-            label={t("Explicitly_Out_of_Scope")}
-            value={scope}
-            onChange={(e) => {
-              setScope(e.target.value);
-              handleFieldEdit("scope_definition");
-            }}
-            placeholder={t("define_what_is_not_included_in_this_project")}
-            readOnly={isFieldDisabled("scope_definition")}
-            onFocus={handleFieldFocus}
-            fieldName="scope_definition"
-          />
-
-          <TextAreaField
-            label={t("Expected_Outcome")}
-            value={outcome}
-            onChange={(e) => {
-              setOutcome(e.target.value);
-              handleFieldEdit("expected_outcome");
-            }}
-            placeholder={t("what_is_the_end_result_use_outcome_based_wording")}
-            readOnly={isFieldDisabled("expected_outcome")}
-            onFocus={handleFieldFocus}
-            fieldName="expected_outcome"
-          />
-
-          <div className="field-row">
-            <div className="field-label-row">
-              <label className="field-label">{t("Success_Metrics")}</label>
-              {renderLockBadge("success_metrics")}
-            </div>
-            <textarea
-              placeholder="How will you measure success? (one metric per line)"
-              rows={3}
-              className="field-textarea"
-              value={successMetrics || ""}
-              onChange={e => {
-                setSuccessMetrics(e.target.value);
-                handleFieldEdit("success_metrics");
-              }}
-              readOnly={isFieldDisabled("success_metrics")}
-              onFocus={() => handleFieldFocus("success_metrics")}
-            />
-          </div>
-
-          <div className="grid-2">
-            <div>
+            {/* Project Name Field - Editable in new mode, readonly in edit mode */}
+            <div className="field-row">
               <div className="field-label-row">
                 <label className="field-label">
-                  <Clock size={16} /> {t("Estimated_Timeline")}
+                  {t("Project_Name")} <span className="required">*</span>
                 </label>
-                {renderLockBadge("estimated_timeline")}
+                {mode !== "new" && renderLockBadge("project_name")}
               </div>
-              <input
-                type="text"
-                placeholder="e.g., 3–6 months"
-                className="field-input"
-                value={timeline || ""}
-                onChange={e => {
-                  setTimeline(e.target.value);
-                  handleFieldEdit("estimated_timeline");
+              {mode === "new" ? (
+                <>
+                  <input
+                    ref={projectNameRef}
+                    type="text"
+                    value={projectName || ""}
+                    onChange={handleProjectNameChange}
+                    placeholder="Enter project name (minimum 3 characters)"
+                    className={`field-input ${showErrors && fieldErrors.projectName ? "error" : ""}`}
+                    readOnly={isReadOnly}
+                    onFocus={() => handleFieldFocus("project_name")}
+                    maxLength={100}
+                    disabled={isSubmitting}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {showErrors && fieldErrors.projectName && (
+                      <small className="error-text">{fieldErrors.projectName}</small>
+                    )}
+                    <small className="text-muted" style={{ marginLeft: 'auto' }}>
+                      {(projectName || '').length}/100 characters
+                    </small>
+                  </div>
+                </>
+              ) : (
+                projectName && (
+                  <div className="project-name-display-inline">
+                    {projectName}
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="field-row">
+              <div className="field-label-row">
+                <label className="field-label">
+                  {t("Project_Description")} <span className="required">*</span>
+                </label>
+                {renderLockBadge("project_description")}
+              </div>
+              <textarea
+                ref={descriptionRef}
+                value={description || ""}
+                onChange={handleDescriptionChange}
+                placeholder="Launch digital wallet product and achieve market penetration (minimum 10 characters)"
+                rows={3}
+                className={`field-textarea ${showErrors && fieldErrors.description ? "error" : ""}`}
+                readOnly={isFieldDisabled("project_description")}
+                onFocus={() => handleFieldFocus("project_description")}
+                maxLength={500}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {showErrors && fieldErrors.description && (
+                  <small className="error-text">{fieldErrors.description}</small>
+                )}
+                <small className="text-muted" style={{ marginLeft: 'auto' }}>
+                  {(description || '').length}/500 characters
+                </small>
+              </div>
+            </div>
+
+            <TextAreaField
+              ref={importanceRef}
+              label={t("Why_This_Matters")}
+              value={importance}
+              onChange={handleImportanceChange}
+              placeholder={t("Why_This_Matters_Placeholder")}
+              error={showErrors && fieldErrors.importance}
+              readOnly={isFieldDisabled("why_this_matters")}
+              onFocus={handleFieldFocus}
+              fieldName="why_this_matters"
+              required
+            />
+          </div>
+        </div>
+
+
+
+        {/* Strategic Core (Start of New V2 Section) */}
+        <div className="center-row">
+          <div className="form-card">
+            <h3 className="section-title">{t("Strategic_Core")}</h3>
+
+            {/* Strategic Decision */}
+            <TextAreaField
+              ref={strategicDecisionRef}
+              label={t("Strategic_Decision_Bet")}
+              value={strategicDecision}
+              onChange={handleStrategicDecisionChange}
+              placeholder={t("Strategic_Decision_Placeholder")}
+              error={showErrors && fieldErrors.strategicDecision}
+              readOnly={isFieldDisabled("strategic_decision")}
+              onFocus={handleFieldFocus}
+              fieldName="strategic_decision"
+              required
+            />
+
+            {/* Accountable Owner */}
+            <InputField
+              ref={accountableOwnerRef}
+              label={t("Accountable_Owner")}
+              value={accountableOwner}
+              onChange={handleAccountableOwnerChange}
+              placeholder={t("Owner_Placeholder")}
+              error={showErrors && fieldErrors.accountableOwner}
+              readOnly={isFieldDisabled("accountable_owner")}
+              onFocus={handleFieldFocus}
+              fieldName="accountable_owner"
+              required
+            />
+
+            {/* Key Assumptions */}
+            <div className="field-row">
+              <div className="field-label-row">
+                <label className="field-label">
+                  {t("Key_Assumptions_Tested")}
+                </label>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[0, 1, 2].map((idx) => (
+                  <input
+                    key={idx}
+                    type="text"
+                    value={keyAssumptions[idx] || ""}
+                    onChange={(e) => {
+                      const newAssumptions = [...keyAssumptions];
+                      newAssumptions[idx] = e.target.value;
+                      setKeyAssumptions(newAssumptions);
+                      handleFieldEdit("key_assumptions");
+                    }}
+                    placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
+                    className="field-input"
+                    readOnly={isFieldDisabled("key_assumptions")}
+                    onFocus={() => handleFieldFocus("key_assumptions")}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Success & Kill Criteria */}
+            <div className="grid-2">
+              <TextAreaField
+                ref={successCriteriaRef}
+                label={t("Continue_If_Label")}
+                value={successCriteria}
+                onChange={handleSuccessCriteriaChange}
+                placeholder={t("Success_Criteria_Placeholder")}
+                error={showErrors && fieldErrors.successCriteria}
+                readOnly={isFieldDisabled("success_criteria") || isSubmitting}
+                onFocus={handleFieldFocus}
+                fieldName="success_criteria"
+                required
+                isSubmitting={isSubmitting}
+              />
+              <TextAreaField
+                ref={killCriteriaRef}
+                label={t("Stop_If_Label")}
+                value={killCriteria}
+                onChange={handleKillCriteriaChange}
+                placeholder={t("Kill_Criteria_Placeholder")}
+                error={showErrors && fieldErrors.killCriteria}
+                readOnly={isFieldDisabled("kill_criteria") || isSubmitting}
+                onFocus={handleFieldFocus}
+                fieldName="kill_criteria"
+                required
+                isSubmitting={isSubmitting}
+              />
+            </div>
+
+            {/* Review Cadence, Status & Learning State */}
+            <div className="grid-3" style={{ marginTop: "16px" }}>
+              <SelectField
+                label={t("Review_Cadence")}
+                icon={<Clock size={16} />}
+                options={[
+                  { value: "Weekly", label: t("Weekly"), icon: <Clock size={14} /> },
+                  { value: "Monthly", label: t("Monthly"), icon: <Clock size={14} /> },
+                  { value: "Quarterly", label: t("Quarterly"), icon: <Clock size={14} /> },
+                ]}
+                value={reviewCadence}
+                onChange={(val) => {
+                  setReviewCadence(val);
+                  handleFieldEdit("review_cadence");
                 }}
-                readOnly={isFieldDisabled("estimated_timeline")}
-                onFocus={() => handleFieldFocus("estimated_timeline")}
+                open={openDropdown === "reviewCadence"}
+                setOpen={() => setOpenDropdown(openDropdown === "reviewCadence" ? null : "reviewCadence")}
+                disabled={isFieldDisabled("review_cadence") || isSubmitting}
+                fieldName="review_cadence"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
+              />
+
+              <SelectField
+                ref={statusRef}
+                label={t("Status")}
+                icon={<TrendingUp size={16} />}
+                options={[
+                  { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
+                  { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
+                  { value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
+                  { value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
+                  { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
+                  { value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
+                ]}
+                value={status}
+                onChange={(val) => {
+                  setStatus(val);
+                  handleFieldEdit("status");
+                  if (showErrors) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      status: (val && val.trim()) ? null : t("Status_is_required")
+                    }));
+                  }
+                }}
+                open={openDropdown === "status"}
+                setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
+                disabled={isReadOnly}
+                fieldName="status"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
+                required
+                error={showErrors && fieldErrors.status}
+              />
+
+              <SelectField
+                label={t("Learning_State")}
+                icon={<Zap size={16} />}
+                options={[
+                  { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" /> },
+                  { value: "Validated", label: t("Validated"), icon: <CheckCircle size={14} color="green" /> },
+                  { value: "Disproven", label: t("Disproven"), icon: <XCircle size={14} color="red" /> },
+                ]}
+                value={learningState}
+                onChange={(val) => {
+                  setLearningState(val);
+                  handleFieldEdit("learning_state");
+                }}
+                open={openDropdown === "learning_state"}
+                setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
+                disabled={isFieldDisabled("learning_state") || isSubmitting}
+                fieldName="learning_state"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
               />
             </div>
 
-            <div>
-              <div className="field-label-row">
-                <label className="field-label">
-                  <DollarSign size={16} /> {t("Budget_Estimate")}
-                </label>
-                {renderLockBadge("budget_estimate")}
-              </div>
-              <input
-                ref={budgetRef}
-                type="text"
-                placeholder="e.g., $50K - $100K"
-                className={`field-input ${showErrors && fieldErrors.budget ? "error" : ""}`}
-                value={budget || ""}
-                onChange={handleBudgetChange}
-                onKeyPress={handleBudgetKeyPress}
-                readOnly={isFieldDisabled("budget_estimate")}
-                onFocus={() => handleFieldFocus("budget_estimate")}
+          </div>
+        </div>
+
+
+        {/* Strategic Context */}
+        <div className="center-row">
+          <div className="form-card">
+            <h3 className="section-title">{t("Strategic_Context")}</h3>
+            <div className="grid-3">
+              <SelectField
+                label={t("Impact")}
+                icon={<TrendingUp size={16} />}
+                options={impactOptions}
+                value={selectedImpact}
+                onChange={setSelectedImpact}
+                open={openDropdown === "impact"}
+                setOpen={() => setOpenDropdown(openDropdown === "impact" ? null : "impact")}
+                disabled={isFieldDisabled("impact")}
+                fieldName="impact"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
               />
-              {showErrors && fieldErrors.budget && (
-                <small className="error-text">{fieldErrors.budget}</small>
-              )}
+
+              <SelectField
+                label={t("Effort")}
+                icon={<Zap size={16} />}
+                options={effortOptions}
+                value={selectedEffort}
+                onChange={setSelectedEffort}
+                open={openDropdown === "effort"}
+                setOpen={() => setOpenDropdown(openDropdown === "effort" ? null : "effort")}
+                disabled={isFieldDisabled("effort")}
+                fieldName="effort"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
+              />
+
+            </div> <br></br>
+
+            <div className="grid-3">
+              <SelectField
+                label={t("Risk")}
+                icon={<AlertTriangle size={16} />}
+                options={riskOptions}
+                value={selectedRisk}
+                onChange={setSelectedRisk}
+                open={openDropdown === "risk"}
+                setOpen={() => setOpenDropdown(openDropdown === "risk" ? null : "risk")}
+                disabled={isFieldDisabled("risk")}
+                fieldName="risk"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
+              />
+
+              <SelectField
+                label={t("Strategic_Theme_Horizon")}
+                icon={<Lock size={16} />}
+                options={themeOptions}
+                value={selectedTheme}
+                onChange={setSelectedTheme}
+                open={openDropdown === "theme"}
+                setOpen={() => setOpenDropdown(openDropdown === "theme" ? null : "theme")}
+                disabled={isFieldDisabled("theme")}
+                fieldName="theme"
+                onFieldFocus={handleFieldFocus}
+                onFieldEdit={handleFieldEdit}
+              />
+
+            </div> <br></br>
+
+            <div className="field-row">
+              <div className="field-label-row">
+                <label className="field-label">{t("Dependencies")}</label>
+                {renderLockBadge("dependencies")}
+              </div>
+              <textarea
+                placeholder="List dependencies (one per line)"
+                rows={3}
+                className="field-textarea transparent"
+                value={dependencies || ""}
+                onChange={e => {
+                  setDependencies(e.target.value);
+                  handleFieldEdit("dependencies");
+                }}
+                readOnly={isFieldDisabled("dependencies")}
+                onFocus={() => handleFieldFocus("dependencies")}
+              />
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Detailed Planning */}
+        <div className="center-row">
+          <div className="form-card">
+            <h3 className="section-title">{t("Detailed_Planning")}</h3>
+
+            <TextAreaField
+              label={t("Constraints_Non_Negotiables")}
+              value={highLevelReq}
+              onChange={(e) => {
+                setHighLevelReq(e.target.value);
+                handleFieldEdit("high_level_requirements");
+              }}
+              placeholder={t("what_are_the_main_requirements_or_constraints")}
+              readOnly={isFieldDisabled("high_level_requirements")}
+              onFocus={handleFieldFocus}
+              fieldName="high_level_requirements"
+            />
+
+            <TextAreaField
+              label={t("Explicitly_Out_of_Scope")}
+              value={scope}
+              onChange={(e) => {
+                setScope(e.target.value);
+                handleFieldEdit("scope_definition");
+              }}
+              placeholder={t("define_what_is_not_included_in_this_project")}
+              readOnly={isFieldDisabled("scope_definition")}
+              onFocus={handleFieldFocus}
+              fieldName="scope_definition"
+            />
+
+            <TextAreaField
+              label={t("Expected_Outcome")}
+              value={outcome}
+              onChange={(e) => {
+                setOutcome(e.target.value);
+                handleFieldEdit("expected_outcome");
+              }}
+              placeholder={t("what_is_the_end_result_use_outcome_based_wording")}
+              readOnly={isFieldDisabled("expected_outcome")}
+              onFocus={handleFieldFocus}
+              fieldName="expected_outcome"
+            />
+
+            <div className="field-row">
+              <div className="field-label-row">
+                <label className="field-label">{t("Success_Metrics")}</label>
+                {renderLockBadge("success_metrics")}
+              </div>
+              <textarea
+                placeholder="How will you measure success? (one metric per line)"
+                rows={3}
+                className="field-textarea"
+                value={successMetrics || ""}
+                onChange={e => {
+                  setSuccessMetrics(e.target.value);
+                  handleFieldEdit("success_metrics");
+                }}
+                readOnly={isFieldDisabled("success_metrics")}
+                onFocus={() => handleFieldFocus("success_metrics")}
+              />
+            </div>
+
+            <div className="grid-2">
+              <div>
+                <div className="field-label-row">
+                  <label className="field-label">
+                    <Clock size={16} /> {t("Estimated_Timeline")}
+                  </label>
+                  {renderLockBadge("estimated_timeline")}
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g., 3–6 months"
+                  className="field-input"
+                  value={timeline || ""}
+                  onChange={e => {
+                    setTimeline(e.target.value);
+                    handleFieldEdit("estimated_timeline");
+                  }}
+                  readOnly={isFieldDisabled("estimated_timeline")}
+                  onFocus={() => handleFieldFocus("estimated_timeline")}
+                />
+              </div>
+
+              <div>
+                <div className="field-label-row">
+                  <label className="field-label">
+                    <DollarSign size={16} /> {t("Budget_Estimate")}
+                  </label>
+                  {renderLockBadge("budget_estimate")}
+                </div>
+                <input
+                  ref={budgetRef}
+                  type="text"
+                  placeholder="e.g., $50K - $100K"
+                  className={`field-input ${showErrors && fieldErrors.budget ? "error" : ""}`}
+                  value={budget || ""}
+                  onChange={handleBudgetChange}
+                  onKeyPress={handleBudgetKeyPress}
+                  readOnly={isFieldDisabled("budget_estimate")}
+                  onFocus={() => handleFieldFocus("budget_estimate")}
+                />
+                {showErrors && fieldErrors.budget && (
+                  <small className="error-text">{fieldErrors.budget}</small>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
 
-    </fieldset>
-    <Aiassistant />
+      </fieldset>
+      <Aiassistant businessId={selectedBusinessId} />
     </>
   );
 };

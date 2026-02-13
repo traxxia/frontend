@@ -629,6 +629,7 @@ const ProjectsSection = ({
         onFieldFocus={handleFieldFocus}
         onFieldEdit={handleFieldEdit}
         isSubmitting={isSubmitting}
+        selectedBusinessId={selectedBusinessId}
       />
     );
   };

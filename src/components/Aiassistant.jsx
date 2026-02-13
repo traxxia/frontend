@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Sparkles, Send, ChevronDown } from "lucide-react";
 import "../styles/Ai.css";
 
-const Aiassistant = () => {
+const Aiassistant = ({ businessId: propBusinessId }) => {
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -34,6 +34,11 @@ const Aiassistant = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Derive business ID from prop or session storage
+  const getBusinessId = () => {
+    return propBusinessId || sessionStorage.getItem("activeBusinessId"); // Fallback to hardcoded ID if none found
+  };
+
   const handleSend = async () => {
     if (!query.trim() || isLoading) return;
 
@@ -47,7 +52,7 @@ const Aiassistant = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-business-id": "698ab3fb36154464bbd4a6ce",
+          "x-business-id": getBusinessId(),
         },
         body: JSON.stringify({ message: query }),
       });
