@@ -184,6 +184,8 @@ const BusinessSetupPage = () => {
       if (stored === 'true') {
         setShowProjectsTab(true);
       }
+      // Set active business ID for AI Assistant fallback
+      sessionStorage.setItem("activeBusinessId", selectedBusinessId);
     } catch { }
   }, [selectedBusinessId]);
 
