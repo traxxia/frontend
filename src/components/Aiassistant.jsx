@@ -115,55 +115,71 @@ const Aiassistant = () => {
           <div style={{ fontSize: 12, color: "#6b7280" }}>Context: Analyzing</div>
           <div style={{ fontWeight: 600, marginTop: 4 }}>{context}</div>
         </div>
-          <div className="ai-content">
-            {/* Chat Window */}
-            <div className="chat-wrapper">
-              {messages.map((m, idx) => (
+        <div className="ai-content">
+          {/* Chat Window */}
+          <div className="chat-wrapper">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+                  marginBottom: 8,
+                }}
+              >
                 <div
-                  key={idx}
                   style={{
-                    display: "flex",
-                    justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-                    marginBottom: 8,
+                    maxWidth: "85%",
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    background: m.role === "user" ? "#6f3cff" : "#f3f4f6",
+                    color: m.role === "user" ? "#ffffff" : "#050505ff",
+                    fontSize: 13,
+                    lineHeight: 1.4,
                   }}
                 >
-                  <div
-                    style={{
-                      maxWidth: "85%",
-                      padding: "8px 10px",
-                      borderRadius: 10,
-                      background: m.role === "user" ? "#6f3cff" : "#f3f4f6",
-                      color: m.role === "user" ? "#ffffff" : "#050505ff",
-                      fontSize: 13,
-                      lineHeight: 1.4,
-                    }}
-                  >          
-                    {m.text}
-                  </div>
+                  {m.text}
                 </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-start",
+                  marginBottom: 8,
+                }}
+              >
+                <div className="thinking-bubble">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Suggested Questions - Accordion */}
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "#111827" }}>
+              Suggested questions
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {suggestedQuestions.map((q, i) => (
+                <button
+                  key={i}
+                  className="ai-suggestion"
+                  onClick={() => setQuery(q)}
+                >
+                  {q}
+                </button>
               ))}
             </div>
-
-            {/* Suggested Questions - Accordion */}
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "#111827" }}>
-                Suggested questions
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {suggestedQuestions.map((q, i) => (
-                  <button
-                    key={i}
-                    className="ai-suggestion"
-                    onClick={() => setQuery(q)}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
-          {/* Data Sources - Accordion */}
+        </div>
+        {/* Data Sources - Accordion */}
+        {/*
           <div className="datasource-wrapper">
           <div className="datasource-title">Data Sources</div>
 
@@ -194,7 +210,7 @@ const Aiassistant = () => {
             ))}
           </div>
         </div>    
-
+        */}
         {/* Input Area */}
         <div className="ai-input-area">
           <input
