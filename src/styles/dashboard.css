@@ -132,6 +132,8 @@
   .business-list.desktop {
     max-height: none;
     overflow: visible !important;
+    gap: 10px;
+    display: grid;
   }
 
   .business-item {
