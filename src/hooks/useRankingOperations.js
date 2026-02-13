@@ -60,10 +60,13 @@ export const useRankingOperations = (selectedBusinessId, companyAdminIds) => {
           params: { project_id: projectId },
         }
       );
-      return true;
+      return { success: true };
     } catch (err) {
       console.error("Failed to lock ranking", err);
-      return false;
+      return {
+        success: false,
+        error: err.response?.data?.error || "Failed to lock ranking"
+      };
     }
   }, []);
 

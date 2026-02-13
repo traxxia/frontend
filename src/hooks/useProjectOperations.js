@@ -40,16 +40,19 @@ export const useProjectOperations = (selectedBusinessId, onProjectCountChange) =
   const deleteProject = useCallback(async (projectId) => {
     try {
       const token = getToken();
-      const res = await axios.delete(
+      await axios.delete(
         `${process.env.REACT_APP_BACKEND_URL}/api/projects/${projectId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return true;
+      return { success: true };
     } catch (err) {
       console.error("DELETE FAILED:", err);
-      return false;
+      return {
+        success: false,
+        error: err.response?.data?.error || "Failed to kill project."
+      };
     }
   }, []);
 
@@ -66,10 +69,13 @@ export const useProjectOperations = (selectedBusinessId, onProjectCountChange) =
           },
         }
       );
-      return true;
+      return { success: true };
     } catch (err) {
       console.error("Project creation failed:", err);
-      return false;
+      return {
+        success: false,
+        error: err.response?.data?.error || "Project creation failed."
+      };
     }
   }, []);
 
@@ -86,10 +92,36 @@ export const useProjectOperations = (selectedBusinessId, onProjectCountChange) =
           },
         }
       );
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Error updating project:", error);
-      return false;
+      return {
+        success: false,
+        error: error.response?.data?.error || "Error updating project."
+      };
+    }
+  }, []);
+
+  const launchProjects = useCallback(async (projectIds) => {
+    try {
+      const token = getToken();
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/launch`,
+        { project_ids: projectIds },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error("Launch failed:", err);
+      return {
+        success: false,
+        error: err.response?.data?.error || "Failed to launch projects."
+      };
     }
   }, []);
 
@@ -98,5 +130,6 @@ export const useProjectOperations = (selectedBusinessId, onProjectCountChange) =
     deleteProject,
     createProject,
     updateProject,
+    launchProjects,
   };
 };

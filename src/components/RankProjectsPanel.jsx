@@ -320,7 +320,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       }
     } catch (err) {
       console.error("Save rankings failed", err);
-      onShowToast("Failed to save rankings", "error");
+      const errorMsg = err.response?.data?.error || "Failed to save rankings";
+      onShowToast(errorMsg, "error");
     } finally {
       setIsSaving(false);
     }

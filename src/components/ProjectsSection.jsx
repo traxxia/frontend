@@ -97,7 +97,7 @@ const ProjectsSection = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const { locks } = useFieldLockPolling(currentProject?._id);
-  const { fetchProjects, deleteProject, createProject, updateProject } =
+  const { fetchProjects, deleteProject, createProject, updateProject, launchProjects } =
     useProjectOperations(selectedBusinessId, onProjectCountChange);
   const { fetchTeamRankings, fetchAdminRankings, lockRanking } =
     useRankingOperations(selectedBusinessId, companyAdminIds);
@@ -452,11 +452,25 @@ const ProjectsSection = ({
     setTimeout(() => setShowFinalizeToast(false), 3000);
   };
 
-  const handleLaunchProjects = () => {
-    setLaunched(true);
-    setShowLaunchToast(true);
-    updateBusinessStatus("launched");
-    setTimeout(() => setShowLaunchToast(false), 3000);
+  const handleLaunchProjects = async () => {
+    try {
+      setIsSubmitting(true);
+      const projectIds = projects.map(p => p._id);
+
+      const { success, error } = await launchProjects(projectIds);
+
+      if (success) {
+        setLaunched(true);
+        setShowLaunchToast(true);
+        updateBusinessStatus("launched");
+        await loadProjects();
+        setTimeout(() => setShowLaunchToast(false), 3000);
+      } else {
+        handleShowToast(error || "Failed to launch projects.", "error", 5000);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleNewProject = () => {
@@ -498,14 +512,14 @@ const ProjectsSection = ({
       const userId = sessionStorage.getItem("userId");
       const payload = getPayload(userId, selectedBusinessId);
 
-      const success = await createProject(payload);
+      const { success, error } = await createProject(payload);
       if (success) {
         handleShowToast("Project created successfully!", "success");
         await unlockAllFieldsSafe();
         await loadProjects();
         handleBackToList();
       } else {
-        handleShowToast("Failed to create project.", "error");
+        handleShowToast(error || "Failed to create project.", "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -534,14 +548,14 @@ const ProjectsSection = ({
       const userId = sessionStorage.getItem("userId");
       const payload = getPayload(userId, selectedBusinessId);
 
-      const success = await updateProject(currentProject._id, payload);
+      const { success, error } = await updateProject(currentProject._id, payload);
       if (success) {
         handleShowToast("Project updated successfully!", "success");
         await unlockAllFieldsSafe();
         await loadProjects();
         handleBackToList();
       } else {
-        handleShowToast("Failed to update project.", "error");
+        handleShowToast(error || "Failed to update project.", "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -551,17 +565,17 @@ const ProjectsSection = ({
   const handleDelete = async (projectId) => {
     if (isViewer) return;
 
-    const success = await deleteProject(projectId);
+    const { success, error } = await deleteProject(projectId);
     if (success) {
       handleShowToast("Project killed successfully!", "success");
       await loadProjects(); // Reload to get updated status/sorting
     } else {
-      handleShowToast("Failed to kill project.", "error");
+      handleShowToast(error || "Failed to kill project.", "error");
     }
   };
 
   const lockMyRanking = async (projectId) => {
-    const success = await lockRanking(projectId);
+    const { success, error } = await lockRanking(projectId);
     if (success) {
       setRankingsLocked(true);
       setRankingLockedFirst(true);
@@ -569,7 +583,7 @@ const ProjectsSection = ({
       refreshTeamRankings();
       setTimeout(() => setShowLockToast(false), 3000);
     } else {
-      handleShowToast("Failed to lock ranking", "error");
+      handleShowToast(error || "Failed to lock ranking", "error");
     }
   };
 
