@@ -425,6 +425,23 @@ export const academyStructure = {
                     relatedArticles: ["creating-an-account"]
                 }
             ]
+        },
+        {
+            id: "pmf-flow",
+            title: "PMF Flow",
+            icon: "Target",
+            description: "Understand the core strategic engine of Traxxia",
+            articles: [
+                {
+                    id: "pmf-flow-process",
+                    title: "PMF Flow Process",
+                    path: "16-pmf-flow/pmf-flow-process.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["pmf", "strategy", "core"],
+                    relatedArticles: ["strategic-analysis-overview", "project-management-overview"]
+                }
+            ]
         }
     ]
 };

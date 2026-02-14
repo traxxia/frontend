@@ -245,6 +245,15 @@ const AcademyPage = () => {
                                 View Strategy →
                             </Link>
                         </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🎯</div>
+                            <h3>PMF Flow</h3>
+                            <p>Master the core strategic engine</p>
+                            <Link to="/academy/pmf-flow/pmf-flow-process" className="feature-link">
+                                Learn More →
+                            </Link>
+                        </div>
                     </div>
 
                     <div className="welcome-footer">
