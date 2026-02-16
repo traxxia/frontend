@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, ListOrdered, Lock, Users } from "lucide-react";
+import { Plus, ListOrdered, Lock, Users, Rocket } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 
 const ProjectsHeader = ({
@@ -17,6 +17,11 @@ const ProjectsHeader = ({
   onToggleRankScreen,
   showTeamRankings,
   onToggleTeamRankings,
+  selectedCount = 0,
+  onLaunchSelected,
+  isSubmitting = false,
+  shouldBlinkRank = false,
+  isAdmin = false,
 }) => {
   const { t } = useTranslation();
   return (
@@ -51,6 +56,28 @@ const ProjectsHeader = ({
         </div>
 
         <div className="d-flex gap-2 flex-wrap justify-content-end align-items-center">
+          {selectedCount > 0 && !isViewer && !isArchived && isAdmin && (
+            <button
+              onClick={onLaunchSelected}
+              className="btn-launch-projects"
+              disabled={isSubmitting}
+              style={{
+                backgroundColor: '#9333ea',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: '600'
+              }}
+            >
+              <Rocket size={18} />
+              {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedCount})`}
+            </button>
+          )}
+
           {!isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
             <button onClick={onNewProject} className="btn-new-project">
               <Plus size={18} />
@@ -58,27 +85,25 @@ const ProjectsHeader = ({
             </button>
           )}
 
-          {((isPrioritizing && !rankingsLocked) ||
-            (launched && userHasRerankAccess)) &&
-            !isViewer && !isArchived && (
-              <div className="consensus-toggle-group" style={{ marginLeft: '8px' }}>
-                <button
-                  onClick={onToggleRankScreen}
-                  className={`toggle-btn ${showRankScreen ? 'active' : ''}`}
-                >
-                  <ListOrdered size={14} />
-                  {t("Rank_Projects")}
-                </button>
+          {!isViewer && !isArchived && (
+            <div className="consensus-toggle-group" style={{ marginLeft: '8px' }}>
+              <button
+                onClick={onToggleRankScreen}
+                className={`toggle-btn ${showRankScreen ? 'active' : ''} ${shouldBlinkRank ? 'blink-highlight' : ''}`}
+              >
+                <ListOrdered size={14} />
+                {t("Rank_Projects")}
+              </button>
 
-                <button
-                  onClick={onToggleTeamRankings}
-                  className={`toggle-btn ${showTeamRankings ? 'active' : ''}`}
-                >
-                  <Users size={14} />
-                  {t("Rankings_View")}
-                </button>
-              </div>
-            )}
+              <button
+                onClick={onToggleTeamRankings}
+                className={`toggle-btn ${showTeamRankings ? 'active' : ''}`}
+              >
+                <Users size={14} />
+                {t("Rankings_View")}
+              </button>
+            </div>
+          )}
 
           {isPrioritizing && rankingsLocked && !userHasRerankAccess && (
             <>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   Button,
@@ -16,6 +16,8 @@ import { Lock, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
+import { callMLRankingAPI } from "../services/aiRankingService";
+import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
 
 /* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
@@ -46,23 +48,98 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [pendingDragResult, setPendingDragResult] = useState(null);
   const [tempRationale, setTempRationale] = useState("");
   const [movedProjectName, setMovedProjectName] = useState("");
+  const [step, setStep] = useState(1); // 1: Selection, 2: Ranking
+  const [selectedDraftIds, setSelectedDraftIds] = useState([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
 
-    const sorted = [...projects].sort((a, b) => {
-      const rankA = a.rank ?? Infinity;
-      const rankB = b.rank ?? Infinity;
-      return rankA - rankB;
-    }).map(project => ({
-      ...project,
-      rationale: project.rationale || project.rationals || "",
-      description: project.description || project.project_description || ""
-    }));
-    setProjectList(sorted);
-    setInitialOrder(sorted.map(p => p._id));
-  }, [projects]);
+    // Filter projects by status
+    const active = projects.filter(p => p.status?.toLowerCase() === 'active');
+    const draft = projects.filter(p => !p.status || p.status?.toLowerCase() === 'draft');
+
+    // For step 2, we use whatever is selected
+    if (step === 2) {
+      const selectedProjects = projects.filter(p =>
+        p.status?.toLowerCase() === 'active' || selectedDraftIds.includes(p._id)
+      );
+
+      const sorted = [...selectedProjects].sort((a, b) => {
+        const rankA = a.rank ?? Infinity;
+        const rankB = b.rank ?? Infinity;
+        return rankA - rankB;
+      }).map(project => ({
+        ...project,
+        rationale: project.rationale || project.rationals || "",
+        description: project.description || project.project_description || ""
+      }));
+      setProjectList(sorted);
+      setInitialOrder(sorted.map(p => p._id));
+    }
+  }, [projects, step, selectedDraftIds]);
+
+  const activeProjects = useMemo(() => projects.filter(p => p.status?.toLowerCase() === 'active'), [projects]);
+  const draftProjects = useMemo(() => projects.filter(p => !p.status || p.status?.toLowerCase() === 'draft'), [projects]);
+
+  useEffect(() => {
+    if (projects && projects.length > 0 && selectedDraftIds.length === 0 && step === 1) {
+      const rankedDrafts = projects
+        .filter(p => (!p.status || p.status?.toLowerCase() === 'draft') && p.rank !== null && p.rank !== undefined)
+        .map(p => p._id);
+      if (rankedDrafts.length > 0) {
+        setSelectedDraftIds(rankedDrafts);
+      }
+    }
+  }, [projects, step]); // Run when projects or step changes
+
+  const handleToggleDraft = (projectId) => {
+    setSelectedDraftIds(prev =>
+      prev.includes(projectId) ? prev.filter(id => id !== projectId) : [...prev, projectId]
+    );
+  };
+
+  const handleNextToRanking = async () => {
+    const selectedProjects = [...activeProjects, ...draftProjects.filter(p => selectedDraftIds.includes(p._id))];
+
+    if (selectedProjects.length === 0) {
+      onShowToast("Please select at least one project", "warning");
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    try {
+      const { success, rankings } = await callMLRankingAPI(selectedProjects);
+      if (success) {
+        // Map rankings back to projects
+        const rankedList = selectedProjects.map(p => {
+          const r = rankings.find(rankItem => rankItem.project_id === p._id);
+          return {
+            ...p,
+            rank: r ? r.rank : Infinity,
+            rationale: "", // Reset rationale for new AI-suggested order? Or keep?
+            description: p.description || p.project_description || ""
+          };
+        }).sort((a, b) => a.rank - b.rank);
+
+        setProjectList(rankedList);
+        setInitialOrder(rankedList.map(p => p._id));
+        setStep(2);
+      }
+    } catch (err) {
+      onShowToast("ML ranking service failed. Proceeding with manual ranking.", "warning");
+      setProjectList(selectedProjects.map(p => ({
+        ...p,
+        rationale: "",
+        description: p.description || p.project_description || ""
+      })));
+      setInitialOrder(selectedProjects.map(p => p._id));
+      setStep(2);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   if (!show) return null;
 
@@ -286,14 +363,25 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     try {
       const token = sessionStorage.getItem("token");
 
+      const rankedIds = projectList.map(p => String(p._id));
       const payload = {
         business_id: businessId,
-        projects: projectList.map((p, index) => {
-          return {
-            project_id: p._id,
-            rank: index + 1,
-            rationals: p.rationale || ""
-          };
+        projects: projects.map((p) => {
+          const rankedIndex = rankedIds.indexOf(String(p._id));
+          if (rankedIndex !== -1) {
+            const rankedProject = projectList[rankedIndex];
+            return {
+              project_id: p._id,
+              rank: rankedIndex + 1,
+              rationals: rankedProject.rationale || ""
+            };
+          } else {
+            return {
+              project_id: p._id,
+              rank: null,
+              rationals: ""
+            };
+          }
         })
       };
 
@@ -339,42 +427,67 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     }
   };
 
-  return (
-    <div className="rank-panel-container responsive-panel compact-mode" >
-      <Row className="rank-panel-header">
-        <Col xs={12} md={8} className="d-flex align-items-center gap-3">
-          <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
-          {(isAdmin || !isRankingLocked) && (
-            <Button
-              className="btn-save-rank responsive-btn"
-              onClick={handleSaveRankings}
-              disabled={isSaving || (isSaved && !hasRankingsChanged())}
-            >
-              {isSaving ? "Saving..." : t("Save_Rankings")}
-            </Button>
-          )}
-        </Col>
+  const handleSaveAndClose = async () => {
+    await handleSaveRankings();
+    // No explicit close here, as onRankSaved might be used by parent to close.
+    // However, the user said "collapse the rank projects view", so I'll ensure parent is notified.
+  };
 
-        <Col
-          xs={12}
-          md={4}
-          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
+  const renderStep1 = () => (
+    <div className="rank-step-selection">
+      <h6 className="mb-3 text-primary">{t("Active Projects (Mandatory)")}</h6>
+      <div className="selection-list mb-4">
+        {activeProjects.map(p => (
+          <div key={p._id} className="selection-item mandatory">
+            <Form.Check
+              type="checkbox"
+              checked={true}
+              disabled={true}
+              label={p.project_name}
+            />
+          </div>
+        ))}
+        {activeProjects.length === 0 && <p className="text-muted small">{t("No active projects found.")}</p>}
+      </div>
+
+      <h6 className="mb-3 text-secondary">{t("Draft Projects (Optional)")}</h6>
+      <div className="selection-list mb-4">
+        {draftProjects.map(p => (
+          <div key={p._id} className="selection-item">
+            <Form.Check
+              type="checkbox"
+              id={`draft-${p._id}`}
+              checked={selectedDraftIds.includes(p._id)}
+              onChange={() => handleToggleDraft(p._id)}
+              label={p.project_name}
+            />
+          </div>
+        ))}
+        {draftProjects.length === 0 && <p className="text-muted small">{t("No draft projects found.")}</p>}
+      </div>
+
+      <div className="d-flex justify-content-end mt-4">
+        <Button
+          variant="primary"
+          onClick={handleNextToRanking}
+          disabled={isGeneratingAI}
         >
-          {!isAdmin && (
-            <Button
-              className="btn-lock-rank responsive-btn"
-              onClick={handleLockRankings}
-              disabled={isLocked || !isSaved}
-            >
-              <Lock size={16} /> {t("Lock_My_Rankings")}
-            </Button>
-          )}
-        </Col>
-      </Row>
+          {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
+        </Button>
+      </div>
+    </div>
+  );
 
-      <p className="rank-description">
-        Drag projects to reorder. <strong>Rationale is required</strong> for any project you move.
-      </p>
+  const renderStep2 = () => (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <Button variant="outline-secondary" size="sm" onClick={() => setStep(1)}>
+          ← {t("Back to Selection")}
+        </Button>
+        <p className="rank-description mb-0">
+          {t("Drag projects to reorder. AI suggested an initial order.")}
+        </p>
+      </div>
 
       {/* Validation Error Alert */}
       {validationError && (
@@ -515,6 +628,43 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           )}
         </Droppable>
       </DragDropContext>
+    </>
+  );
+
+  return (
+    <div className="rank-panel-container responsive-panel compact-mode" >
+      <Row className="rank-panel-header align-items-center">
+        <Col xs={12} md={8} className="d-flex align-items-center gap-3">
+          <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
+          {step === 2 && (isAdmin || !isRankingLocked) && (
+            <Button
+              className="btn-save-rank responsive-btn"
+              onClick={handleSaveRankings}
+              disabled={isSaving || (isSaved && !hasRankingsChanged())}
+            >
+              {isSaving ? "Saving..." : t("Save_Rankings")}
+            </Button>
+          )}
+        </Col>
+
+        <Col
+          xs={12}
+          md={4}
+          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
+        >
+          {step === 2 && !isAdmin && (
+            <Button
+              className="btn-lock-rank responsive-btn"
+              onClick={handleLockRankings}
+              disabled={isLocked || !isSaved}
+            >
+              <Lock size={16} /> {t("Lock_My_Rankings")}
+            </Button>
+          )}
+        </Col>
+      </Row>
+
+      {step === 1 ? renderStep1() : renderStep2()}
 
       {/* ---------- RATIONALE MODAL ---------- */}
       <Modal

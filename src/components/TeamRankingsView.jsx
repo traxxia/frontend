@@ -205,58 +205,58 @@ const TeamRankingsView = ({
               </thead>
               <tbody>
                 {sortedProjects.map((p, index) => {
-                  const key = String(p._id);
-                  const userRank = rankMap[key];
-                  const aiRank = p.ai_rank;
-                  const consensus = consensusData[key];
-                  const isExpanded = expandedRows.has(key);
-                  const hasCollaboratorData = consensus?.collaborator_rankings?.length > 0;
+                    const key = String(p._id);
+                    const userRank = rankMap[key];
+                    const aiRank = p.ai_rank;
+                    const consensus = consensusData[key];
+                    const isExpanded = expandedRows.has(key);
+                    const hasCollaboratorData = consensus?.collaborator_rankings?.length > 0;
 
-                  return (
-                    <React.Fragment key={p._id}>
-                      <tr className={`ranking-row ${isExpanded ? 'expanded' : ''}`} onClick={() => hasCollaboratorData && consensusMode === 'collaborator' && toggleRowExpansion(key)}>
-                        {consensusMode === "collaborator" && isSuperAdmin && (
-                          hasCollaboratorData ? (
-                            <td className="text-center toggle-cell">
-                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    return (
+                      <React.Fragment key={p._id}>
+                        <tr className={`ranking-row ${isExpanded ? 'expanded' : ''}`} onClick={() => hasCollaboratorData && consensusMode === 'collaborator' && toggleRowExpansion(key)}>
+                          {consensusMode === "collaborator" && isSuperAdmin && (
+                            hasCollaboratorData ? (
+                              <td className="text-center toggle-cell">
+                                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </td>
+                            ) : null
+                          )}
+                          <td
+                            className="project-name-cell"
+                            colSpan={consensusMode === "collaborator" && isSuperAdmin && !hasCollaboratorData ? 2 : 1}
+                          >
+                            <div className="name-wrapper" style={{ fontSize: '0.95rem' }}>
+                              {p.project_name}
+                            </div>
+                          </td>     {!isSuperAdmin && (
+                            <td className="text-center">
+                              {userRank ? <Badge bg="primary" className="rank-badge">{userRank}</Badge> : <span className="text-muted">-</span>}
                             </td>
-                          ) : null
-                        )}
-                        <td
-                          className="project-name-cell"
-                          colSpan={consensusMode === "collaborator" && isSuperAdmin && !hasCollaboratorData ? 2 : 1}
-                        >
-                          <div className="name-wrapper" style={{ fontSize: '0.95rem' }}>
-                            {p.project_name}
-                          </div>
-                        </td>     {!isSuperAdmin && (
-                          <td className="text-center">
-                            {userRank ? <Badge bg="primary" className="rank-badge">{userRank}</Badge> : <span className="text-muted">-</span>}
-                          </td>
-                        )}
+                          )}
 
-                        {consensusMode === "ai" && (
-                          <td className="text-center">
-                            {aiRank ? <Badge bg="warning" text="dark" className="rank-badge ai">{aiRank}</Badge> : <span className="text-muted">-</span>}
-                          </td>
-                        )}
+                          {consensusMode === "ai" && (
+                            <td className="text-center">
+                              {aiRank ? <Badge bg="warning" text="dark" className="rank-badge ai">{aiRank}</Badge> : <span className="text-muted">-</span>}
+                            </td>
+                          )}
 
-                        {isSuperAdmin && consensusMode === "ai" && (
-                          <td className="text-center">
-                            {consensus ? getConsensusEmoji(consensus.consensus_score) : "-"}
-                          </td>
-                        )}
-                      </tr>
-                      {consensusMode === "collaborator" && isSuperAdmin && hasCollaboratorData && isExpanded && (
-                        <tr className="details-row">
-                          <td colSpan={10}>
-                            {renderCollaboratorDetails(consensus)}
-                          </td>
+                          {isSuperAdmin && consensusMode === "ai" && (
+                            <td className="text-center">
+                              {consensus ? getConsensusEmoji(consensus.consensus_score) : "-"}
+                            </td>
+                          )}
                         </tr>
-                      )}
-                    </React.Fragment>
-                  )
-                })}
+                        {consensusMode === "collaborator" && isSuperAdmin && hasCollaboratorData && isExpanded && (
+                          <tr className="details-row">
+                            <td colSpan={10}>
+                              {renderCollaboratorDetails(consensus)}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    )
+                  })}
               </tbody>
             </Table>
           </div>

@@ -11,6 +11,7 @@ import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 
 import { MdArrowDownward } from "react-icons/md";
+import { Users, CheckCircle } from "lucide-react";
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
 import ProjectsHeader from "../components/ProjectsHeader";
@@ -49,6 +50,8 @@ const ProjectsSection = ({
   const [businessStatus, setBusinessStatus] = useState("draft");
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedProjectIds, setSelectedProjectIds] = useState([]);
+  const [isRankingBlinking, setIsRankingBlinking] = useState(false);
 
   // Sync prop to internal state
   useEffect(() => {
@@ -62,6 +65,7 @@ const ProjectsSection = ({
     { id: "At Risk", label: t("At Risk") || "At Risk" },
     { id: "Paused", label: t("Paused") || "Paused" },
     { id: "Killed", label: t("Killed") || "Killed" },
+    { id: "Scaled", label: t("Scaled") || "Scaled" },
   ];
 
   const onToggleTeamRankings = () => {
@@ -199,14 +203,24 @@ const ProjectsSection = ({
       Active: 0,
       "At Risk": 0,
       Paused: 0,
-      Killed: 0
+      Killed: 0,
+      Scaled: 0
     };
 
     projects.forEach(p => {
-      const status = p.status || "Draft";
-      if (counts[status] !== undefined) {
-        counts[status]++;
-      } else if (status === "Draft") {
+      const statusValue = (p.status || "Draft").toLowerCase();
+      if (statusValue === "active") {
+        counts.Active++;
+      } else if (statusValue === "at risk" || statusValue === "at_risk") {
+        counts["At Risk"]++;
+      } else if (statusValue === "paused") {
+        counts.Paused++;
+      } else if (statusValue === "killed") {
+        counts.Killed++;
+      } else if (statusValue === "scaled") {
+        counts.Scaled++;
+      } else {
+        // Includes 'draft', 'launched', and any unknown fallback
         counts.Draft++;
       }
     });
@@ -301,6 +315,14 @@ const ProjectsSection = ({
     return lockedUsers.some(user => user.user_id.toString() === myUserId);
   };
 
+  const toggleProjectSelection = (projectId) => {
+    setSelectedProjectIds((prev) =>
+      prev.includes(projectId)
+        ? prev.filter((id) => id !== projectId)
+        : [...prev, projectId]
+    );
+  };
+
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
     const result = await fetchProjects();
@@ -392,6 +414,7 @@ const ProjectsSection = ({
       locked_users_count: result.lockSummary?.locked_users_count ?? 0,
       total_users: result.lockSummary?.total_users ?? 0,
       locked_users: result.lockSummary?.locked_users ?? [],
+      pending_users: result.lockSummary?.pending_users ?? [],
     };
     setLockSummary(lockSummaryData);
 
@@ -453,16 +476,32 @@ const ProjectsSection = ({
   };
 
   const handleLaunchProjects = async () => {
+    if (selectedProjectIds.length === 0) {
+      handleShowToast("Please select at least one project to launch.", "error");
+      return;
+    }
+
+    const unrankedSelected = selectedProjectIds.some(id => {
+      const rank = rankMap[String(id)];
+      return rank === null || rank === undefined;
+    });
+
+    if (unrankedSelected) {
+      handleShowToast("There is no rank so first rank and then launch.", "error", 5000);
+      setIsRankingBlinking(true);
+      setTimeout(() => setIsRankingBlinking(false), 5000);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const projectIds = projects.map(p => p._id);
-
-      const { success, error } = await launchProjects(projectIds);
+      const { success, error } = await launchProjects(selectedProjectIds);
 
       if (success) {
         setLaunched(true);
         setShowLaunchToast(true);
         updateBusinessStatus("launched");
+        setSelectedProjectIds([]); // Clear selection
         await loadProjects();
         setTimeout(() => setShowLaunchToast(false), 3000);
       } else {
@@ -652,7 +691,7 @@ const ProjectsSection = ({
   const renderProjectList = () => {
     return (
       <>
-        {isSuperAdmin && !isViewer && (
+        {/* {isSuperAdmin && !isViewer && (
           <div className="collaboration-card-wrapper">
             <CollaborationCard
               projectCreationLocked={projectCreationLocked}
@@ -666,7 +705,7 @@ const ProjectsSection = ({
               isGeneratingAIRankings={isGeneratingAIRankings}
             />
           </div>
-        )}
+        )} */}
 
         {/* <PortfolioOverview portfolioData={portfolioData} /> */}
 
@@ -689,7 +728,50 @@ const ProjectsSection = ({
           }}
           showTeamRankings={showTeamRankings}
           onToggleTeamRankings={onToggleTeamRankings}
+          selectedCount={selectedProjectIds.length}
+          onLaunchSelected={handleLaunchProjects}
+          isSubmitting={isSubmitting}
+          shouldBlinkRank={isRankingBlinking}
+          isAdmin={isSuperAdmin}
         />
+
+        <div className="collaborator-status-banner px-3 py-2" style={{
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '20px',
+          fontSize: '13px',
+          marginTop: '12px',
+          marginBottom: '16px'
+        }}>
+          <div className="d-flex align-items-center gap-2">
+            <Users size={16} className="text-primary" />
+            <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
+            <span className="badge bg-primary rounded-pill" style={{ fontSize: '12px' }}>
+              {lockSummary.locked_users_count} / {lockSummary.total_users} {t("Ranked")}
+            </span>
+          </div>
+
+          {lockSummary.pending_users && lockSummary.pending_users.length > 0 ? (
+            <div className="text-secondary overflow-hidden text-truncate" style={{ maxWidth: '500px' }}>
+              <span className="fw-medium text-slate-500" style={{ fontWeight: '500' }}>{t("Pending")}: </span>
+              <span title={lockSummary.pending_users.map(u => u.name || u.email).join(", ")}>
+                {lockSummary.pending_users.map(u => u.name || u.email).join(", ")}
+              </span>
+            </div>
+          ) : lockSummary.total_users > 0 ? (
+            <div className="text-success fw-bold d-flex align-items-center gap-1" style={{ fontWeight: '700' }}>
+              <CheckCircle size={14} /> {t("All collaborators have ranked")}
+            </div>
+          ) : (
+            <div className="text-muted small italic">
+              {t("No collaborators found for ranking")}
+            </div>
+          )}
+        </div>
 
         <div className="status-tabs-container">
           {categories.map((cat) => (
@@ -709,7 +791,10 @@ const ProjectsSection = ({
           projects={rankedProjects}
           businessId={selectedBusinessId}
           onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
-          onRankSaved={refreshTeamRankings}
+          onRankSaved={() => {
+            refreshTeamRankings();
+            setShowRankScreen(false);
+          }}
           isAdmin={isSuperAdmin}
           isRankingLocked={isRankingLocked}
           onShowToast={handleShowToast}
@@ -748,6 +833,8 @@ const ProjectsSection = ({
           onDelete={handleDelete}
           selectedCategory={selectedCategory}
           isArchived={apiIsArchived}
+          selectedProjectIds={selectedProjectIds}
+          onToggleSelection={toggleProjectSelection}
         />
       </>
     );

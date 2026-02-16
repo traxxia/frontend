@@ -1,5 +1,6 @@
 /* Outer Container */
 .rank-panel-container {
+  margin-top: 10px;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -401,4 +402,57 @@
 
 .btn-lock-rank:not(:disabled):hover {
   opacity: 0.9;
+}
+
+/* Step 1: Selection UI */
+.rank-step-selection {
+  padding: 10px 0;
+}
+
+.selection-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.selection-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background 0.2s;
+}
+
+.selection-item:hover {
+  background: #f3f4f6;
+}
+
+.selection-item.mandatory {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+}
+
+.selection-item.mandatory label {
+  font-weight: 600;
+  color: #1e40af;
+}
+
+[data-theme="dark"] .selection-list {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+[data-theme="dark"] .selection-item:hover {
+  background: #333;
+}
+
+[data-theme="dark"] .selection-item.mandatory {
+  background: #1e3a8a;
+  border-left-color: #3b82f6;
+}
+
+[data-theme="dark"] .selection-item.mandatory label {
+  color: #bfdbfe;
 }
