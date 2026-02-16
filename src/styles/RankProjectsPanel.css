@@ -428,12 +428,7 @@
 .selection-item:hover {
   background: #f3f4f6;
 }
-
-.selection-item.mandatory {
-  background: #eff6ff;
-  border-left: 3px solid #3b82f6;
-}
-
+ 
 .selection-item.mandatory label {
   font-weight: 600;
   color: #1e40af;

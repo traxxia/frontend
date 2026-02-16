@@ -56,14 +56,14 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   useEffect(() => {
     if (!projects || projects.length === 0) return;
 
-    // Filter projects by status
-    const active = projects.filter(p => p.status?.toLowerCase() === 'active');
-    const draft = projects.filter(p => !p.status || p.status?.toLowerCase() === 'draft');
+    // Filter projects by launch_status: launched = mandatory, unlaunched/draft = optional
+    const active = projects.filter(p => p.launch_status?.toLowerCase() === 'launched');
+    const draft = projects.filter(p => !p.launch_status || p.launch_status?.toLowerCase() === 'unlaunched');
 
     // For step 2, we use whatever is selected
     if (step === 2) {
       const selectedProjects = projects.filter(p =>
-        p.status?.toLowerCase() === 'active' || selectedDraftIds.includes(p._id)
+        p.launch_status?.toLowerCase() === 'launched' || selectedDraftIds.includes(p._id)
       );
 
       const sorted = [...selectedProjects].sort((a, b) => {
@@ -80,13 +80,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     }
   }, [projects, step, selectedDraftIds]);
 
-  const activeProjects = useMemo(() => projects.filter(p => p.status?.toLowerCase() === 'active'), [projects]);
-  const draftProjects = useMemo(() => projects.filter(p => !p.status || p.status?.toLowerCase() === 'draft'), [projects]);
+  const activeProjects = useMemo(() => projects.filter(p => p.launch_status?.toLowerCase() === 'launched'), [projects]);
+  const draftProjects = useMemo(() => projects.filter(p => !p.launch_status || p.launch_status?.toLowerCase() === 'unlaunched' || p.status?.toLowerCase() === 'draft'), [projects]);
 
   useEffect(() => {
     if (projects && projects.length > 0 && selectedDraftIds.length === 0 && step === 1) {
       const rankedDrafts = projects
-        .filter(p => (!p.status || p.status?.toLowerCase() === 'draft') && p.rank !== null && p.rank !== undefined)
+        .filter(p => (p.launch_status?.toLowerCase() !== 'launched' || p.status?.toLowerCase() === 'draft') && p.rank !== null && p.rank !== undefined)
         .map(p => p._id);
       if (rankedDrafts.length > 0) {
         setSelectedDraftIds(rankedDrafts);
@@ -435,7 +435,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const renderStep1 = () => (
     <div className="rank-step-selection">
-      <h6 className="mb-3 text-primary">{t("Active Projects (Mandatory)")}</h6>
+      <h6 className="mb-3 text-primary">{t("Launched Projects (Mandatory)")}</h6>
       <div className="selection-list mb-4">
         {activeProjects.map(p => (
           <div key={p._id} className="selection-item mandatory">
@@ -450,7 +450,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         {activeProjects.length === 0 && <p className="text-muted small">{t("No active projects found.")}</p>}
       </div>
 
-      <h6 className="mb-3 text-secondary">{t("Draft Projects (Optional)")}</h6>
+      <h6 className="mb-3 text-secondary">{t("Unlaunched/Draft Projects (Optional)")}</h6>
       <div className="selection-list mb-4">
         {draftProjects.map(p => (
           <div key={p._id} className="selection-item">
