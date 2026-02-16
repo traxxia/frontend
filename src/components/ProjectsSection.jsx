@@ -11,10 +11,9 @@ import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 
 import { MdArrowDownward } from "react-icons/md";
-import { Users, CheckCircle } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
-import ProjectsHeader from "../components/ProjectsHeader";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
@@ -37,6 +36,7 @@ const ProjectsSection = ({
   const user = sessionStorage.getItem("userName");
 
   const [activeView, setActiveView] = useState("list");
+  const [viewMode, setViewMode] = useState("projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [showTeamRankings, setShowTeamRankings] = useState(false); // New state for Team Rankings Panel
@@ -691,151 +691,270 @@ const ProjectsSection = ({
   const renderProjectList = () => {
     return (
       <>
-        {/* {isSuperAdmin && !isViewer && (
-          <div className="collaboration-card-wrapper">
-            <CollaborationCard
-              projectCreationLocked={projectCreationLocked}
+        <div className="view-mode-tabs-container mb-4" style={{
+          display: 'flex',
+          borderBottom: '1px solid #e2e8f0',
+          width: '100%',
+          paddingLeft: '4px'
+        }}>
+          <button
+            onClick={() => {
+              setViewMode("projects");
+              setShowRankScreen(false);
+              setShowTeamRankings(false);
+            }}
+            className={`view-mode-tab ${viewMode === "projects" ? "active" : ""}`}
+            style={{
+              padding: '12px 20px',
+              border: 'none',
+              fontSize: '15px',
+              fontWeight: '700',
+              borderRadius: '0px',
+              cursor: 'pointer',
+              backgroundColor: 'transparent',
+              color: viewMode === "projects" ? 'rgb(37, 99, 235)' : '#94a3b8',
+              borderBottom: viewMode === "projects" ? '2px solid rgb(37, 99, 235)' : '2px solid transparent',
+              transition: 'all 0.2s ease',
+              marginBottom: '-1px'
+            }}
+          >
+            {isLoading ? (
+              <>
+                {t("Projects")} (..)
+              </>
+            ) : (
+              <>
+                {t("Projects")} ({portfolioData.totalProjects})
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setViewMode("ranking");
+              setShowRankScreen(true);
+            }}
+            className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
+            style={{
+              padding: '12px 20px',
+              border: 'none',
+              fontSize: '15px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              backgroundColor: 'transparent',
+              color: viewMode === "ranking" ? 'rgb(37, 99, 235)' : '#94a3b8',
+              borderBottom: viewMode === "ranking" ? '2px solid rgb(37, 99, 235)' : '2px solid transparent',
+              transition: 'all 0.2s ease',
+              marginBottom: '-1px'
+            }}
+          >
+            {t("Ranking")}
+          </button>
+        </div>
+
+        {viewMode === "ranking" ? (
+          <>
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-4">
+              <div className="d-flex align-items-center gap-2">
+                {!isViewer && !isArchived && (
+                  <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    <button
+                      onClick={() => {
+                        setShowRankScreen(!showRankScreen);
+                        if (!showRankScreen) setShowTeamRankings(false);
+                      }}
+                      className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
+                    >
+                      <ListOrdered size={16} />
+                      {t("Rank_Projects")}
+                    </button>
+
+                    <button
+                      onClick={onToggleTeamRankings}
+                      className={`status-tab ${showTeamRankings ? 'active' : ''}`}
+                    >
+                      <Users size={16} />
+                      {t("Rankings_View")}
+                    </button>
+                  </div>
+                )}
+
+                {isPrioritizing && rankingsLocked && !userHasRerankAccess && (
+                  <div className="d-flex align-items-center gap-2">
+                    <button className="btn-rankings-locked" disabled style={{
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <Lock size={16} />
+                      {t("Rankings_Locked")}
+                    </button>
+                    {showRankScreen && (
+                      <button
+                        onClick={() => setShowRankScreen(false)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: '1px solid #e2e8f0',
+                          backgroundColor: 'white',
+                          fontSize: '14px'
+                        }}
+                      >
+                        {t("Hide")}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Repositioned Collaborator Progress */}
+              <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2" style={{
+                backgroundColor: '#f8fafc',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                fontSize: '13px'
+              }}>
+                <Users size={16} className="text-primary" />
+                <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
+                <span className="badge bg-primary rounded-pill" style={{ fontSize: '11px' }}>
+                  {lockSummary.locked_users_count} / {lockSummary.total_users}
+                </span>
+
+                {lockSummary.total_users > 0 && lockSummary.locked_users_count === lockSummary.total_users && (
+                  <CheckCircle size={14} className="text-success" />
+                )}
+              </div>
+            </div>
+
+            <RankProjectsPanel
+              show={showRankScreen}
+              projects={rankedProjects}
+              businessId={selectedBusinessId}
+              onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
+              onRankSaved={() => {
+                refreshTeamRankings();
+                setShowRankScreen(false);
+              }}
+              isAdmin={isSuperAdmin}
+              isRankingLocked={isRankingLocked}
+              onShowToast={handleShowToast}
+              isArchived={apiIsArchived}
+            />
+
+            {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
+              <TeamRankingsView
+                activeAccordionKey={activeAccordionKey}
+                onAccordionSelect={handleAccordionSelect}
+                isSuperAdmin={isSuperAdmin}
+                user={user}
+                sortedProjects={sortedProjects}
+                rankMap={rankMap}
+                adminRankMap={adminRankMap}
+                userRole={userRole}
+                businessId={selectedBusinessId}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <div className="management-row-container mb-4" style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              flexWrap: 'wrap'
+            }}>
+              <div className="status-tabs-container">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    <span className="status-name">{cat.label}</span>
+                    <span className="status-count">{categoryCounts[cat.id] || 0}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="management-buttons d-flex gap-2">
+                {selectedProjectIds.length > 0 && !isViewer && !isArchived && isSuperAdmin && (
+                  <button
+                    onClick={handleLaunchProjects}
+                    disabled={isSubmitting}
+                    style={{
+                      backgroundColor: '#9333ea',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      boxShadow: '0 4px 6px -1px rgba(147, 51, 234, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Rocket size={18} />
+                    {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
+                  </button>
+                )}
+
+                {!isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
+                  <button
+                    onClick={handleNewProject}
+                    style={{
+                      backgroundColor: '#2563eb',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Plus size={18} />
+                    {t("New_Project")}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <ProjectsList
+              sortedProjects={sortedProjects}
+              rankMap={rankMap}
               finalizeCompleted={finalizeCompleted}
               launched={launched}
-              lockSummary={lockSummary}
-              allCollaboratorsLocked={allCollaboratorsLocked}
-              onLockProjectCreation={handleLockProjectCreation}
-              onFinalizePrioritization={handleFinalizePrioritization}
-              onLaunchProjects={handleLaunchProjects}
-              isGeneratingAIRankings={isGeneratingAIRankings}
+              isViewer={isViewer}
+              isAdmin={isSuperAdmin}
+              isEditor={isEditor}
+              isDraft={isDraft}
+              projectCreationLocked={projectCreationLocked}
+              isFinalizedView={isFinalizedView}
+              canEditProject={(project) =>
+                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
+              }
+              onEdit={(project) => handleEditProject(project, "edit")}
+              onView={(project) => handleEditProject(project, "view")}
+              onDelete={handleDelete}
+              selectedCategory={selectedCategory}
+              isArchived={apiIsArchived}
+              selectedProjectIds={selectedProjectIds}
+              onToggleSelection={toggleProjectSelection}
             />
-          </div>
-        )} */}
-
-        {/* <PortfolioOverview portfolioData={portfolioData} /> */}
-
-        <ProjectsHeader
-          totalProjects={portfolioData.totalProjects}
-          isLoading={isLoading}
-          isDraft={isDraft}
-          isPrioritizing={isPrioritizing}
-          launched={launched}
-          isViewer={isViewer}
-          isArchived={apiIsArchived}
-          rankingsLocked={rankingsLocked}
-          showRankScreen={showRankScreen}
-          userHasRerankAccess={userHasRerankAccess}
-          onNewProject={handleNewProject}
-          onToggleRankScreen={() => {
-            const newState = !showRankScreen;
-            setShowRankScreen(newState);
-            if (newState) setShowTeamRankings(false);
-          }}
-          showTeamRankings={showTeamRankings}
-          onToggleTeamRankings={onToggleTeamRankings}
-          selectedCount={selectedProjectIds.length}
-          onLaunchSelected={handleLaunchProjects}
-          isSubmitting={isSubmitting}
-          shouldBlinkRank={isRankingBlinking}
-          isAdmin={isSuperAdmin}
-        />
-
-        <div className="collaborator-status-banner px-3 py-2" style={{
-          backgroundColor: '#f8fafc',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '20px',
-          fontSize: '13px',
-          marginTop: '12px',
-          marginBottom: '16px'
-        }}>
-          <div className="d-flex align-items-center gap-2">
-            <Users size={16} className="text-primary" />
-            <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
-            <span className="badge bg-primary rounded-pill" style={{ fontSize: '12px' }}>
-              {lockSummary.locked_users_count} / {lockSummary.total_users} {t("Ranked")}
-            </span>
-          </div>
-
-          {lockSummary.pending_users && lockSummary.pending_users.length > 0 ? (
-            <div className="text-secondary overflow-hidden text-truncate" style={{ maxWidth: '500px' }}>
-              <span className="fw-medium text-slate-500" style={{ fontWeight: '500' }}>{t("Pending")}: </span>
-              <span title={lockSummary.pending_users.map(u => u.name || u.email).join(", ")}>
-                {lockSummary.pending_users.map(u => u.name || u.email).join(", ")}
-              </span>
-            </div>
-          ) : lockSummary.total_users > 0 ? (
-            <div className="text-success fw-bold d-flex align-items-center gap-1" style={{ fontWeight: '700' }}>
-              <CheckCircle size={14} /> {t("All collaborators have ranked")}
-            </div>
-          ) : (
-            <div className="text-muted small italic">
-              {t("No collaborators found for ranking")}
-            </div>
-          )}
-        </div>
-
-        <div className="status-tabs-container">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
-              onClick={() => setSelectedCategory(cat.id)}
-            >
-              <span className="status-name">{cat.label}</span>
-              <span className="status-count">{categoryCounts[cat.id] || 0}</span>
-            </button>
-          ))}
-        </div>
-
-        <RankProjectsPanel
-          show={showRankScreen}
-          projects={rankedProjects}
-          businessId={selectedBusinessId}
-          onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
-          onRankSaved={() => {
-            refreshTeamRankings();
-            setShowRankScreen(false);
-          }}
-          isAdmin={isSuperAdmin}
-          isRankingLocked={isRankingLocked}
-          onShowToast={handleShowToast}
-          isArchived={apiIsArchived}
-        />
-
-        {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
-          <TeamRankingsView
-            activeAccordionKey={activeAccordionKey}
-            onAccordionSelect={handleAccordionSelect}
-            isSuperAdmin={isSuperAdmin}
-            user={user}
-            sortedProjects={sortedProjects}
-            rankMap={rankMap}
-            adminRankMap={adminRankMap}
-            userRole={userRole}
-            businessId={selectedBusinessId}
-          />
+          </>
         )}
-
-        <ProjectsList
-          sortedProjects={sortedProjects}
-          rankMap={rankMap}
-          finalizeCompleted={finalizeCompleted}
-          launched={launched}
-          isViewer={isViewer}
-          isEditor={isEditor}
-          isDraft={isDraft}
-          projectCreationLocked={projectCreationLocked}
-          isFinalizedView={isFinalizedView}
-          canEditProject={(project) =>
-            canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
-          }
-          onEdit={(project) => handleEditProject(project, "edit")}
-          onView={(project) => handleEditProject(project, "view")}
-          onDelete={handleDelete}
-          selectedCategory={selectedCategory}
-          isArchived={apiIsArchived}
-          selectedProjectIds={selectedProjectIds}
-          onToggleSelection={toggleProjectSelection}
-        />
       </>
     );
   };

@@ -18,6 +18,7 @@ const ProjectsList = ({
   onDelete,
   selectedCategory,
   isArchived,
+  isAdmin,
   selectedProjectIds = [],
   onToggleSelection,
 }) => {
@@ -102,6 +103,7 @@ const ProjectsList = ({
               showMenuId={showMenuId}
               setShowMenuId={setShowMenuId}
               isArchived={isArchived}
+              isAdmin={isAdmin}
               isSelected={selectedProjectIds.includes(project._id)}
               onToggleSelection={onToggleSelection}
             />

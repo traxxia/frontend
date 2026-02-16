@@ -49,6 +49,7 @@ const ProjectCard = ({
   setShowMenuId,
   isDark,
   isArchived,
+  isAdmin,
   isSelected,
   onToggleSelection
 }) => {
@@ -86,7 +87,7 @@ const ProjectCard = ({
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
-          {!isViewer && !isArchived && (
+          {isAdmin && !isArchived && (
             <input
               type="checkbox"
               checked={isSelected}
