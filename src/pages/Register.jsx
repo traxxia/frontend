@@ -265,7 +265,7 @@ const Register = () => {
                               className="password-toggle"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <FaEyeSlash /> : <FaEye />}
+                              {showPassword ? <FaEye /> : <FaEyeSlash />}
                             </button>
                           </div>
                           {errors.password && <span className="error-message">{errors.password}</span>}
@@ -289,7 +289,7 @@ const Register = () => {
                               className="password-toggle"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             >
-                              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                              {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
                             </button>
                           </div>
                           {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
@@ -340,7 +340,7 @@ const Register = () => {
                               <label>{t('password')} *</label>
                               <div className="password-input-container">
                                 <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Create password" value={form.password} onChange={handleChange} className={errors.password ? 'error' : ''} required />
-                                <button type="button" className="password-toggle-button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FaEyeSlash /> : <FaEye />}</button>
+                                <button type="button" className="password-toggle-button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FaEye /> : <FaEyeSlash />}</button>
                               </div>
                               {errors.password && <div className="error-message">{errors.password}</div>}
                             </div>
@@ -349,7 +349,7 @@ const Register = () => {
                               <label>{t('confirm_password')} *</label>
                               <div className="password-input-container">
                                 <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" placeholder="Confirm password" value={form.confirmPassword} onChange={handleChange} className={errors.confirmPassword ? 'error' : ''} required />
-                                <button type="button" className="password-toggle-button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>
+                                <button type="button" className="password-toggle-button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <FaEye /> : <FaEyeSlash />}</button>
                               </div>
                               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
                             </div>
