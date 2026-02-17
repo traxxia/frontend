@@ -251,7 +251,7 @@ const ProjectDetails = ({
                             <div className="detail-value">
                                 <div className="detail-value-with-icon">
                                     {project.learning_state === "Validated" && <CheckCircle size={16} color="green" />}
-                                    {project.learning_state === "Disproven" && <XCircle size={16} color="red" />}
+                                    {project.learning_state === "Invalidated" && <XCircle size={16} color="red" />}
                                     {project.learning_state === "Testing" && <Clock size={16} color="blue" />}
                                     <span>{project.learning_state ? t(project.learning_state) : t("Testing")}</span>
                                 </div>

@@ -162,12 +162,8 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Sparkles size={20} color="#fff" />
             <strong>AI Assistant</strong>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span className="credits-pill">{credits} credits</span>
-            <span style={{ fontSize: 12, opacity: 0.9 }}>• 1 credit per query</span>
-            <button className="ai-close-btn" onClick={() => setOpen(false)} aria-label="Close" title="Close">✕</button>
-          </div>
+             <button className="ai-close-btn" onClick={() => setOpen(false)} aria-label="Close" title="Close">✕</button>
+          </div> 
         </div>
 
         <div className="ai-content">

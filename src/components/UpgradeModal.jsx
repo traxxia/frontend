@@ -212,7 +212,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
                         <Alert variant="danger">{error}</Alert>
                     ) : (
                         <>
-                            <div className="current-usage-box p-3 rounded-3 mb-4">
+                            {/* <div className="current-usage-box p-3 rounded-3 mb-4">
                                 <h6 className="mb-3 text-uppercase small fw-bold text-muted">Current Usage</h6>
                                 <Row className="text-center">
                                     <Col>
@@ -240,7 +240,34 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
                                         </div>
                                     </Col>
                                 </Row>
-                            </div>
+                            </div> */}
+
+                            {selectedPlan?.name?.toLowerCase() === 'essential' && subscription?.plan?.toLowerCase() !== 'essential' && (
+                                <Alert variant="warning" className="mb-3 border-0 shadow-sm">
+                                    <div className="d-flex align-items-start">
+                                        <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
+                                        <div className="small">
+                                            <h6 className="mb-2 fw-bold">⚠️ Downgrade Warning</h6>
+                                            <p className="mb-2">
+                                                Downgrading to <strong>Essential</strong> will impact your current setup:
+                                            </p>
+                                            <ul className="mb-0 ps-3">
+                                                {subscription.usage.workspaces.current > 1 && (
+                                                    <li className="mb-1">
+                                                        <strong>Workspaces:</strong> You currently have <strong>{subscription.usage.workspaces.current}</strong> active workspace(s).
+                                                        Only <strong>1</strong> will remain active, and <strong>{subscription.usage.workspaces.current - 1}</strong> will be archived (read-only).
+                                                    </li>
+                                                )}
+                                                {subscription.usage.collaborators.current > 0 && (
+                                                    <li className="mb-1">
+                                                        <strong>Collaborators:</strong> All <strong>{subscription.usage.collaborators.current}</strong> collaborator(s) will be archived and lose access.
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </Alert>
+                            )}
 
                             <div className="plans-grid">
                                 {plans.map((plan) => (
