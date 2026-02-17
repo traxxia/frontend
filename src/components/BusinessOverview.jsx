@@ -15,6 +15,7 @@ const BusinessOverview = ({ onToast }) => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [pageBeforeSearch, setPageBeforeSearch] = useState(1);
     const itemsPerPage = 10;
 
     // Modal state
@@ -44,6 +45,15 @@ const BusinessOverview = ({ onToast }) => {
         }
     };
 
+    const handleSearch = (value) => {
+        if (value && !searchTerm) {
+            setPageBeforeSearch(currentPage);
+        } else if (!value && searchTerm) {
+            setCurrentPage(pageBeforeSearch);
+        }
+        setSearchTerm(value);
+    };
+
     useEffect(() => {
         const filtered = businesses.filter((biz) =>
             biz.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -51,7 +61,13 @@ const BusinessOverview = ({ onToast }) => {
             biz.owner_email?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredBusinesses(filtered);
-        setCurrentPage(1);
+
+        if (searchTerm) {
+            const newTotalPages = Math.ceil(filtered.length / itemsPerPage);
+            if (currentPage > newTotalPages && newTotalPages > 0) {
+                setCurrentPage(1);
+            }
+        }
     }, [searchTerm, businesses]);
 
     const totalItems = filteredBusinesses.length;
@@ -123,7 +139,7 @@ const BusinessOverview = ({ onToast }) => {
                                         className="search-input"
                                         placeholder={t("search_by_business_owner")}
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e) => handleSearch(e.target.value)}
                                     />
                                 </div>
                             </div>
