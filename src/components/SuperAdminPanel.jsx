@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Building2,
   Users,
@@ -30,6 +31,7 @@ import "../styles/superadmin.css";
 
 const SuperAdminPanel = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("companies");
   const [showToast, setShowToast] = useState({
     show: false,
@@ -42,6 +44,15 @@ const SuperAdminPanel = () => {
     const userRoleStored = sessionStorage.getItem("userRole");
     setUserRole(userRoleStored || "");
   }, []);
+
+  // Check for tab query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   const showToastMessage = (message, type = "success") => {
     setShowToast({ show: true, message, type });

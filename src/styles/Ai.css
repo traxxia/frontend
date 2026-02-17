@@ -54,13 +54,13 @@
   position: fixed;
   top: 0;
   right: 0;
-  height: 100vh;
+  height: 84vh;
   width: 380px;
   background: #fff;
   box-shadow: -4px 0px 20px rgba(0, 0, 0, 0.1);
   transition: 0.35s ease;
   z-index: 999;
-  padding: 20px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
 }
@@ -69,7 +69,7 @@
   background: #6f3cff;
   color: #fff;
   border-radius: 0;
-  padding: 34px 14px 14px 14px;
+  padding: 0px 14px;
   align-items: center;
   justify-content: space-between;
   position: relative;
@@ -90,8 +90,7 @@
   font-size: 18px;
   cursor: pointer;
   position: relative;
-  top: -32px;
-  right: -60px;
+  right: -120px;
 }
 
 .ai-bottom {
@@ -175,7 +174,7 @@
 
 /* Ensure panel content doesn't hide under sticky toolbar */
 .ai-panel {
-  padding-top: 20px;
+  margin-top: 96px;
 }
 
 .datasource-wrapper {

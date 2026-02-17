@@ -87,7 +87,7 @@ const ProjectCard = ({
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
-          {isAdmin && !isArchived && (
+          {isAdmin && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
             <input
               type="checkbox"
               checked={isSelected}

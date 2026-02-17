@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import { Container } from "react-bootstrap";
+import { Row, Col, Button, Form, Dropdown, Alert, Container } from "react-bootstrap";
 import axios from "axios";
 import { lockField, heartbeat, unlockFields } from "@/hooks/fieldlockapi";
 import { useFieldLockPolling } from "@/hooks/useFieldLockPolling";
@@ -730,8 +730,11 @@ const ProjectsSection = ({
   };
 
   const renderProjectList = () => {
+    const userPlan = sessionStorage.getItem("userPlan");
+    const isReadOnly = apiIsArchived || userPlan === 'essential';
+
     return (
-      <>
+      <> 
         <div className="view-mode-tabs-container mb-4" style={{
           display: 'flex',
           borderBottom: '1px solid #e2e8f0',
@@ -894,7 +897,7 @@ const ProjectsSection = ({
               </div>
 
               <div className="management-buttons d-flex gap-2">
-                {selectedProjectIds.length > 0 && !isViewer && !isArchived && isSuperAdmin && (
+                {selectedProjectIds.length > 0 && !isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && isSuperAdmin && (
                   <button
                     onClick={handleLaunchProjects}
                     disabled={isSubmitting}

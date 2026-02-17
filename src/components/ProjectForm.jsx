@@ -939,9 +939,27 @@ const ProjectForm = ({
                 label={t("Learning_State")}
                 icon={<Zap size={16} />}
                 options={[
-                  { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" /> },
-                  { value: "Validated", label: t("Validated"), icon: <CheckCircle size={14} color="green" /> },
-                  { value: "Disproven", label: t("Disproven"), icon: <XCircle size={14} color="red" /> },
+                  { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" />, disabled: false },
+                  {
+                    value: "Validated",
+                    label: (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                        {t("Validated")} <Lock size={12} color="#94a3b8" />
+                      </span>
+                    ),
+                    icon: <CheckCircle size={14} color="green" />,
+                    disabled: true
+                  },
+                  {
+                    value: "Invalidated",
+                    label: (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                        {t("Invalidated")} <Lock size={12} color="#94a3b8" />
+                      </span>
+                    ),
+                    icon: <XCircle size={14} color="red" />,
+                    disabled: true
+                  },
                 ]}
                 value={learningState}
                 onChange={(val) => {

@@ -512,6 +512,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               checked={selectedDraftIds.includes(p._id)}
               onChange={() => handleToggleDraft(p._id)}
               label={p.project_name}
+              disabled={isArchived}
             />
           </div>
         ))}
@@ -658,6 +659,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                                     value={item.rationale || ""}
                                     onChange={(e) => handleRationaleTextareaChange(index, e.target.value)}
                                     onBlur={() => handleRationaleBlur(index)}
+                                    readOnly={isArchived}
+                                    style={isArchived ? { backgroundColor: '#f8f9fa', cursor: 'not-allowed' } : {}}
                                   />
                                 )}
                                 {errorMessage && (
@@ -683,7 +686,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   );
 
   return (
-    <div className="rank-panel-container responsive-panel compact-mode" >
+    <div className="rank-panel-container responsive-panel compact-mode" > 
+
       <Row className="rank-panel-header align-items-center">
         <Col xs={12} md={8} className="d-flex align-items-center gap-3">
           <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
@@ -699,7 +703,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               variant="primary"
               className="responsive-btn"
               onClick={handleNextToRanking}
-              disabled={isGeneratingAI}
+              disabled={isGeneratingAI || isArchived}
             >
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
             </Button>
@@ -708,7 +712,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
             <Button
               className="btn-save-rank responsive-btn"
               onClick={handleSaveRankings}
-              disabled={isSaving || (isSaved && !hasRankingsChanged())}
+              disabled={isSaving || (isSaved && !hasRankingsChanged()) || isArchived}
             >
               {isSaving ? "Saving..." : t("Save_Rankings")}
             </Button>

@@ -106,6 +106,7 @@ const ProjectsList = ({
               isAdmin={isAdmin}
               isSelected={selectedProjectIds.includes(project._id)}
               onToggleSelection={onToggleSelection}
+              isCheckboxDisabled={isArchived || sessionStorage.getItem("userPlan") === 'essential'}
             />
           </Col>
         ))}

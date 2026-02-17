@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle } from "lucide-react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 import ChatComponent from "../components/ChatComponent";
 import MenuBar from "../components/MenuBar";
@@ -69,6 +69,7 @@ const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
 
 const BusinessSetupPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const business = location.state?.business;
   const selectedBusinessId = location.state?.business?._id;
   const selectedBusinessName = location.state?.business?.business_name;
@@ -789,7 +790,7 @@ const BusinessSetupPage = () => {
                 className="btn btn-warning btn-sm fw-bold border-dark"
                 onClick={() => {
                   if (loggedInRole === 'company_admin' || loggedInRole === 'admin') {
-                    setShowUpgradeModal(true);
+                    navigate('/admin?tab=subscription');
                   } else {
                     showToastMessage("Contact admin for upgradation", "warning");
                   }

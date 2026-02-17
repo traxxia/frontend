@@ -105,11 +105,17 @@ export const useAccessControl = (selectedBusinessId) => {
     [userHasProjectEditAccess]
   );
 
+  const isReadOnlyMode = useCallback((isArchived) => {
+    const userPlan = sessionStorage.getItem("userPlan");
+    return userPlan === 'essential' || isArchived;
+  }, []);
+
   return {
     userHasRerankAccess,
     userHasProjectEditAccess,
     checkBusinessAccess,
     checkProjectsAccess,
     canEditProject,
+    isReadOnlyMode,
   };
 };
