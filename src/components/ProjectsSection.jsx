@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Row, Col, Button, Form, Dropdown, Alert, Container } from "react-bootstrap";
 import axios from "axios";
@@ -36,6 +36,24 @@ const ProjectsSection = ({
   const user = sessionStorage.getItem("userName");
 
   const [activeView, setActiveView] = useState("list");
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (activeView !== "list") {
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+
+          const parent = containerRef.current.closest('.info-panel-content');
+          if (parent) {
+            parent.scrollTo({ top: 0, behavior: 'auto' });
+          }
+        }
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }, 0);
+    }
+  }, [activeView]);
+
   const [viewMode, setViewMode] = useState("projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
   const [showRankScreen, setShowRankScreen] = useState(false);
@@ -1004,7 +1022,7 @@ const ProjectsSection = ({
         </div>
       )}
 
-      <Container fluid className="projects-wrapper">
+      <Container fluid className="projects-wrapper" ref={containerRef}>
         {activeView === "list" ? renderProjectList() : renderProjectForm()}
       </Container>
     </>

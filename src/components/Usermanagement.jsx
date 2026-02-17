@@ -81,6 +81,7 @@ const UserManagement = ({ onToast }) => {
   const [showAccessConfirmation, setShowAccessConfirmation] = useState(false);
   const [assignErrors, setAssignErrors] = useState({});
   const [accessErrors, setAccessErrors] = useState({});
+  const [isGrantingAccess, setIsGrantingAccess] = useState(false);
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
@@ -286,6 +287,7 @@ const UserManagement = ({ onToast }) => {
   };
 
   const handleGiveProjectAccess = async () => {
+    setIsGrantingAccess(true);
     try {
       if (accessType === "projectEdit") {
         await axios.put(
@@ -349,6 +351,8 @@ const UserManagement = ({ onToast }) => {
         err.response?.data?.error || "Failed to give access",
         "error"
       );
+    } finally {
+      setIsGrantingAccess(false);
     }
   };
 
@@ -1266,8 +1270,19 @@ const UserManagement = ({ onToast }) => {
             >
               Go Back
             </Button>
-            <Button variant="primary" onClick={handleGiveProjectAccess}>
-              Yes, Grant Access
+            <Button
+              variant="primary"
+              onClick={handleGiveProjectAccess}
+              disabled={isGrantingAccess}
+            >
+              {isGrantingAccess ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Granting...
+                </>
+              ) : (
+                "Yes, Grant Access"
+              )}
             </Button>
           </Modal.Footer>
         </Modal>
