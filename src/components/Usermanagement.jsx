@@ -680,11 +680,16 @@ const UserManagement = ({ onToast }) => {
                 <Button
                   className="add-user-btn d-flex align-items-center"
                   onClick={() => {
-                    const userPlan = sessionStorage.getItem("userPlan");
-                    if (userPlan === 'essential') {
-                      setShowUpgradeModal(true);
-                    } else {
+                    // Super admin bypasses plan checks
+                    if (isSuperAdmin) {
                       handleOpenModal();
+                    } else {
+                      const userPlan = sessionStorage.getItem("userPlan");
+                      if (userPlan === 'essential') {
+                        setShowUpgradeModal(true);
+                      } else {
+                        handleOpenModal();
+                      }
                     }
                   }}
                 >
