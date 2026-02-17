@@ -211,7 +211,7 @@
   border-radius: 100px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
-  overflow-x: auto; 
+  overflow-x: auto;
 }
 
 .status-tab {
@@ -985,11 +985,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 16px;
   font-size: 12px;
   color: #6b7280;
   background: #f1f5f9;
-  padding: 2px 8px;
+  padding: 4px 12px;
   border-radius: 999px;
 }
 
@@ -1021,7 +1020,8 @@
   border-bottom: 1px solid #f3f4f6;
   background: #fff;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .consensus-toggle-group {

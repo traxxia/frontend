@@ -58,9 +58,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
     if (!isAdmin) {
       console.log(projects)
-      // For collaborators, we ONLY show projects that have an AI rank
+      // For collaborators, we ONLY show projects that have an AI rank AND are not killed
       // Fallback: if no AI ranks yet, this list will be empty as requested.
-      const mandatoryProjects = projects.filter(p => p.ai_rank !== null && p.ai_rank !== undefined);
+      const mandatoryProjects = projects.filter(p =>
+        p.ai_rank !== null &&
+        p.ai_rank !== undefined &&
+        p.status?.toLowerCase() !== 'killed'
+      );
 
       setProjectList(mandatoryProjects.map(p => ({
         ...p,
@@ -74,20 +78,22 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
     // Filter projects by launch_status: launched/pending_launch = mandatory, unlaunched/draft = optional
     const active = projects.filter(p =>
-      p.launch_status?.toLowerCase() === 'launched' ||
-      p.launch_status?.toLowerCase() === 'pending_launch'
+      (p.launch_status?.toLowerCase() === 'launched' ||
+        p.launch_status?.toLowerCase() === 'pending_launch') &&
+      p.status?.toLowerCase() === 'active' // Only show Active status projects
     );
     const draft = projects.filter(p =>
       !p.launch_status ||
       (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch')
     );
 
-    // For step 2, we use whatever is selected
+    // For step 2, we use whatever is selected (excluding killed projects)
     if (step === 2) {
       const selectedProjects = projects.filter(p =>
-        p.launch_status?.toLowerCase() === 'launched' ||
-        p.launch_status?.toLowerCase() === 'pending_launch' ||
-        selectedDraftIds.includes(p._id)
+        (p.launch_status?.toLowerCase() === 'launched' ||
+          p.launch_status?.toLowerCase() === 'pending_launch' ||
+          selectedDraftIds.includes(p._id)) &&
+        p.status?.toLowerCase() !== 'killed' // Exclude killed projects
       );
 
       const sorted = [...selectedProjects].sort((a, b) => {
@@ -107,13 +113,14 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const activeProjects = useMemo(() => projects.filter(p =>
     p.launch_status?.toLowerCase() === 'launched' ||
-    p.launch_status?.toLowerCase() === 'pending_launch' ||
-    (p.ai_rank !== null && p.ai_rank !== undefined)
+    p.status?.toLowerCase() !== 'killed' && // Exclude killed projects
+    p.status?.toLowerCase() === 'active' // Only show Active status projects
   ), [projects]);
   const draftProjects = useMemo(() => projects.filter(p =>
-    !p.launch_status ||
-    (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') ||
-    p.status?.toLowerCase() === 'draft'
+    (!p.launch_status ||
+      (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') ||
+      p.status?.toLowerCase() === 'draft') &&
+    p.status?.toLowerCase() !== 'killed' // Exclude killed projects
   ), [projects]);
 
   useEffect(() => {
@@ -143,10 +150,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
     setIsGeneratingAI(true);
     try {
-      const { success, rankings } = await callMLRankingAPI(selectedProjects);
+      // Deduplicate projects by ID before sending to ML API
+      const uniqueProjects = selectedProjects.filter((project, index, self) =>
+        index === self.findIndex(p => p._id === project._id)
+      );
+
+      const { success, rankings } = await callMLRankingAPI(uniqueProjects);
       if (success) {
         // Map rankings back to projects
-        const rankedList = selectedProjects.map(p => {
+        const rankedList = uniqueProjects.map(p => {
           const r = rankings.find(rankItem => rankItem.project_id === p._id);
           return {
             ...p,
@@ -416,26 +428,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     try {
       const token = sessionStorage.getItem("token");
 
-      const rankedIds = projectList.map(p => String(p._id));
       const payload = {
         business_id: businessId,
-        projects: projects.map((p) => {
-          const rankedIndex = rankedIds.indexOf(String(p._id));
-          if (rankedIndex !== -1) {
-            const rankedProject = projectList[rankedIndex];
-            return {
-              project_id: p._id,
-              rank: rankedIndex + 1,
-              rationals: rankedProject.rationale || ""
-            };
-          } else {
-            return {
-              project_id: p._id,
-              rank: null,
-              rationals: ""
-            };
-          }
-        })
+        projects: projectList.map((p, index) => ({
+          project_id: p._id,
+          rank: index + 1,
+          rationals: p.rationale || ""
+        }))
       };
 
       await axios.put(

@@ -451,7 +451,12 @@ const ProjectsSection = ({
 
       setIsGeneratingAIRankings(true);
 
-      const mlResponse = await callMLRankingAPI(projects);
+      // Deduplicate projects by ID before sending to ML API
+      const uniqueProjects = projects.filter((project, index, self) =>
+        index === self.findIndex(p => p._id === project._id)
+      );
+
+      const mlResponse = await callMLRankingAPI(uniqueProjects);
 
       const saveResponse = await saveAIRankings(
         selectedBusinessId,
@@ -490,7 +495,18 @@ const ProjectsSection = ({
       return;
     }
 
-    // 1. Check if ADMIN has ranked the selected projects (Frontend check for immediate feedback)
+    // 1. Check for killed projects (cannot be launched)
+    const killedProjects = selectedProjectIds.filter(id => {
+      const project = projects.find(p => p._id === id);
+      return project?.status?.toLowerCase() === 'killed';
+    });
+
+    if (killedProjects.length > 0) {
+      handleShowToast("Killed projects cannot be launched. Please deselect killed projects and try again.", "error", 5000);
+      return;
+    }
+
+    // 2. Check if ADMIN has ranked the selected projects (Frontend check for immediate feedback)
     const unrankedSelected = selectedProjectIds.some(id => {
       const rank = rankMap[String(id)];
       return rank === null || rank === undefined;
@@ -785,26 +801,28 @@ const ProjectsSection = ({
                     </button>
                   </div>
                 )}
- 
+
               </div>
 
-              {/* Repositioned Collaborator Progress */}
-              <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2" style={{
-                backgroundColor: '#f8fafc',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                fontSize: '13px'
-              }}>
-                <Users size={16} className="text-primary" />
-                <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
-                <span className="badge bg-primary rounded-pill" style={{ fontSize: '11px' }}>
-                  {lockSummary.locked_users_count} / {lockSummary.total_users}
-                </span>
+              {/* Repositioned Collaborator Progress - Admin Only */}
+              {isSuperAdmin && (
+                <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2" style={{
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '13px'
+                }}>
+                  <Users size={16} className="text-primary" />
+                  <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
+                  <span className="badge bg-primary rounded-pill" style={{ fontSize: '11px' }}>
+                    {lockSummary.locked_users_count} / {lockSummary.total_users}
+                  </span>
 
-                {lockSummary.total_users > 0 && lockSummary.locked_users_count === lockSummary.total_users && (
-                  <CheckCircle size={14} className="text-success" />
-                )}
-              </div>
+                  {lockSummary.total_users > 0 && lockSummary.locked_users_count === lockSummary.total_users && (
+                    <CheckCircle size={14} className="text-success" />
+                  )}
+                </div>
+              )}
             </div>
 
             <RankProjectsPanel
@@ -821,7 +839,7 @@ const ProjectsSection = ({
               isArchived={apiIsArchived}
             />
 
-            {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
+            {showTeamRankings && !isViewer && (
               <TeamRankingsView
                 activeAccordionKey={activeAccordionKey}
                 onAccordionSelect={handleAccordionSelect}
