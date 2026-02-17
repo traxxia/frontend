@@ -525,7 +525,7 @@ const UserManagement = ({ onToast }) => {
       setLoadingProjects(true);
 
       const projectRes = await axios.get(`${BACKEND_URL}/api/projects`, {
-        params: { status: "launched" },
+        params: { launch_status: "launched" },
         headers: { Authorization: `Bearer ${token}` },
       });
 

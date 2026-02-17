@@ -5135,8 +5135,7 @@
    display: flex;
    flex-direction: column;
    gap: 0px;
-   padding: 0px;
-   background: #fff;
+   padding: 0px; 
    border-radius: 8px;
    position: relative;
  }

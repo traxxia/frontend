@@ -128,35 +128,9 @@ const TeamRankingsView = ({
   return (
     <div className="ranking-panel-container expanded-view">
 
-      {/* Panel Header */}
-      <div
-        className="ranking-header-bar open"
-        style={{ cursor: 'default' }} // No longer togglable by clicking header, handled by parent button
-      >
-        <div className="header-left">
-          <div className="header-icon-box">
-            <Users size={18} className="text-primary" />
-          </div>
-          <h5 className="header-title">{t("Team_Rankings_View")}</h5>
-
-          {/* Always show summary if available and in AI mode */}
-          {isSuperAdmin && consensusSummary && consensusMode === "ai" && (
-            <div className="mini-summary">
-              <span className="dot green" title="High Agreement"></span> {consensusSummary.high_consensus || 0}
-              <span className="dot yellow" title="Medium Agreement"></span> {consensusSummary.medium_consensus || 0}
-              <span className="dot red" title="Low Agreement"></span> {consensusSummary.low_consensus || 0}
-            </div>
-          )}
-        </div>
-
-        {/* Optional: Add a close button here if requested, but user said "make it like rank projects button" which usually implies the header button toggles it. 
-            We can leave the right side empty or add a refresh button?
-        */}
-      </div>
 
       {/* Content Body - Always Visible since this component is only rendered when open */}
       <div className="ranking-content-body">
-
         {/* Toolbar: Consensus Mode Toggle */}
         {isSuperAdmin && (
           <div className="ranking-toolbar">
@@ -174,6 +148,15 @@ const TeamRankingsView = ({
                 <Users size={14} /> Team Consensus
               </button>
             </div>
+
+            {/* Mini Summary - Inline with toggles */}
+            {consensusSummary && consensusMode === "ai" && (
+              <div className="mini-summary">
+                <span className="dot green" title="High Agreement"></span> {consensusSummary.high_consensus || 0}
+                <span className="dot yellow" title="Medium Agreement"></span> {consensusSummary.medium_consensus || 0}
+                <span className="dot red" title="Low Agreement"></span> {consensusSummary.low_consensus || 0}
+              </div>
+            )}
           </div>
         )}
 

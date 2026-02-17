@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   Button,
@@ -16,6 +16,8 @@ import { Lock, ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/RankProjectsPanel.css";
 import { validateRationale } from "../utils/validation";
+import { callMLRankingAPI } from "../services/aiRankingService";
+import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
 
 /* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
@@ -46,23 +48,163 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [pendingDragResult, setPendingDragResult] = useState(null);
   const [tempRationale, setTempRationale] = useState("");
   const [movedProjectName, setMovedProjectName] = useState("");
+  const [step, setStep] = useState(1); // 1: Selection, 2: Ranking
+  const [selectedDraftIds, setSelectedDraftIds] = useState([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
 
-    const sorted = [...projects].sort((a, b) => {
-      const rankA = a.rank ?? Infinity;
-      const rankB = b.rank ?? Infinity;
-      return rankA - rankB;
-    }).map(project => ({
-      ...project,
-      rationale: project.rationale || project.rationals || "",
-      description: project.description || project.project_description || ""
-    }));
-    setProjectList(sorted);
-    setInitialOrder(sorted.map(p => p._id));
-  }, [projects]);
+    if (!isAdmin) {
+      console.log(projects)
+      // For collaborators, we ONLY show projects that have an AI rank AND are not killed
+      // Fallback: if no AI ranks yet, this list will be empty as requested.
+      const mandatoryProjects = projects.filter(p =>
+        p.ai_rank !== null &&
+        p.ai_rank !== undefined &&
+        p.status?.toLowerCase() !== 'killed'
+      );
+
+      setProjectList(mandatoryProjects.map(p => ({
+        ...p,
+        rationale: p.rationale || p.rationals || "",
+        description: p.description || p.project_description || ""
+      })));
+      setInitialOrder(mandatoryProjects.map(p => p._id));
+      setStep(2);
+      return;
+    }
+
+    // Filter projects by launch_status: launched/pending_launch = mandatory, unlaunched/draft = optional
+    const active = projects.filter(p =>
+      (p.launch_status?.toLowerCase() === 'launched' ||
+        p.launch_status?.toLowerCase() === 'pending_launch') &&
+      p.status?.toLowerCase() === 'active' // Only show Active status projects
+    );
+    const draft = projects.filter(p =>
+      !p.launch_status ||
+      (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch')
+    );
+
+    // For step 2, we use whatever is selected (excluding killed projects)
+    if (step === 2) {
+      const selectedProjects = projects.filter(p =>
+        (p.launch_status?.toLowerCase() === 'launched' ||
+          p.launch_status?.toLowerCase() === 'pending_launch' ||
+          selectedDraftIds.includes(p._id)) &&
+        p.status?.toLowerCase() !== 'killed' // Exclude killed projects
+      );
+
+      const sorted = [...selectedProjects].sort((a, b) => {
+        const rankA = a.rank === null || a.rank === undefined ? Infinity : a.rank;
+        const rankB = b.rank === null || b.rank === undefined ? Infinity : b.rank;
+        return rankA - rankB;
+      });
+
+      setProjectList(sorted.map(p => ({
+        ...p,
+        rationale: p.rationale || p.rationals || "",
+        description: p.description || p.project_description || ""
+      })));
+      setInitialOrder(sorted.map(p => p._id));
+    }
+  }, [projects, step, selectedDraftIds, isAdmin]);
+
+  const activeProjects = useMemo(() => projects.filter(p =>
+    p.launch_status?.toLowerCase() === 'launched' ||
+    p.status?.toLowerCase() !== 'killed' && // Exclude killed projects
+    p.status?.toLowerCase() === 'active' // Only show Active status projects
+  ), [projects]);
+  const draftProjects = useMemo(() => projects.filter(p =>
+    (!p.launch_status ||
+      (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') ||
+      p.status?.toLowerCase() === 'draft') &&
+    p.status?.toLowerCase() !== 'killed' // Exclude killed projects
+  ), [projects]);
+
+  useEffect(() => {
+    if (projects && projects.length > 0 && selectedDraftIds.length === 0 && step === 1) {
+      const rankedDrafts = projects
+        .filter(p => (p.launch_status?.toLowerCase() !== 'launched' || p.status?.toLowerCase() === 'draft') && p.rank !== null && p.rank !== undefined)
+        .map(p => p._id);
+      if (rankedDrafts.length > 0) {
+        setSelectedDraftIds(rankedDrafts);
+      }
+    }
+  }, [projects, step]); // Run when projects or step changes
+
+  const handleToggleDraft = (projectId) => {
+    setSelectedDraftIds(prev =>
+      prev.includes(projectId) ? prev.filter(id => id !== projectId) : [...prev, projectId]
+    );
+  };
+
+  const handleNextToRanking = async () => {
+    const selectedProjects = [...activeProjects, ...draftProjects.filter(p => selectedDraftIds.includes(p._id))];
+
+    if (selectedProjects.length === 0) {
+      onShowToast("Please select at least one project", "warning");
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    try {
+      // Deduplicate projects by ID before sending to ML API
+      const uniqueProjects = selectedProjects.filter((project, index, self) =>
+        index === self.findIndex(p => p._id === project._id)
+      );
+
+      const { success, rankings } = await callMLRankingAPI(uniqueProjects);
+      if (success) {
+        // Map rankings back to projects
+        const rankedList = uniqueProjects.map(p => {
+          const r = rankings.find(rankItem => rankItem.project_id === p._id);
+          return {
+            ...p,
+            rank: r ? r.rank : Infinity,
+            rationale: "", // Reset rationale for new AI-suggested order
+            description: p.description || p.project_description || ""
+          };
+        }).sort((a, b) => a.rank - b.rank);
+
+        // Persist AI rankings to backend so collaborators can see them
+        const validRankings = rankedList
+          .filter(p => p.rank !== Infinity && p.rank !== null && p.rank !== undefined)
+          .map(p => ({
+            project_id: p._id,
+            rank: p.rank
+          }));
+
+        if (validRankings.length > 0) {
+          const aiPayload = {
+            business_id: businessId,
+            ai_rankings: validRankings,
+            model_version: "v1.0"
+          };
+          const token = sessionStorage.getItem("token");
+          await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/projects/ai-rankings`, aiPayload, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+
+        setProjectList(rankedList);
+        setInitialOrder(rankedList.map(p => p._id));
+        setStep(2);
+      }
+    } catch (err) {
+      onShowToast("ML ranking service failed. Proceeding with manual ranking.", "warning");
+      setProjectList(selectedProjects.map(p => ({
+        ...p,
+        rationale: "",
+        description: p.description || p.project_description || ""
+      })));
+      setInitialOrder(selectedProjects.map(p => p._id));
+      setStep(2);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   if (!show) return null;
 
@@ -288,13 +430,11 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
       const payload = {
         business_id: businessId,
-        projects: projectList.map((p, index) => {
-          return {
-            project_id: p._id,
-            rank: index + 1,
-            rationals: p.rationale || ""
-          };
-        })
+        projects: projectList.map((p, index) => ({
+          project_id: p._id,
+          rank: index + 1,
+          rationals: p.rationale || ""
+        }))
       };
 
       await axios.put(
@@ -320,7 +460,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       }
     } catch (err) {
       console.error("Save rankings failed", err);
-      onShowToast("Failed to save rankings", "error");
+      const errorMsg = err.response?.data?.error || "Failed to save rankings";
+      onShowToast(errorMsg, "error");
     } finally {
       setIsSaving(false);
     }
@@ -338,42 +479,60 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     }
   };
 
-  return (
-    <div className="rank-panel-container responsive-panel compact-mode" >
-      <Row className="rank-panel-header">
-        <Col xs={12} md={8} className="d-flex align-items-center gap-3">
-          <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
-          {(isAdmin || !isRankingLocked) && (
-            <Button
-              className="btn-save-rank responsive-btn"
-              onClick={handleSaveRankings}
-              disabled={isSaving || (isSaved && !hasRankingsChanged())}
-            >
-              {isSaving ? "Saving..." : t("Save_Rankings")}
-            </Button>
-          )}
-        </Col>
+  const handleSaveAndClose = async () => {
+    await handleSaveRankings();
+    // No explicit close here, as onRankSaved might be used by parent to close.
+    // However, the user said "collapse the rank projects view", so I'll ensure parent is notified.
+  };
 
-        <Col
-          xs={12}
-          md={4}
-          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
-        >
-          {!isAdmin && (
-            <Button
-              className="btn-lock-rank responsive-btn"
-              onClick={handleLockRankings}
-              disabled={isLocked || !isSaved}
-            >
-              <Lock size={16} /> {t("Lock_My_Rankings")}
-            </Button>
-          )}
-        </Col>
-      </Row>
+  const renderStep1 = () => (
+    <div className="rank-step-selection">
+      <h6 className="mb-3 text-primary">{t("Mandatory Projects")}</h6>
+      <div className="selection-list mb-4">
+        {activeProjects.map(p => (
+          <div key={p._id} className="selection-item mandatory">
+            <Form.Check
+              type="checkbox"
+              checked={true}
+              disabled={true}
+              label={p.project_name}
+            />
+          </div>
+        ))}
+        {activeProjects.length === 0 && <p className="text-muted small">{t("No active projects found.")}</p>}
+      </div>
 
-      <p className="rank-description">
-        Drag projects to reorder. <strong>Rationale is required</strong> for any project you move.
-      </p>
+      <h6 className="mb-3 text-secondary">{t("Unlaunched/Draft Projects (Optional)")}</h6>
+      <div className="selection-list mb-4">
+        {draftProjects.map(p => (
+          <div key={p._id} className="selection-item">
+            <Form.Check
+              type="checkbox"
+              id={`draft-${p._id}`}
+              checked={selectedDraftIds.includes(p._id)}
+              onChange={() => handleToggleDraft(p._id)}
+              label={p.project_name}
+            />
+          </div>
+        ))}
+        {draftProjects.length === 0 && <p className="text-muted small">{t("No draft projects found.")}</p>}
+      </div>
+
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        {isAdmin && (
+          <Button variant="outline-secondary" size="sm" onClick={() => setStep(1)}>
+            ← {t("Back to Selection")}
+          </Button>
+        )}
+        <p className="rank-description mb-0">
+          {t("Drag projects to reorder. AI suggested an initial order.")}
+        </p>
+      </div>
 
       {/* Validation Error Alert */}
       {validationError && (
@@ -394,126 +553,173 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
-              {projectList.map((item, index) => {
-                const positionChanged = hasPositionChanged(item._id, index);
-                const validation = validateRationale(item.rationale);
-                const needsRationale = positionChanged && !validation.isValid;
-                const errorMessage = rationaleErrors[item._id] || "";
+              {projectList.length === 0 ? (
+                <div className="text-center py-5 text-muted border rounded bg-light">
+                  <p className="mb-0">{t("No projects have been prioritized for ranking by the admin yet.")}</p>
+                </div>
+              ) : (
+                projectList.map((item, index) => {
+                  const positionChanged = hasPositionChanged(item._id, index);
+                  const validation = validateRationale(item.rationale);
+                  const needsRationale = positionChanged && !validation.isValid;
+                  const errorMessage = rationaleErrors[item._id] || "";
 
-                return (
-                  <Draggable
-                    key={item._id}
-                    draggableId={item._id}
-                    index={index}
-                    isDragDisabled={(isRankingLocked && !isAdmin) || isArchived}
-                  >
-                    {(provided, snapshot) => (
-                      <Card
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className={`rank-project-card responsive-card ${snapshot.isDragging ? "dragging" : ""
-                          } ${needsRationale ? "needs-rationale" : ""}`}
-                      >
-                        <Card.Body>
-                          {/* ---------- TOP ---------- */}
-                          <div className="rank-card-top responsive-card-top">
-                            <div className="rank-number">{index + 1}</div>
+                  return (
+                    <Draggable
+                      key={item._id}
+                      draggableId={item._id}
+                      index={index}
+                      isDragDisabled={(isRankingLocked && !isAdmin) || isArchived}
+                    >
+                      {(provided, snapshot) => (
+                        <Card
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`rank-project-card responsive-card ${snapshot.isDragging ? "dragging" : ""
+                            } ${needsRationale ? "needs-rationale" : ""}`}
+                        >
+                          <Card.Body>
+                            {/* ---------- TOP ---------- */}
+                            <div className="rank-card-top responsive-card-top">
+                              <div className="rank-number">{index + 1}</div>
 
-                            <div className="rank-content">
-                              <div className="d-flex align-items-center gap-2">
-                                <h5 className="rank-project-title mb-0">
-                                  {item.project_name}
-                                </h5>
-                                {needsRationale && (
-                                  <AlertTriangle size={16} color="#dc3545" title="Rationale required" />
+                              <div className="rank-content">
+                                <div className="d-flex align-items-center gap-2">
+                                  <h5 className="rank-project-title mb-0">
+                                    {item.project_name}
+                                  </h5>
+                                  {needsRationale && (
+                                    <AlertTriangle size={16} color="#dc3545" title="Rationale required" />
+                                  )}
+                                </div>
+                                <p className="rank-project-desc">
+                                  {item.description || item.project_description || "No description provided"}
+                                </p>
+                              </div>
+
+                              <div
+                                className="rank-move-buttons responsive-move-buttons"
+                                style={{ cursor: isRankingLocked && !isAdmin ? "not-allowed" : "grab" }}
+                              >
+                                <ChevronUp size={18} />
+                                <ChevronDown size={18} />
+                              </div>
+                            </div>
+
+                            {/* ---------- RATIONALE ---------- */}
+                            <div className="rank-rationale-btn-container responsive-rationale-btn">
+                              <RationaleToggle eventKey={index.toString()}>
+                                {item.rationale && item.rationale.trim() !== "" ? (
+                                  positionChanged ? (
+                                    <span style={{ color: needsRationale ? "#dc3545" : "#28a745" }}>
+                                      {validation.isValid ? t("Edit Rationale ▼") : t("⚠️ Edit Rationale (Invalid) ▼")}
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: "#28a745" }}>
+                                      {t("Edit Rationale ▼")}
+                                    </span>
+                                  )
+                                ) : (
+                                  positionChanged ? (
+                                    <span style={{ color: "#dc3545" }}>
+                                      ⚠️ {t("Add Rationale (Required) ▼")}
+                                    </span>
+                                  ) : (
+                                    t("Add Rationale ▼")
+                                  )
+                                )}
+                              </RationaleToggle>
+                            </div>
+
+                            <Accordion.Collapse eventKey={index.toString()}>
+                              <div className="mt-2">
+                                {item.rationale && item.rationale.includes("<strong>") ? (
+                                  <div
+                                    className="rank-rationale-display responsive-textarea"
+                                    dangerouslySetInnerHTML={{ __html: item.rationale }}
+                                    style={{
+                                      padding: "10px",
+                                      border: "1px solid #dee2e6",
+                                      borderRadius: "4px",
+                                      backgroundColor: "#f8f9fa",
+                                      minHeight: "80px",
+                                      whiteSpace: "pre-wrap"
+                                    }}
+                                  />
+                                ) : (
+                                  <textarea
+                                    className={`rank-rationale-textarea responsive-textarea ${errorMessage ? "border-danger" : ""}`}
+                                    placeholder={
+                                      positionChanged
+                                        ? t("Required: Why did you rank this project here?")
+                                        : t("Why did you rank this project here?")
+                                    }
+                                    value={item.rationale || ""}
+                                    onChange={(e) => handleRationaleTextareaChange(index, e.target.value)}
+                                    onBlur={() => handleRationaleBlur(index)}
+                                  />
+                                )}
+                                {errorMessage && (
+                                  <small className="text-danger d-block mt-1">
+                                    ⚠️ {errorMessage}
+                                  </small>
                                 )}
                               </div>
-                              <p className="rank-project-desc">
-                                {item.description || item.project_description || "No description provided"}
-                              </p>
-                            </div>
-
-                            <div
-                              className="rank-move-buttons responsive-move-buttons"
-                              style={{ cursor: isRankingLocked && !isAdmin ? "not-allowed" : "grab" }}
-                            >
-                              <ChevronUp size={18} />
-                              <ChevronDown size={18} />
-                            </div>
-                          </div>
-
-                          {/* ---------- RATIONALE ---------- */}
-                          <div className="rank-rationale-btn-container responsive-rationale-btn">
-                            <RationaleToggle eventKey={index.toString()}>
-                              {item.rationale && item.rationale.trim() !== "" ? (
-                                positionChanged ? (
-                                  <span style={{ color: needsRationale ? "#dc3545" : "#28a745" }}>
-                                    {validation.isValid ? "Edit Rationale ▼" : "⚠️ Edit Rationale (Invalid) ▼"}
-                                  </span>
-                                ) : (
-                                  <span style={{ color: "#28a745" }}>
-                                    Edit Rationale ▼
-                                  </span>
-                                )
-                              ) : (
-                                positionChanged ? (
-                                  <span style={{ color: "#dc3545" }}>
-                                    ⚠️ Add Rationale (Required) ▼
-                                  </span>
-                                ) : (
-                                  "Add Rationale ▼"
-                                )
-                              )}
-                            </RationaleToggle>
-                          </div>
-
-                          <Accordion.Collapse eventKey={index.toString()}>
-                            <div>
-                              {item.rationale && item.rationale.includes("<strong>") ? (
-                                <div
-                                  className="rank-rationale-display responsive-textarea"
-                                  dangerouslySetInnerHTML={{ __html: item.rationale }}
-                                  style={{
-                                    padding: "10px",
-                                    border: "1px solid #dee2e6",
-                                    borderRadius: "4px",
-                                    backgroundColor: "#f8f9fa",
-                                    minHeight: "80px",
-                                    whiteSpace: "pre-wrap"
-                                  }}
-                                />
-                              ) : (
-                                <textarea
-                                  className={`rank-rationale-textarea responsive-textarea ${errorMessage ? "border-danger" : ""}`}
-                                  placeholder={
-                                    positionChanged
-                                      ? "Required: Why did you rank this project here?"
-                                      : "Why did you rank this project here?"
-                                  }
-                                  value={item.rationale || ""}
-                                  onChange={(e) => handleRationaleTextareaChange(index, e.target.value)}
-                                  onBlur={() => handleRationaleBlur(index)}
-                                />
-                              )}
-                              {errorMessage && (
-                                <small className="text-danger d-block mt-1">
-                                  ⚠️ {errorMessage}
-                                </small>
-                              )}
-                            </div>
-                          </Accordion.Collapse>
-                        </Card.Body>
-                      </Card>
-                    )}
-                  </Draggable>
-                );
-              })}
+                            </Accordion.Collapse>
+                          </Card.Body>
+                        </Card>
+                      )}
+                    </Draggable>
+                  );
+                })
+              )}
               {provided.placeholder}
             </Accordion>
           )}
         </Droppable>
       </DragDropContext>
+    </>
+  );
+
+  return (
+    <div className="rank-panel-container responsive-panel compact-mode" >
+      <Row className="rank-panel-header align-items-center">
+        <Col xs={12} md={8} className="d-flex align-items-center gap-3">
+          <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
+        </Col>
+
+        <Col
+          xs={12}
+          md={4}
+          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
+        >
+          {step === 1 && isAdmin && (
+            <Button
+              variant="primary"
+              className="responsive-btn"
+              onClick={handleNextToRanking}
+              disabled={isGeneratingAI}
+            >
+              {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
+            </Button>
+          )}
+          {step === 2 && (isAdmin || !isRankingLocked) && (
+            <Button
+              className="btn-save-rank responsive-btn"
+              onClick={handleSaveRankings}
+              disabled={isSaving || (isSaved && !hasRankingsChanged())}
+            >
+              {isSaving ? "Saving..." : t("Save_Rankings")}
+            </Button>
+          )}
+          {/* Lock Rankings removed - saving is final */}
+        </Col>
+      </Row>
+
+      <div className="rank-panel-body">
+        {step === 1 && isAdmin ? renderStep1() : renderStep2()}
+      </div>
 
       {/* ---------- RATIONALE MODAL ---------- */}
       <Modal

@@ -48,7 +48,10 @@ const ProjectCard = ({
   showMenuId,
   setShowMenuId,
   isDark,
-  isArchived
+  isArchived,
+  isAdmin,
+  isSelected,
+  onToggleSelection
 }) => {
   const { t } = useTranslation();
 
@@ -82,16 +85,34 @@ const ProjectCard = ({
 
   return (
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
-      {finalizeCompleted && (
-        <div className="project-serial-number">
-          {rankMap[String(project._id)] ?? index + 1}
-        </div>
-      )}
-
       <div className="project-header">
-        <h3 className={`project-title ${finalizeCompleted ? "with-rank" : ""}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {project.project_name}
-        </h3>
+        <div className="project-header-content">
+          {isAdmin && !isArchived && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelection(project._id)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '25px',
+                height: '20px',
+                cursor: 'pointer',
+                accentColor: '#9333ea',
+                flexShrink: 0
+              }}
+            />
+          )}
+
+          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && (
+            <div className="project-rank-badge">
+              Rank {rankMap[String(project._id)]}
+            </div>
+          )}
+
+          <h3 className="project-title" style={{ marginBottom: 0 }}>
+            {project.project_name}
+          </h3>
+        </div>
         <div className="project-menu-container">
           <button
             className="menu-button"
@@ -115,7 +136,7 @@ const ProjectCard = ({
             </div>
           )}
         </div>
-      </div> 
+      </div>
 
       <p className="project-last-edited" style={{ marginBottom: "8px", fontSize: "12px" }}>
         {t("Project_Description")}: <span className="project-last-edited-name" style={{ color: "#475569" }}>{project.description ? project.description : "None"}</span>
