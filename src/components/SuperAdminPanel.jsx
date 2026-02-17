@@ -90,6 +90,7 @@ const SuperAdminPanel = () => {
       id: "subscription",
       label: t('subscription') || "Subscription",
       icon: CreditCard,
+      superAdminHidden: true  // Hide for super admin
     }
   ];
 
@@ -97,6 +98,9 @@ const SuperAdminPanel = () => {
     if (tab.superAdminOnly && !isSuperAdmin) return false;
 
     if (tab.adminOnly && userRole !== 'company_admin') return false;
+
+    // Hide subscription tab for super admin
+    if (tab.superAdminHidden && isSuperAdmin) return false;
 
     return true;
   });
