@@ -129,7 +129,6 @@ const ProjectsSection = ({
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
 
   const allCollaboratorsLocked =
-    lockSummary.total_users > 0 &&
     lockSummary.locked_users_count === lockSummary.total_users;
 
   const isRankingLocked = allCollaboratorsLocked;
@@ -228,10 +227,20 @@ const ProjectsSection = ({
     return counts;
   }, [projects]);
 
-  const rankedProjects = projects.map((p) => ({
-    ...p,
-    rank: rankMap[String(p._id)],
-  }));
+  const aiRankMap = teamRankings.reduce((acc, r) => {
+    acc[normalizeId(r.project_id)] = r.ai_rank;
+    return acc;
+  }, {});
+
+  const rankedProjects = projects.map((p) => {
+    const manualRank = rankMap[String(p._id)];
+    const aiRank = p.ai_rank || aiRankMap[String(p._id)];
+    return {
+      ...p,
+      rank: manualRank,
+      ai_rank: aiRank,
+    };
+  });
 
   const getToken = () => sessionStorage.getItem("token");
 
@@ -481,13 +490,14 @@ const ProjectsSection = ({
       return;
     }
 
+    // 1. Check if ADMIN has ranked the selected projects (Frontend check for immediate feedback)
     const unrankedSelected = selectedProjectIds.some(id => {
       const rank = rankMap[String(id)];
       return rank === null || rank === undefined;
     });
 
     if (unrankedSelected) {
-      handleShowToast("There is no rank so first rank and then launch.", "error", 5000);
+      handleShowToast("Your projects are not ranked. Please rank them before launching.", "error", 5000);
       setIsRankingBlinking(true);
       setTimeout(() => setIsRankingBlinking(false), 5000);
       return;
@@ -495,7 +505,7 @@ const ProjectsSection = ({
 
     try {
       setIsSubmitting(true);
-      const { success, error } = await launchProjects(selectedProjectIds);
+      const { success, data, error } = await launchProjects(selectedProjectIds);
 
       if (success) {
         setLaunched(true);
@@ -505,6 +515,11 @@ const ProjectsSection = ({
         await loadProjects();
         setTimeout(() => setShowLaunchToast(false), 3000);
       } else {
+        // Special case: If it failed because of collaborators, we still want to refresh
+        // because the backend HAS persisted the pending_launch selection.
+        if (error.includes("collaborators")) {
+          await loadProjects();
+        }
         handleShowToast(error || "Failed to launch projects.", "error", 5000);
       }
     } finally {
@@ -613,17 +628,9 @@ const ProjectsSection = ({
     }
   };
 
-  const lockMyRanking = async (projectId) => {
-    const { success, error } = await lockRanking(projectId);
-    if (success) {
-      setRankingsLocked(true);
-      setRankingLockedFirst(true);
-      setShowLockToast(true);
-      refreshTeamRankings();
-      setTimeout(() => setShowLockToast(false), 3000);
-    } else {
-      handleShowToast(error || "Failed to lock ranking", "error");
-    }
+  const handleLockProjectRanking = async () => {
+    // This used to lock, now it just refreshes as saving is enough
+    await refreshTeamRankings();
   };
 
   const handleAccordionSelect = (eventKey) => {
@@ -739,6 +746,7 @@ const ProjectsSection = ({
               border: 'none',
               fontSize: '15px',
               fontWeight: '700',
+              borderRadius: '0px',
               cursor: 'pointer',
               backgroundColor: 'transparent',
               color: viewMode === "ranking" ? 'rgb(37, 99, 235)' : '#94a3b8',
@@ -777,38 +785,7 @@ const ProjectsSection = ({
                     </button>
                   </div>
                 )}
-
-                {isPrioritizing && rankingsLocked && !userHasRerankAccess && (
-                  <div className="d-flex align-items-center gap-2">
-                    <button className="btn-rankings-locked" disabled style={{
-                      backgroundColor: '#10b981',
-                      color: 'white',
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <Lock size={16} />
-                      {t("Rankings_Locked")}
-                    </button>
-                    {showRankScreen && (
-                      <button
-                        onClick={() => setShowRankScreen(false)}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
-                          backgroundColor: 'white',
-                          fontSize: '14px'
-                        }}
-                      >
-                        {t("Hide")}
-                      </button>
-                    )}
-                  </div>
-                )}
+ 
               </div>
 
               {/* Repositioned Collaborator Progress */}
@@ -834,10 +811,9 @@ const ProjectsSection = ({
               show={showRankScreen}
               projects={rankedProjects}
               businessId={selectedBusinessId}
-              onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
+              onLockRankings={handleLockProjectRanking}
               onRankSaved={() => {
                 refreshTeamRankings();
-                setShowRankScreen(false);
               }}
               isAdmin={isSuperAdmin}
               isRankingLocked={isRankingLocked}
