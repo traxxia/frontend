@@ -1,22 +1,9 @@
 import React from "react";
-import { Plus, ListOrdered, Lock, Users } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 
 const ProjectsHeader = ({
   totalProjects,
   isLoading,
-  isDraft,
-  isPrioritizing,
-  launched,
-  isViewer,
-  isArchived,
-  rankingsLocked,
-  showRankScreen,
-  userHasRerankAccess,
-  onNewProject,
-  onToggleRankScreen,
-  showTeamRankings,
-  onToggleTeamRankings,
 }) => {
   const { t } = useTranslation();
   return (
@@ -48,51 +35,6 @@ const ProjectsHeader = ({
               </>
             )}
           </div>
-        </div>
-
-        <div className="d-flex gap-2 flex-wrap justify-content-end align-items-center">
-          {isDraft && !isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
-            <button onClick={onNewProject} className="btn-new-project">
-              <Plus size={18} />
-              {t("New_Project")}
-            </button>
-          )}
-
-          {((isPrioritizing && !rankingsLocked) ||
-            (launched && userHasRerankAccess)) &&
-            !isViewer && !isArchived && (
-              <div className="consensus-toggle-group" style={{ marginLeft: '8px' }}>
-                <button
-                  onClick={onToggleRankScreen}
-                  className={`toggle-btn ${showRankScreen ? 'active' : ''}`}
-                >
-                  <ListOrdered size={14} />
-                  {t("Rank_Projects")}
-                </button>
-
-                <button
-                  onClick={onToggleTeamRankings}
-                  className={`toggle-btn ${showTeamRankings ? 'active' : ''}`}
-                >
-                  <Users size={14} />
-                  {t("Rankings_View")}
-                </button>
-              </div>
-            )}
-
-          {isPrioritizing && rankingsLocked && !userHasRerankAccess && (
-            <>
-              <button className="btn-rankings-locked" disabled>
-                <Lock size={18} />
-                {t("Rankings_Locked")}
-              </button>
-              {showRankScreen && (
-                <button onClick={onToggleRankScreen} className="btn-rank-projects">
-                  {t("Hide")}
-                </button>
-              )}
-            </>
-          )}
         </div>
       </div>
     </div>

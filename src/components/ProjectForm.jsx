@@ -157,11 +157,17 @@ const SelectField = forwardRef(({
             {options.map((item) => (
               <div
                 key={item.value}
-                className="sf-option"
+                className={`sf-option ${item.disabled ? 'disabled' : ''}`}
                 onClick={() => {
+                  if (item.disabled) return; // Prevent selection of disabled options
                   onChange(item.value);
                   onFieldEdit?.(fieldName);
                   setOpen();
+                }}
+                style={{
+                  cursor: item.disabled ? 'not-allowed' : 'pointer',
+                  opacity: item.disabled ? 0.6 : 1,
+                  pointerEvents: item.disabled ? 'none' : 'auto'
                 }}
               >
                 {item.icon} {item.label}
@@ -874,12 +880,39 @@ const ProjectForm = ({
                 label={t("Status")}
                 icon={<TrendingUp size={16} />}
                 options={[
-                  { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
-                  { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
-                  { value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
-                  { value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
-                  { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
-                  { value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
+                  { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" />, disabled: false },
+                  { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" />, disabled: false },
+                  {
+                    value: "At Risk",
+                    label: (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                        {t("At Risk")} <Lock size={12} color="#94a3b8" />
+                      </span>
+                    ),
+                    icon: <Circle size={14} color="red" fill="red" />,
+                    disabled: true
+                  },
+                  {
+                    value: "Paused",
+                    label: (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                        {t("Paused")} <Lock size={12} color="#94a3b8" />
+                      </span>
+                    ),
+                    icon: <Circle size={14} color="orange" fill="orange" />,
+                    disabled: true
+                  },
+                  { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" />, disabled: false },
+                  {
+                    value: "Scaled",
+                    label: (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                        {t("Scaled")} <Lock size={12} color="#94a3b8" />
+                      </span>
+                    ),
+                    icon: <Circle size={14} color="purple" fill="purple" />,
+                    disabled: true
+                  },
                 ]}
                 value={status}
                 onChange={(val) => {

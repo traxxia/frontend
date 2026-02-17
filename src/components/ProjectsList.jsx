@@ -18,6 +18,9 @@ const ProjectsList = ({
   onDelete,
   selectedCategory,
   isArchived,
+  isAdmin,
+  selectedProjectIds = [],
+  onToggleSelection,
 }) => {
   const [showMenuId, setShowMenuId] = useState(null);
 
@@ -46,7 +49,8 @@ const ProjectsList = ({
       "Active": [],
       "At Risk": [],
       "Paused": [],
-      "Killed": []
+      "Killed": [],
+      "Scaled": []
     };
 
     sortedProjects.forEach(p => {
@@ -59,6 +63,8 @@ const ProjectsList = ({
         groups["Paused"].push(p);
       } else if (statusValue === "killed") {
         groups["Killed"].push(p);
+      } else if (statusValue === "scaled") {
+        groups["Scaled"].push(p);
       } else {
         // Includes 'draft', 'launched', and any unknown fallback
         groups["Draft"].push(p);
@@ -97,6 +103,9 @@ const ProjectsList = ({
               showMenuId={showMenuId}
               setShowMenuId={setShowMenuId}
               isArchived={isArchived}
+              isAdmin={isAdmin}
+              isSelected={selectedProjectIds.includes(project._id)}
+              onToggleSelection={onToggleSelection}
             />
           </Col>
         ))}

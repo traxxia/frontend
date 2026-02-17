@@ -11,9 +11,9 @@ import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 
 import { MdArrowDownward } from "react-icons/md";
+import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
-import ProjectsHeader from "../components/ProjectsHeader";
 import RankProjectsPanel from "../components/RankProjectsPanel";
 import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
@@ -36,6 +36,7 @@ const ProjectsSection = ({
   const user = sessionStorage.getItem("userName");
 
   const [activeView, setActiveView] = useState("list");
+  const [viewMode, setViewMode] = useState("projects"); // "projects" or "ranking"
   const [currentProject, setCurrentProject] = useState(null);
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [showTeamRankings, setShowTeamRankings] = useState(false); // New state for Team Rankings Panel
@@ -49,6 +50,8 @@ const ProjectsSection = ({
   const [businessStatus, setBusinessStatus] = useState("draft");
   const [apiIsArchived, setApiIsArchived] = useState(isArchived);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedProjectIds, setSelectedProjectIds] = useState([]);
+  const [isRankingBlinking, setIsRankingBlinking] = useState(false);
 
   // Sync prop to internal state
   useEffect(() => {
@@ -62,6 +65,7 @@ const ProjectsSection = ({
     { id: "At Risk", label: t("At Risk") || "At Risk" },
     { id: "Paused", label: t("Paused") || "Paused" },
     { id: "Killed", label: t("Killed") || "Killed" },
+    { id: "Scaled", label: t("Scaled") || "Scaled" },
   ];
 
   const onToggleTeamRankings = () => {
@@ -97,7 +101,7 @@ const ProjectsSection = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const { locks } = useFieldLockPolling(currentProject?._id);
-  const { fetchProjects, deleteProject, createProject, updateProject } =
+  const { fetchProjects, deleteProject, createProject, updateProject, launchProjects } =
     useProjectOperations(selectedBusinessId, onProjectCountChange);
   const { fetchTeamRankings, fetchAdminRankings, lockRanking } =
     useRankingOperations(selectedBusinessId, companyAdminIds);
@@ -125,7 +129,6 @@ const ProjectsSection = ({
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
 
   const allCollaboratorsLocked =
-    lockSummary.total_users > 0 &&
     lockSummary.locked_users_count === lockSummary.total_users;
 
   const isRankingLocked = allCollaboratorsLocked;
@@ -199,14 +202,24 @@ const ProjectsSection = ({
       Active: 0,
       "At Risk": 0,
       Paused: 0,
-      Killed: 0
+      Killed: 0,
+      Scaled: 0
     };
 
     projects.forEach(p => {
-      const status = p.status || "Draft";
-      if (counts[status] !== undefined) {
-        counts[status]++;
-      } else if (status === "Draft") {
+      const statusValue = (p.status || "Draft").toLowerCase();
+      if (statusValue === "active") {
+        counts.Active++;
+      } else if (statusValue === "at risk" || statusValue === "at_risk") {
+        counts["At Risk"]++;
+      } else if (statusValue === "paused") {
+        counts.Paused++;
+      } else if (statusValue === "killed") {
+        counts.Killed++;
+      } else if (statusValue === "scaled") {
+        counts.Scaled++;
+      } else {
+        // Includes 'draft', 'launched', and any unknown fallback
         counts.Draft++;
       }
     });
@@ -214,10 +227,20 @@ const ProjectsSection = ({
     return counts;
   }, [projects]);
 
-  const rankedProjects = projects.map((p) => ({
-    ...p,
-    rank: rankMap[String(p._id)],
-  }));
+  const aiRankMap = teamRankings.reduce((acc, r) => {
+    acc[normalizeId(r.project_id)] = r.ai_rank;
+    return acc;
+  }, {});
+
+  const rankedProjects = projects.map((p) => {
+    const manualRank = rankMap[String(p._id)];
+    const aiRank = p.ai_rank || aiRankMap[String(p._id)];
+    return {
+      ...p,
+      rank: manualRank,
+      ai_rank: aiRank,
+    };
+  });
 
   const getToken = () => sessionStorage.getItem("token");
 
@@ -299,6 +322,14 @@ const ProjectsSection = ({
       return false;
     }
     return lockedUsers.some(user => user.user_id.toString() === myUserId);
+  };
+
+  const toggleProjectSelection = (projectId) => {
+    setSelectedProjectIds((prev) =>
+      prev.includes(projectId)
+        ? prev.filter((id) => id !== projectId)
+        : [...prev, projectId]
+    );
   };
 
   const loadProjects = useCallback(async () => {
@@ -392,6 +423,7 @@ const ProjectsSection = ({
       locked_users_count: result.lockSummary?.locked_users_count ?? 0,
       total_users: result.lockSummary?.total_users ?? 0,
       locked_users: result.lockSummary?.locked_users ?? [],
+      pending_users: result.lockSummary?.pending_users ?? [],
     };
     setLockSummary(lockSummaryData);
 
@@ -419,7 +451,12 @@ const ProjectsSection = ({
 
       setIsGeneratingAIRankings(true);
 
-      const mlResponse = await callMLRankingAPI(projects);
+      // Deduplicate projects by ID before sending to ML API
+      const uniqueProjects = projects.filter((project, index, self) =>
+        index === self.findIndex(p => p._id === project._id)
+      );
+
+      const mlResponse = await callMLRankingAPI(uniqueProjects);
 
       const saveResponse = await saveAIRankings(
         selectedBusinessId,
@@ -452,11 +489,58 @@ const ProjectsSection = ({
     setTimeout(() => setShowFinalizeToast(false), 3000);
   };
 
-  const handleLaunchProjects = () => {
-    setLaunched(true);
-    setShowLaunchToast(true);
-    updateBusinessStatus("launched");
-    setTimeout(() => setShowLaunchToast(false), 3000);
+  const handleLaunchProjects = async () => {
+    if (selectedProjectIds.length === 0) {
+      handleShowToast("Please select at least one project to launch.", "error");
+      return;
+    }
+
+    // 1. Check for killed projects (cannot be launched)
+    const killedProjects = selectedProjectIds.filter(id => {
+      const project = projects.find(p => p._id === id);
+      return project?.status?.toLowerCase() === 'killed';
+    });
+
+    if (killedProjects.length > 0) {
+      handleShowToast("Killed projects cannot be launched. Please deselect killed projects and try again.", "error", 5000);
+      return;
+    }
+
+    // 2. Check if ADMIN has ranked the selected projects (Frontend check for immediate feedback)
+    const unrankedSelected = selectedProjectIds.some(id => {
+      const rank = rankMap[String(id)];
+      return rank === null || rank === undefined;
+    });
+
+    if (unrankedSelected) {
+      handleShowToast("Your projects are not ranked. Please rank them before launching.", "error", 5000);
+      setIsRankingBlinking(true);
+      setTimeout(() => setIsRankingBlinking(false), 5000);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { success, data, error } = await launchProjects(selectedProjectIds);
+
+      if (success) {
+        setLaunched(true);
+        setShowLaunchToast(true);
+        updateBusinessStatus("launched");
+        setSelectedProjectIds([]); // Clear selection
+        await loadProjects();
+        setTimeout(() => setShowLaunchToast(false), 3000);
+      } else {
+        // Special case: If it failed because of collaborators, we still want to refresh
+        // because the backend HAS persisted the pending_launch selection.
+        if (error.includes("collaborators")) {
+          await loadProjects();
+        }
+        handleShowToast(error || "Failed to launch projects.", "error", 5000);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleNewProject = () => {
@@ -498,14 +582,14 @@ const ProjectsSection = ({
       const userId = sessionStorage.getItem("userId");
       const payload = getPayload(userId, selectedBusinessId);
 
-      const success = await createProject(payload);
+      const { success, error } = await createProject(payload);
       if (success) {
         handleShowToast("Project created successfully!", "success");
         await unlockAllFieldsSafe();
         await loadProjects();
         handleBackToList();
       } else {
-        handleShowToast("Failed to create project.", "error");
+        handleShowToast(error || "Failed to create project.", "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -534,14 +618,14 @@ const ProjectsSection = ({
       const userId = sessionStorage.getItem("userId");
       const payload = getPayload(userId, selectedBusinessId);
 
-      const success = await updateProject(currentProject._id, payload);
+      const { success, error } = await updateProject(currentProject._id, payload);
       if (success) {
         handleShowToast("Project updated successfully!", "success");
         await unlockAllFieldsSafe();
         await loadProjects();
         handleBackToList();
       } else {
-        handleShowToast("Failed to update project.", "error");
+        handleShowToast(error || "Failed to update project.", "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -551,26 +635,18 @@ const ProjectsSection = ({
   const handleDelete = async (projectId) => {
     if (isViewer) return;
 
-    const success = await deleteProject(projectId);
+    const { success, error } = await deleteProject(projectId);
     if (success) {
       handleShowToast("Project killed successfully!", "success");
       await loadProjects(); // Reload to get updated status/sorting
     } else {
-      handleShowToast("Failed to kill project.", "error");
+      handleShowToast(error || "Failed to kill project.", "error");
     }
   };
 
-  const lockMyRanking = async (projectId) => {
-    const success = await lockRanking(projectId);
-    if (success) {
-      setRankingsLocked(true);
-      setRankingLockedFirst(true);
-      setShowLockToast(true);
-      refreshTeamRankings();
-      setTimeout(() => setShowLockToast(false), 3000);
-    } else {
-      handleShowToast("Failed to lock ranking", "error");
-    }
+  const handleLockProjectRanking = async () => {
+    // This used to lock, now it just refreshes as saving is enough
+    await refreshTeamRankings();
   };
 
   const handleAccordionSelect = (eventKey) => {
@@ -638,103 +714,241 @@ const ProjectsSection = ({
   const renderProjectList = () => {
     return (
       <>
-        {isSuperAdmin && !isViewer && (
-          <div className="collaboration-card-wrapper">
-            <CollaborationCard
-              projectCreationLocked={projectCreationLocked}
-              finalizeCompleted={finalizeCompleted}
-              launched={launched}
-              lockSummary={lockSummary}
-              allCollaboratorsLocked={allCollaboratorsLocked}
-              onLockProjectCreation={handleLockProjectCreation}
-              onFinalizePrioritization={handleFinalizePrioritization}
-              onLaunchProjects={handleLaunchProjects}
-              isGeneratingAIRankings={isGeneratingAIRankings}
-            />
-          </div>
-        )}
-
-        {/* <PortfolioOverview portfolioData={portfolioData} /> */}
-
-        <ProjectsHeader
-          totalProjects={portfolioData.totalProjects}
-          isLoading={isLoading}
-          isDraft={isDraft}
-          isPrioritizing={isPrioritizing}
-          launched={launched}
-          isViewer={isViewer}
-          isArchived={apiIsArchived}
-          rankingsLocked={rankingsLocked}
-          showRankScreen={showRankScreen}
-          userHasRerankAccess={userHasRerankAccess}
-          onNewProject={handleNewProject}
-          onToggleRankScreen={() => {
-            const newState = !showRankScreen;
-            setShowRankScreen(newState);
-            if (newState) setShowTeamRankings(false);
-          }}
-          showTeamRankings={showTeamRankings}
-          onToggleTeamRankings={onToggleTeamRankings}
-        />
-
-        <div className="status-tabs-container">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
-              onClick={() => setSelectedCategory(cat.id)}
-            >
-              <span className="status-name">{cat.label}</span>
-              <span className="status-count">{categoryCounts[cat.id] || 0}</span>
-            </button>
-          ))}
+        <div className="view-mode-tabs-container mb-4" style={{
+          display: 'flex',
+          borderBottom: '1px solid #e2e8f0',
+          width: '100%',
+          paddingLeft: '4px'
+        }}>
+          <button
+            onClick={() => {
+              setViewMode("projects");
+              setShowRankScreen(false);
+              setShowTeamRankings(false);
+            }}
+            className={`view-mode-tab ${viewMode === "projects" ? "active" : ""}`}
+            style={{
+              padding: '12px 20px',
+              border: 'none',
+              fontSize: '15px',
+              fontWeight: '700',
+              borderRadius: '0px',
+              cursor: 'pointer',
+              backgroundColor: 'transparent',
+              color: viewMode === "projects" ? 'rgb(37, 99, 235)' : '#94a3b8',
+              borderBottom: viewMode === "projects" ? '2px solid rgb(37, 99, 235)' : '2px solid transparent',
+              transition: 'all 0.2s ease',
+              marginBottom: '-1px'
+            }}
+          >
+            {isLoading ? (
+              <>
+                {t("Projects")} (..)
+              </>
+            ) : (
+              <>
+                {t("Projects")} ({portfolioData.totalProjects})
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setViewMode("ranking");
+              setShowRankScreen(true);
+            }}
+            className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
+            style={{
+              padding: '12px 20px',
+              border: 'none',
+              fontSize: '15px',
+              fontWeight: '700',
+              borderRadius: '0px',
+              cursor: 'pointer',
+              backgroundColor: 'transparent',
+              color: viewMode === "ranking" ? 'rgb(37, 99, 235)' : '#94a3b8',
+              borderBottom: viewMode === "ranking" ? '2px solid rgb(37, 99, 235)' : '2px solid transparent',
+              transition: 'all 0.2s ease',
+              marginBottom: '-1px'
+            }}
+          >
+            {t("Ranking")}
+          </button>
         </div>
 
-        <RankProjectsPanel
-          show={showRankScreen}
-          projects={rankedProjects}
-          businessId={selectedBusinessId}
-          onLockRankings={() => lockMyRanking(rankedProjects[0]?._id)}
-          onRankSaved={refreshTeamRankings}
-          isAdmin={isSuperAdmin}
-          isRankingLocked={isRankingLocked}
-          onShowToast={handleShowToast}
-          isArchived={apiIsArchived}
-        />
+        {viewMode === "ranking" ? (
+          <>
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-4">
+              <div className="d-flex align-items-center gap-2">
+                {!isViewer && !isArchived && (
+                  <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    <button
+                      onClick={() => {
+                        setShowRankScreen(!showRankScreen);
+                        if (!showRankScreen) setShowTeamRankings(false);
+                      }}
+                      className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
+                    >
+                      <ListOrdered size={16} />
+                      {t("Rank_Projects")}
+                    </button>
 
-        {showTeamRankings && ((isPrioritizing || (launched && userHasRerankAccess)) && !isViewer) && (
-          <TeamRankingsView
-            activeAccordionKey={activeAccordionKey}
-            onAccordionSelect={handleAccordionSelect}
-            isSuperAdmin={isSuperAdmin}
-            user={user}
-            sortedProjects={sortedProjects}
-            rankMap={rankMap}
-            adminRankMap={adminRankMap}
-            userRole={userRole}
-            businessId={selectedBusinessId}
-          />
+                    <button
+                      onClick={onToggleTeamRankings}
+                      className={`status-tab ${showTeamRankings ? 'active' : ''}`}
+                    >
+                      <Users size={16} />
+                      {t("Rankings_View")}
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Repositioned Collaborator Progress - Admin Only */}
+              {isSuperAdmin && (
+                <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2" style={{
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '13px'
+                }}>
+                  <Users size={16} className="text-primary" />
+                  <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
+                  <span className="badge bg-primary rounded-pill" style={{ fontSize: '11px' }}>
+                    {lockSummary.locked_users_count} / {lockSummary.total_users}
+                  </span>
+
+                  {lockSummary.total_users > 0 && lockSummary.locked_users_count === lockSummary.total_users && (
+                    <CheckCircle size={14} className="text-success" />
+                  )}
+                </div>
+              )}
+            </div>
+
+            <RankProjectsPanel
+              show={showRankScreen}
+              projects={rankedProjects}
+              businessId={selectedBusinessId}
+              onLockRankings={handleLockProjectRanking}
+              onRankSaved={() => {
+                refreshTeamRankings();
+              }}
+              isAdmin={isSuperAdmin}
+              isRankingLocked={isRankingLocked}
+              onShowToast={handleShowToast}
+              isArchived={apiIsArchived}
+            />
+
+            {showTeamRankings && !isViewer && (
+              <TeamRankingsView
+                activeAccordionKey={activeAccordionKey}
+                onAccordionSelect={handleAccordionSelect}
+                isSuperAdmin={isSuperAdmin}
+                user={user}
+                sortedProjects={sortedProjects}
+                rankMap={rankMap}
+                adminRankMap={adminRankMap}
+                userRole={userRole}
+                businessId={selectedBusinessId}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <div className="management-row-container mb-4" style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              flexWrap: 'wrap'
+            }}>
+              <div className="status-tabs-container">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    className={`status-tab ${selectedCategory === cat.id ? "active" : ""}`}
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    <span className="status-name">{cat.label}</span>
+                    <span className="status-count">{categoryCounts[cat.id] || 0}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="management-buttons d-flex gap-2">
+                {selectedProjectIds.length > 0 && !isViewer && !isArchived && isSuperAdmin && (
+                  <button
+                    onClick={handleLaunchProjects}
+                    disabled={isSubmitting}
+                    style={{
+                      backgroundColor: '#9333ea',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      boxShadow: '0 4px 6px -1px rgba(147, 51, 234, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Rocket size={18} />
+                    {isSubmitting ? t("Launching...") : `${t("Launch")} (${selectedProjectIds.length})`}
+                  </button>
+                )}
+
+                {!isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
+                  <button
+                    onClick={handleNewProject}
+                    style={{
+                      backgroundColor: '#2563eb',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Plus size={18} />
+                    {t("New_Project")}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <ProjectsList
+              sortedProjects={sortedProjects}
+              rankMap={rankMap}
+              finalizeCompleted={finalizeCompleted}
+              launched={launched}
+              isViewer={isViewer}
+              isAdmin={isSuperAdmin}
+              isEditor={isEditor}
+              isDraft={isDraft}
+              projectCreationLocked={projectCreationLocked}
+              isFinalizedView={isFinalizedView}
+              canEditProject={(project) =>
+                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
+              }
+              onEdit={(project) => handleEditProject(project, "edit")}
+              onView={(project) => handleEditProject(project, "view")}
+              onDelete={handleDelete}
+              selectedCategory={selectedCategory}
+              isArchived={apiIsArchived}
+              selectedProjectIds={selectedProjectIds}
+              onToggleSelection={toggleProjectSelection}
+            />
+          </>
         )}
-
-        <ProjectsList
-          sortedProjects={sortedProjects}
-          rankMap={rankMap}
-          finalizeCompleted={finalizeCompleted}
-          launched={launched}
-          isViewer={isViewer}
-          isEditor={isEditor}
-          isDraft={isDraft}
-          projectCreationLocked={projectCreationLocked}
-          isFinalizedView={isFinalizedView}
-          canEditProject={(project) =>
-            canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
-          }
-          onEdit={(project) => handleEditProject(project, "edit")}
-          onView={(project) => handleEditProject(project, "view")}
-          onDelete={handleDelete}
-          selectedCategory={selectedCategory}
-          isArchived={apiIsArchived}
-        />
       </>
     );
   };

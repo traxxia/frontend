@@ -1011,7 +1011,7 @@ export const staticTranslations = {
     'Accountable_Owner_Sublabel': "The single person responsible for the project's success or failure.",
     'Key_Assumptions_Tested': 'Key Assumptions Tested',
     'Key_Assumptions_Sublabel': 'What are the 3 top risks/assumptions that MUST be true for this to work?',
-    'Continue_If_Label': 'Continue If (Kill Criteria)',
+    'Continue_If_Label': 'Continue If (Success Criteria)',
     'Continue_If_Sublabel': 'What learning or data indicates we should keep going?',
     'Stop_If_Label': 'Stop If (Kill Criteria)',
     'Stop_If_Sublabel': 'What evidence or red flags means we should pivot or kill?',
