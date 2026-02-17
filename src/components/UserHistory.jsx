@@ -1062,7 +1062,7 @@ const BusinessesTab = ({ businesses }) => {
 
   return (
     <div className="businesses-tab">
-      <div className="businesses-list">
+      <div className="history-businesses-list">
         {businesses.map((business, index) => (
           <BusinessCard key={index} business={business} />
         ))}
@@ -1075,16 +1075,16 @@ const BusinessCard = ({ business }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="business-item">
-      <div className="business-header">
-        <h5 className="business-name"><strong>{t('business_name')}:</strong> {business.business_name}</h5>
-        <span className="business-date">{formatDate(business.created_at)}</span>
+    <div className="history-business-card">
+      <div className="history-business-header">
+        <h5 className="history-business-name"><strong>{t('business_name')}:</strong> {business.business_name}</h5>
+        <span className="history-business-date">{formatDate(business.created_at)}</span>
       </div>
-      <div className="business-purpose">
+      <div className="history-business-purpose">
         <strong>{t('Purpose')}:</strong> {business.business_purpose}
       </div>
       {business.description && (
-        <div className="business-description">
+        <div className="history-business-description">
           <strong>{t('description')}:</strong> {business.description}
         </div>
       )}
@@ -1096,18 +1096,18 @@ const BusinessCard = ({ business }) => {
 };
 
 const BusinessStats = ({ stats }) => (
-  <div className="business-stats">
-    <div className="stat-item">
-      <span className="stat-label">Progress:</span>
-      <span className="stat-value">{stats.progress_percentage}%</span>
+  <div className="history-business-stats">
+    <div className="history-stat-item">
+      <span className="history-stat-label">Progress:</span>
+      <span className="history-stat-value">{stats.progress_percentage}%</span>
     </div>
-    <div className="stat-item">
-      <span className="stat-label">Completed:</span>
-      <span className="stat-value">{stats.completed_questions}</span>
+    <div className="history-stat-item">
+      <span className="history-stat-label">Completed:</span>
+      <span className="history-stat-value">{stats.completed_questions}</span>
     </div>
-    <div className="stat-item">
-      <span className="stat-label">Total:</span>
-      <span className="stat-value">{stats.total_questions}</span>
+    <div className="history-stat-item">
+      <span className="history-stat-label">Total:</span>
+      <span className="history-stat-value">{stats.total_questions}</span>
     </div>
   </div>
 );
