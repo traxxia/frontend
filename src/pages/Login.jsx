@@ -130,6 +130,7 @@ const Login = () => {
                     if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
                   }}
                   placeholder={t("email_address")}
+                  disabled={isLoading}
                 />
               </div>
               {errors.email && <span className="error-message">{errors.email}</span>}
@@ -146,6 +147,7 @@ const Login = () => {
                     if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
                   }}
                   placeholder={t("password")}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
