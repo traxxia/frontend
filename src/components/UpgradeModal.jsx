@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
-import { ArrowRight, Zap } from 'lucide-react';
+import { ArrowRight, Zap, CreditCard } from 'lucide-react';
 import PricingPlanCard from './PricingPlanCard';
 import DowngradeSelectionModal from './DowngradeSelectionModal';
 import UpgradeReactivationModal from './UpgradeReactivationModal';
 import '../styles/UpgradeModal.css';
 
-const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
+const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -282,20 +282,32 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess }) => {
                         </>
                     )}
                 </Modal.Body>
-                <Modal.Footer className="border-0 pt-0">
-                    <Button variant="link" onClick={onHide} className="text-decoration-none text-muted">
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="primary"
-                        onClick={handleUpgrade}
-                        disabled={submitting || !selectedPlanId || (subscription?.plan?.toLowerCase() === selectedPlan?.name?.toLowerCase())}
-                        className="px-4 py-2 fw-bold"
-                    >
-                        {submitting ? <Spinner animation="border" size="sm" /> :
-                            (selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
-                        {!submitting && <ArrowRight size={18} className="ms-2" />}
-                    </Button>
+                <Modal.Footer className="border-0 pt-0 d-flex justify-content-between align-items-center">
+                    <div className="d-flex align-items-center text-muted small">
+                        {paymentMethod && (
+                            <>
+                                <CreditCard size={16} className="me-2" />
+                                <span className="me-1">Card ending in</span>
+                                <span className="fw-bold me-1">•••• {paymentMethod.last4}</span>
+                                <span className="text-uppercase" style={{ fontSize: '0.75rem', opacity: 0.8 }}>({paymentMethod.brand})</span>
+                            </>
+                        )}
+                    </div>
+                    <div>
+                        <Button variant="link" onClick={onHide} className="text-decoration-none text-muted me-2">
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={handleUpgrade}
+                            disabled={submitting || !selectedPlanId || (subscription?.plan?.toLowerCase() === selectedPlan?.name?.toLowerCase())}
+                            className="px-4 py-2 fw-bold"
+                        >
+                            {submitting ? <Spinner animation="border" size="sm" /> :
+                                (selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
+                            {!submitting && <ArrowRight size={18} className="ms-2" />}
+                        </Button>
+                    </div>
                 </Modal.Footer>
             </Modal>
 
