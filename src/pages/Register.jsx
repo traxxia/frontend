@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave, FaBriefcase, FaEnvelope } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave, FaBriefcase, FaEnvelope, FaCreditCard, FaPaypal, FaUniversity, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
 import '../styles/Register.css';
@@ -9,6 +9,71 @@ import logo from '../assets/01a2750def81a5872ec67b2b5ec01ff5e9d69d0e.png';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import PricingPlanCard from '../components/PricingPlanCard';
+
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import PaymentForm from '../components/PaymentForm';
+
+const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [localError, setLocalError] = useState(null);
+
+  const handlePayClick = async (e) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    const cardElement = elements.getElement(CardNumberElement);
+    if (!cardElement) {
+      setLocalError("Please complete the card details.");
+      return;
+    }
+
+    try {
+      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+      });
+
+      if (stripeError) {
+        setLocalError(stripeError.message);
+        return;
+      }
+
+      setLocalError(null);
+      onSubmit(paymentMethod.id, true);
+
+    } catch (err) {
+      setLocalError("An unexpected error occurred.");
+      console.error(err);
+    }
+  };
+
+  return (
+    <motion.div
+      key="tab3"
+      className="register-form-grid fade-blur-in"
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+    >
+      <div className="full-width-field">
+        <PaymentForm
+          error={localError || error}
+        />
+      </div>
+
+      <div className="tab-navigation full-width-field">
+        <button type="button" onClick={onBack} className="btn-vibrant btn-secondary-vibrant">
+          <FaAngleLeft /> Previous
+        </button>
+        <button type="button" onClick={handlePayClick} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
+          {isSubmitting ? <><FaSpinner className="spinner" /> Processing...</> : <><FaCheck /> Pay & Register</>}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
 
 const Register = () => {
   const navigate = useNavigate();
@@ -44,6 +109,16 @@ const Register = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
+  const [stripePromise, setStripePromise] = useState(null);
+
+  useEffect(() => {
+    if (activeTab === 3 && isNewCompany && !stripePromise) {
+      loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).then(stripe => {
+        setStripePromise(stripe);
+      });
+    }
+  }, [activeTab, isNewCompany, stripePromise]);
 
   useEffect(() => {
     fetchCompanies();
@@ -113,17 +188,26 @@ const Register = () => {
   };
 
   const handleNext = () => {
-    if (validateTab1()) setActiveTab(2);
+    if (activeTab === 1) {
+      if (validateTab1()) setActiveTab(2);
+    } else if (activeTab === 2) {
+      if (validateTab2()) {
+        if (isNewCompany) {
+          setActiveTab(3);
+        } else {
+          handleSubmit(null, null);
+        }
+      }
+    }
   };
 
   const handleBack = () => {
-    setActiveTab(1);
+    setActiveTab(prev => prev - 1);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateTab2()) return;
+  const handleSubmit = async (paymentMethodId, saveCard) => {
     setIsSubmitting(true);
+    setErrors({});
 
     try {
       const userData = {
@@ -137,6 +221,10 @@ const Register = () => {
       if (isNewCompany) {
         userData.company_name = form.company_name.trim();
         userData.plan_id = selectedPlanId;
+        if (paymentMethodId) {
+          userData.paymentMethodId = paymentMethodId;
+          userData.saveCard = saveCard;
+        }
       } else {
         userData.company_id = form.company_id;
       }
@@ -155,6 +243,9 @@ const Register = () => {
       setIsSubmitting(false);
       setIsError(true);
       setModalMessage(err.response?.data?.error || 'Registration failed.');
+      if (err.response?.data?.error && err.response.data.error.includes('Payment')) {
+        setErrors({ payment: err.response.data.error });
+      }
       setShowSuccessModal(true);
     }
   };
@@ -187,23 +278,36 @@ const Register = () => {
                 <p>{t('create_account_subtitle')}</p>
               </div>
 
-              {/* Redesigned Step Indicator */}
               <div className="register-steps-container">
-                <div className={`step-item ${activeTab === 1 ? 'active' : ''} ${activeTab === 2 ? 'completed' : ''}`}>
+                <div className={`step-item ${activeTab >= 1 ? 'active' : ''} ${activeTab > 1 ? 'completed' : ''}`}>
                   <div className="step-circle">
-                    {activeTab === 2 ? <FaCheck /> : 1}
+                    {activeTab > 1 ? <FaCheck /> : 1}
                   </div>
                   <span className="step-label">{t('step_1_user_info')}</span>
                 </div>
-                <div className="step-line"></div>
-                <div className={`step-item ${activeTab === 2 ? 'active' : ''}`}>
-                  <div className="step-circle">2</div>
+
+                <div className={`step-line ${activeTab > 1 ? 'completed' : ''}`}></div>
+
+                <div className={`step-item ${activeTab >= 2 ? 'active' : ''} ${activeTab > 2 ? 'completed' : ''}`}>
+                  <div className="step-circle">
+                    {activeTab > 2 ? <FaCheck /> : 2}
+                  </div>
                   <span className="step-label">{t('step_2_company_setup')}</span>
                 </div>
+
+                {isNewCompany && (
+                  <>
+                    <div className={`step-line ${activeTab > 2 ? 'completed' : ''}`}></div>
+                    <div className={`step-item ${activeTab === 3 ? 'active' : ''}`}>
+                      <div className="step-circle">3</div>
+                      <span className="step-label">Payment</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <AnimatePresence mode="wait">
-                {activeTab === 1 ? (
+                {activeTab === 1 && (
                   <motion.div
                     key="user"
                     initial={{ opacity: 0, x: -20 }}
@@ -306,7 +410,9 @@ const Register = () => {
                       </div>
                     </form>
                   </motion.div>
-                ) : (
+                )}
+
+                {activeTab === 2 && (
                   <motion.div
                     key="company"
                     initial={{ opacity: 0, x: 20 }}
@@ -314,99 +420,73 @@ const Register = () => {
                     exit={{ opacity: 0, x: -20 }}
                     className="tab-content"
                   >
-                    <form onSubmit={handleSubmit} className="register-form">
+                    <form className="register-form">
                       <AnimatePresence mode="wait">
-                        {activeTab === 1 && (
-                          <motion.div
-                            key="tab1"
-                            className="register-form-grid fade-blur-in"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                          >
-                            <div className="form-group-custom">
-                              <label>{t('user_name')} *</label>
-                              <input type="text" name="name" placeholder="Full Name" value={form.name} onChange={handleChange} className={errors.name ? 'error' : ''} required />
-                              {errors.name && <div className="error-message">{errors.name}</div>}
-                            </div>
-
-                            <div className="form-group-custom">
-                              <label>{t('email')} *</label>
-                              <input type="email" name="email" placeholder="email@example.com" value={form.email} onChange={handleChange} className={errors.email ? 'error' : ''} autoComplete="email" required />
-                              {errors.email && <div className="error-message">{errors.email}</div>}
-                            </div>
-
-                            <div className="form-group-custom">
-                              <label>{t('password')} *</label>
-                              <div className="password-input-container">
-                                <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Create password" value={form.password} onChange={handleChange} className={errors.password ? 'error' : ''} required />
-                                <button type="button" className="password-toggle-button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <FaEyeSlash /> : <FaEye />}</button>
-                              </div>
-                              {errors.password && <div className="error-message">{errors.password}</div>}
-                            </div>
-
-                            <div className="form-group-custom">
-                              <label>{t('confirm_password')} *</label>
-                              <div className="password-input-container">
-                                <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" placeholder="Confirm password" value={form.confirmPassword} onChange={handleChange} className={errors.confirmPassword ? 'error' : ''} required />
-                                <button type="button" className="password-toggle-button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}</button>
-                              </div>
-                              {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
-                            </div>
-
-                            <div className="form-group-custom full-width-field">
-                              <label>{t('job_title')} (Optional)</label>
-                              <input type="text" name="job_title" placeholder="e.g. Strategy Manager" value={form.job_title} onChange={handleChange} />
-                            </div>
-
-                            <div className="tab-navigation full-width-field">
-                              <button type="button" onClick={() => navigate('/')} className="btn-vibrant btn-secondary-vibrant">
-                                <FaAngleLeft /> Back to Home
-                              </button>
-                              <button type="button" onClick={handleNext} className="btn-vibrant btn-primary-vibrant">
-                                Next Step <FaAngleRight />
-                              </button>
-                            </div>
-                          </motion.div>
-                        )}
-
-                        {activeTab === 2 && (
-                          <motion.div
-                            key="tab2"
-                            className="register-form-grid fade-blur-in"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                          >
-                            <div className="form-group-custom full-width-field">
-                              <div className="selection-header">
-                                <label>Action Type  <span className="required">*</span></label>
-                                <div className="action-selection-group">
-                                  <button
-                                    type="button"
-                                    className={`selection-btn ${!isNewCompany ? 'active' : ''}`}
-                                    onClick={() => setIsNewCompany(false)}
-                                  >
-                                    <FaUser /> Join Existing
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`selection-btn ${isNewCompany ? 'active' : ''}`}
-                                    onClick={() => setIsNewCompany(true)}
-                                  >
-                                    <FaBuilding /> Create New
-                                  </button>
+                        <motion.div
+                          key="tab2-content"
+                          className="register-form-grid fade-blur-in"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                        >
+                          <div className="form-group-custom full-width-field">
+                            <div className="selection-header">
+                              <label>Action Type  <span className="required">*</span></label>
+                              <div className="action-selection-group">
+                                <div
+                                  className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
+                                  onClick={() => setIsNewCompany(false)}
+                                >
+                                  {!isNewCompany && (
+                                    <motion.div
+                                      layoutId="active-pill"
+                                      className="active-pill-bg"
+                                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                  )}
+                                  <span className="pill-text"><FaUser /> Join Existing</span>
+                                </div>
+                                <div
+                                  className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
+                                  onClick={() => setIsNewCompany(true)}
+                                >
+                                  {isNewCompany && (
+                                    <motion.div
+                                      layoutId="active-pill"
+                                      className="active-pill-bg"
+                                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                  )}
+                                  <span className="pill-text"><FaBuilding /> Create New</span>
                                 </div>
                               </div>
+                            </div>
 
-                              <div className="selection-content">
+                            <div className="selection-content" style={{ overflow: 'hidden' }}>
+                              <AnimatePresence mode="wait" initial={false}>
                                 {isNewCompany ? (
-                                  <div className="form-group-custom animate-slide-in">
+                                  <motion.div
+                                    key="create-new"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    layout
+                                    className="form-group-custom"
+                                  >
                                     <label>Company Name  <span className="required">*</span></label>
                                     <input type="text" name="company_name" placeholder="Your brand name" value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
-                                  </div>
+                                  </motion.div>
                                 ) : (
-                                  <div className="form-group-custom animate-slide-in">
+                                  <motion.div
+                                    key="join-existing"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    layout
+                                    className="form-group-custom"
+                                  >
                                     <label>Select Company  <span className="required">*</span></label>
                                     <div className="select-wrapper">
                                       {loadingCompanies ? (
@@ -420,14 +500,23 @@ const Register = () => {
                                         </select>
                                       )}
                                     </div>
-                                  </div>
+                                  </motion.div>
                                 )}
-                              </div>
-                              {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
+                              </AnimatePresence>
                             </div>
+                            {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
+                          </div>
 
+                          <AnimatePresence>
                             {isNewCompany && (
-                              <div className="pricing-section full-width-field">
+                              <motion.div
+                                key="pricing-plans"
+                                initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                                exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                className="pricing-section full-width-field"
+                              >
                                 <label className="section-label">Choose Strategy Plan  <span className="required">*</span></label>
                                 <div className="plans-grid">
                                   {plans.map((p) => (
@@ -435,32 +524,50 @@ const Register = () => {
                                   ))}
                                 </div>
                                 {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
-                              </div>
+                              </motion.div>
                             )}
+                          </AnimatePresence>
 
-                            <div className="checkbox-group full-width-field">
-                              <div className="checkbox-wrapper">
-                                <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
-                                <label htmlFor="terms-checkbox" className="checkbox-label-text">
-                                  I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>Terms</a> and <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>Privacy Policy</a>
-                                </label> <span className="required">*</span>
-                              </div>
-                              {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
+                          <div className="checkbox-group full-width-field">
+                            <div className="checkbox-wrapper">
+                              <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
+                              <label htmlFor="terms-checkbox" className="checkbox-label-text">
+                                I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>Terms</a> and <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>Privacy Policy</a>
+                              </label> <span className="required">*</span>
                             </div>
+                            {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
+                          </div>
 
-                            <div className="tab-navigation full-width-field">
-                              <button type="button" onClick={handleBack} className="btn-vibrant btn-secondary-vibrant">
-                                <FaAngleLeft /> Previous
+                          <div className="tab-navigation full-width-field">
+                            <button type="button" onClick={handleBack} className="btn-vibrant btn-secondary-vibrant">
+                              <FaAngleLeft /> Previous
+                            </button>
+
+                            {isNewCompany ? (
+                              <button type="button" onClick={handleNext} className="btn-vibrant btn-primary-vibrant">
+                                Proceed to Payment <FaAngleRight />
                               </button>
-                              <button type="submit" disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
+                            ) : (
+                              <button type="button" onClick={() => handleNext()} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
                                 {isSubmitting ? <><FaSpinner className="spinner" /> Saving...</> : <><FaSave /> Create Account</>}
                               </button>
-                            </div>
-                          </motion.div>
-                        )}
+                            )}
+                          </div>
+                        </motion.div>
                       </AnimatePresence>
                     </form>
                   </motion.div>
+                )}
+
+                {activeTab === 3 && isNewCompany && stripePromise && (
+                  <Elements stripe={stripePromise}>
+                    <PaymentStep
+                      onBack={handleBack}
+                      onSubmit={handleSubmit}
+                      isSubmitting={isSubmitting}
+                      error={errors.payment}
+                    />
+                  </Elements>
                 )}
               </AnimatePresence>
             </motion.div>
@@ -468,7 +575,6 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Success/Error Modal */}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
         <Modal.Body className="text-center py-4">
           <div className={`mb-3 ${isError ? 'text-danger' : 'text-success'}`}>

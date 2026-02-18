@@ -195,6 +195,7 @@ const SubscriptionTab = ({ onToast }) => {
                 onHide={() => setShowUpgradeModal(false)}
                 availablePlans={available_plans}
                 currentPlanName={currentPlanName}
+                paymentMethod={subscription?.payment_method}
                 onUpgradeSuccess={(updatedSub) => {
                     setSubscription(updatedSub);
                     if (onToast) onToast(t('plan_updated_success') || 'Plan updated successfully!', 'success');

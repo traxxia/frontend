@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { initializeTranslations } from './utils/translations';
 
-import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
@@ -26,6 +25,9 @@ const GlobalAiAssistant = () => {
   if (isExcluded) return null;
   return <Aiassistant />;
 };
+
+const Register = React.lazy(() => import('./pages/Register'));
+
 
 const App = () => {
   useEffect(() => {
