@@ -1,45 +1,49 @@
 # Kickstart the Project
 
-Welcome to the **Kickstart the Project** guide. This section provides a comprehensive walkthrough for initiating and setting up a new project within the Traxxia ecosystem.
+Welcome to the **Kickstart the Project** guide. This section explains how to initiate the project phase from the strategic analysis tab.
 
-## 1. Project Kick-off Definition
+## 1. What is Kickstart?
 
-The "Kickstart" phase is the critical first step in your project lifecycle. It serves to:
-*   **Define Objectives:** Clearly state what the project aims to achieve.
-*   **Align Stakeholders:** Ensure everyone involved understands the goals and scope.
-*   **Establish Baseline:** Set the initial parameters against which progress will be measured.
+The "Kickstart" action is the bridge between strategic analysis and project execution. It transitions the business from the **Analysis phase** to the **Projects phase**.
 
-In Traxxia, kicking off a project initializes the workspace and prepares the necessary data structures for subsequent analysis.
+When you kickstart projects:
+*   The business card turns **blue** on the Dashboard, indicating it is now in the Projects phase
+*   The **Projects tab** becomes visible and active
+*   You can begin creating and managing strategic projects
 
-## 2. Kickstart Projects
+## 2. Kickstart Projects Button
 
-For **Company Admins**, the S.T.R.A.T.E.G.I.C tab includes a powerful **"Kickstart Projects"** feature.
+For **Company Admins**, the S.T.R.A.T.E.G.I.C tab includes a **"Kickstart Projects"** button.
 
 ![Kickstart Projects Feature](/academy-screenshots/projects/kickstart-project.png)
 
-Clicking this button automatically:
-1.  **Scans** your generated recommendations (from PESTEL, Porter's, etc.).
-2.  **Identifies** immediate actions and strategic initiatives.
-3.  **Creates** draft entries in your **Projects** tab.
+Clicking this button:
+1. Transitions the business to the **Projects phase**
+2. Opens the Projects tab automatically
+3. Allows you to create your first project
 
-This allows you to instantly move from reading a report to assigning tasks and tracking progress in the Project Management module.
+> [!NOTE]
+> The Kickstart button is only available to **Company Admins**. Collaborators and Viewers cannot kickstart the project phase.
 
 ## 3. Who can Kickstart Projects?
 
-The **"Kickstart Projects"** automation is a powerful strategic tool reserved for specific roles:
-
 *   **Company Admins:** Only users with the Company Admin role can see and click the "Kickstart Projects" button in the S.T.R.A.T.E.G.I.C tab.
 
-This ensures that strategic initiatives are converted into projects by those with the appropriate organizational oversight.
+This ensures that the transition from analysis to execution is made by those with the appropriate organizational oversight.
 
-## 4. Post-Kickstart Actions
+## 4. After Kickstarting
 
-Once you have kicked started your projects, you are ready for the next steps:
+Once you have kickstarted the project phase:
 
 ![After clicked Kickstart Projects button](/academy-screenshots/projects/post-kickstart-projects.png)
 
-1.  **Review Drafts:** If you used the automatic Kickstart button, go to your **Projects** tab to see the newly created draft entries.
-2.  **Strategic Analysis:** specific SWOT/PESTEL analysis applied to this project.
-3.  **Questionnaire:** Run the AI questionnaire to gather deep insights.
+1. **Create Projects:** Use the **"New Project"** button in the Projects tab to create your first strategic initiative
+2. **Fill in Project Details:** Complete the Strategic Core fields — especially the Strategic Bet and Key Assumptions
+3. **Invite Collaborators:** Add team members who will rank and contribute to projects
+4. **Rank Projects:** Use the Ranking tab to set priorities
 
-Select your new project from the dashboard to begin these activities.
+## 5. Related Articles
+
+- [Project Management Overview](../06-projects/01-project-management-overview.md)
+- [Lock Project Creation](../09-lock-project/01-lock-project-creation.md)
+- [Ranking View Explained](../12-ranking/01-ranking-view.md)

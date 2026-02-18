@@ -1,33 +1,49 @@
 # Lock Project Creation
 
-Understanding how and when to lock a project is essential for maintaining data integrity and ensuring stability after the planning phase.
+Understanding how and when to lock project creation is essential for moving the business from the drafting phase into the prioritization phase.
 
 ## 1. Access Control: Who Can Lock?
 
-Locking a project is a sensitive action that freezes the project's parameters. Therefore, this capability is restricted to high-level roles:
-*   **Organization Admins:** Have full control over all projects within the organization.
-*   **Project Owners:** Can lock projects they explicitly own.
+Locking project creation is restricted to:
+*   **Company Admins**
+*   **Super Admins**
 
-Standard collaborators and viewers cannot lock or unlock projects.
+Standard collaborators and viewers cannot lock project creation.
 
-## 2. Before Locking
+## 2. What Locking Does
 
-Before you lock a project, ensure the following:
-*   **Scope is Finalized:** All initial planning data has been entered and verified.
-*   **Stakeholder Approval:** Key stakeholders have reviewed and agreed upon the project charter.
-*   **Team Assembled:** The core team members have been assigned.
+When a Company Admin clicks **"Lock Project Creation"**:
+
+1. The AI ranking engine is called automatically to rank all current projects
+2. AI rankings are saved and become visible to all collaborators
+3. No new projects can be created (the "New Project" button is hidden)
+4. The business status moves from **"Draft"** to **"Prioritizing"**
+
+This signals to the team that the project list is finalized and it's time to rank.
 
 ![lock project creation](/academy-screenshots/projects/create-project-button.png)
 
-**State:** *Editable* - All fields and settings can be modified.
+## 3. Before Locking
 
-## 3. After Locking
+Before you lock project creation, ensure the following:
+*   **All Projects Created:** The full list of strategic initiatives has been entered
+*   **Stakeholder Approval:** Key stakeholders have reviewed the project list
+*   **Team Assembled:** Collaborators who will rank projects have been invited
 
-Once a project is locked:
-*   **Immutability:** Core project details (Name, Objectives, Start Date) become read-only.
-*   **Phase Transition:** The project officially moves from "Planning" to "Execution" or "Analysis".
-*   **Audit Trail:** A record is created indicating who locked the project and when.
+## 4. After Locking
+
+Once project creation is locked:
+*   **AI Rankings Generated:** The AI ranking engine runs automatically and ranks all projects
+*   **Collaborators Can Rank:** All collaborators can now see the projects and submit their manual rankings
+*   **Business Status:** Moves to **"Prioritizing"**
 
 ![After Project Creation Locked](/academy-screenshots/projects/project-locked.png)
 
-**State:** *Locked* - Critical fields are frozen. To make changes, an Admin must explicitly unlock the project, which will trigger a notification to all stakeholders.
+> [!NOTE]
+> Locking project creation does not prevent editing existing projects. Collaborators can still update project details — only creating new projects is blocked.
+
+## 5. Related Articles
+
+- [Finalize Prioritization](../10-finalize/01-finalize-prioritization.md)
+- [AI Ranking in the UI](../13-ai-ranking/01-ai-ranking.md)
+- [Launch Project](../11-launch/01-launch-project.md)

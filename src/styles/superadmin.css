@@ -1681,7 +1681,7 @@
 .admin-content {
   max-width: -webkit-fill-available;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 10px 15px;
 }
 
 .loading-container {

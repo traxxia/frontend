@@ -4,7 +4,7 @@ import { Breadcrumb } from "react-bootstrap";
 import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
-import Aiassistant from "./Aiassistant";
+
 
 const impactOptions = [
   { value: "High", label: "High - Game changer", icon: <Circle size={14} color="green" fill="green" /> },
@@ -1179,7 +1179,6 @@ const ProjectForm = ({
 
 
       </fieldset>
-      <Aiassistant businessId={selectedBusinessId} projectId={projectId} />
     </>
   );
 };

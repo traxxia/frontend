@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, ProgressBar, Spinner, Alert, Button } from 'react-bootstrap';
+import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import {
-    CreditCard, Calendar, BarChart3, Zap, ShieldCheck,
-    Building2, Users, Check, Plus, ArrowRight, Settings,
-    Activity, User, Lock, Briefcase
+    Check, Users, Briefcase, LayoutGrid, FileText
 } from 'lucide-react';
-import { MdArrowDownward } from 'react-icons/md';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from './UpgradeModal';
+import AdminTable from './AdminTable';
+import MetricCard from './MetricCard';
 import '../styles/accessmanagement.css';
+import '../styles/AdminTableStyles.css';
 
 const SubscriptionTab = ({ onToast }) => {
     const { t } = useTranslation();
@@ -16,6 +16,10 @@ const SubscriptionTab = ({ onToast }) => {
     const [error, setError] = useState(null);
     const [subscription, setSubscription] = useState(null);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    // Pagination state for Billing History
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -75,18 +79,49 @@ const SubscriptionTab = ({ onToast }) => {
         return tiers.indexOf(pName.toLowerCase()) > tiers.indexOf(currentPlanName);
     };
 
+    // Client-side pagination for billing history
+    const totalItems = billing_history.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const paginatedHistory = billing_history.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    const billingColumns = [
+        {
+            key: 'date',
+            label: t('date') || 'Date',
+            render: (_, row) => (
+                <div>
+                    <div className="admin-cell-primary">{new Date(row.date).toLocaleDateString()}</div>
+                    <div className="admin-cell-secondary">{new Date(row.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            )
+        },
+        {
+            key: 'details',
+            label: t('details') || 'Details',
+            render: (_, row) => (
+                <span className="text-capitalize fw-medium">{row.plan_name} plan</span>
+            )
+        },
+        {
+            key: 'amount',
+            label: t('amount') || 'Amount',
+            render: (_, row) => (
+                <span className="fw-bold">${row.amount}</span>
+            )
+        }
+    ];
+
     return (
         <div className="subscription-redesign-wrapper">
             <Row>
-                <Col md={11}>
+                <Col md={12}>
 
                     {/* Plan Section */}
-                    <section id="subscription-plan" className="mb-3">
+                    <section id="subscription-plan" className="mb-4">
                         <h5 className="autorenew-title mb-4">{t("subscription_plans") || "Subscription Plans"}</h5>
                         <div className="plan-cards-row">
                             {available_plans.map((p) => {
                                 const isCurrent = p.name.toLowerCase() === currentPlanName;
-                                const isProfessional = p.name.toLowerCase() === 'professional' || p.name.toLowerCase() === 'advanced';
 
                                 return (
                                     <div key={p._id} className={`plan-card-mockup ${isCurrent ? 'premium-type' : ''}`}>
@@ -126,65 +161,47 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
-                    <section className="mt-3 pt-4 mb-3 pb-4 border-bottom border-top">
-                        <h5 className="autorenew-title">{t("usage_metrics") || "Usage Metrics"}</h5>
-                        <Row className="g-4">
-                            <Col md={4}>
-                                <div className="usage-progress-container">
-                                    <div className="usage-metric-item">
-                                        <span className="usage-label-text">{t("workspaces") || "Workspaces"}</span>
-                                        <span className="usage-value-text">{usage.workspaces.current} / {usage.workspaces.limit}</span>
-                                    </div>
-                                </div>
-                            </Col>
-                            <Col md={4}>
-                                <div className="usage-progress-container">
-                                    <div className="usage-metric-item">
-                                        <span className="usage-label-text">{t("collaborators") || "Collaborators"}</span>
-                                        <span className="usage-value-text">{usage.collaborators.current} / {usage.collaborators.limit}</span>
-                                    </div>
-                                </div>
-                            </Col>
-                            <Col md={4}>
-                                <div className="usage-progress-container">
-                                    <div className="usage-metric-item">
-                                        <span className="usage-label-text">{t("projects") || "Projects"}</span>
-                                        <span className="usage-value-text">{usage.projects.current} / {usage.projects.limit === 'unlimited' ? '∞' : usage.projects.limit}</span>
-                                    </div>
-                                </div>
-                            </Col>
-                        </Row>
+                    {/* Usage Metrics Section */}
+                    <section className="mt-4 pt-2 mb-4">
+                        <h5 className="autorenew-title mb-4">{t("usage_metrics") || "Usage Metrics"}</h5>
+                        <div className="admin-metrics-grid">
+                            <MetricCard
+                                label={t("workspaces") || "Workspaces"}
+                                value={`${usage.workspaces.current} / ${usage.workspaces.limit}`}
+                                icon={Briefcase}
+                                iconColor="blue"
+                            />
+                            <MetricCard
+                                label={t("collaborators") || "Collaborators"}
+                                value={`${usage.collaborators.current} / ${usage.collaborators.limit}`}
+                                icon={Users}
+                                iconColor="purple"
+                            />
+                            <MetricCard
+                                label={t("projects") || "Projects"}
+                                value={`${usage.projects.current} / ${usage.projects.limit === 'unlimited' ? '∞' : usage.projects.limit}`}
+                                icon={LayoutGrid}
+                                iconColor="orange"
+                            />
+                        </div>
                     </section>
 
                     {/* Billing History Section */}
                     <section className="mb-5">
-                        <h5 className="autorenew-title mb-3">{t("billing_history") || "Billing History"}</h5>
-                        <table className="billing-history-table">
-                            <thead>
-                                <tr>
-                                    <th>{t("date") || "Date"}</th>
-                                    <th>{t("details") || "Details"}</th>
-                                    <th>{t("amount") || "Amount"}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {billing_history.length > 0 ? billing_history.map((bh, idx) => (
-                                    <tr key={idx}>
-                                        <td className="billing-date">
-                                            {new Date(bh.date).toLocaleDateString()} &nbsp;<span>{new Date(bh.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </td>
-                                        <td className="text-capitalize">{bh.plan_name} plan</td>
-                                        <td className="billing-amount">${bh.amount}</td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan="3" className="text-center py-4 text-muted">
-                                            {t("no_billing_history") || "No billing history found"}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                        <AdminTable
+                            title={t("billing_history") || "Billing History"}
+                            count={totalItems}
+                            countLabel={t("Records") || "Records"}
+                            columns={billingColumns}
+                            data={paginatedHistory}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                            totalItems={totalItems}
+                            itemsPerPage={itemsPerPage}
+                            loading={loading}
+                            emptyMessage={t("no_billing_history") || "No billing history found"}
+                        />
                     </section>
 
                 </Col>
@@ -195,6 +212,7 @@ const SubscriptionTab = ({ onToast }) => {
                 onHide={() => setShowUpgradeModal(false)}
                 availablePlans={available_plans}
                 currentPlanName={currentPlanName}
+                paymentMethod={subscription?.payment_method}
                 onUpgradeSuccess={(updatedSub) => {
                     setSubscription(updatedSub);
                     if (onToast) onToast(t('plan_updated_success') || 'Plan updated successfully!', 'success');

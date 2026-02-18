@@ -1,109 +1,90 @@
-import React, { useState, useEffect } from "react";
-import { Sparkles, Send, ChevronDown } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Sparkles, Send, X, Bot } from "lucide-react";
 import axios from "axios";
 import "../styles/Ai.css";
 
 const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
-
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [context] = useState("Enhance digital product offerings");
-  const [credits] = useState(25);
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hi! How can I help with your project?" },
+    { role: "assistant", text: "Hi! How can I help you today? 👋" },
   ]);
-  const [showSuggestions, setShowSuggestions] = useState(true);
-  const [showSources, setShowSources] = useState(true);
-  const [sources, setSources] = useState({
-    internet: false,
-    traxxia: false,
-    qa: false,
-    financials: false,
-    other: false,
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const chatEndRef = useRef(null);
 
   const suggestedQuestions = [
     "Help me refine the project description",
     "What risks should I consider?",
-    "Suggest success metrics for this project",
-    "How can I improve the strategic justification?",
+    "Suggest success metrics",
+    "How to improve strategic justification?",
   ];
 
-  const toggleSource = (key) => {
-    setSources((s) => ({ ...s, [key]: !s[key] }));
-  };
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Derive business ID from prop or session storage
-  const getBusinessId = () => {
-    return propBusinessId || sessionStorage.getItem("activeBusinessId"); // Fallback to hardcoded ID if none found
-  };
+  const getBusinessId = () =>
+    propBusinessId || sessionStorage.getItem("activeBusinessId");
 
   const getToken = () => sessionStorage.getItem("token");
 
-  // Fetch history when projectId changes
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (open) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, open, isLoading]);
+
+  // Fetch history when projectId changes.
+  // Uses 'global' scope when no projectId is provided (non-project pages).
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!projectId) {
-        setMessages([{ role: "assistant", text: "Hi! How can I help with your project?" }]);
-        return;
-      }
-
       const token = getToken();
       if (!token) return;
 
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${projectId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+      // Use 'global' as the key when not in a project context
+      const historyKey = projectId || 'global';
 
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${historyKey}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         if (response.data.history && response.data.history.length > 0) {
-          setMessages(response.data.history.map(msg => ({
-            role: msg.role,
-            text: msg.text
-          })));
+          setMessages(response.data.history.map((msg) => ({ role: msg.role, text: msg.text })));
         } else {
-          setMessages([{ role: "assistant", text: "Hi! How can I help with your project?" }]);
+          setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
         }
       } catch (error) {
         console.error("Error fetching AI chat history:", error);
+        setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
       }
     };
-
     fetchHistory();
   }, [projectId]);
 
   const saveMessageToHistory = async (role, text) => {
-    if (!projectId) return;
-
     const token = getToken();
     if (!token) return;
-
     try {
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/ai-chat/history`, {
-        project_id: projectId,
-        role,
-        text
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Only include project_id if we are in a project context
+      const body = { role, text };
+      if (projectId) body.project_id = projectId;
+
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history`,
+        body,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
     } catch (error) {
-      console.error("Error saving AI chat message to history:", error);
+      console.error("Error saving AI chat message:", error);
     }
   };
 
-  const handleSend = async () => {
-    if (!query.trim() || isLoading) return;
+  const handleSend = async (text) => {
+    const userText = text || query;
+    if (!userText.trim() || isLoading) return;
 
-    const userText = query;
-    const userMessage = { role: "user", text: userText };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, { role: "user", text: userText }]);
     setQuery("");
     setIsLoading(true);
-
-    // Save user message to history
     await saveMessageToHistory("user", userText);
+
+    let assistantText = "";
 
     try {
       const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
@@ -115,169 +96,124 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
         body: JSON.stringify({ message: userText }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI assistant");
-      }
-
       const data = await response.json();
 
-      // Look for response or text field in the API reply
-      const assistantText = data.response || data.text || "I'm sorry, I couldn't process that request.";
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: assistantText },
-      ]);
-
-      // Save assistant message to history
-      await saveMessageToHistory("assistant", assistantText);
-
+      if (!response.ok) {
+        // Handle rate limit or other API errors gracefully
+        if (data?.error && data.error.toLowerCase().includes("rate limit")) {
+          assistantText = "⚠️ The AI is temporarily unavailable due to rate limits. Please try again in a few minutes.";
+        } else {
+          assistantText = data?.error || "Sorry, I couldn't process that request. Please try again.";
+        }
+      } else {
+        assistantText = data.response || data.text || "I'm sorry, I couldn't process that request.";
+      }
     } catch (error) {
       console.error("AI Assistant API Error:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: "Sorry, I encountered an error. Please try again later." },
-      ]);
+      assistantText = "Sorry, I encountered a network error. Please check your connection and try again.";
     } finally {
+      // Always show and save the assistant reply — even error messages
+      setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
+      await saveMessageToHistory("assistant", assistantText);
       setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Trigger Button — hidden when panel is open */}
       <button
-        className="Ai-button"
+        className={`ai-fab${open ? " ai-fab--hidden" : ""}`}
         onClick={() => setOpen(true)}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        title="AI Assistant"
       >
-        <Sparkles size={28} color="#ffffff" strokeWidth={2.3} />
+        <Sparkles size={22} color="#fff" />
       </button>
 
-      {/* Slide-Out AI Panel */}
-      <div className="ai-panel" style={{ transform: open ? "translateX(0)" : "translateX(100%)" }}>
-        {/* Top bar */}
-        <div className="ai-tool-bar">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Sparkles size={20} color="#fff" />
-            <strong>AI Assistant</strong>
-             <button className="ai-close-btn" onClick={() => setOpen(false)} aria-label="Close" title="Close">✕</button>
-          </div> 
-        </div>
+      {/* Backdrop */}
+      {open && <div className="ai-backdrop" onClick={() => setOpen(false)} />}
 
-        <div className="ai-content">
-          {/* Chat Window */}
-          <div className="chat-wrapper">
-            {messages.map((m, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "flex",
-                  justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-                  marginBottom: 8,
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: "85%",
-                    padding: "8px 10px",
-                    borderRadius: 10,
-                    background: m.role === "user" ? "#6f3cff" : "#f3f4f6",
-                    color: m.role === "user" ? "#ffffff" : "#050505ff",
-                    fontSize: 13,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  marginBottom: 8,
-                }}
-              >
-                <div className="thinking-bubble">
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Suggested Questions - Accordion */}
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "#111827" }}>
-              Suggested questions
+      {/* Panel — slides up from bottom */}
+      <div className={`ai-panel ${open ? "ai-panel--open" : ""}`}>
+        {/* Header */}
+        <div className="ai-header">
+          <div className="ai-header__left">
+            <div className="ai-header__icon">
+              <Sparkles size={16} color="#fff" />
             </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {suggestedQuestions.map((q, i) => (
-                <button
-                  key={i}
-                  className="ai-suggestion"
-                  onClick={() => setQuery(q)}
-                >
-                  {q}
-                </button>
-              ))}
+            <div>
+              <div className="ai-header__title">AI Assistant</div>
+              <div className="ai-header__subtitle">Powered by Traxxia</div>
             </div>
           </div>
+          <button className="ai-header__close" onClick={() => setOpen(false)}>
+            <X size={18} />
+          </button>
         </div>
-        {/* Data Sources - Accordion */}
-        {/*
-          <div className="datasource-wrapper">
-          <div className="datasource-title">Data Sources</div>
 
-          <div className="datasource-list">
-            {[
-              { key: "internet", label: "Internet Search (Perplexity)" },
-              { key: "traxxia", label: "Traxxia Insights" },
-              { key: "qa", label: "Historical Q&A" },
-              { key: "financials", label: "Company Financials" },
-              { key: "other", label: "Other Projects" },
-            ].map((item) => (
-              <label
-                key={item.key}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!sources[item.key]}
-                  onChange={() => toggleSource(item.key)}
-                />
-                <span>{item.label}</span>
-              </label>
+        {/* Chat Messages */}
+        <div className="ai-messages">
+          {messages.map((m, idx) => (
+            <div key={idx} className={`ai-msg ai-msg--${m.role}`}>
+              {m.role === "assistant" && (
+                <div className="ai-msg__avatar">
+                  <Bot size={14} color="#6f3cff" />
+                </div>
+              )}
+              <div className="ai-msg__bubble">{m.text}</div>
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="ai-msg ai-msg--assistant">
+              <div className="ai-msg__avatar">
+                <Bot size={14} color="#6f3cff" />
+              </div>
+              <div className="ai-msg__bubble ai-msg__bubble--typing">
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Suggested Questions */}
+        <div className="ai-suggestions">
+          <p className="ai-suggestions__label">Suggestions</p>
+          <div className="ai-suggestions__list">
+            {suggestedQuestions.map((q, i) => (
+              <button key={i} className="ai-suggestion-chip" onClick={() => handleSend(q)}>
+                {q}
+              </button>
             ))}
           </div>
-        </div>    
-        */}
-        {/* Input Area */}
-        <div className="ai-input-area">
+        </div>
+
+        {/* Input */}
+        <div className="ai-input-row">
           <input
             className="ai-input"
             type="text"
-            placeholder="Ask a question..."
+            placeholder="Ask anything..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
           <button
-            className="ai-send-button"
-            onClick={handleSend}
+            className="ai-send-btn"
+            onClick={() => handleSend()}
             disabled={!query.trim() || isLoading}
-            style={{ opacity: (!query.trim() || isLoading) ? 0.5 : 1 }}
           >
-            <Send size={16} color="#fff" />
+            <Send size={15} color="#fff" />
           </button>
         </div>
       </div>

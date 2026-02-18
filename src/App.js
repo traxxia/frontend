@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { initializeTranslations } from './utils/translations';
 
-import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
@@ -12,6 +11,22 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
 import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
+import Aiassistant from './components/Aiassistant';
+
+// Pages where the AI assistant should NOT appear
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/admin', '/super-admin'];
+const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
+
+const GlobalAiAssistant = () => {
+  const location = useLocation();
+  const isExcluded =
+    AI_EXCLUDED_EXACT_PATHS.includes(location.pathname) ||
+    AI_EXCLUDED_PREFIX_PATHS.some((prefix) => location.pathname.startsWith(prefix));
+  if (isExcluded) return null;
+  return <Aiassistant />;
+};
+
+const Register = React.lazy(() => import('./pages/Register'));
 
 
 const App = () => {
@@ -48,6 +63,7 @@ const App = () => {
   return (
     <Router>
       <div className="App">
+        <GlobalAiAssistant />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />

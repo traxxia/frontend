@@ -158,7 +158,7 @@ const Login = () => {
                   }
                 >
                   <FontAwesomeIcon
-                    icon={showPassword ? faEye : faEyeSlash}
+                    icon={showPassword ? faEyeSlash : faEye}
                     className="eye-icon"
                     style={{ color: "#8F9098", fontSize: "20px" }}
                   />
