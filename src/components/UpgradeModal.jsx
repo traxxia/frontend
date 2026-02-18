@@ -1,10 +1,215 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
-import { ArrowRight, Zap, CreditCard } from 'lucide-react';
+import { Modal, Button, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
+import { ArrowRight, Zap, CreditCard, Check } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
 import PricingPlanCard from './PricingPlanCard';
 import DowngradeSelectionModal from './DowngradeSelectionModal';
 import UpgradeReactivationModal from './UpgradeReactivationModal';
+import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
+const UpgradeModalContent = ({
+    onHide,
+    loading,
+    error,
+    plans,
+    subscription,
+    selectedPlanId,
+    setSelectedPlanId,
+    paymentMethods = [],
+    defaultPaymentMethodId,
+    submitting,
+    onProcessUpgrade,
+    selectedPlan
+}) => {
+    const stripe = useStripe();
+    const elements = useElements();
+
+    // Default to the default PM, or 'new' if none exist
+    const [selectedMethodId, setSelectedMethodId] = useState('new');
+    const [localError, setLocalError] = useState(null);
+
+    useEffect(() => {
+        if (defaultPaymentMethodId) {
+            setSelectedMethodId(defaultPaymentMethodId);
+        } else if (paymentMethods && paymentMethods.length > 0) {
+            setSelectedMethodId(paymentMethods[0].id);
+        } else {
+            setSelectedMethodId('new');
+        }
+    }, [defaultPaymentMethodId, paymentMethods]);
+
+    const handleConfirm = async () => {
+        setLocalError(null);
+        let paymentMethodId = selectedMethodId;
+        let saveNewCard = true; // Default true for existing cards (make them default)
+
+        // If using new card, create payment method first
+        if (selectedMethodId === 'new') {
+            if (!stripe || !elements) return;
+
+            const cardElement = elements.getElement(CardNumberElement);
+            if (!cardElement) {
+                setLocalError("Please complete the card details.");
+                return;
+            }
+
+            try {
+                const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                });
+
+                if (stripeError) {
+                    setLocalError(stripeError.message);
+                    return;
+                }
+                paymentMethodId = paymentMethod.id;
+                saveNewCard = true;
+            } catch (err) {
+                setLocalError("Payment processing failed. Please try again.");
+                console.error(err);
+                return;
+            }
+        }
+
+        // Proceed and pass save boolean
+        onProcessUpgrade(paymentMethodId, saveNewCard);
+    };
+
+    return (
+        <React.Fragment>
+            <Modal.Header closeButton className="border-0 pb-0">
+                <Modal.Title className="fw-bold">
+                    <Zap className="text-warning me-2" />
+                    Plan Management
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="pt-2">
+                {loading ? (
+                    <div className="text-center py-5">
+                        <Spinner animation="border" variant="primary" />
+                        <p className="mt-2 text-muted">Loading your options...</p>
+                    </div>
+                ) : (
+                    <>
+                        {error && <Alert variant="danger">{error}</Alert>}
+
+                        {selectedPlan?.name?.toLowerCase() === 'essential' && subscription?.plan?.toLowerCase() !== 'essential' && (
+                            <Alert variant="warning" className="mb-3 border-0 shadow-sm">
+                                <div className="d-flex align-items-start">
+                                    <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
+                                    <div className="small">
+                                        <h6 className="mb-2 fw-bold">⚠️ Downgrade Warning</h6>
+                                        <p className="mb-2">
+                                            Downgrading to <strong>Essential</strong> will impact your current setup:
+                                        </p>
+                                        <ul className="mb-0 ps-3">
+                                            {subscription.usage.workspaces.current > 1 && (
+                                                <li className="mb-1">
+                                                    <strong>Workspaces:</strong> You currently have <strong>{subscription.usage.workspaces.current}</strong> active workspace(s).
+                                                    Only <strong>1</strong> will remain active.
+                                                </li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </Alert>
+                        )}
+
+                        <div className="plans-grid mb-4">
+                            {plans.map((plan) => (
+                                <PricingPlanCard
+                                    key={plan._id}
+                                    plan={plan}
+                                    isSelected={selectedPlanId === plan._id}
+                                    onSelect={setSelectedPlanId}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Payment Selection */}
+                        <div className="payment-section border-top pt-3">
+                            {paymentMethods.length > 0 && (
+                                <>
+                                    <h6 className="fw-bold mb-3">Preferred Payment Methods</h6>
+                                    {/* Saved Cards */}
+                                    {paymentMethods.map(pm => (
+                                        <div
+                                            key={pm.id}
+                                            className="mb-3 p-3 border rounded position-relative"
+                                            style={{
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                borderColor: selectedMethodId === pm.id ? '#666EE8' : '#e0e0e0',
+                                                backgroundColor: selectedMethodId === pm.id ? 'rgba(72, 100, 161, 0.05)' : 'transparent',
+                                                boxShadow: selectedMethodId === pm.id ? '0 0 0 1px #666EE8' : 'none',
+                                                width: 'fit-content',
+                                                minWidth: '320px'
+                                            }}
+                                            onClick={() => setSelectedMethodId(pm.id)}
+                                        >
+                                            <div className="d-flex align-items-center">
+                                                <div className="me-3 p-2 bg-light rounded-circle">
+                                                    <CreditCard size={20} className="text-secondary" />
+                                                </div>
+                                                <div className="pe-4">
+                                                    <div className="fw-bold text-dark fs-6">•••• •••• •••• {pm.last4}</div>
+                                                    <div className="small text-muted text-uppercase mt-1" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                                                        {pm.brand} | Expires {pm.exp_month}/{pm.exp_year}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {selectedMethodId === pm.id && (
+                                                <div className="position-absolute top-0 end-0 m-2 text-primary">
+                                                    <Check size={16} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    <div className="my-4 d-flex align-items-center">
+                                        <hr className="flex-grow-1 border-secondary-subtle" />
+                                        <span className="px-3 text-muted small fw-bold text-uppercase">Or pay with</span>
+                                        <hr className="flex-grow-1 border-secondary-subtle" />
+                                    </div>
+                                </>
+                            )}
+
+                            <h6 className="fw-bold mb-3">Other Payment Methods</h6>
+
+                            <PaymentForm
+                                error={localError}
+                                hideHeader={true}
+                                isActive={selectedMethodId === 'new'}
+                                onMethodSelect={() => setSelectedMethodId('new')}
+                            />
+                        </div>
+                    </>
+                )}
+            </Modal.Body>
+            <Modal.Footer className="border-0 pt-0 d-flex justify-content-end align-items-center">
+                <Button variant="link" onClick={onHide} className="text-decoration-none text-muted me-2">
+                    Cancel
+                </Button>
+                <Button
+                    variant="primary"
+                    onClick={handleConfirm}
+                    disabled={submitting || !selectedPlanId || (subscription?.plan?.toLowerCase() === selectedPlan?.name?.toLowerCase()) || (selectedMethodId === 'new' && !stripe)}
+                    className="px-4 py-2 fw-bold"
+                >
+                    {submitting ? <Spinner animation="border" size="sm" /> :
+                        (selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
+                    {!submitting && <ArrowRight size={18} className="ms-2" />}
+                </Button>
+            </Modal.Footer>
+        </React.Fragment>
+    );
+};
 
 const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
     const [loading, setLoading] = useState(true);
@@ -27,9 +232,6 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
     useEffect(() => {
         if (show) {
             fetchData();
-            if (typeof show === 'object' && show.mode === 'downgrade') {
-                // We'll handle this in fetchData once plans are loaded
-            }
         }
     }, [show]);
 
@@ -60,7 +262,6 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                     setSelectedPlanId(essentialPlan._id);
                 }
             } else {
-                // Auto-select the next plan if current is essential
                 const currentPlanName = subData.plan.toLowerCase();
                 const nextPlan = plansData.plans.find(p => p.name.toLowerCase() !== currentPlanName);
                 if (nextPlan) setSelectedPlanId(nextPlan._id);
@@ -73,7 +274,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
         }
     };
 
-    const handleUpgrade = async () => {
+    const processUpgrade = async (newPaymentMethodId, saveCard) => {
         if (!selectedPlanId) return;
 
         try {
@@ -87,7 +288,11 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ plan_id: selectedPlanId })
+                body: JSON.stringify({
+                    plan_id: selectedPlanId,
+                    paymentMethodId: newPaymentMethodId,
+                    saveCard: saveCard
+                })
             });
 
             const data = await response.json();
@@ -96,21 +301,18 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                 throw new Error(data.error || 'Upgrade failed');
             }
 
-            // Check if selection is required for downgrade
             if (data.requires_selection) {
                 setSelectionData({ ...data, plan_id: selectedPlanId });
                 setShowSelectionModal(true);
                 return;
             }
 
-            // Check if selection is required for reactivation (Moving to Advanced)
             if (data.requires_reactivation_selection) {
                 setReactivationData({ ...data, plan_id: selectedPlanId });
                 setShowReactivationModal(true);
                 return;
             }
 
-            // Success case
             sessionStorage.setItem('userPlan', data.plan);
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             onHide();
@@ -142,7 +344,6 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                 throw new Error(data.error || 'Reactivation failed');
             }
 
-            // Success
             sessionStorage.setItem('userPlan', data.plan);
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             setShowReactivationModal(false);
@@ -179,7 +380,6 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
                 throw new Error(data.error || 'Downgrade failed');
             }
 
-            // Success
             sessionStorage.setItem('userPlan', data.plan);
             if (onUpgradeSuccess) onUpgradeSuccess(data);
             setShowSelectionModal(false);
@@ -195,120 +395,23 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
 
     return (
         <>
-            <Modal show={show} onHide={onHide} size="lg" centered className="upgrade-modal">
-                <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title className="fw-bold">
-                        <Zap className="text-warning me-2" />
-                        Plan Management
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="pt-2">
-                    {loading ? (
-                        <div className="text-center py-5">
-                            <Spinner animation="border" variant="primary" />
-                            <p className="mt-2 text-muted">Loading your options...</p>
-                        </div>
-                    ) : error ? (
-                        <Alert variant="danger">{error}</Alert>
-                    ) : (
-                        <>
-                            {/* <div className="current-usage-box p-3 rounded-3 mb-4">
-                                <h6 className="mb-3 text-uppercase small fw-bold text-muted">Current Usage</h6>
-                                <Row className="text-center">
-                                    <Col>
-                                        <div className="usage-item">
-                                            <div className="fw-bold fs-5 text-primary">
-                                                {subscription.usage.workspaces.current} / {subscription.usage.workspaces.limit}
-                                            </div>
-                                            <div className="small text-muted">Workspaces</div>
-                                        </div>
-                                    </Col>
-                                    <Col className="border-start border-end">
-                                        <div className="usage-item">
-                                            <div className="fw-bold fs-5 text-primary">
-                                                {subscription.usage.collaborators.current} / {subscription.usage.collaborators.limit}
-                                            </div>
-                                            <div className="small text-muted">Collaborators</div>
-                                        </div>
-                                    </Col>
-                                    <Col>
-                                        <div className="usage-item">
-                                            <div className="fw-bold fs-5 text-primary">
-                                                {subscription.usage.projects.current} / {subscription.usage.projects.limit}
-                                            </div>
-                                            <div className="small text-muted">Projects</div>
-                                        </div>
-                                    </Col>
-                                </Row>
-                            </div> */}
-
-                            {selectedPlan?.name?.toLowerCase() === 'essential' && subscription?.plan?.toLowerCase() !== 'essential' && (
-                                <Alert variant="warning" className="mb-3 border-0 shadow-sm">
-                                    <div className="d-flex align-items-start">
-                                        <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
-                                        <div className="small">
-                                            <h6 className="mb-2 fw-bold">⚠️ Downgrade Warning</h6>
-                                            <p className="mb-2">
-                                                Downgrading to <strong>Essential</strong> will impact your current setup:
-                                            </p>
-                                            <ul className="mb-0 ps-3">
-                                                {subscription.usage.workspaces.current > 1 && (
-                                                    <li className="mb-1">
-                                                        <strong>Workspaces:</strong> You currently have <strong>{subscription.usage.workspaces.current}</strong> active workspace(s).
-                                                        Only <strong>1</strong> will remain active, and <strong>{subscription.usage.workspaces.current - 1}</strong> will be archived (read-only).
-                                                    </li>
-                                                )}
-                                                {subscription.usage.collaborators.current > 0 && (
-                                                    <li className="mb-1">
-                                                        <strong>Collaborators:</strong> All <strong>{subscription.usage.collaborators.current}</strong> collaborator(s) will be archived and lose access.
-                                                    </li>
-                                                )}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </Alert>
-                            )}
-
-                            <div className="plans-grid">
-                                {plans.map((plan) => (
-                                    <PricingPlanCard
-                                        key={plan._id}
-                                        plan={plan}
-                                        isSelected={selectedPlanId === plan._id}
-                                        onSelect={setSelectedPlanId}
-                                    />
-                                ))}
-                            </div>
-                        </>
-                    )}
-                </Modal.Body>
-                <Modal.Footer className="border-0 pt-0 d-flex justify-content-between align-items-center">
-                    <div className="d-flex align-items-center text-muted small">
-                        {paymentMethod && (
-                            <>
-                                <CreditCard size={16} className="me-2" />
-                                <span className="me-1">Card ending in</span>
-                                <span className="fw-bold me-1">•••• {paymentMethod.last4}</span>
-                                <span className="text-uppercase" style={{ fontSize: '0.75rem', opacity: 0.8 }}>({paymentMethod.brand})</span>
-                            </>
-                        )}
-                    </div>
-                    <div>
-                        <Button variant="link" onClick={onHide} className="text-decoration-none text-muted me-2">
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={handleUpgrade}
-                            disabled={submitting || !selectedPlanId || (subscription?.plan?.toLowerCase() === selectedPlan?.name?.toLowerCase())}
-                            className="px-4 py-2 fw-bold"
-                        >
-                            {submitting ? <Spinner animation="border" size="sm" /> :
-                                (selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
-                            {!submitting && <ArrowRight size={18} className="ms-2" />}
-                        </Button>
-                    </div>
-                </Modal.Footer>
+            <Modal show={show} onHide={onHide} size="lg" centered className="upgrade-modal" backdrop="static" keyboard={false}>
+                <Elements stripe={stripePromise}>
+                    <UpgradeModalContent
+                        onHide={onHide}
+                        loading={loading}
+                        error={error}
+                        plans={plans}
+                        subscription={subscription}
+                        selectedPlanId={selectedPlanId}
+                        setSelectedPlanId={setSelectedPlanId}
+                        paymentMethods={subscription?.payment_methods}
+                        defaultPaymentMethodId={subscription?.default_payment_method_id}
+                        submitting={submitting}
+                        onProcessUpgrade={processUpgrade}
+                        selectedPlan={selectedPlan}
+                    />
+                </Elements>
             </Modal>
 
             <DowngradeSelectionModal

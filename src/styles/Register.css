@@ -302,37 +302,57 @@
   background: var(--color-bg-light);
   padding: 4px;
   border-radius: var(--border-radius-md);
-  gap: 4px;
+  gap: 0;
+  /* Gap handled by padding if needed, but 0 is better for sliding */
+  position: relative;
+  border: 1px solid var(--color-border-light);
 }
 
-.selection-btn {
+.selection-pill-option {
   flex: 1;
+  position: relative;
   padding: 8px 16px;
-  border-radius: var(--border-radius-sm);
-  border: none;
-  background: transparent;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-xs);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  transition: var(--transition-normal);
+  transition: color 0.2s ease;
+  z-index: 1;
+  text-align: center;
 }
 
-.selection-btn.active {
-  background: var(--color-bg-primary);
+.selection-pill-option.active {
   color: var(--color-primary);
-  box-shadow: var(--shadow-sm);
 }
- 
+
+.active-pill-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: -1;
+}
+
+.pill-text {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .plans-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  margin-top:0px !important;
+  margin-top: 0px !important;
 }
 
 /* Checkbox */
@@ -499,4 +519,231 @@
 .modal-content {
   max-height: fit-content !important;
   width: 100% !important;
+}
+
+/* Payment UI Redesign */
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.payment-method-card {
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  background: var(--color-bg-primary);
+  text-align: center;
+  /* Ensure text is centered */
+  justify-content: center;
+  /* Reinforce centering */
+}
+
+.payment-method-card:hover:not(.disabled) {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.payment-method-card.active {
+  border-color: var(--color-primary);
+  background: rgba(72, 100, 161, 0.05);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.payment-method-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-bg-light);
+}
+
+.pm-icon {
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+}
+
+.pm-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.pm-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--color-primary);
+  font-size: 0.8rem;
+}
+
+.pm-badge {
+  font-size: 0.65rem;
+  background: var(--color-border-medium);
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+}
+
+.card-details-container {
+  background: var(--color-bg-light);
+  padding: 1.5rem;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border-light);
+  overflow: visible !important;
+}
+
+.payment-form-container {
+  width: 100%;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
+.payment-section,
+.payment-methods-grid,
+.payment-method-card {
+  touch-action: pan-y;
+}
+
+.payment-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.secure-badge {
+  font-size: 0.75rem;
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stripe-input-wrapper {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+  transition: border-color 0.2s ease;
+}
+
+.stripe-input-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(72, 100, 161, 0.1);
+}
+
+[data-theme="dark"] .stripe-input-wrapper {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+@media (max-width: 600px) {
+  .payment-methods-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Visual Card Preview */
+.visual-card-wrapper {
+  display: flex;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.visual-card {
+  width: 100%;
+  max-width: 340px;
+  height: 220px;
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transition: background 0.5s ease;
+  background: linear-gradient(135deg, #485563, #29323c);
+}
+
+.visual-card.brand-visa {
+  background: linear-gradient(135deg, #005bea, #00c6fb);
+}
+
+.visual-card.brand-mastercard {
+  background: linear-gradient(135deg, #f79d00, #64f38c);
+  background: linear-gradient(135deg, #ee0979, #ff6a00);
+}
+
+.visual-card.brand-amex {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+}
+
+.visual-card.brand-discover {
+  background: linear-gradient(135deg, #f12711, #f5af19);
+}
+
+.visual-card.brand-unknown {
+  background: linear-gradient(135deg, #304352, #d7d2cc);
+}
+
+.card-chip {
+  color: #fbbf24;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.card-brand-logo {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.card-number-display {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-number-display.complete {
+  color: #fff;
+}
+
+.valid-check {
+  color: #4ade80;
+}
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  opacity: 0.8;
+  letter-spacing: 1px;
+}
+
+.meta-value {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }

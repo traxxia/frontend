@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { initializeTranslations } from './utils/translations';
 
-import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
@@ -12,6 +11,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
 import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
+
+
+const Register = React.lazy(() => import('./pages/Register'));
 
 
 const App = () => {
@@ -48,39 +50,41 @@ const App = () => {
   return (
     <Router>
       <div className="App">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/businesspage" element={<BusinessSetupPage />} />
+        <React.Suspense fallback={<div className="d-flex justify-content-center align-items-center vh-100">Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/businesspage" element={<BusinessSetupPage />} />
 
-          {/* Traxxia Academy Routes */}
-          <Route path="/academy" element={<AcademyPage />} />
-          <Route path="/academy/:category" element={<AcademyPage />} />
-          <Route path="/academy/:category/:article" element={<AcademyPage />} />
+            {/* Traxxia Academy Routes */}
+            <Route path="/academy" element={<AcademyPage />} />
+            <Route path="/academy/:category" element={<AcademyPage />} />
+            <Route path="/academy/:category/:article" element={<AcademyPage />} />
 
-          {/* Admin Route - renders unified SuperAdminPage */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <SuperAdminPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin Route - renders unified SuperAdminPage */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <SuperAdminPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Super Admin Route - accessible by both admins and super admins */}
-          <Route
-            path="/super-admin"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <SuperAdminPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Super Admin Route - accessible by both admins and super admins */}
+            <Route
+              path="/super-admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <SuperAdminPage />
+                </ProtectedRoute>
+              }
+            />
 
-        </Routes>
+          </Routes>
+        </React.Suspense>
       </div>
     </Router>
   );

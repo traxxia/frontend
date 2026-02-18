@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave, FaBriefcase, FaEnvelope, FaCreditCard } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaCheck, FaTimes, FaAngleLeft, FaAngleRight, FaSpinner, FaUser, FaBuilding, FaSave, FaBriefcase, FaEnvelope, FaCreditCard, FaPaypal, FaUniversity, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
 import '../styles/Register.css';
@@ -11,11 +11,10 @@ import { useTranslation } from '../hooks/useTranslation';
 import PricingPlanCard from '../components/PricingPlanCard';
 
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import PaymentForm from '../components/PaymentForm';
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-
-const PaymentStep = ({ onBack, onSubmit, isSubmitting, error }) => {
+const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [localError, setLocalError] = useState(null);
@@ -24,8 +23,11 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error }) => {
     e.preventDefault();
     if (!stripe || !elements) return;
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) return;
+    const cardElement = elements.getElement(CardNumberElement);
+    if (!cardElement) {
+      setLocalError("Please complete the card details.");
+      return;
+    }
 
     try {
       const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
@@ -39,7 +41,7 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error }) => {
       }
 
       setLocalError(null);
-      onSubmit(paymentMethod.id);
+      onSubmit(paymentMethod.id, true);
 
     } catch (err) {
       setLocalError("An unexpected error occurred.");
@@ -55,28 +57,10 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error }) => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
     >
-      <div className="full-width-field payment-section">
-        <h3><FaCreditCard /> Payment Details</h3>
-        <p className="text-muted">Enter your card details to process the subscription.</p>
-
-        <div className="stripe-card-container">
-          <CardElement options={{
-            hidePostalCode: true,
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-          }} />
-        </div>
-        {(localError || error) && <div className="error-message">{localError || error}</div>}
+      <div className="full-width-field">
+        <PaymentForm
+          error={localError || error}
+        />
       </div>
 
       <div className="tab-navigation full-width-field">
@@ -125,6 +109,16 @@ const Register = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+
+  const [stripePromise, setStripePromise] = useState(null);
+
+  useEffect(() => {
+    if (activeTab === 3 && isNewCompany && !stripePromise) {
+      loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).then(stripe => {
+        setStripePromise(stripe);
+      });
+    }
+  }, [activeTab, isNewCompany, stripePromise]);
 
   useEffect(() => {
     fetchCompanies();
@@ -211,7 +205,7 @@ const Register = () => {
     setActiveTab(prev => prev - 1);
   };
 
-  const handleSubmit = async (paymentMethodId) => {
+  const handleSubmit = async (paymentMethodId, saveCard) => {
     setIsSubmitting(true);
     setErrors({});
 
@@ -229,6 +223,7 @@ const Register = () => {
         userData.plan_id = selectedPlanId;
         if (paymentMethodId) {
           userData.paymentMethodId = paymentMethodId;
+          userData.saveCard = saveCard;
         }
       } else {
         userData.company_id = form.company_id;
@@ -438,61 +433,100 @@ const Register = () => {
                             <div className="selection-header">
                               <label>Action Type  <span className="required">*</span></label>
                               <div className="action-selection-group">
-                                <button
-                                  type="button"
-                                  className={`selection-btn ${!isNewCompany ? 'active' : ''}`}
+                                <div
+                                  className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
                                   onClick={() => setIsNewCompany(false)}
                                 >
-                                  <FaUser /> Join Existing
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`selection-btn ${isNewCompany ? 'active' : ''}`}
+                                  {!isNewCompany && (
+                                    <motion.div
+                                      layoutId="active-pill"
+                                      className="active-pill-bg"
+                                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                  )}
+                                  <span className="pill-text"><FaUser /> Join Existing</span>
+                                </div>
+                                <div
+                                  className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
                                   onClick={() => setIsNewCompany(true)}
                                 >
-                                  <FaBuilding /> Create New
-                                </button>
+                                  {isNewCompany && (
+                                    <motion.div
+                                      layoutId="active-pill"
+                                      className="active-pill-bg"
+                                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                  )}
+                                  <span className="pill-text"><FaBuilding /> Create New</span>
+                                </div>
                               </div>
                             </div>
 
-                            <div className="selection-content">
-                              {isNewCompany ? (
-                                <div className="form-group-custom animate-slide-in">
-                                  <label>Company Name  <span className="required">*</span></label>
-                                  <input type="text" name="company_name" placeholder="Your brand name" value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
-                                </div>
-                              ) : (
-                                <div className="form-group-custom animate-slide-in">
-                                  <label>Select Company  <span className="required">*</span></label>
-                                  <div className="select-wrapper">
-                                    {loadingCompanies ? (
-                                      <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
-                                    ) : (
-                                      <select name="company_id" value={form.company_id} onChange={handleChange} className={errors.company_id ? 'error' : ''} required>
-                                        <option value="">{t('select_a_company')}</option>
-                                        {companies.map((c) => (
-                                          <option key={c._id} value={c._id}>{c.company_name}</option>
-                                        ))}
-                                      </select>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
+                            <div className="selection-content" style={{ overflow: 'hidden' }}>
+                              <AnimatePresence mode="wait" initial={false}>
+                                {isNewCompany ? (
+                                  <motion.div
+                                    key="create-new"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    layout
+                                    className="form-group-custom"
+                                  >
+                                    <label>Company Name  <span className="required">*</span></label>
+                                    <input type="text" name="company_name" placeholder="Your brand name" value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    key="join-existing"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    layout
+                                    className="form-group-custom"
+                                  >
+                                    <label>Select Company  <span className="required">*</span></label>
+                                    <div className="select-wrapper">
+                                      {loadingCompanies ? (
+                                        <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
+                                      ) : (
+                                        <select name="company_id" value={form.company_id} onChange={handleChange} className={errors.company_id ? 'error' : ''} required>
+                                          <option value="">{t('select_a_company')}</option>
+                                          {companies.map((c) => (
+                                            <option key={c._id} value={c._id}>{c.company_name}</option>
+                                          ))}
+                                        </select>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                             {(errors.company_name || errors.company_id) && <div className="error-message">{errors.company_name || errors.company_id}</div>}
                           </div>
 
-                          {isNewCompany && (
-                            <div className="pricing-section full-width-field">
-                              <label className="section-label">Choose Strategy Plan  <span className="required">*</span></label>
-                              <div className="plans-grid">
-                                {plans.map((p) => (
-                                  <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
-                                ))}
-                              </div>
-                              {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
-                            </div>
-                          )}
+                          <AnimatePresence>
+                            {isNewCompany && (
+                              <motion.div
+                                key="pricing-plans"
+                                initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                                exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                className="pricing-section full-width-field"
+                              >
+                                <label className="section-label">Choose Strategy Plan  <span className="required">*</span></label>
+                                <div className="plans-grid">
+                                  {plans.map((p) => (
+                                    <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
+                                  ))}
+                                </div>
+                                {errors.selectedPlanId && <div className="error-message">{errors.selectedPlanId}</div>}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
 
                           <div className="checkbox-group full-width-field">
                             <div className="checkbox-wrapper">
@@ -525,7 +559,7 @@ const Register = () => {
                   </motion.div>
                 )}
 
-                {activeTab === 3 && isNewCompany && (
+                {activeTab === 3 && isNewCompany && stripePromise && (
                   <Elements stripe={stripePromise}>
                     <PaymentStep
                       onBack={handleBack}
