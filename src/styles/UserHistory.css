@@ -1,5 +1,32 @@
 /* UserHistory.css */
 
+/* Target the modal container to ensure flex centering */
+.user-history-modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.user-history-modal .modal-dialog {  
+  margin: auto !important;
+  /* Ensure it is centered within the flex container */
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 3.5rem);
+}
+
+@media (min-width: 1200px) {
+  .user-history-modal .modal-dialog {
+    max-width: 1400px !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .user-history-modal .modal-dialog {
+    max-width: 1600px !important;
+  }
+}
+
 /* Main Container */
 .user-history-container {
   padding: 0px;
@@ -4575,4 +4602,89 @@
   align-items: center;
   box-shadow: 0 8px 40px rgba(18, 24, 44, 0.7);
   /* stronger, softer dark shadow */
+}
+
+/* User Details Modal & Panel Redesign */
+.user-history-modal .modal-content {
+  border-radius: 0;
+  border: none;
+}
+
+.user-details-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+}
+
+.panel-content-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+  /* Center the main content */
+}
+
+.panel-main {
+  flex: 1;
+  max-width: 1000px;
+  /* Limit width now that sidebar is gone */
+  background: white;
+}
+
+.panel-tabs {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.tab-link {
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.875rem;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tab-link:hover {
+  color: #111827;
+}
+
+.tab-link.active {
+  color: #4f46e5;
+}
+
+.tab-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #4f46e5;
+}
+
+[data-theme="dark"] .user-details-panel,
+[data-theme="dark"] .panel-main {
+  background: #0f1115 !important;
+}
+
+[data-theme="dark"] .tab-link {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .tab-link:hover {
+  color: #f3f4f6;
+}
+
+[data-theme="dark"] .tab-link.active {
+  color: #818cf8;
+}
+
+[data-theme="dark"] .panel-user-header {
+  background: #151921 !important;
+  border-bottom: 1px solid #23304b !important;
 }

@@ -622,6 +622,9 @@ export const staticTranslations = {
     'showing': 'Showing',
     'of': 'of',
     'total_entries': 'total entries',
+    'audit_trail': 'Audit Trail',
+    'event_details': 'Event Details',
+    'raw_data': 'Raw Event Data',
 
     // ===========================
     // USER HISTORY
@@ -630,6 +633,25 @@ export const staticTranslations = {
     'businesses': 'Businesses',
     'Purpose': 'Purpose',
     'business': 'Business',
+    'user_history_and_chat_records': 'User History & Chat Records',
+    'history_records': 'History Records',
+    'recent_activity': 'Recent Activity',
+    'records': 'Records',
+    'user_history_details': 'User History Details',
+    'Loading_user_data...': 'Loading user data...',
+    'overall_summary': 'Overall Summary',
+    'activity_summary': 'Activity Summary',
+    'chat_records': 'Chat Records',
+    'strategic_analysis_tab': 'Strategic Analysis',
+    'completion_percentage': 'Completion %',
+    'user_progress': 'User Progress',
+    'no_chat_records': 'No chat records found.',
+    'view_history': 'View History',
+    'total_events': 'Total Events',
+    'events': 'Events',
+    'view_analysis': 'View Analysis',
+    'audit_analysis': 'Audit Analysis',
+    'view': 'View',
     // ===========================
     // ANALYSIS FRAMEWORKS
     // ===========================
@@ -890,7 +912,7 @@ export const staticTranslations = {
     // ===========================
     'User_Management': 'User Management',
     'Add_and_manage_organization_collaborators_and_viewers': 'Add and manage organization collaborators and viewers',
-    'Search_by_name_or_email': 'Search by name or email or company...',
+    'Search_by_name_or_email': 'Search by name or email...',
     'All_Roles': 'All Roles',
     'business_overview': 'Business Overview',
     'business_overview_subtitle': 'View and manage all businesses, their owners, collaborators, and current stages.',

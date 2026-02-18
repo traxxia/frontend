@@ -1,35 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import AnalysisDataModal from './AnalysisDataModal';
+import AdminTable from './AdminTable';
+import MetricCard from './MetricCard';
+import { Form, Row, Col, Modal, Button as RBButton } from 'react-bootstrap';
 import {
-  Search,
-  Filter,
-  User,
   Activity,
-  ChevronDown,
-  RefreshCw,
   Clock,
   Shield,
   LogIn,
-  LogOut,
-  Edit,
+  BarChart3,
   Eye,
   Settings,
+  Search,
+  Filter,
+  RefreshCw,
+  LogIn as LogInIcon,
+  LogOut,
+  Edit,
   Plus,
   X,
-  Calendar,
-  FilterX,
-  ChevronUp,
-  Database,
-  BarChart3,
-  FileText,
-  Download,
-  ExternalLink,
-  Info,
-  ChevronLeft,
-  ChevronRight
+  Info
 } from 'lucide-react';
-import AnalysisDataModal from './AnalysisDataModal';
 import "../styles/audittrail.css";
-import Pagination from '../components/Pagination';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const AuditTrail = ({ onToast }) => {
@@ -46,12 +38,8 @@ const AuditTrail = ({ onToast }) => {
     include_analysis_data: false
   });
   const [users, setUsers] = useState([]);
-  const [eventTypes, setEventTypes] = useState([]);
   const [pagination, setPagination] = useState({});
-  const [showFilters, setShowFilters] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [activeFilters, setActiveFilters] = useState([]);
   const [expandedAnalysis, setExpandedAnalysis] = useState({});
   const [loadingAnalysisData, setLoadingAnalysisData] = useState({});
   const [analysisStats, setAnalysisStats] = useState([]);
@@ -68,19 +56,10 @@ const AuditTrail = ({ onToast }) => {
     auditId: ''
   });
 
+  const [selectedEntry, setSelectedEntry] = useState(null);
+
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
-  // Quick filter presets - Updated for admin roles
-  const quickFilters = [
-    { label: t('Login_Events'), key: 'event_type', value: 'login_success' },
-    { label: t('Failed_Logins'), key: 'event_type', value: 'login_failed' },
-    { label: t('Analysis_Generated'), key: 'event_type', value: 'analysis_generated' },
-    { label: t('Business_Created'), key: 'event_type', value: 'business_created' },
-    { label: t('Business_Deleted'), key: 'event_type', value: 'business_deleted' },
-    { label: t('Today'), key: 'quick_date', value: 'today' },
-    { label: t('This_Week'), key: 'quick_date', value: 'week' },
-    { label: t('This_Month'), key: 'quick_date', value: 'month' }
-  ];
 
   // Get current user role from session/token
   useEffect(() => {
@@ -101,9 +80,7 @@ const AuditTrail = ({ onToast }) => {
       try {
         // Only fetch users if current user is admin (for filtering dropdown)
         if (['super_admin', 'company_admin'].includes(currentUserRole)) {
-          await Promise.all([fetchUsers(), fetchEventTypes()]);
-        } else {
-          await fetchEventTypes();
+          await fetchUsers();
         }
         setTimeout(() => fetchAuditTrail(), 100);
       } catch (error) {
@@ -118,17 +95,33 @@ const AuditTrail = ({ onToast }) => {
     }
   }, [initialLoad, currentUserRole]);
 
-  // Effect for page changes
+  // Debounce search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(filters.search_term);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(filters.search_term);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [filters.search_term]);
+
+  // Consolidated fetch effect for all filters except page (which has its own effect or can be merged)
+  // Actually, it's better to have one effect that handles everything to avoid race conditions
   useEffect(() => {
     if (!initialLoad) {
       fetchAuditTrail();
     }
-  }, [filters.page]);
+  }, [
+    filters.page,
+    filters.event_type,
+    filters.user_id,
+    filters.start_date,
+    filters.end_date,
+    filters.limit,
+    filters.include_analysis_data,
+    debouncedSearchTerm
+  ]);
 
-  // Update active filters when filters change
-  useEffect(() => {
-    updateActiveFilters();
-  }, [filters]);
 
   const fetchAuditTrail = async () => {
     try {
@@ -142,8 +135,10 @@ const AuditTrail = ({ onToast }) => {
 
       const params = new URLSearchParams();
       Object.keys(filters).forEach(key => {
-        if (filters[key] && key !== 'quick_date') {
-          params.append(key, filters[key]);
+        // Use debounced search term instead of raw filter search_term
+        const value = key === 'search_term' ? debouncedSearchTerm : filters[key];
+        if (value && key !== 'quick_date') {
+          params.append(key, value);
         }
       });
 
@@ -175,59 +170,7 @@ const AuditTrail = ({ onToast }) => {
     }
   };
 
-  const fetchAnalysisData = async (auditId) => {
-    try {
-      setLoadingAnalysisData(prev => ({ ...prev, [auditId]: true }));
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
 
-      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${auditId}/analysis-data`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data; // Return the full data object, not just analysis_result
-      } else {
-        onToast('Failed to fetch analysis data', 'error');
-        return null;
-      }
-    } catch (error) {
-      onToast('Error fetching analysis data', 'error');
-      return null;
-    } finally {
-      setLoadingAnalysisData(prev => ({ ...prev, [auditId]: false }));
-    }
-  };
-
-  const openAnalysisModal = async (entry) => {
-    const eventData = entry.event_data_summary || entry.event_data || {};
-
-    let analysisData = entry.event_data?.analysis_result;
-    let businessName = eventData.business_name || entry.business_name || 'Business';
-
-    // If analysis data is not in the entry, fetch it
-    if (!analysisData) {
-      const fetchedData = await fetchAnalysisData(entry._id);
-      if (fetchedData) {
-        analysisData = fetchedData.analysis_result;
-        businessName = fetchedData.business_name || businessName;
-      }
-    }
-
-    if (analysisData) {
-      setModalData({
-        isOpen: true,
-        analysisType: eventData.analysis_type || 'analysis',
-        analysisData: analysisData,
-        analysisName: eventData.analysis_name || `${eventData.analysis_type} Analysis`,
-        businessName: businessName,
-        auditId: entry._id
-      });
-    }
-  };
 
   const closeModal = () => {
     setModalData({
@@ -264,166 +207,13 @@ const AuditTrail = ({ onToast }) => {
     }
   };
 
-  const fetchEventTypes = async () => {
-    try {
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-
-      if (!token || token === 'undefined' || token === 'null') {
-        return;
-      }
-
-      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/event-types`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setEventTypes(data.event_types || []);
-      }
-    } catch (error) {
-      // Silent fail
-    }
-  };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
-      page: 1
+      page: key === 'page' ? value : 1
     }));
-  };
-
-  const handleQuickFilter = (filterConfig) => {
-    if (filterConfig.key === 'quick_date') {
-      const dates = getDateRange(filterConfig.value);
-      setFilters(prev => ({
-        ...prev,
-        start_date: dates.start,
-        end_date: dates.end,
-        page: 1
-      }));
-    } else {
-      setFilters(prev => ({
-        ...prev,
-        [filterConfig.key]: filterConfig.value,
-        page: 1
-      }));
-    }
-  };
-
-  const getDateRange = (range) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    switch (range) {
-      case 'today':
-        return {
-          start: today.toISOString().slice(0, 16),
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString().slice(0, 16)
-        };
-      case 'week':
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay());
-        return {
-          start: weekStart.toISOString().slice(0, 16),
-          end: new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1).toISOString().slice(0, 16)
-        };
-      case 'month':
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
-        return {
-          start: monthStart.toISOString().slice(0, 16),
-          end: monthEnd.toISOString().slice(0, 16)
-        };
-      default:
-        return { start: '', end: '' };
-    }
-  };
-
-  const updateActiveFilters = () => {
-    const active = [];
-
-    // Only show user filter for admin roles
-    if (filters.user_id && ['super_admin', 'company_admin'].includes(currentUserRole)) {
-      const user = users.find(u => u._id === filters.user_id);
-      active.push({
-        key: 'user_id',
-        label: `User: ${user?.name || 'Unknown'}`,
-        value: filters.user_id
-      });
-    }
-
-    if (filters.event_type) {
-      active.push({
-        key: 'event_type',
-        label: `Event: ${filters.event_type.replace('_', ' ').toUpperCase()}`,
-        value: filters.event_type
-      });
-    }
-
-    if (filters.search_term) {
-      active.push({
-        key: 'search_term',
-        label: `Search: "${filters.search_term}"`,
-        value: filters.search_term
-      });
-    }
-
-    if (filters.start_date) {
-      active.push({
-        key: 'start_date',
-        label: `From: ${new Date(filters.start_date).toLocaleDateString()}`,
-        value: filters.start_date
-      });
-    }
-
-    if (filters.end_date) {
-      active.push({
-        key: 'end_date',
-        label: `To: ${new Date(filters.end_date).toLocaleDateString()}`,
-        value: filters.end_date
-      });
-    }
-
-    if (filters.include_analysis_data) {
-      active.push({
-        key: 'include_analysis_data',
-        label: 'Including full analysis data',
-        value: filters.include_analysis_data
-      });
-    }
-
-    setActiveFilters(active);
-  };
-
-  const removeFilter = (filterKey) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterKey]: filterKey === 'include_analysis_data' ? false : '',
-      page: 1
-    }));
-  };
-
-  const applyFilters = () => {
-    fetchAuditTrail();
-    setShowFilters(false);
-  };
-
-  const clearAllFilters = () => {
-    setFilters({
-      user_id: '',
-      event_type: '',
-      start_date: '',
-      end_date: '',
-      search_term: '',
-      page: 1,
-      limit: 50,
-      include_analysis_data: false
-    });
-    setTimeout(() => fetchAuditTrail(), 100);
   };
 
   const getEventIcon = (eventType) => {
@@ -498,350 +288,149 @@ const AuditTrail = ({ onToast }) => {
     URL.revokeObjectURL(url);
   };
 
-  // Helper function to get page title based on user role
-  const getPageTitle = () => {
-    switch (currentUserRole) {
-      case 'super_admin':
-        return t('System_wide_Audit_Trail');
-      case 'company_admin':
-        return t('Company_Audit_Trail');
-      default:
-        return t('audit_trail');
+  const openAnalysisModal = async (row) => {
+    try {
+      setLoadingAnalysisData(prev => ({ ...prev, [row._id]: true }));
+      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${row._id}/analysis-data`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setModalData({
+          isOpen: true,
+          analysisType: row.event_data?.analysis_type || 'Analysis',
+          analysisData: data.analysis_result,
+          analysisName: row.event_data?.analysis_name || 'Analysis Result',
+          businessName: data.business_name || row.company_name || 'System',
+          auditId: row._id
+        });
+      } else {
+        onToast('Failed to load analysis data', 'error');
+      }
+    } catch (error) {
+      onToast('Error loading analysis data', 'error');
+    } finally {
+      setLoadingAnalysisData(prev => ({ ...prev, [row._id]: false }));
     }
   };
 
-  // Helper function to get page description based on user role
-  const getPageDescription = () => {
-    switch (currentUserRole) {
-      case 'super_admin':
-        return t('View_audit_logs_for_all_users_across_all_companies');
-      case 'company_admin':
-        return t('View_audit_logs_for_all_users_in_your_company');
-      default:
-        return t('View_system_audit_logs');
+  const columns = [
+    {
+      label: t('event'),
+      key: 'event_type',
+      render: (val, row) => (
+        <div className="d-flex align-items-center gap-2">
+          {getEventIcon(val)}
+          <span className="text-uppercase fw-600" style={{ fontSize: '0.75rem' }}>{val.replace('_', ' ')}</span>
+        </div>
+      )
+    },
+    {
+      label: t('timestamp'),
+      key: 'timestamp',
+      render: (val) => (
+        <div className="text-muted" style={{ fontSize: '0.85rem' }}>
+          {formatTimestamp(val)}
+        </div>
+      )
+    },
+    {
+      label: t('user'),
+      key: 'user_name',
+      render: (_, row) => (
+        <div className="user-info">
+          <div className="fw-600 text-dark">{row.user_name}</div>
+          <div className="text-muted small">{row.user_email}</div>
+          {row.company_name && <div className="text-primary tiny-label">@ {row.company_name}</div>}
+        </div>
+      )
+    },
+    {
+      label: t('description'),
+      key: 'description',
+      width: '35%',
+      render: (_, row) => (
+        <div className="text-wrap" style={{ fontSize: '0.85rem', lineHeight: '1.4' }}>
+          {formatEventData(row.event_type, row.event_data, row.event_data_summary)}
+        </div>
+      )
+    },
+    {
+      label: t('details'),
+      key: 'actions',
+      align: 'right',
+      render: (_, row) => (
+        <>
+          {row.event_data && Object.keys(row.event_data).length > 0 && row.event_type !== 'analysis_generated' && (
+            <button
+              className="view-button btn-sm"
+              onClick={() => setSelectedEntry(row)}
+            >
+              <Eye size={14} /> {t('view')}
+            </button>
+          )}
+          {row.event_type === 'analysis_generated' && (
+            <button
+              className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-pill px-3"
+              onClick={() => openAnalysisModal(row)}
+              disabled={loadingAnalysisData[row._id]}
+            >
+              <BarChart3 size={14} />
+              {loadingAnalysisData[row._id] ? t('Loading...') : t('view_analysis')}
+            </button>
+          )}
+        </>
+      )
     }
-  };
+  ];
 
   return (
-    <div className="audit-trail-container">
-      {/* Header */}
-      <div className="cs-header">
-        <div className="cs-title-section">
-          <Activity className="main-icon" size={24} />
-          <div>
-            <h2 className="cs-title">{getPageTitle()}</h2>
-            <p className="text-sm text-gray-600 mt-1">{getPageDescription()}</p>
+    <div className="admin-container">
+      <AdminTable
+        title={t('audit_trail')}
+        count={pagination.total || 0}
+        countLabel={t('events')}
+        columns={columns}
+        data={auditEntries}
+        searchTerm={filters.search_term}
+        onSearchChange={(val) => handleFilterChange('search_term', val)}
+        searchPlaceholder={t('search_events')}
+        currentPage={filters.page}
+        totalPages={pagination.total_pages || 1}
+        onPageChange={(page) => handleFilterChange('page', page)}
+        totalItems={pagination.total || 0}
+        itemsPerPage={filters.limit}
+        loading={loading}
+        toolbarContent={
+          <div className="d-flex gap-3 align-items-center flex-wrap">
+            {['super_admin', 'company_admin'].includes(currentUserRole) && (
+              <Form.Select
+                size="sm"
+                className="admin-filter-select"
+                style={{ width: '200px' }}
+                value={filters.user_id}
+                onChange={(e) => handleFilterChange('user_id', e.target.value)}
+              >
+                <option value="">{t('all_users')}</option>
+                {users.map(user => (
+                  <option key={user._id} value={user._id}>{user.name}</option>
+                ))}
+              </Form.Select>
+            )}
+
+            <button
+              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 border-0"
+              onClick={fetchAuditTrail}
+              disabled={loading}
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
           </div>
-        </div>
-        <div className="header-actions">
-          <button
-            className="filter-button"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter size={16} />
-            {t('Filters')}
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          <button
-            className="refresh-button"
-            onClick={fetchAuditTrail}
-            disabled={loading}
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            {t('Refresh')}
-          </button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Active Filters Display */}
-      {activeFilters.length > 0 && (
-        <div className="filter-results-summary">
-          <div className="active-filters">
-            <span className="results-count">{pagination.total || 0} entries found</span>
-            {activeFilters.map((filter, index) => (
-              <span key={index} className="filter-tag">
-                {filter.label}
-                <button
-                  className="remove-filter"
-                  onClick={() => removeFilter(filter.key)}
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
-          </div>
-          <button className="clear-all-filters" onClick={clearAllFilters}>
-            Clear all filters
-          </button>
-        </div>
-      )}
-
-      {/* Quick Filters */}
-      <div className="quick-filters">
-        {quickFilters.map((filter, index) => (
-          <button
-            key={index}
-            className={`quick-filter-btn ${(filter.key === 'event_type' && filters.event_type === filter.value) ||
-              (filter.key === 'quick_date' && getDateRange(filter.value).start === filters.start_date)
-              ? 'active' : ''
-              }`}
-            onClick={() => handleQuickFilter(filter)}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="section-container">
-          <div className="table-container">
-            {/* Search Bar */}
-            <div className="filter-group">
-              <label>{t('search_events')}</label>
-              <div className="search-container">
-                {!filters.search_term && <Search className="search-icon" size={16} />}
-                <input
-                  type="text"
-                  placeholder="Search by user name, email, or event description..."
-                  value={filters.search_term}
-                  onChange={(e) => handleFilterChange('search_term', e.target.value)}
-                />
-                {filters.search_term && (
-                  <button
-                    className="clear-search"
-                    onClick={() => handleFilterChange('search_term', '')}
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="filters-grid">
-              {/* User Filter - Only show for admin roles */}
-              {['super_admin', 'company_admin'].includes(currentUserRole) && (
-                <div className="filter-group">
-                  <label>{t('user')}</label>
-                  <select
-                    value={filters.user_id}
-                    onChange={(e) => handleFilterChange('user_id', e.target.value)}
-                  >
-                    <option value="">{t('all_users')}</option>
-                    {users.map(user => (
-                      <option key={user._id} value={user._id}>
-                        {user.name} ({user.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="filter-group">
-                <label>{t('event_type')}</label>
-                <select
-                  value={filters.event_type}
-                  onChange={(e) => handleFilterChange('event_type', e.target.value)}
-                >
-                  <option value="">{t('all_events')}</option>
-                  {eventTypes.map(type => (
-                    <option key={type} value={type}>
-                      {type.replace('_', ' ').toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="date-range-group">
-                <div className="filter-group">
-                  <label>{t('start_date')}</label>
-                  <input
-                    type="datetime-local"
-                    value={filters.start_date}
-                    onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                  />
-                </div>
-                <div className="date-separator">to</div>
-                <div className="filter-group">
-                  <label>{t('end_date')}</label>
-                  <input
-                    type="datetime-local"
-                    value={filters.end_date}
-                    onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Advanced Options */}
-            <div className="advanced-options">
-              <div className="filter-group">
-                <div className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={filters.include_analysis_data}
-                    onChange={(e) => {
-                      handleFilterChange('include_analysis_data', e.target.checked);
-                    }}
-                  />
-                  <span className='span-text' style={{ marginLeft: '2px' }}>Include full analysis data (slower loading)</span>
-                  <span
-                    className="info-tooltip"
-                    tabIndex={0}
-                    role="button"
-                    aria-label="More info about including full analysis data"
-                  >
-                    <Info size={14} className="info-icon" aria-hidden="true" />
-                    <span className="tooltip-content" role="tooltip">
-                      When enabled, full analysis results are included in the initial load. Otherwise, they're loaded on-demand.
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="filter-actions">
-              <button className="clear-filters-btn" onClick={clearAllFilters}>
-                <FilterX size={16} />
-                {t('clear_all')}
-              </button>
-              <button className="apply-filters-btn" onClick={applyFilters}>
-                {t('apply_filters')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Audit Entries */}
-      <div className="section-container">
-        <div className="user-table-wrapper">
-          {loading ? (
-            <div className="loading-state">
-              <RefreshCw className="animate-spin" size={24} />
-              <span>Loading audit trail...</span>
-            </div>
-          ) : auditEntries.length === 0 ? (
-            <div className="empty-state">
-              <Activity size={48} />
-              <h3>No audit entries found</h3>
-              <p>No audit trail entries match your current filters.</p>
-              {activeFilters.length > 0 && (
-                <button className="clear-all-filters" onClick={clearAllFilters}>
-                  Clear filters to see all entries
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <table className="user-table">
-                <thead>
-                  <tr>
-                    <th>{t('event')}</th>
-                    <th>{t('timestamp')}</th>
-                    <th>{t('user')}</th>
-                    <th>{t('description')}</th>
-                    <th>{t('details')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditEntries.map((entry, index) => (
-                    <tr key={`${entry._id}-${index}`} className={getEventColor(entry.event_type)}>
-                      <td>
-                        <div className="event-type">
-                          {getEventIcon(entry.event_type)}
-                          <span>{entry.event_type.replace('_', ' ').toUpperCase()}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="timestamp">
-                          <span className="timestamp-text">{formatTimestamp(entry.timestamp)}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="user-info">
-                          <div>
-                            <span>{entry.user_name}</span>
-                            <div className="email">({entry.user_email})</div>
-                            {entry.company_name && (
-                              <div className="company">@ {entry.company_name}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="description-cell">
-                        {formatEventData(entry.event_type, entry.event_data, entry.event_data_summary)}
-                      </td>
-                      <td>
-                        <div className="details-cell">
-                          {/* Regular event details (exclude analysis_generated) */}
-                          {entry.event_data && Object.keys(entry.event_data).length > 0 && entry.event_type !== 'analysis_generated' && (
-                            <details className="event-details">
-                              <summary>{t("audit_view")}</summary>
-                              <pre>{JSON.stringify(entry.event_data, null, 2)}</pre>
-                            </details>
-                          )}
-
-                          {/* Analysis-specific details */}
-                          {entry.event_type === 'analysis_generated' && (
-                            <div className="analysis-details">
-                              <div className="analysis-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                {/* View Analysis Button */}
-                                <button
-                                  className="view-analysis-btn"
-                                  onClick={() => openAnalysisModal(entry)}
-                                  disabled={loadingAnalysisData[entry._id]}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '6px 12px',
-                                    backgroundColor: '#3b82f6',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    fontSize: '12px',
-                                    fontWeight: '500',
-                                    cursor: loadingAnalysisData[entry._id] ? 'not-allowed' : 'pointer',
-                                    opacity: loadingAnalysisData[entry._id] ? 0.7 : 1
-                                  }}
-                                >
-                                  {loadingAnalysisData[entry._id] ? (
-                                    <>
-                                      <RefreshCw size={12} className="animate-spin" />
-                                      Loading...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <BarChart3 size={12} />
-                                      {t("audit_analysis")}
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Pagination
-                currentPage={pagination.page || 1}
-                totalPages={pagination.total_pages || 1}
-                onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
-                variant="default"
-                showPageNumbers={true}
-                totalItems={pagination.total || 0}
-                itemsPerPage={filters.limit || 10}
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Analysis Data Modal */}
       <AnalysisDataModal
         isOpen={modalData.isOpen}
         onClose={closeModal}
@@ -851,6 +440,58 @@ const AuditTrail = ({ onToast }) => {
         businessName={modalData.businessName}
         auditId={modalData.auditId}
       />
+
+      <Modal
+        show={!!selectedEntry}
+        onHide={() => setSelectedEntry(null)}
+        centered
+        size="lg"
+        className="admin-modal"
+      >
+        <Modal.Header closeButton className="border-0 px-4 pt-4">
+          <Modal.Title className="fw-bold d-flex align-items-center gap-3">
+            <div className={`p-2 rounded-3 ${selectedEntry ? getEventColor(selectedEntry.event_type) : ''}`}>
+              {selectedEntry && getEventIcon(selectedEntry.event_type)}
+            </div>
+            <div>
+              <div className="h5 mb-0 fw-bold">{selectedEntry?.event_type.replace('_', ' ').toUpperCase()}</div>
+              <div className="text-muted small fw-normal">{selectedEntry && formatTimestamp(selectedEntry.timestamp)}</div>
+            </div>
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="px-4 pb-4">
+          <div className="detail-section mb-4">
+            <h6 className="fw-bold text-muted small text-uppercase mb-3">{t('event_details')}</h6>
+            <div className="bg-light p-3 rounded-3 border">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="text-muted tiny-label text-uppercase">{t('user')}</label>
+                  <div className="fw-500">{selectedEntry?.user_name}</div>
+                  <div className="text-muted small">{selectedEntry?.user_email}</div>
+                </div>
+                <div className="col-md-6">
+                  <label className="text-muted tiny-label text-uppercase">{t('company')}</label>
+                  <div className="fw-500">{selectedEntry?.company_name || '-'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="detail-section">
+            <h6 className="fw-bold text-muted small text-uppercase mb-3">{t('raw_data')}</h6>
+            <div className="bg-dark p-3 rounded-3 overflow-auto" style={{ maxHeight: '400px' }}>
+              <pre className="text-light small mb-0" style={{ fontFamily: 'Monaco, Consolas, monospace' }}>
+                {selectedEntry && JSON.stringify(selectedEntry.event_data, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="border-0 px-4 pb-4 pt-0">
+          <RBButton variant="secondary" onClick={() => setSelectedEntry(null)} className="rounded-pill px-4">
+            {t('close')}
+          </RBButton>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Loader, Image, Edit, Search } from 'lucide-react';
-import { formatDate } from '../utils/dateUtils'; // Import the utility function
+import { Building2, Image, Edit } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils';
 import '../styles/CompanyManagement.css';
 import { useTranslation } from '../hooks/useTranslation';
-import Pagination from '../components/Pagination';
+import AdminTable from './AdminTable';
 
-
-
-
-// ------------------ CompanyDetails ------------------
+// ------------------ CompanyDetails Modal ------------------
 const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
   return (
     <div className="modal-overlay">
@@ -27,7 +24,6 @@ const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
         </div>
 
         <div className="company-details">
-          {/* Company Logo Display */}
           {company.logo && (
             <div className="logo-section">
               <h4>Company Logo</h4>
@@ -89,11 +85,7 @@ const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
               <div className="stat-card">
                 <span className="stat-number">{company.total_users || 0}</span>
                 <span className="stat-label">Total Users</span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-number">{company.active_users || 0}</span>
-                <span className="stat-label">Active Users</span>
-              </div>
+              </div> 
             </div>
           </div>
         </div>
@@ -106,7 +98,6 @@ const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
 const CompanyManagement = ({ onToast }) => {
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const [userRole, setUserRole] = useState('');
@@ -125,7 +116,6 @@ const CompanyManagement = ({ onToast }) => {
     loadCompanies();
   }, []);
 
-  // Check if user is super admin
   const isSuperAdmin = userRole === 'super_admin';
   const isCompanyAdmin = userRole === 'company_admin';
 
@@ -133,32 +123,20 @@ const CompanyManagement = ({ onToast }) => {
     try {
       setIsLoading(true);
       const token = getAuthToken();
-
       if (!token) {
         onToast('Authentication required', 'error');
         return;
       }
-
-      // Different endpoint based on user role
-      let endpoint = `${API_BASE_URL}/api/admin/companies`;
-
-      // For company admin, we'll filter on backend to show only their company
-      if (isCompanyAdmin) {
-        // The backend should handle filtering based on the user's company_id from the token
-        // We may need to modify the backend endpoint to support this
-      }
-
+      const endpoint = `${API_BASE_URL}/api/admin/companies`;
       const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-
       if (response.ok) {
         const data = await response.json();
-        const companiesData = data.companies || [];
-        setCompanies(companiesData);
+        setCompanies(data.companies || []);
       } else if (response.status === 403) {
         onToast('Admin access required', 'error');
       } else if (response.status === 401) {
@@ -175,167 +153,131 @@ const CompanyManagement = ({ onToast }) => {
     }
   };
 
-
-
-  const handleEditCompany = (company) => {
-    // For now, we'll just show a placeholder action for company admins
-    // This could be expanded to include logo upload functionality
+  const handleEditCompany = () => {
     onToast('Logo editing functionality coming soon', 'info');
   };
 
-  const filteredCompanies = companies.filter(company =>
-    company.company_name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+  // Search
+  const filteredCompanies = companies.filter((company) =>
+    company.company_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
     if (!searchTerm) return;
     const maxPage = Math.max(1, Math.ceil(filteredCompanies.length / pageSize));
-    if (currentPage > maxPage) {
-      setCurrentPage(maxPage);
-    }
+    if (currentPage > maxPage) setCurrentPage(maxPage);
   }, [filteredCompanies.length, searchTerm]);
 
+  const handleSearchChange = (value) => {
+    if (searchTerm === '' && value !== '') setLastPageBeforeSearch(currentPage);
+    if (searchTerm !== '' && value === '') setCurrentPage(lastPageBeforeSearch);
+    setSearchTerm(value);
+  };
 
   const paginatedCompanies = filteredCompanies.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
   const totalPages = Math.ceil(filteredCompanies.length / pageSize);
 
-  if (isLoading) {
-    return (
-      <div className="loading-container">
-        <Loader size={24} className="spinner" />
-        <span>Loading companies...</span>
-      </div>
-    );
-  }
-
+  // Column definitions
+  const columns = [
+    {
+      key: 'logo',
+      label: t('logo'),
+      render: (_, row) =>
+        row.logo ? (
+          <img
+            src={row.logo}
+            alt={`${row.company_name} logo`}
+            className="admin-table-logo"
+          />
+        ) : (
+          <div className="admin-table-logo-placeholder">
+            <Image size={14} />
+          </div>
+        ),
+    },
+    {
+      key: 'company_name',
+      label: t('company_name'),
+      render: (val) => <span className="admin-cell-primary">{val}</span>,
+    },
+    ...(isSuperAdmin
+      ? [
+        {
+          key: 'admin',
+          label: t('administrator') || 'Administrator',
+          render: (_, row) => (
+            <div>
+              <div className="admin-cell-primary">{row.admin_name}</div>
+              <div className="admin-cell-secondary">{row.admin_email}</div>
+            </div>
+          ),
+        },
+      ]
+      : []),
+    {
+      key: 'industry',
+      label: t('industry'),
+      render: (val) => <span className="admin-cell-secondary">{val || '-'}</span>,
+    },
+    {
+      key: 'size',
+      label: t('size'),
+      render: (val) => <span className="admin-cell-secondary">{val || '-'}</span>,
+    },
+    {
+      key: 'status',
+      label: t('status'),
+      render: (val) => (
+        <span className={`admin-status-badge ${val}`}>{val}</span>
+      ),
+    },
+    {
+      key: 'users',
+      label: t('users'),
+      render: (_, row) => (
+        <div style={{ minWidth: '80px' }}>
+          <div className="admin-cell-primary" style={{ fontSize: '0.8rem' }}>
+            {row.total_users ?? 0} 
+          </div> 
+        </div>
+      ),
+    },
+    {
+      key: 'created_at',
+      label: t('created_date'),
+      render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>,
+    },
+  ];
 
   return (
     <div className="company-management">
-      <div className="section-header">
-        <h2>{isSuperAdmin ? t('company_management') : t('my_company')}</h2>
-        <div className="header-actions">
-          {/* Only show search for super admin or if there are multiple companies */}
-          {(isSuperAdmin || companies.length > 1) && (
-            <div className="search-box">
-              <Search size={16} />
-              <input
-                type="text"
-                placeholder={t('search_companies')}
-                value={searchTerm}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // store page only when starting search
-                  if (searchTerm === '' && value !== '') {
-                    setLastPageBeforeSearch(currentPage);
-                  }
-                  // restore page when clearing search
-                  if (searchTerm !== '' && value === '') {
-                    setCurrentPage(lastPageBeforeSearch);
-                  }
-                  setSearchTerm(value);
-                }}
-              />
-            </div>
-          )}
-
-        </div>
-      </div>
-
-
-
-      {paginatedCompanies.length > 0 ? (
-        <>
-          <div className="table-container">
-            <table className="company-table">
-              <thead>
-                <tr>
-                  <th>{t('logo')}</th>
-                  <th>{t('company_name')}</th>
-                  {isSuperAdmin && <th>{t('admin_name')}</th>}
-                  {isSuperAdmin && <th>{t('admin_email')}</th>}
-                  <th>{t('industry')}</th>
-                  <th>{t('size')}</th>
-                  <th>{t('status')}</th>
-                  <th>{t('total_users')}</th>
-                  <th>{t('active_users')}</th>
-                  <th>{t('created_date')}</th>
-                  {/* <th>Actions</th> */}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedCompanies.map(company => (
-                  <tr key={company._id}>
-                    <td>
-                      {company.logo ? (
-                        <img
-                          src={company.logo}
-                          alt={`${company.company_name} logo`}
-                          className="table-logo"
-                          style={{ width: '30px', height: '30px', objectFit: 'contain' }}
-                        />
-                      ) : (
-                        <div className="no-logo-placeholder">
-                          <Image size={16} />
-                        </div>
-                      )}
-                    </td>
-                    <td>{company.company_name}</td>
-                    {isSuperAdmin && <td>{company.admin_name}</td>}
-                    {isSuperAdmin && <td>{company.admin_email}</td>}
-                    <td>{company.industry || '-'}</td>
-                    <td>{company.size || '-'}</td>
-                    <td>
-                      <span className={`status-badge ${company.status}`}>
-                        {company.status}
-                      </span>
-                    </td>
-                    <td>{company.total_users}</td>
-                    <td>{company.active_users}</td>
-                    <td>{formatDate(company.created_at)}</td>
-                    {/* <td>
-                      <button
-                        className="icon-btn"
-                        onClick={() => setSelectedCompany(company)}
-                        title="View Details"
-                      >
-                        <Eye size={16} />
-                      </button>
-                    </td> */}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {isSuperAdmin && (<Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            variant="default"
-            showPageNumbers={true}
-            totalItems={filteredCompanies.length}
-            itemsPerPage={pageSize}
-          />)}
-        </>
-      ) : (
-        <div className="empty-state">
-          <Building2 size={48} />
-          <h3>{isSuperAdmin ? 'No Companies Found' : 'Company Information Not Available'}</h3>
-          <p>
-            {searchTerm
-              ? 'No companies match your search criteria'
-              : isSuperAdmin
-                ? 'Create your first company to get started'
-                : 'Please contact your administrator for more information'
-            }
-          </p>
-        </div>
-      )}
+      <AdminTable
+        title={isSuperAdmin ? t('company_management') : t('my_company')}
+        count={isSuperAdmin ? filteredCompanies.length : undefined}
+        countLabel={filteredCompanies.length === 1 ? 'Company' : 'Companies'}
+        columns={columns}
+        data={paginatedCompanies}
+        searchTerm={(isSuperAdmin || companies.length > 1) ? searchTerm : undefined}
+        onSearchChange={(isSuperAdmin || companies.length > 1) ? handleSearchChange : undefined}
+        searchPlaceholder={t('search_companies')}
+        currentPage={currentPage}
+        totalPages={isSuperAdmin ? totalPages : 1}
+        onPageChange={setCurrentPage}
+        totalItems={filteredCompanies.length}
+        itemsPerPage={pageSize}
+        emptyMessage={isSuperAdmin ? 'No Companies Found' : 'Company Information Not Available'}
+        emptySubMessage={
+          searchTerm
+            ? 'No companies match your search criteria'
+            : isSuperAdmin
+              ? 'Create your first company to get started'
+              : 'Please contact your administrator for more information'
+        }
+        loading={isLoading}
+      />
 
       {selectedCompany && (
         <CompanyDetails
