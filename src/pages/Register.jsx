@@ -369,7 +369,7 @@ const Register = () => {
                               className="password-toggle"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <FaEye /> : <FaEyeSlash />}
+                              {showPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
                           </div>
                           {errors.password && <span className="error-message">{errors.password}</span>}
@@ -393,7 +393,7 @@ const Register = () => {
                               className="password-toggle"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             >
-                              {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
+                              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
                           </div>
                           {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}

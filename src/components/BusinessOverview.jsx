@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Card, Table, Form, Row, Col, Spinner, Badge, Modal, Button } from "react-bootstrap";
-import { Search, Building2, User, Users, Activity, X } from "lucide-react";
+import { Search, Users, Building2, Activity, TrendingUp, X } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
-import Pagination from "./Pagination";
-import "../styles/usermanagement.css"; // Reuse usermanagement styles for consistency
+import AdminTable from "./AdminTable";
+import MetricCard from "./MetricCard";
+import "../styles/AdminTableStyles.css";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -18,7 +18,7 @@ const BusinessOverview = ({ onToast }) => {
     const [pageBeforeSearch, setPageBeforeSearch] = useState(1);
     const itemsPerPage = 10;
 
-    // Modal state
+    // Collaborator modal state
     const [showCollabModal, setShowCollabModal] = useState(false);
     const [selectedBizForCollab, setSelectedBizForCollab] = useState(null);
 
@@ -46,27 +46,22 @@ const BusinessOverview = ({ onToast }) => {
     };
 
     const handleSearch = (value) => {
-        if (value && !searchTerm) {
-            setPageBeforeSearch(currentPage);
-        } else if (!value && searchTerm) {
-            setCurrentPage(pageBeforeSearch);
-        }
+        if (value && !searchTerm) setPageBeforeSearch(currentPage);
+        else if (!value && searchTerm) setCurrentPage(pageBeforeSearch);
         setSearchTerm(value);
     };
 
     useEffect(() => {
-        const filtered = businesses.filter((biz) =>
-            biz.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            biz.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            biz.owner_email?.toLowerCase().includes(searchTerm.toLowerCase())
+        const filtered = businesses.filter(
+            (biz) =>
+                biz.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                biz.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                biz.owner_email?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredBusinesses(filtered);
-
         if (searchTerm) {
             const newTotalPages = Math.ceil(filtered.length / itemsPerPage);
-            if (currentPage > newTotalPages && newTotalPages > 0) {
-                setCurrentPage(1);
-            }
+            if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(1);
         }
     }, [searchTerm, businesses]);
 
@@ -77,13 +72,28 @@ const BusinessOverview = ({ onToast }) => {
         currentPage * itemsPerPage
     );
 
-    const getStatusLabelAndClass = (status) => {
+    // Metrics
+    const launchedCount = businesses.filter(
+        (b) => b.status?.toLowerCase() === "launched" || b.status?.toLowerCase() === "lauched"
+    ).length;
+    const inProgressCount = businesses.length - launchedCount;
+
+    const getStatusClass = (status) => {
         const s = status?.toLowerCase();
-        if (s === "launched" || s === "lauched") return { label: t("launched"), className: "status-launched" };
-        if (s === "prioritized") return { label: t("prioritized"), className: "status-active" }; // Using active for prioritized
-        if (s === "prioritizing" || s === "prioritization") return { label: t("prioritization"), className: "status-pending" };
-        if (s === "kick_start") return { label: t("kick_start"), className: "status-active" };
-        return { label: status || t("draft"), className: "status-pending" };
+        if (s === "launched" || s === "lauched") return "launched";
+        if (s === "prioritized") return "prioritized";
+        if (s === "prioritizing" || s === "prioritization") return "prioritization";
+        if (s === "kick_start") return "kick_start";
+        return "draft";
+    };
+
+    const getStatusLabel = (status) => {
+        const s = status?.toLowerCase();
+        if (s === "launched" || s === "lauched") return t("launched");
+        if (s === "prioritized") return t("prioritized");
+        if (s === "prioritizing" || s === "prioritization") return t("prioritization");
+        if (s === "kick_start") return t("kick_start");
+        return status || t("draft");
     };
 
     const formatDate = (dateString) => {
@@ -100,193 +110,129 @@ const BusinessOverview = ({ onToast }) => {
         setShowCollabModal(true);
     };
 
-    const launchedCount = businesses.filter(b => b.status?.toLowerCase() === "launched" || b.status?.toLowerCase() === "lauched").length;
-    const inProgressCount = businesses.length - launchedCount;
-
-    return (
-        <div className="access-management-container minimal">
-            <div className="access-content">
-                <div className="access-header-minimal mb-4">
-                    <h2 className="minimal-page-title">{t("business_overview")}</h2>
-                    <p className="minimal-page-subtitle text-muted">
-                        {t("business_overview_subtitle")}
-                    </p>
+    // Column definitions for AdminTable
+    const columns = [
+        {
+            key: "business_name",
+            label: t("business_name"),
+            render: (val) => <span className="admin-cell-primary">{val}</span>,
+        },
+        {
+            key: "owner",
+            label: t("owner"),
+            render: (_, row) => (
+                <div>
+                    <div className="admin-cell-primary">{row.owner_name || t("unknown")}</div>
+                    <div className="admin-cell-secondary">{row.owner_email}</div>
                 </div>
-
-                <div className="compact-summary-row mb-4">
-                    <div className="summary-item">
-                        <span className="summary-label">{t("total_businesses") || "Total Businesses"}:</span>
-                        <span className="summary-value-minimal">{businesses.length}</span>
-                    </div>
-                    <div className="summary-item">
-                        <span className="summary-label">{t("launched")}:</span>
-                        <span className="summary-value-minimal">{launchedCount}</span>
-                    </div>
-                    <div className="summary-item">
-                        <span className="summary-label">{t("in_progress")}:</span>
-                        <span className="summary-value-minimal">{inProgressCount}</span>
-                    </div>
-                </div>
-
-                <Row className="mt-4">
-                    <Col>
-                        <div className="user-toolbar d-flex align-items-center justify-content-between flex-wrap gap-3">
-                            <div className="search-container flex-grow-1">
-                                <div className="search-input-wrapper">
-                                    <Search size={18} className="search-icon" />
-                                    <input
-                                        type="text"
-                                        className="search-input"
-                                        placeholder={t("search_by_business_owner")}
-                                        value={searchTerm}
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </Col>
-                </Row>
-
-                <Card className="mt-4">
-                    <Card.Body>
-                        {loading ? (
-                            <div className="text-center py-5">
-                                <Spinner animation="border" variant="primary" />
-                                <p className="mt-2 text-muted">{t("loading_businesses")}</p>
-                            </div>
-                        ) : (
-                            <>
-                                <Table hover responsive className="align-middle">
-                                    <thead className="table-heading">
-                                        <tr>
-                                            <th>{t("business_name")}</th>
-                                            <th>{t("owner")}</th>
-                                            <th>{t("collaborators")}</th>
-                                            <th>{t("stage")}</th>
-                                            <th>{t("created")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {paginatedBusinesses.length > 0 ? (
-                                            paginatedBusinesses.map((biz) => {
-                                                const statusInfo = getStatusLabelAndClass(biz.status);
-                                                const displayedCollabs = biz.collaborators?.slice(0, 2) || [];
-                                                const hasMoreCollabs = (biz.collaborators?.length || 0) > 2;
-
-                                                return (
-                                                    <tr key={biz._id}>
-                                                        <td title={biz.business_name}>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <span className="fw-semibold">{biz.business_name}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td title={`${biz.owner_name || t("unknown")} (${biz.owner_email})`}>
-                                                            <div>
-                                                                <div className="fw-semibold">{biz.owner_name || t("unknown")}</div>
-                                                                <small className="text-muted">{biz.owner_email}</small>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex flex-column gap-2">
-                                                                {displayedCollabs.length > 0 ? (
-                                                                    <>
-                                                                        {displayedCollabs.map((collab, idx) => (
-                                                                            <div key={idx} className="d-flex flex-column lh-1" title={`${collab.name} (${collab.email})`}>
-                                                                                <span className="fw-medium" style={{ fontSize: '0.9rem' }}>{collab.name}</span>
-                                                                                <small className="text-muted" style={{ fontSize: '0.75rem' }}>{collab.email}</small>
-                                                                            </div>
-                                                                        ))}
-                                                                        {hasMoreCollabs && (
-                                                                            <Button
-                                                                                variant="link"
-                                                                                className="p-0 text-start text-primary text-decoration-none fw-semibold"
-                                                                                style={{ fontSize: '0.8rem' }}
-                                                                                onClick={() => handleShowAllCollaborators(biz)}
-                                                                            >
-                                                                                +{(biz.collaborators?.length || 0) - 2} {t("more") || "more"}...
-                                                                            </Button>
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-muted small">
-                                                                        <Users size={14} className="me-1" />
-                                                                        {t("no_collaborators")}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <div className="d-flex flex-column gap-1">
-                                                                <span className={`status-badge ${statusInfo.className}`}>
-                                                                    {statusInfo.label}
-                                                                </span>
-                                                                {(biz.access_mode === 'archived' || biz.access_mode === 'hidden') && (
-                                                                    <span className="badge bg-warning text-dark" style={{ width: 'fit-content', fontSize: '0.7rem' }}>
-                                                                        Archived
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className="text-muted">{formatDate(biz.created_at)}</td>
-                                                    </tr>
-                                                );
-                                            })
-                                        ) : (
-                                            <tr>
-                                                <td colSpan="5" className="text-center py-5 text-muted">
-                                                    {t("no_businesses_found")}
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </Table>
-                                <Pagination
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    totalItems={totalItems}
-                                    itemsPerPage={itemsPerPage}
-                                    onPageChange={setCurrentPage}
-                                />
-                            </>
-                        )}
-                    </Card.Body>
-                </Card>
-            </div>
-
-            {/* Collaborators Modal */}
-            <Modal
-                show={showCollabModal}
-                onHide={() => setShowCollabModal(false)}
-                centered
-                size="md"
-                className="minimal-modal"
-            >
-
-                <Modal.Header closeButton className="border-0 pb-0">
-                    <Modal.Title className="fw-bold h5">
-                        <Users size={20} className="text-primary me-2" />
-                        {selectedBizForCollab?.business_name} - {t("collaborators")}
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="pt-4">
-                    <div className="d-flex flex-column gap-3 max-vh-50 overflow-auto pe-2 custom-scrollbar">
-                        {selectedBizForCollab?.collaborators?.map((collab, idx) => (
-                            <div key={idx} className="d-flex align-items-center gap-3 p-2 bg-light rounded-3">
-                                <div className="d-flex flex-column">
-                                    <span className="fw-semibold">{collab.name}</span>
-                                    <small className="text-muted">{collab.email}</small>
-                                </div>
+            ),
+        },
+        {
+            key: "collaborators",
+            label: t("collaborators"),
+            render: (_, row) => {
+                const collabs = row.collaborators || [];
+                const displayed = collabs.slice(0, 2);
+                const hasMore = collabs.length > 2;
+                if (collabs.length === 0) {
+                    return (
+                        <span className="admin-cell-secondary">
+                            <Users size={13} style={{ marginRight: 4, verticalAlign: "middle" }} />
+                            {t("no_collaborators")}
+                        </span>
+                    );
+                }
+                return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                        {displayed.map((c, idx) => (
+                            <div key={idx}>
+                                <div className="admin-cell-primary" style={{ fontSize: "0.85rem" }}>{c.name}</div>
+                                <div className="admin-cell-secondary">{c.email}</div>
                             </div>
                         ))}
+                        {hasMore && (
+                            <button
+                                className="admin-collab-more-btn"
+                                onClick={() => handleShowAllCollaborators(row)}
+                            >
+                                +{collabs.length - 2} {t("more") || "more"}...
+                            </button>
+                        )}
                     </div>
-                </Modal.Body>
-                <Modal.Footer className="border-0">
-                    <Button variant="secondary" className="px-4 fw-semibold" onClick={() => setShowCollabModal(false)}>
-                        {t("close")}
-                    </Button>
-                </Modal.Footer>
-            </Modal >
-        </div >
+                );
+            },
+        },
+        {
+            key: "created_at",
+            label: t("created"),
+            render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>,
+        },
+    ];
+
+    return (
+        <div>
+            {/* ---- Table ---- */}
+
+            {/* ---- Table ---- */}
+            <AdminTable
+                title={t("business_overview") || "Business Overview"}
+                count={filteredBusinesses.length}
+                countLabel={filteredBusinesses.length === 1 ? "Business" : "Businesses"}
+                columns={columns}
+                data={paginatedBusinesses}
+                searchTerm={searchTerm}
+                onSearchChange={handleSearch}
+                searchPlaceholder={t("search_by_business_owner") || "Search by business or owner..."}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                emptyMessage={t("no_businesses_found") || "No businesses found"}
+                loading={loading}
+            />
+
+            {/* ---- Collaborators Modal (native, no Bootstrap) ---- */}
+            {showCollabModal && selectedBizForCollab && (
+                <div className="admin-modal-overlay" onClick={() => setShowCollabModal(false)}>
+                    <div className="admin-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="admin-modal-header">
+                            <h3>
+                                <Users size={18} style={{ color: "#6366f1" }} />
+                                {selectedBizForCollab.business_name} — {t("collaborators")}
+                            </h3>
+                            <button
+                                className="admin-modal-close"
+                                onClick={() => setShowCollabModal(false)}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="admin-modal-body">
+                            {selectedBizForCollab.collaborators?.map((collab, idx) => (
+                                <div key={idx} className="admin-collab-item">
+                                    <div className="admin-collab-avatar">
+                                        {(collab.name || "?")[0].toUpperCase()}
+                                    </div>
+                                    <div className="admin-collab-info">
+                                        <span className="admin-collab-name">{collab.name}</span>
+                                        <span className="admin-collab-email">{collab.email}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="admin-modal-footer">
+                            <button
+                                className="admin-modal-footer-btn"
+                                onClick={() => setShowCollabModal(false)}
+                            >
+                                {t("close") || "Close"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 

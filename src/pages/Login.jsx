@@ -130,6 +130,7 @@ const Login = () => {
                     if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
                   }}
                   placeholder={t("email_address")}
+                  disabled={isLoading}
                 />
               </div>
               {errors.email && <span className="error-message">{errors.email}</span>}
@@ -146,6 +147,7 @@ const Login = () => {
                     if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
                   }}
                   placeholder={t("password")}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -156,7 +158,7 @@ const Login = () => {
                   }
                 >
                   <FontAwesomeIcon
-                    icon={showPassword ? faEye : faEyeSlash}
+                    icon={showPassword ? faEyeSlash : faEye}
                     className="eye-icon"
                     style={{ color: "#8F9098", fontSize: "20px" }}
                   />

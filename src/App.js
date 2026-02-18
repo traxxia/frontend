@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { initializeTranslations } from './utils/translations';
 
@@ -11,7 +11,20 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import BusinessSetupPage from './pages/BusinessSetupPage';
 import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
+import Aiassistant from './components/Aiassistant';
 
+// Pages where the AI assistant should NOT appear
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/admin', '/super-admin'];
+const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
+
+const GlobalAiAssistant = () => {
+  const location = useLocation();
+  const isExcluded =
+    AI_EXCLUDED_EXACT_PATHS.includes(location.pathname) ||
+    AI_EXCLUDED_PREFIX_PATHS.some((prefix) => location.pathname.startsWith(prefix));
+  if (isExcluded) return null;
+  return <Aiassistant />;
+};
 
 const Register = React.lazy(() => import('./pages/Register'));
 
@@ -50,41 +63,40 @@ const App = () => {
   return (
     <Router>
       <div className="App">
-        <React.Suspense fallback={<div className="d-flex justify-content-center align-items-center vh-100">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/businesspage" element={<BusinessSetupPage />} />
+        <GlobalAiAssistant />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/businesspage" element={<BusinessSetupPage />} />
 
-            {/* Traxxia Academy Routes */}
-            <Route path="/academy" element={<AcademyPage />} />
-            <Route path="/academy/:category" element={<AcademyPage />} />
-            <Route path="/academy/:category/:article" element={<AcademyPage />} />
+          {/* Traxxia Academy Routes */}
+          <Route path="/academy" element={<AcademyPage />} />
+          <Route path="/academy/:category" element={<AcademyPage />} />
+          <Route path="/academy/:category/:article" element={<AcademyPage />} />
 
-            {/* Admin Route - renders unified SuperAdminPage */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute adminOnly={true}>
-                  <SuperAdminPage />
-                </ProtectedRoute>
-              }
-            />
+          {/* Admin Route - renders unified SuperAdminPage */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <SuperAdminPage />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Super Admin Route - accessible by both admins and super admins */}
-            <Route
-              path="/super-admin"
-              element={
-                <ProtectedRoute adminOnly={true}>
-                  <SuperAdminPage />
-                </ProtectedRoute>
-              }
-            />
+          {/* Super Admin Route - accessible by both admins and super admins */}
+          <Route
+            path="/super-admin"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <SuperAdminPage />
+              </ProtectedRoute>
+            }
+          />
 
-          </Routes>
-        </React.Suspense>
+        </Routes>
       </div>
     </Router>
   );

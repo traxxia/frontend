@@ -8,9 +8,9 @@ Transform strategic insights into action with Traxxia's integrated project manag
 
 Project Management connects strategy to execution by:
 - **Creating Strategic Projects**: Turn SWOT insights and strategic analyses into concrete initiatives
-- **Prioritizing Initiatives**: Rank projects using custom ranking models
-- **Tracking Progress**: Monitor project status and milestones
-- **Team Collaboration**: Assign project owners and collaborators
+- **Prioritizing Initiatives**: Rank projects using manual and AI-assisted ranking
+- **Tracking Progress**: Monitor project status through the full lifecycle
+- **Team Collaboration**: Assign project owners and collaborators, gather team rankings
 
 ---
 
@@ -38,45 +38,71 @@ Project Management connects strategy to execution by:
 
 ### Two methods to create a project:
 
-**Method 1:** Kickstart project button in strategic tab (first time only).
-**Method 2:** Create new project button in project tab.
+**Method 1:** Kickstart project button in the S.T.R.A.T.E.G.I.C tab (first time only — Company Admins only).  
+**Method 2:** "New Project" button in the Projects tab.
 
-### Project Information:
+### Project Fields:
 
-**Required Fields**:
+**Strategic Core** (the heart of the project):
 - **Project Name**: Clear, specific title
 - **Description**: What the project accomplishes
-- **Owner**: Who's responsible for execution
+- **Why This Matters**: The strategic rationale
+- **Strategic Bet**: The key strategic decision or hypothesis being tested
+- **Accountable Owner**: Who's responsible for execution
+- **Impact**: High / Medium / Low
+- **Key Assumptions to Test**: Bullet-point list of assumptions that must hold true
+- **Continue If**: Success criteria — when to keep going
+- **Stop If**: Kill criteria — when to stop the project
+- **Status**: Draft / Active / At Risk / Paused / Killed / Scaled
+- **Learning State**: Testing / Validated / Invalidated
+- **Review Cadence**: How frequently the project is reviewed
 
-**Optional Fields**:
-- **Start Date**: When work begins
-- **End Date**: Target completion
-- **Budget**: Estimated cost
-- **Priority**: High/Medium/Low
-- **Status**: Not Started/In Progress/Completed
+**Strategic Context**:
+- **Impact**: High / Medium / Low
+- **Effort**: Small / Medium / Large
+- **Risk**: Low / Medium / High
+- **Strategic Theme**: Growth / Efficiency / Innovation / Customer Experience / Risk Mitigation / Platform
 
-![Create Project form](/academy-screenshots/projects/project-creation-form.png)
+**Additional Details**:
+- **Constraints / Non-Negotiables**: Hard limits on the project
+- **Dependencies**: What this project depends on
+- **Explicitly Out of Scope**: What is excluded
+- **Expected Outcome**: What success looks like
+- **Success Metrics**: How success is measured
+- **Estimated Timeline**: Rough duration
+- **Budget Estimate**: Estimated cost
 
 ---
 
-## Project Examples
+## Projects Dashboard View
 
-### From Strategic initiative:
+### UI Layout:
 
-**Long Term Project**:
-- SWOT Finding: "Strong AI expertise"
-- **Project**: "Launch AI Consulting Service"
-- **Description**: "Develop and market AI strategy consulting targeting mid-market companies"
+The Projects tab has two top-level views toggled by tabs at the top:
 
-**Short Term Project**:
-- SWOT Finding: "Competitor X exited mid-market"
-- **Project**: "Mid-Market Expansion Campaign"
-- **Description**: "Sales and marketing push to capture former Competitor X customers"
+- **Projects tab**: Shows the project card grid with status filter tabs (All / Draft / Active / At Risk / Paused / Killed / Scaled) and action buttons (New Project, Launch)
+- **Ranking tab**: Shows the ranking panel and team rankings view
 
-**Immediate Project**:
-- SWOT Finding: "High customer churn (15%)"
-- **Project**: "Customer Success Program"
-- **Description**: "Implement proactive onboarding and support to reduce churn to <8%"
+**Project Card**:
+- Project name and description
+- Color-coded badges for Impact, Effort, Risk, and Strategic Theme
+- Status badge
+- Strategic Decision (Strategic Bet) text
+- Quick actions (view, edit, delete via 3-dot menu)
+- Checkbox for selecting projects to launch (Admin only)
+
+---
+
+## Project Statuses
+
+| Status | Meaning |
+|--------|---------|
+| **Draft** | Being defined — not yet in execution |
+| **Active** | Currently being worked on |
+| **At Risk** | Active but facing challenges |
+| **Paused** | Temporarily suspended |
+| **Killed** | Discontinued — no longer viable |
+| **Scaled** | Successfully expanded beyond initial scope |
 
 ---
 
@@ -90,43 +116,16 @@ With limited resources, you can't do everything. Ranking helps:
 - Sequence projects logically
 - Communicate priorities to team
 
-### Traxxia's Ranking System:
-
-**Ranking Models**:
-Traxxia provides multiple ranking frameworks:
-1. **Effort vs. Impact**: Classic 2x2 matrix
-2. **Strategic Fit**: Alignment with business goals
-3. **Risk vs. Reward**: Evaluate risk tolerance
-4. **ROI Ranking**: Financial return focus
-5. **Urgency vs. Importance**: Eisenhower Matrix
-
 ### How to Rank:
 
-1. Create multiple projects
-2. Click "Rank Projects" button
-3. Select ranking model
-4. Score each project on criteria
-5. View prioritized list
+1. Switch to the **Ranking** tab in the Projects section
+2. Use the **Rank Projects** panel to drag-and-drop or assign ranks
+3. Save your rankings — AI re-ranking is automatically triggered after saving
+4. View the **Rankings View** to see all collaborators' rankings side by side
 
-![Project ranking interface](/academy-screenshots/projects/project-ranking-interface.png)
+### AI Re-Ranking:
 
----
-
-
-
-
-
-## Projects Dashboard View
-
-### What You See:
-
-**Project Card**:
-- Project name and description
-- Owner
-- Status badge
-- Quick actions (edit, delete, view)
-
-![Projects dashboard view](/academy-screenshots/projects/project-list-view.png)
+After you save manual rankings, Traxxia automatically calls the AI ranking engine to generate an objective AI ranking. This AI ranking is shown alongside manual rankings so you can compare human intuition with AI analysis.
 
 ---
 
@@ -134,17 +133,27 @@ Traxxia provides multiple ranking frameworks:
 
 ### Project Roles:
 
-**Org Admin**:
-- Primary person responsible
-- Accountable for delivery
-- Updates status and progress
+**Company Admin / Super Admin**:
+- Create, edit, delete any project
+- Lock project creation (moves business to "Prioritizing" phase)
+- Finalize prioritization
+- Launch projects
+- View collaborator ranking progress
 
 **Collaborators**:
-- All business collaborators can view projects
-- Can comment and contribute
-- Cannot edit unless given permissions
+- Create and edit their own projects (in Draft status)
+- Rank projects
+- Lock their own rankings
+- View all projects
 
+**Viewers**:
+- View projects only — no editing or ranking
 
+### Collaborator Ranking Progress:
+
+Admins can see a **Collaborator Progress** badge (e.g., "2 / 3") showing how many collaborators have locked their rankings. A green checkmark appears when all collaborators have locked.
+
+---
 
 ## Project Best Practices
 
@@ -165,15 +174,9 @@ Every project should connect to:
 - Clear business objective
 - Measurable outcome
 
-**Bad Project**: "General marketing improvements"  
-**Good Project**: "Launch content marketing program to address brand awareness weakness, targeting 50 new leads/month"
+### 3. Use Key Assumptions
 
-### 3. Right-Size Projects
-
-**Too Big**: "Complete digital transformation"  
-**Too Small**: "Update website footer"
-
-**Just Right**: "Implement CRM system for sales team (Q2 2024)"
+Fill in the **Key Assumptions to Test** field to make your strategic bets explicit. This forces clarity on what must be true for the project to succeed, and makes it easier to know when to stop.
 
 ### 4. Limit WIP (Work in Progress)
 
@@ -186,67 +189,12 @@ Focus beats diffusion.
 
 ---
 
-## Linking Projects to Analyses
-
-### How Projects Connect:
-
-**Strategic Analysis**:
-- SWOT generates insights
-- Insights suggest projects
-- Projects address strengths, weaknesses, opportunities, threats
-
-**Financial Analysis**:
-- Financial metrics reveal trends
-- Projects improve key metrics
-- Track project ROI
-
-**Example Flow**:
-1. SWOT identifies weakness: "Manual processes slow customer onboarding"
-2. Create project: "Implement Automated Onboarding System"
-3. Financial analysis shows: Customer acquisition cost = $500
-4. Project goal: Reduce CAC to $300 through automation
-
----
-
-
-
-## Role-Based Access
-
-### Who Can Do What:
-
-| Role | Create Projects | View Projects | Edit Projects | Delete Projects |
-|------|----------------|---------------|---------------|-----------------|
-| **Company Admin** | ✅ | ✅ | ✅ | ✅ |
-| **Collaborator** | ✅ | ✅ | ✅ Owner only | ✅ Owner only |
-| **Viewer** | ❌ | ✅ | ❌ | ❌ |
-
----
-
-## Common Questions
-
-**Q: How many projects should I create?**  
-A: Quality over quantity. Start with 3-5 high-impact projects. You can always add more.
-
-**Q: Can I delete a project?**  
-A: Yes. Click the project and select "Delete." This is permanent and cannot be undone.
-
-**Q: What happens when I complete a project?**  
-A: Mark it "Completed" to track it as finished. It remains visible for reference but can be archived.
-
-**Q: Can projects span multiple businesses?**  
-A: No. Projects belong to one business. Create separate projects in each business if needed.
-
-**Q: Does Traxxia have Gantt charts or detailed task management?**  
-A: Not currently. Traxxia focuses on strategic project identification and prioritization. Use dedicated project management tools (Asana, Jira, etc.) for detailed execution tracking.
-
----
-
 ## Phase Transition: Analysis → Projects
 
 ### What Changes:
 
 **Visual**:
-- Transition happens when the **orgadmin** clicks the kickstart project button in the strategic tab.
+- Transition happens when the **Company Admin** clicks the Kickstart Projects button in the S.T.R.A.T.E.G.I.C tab.
 - "Projects" tab becomes primary focus
 
 **Mindset Shift**:
@@ -268,9 +216,9 @@ A: Not currently. Traxxia focuses on strategic project identification and priori
 
 After understanding project management:
 
-
 1. **[Review SWOT Analysis](../04-strategic-analysis/02-using-swot-analysis.md)** - Source of project ideas
 2. **[Invite collaborators](../07-collaboration/02-inviting-collaborators.md)** - Build your project team
+3. **[Ranking View Explained](../12-ranking/01-ranking-view.md)** - Understand how to rank projects
 
 ---
 
@@ -278,4 +226,5 @@ After understanding project management:
 
 - [Using SWOT Analysis](../04-strategic-analysis/02-using-swot-analysis.md)
 - [What is a Business Profile?](../02-businesses/01-what-is-a-business-profile.md)
-- [Inviting Collaborators](../07-collaboration/02-inviting-collaborators.md)
+- [Project Category & Statuses](./02-project-category.md)
+- [Ranking View Explained](../12-ranking/01-ranking-view.md)
