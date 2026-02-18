@@ -677,25 +677,24 @@ const UserManagement = ({ onToast }) => {
                   <option>Viewer</option>
                 </Form.Select>
 
-                <Button
-                  className="add-user-btn d-flex align-items-center"
-                  onClick={() => {
-                    // Super admin bypasses plan checks
-                    if (isSuperAdmin) {
-                      handleOpenModal();
-                    } else {
+                {!isSuperAdmin && (
+                  <Button
+                    className="add-user-btn d-flex align-items-center"
+                    onClick={() => {
                       const userPlan = sessionStorage.getItem("userPlan");
-                      if (userPlan === 'essential') {
+                      if (userPlan === "essential") {
                         setShowUpgradeModal(true);
                       } else {
                         handleOpenModal();
                       }
-                    }
-                  }}
-                >
-                  <Plus size={16} className="me-2" />
-                  {t("Add_User")}
-                </Button>
+                    }}
+                  >
+                    <Plus size={16} className="me-2" />
+                    {t("Add_User")}
+                  </Button>
+                )}
+
+
 
                 {!isSuperAdmin && (<>
                   <Button
@@ -903,7 +902,7 @@ const UserManagement = ({ onToast }) => {
                           className="toggle-password-btn"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                         </Button>
                         {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                       </InputGroup>
@@ -927,7 +926,7 @@ const UserManagement = ({ onToast }) => {
                           className="toggle-password-btn"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
-                          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                         </Button>
                         {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
                       </InputGroup>
