@@ -29,19 +29,16 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     if (open) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, isLoading]);
 
-  // Fetch history when projectId changes.
-  // Uses 'global' scope when no projectId is provided (non-project pages).
+  // Fetch unified history on mount.
+  // We use 'all' to get the continuous thread across the entire session.
   useEffect(() => {
     const fetchHistory = async () => {
       const token = getToken();
       if (!token) return;
 
-      // Use 'global' as the key when not in a project context
-      const historyKey = projectId || 'global';
-
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${historyKey}`,
+          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/all`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.history && response.data.history.length > 0) {
@@ -55,7 +52,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
       }
     };
     fetchHistory();
-  }, [projectId]);
+  }, []); // Only fetch on mount to retain history during navigation
 
   const saveMessageToHistory = async (role, text) => {
     const token = getToken();
@@ -87,13 +84,18 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     let assistantText = "";
 
     try {
+      const requestBody = { message: userText };
+      if (projectId) {
+        requestBody.projectId = projectId;
+      }
+
       const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-business-id": getBusinessId(),
         },
-        body: JSON.stringify({ message: userText }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

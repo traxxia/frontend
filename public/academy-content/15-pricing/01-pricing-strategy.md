@@ -56,26 +56,26 @@ Upgrade prompts appear at logical value-extension points:
 
 ---
 
-## 4. Functional Requirements (FR)
+## 4. Functional Requirements
 
-### FR-1: Subscription & Access Control
-*   **1.1 Workspace Limits:** The system must enforce a hard cap of 1 workspace for Essential and 3 for Advanced.
-*   **1.2 Feature Gating:** The system must disable all "Project" related modules (Kickoff, Monitoring, Maintenance) for Essential users.
-*   **1.3 Collaborator Management:** Advanced accounts are limited to 3 collaborator invites.
+### Subscription & Access Control
+*   **Workspace Limits:** The system must enforce a hard cap of 1 workspace for Essential and 3 for Advanced.
+*   **Feature Gating:** The system must disable all "Project" related modules (Kickoff, Monitoring, Maintenance) for Essential users.
+*   **Collaborator Management:** Advanced accounts are limited to 3 collaborator invites.
 
-### FR-2: Downgrade Protocol
-*   **2.1 Data Retention:** On downgrade, the system must retain all data but revoke "Write" access to Advanced features.
-*   **2.2 Workspace Selection:** If a user has >1 workspace and downgrades, the UI must force the user to choose one business to retain.
-*   **2.3 Collaborator Removal:** All collaborator access is revoked immediately upon downgrade.
-*   **2.4 Project Lock:** Existing projects remain in the database but become "Read-Only."
+### Downgrade Protocol
+*   **Data Retention:** On downgrade, the system must retain all data but revoke "Write" access to Advanced features.
+*   **Workspace Selection:** If a user has >1 workspace and downgrades, the UI must force the user to choose one business to retain.
+*   **Collaborator Removal:** All collaborator access is revoked immediately upon downgrade.
+*   **Project Lock:** Existing projects remain in the database but become "Read-Only."
 
-### FR-3: Workspace Integrity & Anti-Abuse
-*   **3.1 Deletion Rate-Limit:** Users are restricted to 1 workspace deletion per 30-day period.
-*   **3.2 Soft Deletion:** Deleted workspaces are archived internally (soft-deleted).
+### Workspace Integrity & Anti-Abuse
+*   **Deletion Rate-Limit:** Users are restricted to 1 workspace deletion per 30-day period.
+*   **Soft Deletion:** Deleted workspaces are archived internally (soft-deleted).
 
-### FR-4: AI Usage & Metering
-*   **4.1 Silent Metering:** No visible AI token UI or user-facing warnings.
-*   **4.2 Internal Constraints:** Backend logs all LLM calls per UID for infrastructure cost monitoring.
+### AI Usage & Metering
+*   **Silent Metering:** No visible AI token UI or user-facing warnings.
+*   **Internal Constraints:** Backend logs all LLM calls per UID for infrastructure cost monitoring.
 
 ---
 

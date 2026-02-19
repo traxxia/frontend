@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import AcademyNavigation from '../components/AcademyNavigation';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';
-import { findArticleById, findCategoryById, getBreadcrumbs } from '../utils/academyIndex';
+import { findArticleById, findCategoryById, getBreadcrumbs, academyStructure } from '../utils/academyIndex';
+import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
 /**
@@ -18,11 +19,44 @@ import '../styles/academy.css';
  */
 const AcademyPage = () => {
     const { category, article } = useParams();
+    const navigate = useNavigate(); // Hook for navigation
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentArticle, setCurrentArticle] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+
+    // Reset search when navigating
+    useEffect(() => {
+        setSearchQuery('');
+        setSearchResults([]);
+    }, [category, article]);
+
+    // Search Logic
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        const query = searchQuery.toLowerCase();
+        const results = [];
+
+        academyStructure.categories.forEach(cat => {
+            cat.articles.forEach(art => {
+                if (
+                    art.title.toLowerCase().includes(query) ||
+                    art.tags.some(tag => tag.toLowerCase().includes(query))
+                ) {
+                    results.push({ ...art, categoryId: cat.id, categoryTitle: cat.title });
+                }
+            });
+        });
+
+        setSearchResults(results);
+    }, [searchQuery]);
 
     useEffect(() => {
         if (!category || !article) {
@@ -85,12 +119,12 @@ const AcademyPage = () => {
 
                 if (pathParts.length === 2) {
                     // Has category: /academy/category/article
-                    window.location.href = href; // Use window.location for now
+                    navigate(href);
                 } else if (pathParts.length === 1) {
                     // No category - need to find it using findArticleById
                     const articleData = findArticleById(pathParts[0]);
                     if (articleData && articleData.categoryId) {
-                        window.location.href = `/academy/${articleData.categoryId}/${pathParts[0]}`;
+                        navigate(`/academy/${articleData.categoryId}/${pathParts[0]}`);
                     }
                 }
             }
@@ -105,165 +139,103 @@ const AcademyPage = () => {
 
     const breadcrumbs = getBreadcrumbs(category, article);
 
+    const handleBack = () => {
+        if (article) {
+            navigate(`/academy/${category}`);
+        } else if (category) {
+            navigate('/academy');
+        } else {
+            navigate(-1);
+        }
+    };
+
+    const renderCategoryIcon = (iconName) => {
+        const IconComponent = LucideIcons[iconName];
+        return IconComponent ? <IconComponent size={24} /> : <LucideIcons.BookOpen size={24} />;
+    };
+
+    const renderSearchResults = () => {
+        if (!searchQuery.trim()) return null;
+
+        return (
+            <div className="search-results-overlay">
+                <h3>Search Results for "{searchQuery}"</h3>
+                {searchResults.length === 0 ? (
+                    <p>No articles found matching your query.</p>
+                ) : (
+                    <div className="search-results-grid">
+                        {searchResults.map(result => (
+                            <Link
+                                key={result.id}
+                                to={`/academy/${result.categoryId}/${result.id}`}
+                                className="search-result-card"
+                            >
+                                <h4>{result.title}</h4>
+                                <span className="result-category">{result.categoryTitle}</span>
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const renderWelcomePage = () => {
         const categoryData = category ? findCategoryById(category) : null;
+
+        // Search Interface for Home Page
+        const renderSearchHeader = () => (
+            <div className="welcome-header">
+                <h1>Welcome to Traxxia Academy</h1>
+                <p className="welcome-subtitle">
+                    Your comprehensive guide to utilizing Traxxia for strategic success.
+                </p>
+                <div className="academy-main-search">
+                    <LucideIcons.Search className="main-search-icon" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Search for guides, articles, or topics..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="academy-main-search-input"
+                    />
+                </div>
+            </div>
+        );
 
         if (!category) {
             // Main academy home
             return (
                 <div className="academy-welcome">
-                    <div className="welcome-header">
-                        <h1>Welcome to Traxxia Academy</h1>
-                        <p className="welcome-subtitle">
-                            Your comprehensive guide to leveraging Traxxia for strategic business analysis
-                        </p>
-                    </div>
+                    {renderSearchHeader()}
 
-                    <div className="welcome-features">
-                        <div className="feature-card">
-                            <div className="feature-icon">🚀</div>
-                            <h3>Getting Started</h3>
-                            <p>Learn the basics and set up your account</p>
-                            <Link to="/academy/getting-started/what-is-traxxia" className="feature-link">
-                                Start Here →
-                            </Link>
+                    {searchQuery.trim() ? (
+                        renderSearchResults()
+                    ) : (
+                        <div className="welcome-features">
+                            {academyStructure.categories.map((cat) => (
+                                <div key={cat.id} className="feature-card">
+                                    <div className="feature-icon">{renderCategoryIcon(cat.icon)}</div>
+                                    <h3>{cat.title}</h3>
+                                    <p>{cat.description}</p>
+                                    <Link to={`/academy/${cat.id}`} className="feature-link">
+                                        View Guides →
+                                    </Link>
+                                </div>
+                            ))}
                         </div>
+                    )}
 
-                        <div className="feature-card">
-                            <div className="feature-icon">💼</div>
-                            <h3>Business Management</h3>
-                            <p>Create and manage your business profiles</p>
-                            <Link to="/academy/businesses/what-is-a-business-profile" className="feature-link">
-                                Learn More →
-                            </Link>
+                    {!searchQuery.trim() && (
+                        <div className="welcome-footer">
+                            <div className="help-section">
+                                <h3>Need more help?</h3>
+                                <p>Our AI Assistant is available to answer your specific questions in real-time.</p>
+                                <Link to="/academy/ai-assistant/ai-assistant-overview" className="btn-secondary">Go to AI Assistant</Link>
+                            </div>
                         </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">📊</div>
-                            <h3>Strategic Analysis</h3>
-                            <p>Unlock powerful insights with SWOT, PESTEL, and more</p>
-                            <Link to="/academy/strategic-analysis/strategic-analysis-overview" className="feature-link">
-                                Explore →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">💰</div>
-                            <h3>Financial Analysis</h3>
-                            <p>Upload and analyze financial documents</p>
-                            <Link to="/academy/financial-analysis/financial-analysis-overview" className="feature-link">
-                                Get Started →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">📁</div>
-                            <h3>Project Management</h3>
-                            <p>Create and prioritize strategic projects</p>
-                            <Link to="/academy/projects/project-management-overview" className="feature-link">
-                                Discover →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">👥</div>
-                            <h3>Collaboration</h3>
-                            <p>Work with your team effectively</p>
-                            <Link to="/academy/collaboration/collaboration-overview" className="feature-link">
-                                Learn How →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">⚡</div>
-                            <h3>Kickstart the Project</h3>
-                            <p>Step-by-step guide to kicking off your project</p>
-                            <Link to="/academy/kickstart/kickstart-the-project" className="feature-link">
-                                Start Now →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🔒</div>
-                            <h3>Lock Project Creation</h3>
-                            <p>Understand project locking policies</p>
-                            <Link to="/academy/lock-project/lock-project-creation" className="feature-link">
-                                View Guide →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">✅</div>
-                            <h3>Finalize Prioritization</h3>
-                            <p>Finalizing a project's prioritization</p>
-                            <Link to="/academy/finalize/finalize-prioritization" className="feature-link">
-                                View Guide →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🚀</div>
-                            <h3>Launch Project</h3>
-                            <p>Launching your project</p>
-                            <Link to="/academy/launch/launch-project" className="feature-link">
-                                View Guide →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🔢</div>
-                            <h3>Ranking View</h3>
-                            <p>Understanding ranking & consensus</p>
-                            <Link to="/academy/ranking/ranking-view" className="feature-link">
-                                View Guide →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🤖</div>
-                            <h3>AI Ranking</h3>
-                            <p>Leveraging AI for analysis</p>
-                            <Link to="/academy/ai-ranking/ai-ranking-ui" className="feature-link">
-                                View Guide →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🔄</div>
-                            <h3>Reprioritization</h3>
-                            <p>Managing updates and edits</p>
-                            <Link to="/academy/reprioritization/reprioritization-process" className="feature-link">
-                                View Guide →
-                            </Link>
-                        </div>
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🏷️</div>
-                            <h3>Pricing Strategy</h3>
-                            <p>Understand Traxxia's SaaS model and tiers</p>
-                            <Link to="/academy/pricing/pricing-strategy" className="feature-link">
-                                View Strategy →
-                            </Link>
-                        </div>
-
-
-                        <div className="feature-card">
-                            <div className="feature-icon">🤖</div>
-                            <h3>AI Assistant</h3>
-                            <p>Master the Traxxia AI Assistant</p>
-                            <Link to="/academy/ai-assistant/ai-assistant-overview" className="feature-link">
-                                Get Help →
-                            </Link>
-                        </div>
-                    </div >
-
-                    <div className="welcome-footer">
-                        <div className="help-section">
-                            <h3>Need Help?</h3>
-                            <p>Can't find what you're looking for? Browse the categories in the sidebar or stay tuned for our Academy Assistant!</p>
-                        </div>
-                    </div>
-                </div >
+                    )}
+                </div>
             );
         }
 
@@ -271,6 +243,9 @@ const AcademyPage = () => {
         if (categoryData) {
             return (
                 <div className="academy-category-page">
+                    <button onClick={handleBack} className="academy-back-btn mb-4">
+                        <LucideIcons.ArrowLeft size={16} /> Back to Academy
+                    </button>
                     <h1>{categoryData.title}</h1>
                     <p className="category-description">{categoryData.description}</p>
 
@@ -337,7 +312,7 @@ const AcademyPage = () => {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="Toggle navigation"
             >
-                <Menu size={24} />
+                <LucideIcons.Menu size={24} />
             </button>
 
             <AcademyNavigation
@@ -346,6 +321,8 @@ const AcademyPage = () => {
             />
 
             <main className="academy-content">
+                {/* Search Bar for Article Pages (Optional, maybe in header?) - Keeping it simple for now */}
+
                 {breadcrumbs.length > 1 && (
                     <nav className="academy-breadcrumbs">
                         {breadcrumbs.map((crumb, index) => (
@@ -381,6 +358,10 @@ const AcademyPage = () => {
                         </div>
                     ) : (
                         <>
+                            <button onClick={handleBack} className="academy-back-btn mb-4">
+                                <LucideIcons.ArrowLeft size={16} /> Back to {findCategoryById(category)?.title || 'Category'}
+                            </button>
+
                             {currentArticle && (
                                 <div className="article-header">
                                     <h1>{currentArticle.title}</h1>

@@ -14,7 +14,7 @@ import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
 import Aiassistant from './components/Aiassistant';
 
 // Pages where the AI assistant should NOT appear
-const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/admin', '/super-admin'];
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register','/dashboard', '/admin', '/super-admin'];
 const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
 
 const GlobalAiAssistant = () => {

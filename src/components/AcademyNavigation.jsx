@@ -52,22 +52,6 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                     )}
                 </div>
 
-                <div className="academy-nav-search">
-                    <div className="search-input-wrapper">
-                        <LucideIcons.Search size={16} className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Search documentation..."
-                            className="academy-search-input"
-                            disabled
-                            title="Search coming in future update"
-                        />
-                    </div>
-                    <div className="search-hint">
-                        <LucideIcons.Sparkles size={14} />
-                        <span>Academy Assistant coming soon!</span>
-                    </div>
-                </div>
             </div>
 
             <nav className="academy-nav-categories">

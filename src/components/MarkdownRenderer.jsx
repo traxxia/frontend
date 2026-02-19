@@ -152,13 +152,17 @@ const MarkdownRenderer = ({ content, articleId }) => {
 
                 // Map directory names to actual category IDs
                 const categoryMap = {
-                    '01-getting-started': 'getting-started',
-                    '02-businesses': 'businesses',
-                    '03-questionnaire': 'questionnaire',
-                    '04-strategic-analysis': 'strategic-analysis',
-                    '05-financial-analysis': 'financial-analysis',
-                    '06-projects': 'projects',
-                    '07-collaboration': 'collaboration'
+                    '01-auth-onboarding': 'auth-onboarding',
+                    '02-dashboard-business': 'dashboard-business',
+                    '03-ai-questionnaire': 'ai-questionnaire',
+                    '04-insights-strategy': 'insights-strategy',
+                    '05-collaboration': 'collaboration',
+                    '06-kickstart-projects': 'kickstart-projects',
+                    '07-project-management': 'project-management',
+                    '08-prioritization-launch': 'prioritization-launch',
+                    '09-ai-assistant': 'ai-assistant',
+                    '10-admin-panel': 'admin-panel',
+                    '11-account-management': 'account-management'
                 };
 
                 if (category && categoryMap[category]) {
