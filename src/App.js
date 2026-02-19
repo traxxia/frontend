@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { initializeTranslations } from './utils/translations';
@@ -14,16 +14,39 @@ import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
 import Aiassistant from './components/Aiassistant';
 
 // Pages where the AI assistant should NOT appear
-const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/admin', '/super-admin'];
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register','/dashboard', '/admin', '/super-admin'];
 const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
 
 const GlobalAiAssistant = () => {
   const location = useLocation();
+  const [projectId, setProjectId] = useState(null);
+
+  useEffect(() => {
+    const handleContextChange = (event) => {
+      if (event.detail && event.detail.projectId !== undefined) {
+        setProjectId(event.detail.projectId);
+      }
+    };
+
+    window.addEventListener('ai_context_changed', handleContextChange);
+
+    return () => {
+      window.removeEventListener('ai_context_changed', handleContextChange);
+    };
+  }, []);
+
+  // Reset project context on route change
+  useEffect(() => {
+    setProjectId(null);
+  }, [location.pathname]);
+
   const isExcluded =
     AI_EXCLUDED_EXACT_PATHS.includes(location.pathname) ||
     AI_EXCLUDED_PREFIX_PATHS.some((prefix) => location.pathname.startsWith(prefix));
+
   if (isExcluded) return null;
-  return <Aiassistant />;
+
+  return <Aiassistant projectId={projectId} />;
 };
 
 const Register = React.lazy(() => import('./pages/Register'));

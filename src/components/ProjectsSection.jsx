@@ -525,13 +525,19 @@ const ProjectsSection = ({
     }
 
     // 2. Check if ADMIN has ranked the selected projects (Frontend check for immediate feedback)
-    const unrankedSelected = selectedProjectIds.some(id => {
-      const rank = rankMap[String(id)];
-      return rank === null || rank === undefined;
-    });
+    const unrankedSelectedNames = selectedProjectIds
+      .filter(id => {
+        const rank = rankMap[String(id)];
+        return rank === null || rank === undefined;
+      })
+      .map(id => projects.find(p => p._id === id)?.project_name)
+      .filter(Boolean);
 
-    if (unrankedSelected) {
-      handleShowToast("Your projects are not ranked. Please rank them before launching.", "error", 5000);
+    if (unrankedSelectedNames.length > 0) {
+      const bulletedList = unrankedSelectedNames.map(name => `• ${name}`).join("\n");
+      const message = `The following projects chosen for launch are not ranked:\n${bulletedList}\n\nPlease rank them before launching.`;
+
+      handleShowToast(message, "error", 10000);
       setIsRankingBlinking(true);
       setTimeout(() => setIsRankingBlinking(false), 5000);
       return;
@@ -561,13 +567,22 @@ const ProjectsSection = ({
     }
   };
 
+  // Cleanup project context on unmount
+  useEffect(() => {
+    return () => {
+      window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
+    };
+  }, []);
+
   const handleNewProject = () => {
+    window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
     resetForm();
     setCurrentProject(null);
     setActiveView("new");
   };
 
   const handleEditProject = (project, mode = "edit") => {
+    window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: project._id } }));
     setCurrentProject(project);
     loadProjectData(project);
     setActiveView(mode);
@@ -582,6 +597,7 @@ const ProjectsSection = ({
   };
 
   const handleBackToList = () => {
+    window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
     unlockAllFieldsSafe();
     setActiveView("list");
     setCurrentProject(null);
@@ -734,7 +750,7 @@ const ProjectsSection = ({
     const isReadOnly = apiIsArchived || userPlan === 'essential';
 
     return (
-      <> 
+      <>
         <div className="view-mode-tabs-container mb-4" style={{
           display: 'flex',
           borderBottom: '1px solid #e2e8f0',

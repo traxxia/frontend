@@ -35,7 +35,7 @@ const ToastNotifications = ({
         >
           <Toast.Body className={isSuccess ? "validation-toast-body-success" : "validation-toast-body"}>
             {isSuccess ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-            <span>{validationMessage}</span>
+            <span style={{ whiteSpace: "pre-line" }}>{validationMessage}</span>
           </Toast.Body>
         </Toast>
       </div>

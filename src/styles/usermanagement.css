@@ -143,6 +143,10 @@
 
 /* Toast text */
 .toast-body {
+  padding: 12px 16px;
+  background: white;
+  border-radius: 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   font-weight: 500;
 }
 

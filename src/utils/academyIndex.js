@@ -8,421 +8,234 @@
 export const academyStructure = {
     categories: [
         {
-            id: "getting-started",
-            title: "Getting Started",
-            icon: "Rocket",
-            description: "Learn the basics of Traxxia and get your account set up",
+            id: "auth-onboarding",
+            title: "1. Account Setup & Onboarding",
+            icon: "UserPlus",
+            description: "Learn how to create your account, select a plan, and get started.",
             articles: [
                 {
-                    id: "what-is-traxxia",
-                    title: "What is Traxxia?",
-                    path: "01-getting-started/01-what-is-traxxia.md",
-                    phase: 2,
+                    id: "welcome-to-traxxia",
+                    title: "Welcome to Traxxia",
+                    path: "01-auth-onboarding/welcome-to-traxxia.md",
+                    phase: 1,
                     roles: ["all"],
-                    tags: ["beginner", "overview"],
-                    relatedArticles: ["creating-an-account", "understanding-user-roles"]
+                    tags: ["overview", "intro"]
                 },
                 {
-                    id: "creating-an-account",
-                    title: "Creating an Account",
-                    path: "01-getting-started/02-creating-an-account.md",
-                    phase: 2,
+                    id: "registration-and-plans",
+                    title: "Registration & Plans",
+                    path: "01-auth-onboarding/registration-and-plans.md",
+                    phase: 1,
                     roles: ["all"],
-                    tags: ["beginner", "setup"],
-                    relatedArticles: ["what-is-traxxia", "first-login-experience"]
+                    tags: ["setup", "onboarding"]
                 },
                 {
-                    id: "understanding-user-roles",
-                    title: "Understanding User Roles",
-                    path: "01-getting-started/03-understanding-user-roles.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["beginner", "roles"],
-                    relatedArticles: ["creating-an-account", "first-login-experience"]
-                },
-                {
-                    id: "first-login-experience",
-                    title: "First Login Experience",
-                    path: "01-getting-started/04-first-login-experience.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["beginner", "setup"],
-                    relatedArticles: ["understanding-user-roles", "dashboard-overview"]
-                },
-                {
-                    id: "dashboard-overview",
-                    title: "Dashboard Overview",
-                    path: "01-getting-started/05-dashboard-overview.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["beginner", "navigation"],
-                    relatedArticles: ["first-login-experience", "navigation-basics"]
-                },
-                {
-                    id: "navigation-basics",
-                    title: "Navigation Basics",
-                    path: "01-getting-started/06-navigation-basics.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["beginner", "navigation"],
-                    relatedArticles: ["dashboard-overview"]
-                },
-                {
-                    id: "changing-language-settings",
-                    title: "Changing Language Settings",
-                    path: "01-getting-started/07-changing-language-settings.md",
+                    id: "roles-and-plans",
+                    title: "Roles and Plan Lifecycle",
+                    path: "11-account-management/roles-and-plans.md",
                     phase: 3,
-                    roles: ["all"],
-                    tags: ["settings", "localization"],
-                    relatedArticles: ["dashboard-overview"]
-                },
-
-                {
-                    id: "help-and-support",
-                    title: "Help & Support Resources",
-                    path: "01-getting-started/09-help-and-support-resources.md",
-                    phase: 3,
-                    roles: ["all"],
-                    tags: ["support", "reference"],
-                    relatedArticles: ["what-is-traxxia"]
+                    roles: ["orgadmin"],
+                    tags: ["plans", "roles", "billing"]
                 }
             ]
         },
         {
-            id: "businesses",
-            title: "Business Management",
-            icon: "Building2",
-            description: "Create and manage your business profiles",
+            id: "dashboard-business",
+            title: "2. Dashboard & Business Setup",
+            icon: "LayoutDashboard",
+            description: "Navigate your dashboard and set up your business profiles.",
             articles: [
                 {
-                    id: "what-is-a-business-profile",
-                    title: "What is a Business Profile?",
-                    path: "02-businesses/01-what-is-a-business-profile.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["business", "overview"],
-                    relatedArticles: ["creating-your-first-business"]
-                },
-                {
-                    id: "creating-your-first-business",
-                    title: "Creating Your First Business",
-                    path: "02-businesses/02-creating-your-first-business.md",
-                    phase: 2,
-                    roles: ["orgadmin", "user"],
-                    tags: ["business", "howto"],
-                    relatedArticles: ["what-is-a-business-profile", "ai-assistant-overview"]
+                    id: "creating-your-business",
+                    title: "Creating Your Business",
+                    path: "02-dashboard-business/creating-your-business.md",
+                    phase: 1,
+                    roles: ["orgadmin"],
+                    tags: ["business", "dashboard"]
                 }
             ]
         },
         {
-            id: "questionnaire",
-            title: "AI Questionnaire",
+            id: "ai-questionnaire",
+            title: "3. The AI Questionnaire",
             icon: "MessageSquare",
-            description: "Learn how to use the AI-powered questionnaire system",
+            description: "Answering the core questions to define your business strategy.",
             articles: [
                 {
-                    id: "ai-assistant-overview",
-                    title: "AI Assistant Overview",
-                    path: "03-questionnaire/01-ai-assistant-overview.md",
+                    id: "questionnaire-phases",
+                    title: "Questionnaire Phases",
+                    path: "03-ai-questionnaire/questionnaire-phases.md",
                     phase: 2,
-                    roles: ["orgadmin", "user", "collaborator"],
-                    tags: ["ai", "overview"],
-                    relatedArticles: ["answering-questions-effectively", "question-phases-explained"]
-                },
-                {
-                    id: "answering-questions-effectively",
-                    title: "Answering Questions Effectively",
-                    path: "03-questionnaire/02-answering-questions-effectively.md",
-                    phase: 2,
-                    roles: ["orgadmin", "user", "collaborator"],
-                    tags: ["ai", "howto"],
-                    relatedArticles: ["ai-assistant-overview", "question-phases-in-depth"]
-                },
-                {
-                    id: "question-phases-in-depth",
-                    title: "Question Phases In-Depth",
-                    path: "03-questionnaire/03-question-phases-in-depth.md",
-                    phase: 2,
-                    roles: ["orgadmin", "user", "collaborator"],
-                    tags: ["ai", "concepts"],
-                    relatedArticles: ["ai-assistant-overview", "strategic-analysis-overview"]
-                },
-                {
-                    id: "tracking-your-progress",
-                    title: "Tracking Your Progress",
-                    path: "03-questionnaire/04-tracking-your-progress.md",
-                    phase: 3,
-                    roles: ["orgadmin", "user", "collaborator"],
-                    tags: ["ai", "progress"],
-                    relatedArticles: ["question-phases-in-depth", "business-statuses-explained"]
+                    roles: ["all"],
+                    tags: ["ai", "questions"]
                 }
             ]
         },
         {
-            id: "strategic-analysis",
-            title: "Strategic Analysis",
+            id: "insights-strategy",
+            title: "4. Insights & Strategic Analysis",
             icon: "TrendingUp",
-            description: "Unlock powerful strategic insights for your business",
+            description: "Understand your business through deep insights and strategic components.",
             articles: [
                 {
-                    id: "strategic-analysis-overview",
-                    title: "Strategic Analysis Overview",
-                    path: "04-strategic-analysis/01-strategic-analysis-overview.md",
+                    id: "strategic-insights",
+                    title: "Strategic Insights Overview",
+                    path: "04-insights-strategy/strategic-insights.md",
                     phase: 2,
                     roles: ["all"],
-                    tags: ["strategy", "overview"],
-                    relatedArticles: ["using-swot-analysis"]
+                    tags: ["strategy", "insights"]
                 },
                 {
-                    id: "using-swot-analysis",
-                    title: "Using SWOT Analysis",
-                    path: "04-strategic-analysis/02-using-swot-analysis.md",
+                    id: "strategic-initiatives",
+                    title: "Initiatives & Curation",
+                    path: "04-insights-strategy/strategic-initiatives.md",
+                    phase: 2,
+                    roles: ["orgadmin", "collaborator"],
+                    tags: ["strategy", "initiatives"]
+                },
+                {
+                    id: "swot-analysis",
+                    title: "SWOT Analysis Guide",
+                    path: "04-insights-strategy/swot-analysis.md",
                     phase: 2,
                     roles: ["all"],
-                    tags: ["strategy", "swot", "howto"],
-                    relatedArticles: ["strategic-analysis-overview"]
+                    tags: ["strategy", "swot"]
+                },
+                {
+                    id: "pestel-analysis",
+                    title: "PESTEL Analysis",
+                    path: "04-insights-strategy/pestel-analysis.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["strategy", "external"]
                 },
                 {
                     id: "porters-five-forces",
-                    title: "Porter's Five Forces Analysis",
-                    path: "04-strategic-analysis/04-porters-five-forces.md",
+                    title: "Porter's Five Forces",
+                    path: "04-insights-strategy/porters-five-forces.md",
                     phase: 3,
                     roles: ["all"],
-                    tags: ["strategy", "competitive", "framework"],
-                    relatedArticles: ["strategic-analysis-overview", "using-swot-analysis"]
+                    tags: ["strategy", "competitive"]
                 },
                 {
                     id: "strategic-framework",
-                    title: "S.T.R.A.T.E.G.I.C Framework Guide",
-                    path: "04-strategic-analysis/05-strategic-framework.md",
+                    title: "S.T.R.A.T.E.G.I.C Framework",
+                    path: "04-insights-strategy/strategic-framework.md",
                     phase: 3,
                     roles: ["all"],
-                    tags: ["strategy", "framework", "guide"],
-                    relatedArticles: ["strategic-analysis-overview", "using-swot-analysis"]
-                }
-            ]
-        },
-        {
-            id: "financial-analysis",
-            title: "Financial Analysis",
-            icon: "DollarSign",
-            description: "Upload and analyze financial documents",
-            articles: [
+                    tags: ["strategy", "framework"]
+                },
                 {
-                    id: "financial-analysis-overview",
+                    id: "financial-analysis",
                     title: "Financial Analysis Overview",
-                    path: "05-financial-analysis/01-financial-analysis-overview.md",
+                    path: "04-insights-strategy/financial-analysis.md",
                     phase: 2,
                     roles: ["all"],
-                    tags: ["financial", "overview"],
-                    relatedArticles: ["uploading-financial-documents"]
-                },
-                {
-                    id: "uploading-financial-documents",
-                    title: "Uploading Financial Documents",
-                    path: "05-financial-analysis/02-uploading-financial-documents.md",
-                    phase: 2,
-                    roles: ["orgadmin", "user"],
-                    tags: ["financial", "howto"],
-                    relatedArticles: ["financial-file-formats"]
-                },
-                {
-                    id: "financial-file-formats",
-                    title: "Financial File Formats",
-                    path: "05-financial-analysis/03-financial-file-formats.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["financial", "reference"],
-                    relatedArticles: ["uploading-financial-documents"]
-                },
-                {
-                    id: "understanding-financial-reports",
-                    title: "Understanding Financial Reports",
-                    path: "05-financial-analysis/04-understanding-financial-reports.md",
-                    phase: 3,
-                    roles: ["all"],
-                    tags: ["financial", "reports", "analysis"],
-                    relatedArticles: ["uploading-financial-documents", "financial-analysis-overview"]
+                    tags: ["financial", "analysis"]
                 }
-            ]
-        },
-        {
-            id: "projects",
-            title: "Project Management",
-            icon: "FolderKanban",
-            description: "Create and manage strategic projects",
-            articles: [
-                {
-                    id: "project-management-overview",
-                    title: "Project Management Overview",
-                    path: "06-projects/01-project-management-overview.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["projects", "overview"],
-                    relatedArticles: ["project-category"]
-                },
-                {
-                    id: "project-category",
-                    title: "Project Category",
-                    path: "06-projects/02-project-category.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["projects", "status", "category"],
-                    relatedArticles: ["project-management-overview"]
-                },
-
             ]
         },
         {
             id: "collaboration",
-            title: "Collaboration",
+            title: "5. Team Collaboration",
             icon: "Users",
-            description: "Work with your team on projects and analysis",
+            description: "Adding team members and working together on your goals.",
             articles: [
                 {
-                    id: "collaboration-overview",
-                    title: "Collaboration Overview",
-                    path: "07-collaboration/01-collaboration-overview.md",
+                    id: "collaborators",
+                    title: "Adding Collaborators",
+                    path: "05-collaboration/collaborators.md",
                     phase: 2,
-                    roles: ["all"],
-                    tags: ["collaboration", "overview"],
-                    relatedArticles: []
-                }
-            ]
-        },
-        {
-            id: "kickstart",
-            title: "Kickstart the Project",
-            icon: "Zap",
-            description: "Step-by-step guide to kicking off your project",
-            articles: [
-                {
-                    id: "kickstart-the-project",
-                    title: "Kickstart the Project",
-                    path: "08-kickstart/01-kickstart-the-project.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["guide", "kickoff"],
-                    relatedArticles: []
-                }
-            ]
-        },
-        {
-            id: "lock-project",
-            title: "Lock Project Creation",
-            icon: "Lock",
-            description: "Understand project locking policies and procedures",
-            articles: [
-                {
-                    id: "lock-project-creation",
-                    title: "Lock Project Creation",
-                    path: "09-lock-project/01-lock-project-creation.md",
-                    phase: 2,
-                    roles: ["orgadmin", "owner"],
-                    tags: ["guide", "security", "admin"],
-                    relatedArticles: ["kickstart-the-project"]
-                }
-            ]
-        },
-        {
-            id: "finalize",
-            title: "Finalize Prioritization",
-            icon: "CheckCircle",
-            description: "Finalizing a project's prioritization",
-            articles: [
-                {
-                    id: "finalize-prioritization",
-                    title: "Finalize Prioritization",
-                    path: "10-finalize/01-finalize-prioritization.md",
-                    phase: 2,
-                    roles: ["orgadmin", "owner"],
-                    tags: ["guide", "workflow"],
-                    relatedArticles: []
-                }
-            ]
-        },
-        {
-            id: "launch",
-            title: "Launch Project",
-            icon: "Send",
-            description: "Launching your project to the organization",
-            articles: [
-                {
-                    id: "launch-project",
-                    title: "Launch Project",
-                    path: "11-launch/01-launch-project.md",
-                    phase: 2,
-                    roles: ["orgadmin", "owner"],
-                    tags: ["guide", "launch"],
-                    relatedArticles: ["finalize-prioritization"]
-                }
-            ]
-        },
-        {
-            id: "ranking",
-            title: "Ranking Analysis",
-            icon: "ListOrdered",
-            description: "Understanding ranking views and consensus",
-            articles: [
-                {
-                    id: "ranking-view",
-                    title: "Ranking View Explained",
-                    path: "12-ranking/01-ranking-view.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["guide", "analysis", "ranking"],
-                    relatedArticles: ["ai-ranking"]
-                }
-            ]
-        },
-        {
-            id: "ai-ranking",
-            title: "AI Ranking",
-            icon: "Cpu",
-            description: "Leveraging AI for comparative analysis",
-            articles: [
-                {
-                    id: "ai-ranking-ui",
-                    title: "AI Ranking in the UI",
-                    path: "13-ai-ranking/01-ai-ranking.md",
-                    phase: 2,
-                    roles: ["orgadmin", "owner", "collaborator"],
-                    tags: ["guide", "ai", "ranking"],
-                    relatedArticles: ["ranking-view"]
-                }
-            ]
-        },
-        {
-            id: "reprioritization",
-            title: "Reprioritization",
-            icon: "Edit3",
-            description: "Managing project updates and edits",
-            articles: [
-                {
-                    id: "reprioritization-process",
-                    title: "Reprioritization & Re-editing",
-                    path: "14-reprioritization/01-reprioritization.md",
-                    phase: 3,
                     roles: ["orgadmin"],
-                    tags: ["guide", "workflow", "admin"],
-                    relatedArticles: ["finalize-prioritization"]
+                    tags: ["team", "collaboration"]
                 }
             ]
         },
         {
-            id: "pricing",
-            title: "Pricing Strategy",
-            icon: "DollarSign",
-            description: "Understand Traxxia's SaaS model and tier features",
+            id: "kickstart-projects",
+            title: "6. Kickstarting Projects",
+            icon: "Rocket",
+            description: "Moving from strategic analysis to actionable projects.",
             articles: [
                 {
-                    id: "pricing-strategy",
-                    title: "Pricing Strategy & Features",
-                    path: "15-pricing/01-pricing-strategy.md",
+                    id: "kickstart-process",
+                    title: "Kickstart Process",
+                    path: "06-kickstart-projects/kickstart-process.md",
+                    phase: 2,
+                    roles: ["orgadmin"],
+                    tags: ["projects", "kickstart"]
+                }
+            ]
+        },
+        {
+            id: "project-management",
+            title: "7. Project Management",
+            icon: "FolderKanban",
+            description: "Managing your initiatives throughout their lifecycle.",
+            articles: [
+                {
+                    id: "project-lifecycle",
+                    title: "Collaborative Lifecycle & Locking",
+                    path: "07-project-management/project-lifecycle.md",
                     phase: 3,
                     roles: ["all"],
-                    tags: ["pricing", "saas", "tiers"],
-                    relatedArticles: ["creating-an-account"]
+                    tags: ["projects", "management", "collaboration"]
+                },
+                {
+                    id: "review-cadence-logs",
+                    title: "Execution Monitoring & Logs",
+                    path: "07-project-management/review-cadence-logs.md",
+                    phase: 3,
+                    roles: ["orgadmin", "collaborator"],
+                    tags: ["accountability", "governance"]
+                }
+            ]
+        },
+        {
+            id: "prioritization-launch",
+            title: "8. Ranking & Launching",
+            icon: "CheckSquare",
+            description: "Prioritizing your projects and launching them to active status.",
+            articles: [
+                {
+                    id: "ranking-and-consensus",
+                    title: "Ranking & Consensus",
+                    path: "08-prioritization-launch/ranking-and-consensus.md",
+                    phase: 3,
+                    roles: ["orgadmin", "collaborator"],
+                    tags: ["ranking", "launch"]
+                }
+            ]
+        },
+        {
+            id: "ai-assistant",
+            title: "9. The AI Assistant",
+            icon: "Bot",
+            description: "Your continuous companion for business and project intelligence.",
+            articles: [
+                {
+                    id: "ai-companion",
+                    title: "Your AI Companion",
+                    path: "09-ai-assistant/ai-companion.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["ai", "assistant"]
+                }
+            ]
+        },
+        {
+            id: "admin-panel",
+            title: "10. Admin Panel Control",
+            icon: "Shield",
+            description: "Monitoring progress and managing organization-wide settings.",
+            articles: [
+                {
+                    id: "monitoring-progress",
+                    title: "Monitoring Progress",
+                    path: "10-admin-panel/monitoring-progress.md",
+                    phase: 3,
+                    roles: ["super_admin"],
+                    tags: ["admin", "superadmin"]
                 }
             ]
         }

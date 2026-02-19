@@ -468,6 +468,8 @@
 }
 
 .form-grid {
+  display: block !important;
+  grid-template-columns: none !important;
   gap: 0px !important;
 }
 
@@ -746,4 +748,34 @@
   font-size: 0.9rem;
   font-weight: 600;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Compact Success Modal (Toast Style) */
+.compact-success-modal {
+  max-width: 350px !important;
+  width: 100% !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: unset !important;
+}
+
+.compact-success-modal .modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  height: auto !important;
+  min-height: unset !important;
+  width: auto !important;
+}
+
+.compact-success-modal .modal-body {
+  padding: 1.5rem 2rem;
+  /* Comfortable padding but not excessive */
+  display: block;
+  text-align: center;
 }
