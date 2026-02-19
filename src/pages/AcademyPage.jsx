@@ -245,7 +245,17 @@ const AcademyPage = () => {
                                 View Strategy →
                             </Link>
                         </div>
-                    </div>
+
+
+                        <div className="feature-card">
+                            <div className="feature-icon">🤖</div>
+                            <h3>AI Assistant</h3>
+                            <p>Master the Traxxia AI Assistant</p>
+                            <Link to="/academy/ai-assistant/ai-assistant-overview" className="feature-link">
+                                Get Help →
+                            </Link>
+                        </div>
+                    </div >
 
                     <div className="welcome-footer">
                         <div className="help-section">
@@ -253,7 +263,7 @@ const AcademyPage = () => {
                             <p>Can't find what you're looking for? Browse the categories in the sidebar or stay tuned for our Academy Assistant!</p>
                         </div>
                     </div>
-                </div>
+                </div >
             );
         }
 
