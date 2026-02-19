@@ -369,12 +369,14 @@ const Dashboard = () => {
   // Business Modal Functions
   const handleShowCreateModal = () => {
     const userPlan = sessionStorage.getItem("userPlan");
+    const activeBusinessesCount = businesses.filter(b => b.status !== 'deleted').length;
+
     if (userPlan === 'essential' && myBusinesses.length >= 1) {
       setShowPlanLimitModal(true); // Show limit modal instead of upgrade modal directly
       return;
     }
 
-    if (userPlan === 'advanced' && myBusinesses.length >= 3) { // Assuming 10 is the limit for advanced based on standard patterns, but I should check tierService.
+    if (userPlan === 'advanced' && activeBusinessesCount >= 3) { // Assuming 3 is the limit for advanced.
       setBusinessError("Your plan has been utilized, please contact admin support");
       setShowSuccessPopup(true); // Using common popup but now it will show as error
       setTimeout(() => {
