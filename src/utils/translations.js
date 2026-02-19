@@ -21,6 +21,10 @@ export const staticTranslations = {
     // ===========================
     // REGISTRATION
     // ===========================
+    'plan_limit_reached': 'Plan Limit Reached',
+    'upgrade_to_create_more': 'Upgrade Plan to Create More',
+    'essential_plan_limit_msg': 'You have reached the limit of 1 business on the Essential plan. Please upgrade your plan to create more businesses.',
+    'upgrade_plan': 'Upgrade Plan',
     'sign_up': 'Sign Up',
     'register_title': 'Create Your Account',
     'step_1_user_info': 'User Information',

@@ -18,10 +18,16 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
   const stripe = useStripe();
   const elements = useElements();
   const [localError, setLocalError] = useState(null);
+  const [cardHolderName, setCardHolderName] = useState('');
 
   const handlePayClick = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
+
+    if (!cardHolderName.trim()) {
+      setLocalError("Please enter card holder name.");
+      return;
+    }
 
     const cardElement = elements.getElement(CardNumberElement);
     if (!cardElement) {
@@ -33,6 +39,9 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
+        billing_details: {
+          name: cardHolderName,
+        }
       });
 
       if (stripeError) {
@@ -60,6 +69,8 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       <div className="full-width-field">
         <PaymentForm
           error={localError || error}
+          cardHolderName={cardHolderName}
+          onCardHolderNameChange={setCardHolderName}
         />
       </div>
 
@@ -566,6 +577,7 @@ const Register = () => {
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
                       error={errors.payment}
+                      showSaveCheckbox={false}
                     />
                   </Elements>
                 )}
@@ -575,7 +587,7 @@ const Register = () => {
         </div>
       </div>
 
-      <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered>
+      <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered dialogClassName="compact-success-modal">
         <Modal.Body className="text-center py-4">
           <div className={`mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
             {isError ? <FaTimes size={48} /> : <FaCheck size={48} />}

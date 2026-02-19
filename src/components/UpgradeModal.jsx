@@ -32,6 +32,7 @@ const UpgradeModalContent = ({
     // Default to the default PM, or 'new' if none exist
     const [selectedMethodId, setSelectedMethodId] = useState('new');
     const [localError, setLocalError] = useState(null);
+    const [cardHolderName, setCardHolderName] = useState('');
 
     useEffect(() => {
         if (defaultPaymentMethodId) {
@@ -52,6 +53,11 @@ const UpgradeModalContent = ({
         if (selectedMethodId === 'new') {
             if (!stripe || !elements) return;
 
+            if (!cardHolderName.trim()) {
+                setLocalError("Please enter card holder name.");
+                return;
+            }
+
             const cardElement = elements.getElement(CardNumberElement);
             if (!cardElement) {
                 setLocalError("Please complete the card details.");
@@ -62,6 +68,9 @@ const UpgradeModalContent = ({
                 const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
                     type: 'card',
                     card: cardElement,
+                    billing_details: {
+                        name: cardHolderName,
+                    }
                 });
 
                 if (stripeError) {
@@ -187,6 +196,8 @@ const UpgradeModalContent = ({
                                 hideHeader={true}
                                 isActive={selectedMethodId === 'new'}
                                 onMethodSelect={() => setSelectedMethodId('new')}
+                                cardHolderName={cardHolderName}
+                                onCardHolderNameChange={setCardHolderName}
                             />
                         </div>
                     </>
