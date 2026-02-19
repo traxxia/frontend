@@ -644,6 +644,7 @@
   .toast .toast-body {
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
+    border-radius: 0;
   }
 
   /* Additional fixes for proper scrolling */
@@ -1259,7 +1260,7 @@
     margin-bottom: 0.5rem;
     font-size: 1.5rem;
   }
-  
+
   .success-popup h5.text-danger {
     color: #dc3545 !important;
   }
