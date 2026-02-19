@@ -1576,3 +1576,99 @@
       transform: translateY(0);
     }
   }
+
+  /* Plan Limit Modal Styles */
+  .modal-dialog.plan-limit-modal-dialog {
+    margin: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: calc(100vh - 60px) !important;
+  }
+
+  .plan-limit-modal-content {
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+    overflow: hidden !important;
+    height: auto !important;
+    min-height: 0 !important;
+    flex: none !important;
+    display: block !important;
+  }
+
+  .plan-limit-modal-header {
+    background: transparent;
+    width: 100%;
+  }
+
+  .plan-limit-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .plan-limit-icon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 193, 7, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .plan-limit-icon-circle::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    animation: pulse-ring 2s infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: scale(1.3);
+      opacity: 0;
+    }
+  }
+
+  .plan-limit-title {
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.5px;
+    margin: 0 !important;
+  }
+
+  [data-theme="dark"] .plan-limit-title {
+    color: #fff;
+  }
+
+  .plan-limit-divider {
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #ffc107, #ff9800);
+    border-radius: 2px;
+  }
+
+  .upgrade-btn-premium {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+    border: none !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .upgrade-btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4) !important;
+  }

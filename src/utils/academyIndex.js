@@ -76,7 +76,15 @@ export const academyStructure = {
                     tags: ["settings", "localization"],
                     relatedArticles: ["dashboard-overview"]
                 },
-
+                {
+                    id: "register-page-guide",
+                    title: "Register Page Guide",
+                    path: "01-getting-started/08-register-page-guide.md",
+                    phase: 3,
+                    roles: ["all"],
+                    tags: ["register", "setup"],
+                    relatedArticles: ["creating-an-account", "first-login-experience"]
+                },
                 {
                     id: "help-and-support",
                     title: "Help & Support Resources",
@@ -423,6 +431,23 @@ export const academyStructure = {
                     roles: ["all"],
                     tags: ["pricing", "saas", "tiers"],
                     relatedArticles: ["creating-an-account"]
+                }
+            ]
+        },
+        {
+            id: "ai-assistant",
+            title: "AI Assistant",
+            icon: "MessageSquare",
+            description: "Learn how to use the AI Assistant for enhanced productivity",
+            articles: [
+                {
+                    id: "ai-assistant-overview",
+                    title: "AI Assistant Overview",
+                    path: "16-ai-assistant/01-ai-assistant-overview.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["ai", "assistant", "help"],
+                    relatedArticles: ["ai-assistant-overview"]
                 }
             ]
         }

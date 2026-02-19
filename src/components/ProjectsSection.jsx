@@ -567,13 +567,22 @@ const ProjectsSection = ({
     }
   };
 
+  // Cleanup project context on unmount
+  useEffect(() => {
+    return () => {
+      window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
+    };
+  }, []);
+
   const handleNewProject = () => {
+    window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
     resetForm();
     setCurrentProject(null);
     setActiveView("new");
   };
 
   const handleEditProject = (project, mode = "edit") => {
+    window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: project._id } }));
     setCurrentProject(project);
     loadProjectData(project);
     setActiveView(mode);
@@ -588,6 +597,7 @@ const ProjectsSection = ({
   };
 
   const handleBackToList = () => {
+    window.dispatchEvent(new CustomEvent('ai_context_changed', { detail: { projectId: null } }));
     unlockAllFieldsSafe();
     setActiveView("list");
     setCurrentProject(null);

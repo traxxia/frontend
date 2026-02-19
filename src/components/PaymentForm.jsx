@@ -12,7 +12,9 @@ const PaymentForm = ({
     showSaveCheckbox = true,
     hideHeader = false,
     isActive = true,
-    onMethodSelect
+    onMethodSelect,
+    cardHolderName = '',
+    onCardHolderNameChange = () => { }
 }) => {
     const stripe = useStripe();
     const elements = useElements();
@@ -119,7 +121,7 @@ const PaymentForm = ({
                                         <div className="card-meta">
                                             <div className="card-holder">
                                                 <span className="meta-label">Card Holder</span>
-                                                <span className="meta-value">YOUR NAME</span>
+                                                <span className="meta-value">{(cardHolderName || 'YOUR NAME').toUpperCase()}</span>
                                             </div>
                                             <div className="card-expiry">
                                                 <span className="meta-label">Expires</span>
@@ -133,6 +135,30 @@ const PaymentForm = ({
 
                         <div className="payment-header-row mb-3">
                             <h4 className="m-0">Payment Details</h4>
+                        </div>
+
+                        <div className="form-group mb-3">
+                            <label>Full Name</label>
+                            <div className="stripe-input-wrapper">
+                                <input
+                                    type="text"
+                                    placeholder="Card Holder Name"
+                                    value={cardHolderName}
+                                    onChange={(e) => onCardHolderNameChange && onCardHolderNameChange(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        border: 'none',
+                                        outline: 'none',
+                                        background: 'transparent',
+                                        color: '#424770',
+                                        fontSize: '16px',
+                                        padding: 0,
+                                        margin: 0,
+                                        boxShadow: 'none',
+                                        borderRadius: 0
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         <div className="form-group mb-3">
