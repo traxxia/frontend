@@ -1,4 +1,4 @@
-# Project Management Lifecycle
+# Project Information & Fields (Overview)
 
 Once an initiative is kickstarted, it enters the **Projects Section**. This is where you refine the details of your strategic bets.
 
@@ -22,7 +22,6 @@ The Projects page offers a tabular and card-based view of all your initiatives. 
 -   **Theme**: Group projects by their strategic origin.
 -   **Ranking**: Sort by consensus or individual developer ranking.
 
-> [!TIP]
-> Use the AI Assistant on the project edit page to help you write better descriptions and identify hidden risks.
+> [!TIP] Use the AI Assistant on the project edit page to help you write better descriptions and identify hidden risks.
 
 Next: [Ranking & Consensus](../08-prioritization-launch/01-ranking-launching.md)

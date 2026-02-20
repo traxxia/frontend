@@ -21,7 +21,6 @@ The questionnaire is divided into three distinct phases:
 -   **Goal**: Comprehensive strategic blueprint and risk assessment.
 -   **Outcome**: Complete readiness for project kickstarting.
 
-> [!TIP]
-> The Essential plan offers **Unlimited Initiatives** within your single workspace, allowing you to iterate through as many strategic ideas as you need until you find the right path.
+> [!TIP] The Essential plan offers **Unlimited Initiatives** within your single workspace, allowing you to iterate through as many strategic ideas as you need until you find the right path.
 
 Next: [Strategic Insights](../04-insights-strategy/01-strategic-insights.md)

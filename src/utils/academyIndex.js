@@ -84,15 +84,7 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["strategy", "insights"]
-                },
-                {
-                    id: "strategic-initiatives",
-                    title: "Initiatives & Curation",
-                    path: "04-insights-strategy/strategic-initiatives.md",
-                    phase: 2,
-                    roles: ["orgadmin", "collaborator"],
-                    tags: ["strategy", "initiatives"]
-                },
+                }, 
                 {
                     id: "swot-analysis",
                     title: "SWOT Analysis Guide",
@@ -180,15 +172,7 @@ export const academyStructure = {
                     phase: 3,
                     roles: ["all"],
                     tags: ["projects", "management", "collaboration"]
-                },
-                {
-                    id: "review-cadence-logs",
-                    title: "Execution Monitoring & Logs",
-                    path: "07-project-management/review-cadence-logs.md",
-                    phase: 3,
-                    roles: ["orgadmin", "collaborator"],
-                    tags: ["accountability", "governance"]
-                }
+                }, 
             ]
         },
         {

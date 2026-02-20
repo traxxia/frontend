@@ -16,7 +16,6 @@ For Advanced users, clicking Kickstart moves the initiative from the **Strategy 
 -   **Locked for Essential**: Project Kickoff, Monitoring, Maintenance, and Health Tracking.
 -   **Unlocked for Advanced**: Complete visibility and rigor throughout the project lifecycle.
 
-> [!IMPORTANT]
-> A minimum of **one collaborator** is required for Advanced users to kickstart a project, ensuring a collaborative "sanity check" before execution begins.
+> [!IMPORTANT] A minimum of **one collaborator** is required for Advanced users to kickstart a project, ensuring a collaborative "sanity check" before execution begins.
 
 Next: [Project Management Lifecycle](../07-project-management/01-project-fields.md)

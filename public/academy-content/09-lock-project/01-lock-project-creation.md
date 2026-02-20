@@ -39,8 +39,7 @@ Once project creation is locked:
 
 ![After Project Creation Locked](/academy-screenshots/projects/project-locked.png)
 
-> [!NOTE]
-> Locking project creation does not prevent editing existing projects. Collaborators can still update project details — only creating new projects is blocked.
+> [!NOTE] Locking project creation does not prevent editing existing projects. Collaborators can still update project details — only creating new projects is blocked.
 
 ## 5. Related Articles
 

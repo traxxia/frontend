@@ -1,35 +1,47 @@
-# Collaborative Lifecycle & Locking
+# Collaborative Lifecycle & Locking (UPDATED)
+<!-- Content Refreshed: 2026-02-20 -->
 
 In Traxxia, project management is about transforming "Strategic Initiatives" into "Draft Projects." This guide details the collaboration rules and internal states that govern this process.
 
 ## 1. The Collaborative Workflow
 Any user can start a project by selecting one or more initiatives and clicking **"Create Project"**.
 
-### **Project Dashboards**
-Admin manage projects through three primary workspace views:
--   **Draft Projects Tab**: Shows projects currently being fleshed out by the team (Orange badge).
--   **Finalized Projects Tab**: Shows curated projects approved by the Org Admin (Green badge).
--   **Prioritization Dashboard**: Active only during a prioritization event (Blue badge).
+### **Project States & Colors**
+Traxxia uses color-coded visual cues to signify a project's current status and health:
+-   **Draft**: Standard grey border/badge for projects being fleshed out.
+-   **Active**: **Green** border and badge for projects in active execution.
+-   **At Risk**: **Red** border and badge for projects requiring immediate attention.
+-   **Paused**: **Orange** border and badge for projects temporarily on hold.
+-   **Killed**: **Grey** (semi-transparent) for projects that have been terminated.
+-   **Scaled**: **Purple** border and badge for projects successfully completed.
 
+### **Workspace Management Views**
+Admins manage projects through three primary views:
+-   **Project Management View**: The main hub for creating and editing draft projects.
+-   **Prioritization Dashboard**: Active when the workspace is in the "Prioritizing" state (indicated by the **Blue** active tab).
+-   **Finalized View**: Shows approved projects after they have been prioritized and launched.
+
+![Project List View](/academy-screenshots/projects/project-list-view.png)
+*Managing your organization's projects*
+ 
 ## 2. Real-Time Field Locking
 To ensure data integrity during simultaneous editing, Traxxia uses a **Field-Level Lock** system:
 -   **Visual States**:
-    -   **Blue Border**: You are currently editing this field.
-    -   **Red Border**: Another user (named in the tooltip) has locked this field.
+    -   **Blue Border**: You are currently editing this field (indicated by input focus).
+    -   **Red Border**: Another user (named in the tooltip) has locked this field for editing.
 -   **Manual Save**: Each field or section has its own save button to sync changes immediately to the cloud.
 
 ## 3. Auto-Unlock & Protection
--   **Inactivity Timer**: A 5-minute timer starts when you focus on a field.
--   **Warning**: At 4 minutes, you receive a prompt to "Keep Editing."
--   **Auto-Unlock**: After 5 minutes of idle time, the field unlocks, and any unsaved changes you had are discarded to allow others to edit.
+-   **Inactivity Timer**: A **5-minute** inactivity timer governs each field lock (managed by the backend `heartbeat` service).
+-   **Warning**: At **4 minutes** of inactivity, you receive a prompt to "Keep Editing."
+-   **Auto-Unlock**: After **5 minutes** of idle time, the lock is automatically released, and any unsaved changes are discarded to allow other team members to contribute.
 
 ## 4. Org Admin Curation
 Finalizing a project is an **Org Admin only** action.
--   **Review**: The Admin verifies all mandatory fields (Description, Scope, Metrics, etc.) are complete.
--   **Finalize**: Clicking "Finalize Project" locks the project permanently from editing and moves it to the Finalized tab.
--   **Deletion**: Only **Draft projects** can be deleted by the Org Admin. Once prioritization starts, the deletion of its component projects is disabled.
+-   **Review**: The Admin verifies all mandatory fields (Description, Strategic Decision, Metrics, etc.) are complete.
+-   **Finalize**: Only Org Admins can "Launch" or "Finalize" projects, which locks them from further basic editing.
+-   **Deletion**: Individual project deletion is enabled only for **Draft projects**. 
 
-> [!TIP]
-> Use the **Completion Meter** (progress bar) on draft project cards to see how close a project is to being ready for finalization.
+> [!TIP] Use the **Completion Meter** (progress bar) on draft project cards to see how close a project is to being ready for finalization.
 
 Next: [Ranking & Prioritization Workflow](../08-prioritization-launch/ranking-and-consensus.md)

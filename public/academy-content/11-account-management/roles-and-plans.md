@@ -25,8 +25,7 @@ On downgrade from Advanced to Essential, Traxxia enforces the following protocol
 -   **Silent Metering**: Traxxia monitors AI usage internally. There are no tokens for users to manage, but the system logs infrastructure costs per organization.
 -   **Anti-Abuse**: To prevent workspace-limit bypass, you are allowed only **one workspace deletion every 30 days**.
 
-> [!TIP]
-> Traxxia retains all your data during a downgrade—you simply lose the "Write" and "Execution" permissions for Advanced features. You can restore access by upgrading at any time.
+> [!TIP] Traxxia retains all your data during a downgrade—you simply lose the "Write" and "Execution" permissions for Advanced features. You can restore access by upgrading at any time.
 
 ---
 **Congratulations!** You have completed the Traxxia Academy. You are now ready to lead your organization with data-driven strategic intelligence.

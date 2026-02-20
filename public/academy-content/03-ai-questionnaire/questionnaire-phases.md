@@ -21,7 +21,12 @@ The questionnaire is divided into three distinct phases:
 -   **Goal**: Comprehensive strategic blueprint and risk assessment.
 -   **Outcome**: Complete readiness for project kickstarting.
 
-> [!TIP]
-> The Essential plan offers **Unlimited Initiatives** within your single workspace, allowing you to iterate through as many strategic ideas as you need until you find the right path.
+![AI Questionnaire Interface](/academy-screenshots/questionnaire/chat-interface-fresh.png)
+*The AI Questionnaire Chat Interface*
+
+![Progress Indicator](/academy-screenshots/questionnaire/progress-indicator.png)
+*Tracking your strategic progress*
+
+> [!TIP] The Essential plan offers **Unlimited Initiatives** within your single workspace, allowing you to iterate through as many strategic ideas as you need until you find the right path.
 
 Next: [Strategic Insights](../04-insights-strategy/strategic-insights.md)

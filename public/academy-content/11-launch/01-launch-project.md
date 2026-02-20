@@ -28,8 +28,7 @@ Traxxia applies different rules depending on how many projects you are launching
 - If any collaborator has not yet locked their ranking, the launch will be blocked with an error message
 - Once all collaborators have locked, the admin can select and launch multiple projects
 
-> [!IMPORTANT]
-> Killed projects **cannot be launched**. If your selection includes a killed project, you will receive an error. Deselect killed projects before launching.
+> [!IMPORTANT] Killed projects **cannot be launched**. If your selection includes a killed project, you will receive an error. Deselect killed projects before launching.
 
 ## 4. Ranking Requirement
 

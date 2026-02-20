@@ -36,5 +36,4 @@ The business moves through these statuses during the project phase:
 | **Prioritized** | Rankings finalized, ready to launch |
 | **Launched** | Projects have been launched |
 
-> [!TIP]
-> You can launch projects directly without going through the full finalize flow if you are launching a single project — single project launches bypass ranking requirements entirely.
+> [!TIP] You can launch projects directly without going through the full finalize flow if you are launching a single project — single project launches bypass ranking requirements entirely.

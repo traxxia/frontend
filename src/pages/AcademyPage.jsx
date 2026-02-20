@@ -225,16 +225,7 @@ const AcademyPage = () => {
                             ))}
                         </div>
                     )}
-
-                    {!searchQuery.trim() && (
-                        <div className="welcome-footer">
-                            <div className="help-section">
-                                <h3>Need more help?</h3>
-                                <p>Our AI Assistant is available to answer your specific questions in real-time.</p>
-                                <Link to="/academy/ai-assistant/ai-assistant-overview" className="btn-secondary">Go to AI Assistant</Link>
-                            </div>
-                        </div>
-                    )}
+ 
                 </div>
             );
         }

@@ -30,8 +30,7 @@ After you save manual rankings, Traxxia automatically calls the AI ranking engin
 
 ![AI Ranking](/academy-screenshots/projects/ai-assisted-ranking.png)
 
-> [!TIP]
-> Use the AI ranking as a benchmark. If the AI ranks a project much higher than your team, it may be an overlooked gem. If the AI ranks it much lower, it may be driven by bias rather than data.
+> [!TIP] Use the AI ranking as a benchmark. If the AI ranks a project much higher than your team, it may be an overlooked gem. If the AI ranks it much lower, it may be driven by bias rather than data.
 
 ## 3. Rankings View (Team Rankings)
 
@@ -44,8 +43,7 @@ The **Rankings View** shows all collaborators' rankings side by side, allowing a
 
 Once you are satisfied with your ranking, **saving your rankings** locks them in. The system tracks which collaborators have submitted their rankings.
 
-> [!IMPORTANT]
-> For **multiple project launches**, all collaborators must lock their rankings before the admin can proceed to launch. For a **single project launch**, rankings are bypassed and the project is automatically ranked as #1.
+> [!IMPORTANT] For **multiple project launches**, all collaborators must lock their rankings before the admin can proceed to launch. For a **single project launch**, rankings are bypassed and the project is automatically ranked as #1.
 
 ## 5. Consensus
 

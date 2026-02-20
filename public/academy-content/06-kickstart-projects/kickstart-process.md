@@ -11,12 +11,16 @@ A crucial distinction in Phase 3 is the split between **Insight** (Essential) an
 When you finish a strategic plan or initiative in the Essential tier, Traxxia will prompt you to upgrade. This is the logical moment to transition from purely thinking about strategy to actually managing its delivery.
 
 ## 3. From Thinking to Doing
-For Advanced users, clicking Kickstart moves the initiative from the **Strategy Engine** into the **Project Management Module**.
+### **Phase 3: Advanced (Alignment)**
+-   **Goal**: Comprehensive strategic blueprint and risk assessment.
+-   **Outcome**: Complete readiness for project kickstarting.
+
+![Kickstart Project](/academy-screenshots/projects/kickstart-project.png)
+*Launching a strategic initiative as a project*
 
 -   **Locked for Essential**: Project Kickoff, Monitoring, Maintenance, and Health Tracking.
 -   **Unlocked for Advanced**: Complete visibility and rigor throughout the project lifecycle.
 
-> [!IMPORTANT]
-> A minimum of **one collaborator** is required for Advanced users to kickstart a project, ensuring a collaborative "sanity check" before execution begins.
+> [!IMPORTANT]  A minimum of **one collaborator** is required for Advanced users to kickstart a project, ensuring a collaborative "sanity check" before execution begins.
 
 Next: [Project Management Lifecycle](../07-project-management/project-lifecycle.md)

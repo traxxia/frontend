@@ -19,13 +19,15 @@ Traxxia rates each force on a scale of 1-10:
 - **Medium (4-6)**: Neutral competitive force.
 - **High (7-10)**: Challenging for your business.
 
+![Porter's Five Forces](/academy-screenshots/strategic-analysis/porter.png)
+*The Competitive Landscape Analysis*
+
 ## Strategic Implications
 
 - If **Competitive Rivalry** is high, you must focus on extreme differentiation.
 - If **Buyer Power** is high, you need to build strong brand loyalty and switching costs.
 - If **Threat of New Entrants** is high, focus on securing proprietary technology or exclusive distribution.
 
-> [!NOTE]
-> Even in an "unattractive" industry where most forces are high, individual companies can succeed through superior strategic positioning.
+> [!NOTE] Even in an "unattractive" industry where most forces are high, individual companies can succeed through superior strategic positioning.
 
 Next: [Financial Analysis](./financial-analysis.md)

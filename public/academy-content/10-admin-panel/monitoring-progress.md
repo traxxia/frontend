@@ -14,17 +14,12 @@ Depending on your role, you will see a subset of these specialized tabs:
 -   **Questions**: (Super Admin only) The interface to add/edit the AI Questionnaire structure and strategic frameworks.
 -   **Subscription**: Manage your tier (Essential vs. Advanced), payment methods, and monitor collaborator/workspace usage limits.
 
-## 2. Decision-Level Analytics
-Org Admins can use the panel to analyze the organization's execution performance:
--   **Portfolio Health Mix**: Distribution of project statuses (Active, At Risk, Killed, etc.).
--   **Hypothesis Yield**: Ratio of Validated vs. Invalidated assumptions.
--   **Decision Velocity**: How quickly the team moves through review cadences.
--   **Investment Concentration**: Ensuring resources are focused on the highest-priority strategic themes.
-
-## 3. Executive Portfolio Audit
+![User Management](/academy-screenshots/admin-panel/admin-management.png)
+*Admin Panel Control*
+ 
+## 2. Executive Portfolio Audit
 Admins can drill down into any project state to read **Mandatory Justifications** from the Decision Log, providing full transparency into the "why" behind every pivot or cancellation.
 
-> [!NOTE]
-> Access to the Admin Panel is restricted based on user role. Collaborators do not have access to these management functions.
+> [!NOTE] Access to the Admin Panel is restricted based on user role. Collaborators do not have access to these management functions.
 
 Next: [Roles and Plan Lifecycle](../11-account-management/roles-and-plans.md)

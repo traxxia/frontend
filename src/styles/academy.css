@@ -116,10 +116,11 @@
 
 .academy-main-search-input {
   width: 100%;
-  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg) 48px;
+  margin-top: 10px;
+  padding:10px 50px;
   border: 1px solid var(--color-border-medium);
   border-radius: var(--border-radius-xl);
-  font-size: var(--font-size-lg);
+  font-size: 14px;
   background: var(--color-bg-item);
   color: var(--color-text-primary);
   box-shadow: var(--shadow-sm);
@@ -135,7 +136,7 @@
 .main-search-icon {
   position: absolute;
   left: 16px;
-  top: 50%;
+  top: 60%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
 }
@@ -439,7 +440,7 @@
 }
 
 .welcome-subtitle {
-  font-size: var(--font-size-xl);
+  font-size: 15px;
   color: var(--color-text-secondary);
   max-width: 700px;
   margin: 0 auto;
@@ -898,19 +899,19 @@
 
 .alert-note {
   background: rgba(33, 122, 255, 0.1);
-  border-left-color: var(--color-primary);
+  border-left-color: transparent;
   color: var(--color-text-primary);
 }
 
 .alert-tip {
   background: rgba(34, 197, 94, 0.1);
-  border-left-color: #22c55e;
+  border-left-color: transparent;
   color: var(--color-text-primary);
 }
 
 .alert-important {
   background: rgba(168, 85, 247, 0.1);
-  border-left-color: #a855f7;
+  border-left-color: transparent;
   color: var(--color-text-primary);
 }
 
