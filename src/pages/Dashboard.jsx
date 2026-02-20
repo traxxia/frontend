@@ -45,6 +45,7 @@ const Dashboard = () => {
   const [formErrors, setFormErrors] = useState({});
   const userRole = sessionStorage.getItem("userRole");
   const isViewer = userRole?.toLowerCase() === "viewer";
+  const isCollaborator = userRole?.toLowerCase() === "collaborator";
 
 
   // Delete business state
@@ -688,9 +689,8 @@ const Dashboard = () => {
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <h5 className="mb-0">{t('welcome_dashboard')}</h5>
                         </div>
-                        {!isViewer && (
-                          <p className="text-muted small mb-4">{t('create_business_plans')}</p>
-                        )}
+                        <p className="text-muted small mb-4">{t('create_business_plans')}</p>
+
                       </div>
                       <Accordion className="px-4 mb-4" defaultActiveKey="0">
                         {/* My Businesses */}
@@ -764,8 +764,8 @@ const Dashboard = () => {
 
                       </Accordion>
 
-                      {!isViewer && (
-                        <div className="px-4 pb-4 d-flex flex-wrap gap-2">
+                      <div className="px-4 pb-4 d-flex flex-wrap gap-2">
+                        {!isCollaborator && !isViewer && (
                           <Button
                             variant="primary"
                             className="flex-grow-1 create-business-btn"
@@ -773,16 +773,16 @@ const Dashboard = () => {
                           >
                             {t('create_business')}
                           </Button>
-                          <Button
-                            variant="primary"
-                            className="flex-grow-1 create-business-btn"
-                            onClick={() => setShowHowModal(true)}
-                          >
-                            <Info size={18} className="me-2" />
-                            {t('how_it_works')}
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          variant="primary"
+                          className="flex-grow-1 create-business-btn"
+                          onClick={() => setShowHowModal(true)}
+                        >
+                          <Info size={18} className="me-2" />
+                          {t('how_it_works')}
+                        </Button>
+                      </div>
                     </Card.Body>
                   </Card>
 
@@ -797,11 +797,10 @@ const Dashboard = () => {
                                 <h5 className="mb-2">{t('welcome_dashboard')}</h5>
                               </div>
                             </div>
-                            {!isViewer && (
-                              <p className="text-muted mb-4">{t('create_business_plans')}</p>
-                            )}
-                            {!isViewer && (
-                              <div className="d-flex flex-wrap gap-2">
+                            <p className="text-muted mb-4">{t('create_business_plans')}</p>
+
+                            <div className="d-flex flex-wrap gap-2">
+                              {!isCollaborator && !isViewer && (
                                 <Button
                                   variant="primary"
                                   className="create-business-btn"
@@ -809,17 +808,17 @@ const Dashboard = () => {
                                 >
                                   {t('create_business')}
                                 </Button>
+                              )}
 
-                                <Button
-                                  variant="primary"
-                                  className="create-business-btn"
-                                  onClick={() => setShowHowModal(true)}
-                                >
-                                  <Info size={18} className="me-2" />
-                                  {t('how_it_works')}
-                                </Button>
-                              </div>
-                            )}
+                              <Button
+                                variant="primary"
+                                className="create-business-btn"
+                                onClick={() => setShowHowModal(true)}
+                              >
+                                <Info size={18} className="me-2" />
+                                {t('how_it_works')}
+                              </Button>
+                            </div>
                           </div>
                         </Col>
 
