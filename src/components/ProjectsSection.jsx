@@ -667,7 +667,7 @@ const ProjectsSection = ({
   };
 
   const handleDelete = async (projectId) => {
-    if (isViewer) return;
+    if (isViewer || !isSuperAdmin) return;
 
     const { success, error } = await deleteProject(projectId);
     if (success) {

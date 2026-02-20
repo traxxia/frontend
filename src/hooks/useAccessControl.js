@@ -81,8 +81,9 @@ export const useAccessControl = (selectedBusinessId) => {
 
       if (!project) return false;
 
-      // Admins can always edit (except truly locked launched projects)
-      if (isEditor && businessStatus !== "launched") return true;
+      // Admins and Collaborators can always edit if project is Draft or business is not launched
+      const isProjectDraft = !project.status || project.status.toLowerCase() === 'draft';
+      if (isEditor && (businessStatus !== "launched" || isProjectDraft)) return true;
 
       // For reprioritizing projects
       if (businessStatus === "reprioritizing") {

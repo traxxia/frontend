@@ -125,12 +125,12 @@ const ProjectCard = ({
           </button>
           {showMenuId === project._id && (
             <div className="menu-dropdown">
-              {(launched && !userCanEdit) || isViewer || isArchived ? (
+              {(!userCanEdit || isViewer || isArchived) ? (
                 <div onClick={() => onView(project)} className="menu-item"><Eye size={14} /> {t("view")}</div>
               ) : (
                 <div onClick={() => onEdit(project)} className="menu-item"><Edit2 size={14} /> {t("edit")}</div>
               )}
-              {!projectCreationLocked && !isViewer && !isArchived && (
+              {!isViewer && !isArchived && isAdmin && (!projectCreationLocked || project.status?.toLowerCase() === "draft" || !project.status) && (
                 <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
               )}
             </div>
