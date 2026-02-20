@@ -379,8 +379,23 @@ const Dashboard = () => {
     }
 
     if (userPlan === 'advanced' && activeBusinessesCount >= 3) { // Assuming 3 is the limit for advanced.
-      setShowPlanLimitModal(true);
-      return;
+      const features = [
+        "Up to 3 Workspaces",
+        "Initiative to Project Conversion",
+
+      ];
+
+      if (userPlan === 'advanced' && activeBusinessesCount >= 3) {
+        const exhaustedFeatures = features.map((f, i) => `• ${f}`).join('\n');
+
+        setBusinessError(`You have exhausted the plan:\n${exhaustedFeatures}`);
+        setShowSuccessPopup(true); // Using common popup but now it will show as error
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          setBusinessError('');
+        }, 5000);
+        return;
+      }
     }
 
     setShowCreateModal(true);
