@@ -25,6 +25,9 @@ export const staticTranslations = {
     'upgrade_to_create_more': 'Upgrade Plan to Create More',
     'essential_plan_limit_msg': 'You have reached the limit of 1 business on the Essential plan. Please upgrade your plan to create more businesses.',
     'upgrade_plan': 'Upgrade Plan',
+    'execution_upgrade_title': 'Execution Engine Locked',
+    'execution_upgrade_msg': 'Upgrade to Execute Strategy',
+    'execution_upgrade_submsg': 'The execution engine and project kickstart features are available on the Advanced plan.',
     'sign_up': 'Sign Up',
     'register_title': 'Create Your Account',
     'step_1_user_info': 'User Information',
@@ -1127,6 +1130,13 @@ export const staticTranslations = {
     // ===========================
     // REGISTRO
     // ===========================
+    'plan_limit_reached': 'Límite de Plan Alcanzado',
+    'upgrade_to_create_more': 'Actualiza el Plan para Crear Más',
+    'essential_plan_limit_msg': 'Has alcanzado el límite de 1 negocio en el plan Essential. Por favor, actualiza tu plan para crear más negocios.',
+    'upgrade_plan': 'Actualizar Plan',
+    'execution_upgrade_title': 'Motor de Ejecución Bloqueado',
+    'execution_upgrade_msg': 'Actualizar para Ejecutar la Estrategia',
+    'execution_upgrade_submsg': 'El motor de ejecución y las funciones de inicio del proyecto están disponibles en el plan Avanzado.',
     'sign_up': 'Registrarse',
     'register_title': 'Crea tu cuenta',
     'step_1_user_info': 'Información de Usuario',

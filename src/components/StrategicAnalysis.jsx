@@ -32,6 +32,7 @@ import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import KickstartProjectsCard from "../components/KickstartProjectsCard";
 import UpgradeModal from "./UpgradeModal";
+import PlanLimitModal from "./PlanLimitModal";
 import '../styles/StrategicAnalysis.css';
 
 const StrategicAnalysis = ({
@@ -80,6 +81,7 @@ const StrategicAnalysis = ({
   const [isFreshGeneration, setIsFreshGeneration] = useState(false);
   const [hasKickstarted, setHasKickstarted] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const handleKickstart = async () => {
     try {
       const token = sessionStorage.getItem("token");
@@ -88,7 +90,7 @@ const StrategicAnalysis = ({
       const userPlan = sessionStorage.getItem("userPlan");
 
       if (userPlan === 'essential') {
-        setShowUpgradeModal(true);
+        setShowPlanLimitModal(true);
         return;
       }
 
@@ -2598,6 +2600,13 @@ const StrategicAnalysis = ({
           }
           // Optionally refresh data or simply allow re-trying handleKickstart
         }}
+      />
+      <PlanLimitModal
+        show={showPlanLimitModal}
+        onHide={() => setShowPlanLimitModal(false)}
+        title={t('execution_upgrade_title') || "Execution Engine Locked"}
+        message={t('execution_upgrade_msg') || "Upgrade to Execute Strategy"}
+        subMessage={t('execution_upgrade_submsg') || "The execution engine and project kickstart features are available on the Advanced plan."}
       />
     </div>
   );
