@@ -379,12 +379,7 @@ const Dashboard = () => {
     }
 
     if (userPlan === 'advanced' && activeBusinessesCount >= 3) { // Assuming 3 is the limit for advanced.
-      setBusinessError("Your plan has been utilized, please contact admin support");
-      setShowSuccessPopup(true); // Using common popup but now it will show as error
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-        setBusinessError('');
-      }, 5000);
+      setShowPlanLimitModal(true);
       return;
     }
 
