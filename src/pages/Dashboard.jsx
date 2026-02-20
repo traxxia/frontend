@@ -372,7 +372,7 @@ const Dashboard = () => {
     const userPlan = sessionStorage.getItem("userPlan");
     const activeBusinessesCount = businesses.filter(b => b.status !== 'deleted').length;
 
-    if (userPlan === 'essential' && myBusinesses.length >= 1) {
+    if (userPlan === 'essential' && activeBusinessesCount >= 1) {
       setShowPlanLimitModal(true); // Show limit modal instead of upgrade modal directly
       return;
     }
