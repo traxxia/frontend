@@ -156,8 +156,13 @@ const UserHistory = ({ onToast }) => {
   };
 
   const formatRoleName = (roleName) => {
-    if (!roleName) return 'User';
-    return roleName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    switch (roleName?.toLowerCase()) {
+      case "company_admin": return "Org Admin";
+      case "collaborator": return "Collaborator";
+      case "user": return "User";
+      case "viewer": return "Viewer";
+      default: return roleName ? roleName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'User';
+    }
   };
 
   const columns = [
@@ -172,7 +177,7 @@ const UserHistory = ({ onToast }) => {
       )
     },
     {
-      key: 'role',
+      key: 'role_name',
       label: t('role'),
       render: (val) => <span className="admin-status-badge active" style={{ fontSize: '0.72rem' }}>{formatRoleName(val)}</span>
     },
