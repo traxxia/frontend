@@ -28,7 +28,6 @@ The **Decision Log** is an immutable record of every strategic adjustment. It ca
 -   **Reasoning**: The mandatory justification provided by the owner.
 -   **Lifecycle Metadata**: Timestamp and the specific actor who made the decision.
 
-> [!TIP]
-> This log allows the CEO and Leadership team to perform a "post-mortem" or audit of why specific strategic paths were chosen or abandoned, creating an organizational learning loop.
+> [!TIP] This log allows the CEO and Leadership team to perform a "post-mortem" or audit of why specific strategic paths were chosen or abandoned, creating an organizational learning loop.
 
 Next: [Ranking & Consensus](../08-prioritization-launch/ranking-and-consensus.md)

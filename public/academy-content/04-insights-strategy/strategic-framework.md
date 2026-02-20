@@ -17,11 +17,19 @@ The **S.T.R.A.T.E.G.I.C** framework is your roadmap for turning analysis into ex
 - **I – Innovation**: Managing the future pipeline and portfolio mix.
 - **C – Culture**: Aligning the human side of transformation.
 
+
+![Strategic Analysis Overview](/academy-screenshots/strategic-analysis/str.png)
+*Strategic Dashboard*
+
+
 ## Kickstarting Projects
 
 The **S.T.R.A.T.E.G.I.C** tab includes the powerful **"Kickstart Projects"** feature. This allows Advanced users to instantly convert these pillars into draft entries in the Projects tab.
 
-> [!IMPORTANT]
-> This framework bridges the gap between purely "knowing" your strategy (6 C's) and "doing" the work (Project Management).
+
+![Strategic Analysis Overview](/academy-screenshots/strategic-analysis/kickstart-project.png)
+*Kickstarting Projects*
+
+> [!IMPORTANT] This framework bridges the gap between purely "knowing" your strategy (6 C's) and "doing" the work (Project Management).
 
 Next: [Financial Analysis](./financial-analysis.md)

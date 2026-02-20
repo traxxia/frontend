@@ -12,7 +12,6 @@ In the following sections, we will cover:
 4.  **Collaboration**: Bringing your team into the fold.
 5.  **Execution**: Kickstarting initiatives and launching prioritized projects.
 
-> [!TIP]
-> Use the sidebar to navigate through the steps in order, or use the search bar to find specific topics.
+> [!TIP] Use the sidebar to navigate through the steps in order, or use the search bar to find specific topics.
 
 Ready to start? Head over to the [Registration & Plans](./registration-and-plans.md) guide.

@@ -2,6 +2,9 @@
 
 Traxxia's Financial Analysis transforms your uploaded financial data into actionable insights through automated calculations, visualizations, and strategic recommendations.
 
+![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/cost-financial.png)
+*Deep financial insights and metrics*
+
 ## What it Provides
 
 - **Automated Metrics**: Key financial ratios and KPIs (Profitability, Liquidity, Leverage).
@@ -12,6 +15,9 @@ Traxxia's Financial Analysis transforms your uploaded financial data into action
 
 ### 1. Profitability Analysis
 Measures how efficiently you convert revenue into profit (Gross, Operating, and Net margins).
+
+![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/profitability.png)
+*Profitability Analysis*
 
 ### 2. Growth Tracker
 Tracks revenue and customer growth rates to identify business momentum.
@@ -26,7 +32,6 @@ Evaluates your debt levels and financial risk.
 
 To unlock the full potential of this analysis, you must upload your financial data using Traxxia's Excel templates.
 
-> [!IMPORTANT]
-> Your financial data remains private and secure. It is only used to generate insights for your business and is never shared externally.
+> [!IMPORTANT] Your financial data remains private and secure. It is only used to generate insights for your business and is never shared externally.
 
 Next: [Team Collaboration](../05-collaboration/collaborators.md)

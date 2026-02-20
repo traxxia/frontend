@@ -17,7 +17,6 @@ Super Admins can drill down into specific businesses to:
 ## 3. Security & Governance
 This panel also serves as the control center for system-wide settings, user authorization, and high-level platform health metrics.
 
-> [!NOTE]
-> Regular users and even Company Admins do not have access to the Admin Panel. It is strictly for Traxxia platform administrators.
+> [!NOTE] Regular users and even Company Admins do not have access to the Admin Panel. It is strictly for Traxxia platform administrators.
 
 Next: [Account & Organization Lifecycle](../11-account-management/01-roles-and-plans.md)

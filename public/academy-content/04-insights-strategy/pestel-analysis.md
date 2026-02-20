@@ -11,13 +11,15 @@ PESTEL Analysis is a strategic framework used to evaluate the macro-environmenta
 5. **Environmental**: Sustainability, climate change, carbon footprint, and resource scarcity.
 6. **Legal**: Employment laws, consumer protection laws, health and safety, and industry regulations.
 
+![PESTEL Analysis View](/academy-screenshots/strategic-analysis/pestel.png)
+*Visualizing macro-environmental factors*
+
 ## Why Use PESTEL in Traxxia?
 
 - **Identify Opportunities**: Find emerging trends before your competitors do.
 - **Anticipate Threats**: Prepare for regulatory changes or economic downturns.
 - **Contextualize SWOT**: Feed external PESTEL findings into your SWOT Analysis for a complete picture.
 
-> [!TIP]
-> Use the **"Strategic Positioning Radar"** within the Strategic Analysis page to see how these macro factors are weighted for your specific industry.
+> [!TIP] Use the **"Strategic Positioning Radar"** within the Strategic Analysis page to see how these macro factors are weighted for your specific industry.
 
 Next: [Porter's Five Forces](./porters-five-forces.md)

@@ -180,34 +180,10 @@ const Login = () => {
             <p>
               {t("not_member")} <a href="/register">{t("register_now")}</a>
             </p>
+            <hr className="divider" />
             <p>
               <a href="/academy">📚 Explore Traxxia Academy</a>
             </p>
-          </div>
-          <hr className="divider" />
-          <p>{t("continue_with")}</p>
-          <div className="social-login">
-            <a
-              href="https://google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src={social} alt="Google" />
-            </a>
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src={apple} alt="Apple" />
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src={facebook} alt="Facebook" />
-            </a>
           </div>
         </div>
       </div>

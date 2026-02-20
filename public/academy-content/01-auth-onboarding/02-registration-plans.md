@@ -26,7 +26,6 @@ Traxxia offers two distinct tiers designed for different stages of business grow
 -   **Features**: Includes everything in Essential, plus the Complete Lifecycle (Initiative to Project conversion), Portfolio Management, and Execution Rigor.
 -   **Collaboration**: Includes **3 Collaborator Seats** in the base price (Total of 4 users including the Admin).
 
-> [!IMPORTANT]
-> Traxxia uses **USD-anchored pricing** for consistency, while providing high-value features like multiple workspaces and collaboration in the Advanced tier.
+> [!IMPORTANT] Traxxia uses **USD-anchored pricing** for consistency, while providing high-value features like multiple workspaces and collaboration in the Advanced tier.
 
 Next: [Creating Your Business](../02-dashboard-business/creating-your-business.md)

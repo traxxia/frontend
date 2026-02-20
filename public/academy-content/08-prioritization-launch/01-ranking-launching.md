@@ -19,7 +19,6 @@ After rankings are finalized, the Admin can select the top projects and click **
 ## 3. Re-prioritization
 Strategy is not static. You can always revisit your rankings as new information becomes available or if the organization's goals shift.
 
-> [!IMPORTANT]
-> A project must be ranked before it can be launched. This prevents "gut-feel" decisions from bypassing the data-driven process.
+> [!IMPORTANT] A project must be ranked before it can be launched. This prevents "gut-feel" decisions from bypassing the data-driven process.
 
 Next: [The AI Assistant](../09-ai-assistant/01-ai-companion.md)
