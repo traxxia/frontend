@@ -152,14 +152,14 @@ const ProjectCard = ({
         </div>
         <div>
           <span className="details-label">{t("Effort")}</span>
-          <span className={`property-badge effort-${project.selected_effort?.toLowerCase() || 'medium'}`}>
-            <Clock size={10} /> {project.selected_effort || 'Medium'}
+          <span className={`property-badge effort-${project.effort?.toLowerCase() || 'medium'}`}>
+            <Clock size={10} /> {project.effort || 'Medium'}
           </span>
         </div>
         <div>
           <span className="details-label">{t("Risk")}</span>
-          <span className={`property-badge risk-${project.selected_risk?.toLowerCase() || 'low'}`}>
-            <AlertTriangle size={10} /> {project.selected_risk || 'Low'}
+          <span className={`property-badge risk-${project.risk?.toLowerCase() || 'low'}`}>
+            <AlertTriangle size={10} /> {project.risk || 'Low'}
           </span>
         </div>
         <div>
