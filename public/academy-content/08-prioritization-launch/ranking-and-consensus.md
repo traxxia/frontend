@@ -15,10 +15,10 @@ Collaborators access the Prioritization Dashboard to rank projects:
 -   **Comparison**: See a **Side-by-Side Matrix** of all users' rankings to identify where the team is in agreement (Consensus) or conflict (Divergence).
 
 ![Project Ranking Interface](/academy-screenshots/projects/project-ranking-interface.png)
-*Collaboratively ranking projects for strategic alignment*
+*Screenshot of the project dasboard with rank your project card*
 
 ![Finalize Prioritization](/academy-screenshots/projects/finalize-prioritization.png)
-*Reviewing team consensus and finalizing results*
+*Screenshot of the project dasboard with Reviewing team consensus and finalizing results*
 
 ## 3. Finalization & Overrides
 The Org Admin reviews the team's suggested rankings but maintains final decision rights.

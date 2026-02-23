@@ -17,10 +17,10 @@ As a Company Admin on the Advanced plan:
 -   Assign them to your active businesses.
 
 ![Add Collaborator](/academy-screenshots/collaboration/add-user-collaborator.png)
-*Inviting new team members*
+*Screenshot of user management page with highlighted buttons*
 
 ![Collaborators List](/academy-screenshots/collaboration/collaborators-list.png)
-*Managing your organization's team*
+*Screenshot of user management page with users table*
 
 ---
 **Why Collaboration?** Attempting to add a team member while on the Essential plan will trigger an upgrade modal, as this feature is the primary driver for turning "Insights" into "Execution."

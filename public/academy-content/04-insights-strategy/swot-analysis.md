@@ -25,7 +25,7 @@ Traxxia's AI automatically generates your SWOT analysis based on your questionna
 4. Click **Generate** and wait for the AI to process your data.
 
 ![SWOT Analysis Matrix](/academy-screenshots/strategic-analysis/full-swot.png)
-*A complete SWOT Analysis Matrix*
+*Screenshot of the complete SWOT Analysis Matrix*
 
 ## Applying SWOT Insights
 
@@ -38,4 +38,4 @@ Once generated, use the following strategies to turn insights into action:
 
 > [!TIP] On the **Essential Plan**, you can generate unlimited initiatives based on your SWOT findings to iterate on your strategy.
 
-Next: [Porter's Five Forces](./porters-five-forces.md)
+Next: [PESTEL Analysis](./pestel-analysis.md)

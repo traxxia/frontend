@@ -22,7 +22,7 @@ Admins manage projects through three primary views:
 -   **Finalized View**: Shows approved projects after they have been prioritized and launched.
 
 ![Project List View](/academy-screenshots/projects/project-list-view.png)
-*Managing your organization's projects*
+*Screenshot of the Project Management View*
  
 ## 2. Real-Time Field Locking
 To ensure data integrity during simultaneous editing, Traxxia uses a **Field-Level Lock** system:

@@ -8,10 +8,10 @@ When you first arrive at Traxxia, you have two options:
 -   **Register**: Create a new account. If you are the first person in your organization, you will register as a **Company Admin**.
 
 ![Login Page](/academy-screenshots/getting-started/login-page.png)
-*The Traxxia Login Page*
+*Screenshot of Traxxia Login Page*
 
 ![Registration Form](/academy-screenshots/getting-started/registration-page-full.png)
-*The Traxxia Registration Form*
+*Screenshot of Traxxia Registration Form*
 
 ## 2. Choosing Your Tier
 Traxxia offers two distinct tiers designed for different stages of business growth:
@@ -33,7 +33,7 @@ Traxxia offers two distinct tiers designed for different stages of business grow
 -   **Collaboration**: Includes **3 Collaborator Seats** in the base price (Total of 4 users including the Admin).
 
 ![Registration Form](/academy-screenshots/getting-started/chooseplan.png)
-*Choosing Your Tier*
+*Screenshot of Choosing Your Tier*
 
 > [!IMPORTANT] Traxxia uses **USD-anchored pricing** for consistency, while providing high-value features like multiple workspaces and collaboration in the Advanced tier.
 

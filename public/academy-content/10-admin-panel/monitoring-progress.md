@@ -15,7 +15,7 @@ Depending on your role, you will see a subset of these specialized tabs:
 -   **Subscription**: Manage your tier (Essential vs. Advanced), payment methods, and monitor collaborator/workspace usage limits.
 
 ![User Management](/academy-screenshots/admin-panel/admin-management.png)
-*Admin Panel Control*
+*Screenshot of the Admin Panel with highlighted tabs*
  
 ## 2. Executive Portfolio Audit
 Admins can drill down into any project state to read **Mandatory Justifications** from the Decision Log, providing full transparency into the "why" behind every pivot or cancellation.

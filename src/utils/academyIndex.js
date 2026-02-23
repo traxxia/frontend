@@ -84,7 +84,7 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["strategy", "insights"]
-                }, 
+                },
                 {
                     id: "swot-analysis",
                     title: "SWOT Analysis Guide",
@@ -156,6 +156,14 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["orgadmin"],
                     tags: ["projects", "kickstart"]
+                },
+                {
+                    id: "ai-projects",
+                    title: "AI-Driven Project Creation",
+                    path: "06-kickstart-projects/Ai-Projects.md",
+                    phase: 3,
+                    roles: ["orgadmin"],
+                    tags: ["ai", "projects", "creation"]
                 }
             ]
         },
@@ -172,7 +180,7 @@ export const academyStructure = {
                     phase: 3,
                     roles: ["all"],
                     tags: ["projects", "management", "collaboration"]
-                }, 
+                },
             ]
         },
         {

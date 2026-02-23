@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { academyStructure, findCategoryById } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
@@ -61,19 +61,32 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
                     return (
                         <div key={category.id} className={`category-section ${isActive ? 'active-category' : ''}`}>
-                            <button
+                            <div
                                 className="category-header"
                                 onClick={() => toggleCategory(category.id)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        toggleCategory(category.id);
+                                    }
+                                }}
                             >
                                 <div className="category-title">
                                     {renderCategoryIcon(category.icon)}
                                     <span>{category.title}</span>
                                 </div>
-                                <LucideIcons.ChevronDown
-                                    size={16}
-                                    className={`category-chevron ${isExpanded ? 'expanded' : ''}`}
-                                />
-                            </button>
+                                <div className="category-header-right">
+                                    <span className="article-count-badge">
+                                        {category.articles.length}
+                                    </span>
+                                    <LucideIcons.ChevronDown
+                                        size={16}
+                                        className={`category-chevron ${isExpanded ? 'expanded' : ''}`}
+                                    />
+                                </div>
+                            </div>
 
                             {isExpanded && (
                                 <ul className="category-articles">
@@ -113,7 +126,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                     </Link>
                 </div>
                 <div className="nav-footer-info">
-                    <small>Version 1.0 • Phase 2</small>
+                    <small>Version 1.0 • Phase 3</small>
                 </div>
             </div>
         </div>

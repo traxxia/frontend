@@ -18,10 +18,10 @@ To maintain the integrity of our workspace management system, Traxxia implements
 To create a business, click the **"New Business"** button on the dashboard. You will need to provide the Business Name, Description, and Industry.
 
 ![Dashboard Overview](/academy-screenshots/getting-started/dashboard.png)
-*The Traxxia Dashboard*
+*Screenshot of Traxxia Dashboard after initial setup*
 
 ![Business List](/academy-screenshots/getting-started/dashboard-business-list.png)
-*Viewing your registered businesses*
+*Screenshot of the dashboard section listing all created business profiles*
 
 > [!TIP] If you have already reached your limit, consider **Archiving** your current business to preserve its data before starting a new one (if your plan allows for multiple slots).
 

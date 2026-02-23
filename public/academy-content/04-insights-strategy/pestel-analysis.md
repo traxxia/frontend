@@ -12,7 +12,7 @@ PESTEL Analysis is a strategic framework used to evaluate the macro-environmenta
 6. **Legal**: Employment laws, consumer protection laws, health and safety, and industry regulations.
 
 ![PESTEL Analysis View](/academy-screenshots/strategic-analysis/pestel.png)
-*Visualizing macro-environmental factors*
+*Screenshot of the PESTEL Analysis View*
 
 ## Why Use PESTEL in Traxxia?
 
