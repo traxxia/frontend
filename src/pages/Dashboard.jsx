@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+  const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
@@ -248,6 +249,10 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (response.ok) {
+        setNewlyCreatedBusiness(data.business);
+        if (data.business && (data.business._id || data.business.id)) {
+          sessionStorage.setItem('activeBusinessId', data.business._id || data.business.id);
+        }
         setSuccessMessage(t('business_created_successfully'));
         setShowSuccessPopup(true);
 
@@ -610,6 +615,10 @@ const Dashboard = () => {
 
   // Event Handlers
   const handleBusinessClick = (business) => {
+    const businessId = business._id || business.id;
+    if (businessId) {
+      sessionStorage.setItem('activeBusinessId', businessId);
+    }
     navigate('/businesspage', { state: { business } });
   };
 
@@ -635,7 +644,11 @@ const Dashboard = () => {
           <PMFInsights
             onContinue={() => {
               setShowInsights(false);
-              navigate("/businesspage");
+              navigate("/businesspage", {
+                state: {
+                  business: newlyCreatedBusiness || businesses[0]
+                }
+              });
             }}
           />
         ) : null
@@ -1012,6 +1025,7 @@ const Dashboard = () => {
             <PMFOnboardingModal
               show={showPMFOnboarding}
               onHide={() => setShowPMFOnboarding(false)}
+              businessId={newlyCreatedBusiness?._id || businesses[0]?._id}
               onSubmit={(pmfFormData) => {
                 setShowPMFOnboarding(false);
                 setShowInsights(true);

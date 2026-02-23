@@ -86,7 +86,8 @@ export const API_ENDPOINTS = {
   growthTracker: 'excel-analysis',
   liquidityEfficiency: 'excel-analysis',
   investmentPerformance: 'excel-analysis',
-  leverageRisk: 'excel-analysis'
+  leverageRisk: 'excel-analysis',
+  ahaInsight: 'aha-insight'
 };
 
 // Metric type mapping for excel-analysis
@@ -107,6 +108,75 @@ export class AnalysisApiService {
     this.getAuthToken = getAuthToken;
     this.setApiLoading = setApiLoading;
     this.excelAnalysisCache = null; // Cache the excel-analysis result
+  }
+
+  // PMF Analysis Methods
+  async savePMFOnboardingData(businessId, onboardingData) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ businessId, onboardingData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving PMF onboarding data:', error);
+      throw error;
+    }
+  }
+
+  async getPMFAnalysis(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 404) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching PMF analysis:', error);
+      throw error;
+    }
+  }
+
+  async savePMFInsights(businessId, insights) {
+    try {
+      const token = this.getAuthToken();
+      const insightsData = insights?.insights || insights;
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/insights`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ insights: insightsData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving PMF insights:', error);
+      throw error;
+    }
+  }
+
+  async getBusiness(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching business:', error);
+      throw error;
+    }
   }
 
   isExcelAnalysisType(analysisType) {
@@ -245,7 +315,8 @@ export class AnalysisApiService {
     selectedBusinessId = null,
     uploadedFile = null,
     metricType = null,
-    onStreamChunk = null // ✅ Added live streaming callback
+    onStreamChunk = null, // ✅ Added live streaming callback
+    companyName = null // Add company name for specific analyses like aha-insight
   ) {
     if (questionsArray.length === 0 && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
@@ -321,7 +392,10 @@ export class AnalysisApiService {
           body: JSON.stringify({
             questions: questionsArray,
             answers: answersArray,
-            business_id: selectedBusinessId
+            business_id: selectedBusinessId,
+            company: {
+              name: companyName || (questionsArray[0] === 'Company Name' ? answersArray[0] : null)
+            }
           })
         });
       }

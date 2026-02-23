@@ -22,6 +22,7 @@ import PMFInsightsTab from "../components/PMFInsightsTab";
 //import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
+import PMFOnboardingModal from "../components/PMFOnboardingModal";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -70,11 +71,29 @@ const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
 const BusinessSetupPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const business = location.state?.business;
-  const selectedBusinessId = location.state?.business?._id;
-  const selectedBusinessName = location.state?.business?.business_name;
-  const companyAdminIds = location.state?.business?.company_admin_id || [];
   const { t } = useTranslation();
+
+  // State management for business context
+  const [currentBusiness, setCurrentBusiness] = useState(location.state?.business || null);
+  const [selectedBusinessId, setSelectedBusinessId] = useState(() => {
+    const id = location.state?.business?._id || sessionStorage.getItem('activeBusinessId');
+    return id === "null" ? null : id;
+  });
+
+  // Keep state and sessionStorage in sync
+  useEffect(() => {
+    if (selectedBusinessId) {
+      sessionStorage.setItem('activeBusinessId', selectedBusinessId);
+    } else {
+      const storedId = sessionStorage.getItem('activeBusinessId');
+      if (storedId && storedId !== "null") {
+        console.log("BusinessSetupPage: Recovering ID from storage:", storedId);
+        setSelectedBusinessId(storedId);
+      }
+    }
+  }, [selectedBusinessId]);
+  const [selectedBusinessName, setSelectedBusinessName] = useState(location.state?.business?.business_name || "");
+  const [companyAdminIds, setCompanyAdminIds] = useState(location.state?.business?.company_admin_id || []);
 
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL || 'http://127.0.0.1:8000';
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -98,8 +117,9 @@ const BusinessSetupPage = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const userPlan = sessionStorage.getItem("userPlan");
   const loggedInRole = getLoggedInRole();
+  const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
   const canRegenerate = !["viewer"].includes(loggedInRole);
-  const [businessStatus, setBusinessStatus] = useState(business?.status || "");
+  const [businessStatus, setBusinessStatus] = useState(currentBusiness?.status || "");
   const isLaunchedStatus = businessStatus === "launched";
   const [uploadedFileForAnalysis, setUploadedFileForAnalysis] = useState(null);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
@@ -110,6 +130,7 @@ const BusinessSetupPage = () => {
   const hasLoadedAnalysis = useRef(false);
   const streamingManager = useStreamingManager();
   const [showProjectsTab, setShowProjectsTab] = useState(false);
+  const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
@@ -122,7 +143,7 @@ const BusinessSetupPage = () => {
     setApiLoading
   );
 
-  const state = useBusinessSetup(business, selectedBusinessId);
+  const state = useBusinessSetup(currentBusiness, selectedBusinessId);
   const {
     activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,
     isSliding, setIsSliding, questions, setQuestions, questionsLoaded, setQuestionsLoaded,
@@ -159,8 +180,53 @@ const BusinessSetupPage = () => {
     showDropdown, setShowDropdown
   } = state;
 
-  const isArchived = (business?.access_mode === 'archived' || business?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
+  const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
   const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus && !isArchived;
+
+  // Effect to handle business context recovery on refresh
+  useEffect(() => {
+    const recoverBusinessContext = async () => {
+      if (!selectedBusinessId) {
+        // If no ID at all, we might need to go back to dashboard
+        console.error("No business ID found for context.");
+        return;
+      }
+
+      // Store ID for future refreshes
+      sessionStorage.setItem('activeBusinessId', selectedBusinessId);
+
+      // If we don't have the full business object, fetch it
+      if (!currentBusiness) {
+        try {
+          console.log("Recovering business data for:", selectedBusinessId);
+          const businessDataResult = await apiService.getBusiness(selectedBusinessId);
+          if (businessDataResult) {
+            setCurrentBusiness(businessDataResult);
+            setSelectedBusinessName(businessDataResult.business_name);
+            setCompanyAdminIds(businessDataResult.company_admin_id || []);
+            setBusinessStatus(businessDataResult.status || "");
+          }
+        } catch (error) {
+          console.error("Failed to recover business context:", error);
+        }
+      }
+    };
+
+    recoverBusinessContext();
+  }, [selectedBusinessId, currentBusiness]);
+
+  // Sync businessData in useBusinessSetup when currentBusiness changes
+  useEffect(() => {
+    if (currentBusiness && setBusinessData) {
+      setBusinessData({
+        name: currentBusiness.business_name || "",
+        whatWeDo: currentBusiness.business_purpose || "",
+        products: "",
+        targetAudience: "",
+        uniqueValue: "",
+      });
+    }
+  }, [currentBusiness, setBusinessData]);
 
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
@@ -599,6 +665,16 @@ const BusinessSetupPage = () => {
   };
 
   const handleAhaTabClick = () => {
+    const currentIdInStorage = sessionStorage.getItem('activeBusinessId');
+    console.log("AHA tab clicked, business ID in state:", selectedBusinessId, "in storage:", currentIdInStorage);
+
+    // Safety check: if state is null but storage has it, recover it
+    if (!selectedBusinessId && currentIdInStorage && currentIdInStorage !== "null") {
+      console.log("Recovering ID on tab click...");
+      setSelectedBusinessId(currentIdInStorage);
+    }
+
+    setPmfRefreshTrigger(prev => prev + 1);
     if (isMobile) {
       setActiveTab("aha");
     } else {
@@ -777,7 +853,7 @@ const BusinessSetupPage = () => {
       <MenuBar />
 
       {/* Read-Only Banner for Archived Workspaces */}
-      {(business?.access_mode === 'archived' || business?.access_mode === 'hidden') && (
+      {(currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden') && (
         <div className="alert alert-warning mb-0 border-0 rounded-0 text-center py-2 d-flex align-items-center justify-content-center shadow-sm" style={{ zIndex: 1000, position: 'relative' }}>
           <AlertTriangle size={18} className="me-2 text-warning" />
           <span>
@@ -892,7 +968,7 @@ const BusinessSetupPage = () => {
             userAnswers={userAnswers}
             onBusinessDataUpdate={handleBusinessDataUpdate}
             onNewAnswer={handleNewAnswer}
-            isArchived={business?.access_mode === 'archived' || business?.access_mode === 'hidden'}
+            isArchived={currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden'}
             onQuestionsLoaded={(loadedQuestions) => {
               setQuestions(loadedQuestions);
               setQuestionsLoaded(true);
@@ -1077,7 +1153,11 @@ const BusinessSetupPage = () => {
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
                       {ENABLE_PMF && activeTab === "aha" && (
-                        <PMFInsightsTab />
+                        <PMFInsightsTab
+                          selectedBusinessId={selectedBusinessId}
+                          refreshTrigger={pmfRefreshTrigger}
+                          onStartOnboarding={() => setShowPMFOnboarding(true)}
+                        />
                       )}
                       {/*{activeTab === "executive" && (
                         <ExecutiveSummary/>
@@ -1226,7 +1306,11 @@ const BusinessSetupPage = () => {
                     </div>
                   )}
                   {activeTab === "aha" && (
-                    <PMFInsightsTab />
+                    <PMFInsightsTab
+                      selectedBusinessId={selectedBusinessId}
+                      refreshTrigger={pmfRefreshTrigger}
+                      onStartOnboarding={() => setShowPMFOnboarding(true)}
+                    />
                   )}
                   {/*{activeTab === "executive" && (
                     <ExecutiveSummary/>
@@ -1319,7 +1403,11 @@ const BusinessSetupPage = () => {
                   </div>
                 )}
                 {ENABLE_PMF && activeTab === "aha" && (
-                  <PMFInsightsTab />
+                  <PMFInsightsTab
+                    selectedBusinessId={selectedBusinessId}
+                    refreshTrigger={pmfRefreshTrigger}
+                    onStartOnboarding={() => setShowPMFOnboarding(true)}
+                  />
                 )}
                 {activeTab === "analysis" && (
                   <div className="analysis-section">
@@ -1401,6 +1489,18 @@ const BusinessSetupPage = () => {
         onHide={() => setShowUpgradeModal(false)}
         onUpgradeSuccess={() => window.location.reload()}
       />
+
+      {ENABLE_PMF && (
+        <PMFOnboardingModal
+          show={showPMFOnboarding}
+          onHide={() => setShowPMFOnboarding(false)}
+          businessId={selectedBusinessId}
+          onSubmit={() => {
+            setShowPMFOnboarding(false);
+            setPmfRefreshTrigger(prev => prev + 1);
+          }}
+        />
+      )}
     </div>
   );
 };

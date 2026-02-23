@@ -12,11 +12,23 @@ import {
   USAGE_CONTEXT_OPTIONS,
   TOTAL_STEPS
 } from '../config/pmfOnboardingConfig';
+import { useNavigate } from "react-router-dom";
+import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
+import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
 
-const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
+const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // API Service setup
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem("token");
+  const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+
   const [currentStep, setCurrentStep] = useState(1);
+  const [submissionStep, setSubmissionStep] = useState(0); // 0: initial, 1: saving, 2: generating, 3: finalizing
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
@@ -144,7 +156,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   const validateStep4 = () => {
-    return true; 
+    return true;
   };
 
   const validateStep5 = () => {
@@ -262,11 +274,73 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     }
   };
 
-  const handleSubmit = () => {
-    if (onSubmit) {
-      onSubmit(formData); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      setSubmissionStep(1); // Saving data
+
+      // 1. Save onboarding data to our backend
+      await analysisService.savePMFOnboardingData(businessId, formData);
+
+      setSubmissionStep(2); // Generating insights (The long part)
+
+      // 2. Prepare payload for ML backend
+      // We convert the formData into an array of strings for the ML API
+      const questionsArray = [
+        "Company Name", "Website", "Country", "City", "Primary Industry",
+        "Geographies", "Customer Segments", "Products/Services", "Channels",
+        "Strategic Objective", "Key Challenge", "Differentiation", "Usage Context"
+      ];
+
+      const answersArray = [
+        formData.companyName,
+        formData.website || "N/A",
+        formData.country,
+        formData.city || "N/A",
+        formData.primaryIndustry,
+        [formData.geography1, formData.geography2, formData.geography3].filter(Boolean).join(", "),
+        [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean).join(", "),
+        [formData.productService1, formData.productService2, formData.productService3].filter(Boolean).join(", "),
+        [formData.channel1, formData.channel2, formData.channel3].filter(Boolean).join(", "),
+        formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,
+        formData.keyChallenge === "Other" ? formData.keyChallengeOther : formData.keyChallenge,
+        [...formData.differentiation, formData.differentiationOther].filter(Boolean).join(", "),
+        formData.usageContext
+      ];
+
+      // 3. Call ML Backend
+      const insightResult = await analysisService.makeAPICall(
+        'aha-insight',
+        questionsArray,
+        answersArray,
+        businessId,
+        null,
+        null,
+        null,
+        formData.companyName
+      );
+
+      setSubmissionStep(3); // Finalizing
+
+      // 4. Save insights to our backend
+      await analysisService.savePMFInsights(businessId, insightResult);
+
+      // 5. Fetch final PMF analysis to ensure data is updated
+      await analysisService.getPMFAnalysis(businessId);
+
+      if (onSubmit) {
+        onSubmit(formData);
+      }
+      handleClose();
+    } catch (error) {
+      console.error("Error during PMF onboarding submission:", error);
+      alert("Failed to complete onboarding. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+      setSubmissionStep(0);
     }
-    handleClose(); 
   };
 
 
@@ -399,8 +473,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                     backgroundColor: state.isSelected
                       ? "#217aff"
                       : state.isFocused
-                      ? "#eef4ff"
-                      : "#fff",
+                        ? "#eef4ff"
+                        : "#fff",
                     color: state.isSelected ? "#fff" : "#111",
                     cursor: "pointer"
                   }),
@@ -489,8 +563,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                     backgroundColor: state.isSelected
                       ? "#217aff"
                       : state.isFocused
-                      ? "#eef4ff"
-                      : "#fff",
+                        ? "#eef4ff"
+                        : "#fff",
                     color: state.isSelected ? "#fff" : "#111",
                     cursor: "pointer"
                   }),
@@ -500,7 +574,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                     borderRadius: 6
                   })
                 }}
-                />
+              />
 
               {errors.primaryIndustry && (
                 <Form.Text className="text-danger d-block mt-1">
@@ -701,7 +775,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 )}
               </Form.Group>
             </div>
-            
+
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
                 {t('channels_max_3') || 'Channels (max 3)'}
@@ -1047,12 +1121,28 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
           variant="primary"
           onClick={handleNext}
           className="pmf-next-button"
+          disabled={isSubmitting}
         >
-          {currentStep === TOTAL_STEPS
-            ? (t('finish') || 'Complete Onboarding')
-            : (t('next') || 'Next')}
-          {currentStep < TOTAL_STEPS && (
-            <ChevronRight size={18} className="ms-1" />
+          {isSubmitting ? (
+            <div className="d-flex flex-column align-items-center" style={{ minWidth: "160px" }}>
+              <div className="d-flex align-items-center mb-1">
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span style={{ fontSize: "14px" }}>
+                  {submissionStep === 1 && "Saving data..."}
+                  {submissionStep === 2 && "Analyzing market (60-90s)..."}
+                  {submissionStep === 3 && "Finalizing..."}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <>
+              {currentStep === TOTAL_STEPS
+                ? (t('finish') || 'Complete Onboarding')
+                : (t('next') || 'Next')}
+              {currentStep < TOTAL_STEPS && (
+                <ChevronRight size={18} className="ms-1" />
+              )}
+            </>
           )}
         </Button>
       </Modal.Footer>
