@@ -1105,10 +1105,32 @@ export const staticTranslations = {
     'essential': 'Essential',
     'advanced': 'Advanced',
     'professional': 'Professional',
+
+    // ========================
+    // PMF
+    // ==========================
+    'aha': 'AHA',
+    'AHA Insights': 'AHA Insights',
+    'Heres what we discovered':'Heres what we discovered' ,
+    'Based on your inputs, here are the critical insights about your strategic position': 'Based on your inputs, here are the critical insights about your strategic position.',
+    'company client name': 'company client name',
+ 
   },
 
 
   es: {
+
+    // ========================
+    // PMF
+    // ==========================
+    'aha': 'Ajá',
+    'AHA Insights': 'Perspectivas de la AHA',
+    'Heres what we discovered': 'Esto es lo que descubrimos',
+    'Based on your inputs, here are the critical insights about your strategic position.':'Con base en sus aportes, aquí encontrará información importante sobre su posición estratégica.',
+    'company client name': 'nombre del cliente de la empresa',
+
+
+
     // ===========================
     // LOGIN Y AUTENTICACIÓN
     // ===========================

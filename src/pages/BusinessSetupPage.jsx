@@ -919,7 +919,7 @@ const BusinessSetupPage = () => {
               className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
               onClick={handleAhaTabClick}
             >
-              AHA
+             {t("aha")} 
             </button>
           )}
           {unlockedFeatures.analysis && (
@@ -1007,7 +1007,7 @@ const BusinessSetupPage = () => {
                           className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
                           onClick={handleAhaTabClick}
                         >
-                          AHA
+                          {t("aha")}
                         </button>
                       )}
                       {/*<button
@@ -1223,7 +1223,7 @@ const BusinessSetupPage = () => {
                         className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
                         onClick={handleAhaTabClick}
                       >
-                        AHA
+                        {t("aha")}
                       </button>
                     )}
                     {/*<button

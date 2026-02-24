@@ -388,7 +388,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('company_client_name') || 'Company / Client Name'} <span className="text-danger">*</span>
+                {t('company client name') || 'Company / Client Name'} <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="text"
