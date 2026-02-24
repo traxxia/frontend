@@ -246,7 +246,7 @@ const AuditTrail = ({ onToast }) => {
       question_skipped: `Skipped Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
       question_edited: `Edited Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
       analysis_generated: `Generated ${data.analysis_type || 'analysis'}: ${data.analysis_name} (Phase: ${data.phase})${row.business_name ? ` for business: ${row.business_name}` : ''}`,
-      business_created: `Created business: ${data.business_name} (${data.business_purpose})`,
+      business_created: `Created business: ${data.business_name}`,
       business_deleted: `Deleted business: ${data.business_name}${data.conversations_deleted ? ` (${data.conversations_deleted} conversations removed)` : ''}`,
       collaborator_assigned: `Assigned collaborator to business: ${row.business_name || 'Business'}`
     };
