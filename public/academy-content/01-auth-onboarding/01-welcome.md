@@ -1,6 +1,6 @@
-# Welcome to Traxxia
+# Introduction to Traxxia
 
-Welcome to the **Traxxia Academy**! This guide is designed to take you from a complete beginner to a master of strategic initiative management.
+Welcome1 to the **Traxxia Academy**! This guide is designed to take you from a complete beginner to a master of strategic initiative management.
 
 Traxxia is an AI-powered platform that helps organizations transform fuzzy ideas into clear, prioritized, and actionable projects. Whether you are a solo entrepreneur or a large corporate team, this academy will walk you through the end-to-end application flow to ensure you maximize your business potential.
 
