@@ -15,7 +15,13 @@ import '../styles/academy.css';
 const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     const { category: activeCategory, article: activeArticle } = useParams();
     const navigate = useNavigate();
+    const [userRole, setUserRole] = useState('');
     const [expandedCategories, setExpandedCategories] = useState([activeCategory || 'getting-started']);
+
+    useEffect(() => {
+        const storedRole = sessionStorage.getItem('userRole');
+        setUserRole(storedRole || '');
+    }, []);
 
     const toggleCategory = (categoryId) => {
         setExpandedCategories(prev =>
@@ -116,7 +122,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
             <div className="academy-nav-footer">
                 <div className="nav-footer-links">
-                    <Link to="/dashboard" className="footer-link" style={{ marginBottom: '8px' }}>
+                    <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link" style={{ marginBottom: '8px' }}>
                         <LucideIcons.LayoutDashboard size={16} />
                         <span>Back to Dashboard</span>
                     </Link>

@@ -32,4 +32,4 @@ A visual matrix shows:
 
 --- 
 
-Next: [Your AI Companion](../09-ai-assistant/ai-companion.md)
+Next: [Team Ranking View](./team-consensus.md)

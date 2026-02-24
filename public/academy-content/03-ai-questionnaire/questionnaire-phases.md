@@ -29,4 +29,4 @@ The questionnaire is divided into three distinct phases:
 
 > [!TIP] The Essential plan offers **Unlimited Initiatives** within your single workspace, allowing you to iterate through as many strategic ideas as you need until you find the right path.
 
-Next: [Strategic Insights](../04-insights-strategy/strategic-insights.md)
+Next: [The Brief](the-brief.md)

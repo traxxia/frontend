@@ -46,13 +46,22 @@ export const academyStructure = {
             description: "Navigate your dashboard and set up your business profiles.",
             articles: [
                 {
+                    id: "dashboard-walk-through",
+                    title: "Dashboard Walkthrough",
+                    path: "02-dashboard-business/dashboard-walk-through.md",
+                    phase: 1,
+                    roles: ["orgadmin"],
+                    tags: ["dashboard", "walkthrough"]
+                },
+                {
                     id: "creating-your-business",
-                    title: "Creating Your Business",
+                    title: "Business Overview",
                     path: "02-dashboard-business/creating-your-business.md",
                     phase: 1,
                     roles: ["orgadmin"],
                     tags: ["business", "dashboard"]
                 }
+
             ]
         },
         {
@@ -68,6 +77,14 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["all"],
                     tags: ["ai", "questions"]
+                },
+                {
+                    id: "the-brief",
+                    title: "The Brief: Your Business Profile",
+                    path: "03-ai-questionnaire/the-brief.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["profile", "brief", "editing"]
                 }
             ]
         },
@@ -140,6 +157,14 @@ export const academyStructure = {
                     phase: 2,
                     roles: ["orgadmin"],
                     tags: ["team", "collaboration"]
+                },
+                {
+                    id: "collaborator-access",
+                    title: "Collaborator Access",
+                    path: "05-collaboration/collaborator-access.md",
+                    phase: 2,
+                    roles: ["collaborator"],
+                    tags: ["team", "collaboration", "access"]
                 }
             ]
         },
@@ -181,6 +206,14 @@ export const academyStructure = {
                     roles: ["all"],
                     tags: ["projects", "management", "collaboration"]
                 },
+                {
+                    id: "edit-projects",
+                    title: "Edit Projects",
+                    path: "07-project-management/edit-projects.md",
+                    phase: 3,
+                    roles: ["orgadmin"],
+                    tags: ["projects", "management", "editing"]
+                },
             ]
         },
         {
@@ -196,6 +229,14 @@ export const academyStructure = {
                     phase: 3,
                     roles: ["orgadmin", "collaborator"],
                     tags: ["ranking", "launch"]
+                },
+                {
+                    id: "team-consensus",
+                    title: "Team Consensus",
+                    path: "08-prioritization-launch/team-consensus.md",
+                    phase: 3,
+                    roles: ["orgadmin", "collaborator"],
+                    tags: ["consensus", "prioritization", "ranking"]
                 }
             ]
         },
@@ -223,11 +264,19 @@ export const academyStructure = {
             articles: [
                 {
                     id: "monitoring-progress",
-                    title: "Monitoring Progress",
+                    title: "Monitoring Process For Super Admin",
                     path: "10-admin-panel/monitoring-progress.md",
                     phase: 3,
-                    roles: ["super_admin"],
+                    roles: ["superadmin"],
                     tags: ["admin", "superadmin"]
+                },
+                {
+                    id: "monitoring-process-company-admin",
+                    title: "Monitoring Process for Company admin",
+                    path: "10-admin-panel/monitoring-process-company-admin.md",
+                    phase: 3,
+                    roles: ["orgadmin"],
+                    tags: ["admin", "orgadmin", "monitoring"]
                 }
             ]
         }

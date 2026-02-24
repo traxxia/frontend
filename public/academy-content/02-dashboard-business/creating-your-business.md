@@ -1,4 +1,4 @@
-# Creating Your Business
+# Business Overview
 
 The Dashboard is where your journey truly begins. From here, you can see all your registered businesses and their current progress.
 
@@ -17,11 +17,19 @@ To maintain the integrity of our workspace management system, Traxxia implements
 ## 3. Creating a New Business
 To create a business, click the **"New Business"** button on the dashboard. You will need to provide the Business Name, Description, and Industry.
 
-![Dashboard Overview](/academy-screenshots/getting-started/dashboard.png)
-*Screenshot of Traxxia Dashboard after initial setup*
+![Dashboard Overview](/academy-screenshots/business-management/business-creation-form.png)
+*Screenshot of Traxxia Dashboard with New Business Form*
 
-![Business List](/academy-screenshots/getting-started/dashboard-business-list.png)
-*Screenshot of the dashboard section listing all created business profiles*
+Once you entered the required details, click the **"Create business"** button to create the business.
+
+![Business Success](/academy-screenshots/business-management/business-creation-success.png)
+*Screenshot of Traxxia Dashboard with success message*
+
+## 4. Deleting a Business
+To delete a business, click the **"Delete"** button on the business card.
+
+![Business Delete](/academy-screenshots/business-management/delete-confirmation.png)
+*Screenshot of Traxxia Dashboard with delete confirmation*
 
 > [!TIP] If you have already reached your limit, consider **Archiving** your current business to preserve its data before starting a new one (if your plan allows for multiple slots).
 

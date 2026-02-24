@@ -25,4 +25,4 @@ As a Company Admin on the Advanced plan:
 ---
 **Why Collaboration?** Attempting to add a team member while on the Essential plan will trigger an upgrade modal, as this feature is the primary driver for turning "Insights" into "Execution."
 
-Next: [Kickstarting Initiatives](../06-kickstart-projects/kickstart-process.md)
+Next: [Collaborator Access](./collaborator-access.md)

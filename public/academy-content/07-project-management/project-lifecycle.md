@@ -44,4 +44,4 @@ Finalizing a project is an **Org Admin only** action.
 
 > [!TIP] Use the **Completion Meter** (progress bar) on draft project cards to see how close a project is to being ready for finalization.
 
-Next: [Ranking & Prioritization Workflow](../08-prioritization-launch/ranking-and-consensus.md)
+Next: [Edit Project](edit-projects.md)
