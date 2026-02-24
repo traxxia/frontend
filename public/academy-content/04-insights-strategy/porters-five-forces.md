@@ -20,7 +20,7 @@ Traxxia rates each force on a scale of 1-10:
 - **High (7-10)**: Challenging for your business.
 
 ![Porter's Five Forces](/academy-screenshots/strategic-analysis/porter.png)
-*The Competitive Landscape Analysis*
+*Screenshot of the Porter's Five Forces Analysis*
 
 ## Strategic Implications
 
@@ -30,4 +30,4 @@ Traxxia rates each force on a scale of 1-10:
 
 > [!NOTE] Even in an "unattractive" industry where most forces are high, individual companies can succeed through superior strategic positioning.
 
-Next: [Financial Analysis](./financial-analysis.md)
+Next: [S.T.R.A.T.E.G.I.C Framework](./strategic-framework.md)

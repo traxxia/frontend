@@ -225,7 +225,6 @@ const AcademyPage = () => {
                             ))}
                         </div>
                     )}
- 
                 </div>
             );
         }
@@ -355,7 +354,8 @@ const AcademyPage = () => {
 
                             {currentArticle && (
                                 <div className="article-header">
-                                    <h1>{currentArticle.title}</h1>
+                                    {/* Only show page H1 if markdown doesn't provide its own H1 */}
+                                    {!content.trim().startsWith('# ') && <h1>{currentArticle.title}</h1>}
                                     <div className="article-meta">
                                         {currentArticle.roles.includes('all') ? (
                                             <span className="role-badge">All Users</span>

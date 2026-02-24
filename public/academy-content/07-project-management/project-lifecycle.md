@@ -22,7 +22,7 @@ Admins manage projects through three primary views:
 -   **Finalized View**: Shows approved projects after they have been prioritized and launched.
 
 ![Project List View](/academy-screenshots/projects/project-list-view.png)
-*Managing your organization's projects*
+*Screenshot of the Project Management View*
  
 ## 2. Real-Time Field Locking
 To ensure data integrity during simultaneous editing, Traxxia uses a **Field-Level Lock** system:
@@ -44,4 +44,4 @@ Finalizing a project is an **Org Admin only** action.
 
 > [!TIP] Use the **Completion Meter** (progress bar) on draft project cards to see how close a project is to being ready for finalization.
 
-Next: [Ranking & Prioritization Workflow](../08-prioritization-launch/ranking-and-consensus.md)
+Next: [Edit Project](edit-projects.md)

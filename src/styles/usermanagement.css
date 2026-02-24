@@ -116,9 +116,9 @@
   color: #4b5563;
 }
 
-/* ============================= */
+/* =============================== */
 /*        TOAST COLOR FIX        */
-/* ============================= */
+/* =============================== */
 
 /* Success Toast */
 .toast.bg-success {
@@ -372,4 +372,195 @@
 
 .card-body {
   overflow: visible !important;
+}
+
+/* =============================== */
+/*      NEW USER MODAL STYLES      */
+/* =============================== */
+
+.new-user-modal .modal-content {
+  border-radius: 12px;
+  border: none !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.new-user-modal .modal-header {
+  background-color: #f8f9fa;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.new-user-modal .modal-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.new-user-modal .modal-body {
+  padding: 2.5rem 2rem;
+}
+
+.new-user-modal .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.new-user-modal .form-label {
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 0;
+  display: flex !important;
+  align-items: center;
+  height: 100%;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.password-input-outer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-outer .form-control {
+  padding-right: 45px !important;
+}
+
+.password-input-outer .form-control.is-invalid {
+  padding-right: 75px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s;
+  box-shadow: none !important;
+}
+
+.password-input-outer .form-control.is-invalid+.password-toggle-btn {
+  right: 42px;
+}
+
+.password-toggle-btn:hover {
+  color: #4b5563;
+}
+
+.new-user-modal .form-control,
+.new-user-modal .form-select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.new-user-modal .form-control:focus,
+.new-user-modal .form-select:focus {
+  border-color: #409eff;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+  outline: none;
+}
+
+.new-user-modal .modal-footer {
+  border-top: none;
+  padding: 0 2rem 2.5rem;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+}
+
+.new-user-modal .btn-cancel {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-weight: 500;
+  padding: 0.6rem 0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  box-shadow: none !important;
+}
+
+.new-user-modal .btn-cancel:hover {
+  color: #111;
+  text-decoration: none;
+  background: transparent !important;
+}
+
+.new-user-modal .btn-ok {
+  background-color: #111 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px;
+  padding: 0.6rem 2.5rem;
+  font-weight: 500;
+  min-width: 110px;
+  font-size: 0.95rem;
+}
+
+.new-user-modal .btn-ok:hover {
+  background-color: #333 !important;
+  color: white !important;
+}
+
+.new-user-modal .btn-ok:active {
+  transform: translateY(1px);
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .new-user-modal .modal-header {
+  background-color: #242830;
+  border-bottom-color: #2a2f38;
+}
+
+[data-theme="dark"] .new-user-modal .modal-title {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .new-user-modal .modal-body {
+  background-color: #1a1d23;
+}
+
+[data-theme="dark"] .new-user-modal .form-label {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .password-toggle-btn {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .password-toggle-btn:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .new-user-modal .modal-footer {
+  background-color: #1a1d23;
+}
+
+[data-theme="dark"] .new-user-modal .btn-ok {
+  background-color: #f3f4f6 !important;
+  color: #111 !important;
+}
+
+[data-theme="dark"] .new-user-modal .btn-ok:hover {
+  background-color: #ffffff !important;
+}
+
+[data-theme="dark"] .new-user-modal .btn-cancel {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .new-user-modal .btn-cancel:hover {
+  color: #e5e7eb;
 }

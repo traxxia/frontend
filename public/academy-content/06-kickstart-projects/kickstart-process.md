@@ -16,11 +16,11 @@ When you finish a strategic plan or initiative in the Essential tier, Traxxia wi
 -   **Outcome**: Complete readiness for project kickstarting.
 
 ![Kickstart Project](/academy-screenshots/projects/kickstart-project.png)
-*Launching a strategic initiative as a project*
+*Screenshot of the Strategic Dashboard with highlighted "Kickstart Projects" button*
 
 -   **Locked for Essential**: Project Kickoff, Monitoring, Maintenance, and Health Tracking.
 -   **Unlocked for Advanced**: Complete visibility and rigor throughout the project lifecycle.
 
 > [!IMPORTANT]  A minimum of **one collaborator** is required for Advanced users to kickstart a project, ensuring a collaborative "sanity check" before execution begins.
 
-Next: [Project Management Lifecycle](../07-project-management/project-lifecycle.md)
+Next: [AI-Driven Project Creation](./ai-projects.md)

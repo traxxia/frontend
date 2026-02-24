@@ -1,4 +1,4 @@
-# Welcome to Traxxia
+# Introduction to Traxxia
 
 Welcome to the **Traxxia Academy**! This guide is designed to take you from a complete beginner to a master of strategic initiative management.
 

@@ -3,7 +3,7 @@
 Traxxia's Financial Analysis transforms your uploaded financial data into actionable insights through automated calculations, visualizations, and strategic recommendations.
 
 ![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/cost-financial.png)
-*Deep financial insights and metrics*
+*Screenshot of Deep financial insights and metrics*
 
 ## What it Provides
 
@@ -17,7 +17,7 @@ Traxxia's Financial Analysis transforms your uploaded financial data into action
 Measures how efficiently you convert revenue into profit (Gross, Operating, and Net margins).
 
 ![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/profitability.png)
-*Profitability Analysis*
+*Screenshot of Profitability Analysis*
 
 ### 2. Growth Tracker
 Tracks revenue and customer growth rates to identify business momentum.

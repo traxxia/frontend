@@ -22,11 +22,11 @@ The questionnaire is divided into three distinct phases:
 -   **Outcome**: Complete readiness for project kickstarting.
 
 ![AI Questionnaire Interface](/academy-screenshots/questionnaire/chat-interface-fresh.png)
-*The AI Questionnaire Chat Interface*
+*Screenshot of the AI Questionnaire Chat Interface with no previous responses*
 
 ![Progress Indicator](/academy-screenshots/questionnaire/progress-indicator.png)
-*Tracking your strategic progress*
+*Screenshot of the progress indicator after some responses*
 
 > [!TIP] The Essential plan offers **Unlimited Initiatives** within your single workspace, allowing you to iterate through as many strategic ideas as you need until you find the right path.
 
-Next: [Strategic Insights](../04-insights-strategy/strategic-insights.md)
+Next: [The Brief](the-brief.md)
