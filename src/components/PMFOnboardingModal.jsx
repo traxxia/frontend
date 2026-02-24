@@ -286,40 +286,43 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
 
       setSubmissionStep(2); // Generating insights (The long part)
 
-      // 2. Prepare payload for ML backend
-      // We convert the formData into an array of strings for the ML API
-      const questionsArray = [
-        "Company Name", "Website", "Country", "City", "Primary Industry",
-        "Geographies", "Customer Segments", "Products/Services", "Channels",
-        "Strategic Objective", "Key Challenge", "Differentiation", "Usage Context"
-      ];
+      // 2. Prepare payload for ML backend in the new structured "raw" format
+      const rawPayload = {
+        company: {
+          name: formData.companyName,
+          website: formData.website || "N/A",
+          location: {
+            city: formData.city || "N/A",
+            country: formData.country,
+          },
+          industry: formData.primaryIndustry,
+          geographies: [formData.geography1, formData.geography2, formData.geography3].filter(Boolean),
+          profits: {
+            source: {
+              segments: [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
+              products: [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
+              channels: [formData.channel1, formData.channel2, formData.channel3].filter(Boolean),
+            }
+          },
+          objective: formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,
+          constraint: {
+            primary: formData.keyChallenge === "Other" ? formData.keyChallengeOther : formData.keyChallenge,
+          },
+          usp: [...formData.differentiation.filter(d => d !== 'Other'), formData.differentiationOther].filter(Boolean),
+        }
+      };
 
-      const answersArray = [
-        formData.companyName,
-        formData.website || "N/A",
-        formData.country,
-        formData.city || "N/A",
-        formData.primaryIndustry,
-        [formData.geography1, formData.geography2, formData.geography3].filter(Boolean).join(", "),
-        [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean).join(", "),
-        [formData.productService1, formData.productService2, formData.productService3].filter(Boolean).join(", "),
-        [formData.channel1, formData.channel2, formData.channel3].filter(Boolean).join(", "),
-        formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,
-        formData.keyChallenge === "Other" ? formData.keyChallengeOther : formData.keyChallenge,
-        [...formData.differentiation, formData.differentiationOther].filter(Boolean).join(", "),
-        formData.usageContext
-      ];
-
-      // 3. Call ML Backend
+      // 3. Call ML Backend with the rawPayload
       const insightResult = await analysisService.makeAPICall(
         'aha-insight',
-        questionsArray,
-        answersArray,
+        null, // No questionsArray needed
+        null, // No answersArray needed
         businessId,
         null,
         null,
         null,
-        formData.companyName
+        formData.companyName,
+        rawPayload // Passing the structured payload
       );
 
       setSubmissionStep(3); // Finalizing

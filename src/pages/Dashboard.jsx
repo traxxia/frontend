@@ -642,11 +642,12 @@ const Dashboard = () => {
       {showInsights ? (
         ENABLE_PMF ? (
           <PMFInsights
+            businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
             onContinue={() => {
               setShowInsights(false);
               navigate("/businesspage", {
                 state: {
-                  business: newlyCreatedBusiness || businesses[0]
+                  business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id)) || businesses[0]
                 }
               });
             }}
@@ -1025,7 +1026,7 @@ const Dashboard = () => {
             <PMFOnboardingModal
               show={showPMFOnboarding}
               onHide={() => setShowPMFOnboarding(false)}
-              businessId={newlyCreatedBusiness?._id || businesses[0]?._id}
+              businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
               onSubmit={(pmfFormData) => {
                 setShowPMFOnboarding(false);
                 setShowInsights(true);
