@@ -221,30 +221,9 @@ const AccessManagement = ({ onToast }) => {
         }
     ];
 
-    if (fetchingBusinesses) {
-        return (
-            <div className="d-flex flex-column align-items-center justify-content-center p-5">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">{t('Loading_businesses...')}</p>
-            </div>
-        );
-    }
-
-    if (businesses.length === 0) {
-        return (
-            <div className="p-5 text-center">
-                <AlertCircle size={48} className="text-muted mb-3" />
-                <h4 className="fw-bold">{t("No Launched Businesses")}</h4>
-                <p className="text-muted mb-0">
-                    {t('No businesses have been launched yet. Access management is only available for launched businesses.')}
-                </p>
-            </div>
-        );
-    }
-
-    // Metrics calculation
-    const rerankCount = accessData?.access_list.filter(u => u.has_rerank_access).length || 0;
-    const editCount = accessData?.access_list.filter(u => u.has_project_edit_access).length || 0;
+    const isLoading = fetchingBusinesses || loading;
+    const rerankCount = accessData?.access_list?.filter(u => u.has_rerank_access).length || 0;
+    const editCount = accessData?.access_list?.filter(u => u.has_project_edit_access).length || 0;
 
     return (
         <div>
@@ -280,7 +259,7 @@ const AccessManagement = ({ onToast }) => {
             <div className="admin-toolbar-row mb-3 mt-4">
                 <div className="d-flex align-items-center gap-3">
                     <div className="business-selector-minimal">
-                        <Form.Label className="admin-cell-secondary mb-1 fw-bold" style={{ fontSize: '17px', marginLeft:'10px', textTransform: 'uppercase' }}>
+                        <Form.Label className="admin-cell-secondary mb-1 fw-bold" style={{ fontSize: '17px', marginLeft: '10px', textTransform: 'uppercase' }}>
                             {t("Select_Business")}
                         </Form.Label>
                         <Form.Select
@@ -288,6 +267,7 @@ const AccessManagement = ({ onToast }) => {
                             onChange={(e) => setSelectedBusinessId(e.target.value)}
                             className="role-select"
                             style={{ minWidth: '220px' }}
+                            disabled={isLoading}
                         >
                             {businesses.map((b) => (
                                 <option key={b._id} value={b._id}>
@@ -305,8 +285,9 @@ const AccessManagement = ({ onToast }) => {
                 countLabel={t("Users")}
                 columns={columns}
                 data={accessData?.access_list || []}
-                loading={loading}
-                emptyMessage={t("No users have been granted access yet for this business.")}
+                loading={isLoading}
+                emptyMessage={businesses.length === 0 ? t("No Launched Businesses Found") : t("No users have been granted access yet for this business.")}
+                emptySubMessage={businesses.length === 0 ? t("Access management is only available for launched businesses.") : ""}
                 searchPlaceholder={t("Search users...")}
             />
 

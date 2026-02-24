@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Card, Form, Button, Dropdown, Modal } from "react-bootstrap";
-import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield } from "lucide-react";
+import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
 import UpgradeModal from "./UpgradeModal";
 import axios from "axios";
@@ -38,9 +38,8 @@ const UserManagement = ({ onToast }) => {
   const [selectedRole, setSelectedRole] = useState("All Roles");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageBeforeFilter, setPageBeforeFilter] = useState(1);
   const itemsPerPage = 10;
   const { t } = useTranslation();
   const [errors, setErrors] = useState({});
@@ -62,6 +61,7 @@ const UserManagement = ({ onToast }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingUserId, setPendingUserId] = useState(null);
   const [pendingRole, setPendingRole] = useState(null);
+
   const [accessType, setAccessType] = useState("reRanking");
   const [allBusinesses, setAllBusinesses] = useState([]);
   const [launchedBusinesses, setLaunchedBusinesses] = useState([]);
@@ -129,7 +129,7 @@ const UserManagement = ({ onToast }) => {
     if (!newName.trim()) {
       newErrors.name = t("Name_is_required");
     } else if (!/[a-zA-Z]/.test(newName)) {
-      newErrors.name = t("Name_must_contain_alphabetic_characters") || "Name must contain at least some alphabetic characters";
+      newErrors.name = t("Name_must_contain_alphabetic_characters");
     } else if (newName.trim().length < 3) {
       newErrors.name = t("Name_must_be_atleast3_characters_long");
     }
@@ -137,7 +137,7 @@ const UserManagement = ({ onToast }) => {
     if (!newEmail.trim()) {
       newErrors.email = t("Email_is_required");
     } else if (!emailPattern.test(newEmail)) {
-      newErrors.email = t("Enter a valid email address");
+      newErrors.email = t("Enter_a_valid_email_address");
     }
     if (!newPassword) {
       newErrors.password = t("Password_is_required");
@@ -153,7 +153,7 @@ const UserManagement = ({ onToast }) => {
       newErrors.password = t("Password_must_contain_special_character");
     }
     if (!confirmPassword) {
-      newErrors.confirmPassword = t("Please_confirm_your_password");
+      newErrors.confirmPassword = t("confirm_password_required");
     } else if (newPassword !== confirmPassword) {
       newErrors.confirmPassword = t("Passwords_do_not_match");
     }
@@ -180,11 +180,11 @@ const UserManagement = ({ onToast }) => {
     };
     try {
       await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
-      onToast("User added successfully!", "success");
+      onToast(t("User_added_successfully"), "success");
       await fetchUsers();
       handleCloseModal();
     } catch (error) {
-      const message = error.response?.data?.message || error.response?.data?.error || "Failed to add user";
+      const message = error.response?.data?.message || error.response?.data?.error || t("Failed_to_add_user");
       onToast(message, "error");
     } finally {
       setIsSubmitting(false);
@@ -208,16 +208,16 @@ const UserManagement = ({ onToast }) => {
   const handleRoleUpdate = async (userId, role) => {
     const userPlan = sessionStorage.getItem("userPlan");
     if (userPlan === 'essential' && role.toLowerCase() === 'collaborator') {
-      onToast("Your plan doesn't support collaborators. Upgrade to Advanced to assign team members.", "error");
+      onToast(t("Your_plan_doesnt_support_collaborators"), "error");
       return;
     }
     try {
       await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role });
-      onToast("User role updated successfully", "success");
+      onToast(t("User_role_updated_successfully"), "success");
       fetchUsers();
     } catch (error) {
       console.error(error);
-      onToast(error.response?.data?.error || "Failed to update role", "error");
+      onToast(error.response?.data?.error || t("Failed_to_update_role"), "error");
     }
   };
 
@@ -228,7 +228,7 @@ const UserManagement = ({ onToast }) => {
   const handleProceedToConfirmation = () => {
     const newErrors = {};
     if (!accessBusinessId) newErrors.business = t("select_business_required");
-    if (selectedCollaboratorIds.length === 0) newErrors.collaborators = t("select_collaborators_at_least_one") || "Please select at least one collaborator";
+    if (selectedCollaboratorIds.length === 0) newErrors.collaborators = t("select_collaborators_at_least_one");
     if (accessType === "projectEdit" && !selectedProjectId) newErrors.project = t("select_project_required");
     if (Object.keys(newErrors).length > 0) {
       setAccessErrors(newErrors);
@@ -253,14 +253,14 @@ const UserManagement = ({ onToast }) => {
       if (accessType === "reRanking") {
         await axios.patch(`${BACKEND_URL}/api/businesses/${accessBusinessId}/allowed-ranking-collaborators`, { collaborator_ids: selectedCollaboratorIds });
       }
-      onToast("Access granted successfully", "success");
+      onToast(t("Access_granted_successfully"), "success");
       setShowAccessConfirmation(false);
       setSelectedProjectId("");
       setSelectedCollaboratorIds([]);
       setAccessBusinessId("");
     } catch (err) {
       console.error(err);
-      onToast(err.response?.data?.error || "Failed to give access", "error");
+      onToast(err.response?.data?.error || t("Failed_to_give_access"), "error");
     } finally {
       setIsGrantingAccess(false);
     }
@@ -277,11 +277,11 @@ const UserManagement = ({ onToast }) => {
     }
     try {
       await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
-      onToast("Collaborator assigned successfully");
+      onToast(t("Collaborator_assigned_successfully"), "success");
       handleCloseAssignModal();
     } catch (error) {
       console.error(error);
-      onToast(error.response?.data?.message || "Failed to assign collaborator", "error");
+      onToast(error.response?.data?.message || t("Failed_to_assign_collaborator"), "error");
     }
   };
 
@@ -305,9 +305,8 @@ const UserManagement = ({ onToast }) => {
       const res = await axios.get(`${BACKEND_URL}/api/admin/users`);
       const data = Array.isArray(res.data) ? res.data : res.data.users || [];
       setUsers(data);
-      setFilteredUsers(data);
     } catch (error) {
-      onToast("Failed to fetch users", "error");
+      onToast(t("Failed_to_fetch_users"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -324,27 +323,33 @@ const UserManagement = ({ onToast }) => {
   };
 
   const handleSearch = (value) => {
+    if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
+    if (searchTerm !== "" && value === "") setCurrentPage(lastPageBeforeSearch);
+    if (value !== searchTerm) setCurrentPage(1);
     setSearchTerm(value);
-    setCurrentPage(1);
-    applyFilters(value, selectedRole);
   };
 
   const handleRoleChange = (e) => {
     const value = e.target.value;
     setSelectedRole(value);
     setCurrentPage(1);
-    applyFilters(searchTerm, value);
   };
 
-  const applyFilters = (search, role) => {
-    const result = users.filter((user) => {
-      const matchSearch = user.name?.toLowerCase().includes(search.toLowerCase()) || user.email?.toLowerCase().includes(search.toLowerCase()) || user.company_name?.toLowerCase().includes(search.toLowerCase());
-      const uiRole = formatRole(user.role_name || user.role);
-      const matchRole = role === "All Roles" || uiRole === role;
-      return matchSearch && matchRole;
-    });
-    setFilteredUsers(result);
-  };
+  const filteredUsers = users.filter((user) => {
+    const matchSearch = (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const uiRole = formatRole(user.role_name || user.role);
+    const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
+
+    return matchSearch && matchRole;
+  });
+
+  useEffect(() => {
+    if (!searchTerm && selectedRole === "All Roles") return;
+    const maxPage = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+    if (currentPage > maxPage) setCurrentPage(maxPage);
+  }, [filteredUsers.length, searchTerm, selectedRole]);
 
   const totalItems = filteredUsers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -446,7 +451,7 @@ const UserManagement = ({ onToast }) => {
         return (
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             {style.icon}
-            <span style={{ color: style.color, fontWeight: 500 }}>{uiRole}</span>
+            <span style={{ color: style.color, fontWeight: 500 }}>{t(uiRole.replace(' ', '_'))}</span>
           </span>
         );
       }
@@ -468,13 +473,13 @@ const UserManagement = ({ onToast }) => {
               <Dropdown.Toggle as={CustomToggle} disabled={disabled} />
               <Dropdown.Menu align="end">
                 <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
-                  <UserCog size={16} className="me-2" /> Collaborator
+                  <UserCog size={16} className="me-2" /> {t("Collaborator")}
                 </Dropdown.Item>
                 <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
-                  <User size={16} className="me-2" /> Viewer
+                  <User size={16} className="me-2" /> {t("Viewer")}
                 </Dropdown.Item>
                 <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
-                  <ShieldCheck size={16} className="me-2" /> User
+                  <ShieldCheck size={16} className="me-2" /> {t("User")}
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
@@ -489,25 +494,25 @@ const UserManagement = ({ onToast }) => {
       {/* ---- Metric Cards ---- */}
       <div className="admin-metrics-grid">
         <MetricCard
-          label={t("Total_Users") || "Total Users"}
+          label={t("Total_Users")}
           value={users.length}
           icon={Users}
           iconColor="blue"
         />
         <MetricCard
-          label={t("org_admins") || "Org Admins"}
+          label={t("org_admins")}
           value={orgAdminsCount}
           icon={Crown}
           iconColor="purple"
         />
         <MetricCard
-          label={t("Collaborators") || "Collaborators"}
+          label={t("Collaborators")}
           value={collaboratorsCount}
           icon={UserCog}
           iconColor="green"
         />
         <MetricCard
-          label={t("Viewers") || "Viewers"}
+          label={t("Viewers")}
           value={viewersCount}
           icon={User}
           iconColor="orange"
@@ -526,7 +531,7 @@ const UserManagement = ({ onToast }) => {
                 <User size={16} /> {t("Assign_Collaborator")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
-                <ShieldCheck size={16} /> {t("Project Access")}
+                <ShieldCheck size={16} /> {t("Project_Access")}
               </Button>
             </>
           )}
@@ -536,7 +541,7 @@ const UserManagement = ({ onToast }) => {
       <AdminTable
         title={t("User_Management")}
         count={filteredUsers.length}
-        countLabel={t("Users")}
+        countLabel={filteredUsers.length === 1 ? t("User") : t("Users")}
         columns={columns}
         data={paginatedUsers}
         searchTerm={searchTerm}
@@ -548,6 +553,12 @@ const UserManagement = ({ onToast }) => {
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
         loading={isLoading}
+        emptyMessage={t("No_Users_Found")}
+        emptySubMessage={
+          searchTerm
+            ? t("No_users_match_your_search_criteria")
+            : t("No_users_available")
+        }
         toolbarContent={
           <Form.Select
             className="role-select"
@@ -555,38 +566,135 @@ const UserManagement = ({ onToast }) => {
             value={selectedRole}
             onChange={handleRoleChange}
           >
-            <option>{t("All_Roles")}</option>
-            <option>Org Admin</option>
-            <option>Collaborator</option>
-            <option>User</option>
-            <option>Viewer</option>
+            <option value="All Roles">{t("All_Roles")}</option>
+            <option value="Org Admin">{t("Org_Admin")}</option>
+            <option value="Collaborator">{t("Collaborator")}</option>
+            <option value="User">{t("User")}</option>
+            <option value="Viewer">{t("Viewer")}</option>
           </Form.Select>
         }
       />
 
       {/* --- Modals Stay Same --- */}
-      <Modal show={showModal} onHide={handleCloseModal} centered size="lg">
-        <Modal.Header closeButton className="border-0 pb-2"><Modal.Title className="fw-bold">{t("Add_New_User")}</Modal.Title></Modal.Header>
-        <Modal.Body className="px-4">
+      {/* --- Add New User Modal --- */}
+      <Modal show={showModal} onHide={handleCloseModal} centered size="lg" className="new-user-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>{t("New_user")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
           <Form onSubmit={handleAddUser}>
-            <fieldset disabled={isSubmitting} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
-              <Row>
-                <Col md={6}><Form.Group className="mb-3"><Form.Label className="fw-semibold">{t("user_name")} *</Form.Label><Form.Control type="text" className={`minimal-input ${errors.name ? "is-invalid" : ""}`} value={newName} onChange={(e) => setNewName(e.target.value)} />{errors.name && <div className="invalid-feedback">{errors.name}</div>}</Form.Group></Col>
-                <Col md={6}><Form.Group className="mb-3"><Form.Label className="fw-semibold">{t("email_address")} *</Form.Label><Form.Control type="email" className={`minimal-input ${errors.email ? "is-invalid" : ""}`} value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />{errors.email && <div className="invalid-feedback">{errors.email}</div>}</Form.Group></Col>
-              </Row>
-              <Row>
-                <Col md={6}><Form.Group className="mb-3"><Form.Label className="fw-semibold">{t("password")} *</Form.Label><div className="d-flex"><Form.Control type={showPassword ? "text" : "password"} className={`minimal-input ${errors.password ? "is-invalid" : ""}`} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /><Button variant="outline-secondary" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <Eye size={18} /> : <EyeOff size={18} />}</Button></div>{errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}</Form.Group></Col>
-                <Col md={6}><Form.Group className="mb-3"><Form.Label className="fw-semibold">{t("confirm_password")} *</Form.Label><div className="d-flex"><Form.Control type={showConfirmPassword ? "text" : "password"} className={`minimal-input ${errors.confirmPassword ? "is-invalid" : ""}`} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /><Button variant="outline-secondary" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}</Button></div>{errors.confirmPassword && <div className="invalid-feedback d-block">{errors.confirmPassword}</div>}</Form.Group></Col>
-              </Row>
-              <Row>
-                <Col md={isSuperAdmin ? 6 : 12}><Form.Group className="mb-3"><Form.Label className="fw-semibold">{t("role")} *</Form.Label><Form.Select className={`minimal-input ${errors.role ? "is-invalid" : ""}`} value={newRole} onChange={(e) => setNewRole(e.target.value)}><option value="">{t("Select_Role")}</option><option value="collaborator">Collaborator</option>{!hasPlan && (<><option value="user">User</option><option value="viewer">Viewer</option></>)}</Form.Select>{errors.role && <div className="invalid-feedback">{errors.role}</div>}</Form.Group></Col>
-                {isSuperAdmin && (<Col md={6}><Form.Group className="mb-3"><Form.Label className="fw-semibold">{t("company")} *</Form.Label><Form.Select className={`minimal-input ${errors.company ? "is-invalid" : ""}`} value={selectedCompanyId} onChange={(e) => setSelectedCompanyId(e.target.value)}><option value="">{t("Select_Company")}</option>{companies.map(c => <option key={c._id} value={c._id}>{c.company_name}</option>)}</Form.Select>{errors.company && <div className="invalid-feedback">{errors.company}</div>}</Form.Group></Col>)}
-              </Row>
-              <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                <Button variant="link" onClick={handleCloseModal} disabled={isSubmitting}>{t("cancel")}</Button>
-                <Button type="submit" className="add-user-submit-btn" disabled={isSubmitting}>{isSubmitting ? t("Adding...") : t("Add_User")}</Button>
-              </div>
+            <fieldset disabled={isSubmitting} style={{ border: 'none', padding: 0 }}>
+              <Form.Group as={Row} className="mb-4 align-items-center">
+                <Form.Label column sm={4}>{t("email_address")} *</Form.Label>
+                <Col sm={8}>
+                  <Form.Control
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    isInvalid={!!errors.email}
+                  />
+                  <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
+                </Col>
+              </Form.Group>
+
+              <Form.Group as={Row} className="mb-4 align-items-center">
+                <Form.Label column sm={4}>{t("first_name")} *</Form.Label>
+                <Col sm={8}>
+                  <Form.Control
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    isInvalid={!!errors.name}
+                  />
+                  <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
+                </Col>
+              </Form.Group>
+
+              <Form.Group as={Row} className="mb-4 align-items-center">
+                <Form.Label column sm={4}>{t("password")} *</Form.Label>
+                <Col sm={8}>
+                  <div className="password-input-outer">
+                    <Form.Control
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      isInvalid={!!errors.password}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="password-toggle-btn">
+                      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                  </div>
+                  {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
+                </Col>
+              </Form.Group>
+
+              <Form.Group as={Row} className="mb-4 align-items-center">
+                <Form.Label column sm={4}>{t("confirm_password")} *</Form.Label>
+                <Col sm={8}>
+                  <div className="password-input-outer">
+                    <Form.Control
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      isInvalid={!!errors.confirmPassword}
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="password-toggle-btn">
+                      {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && <div className="invalid-feedback d-block">{errors.confirmPassword}</div>}
+                </Col>
+              </Form.Group>
+
+              <Form.Group as={Row} className="mb-4 align-items-center">
+                <Form.Label column sm={4}>{t("role")} *</Form.Label>
+                <Col sm={8}>
+                  <Form.Select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value)}
+                    isInvalid={!!errors.role}
+                  >
+                    <option value="">{t("Select_Role")}</option>
+                    <option value="collaborator">{t("Collaborator")}</option>
+                    {!hasPlan && (
+                      <>
+                        <option value="user">{t("User")}</option>
+                        <option value="viewer">{t("Viewer")}</option>
+                      </>
+                    )}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{errors.role}</Form.Control.Feedback>
+                </Col>
+              </Form.Group>
+
+              {isSuperAdmin && (
+                <Form.Group as={Row} className="mb-4 align-items-center">
+                  <Form.Label column sm={4}>{t("company")} *</Form.Label>
+                  <Col sm={8}>
+                    <Form.Select
+                      value={selectedCompanyId}
+                      onChange={(e) => setSelectedCompanyId(e.target.value)}
+                      isInvalid={!!errors.company}
+                    >
+                      <option value="">{t("Select_Company")}</option>
+                      {companies.map(c => (
+                        <option key={c._id} value={c._id}>{c.company_name}</option>
+                      ))}
+                    </Form.Select>
+                    <Form.Control.Feedback type="invalid">{errors.company}</Form.Control.Feedback>
+                  </Col>
+                </Form.Group>
+              )}
             </fieldset>
+
+            <div className="modal-footer">
+              <Button variant="link" onClick={handleCloseModal} className="btn-cancel" disabled={isSubmitting}>
+                {t("cancel")}
+              </Button>
+              <Button variant="primary" type="submit" className="btn-ok" disabled={isSubmitting}>
+                {isSubmitting ? t("Adding") : t("ok")}
+              </Button>
+            </div>
           </Form>
         </Modal.Body>
       </Modal>
@@ -604,12 +712,12 @@ const UserManagement = ({ onToast }) => {
       </Modal>
 
       <Modal show={showGiveAccessModal} onHide={() => setShowGiveAccessModal(false)} centered size="lg">
-        <Modal.Header closeButton><Modal.Title>{t("Add Project Access")}</Modal.Title></Modal.Header>
+        <Modal.Header closeButton><Modal.Title>{t("Add_Project_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form noValidate>
-            <Form.Group className="mb-3"><Form.Label className="fw-bold">{t("Access Type")}</Form.Label><div className="mt-2 ms-3"><Form.Check type="radio" label="Enable Reranking Project" checked={accessType === "reRanking"} onChange={() => setAccessType("reRanking")} /><Form.Check type="radio" label="Edit the Project" checked={accessType === "projectEdit"} onChange={() => setAccessType("projectEdit")} /></div></Form.Group>
+            <Form.Group className="mb-3"><Form.Label className="fw-bold">{t("Access_Type")}</Form.Label><div className="mt-2 ms-3"><Form.Check type="radio" label={t("Enable_Reranking_Project")} checked={accessType === "reRanking"} onChange={() => setAccessType("reRanking")} /><Form.Check type="radio" label={t("Edit_the_Project")} checked={accessType === "projectEdit"} onChange={() => setAccessType("projectEdit")} /></div></Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={accessBusinessId} onChange={(e) => setAccessBusinessId(e.target.value)} isInvalid={!!accessErrors.business}><option value="">{t("Select_Business")}</option>{launchedBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.business}</Form.Control.Feedback></Form.Group>
-            {accessType === "projectEdit" && (<Form.Group className="mb-3"><Form.Label>{t("Project")}</Form.Label><Form.Select value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} isInvalid={!!accessErrors.project} disabled={!accessBusinessId}><option value="">{loadingProjects ? t("Loading projects") : t("Select Project")}</option>{projects.map(p => <option key={p._id} value={p._id}>{p.project_name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.project}</Form.Control.Feedback></Form.Group>)}
+            {accessType === "projectEdit" && (<Form.Group className="mb-3"><Form.Label>{t("Project")}</Form.Label><Form.Select value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} isInvalid={!!accessErrors.project} disabled={!accessBusinessId}><option value="">{loadingProjects ? t("Loading_projects") : t("Select_Project")}</option>{projects.map(p => <option key={p._id} value={p._id}>{p.project_name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.project}</Form.Control.Feedback></Form.Group>)}
             <Form.Group className="mb-3"><Form.Label>{t("Collaborators")}</Form.Label><div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "10px" }}>{collaborators.map(c => <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />)}</div></Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={() => setShowGiveAccessModal(false)}>{t("cancel")}</Button><Button variant="primary" onClick={handleProceedToConfirmation}>{t("Continue")}</Button></div>
           </Form>
@@ -617,14 +725,15 @@ const UserManagement = ({ onToast }) => {
       </Modal>
 
       <Modal show={showAccessConfirmation} onHide={() => setShowAccessConfirmation(false)} centered>
-        <Modal.Header closeButton><Modal.Title>Confirm Access Grant</Modal.Title></Modal.Header>
-        <Modal.Body><p>Business: {getSelectedBusinessName()}</p>{accessType === "projectEdit" && <p>Project: {getSelectedProjectName()}</p>}<p>Access: {accessType === "reRanking" ? "Reranking" : "Edit"}</p><p>Collaborators: {getSelectedCollaboratorNames().join(", ")}</p></Modal.Body>
-        <Modal.Footer><Button variant="secondary" onClick={() => setShowAccessConfirmation(false)}>Back</Button><Button variant="primary" onClick={handleGiveProjectAccess} disabled={isGrantingAccess}>{isGrantingAccess ? "Granting..." : "Yes, Grant Access"}</Button></Modal.Footer>
+        <Modal.Header closeButton><Modal.Title>{t("Confirm_Access_Grant")}</Modal.Title></Modal.Header>
+        <Modal.Body><p>{t("Business_Label")} {getSelectedBusinessName()}</p>{accessType === "projectEdit" && <p>{t("Project_Label")} {getSelectedProjectName()}</p>}<p>{t("Access_Label")} {accessType === "reRanking" ? t("reRanking") : t("projectEdit")}</p><p>{t("Collaborators_Label")} {getSelectedCollaboratorNames().join(", ")}</p></Modal.Body>
+        <Modal.Footer><Button variant="secondary" onClick={() => setShowAccessConfirmation(false)}>{t("Back")}</Button><Button variant="primary" onClick={handleGiveProjectAccess} disabled={isGrantingAccess}>{isGrantingAccess ? t("Granting") : t("Yes_Grant_Access")}</Button></Modal.Footer>
       </Modal>
 
-      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered><Modal.Header closeButton><Modal.Title>Confirm Role Change</Modal.Title></Modal.Header><Modal.Body><p>Change role to <strong>{pendingRole}</strong>?</p></Modal.Body><Modal.Footer><Button variant="light" onClick={() => setShowConfirm(false)}>Cancel</Button><Button variant="primary" onClick={() => { handleRoleUpdate(pendingUserId, pendingRole); setShowConfirm(false); }}>Yes, Change Role</Button></Modal.Footer></Modal>
+      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered><Modal.Header closeButton><Modal.Title>{t("Confirm_Role_Change")}</Modal.Title></Modal.Header><Modal.Body><p>{t("Change_role_to")} <strong>{t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1))}</strong>?</p></Modal.Body><Modal.Footer><Button variant="light" onClick={() => setShowConfirm(false)}>{t("cancel")}</Button><Button variant="primary" onClick={() => { handleRoleUpdate(pendingUserId, pendingRole); setShowConfirm(false); }}>{t("Yes_Change_Role")}</Button></Modal.Footer></Modal>
 
       <UpgradeModal show={showUpgradeModal} onHide={() => setShowUpgradeModal(false)} onUpgradeSuccess={() => fetchUsers()} />
+
     </div>
   );
 };

@@ -28,16 +28,15 @@ const AuditTrail = ({ onToast }) => {
   const [auditEntries, setAuditEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    user_id: '',
     event_type: '',
     start_date: '',
     end_date: '',
-    search_term: '',
-    page: 1,
-    limit: 10,
     include_analysis_data: false
   });
-  const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
+  const itemsPerPage = 10;
   const [pagination, setPagination] = useState({});
   const [initialLoad, setInitialLoad] = useState(true);
   const [expandedAnalysis, setExpandedAnalysis] = useState({});
@@ -78,11 +77,7 @@ const AuditTrail = ({ onToast }) => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Only fetch users if current user is admin (for filtering dropdown)
-        if (['super_admin', 'company_admin'].includes(currentUserRole)) {
-          await fetchUsers();
-        }
-        setTimeout(() => fetchAuditTrail(), 100);
+        fetchAuditTrail();
       } catch (error) {
         onToast('Error initializing data', 'error');
       } finally {
@@ -95,31 +90,17 @@ const AuditTrail = ({ onToast }) => {
     }
   }, [initialLoad, currentUserRole]);
 
-  // Debounce search term
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(filters.search_term);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(filters.search_term);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [filters.search_term]);
-
-  // Consolidated fetch effect for all filters except page (which has its own effect or can be merged)
-  // Actually, it's better to have one effect that handles everything to avoid race conditions
+  // Consolidated fetch effect for all filters
   useEffect(() => {
     if (!initialLoad) {
       fetchAuditTrail();
     }
   }, [
-    filters.page,
     filters.event_type,
-    filters.user_id,
     filters.start_date,
     filters.end_date,
-    filters.limit,
-    filters.include_analysis_data,
-    debouncedSearchTerm
+    filters.include_analysis_data
   ]);
 
 
@@ -134,9 +115,11 @@ const AuditTrail = ({ onToast }) => {
       }
 
       const params = new URLSearchParams();
+      // Fetch up to 500 entries for local filtering/pagination
+      params.append('limit', '500');
+
       Object.keys(filters).forEach(key => {
-        // Use debounced search term instead of raw filter search_term
-        const value = key === 'search_term' ? debouncedSearchTerm : filters[key];
+        const value = filters[key];
         if (value && key !== 'quick_date') {
           params.append(key, value);
         }
@@ -156,7 +139,6 @@ const AuditTrail = ({ onToast }) => {
         setAnalysisStats(data.analysis_statistics || []);
       } else {
         const errorData = await response.json();
-
         if (response.status === 401 || response.status === 403) {
           onToast('Session expired. Please login again.', 'error');
         } else {
@@ -170,8 +152,6 @@ const AuditTrail = ({ onToast }) => {
     }
   };
 
-
-
   const closeModal = () => {
     setModalData({
       isOpen: false,
@@ -183,38 +163,46 @@ const AuditTrail = ({ onToast }) => {
     });
   };
 
-  const fetchUsers = async () => {
-    try {
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-
-      if (!token || token === 'undefined' || token === 'null') {
-        return;
-      }
-
-      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
-      }
-    } catch (error) {
-      // Silent fail
-    }
-  };
-
-
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
-      page: key === 'page' ? value : 1
     }));
+    setCurrentPage(1);
   };
+
+  const handleSearch = (value) => {
+    if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
+    if (searchTerm !== "" && value === "") setCurrentPage(lastPageBeforeSearch);
+    if (value !== searchTerm) setCurrentPage(1);
+    setSearchTerm(value);
+  };
+
+  const filteredEntries = auditEntries.filter((entry) => {
+    const term = searchTerm.toLowerCase();
+    const dataString = JSON.stringify(entry.event_data || {}).toLowerCase();
+    const summaryString = JSON.stringify(entry.event_data_summary || {}).toLowerCase();
+    const infoString = JSON.stringify(entry.additional_info || {}).toLowerCase();
+
+    return (
+      entry.user_name?.toLowerCase().includes(term) ||
+      entry.user_email?.toLowerCase().includes(term) ||
+      entry.event_type?.toLowerCase().includes(term) ||
+      entry.event_type?.replace(/_/g, ' ').toLowerCase().includes(term) ||
+      entry.company_name?.toLowerCase().includes(term) ||
+      entry.business_name?.toLowerCase().includes(term) ||
+      dataString.includes(term) ||
+      summaryString.includes(term) ||
+      infoString.includes(term)
+    );
+  });
+
+  const totalItems = filteredEntries.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedEntries = filteredEntries.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getEventIcon = (eventType) => {
     const iconMap = {
@@ -246,7 +234,7 @@ const AuditTrail = ({ onToast }) => {
     return colorMap[eventType] || 'bg-gray-50 border-gray-200';
   };
 
-  const formatEventData = (eventType, eventData, eventDataSummary) => {
+  const formatEventData = (eventType, eventData, eventDataSummary, row) => {
     // Use summary for analysis_generated if available
     const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : eventData;
 
@@ -254,14 +242,28 @@ const AuditTrail = ({ onToast }) => {
       login_success: `Successful login as ${data.role}${data.company ? ` at ${data.company}` : ''}`,
       login_failed: `Failed login attempt for ${data.email}`,
       logout: 'User logged out',
-      question_answered: `Answered: ${data.question_text || 'Question'}`,
-      question_skipped: `Skipped: ${data.question_text || 'Question'}`,
-      question_edited: `Edited: ${data.question_text || 'Question'}`,
-      analysis_generated: `Generated ${data.analysis_type || 'analysis'}: ${data.analysis_name} (Phase: ${data.phase})`,
+      question_answered: `Answered Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
+      question_skipped: `Skipped Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
+      question_edited: `Edited Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
+      analysis_generated: `Generated ${data.analysis_type || 'analysis'}: ${data.analysis_name} (Phase: ${data.phase})${row.business_name ? ` for business: ${row.business_name}` : ''}`,
       business_created: `Created business: ${data.business_name} (${data.business_purpose})`,
-      business_deleted: `Deleted business: ${data.business_name}${data.conversations_deleted ? ` (${data.conversations_deleted} conversations removed)` : ''}`
+      business_deleted: `Deleted business: ${data.business_name}${data.conversations_deleted ? ` (${data.conversations_deleted} conversations removed)` : ''}`,
+      collaborator_assigned: `Assigned collaborator to business: ${row.business_name || 'Business'}`
     };
     return formatMap[eventType] || eventType.replace('_', ' ');
+  };
+
+  const getEventStatusInfo = (eventType) => {
+    if (eventType.includes('success') || eventType.includes('created') || eventType === 'analysis_generated') {
+      return { label: t('success'), color: 'emerald', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' };
+    }
+    if (eventType.includes('failed') || eventType.includes('deleted')) {
+      return { label: eventType.includes('failed') ? t('failed') : t('deleted'), color: 'red', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
+    }
+    if (eventType.includes('skipped') || eventType.includes('skipped')) {
+      return { label: t('skipped'), color: 'yellow', bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' };
+    }
+    return { label: t('info'), color: 'blue', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
   };
 
   const formatTimestamp = (timestamp) => {
@@ -273,6 +275,52 @@ const AuditTrail = ({ onToast }) => {
       minute: '2-digit',
       second: '2-digit'
     });
+  };
+
+  const renderEventDetails = (data) => {
+    if (!data || typeof data !== 'object') return null;
+
+    const excludedKeys = ['has_location', 'conversations_deleted', 'business_purpose'];
+
+    return Object.entries(data)
+      .filter(([key]) => !excludedKeys.includes(key.toLowerCase()))
+      .map(([key, value]) => {
+        // Skip IDs and internal fields if needed, or format them
+        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        let displayValue = value;
+
+        if (value === null || value === undefined || value === "") displayValue = '-';
+        else if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
+        else if (typeof value === 'object' && value !== null) {
+          if (key.toLowerCase() === 'location' || key.toLowerCase() === 'additional_info') {
+            const parts = [];
+            if (value.city) parts.push(value.city);
+            if (value.country) parts.push(value.country);
+            displayValue = parts.length > 0 ? parts.join(', ') : '-';
+          } else {
+            displayValue = Object.entries(value)
+              .filter(([_, v]) => v !== null && v !== undefined && v !== "")
+              .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+              .join(' | ') || '-';
+          }
+        }
+        else if (key.includes('at') || key.includes('timestamp')) {
+          try {
+            displayValue = new Date(value).toLocaleString();
+          } catch (e) {
+            displayValue = value;
+          }
+        }
+
+        const isLongText = String(displayValue).length > 60;
+
+        return (
+          <div className={isLongText ? "col-12 mb-3" : "col-md-6 mb-3"} key={key}>
+            <label className="text-muted tiny-label text-uppercase d-block mb-1">{label}</label>
+            <div className={`fw-500 text-dark ${isLongText ? 'bg-white p-2 border rounded-1' : ''}`} style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{String(displayValue)}</div>
+          </div>
+        );
+      });
   };
 
   const downloadAnalysisData = (auditId, analysisType, analysisResult) => {
@@ -288,31 +336,44 @@ const AuditTrail = ({ onToast }) => {
     URL.revokeObjectURL(url);
   };
 
-  const openAnalysisModal = async (row) => {
-    try {
-      setLoadingAnalysisData(prev => ({ ...prev, [row._id]: true }));
-      const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
-      const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${row._id}/analysis-data`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+  const openAnalysisModal = async (entry) => {
+    const eventData = entry.event_data_summary || entry.event_data || {};
+    let analysisData = entry.event_data?.analysis_result;
+    let businessName = eventData.business_name || entry.business_name || 'Business';
 
-      if (response.ok) {
-        const data = await response.json();
-        setModalData({
-          isOpen: true,
-          analysisType: row.event_data?.analysis_type || 'Analysis',
-          analysisData: data.analysis_result,
-          analysisName: row.event_data?.analysis_name || 'Analysis Result',
-          businessName: data.business_name || row.company_name || 'System',
-          auditId: row._id
+    if (!analysisData) {
+      try {
+        setLoadingAnalysisData(prev => ({ ...prev, [entry._id]: true }));
+        const token = sessionStorage.getItem('token') || sessionStorage.getItem('authToken');
+        const response = await fetch(`${REACT_APP_BACKEND_URL}/api/admin/audit-trail/${entry._id}/analysis-data`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-      } else {
-        onToast('Failed to load analysis data', 'error');
+
+        if (response.ok) {
+          const data = await response.json();
+          analysisData = data.analysis_result;
+          businessName = data.business_name || businessName;
+        } else {
+          onToast('Failed to load analysis data', 'error');
+          return;
+        }
+      } catch (error) {
+        onToast('Error loading analysis data', 'error');
+        return;
+      } finally {
+        setLoadingAnalysisData(prev => ({ ...prev, [entry._id]: false }));
       }
-    } catch (error) {
-      onToast('Error loading analysis data', 'error');
-    } finally {
-      setLoadingAnalysisData(prev => ({ ...prev, [row._id]: false }));
+    }
+
+    if (analysisData) {
+      setModalData({
+        isOpen: true,
+        analysisType: eventData.analysis_type || 'analysis',
+        analysisData: analysisData,
+        analysisName: eventData.analysis_name || `${(eventData.analysis_type || 'analysis').toUpperCase()} Analysis`,
+        businessName: businessName,
+        auditId: entry._id
+      });
     }
   };
 
@@ -353,7 +414,7 @@ const AuditTrail = ({ onToast }) => {
       width: '35%',
       render: (_, row) => (
         <div className="text-wrap" style={{ fontSize: '0.85rem', lineHeight: '1.4' }}>
-          {formatEventData(row.event_type, row.event_data, row.event_data_summary)}
+          {formatEventData(row.event_type, row.event_data, row.event_data_summary, row)}
         </div>
       )
     },
@@ -362,7 +423,7 @@ const AuditTrail = ({ onToast }) => {
       key: 'actions',
       align: 'right',
       render: (_, row) => (
-        <>
+        <div className="details-cell">
           {row.event_data && Object.keys(row.event_data).length > 0 && row.event_type !== 'analysis_generated' && (
             <button
               className="view-button btn-sm"
@@ -372,16 +433,28 @@ const AuditTrail = ({ onToast }) => {
             </button>
           )}
           {row.event_type === 'analysis_generated' && (
-            <button
-              className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-pill px-3"
-              onClick={() => openAnalysisModal(row)}
-              disabled={loadingAnalysisData[row._id]}
-            >
-              <BarChart3 size={14} />
-              {loadingAnalysisData[row._id] ? t('Loading...') : t('view_analysis')}
-            </button>
+            <div className="analysis-details">
+              <button
+                className="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-pill px-3"
+                onClick={() => openAnalysisModal(row)}
+                disabled={loadingAnalysisData[row._id]}
+                style={{ fontSize: '0.75rem' }}
+              >
+                {loadingAnalysisData[row._id] ? (
+                  <>
+                    <RefreshCw size={12} className="animate-spin" />
+                    {t('Loading...')}
+                  </>
+                ) : (
+                  <>
+                    <BarChart3 size={14} />
+                    {t("audit_analysis")}
+                  </>
+                )}
+              </button>
+            </div>
           )}
-        </>
+        </div>
       )
     }
   ];
@@ -390,43 +463,21 @@ const AuditTrail = ({ onToast }) => {
     <div className="admin-container">
       <AdminTable
         title={t('audit_trail')}
-        count={pagination.total || 0}
+        count={totalItems}
         countLabel={t('events')}
         columns={columns}
-        data={auditEntries}
-        searchTerm={filters.search_term}
-        onSearchChange={(val) => handleFilterChange('search_term', val)}
+        data={paginatedEntries}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
         searchPlaceholder={t('search_events')}
-        currentPage={filters.page}
-        totalPages={pagination.total_pages || 1}
-        onPageChange={(page) => handleFilterChange('page', page)}
-        totalItems={pagination.total || 0}
-        itemsPerPage={filters.limit}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
         loading={loading}
         toolbarContent={
           <div className="d-flex gap-3 align-items-center flex-wrap">
-            {['super_admin', 'company_admin'].includes(currentUserRole) && (
-              <Form.Select
-                size="sm"
-                className="admin-filter-select"
-                style={{ width: '200px' }}
-                value={filters.user_id}
-                onChange={(e) => handleFilterChange('user_id', e.target.value)}
-              >
-                <option value="">{t('all_users')}</option>
-                {users.map(user => (
-                  <option key={user._id} value={user._id}>{user.name}</option>
-                ))}
-              </Form.Select>
-            )}
-
-            <button
-              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 border-0"
-              onClick={fetchAuditTrail}
-              disabled={loading}
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            </button>
           </div>
         }
       />
@@ -455,7 +506,7 @@ const AuditTrail = ({ onToast }) => {
             </div>
             <div>
               <div className="h5 mb-0 fw-bold">{selectedEntry?.event_type.replace('_', ' ').toUpperCase()}</div>
-              <div className="text-muted small fw-normal">{selectedEntry && formatTimestamp(selectedEntry.timestamp)}</div>
+              <div className="text-muted small fw-normal mt-1">{selectedEntry && formatTimestamp(selectedEntry.timestamp)}</div>
             </div>
           </Modal.Title>
         </Modal.Header>
@@ -477,12 +528,25 @@ const AuditTrail = ({ onToast }) => {
             </div>
           </div>
 
-          <div className="detail-section">
-            <h6 className="fw-bold text-muted small text-uppercase mb-3">{t('raw_data')}</h6>
-            <div className="bg-dark p-3 rounded-3 overflow-auto" style={{ maxHeight: '400px' }}>
-              <pre className="text-light small mb-0" style={{ fontFamily: 'Monaco, Consolas, monospace' }}>
-                {selectedEntry && JSON.stringify(selectedEntry.event_data, null, 2)}
-              </pre>
+          <div className="detail-section mb-0">
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 className="fw-bold text-muted small text-uppercase mb-0">{t('event_data')}</h6>
+              {selectedEntry && (
+                <span className={`badge rounded-pill ${getEventStatusInfo(selectedEntry.event_type).bg} ${getEventStatusInfo(selectedEntry.event_type).text} border ${getEventStatusInfo(selectedEntry.event_type).border} px-2 py-1`} style={{ fontSize: '0.65rem' }}>
+                  {getEventStatusInfo(selectedEntry.event_type).label.toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className={`${selectedEntry ? getEventStatusInfo(selectedEntry.event_type).bg : 'bg-light'} p-3 rounded-3 border ${selectedEntry ? getEventStatusInfo(selectedEntry.event_type).border : ''}`}>
+              <div className="row">
+                {selectedEntry && renderEventDetails(selectedEntry.event_data)}
+                {selectedEntry && renderEventDetails(selectedEntry.additional_info)}
+                {!selectedEntry?.event_data && !selectedEntry?.additional_info && (
+                  <div className="col-12 text-center py-3 text-muted">
+                    {t('no_details_available')}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Modal.Body>
