@@ -19,7 +19,7 @@ The **S.T.R.A.T.E.G.I.C** framework is your roadmap for turning analysis into ex
 
 
 ![Strategic Analysis Overview](/academy-screenshots/strategic-analysis/str.png)
-*Strategic Dashboard*
+*Screenshot of the Strategic Dashboard with generated initiatives*
 
 
 ## Kickstarting Projects
@@ -28,7 +28,7 @@ The **S.T.R.A.T.E.G.I.C** tab includes the powerful **"Kickstart Projects"** fea
 
 
 ![Strategic Analysis Overview](/academy-screenshots/strategic-analysis/kickstart-project.png)
-*Kickstarting Projects*
+*Screenshot of the Strategic Dashboard with Kickstart Projects button*
 
 > [!IMPORTANT] This framework bridges the gap between purely "knowing" your strategy (6 C's) and "doing" the work (Project Management).
 

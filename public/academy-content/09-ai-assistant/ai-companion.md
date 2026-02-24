@@ -4,15 +4,15 @@ Your **AI Assistant** is more than just a chatbot—it is a continuous data comp
 
 ## 1. Contextual Intelligence
 The AI Assistant is aware of where you are in the application:
--   **Questionarrie View**: Provides high-level business advice and helps you navigate the platform.
+-   **Questionnaire View**: Provides high-level business advice and helps you navigate the platform.
 
 ![AI Assistant Context](/academy-screenshots/questionnaire/ai-assistant-highlevel.png)
-*Context-aware AI assistance throughout the platform*
+*Screenshot of the Questionnaire View with highlighted AI Assistant*
 
 -   **Project Edit View**: Automatically receives the current **Project ID**, allowing it to answer specific questions about that initiative’s goals, risks, and descriptions.
 
 ![AI Assistant Context](/academy-screenshots/questionnaire/chat-qa-exchanges.png)
-*Context-aware AI assistance throughout the platform*
+*Screenshot of the Project Edit View with highlighted AI Assistant*
 
 ## 2. Dynamic Suggestions
 Based on the field you are editing or the phase you are in, the AI will suggest questions like:
@@ -21,7 +21,7 @@ Based on the field you are editing or the phase you are in, the AI will suggest 
 -   "Suggest success metrics for this strategic bet."
 
 ## 3. History Persistence
-Your conversation history is unified across the session. You can start a chat on the Questionarrie and continue it inside a Project page without losing the thread of your conversation.
+Your conversation history is unified across the session. You can start a chat on the Questionnaire and continue it inside a Project page without losing the thread of your conversation.
 
 > [!TIP] Use the AI as a "sparring partner" to challenge your strategic assumptions and help you write more professional business descriptions.
 

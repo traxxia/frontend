@@ -25,6 +25,7 @@
   transition: all 0.2s ease;
   white-space: nowrap;
 }
+
 .advanced-options,
 .filter-group {
   overflow: visible !important;
@@ -378,7 +379,8 @@
   font-size: 14px;
   padding-bottom: 12px;
 }
-.analysis-modal-body h5{
+
+.analysis-modal-body h5 {
   margin-left: 20px;
 }
 
@@ -593,7 +595,8 @@
 
 .checkbox-label .span-text {
   display: inline-block;
-  margin: 0; /* prevent extra vertical spacing */
+  margin: 0;
+  /* prevent extra vertical spacing */
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -628,7 +631,7 @@
   min-width: 220px;
   max-width: 320px;
   text-align: left;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
@@ -681,6 +684,10 @@
 }
 
 .details-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 150px;
 }
 
@@ -725,7 +732,7 @@
   border-radius: 12px;
   width: 90%;
   max-width: 1200px;
-  top:10px;
+  top: 10px;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -738,6 +745,7 @@
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -749,7 +757,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 60px 20px 24px; /* Extra padding on right for close button */
+  padding: 20px 60px 20px 24px;
+  /* Extra padding on right for close button */
   border-bottom: 1px solid #e5e7eb;
   background-color: #f9fafb;
   position: relative;
@@ -911,29 +920,29 @@
   .analysis-modal-overlay {
     padding: 10px;
   }
-  
+
   .analysis-modal-content {
     width: 95%;
     max-height: 95vh;
   }
-  
+
   .analysis-modal-header {
     padding: 15px 50px 15px 20px;
   }
-  
+
   .analysis-modal-close {
     top: 15px;
     right: 15px;
   }
-  
+
   .analysis-modal-title {
     font-size: 18px;
   }
-  
+
   .analysis-modal-subtitle {
     font-size: 13px;
   }
-  
+
   .analysis-modal-download {
     padding: 6px 10px;
     font-size: 13px;
@@ -947,7 +956,7 @@
     gap: 12px;
     padding: 15px 50px 15px 15px;
   }
-  
+
   .analysis-modal-actions {
     width: 100%;
     justify-content: flex-start;
@@ -961,12 +970,14 @@
 [data-theme="dark"] .data-table td,
 [data-theme="dark"] .user-table th,
 [data-theme="dark"] .user-table td {
-  border-bottom: 1px solid #EEEFF7 !important; /* soft white border */
+  border-bottom: 1px solid #EEEFF7 !important;
+  /* soft white border */
 }
 
 [data-theme="dark"] .data-table,
 [data-theme="dark"] .user-table {
-  border: 1px solid #f4f4f7 !important; /* outer border, if needed */
+  border: 1px solid #f4f4f7 !important;
+  /* outer border, if needed */
 }
 
 [data-theme="dark"] .data-table thead,
@@ -976,20 +987,23 @@
 
 [data-theme="dark"] .audit-trail-container,
 [data-theme="dark"] .porters-container {
-  background: #191b22 !important; /* deep dark bg */
+  background: #191b22 !important;
+  /* deep dark bg */
   color: #e5e7eb;
 }
 
 [data-theme="dark"] .data-table,
 [data-theme="dark"] .user-table {
-  background: #212432 !important; /* Table main bg */
+  background: #212432 !important;
+  /* Table main bg */
   color: #55565c !important;
   border-radius: 0 !important;
 }
 
 [data-theme="dark"] .data-table thead,
 [data-theme="dark"] .user-table thead {
-  background: #23263a !important; /* Table header */
+  background: #23263a !important;
+  /* Table header */
   color: #fff !important;
 }
 
@@ -1010,7 +1024,8 @@
 
 [data-theme="dark"] .data-table tr:nth-child(even) td,
 [data-theme="dark"] .user-table tr:nth-child(even) td {
-  background: #202432 !important; /* row banding */
+  background: #202432 !important;
+  /* row banding */
 }
 
 [data-theme="dark"] .data-table tr:hover td,
@@ -1075,6 +1090,7 @@
 [data-theme="dark"] .clear-filters-btn {
   color: #bccdea !important;
 }
+
 [data-theme="dark"] .clear-filters-btn:hover {
   background: #202432 !important;
   color: #fff !important;
@@ -1090,26 +1106,31 @@
 [data-theme="dark"] .maturity-container,
 [data-theme="dark"] .productivity-metrics,
 [data-theme="dark"] .maturity-score-analysis {
-  background: #1a1d27 !important;   /* or #181c24 for even darker look */
+  background: #1a1d27 !important;
+  /* or #181c24 for even darker look */
   color: #e5e7eb !important;
 }
 
 [data-theme="dark"] .data-table,
 [data-theme="dark"] .user-table {
-  border: 1px solid #313654 !important;         /* consistent outer border */
-  border-collapse: collapse !important;         /* helps fix double borders */
+  border: 1px solid #313654 !important;
+  /* consistent outer border */
+  border-collapse: collapse !important;
+  /* helps fix double borders */
 }
 
 [data-theme="dark"] .data-table th,
 [data-theme="dark"] .data-table td,
 [data-theme="dark"] .user-table th,
 [data-theme="dark"] .user-table td {
-  border: 1px solid #313654 !important;         /* thin, clear grid lines everywhere */
+  border: 1px solid #313654 !important;
+  /* thin, clear grid lines everywhere */
 }
 
 [data-theme="dark"] .data-table thead,
 [data-theme="dark"] .user-table thead {
-  border-bottom: 2px solid #384465 !important;  /* thicker header bottom border */
+  border-bottom: 2px solid #384465 !important;
+  /* thicker header bottom border */
 }
 
 [data-theme="dark"] .data-table th,
@@ -1139,13 +1160,16 @@
   background-color: #23263a !important;
   color: #fff !important;
 }
+
 [data-theme="dark"] .analysis-modal-header .analysis-modal-title,
 [data-theme="dark"] .analysis-modal-header h2,
 [data-theme="dark"] .analysis-modal-header * {
   color: #fff !important;
 }
+
 [data-theme="dark"] .analysis-modal-header .analysis-modal-subtitle {
-  color: #a6b1c4 !important; /* or #cbd5e1 for softer gray */
+  color: #a6b1c4 !important;
+  /* or #cbd5e1 for softer gray */
 }
 
 
@@ -1153,27 +1177,34 @@
   max-height: calc(90vh - 80px);
   overflow: auto;
   padding: 0;
-  background: #1a1d27;                    /* dark body to match modal header */
+  background: #1a1d27;
+  /* dark body to match modal header */
   color: #e5e7eb;
 }
 
 [data-theme="dark"] .analysis-modal-close {
-  color: #fff !important;        /* bright white for good contrast */
+  color: #fff !important;
+  /* bright white for good contrast */
 }
+
 [data-theme="dark"] .analysis-modal-close:hover {
   background-color: #23263a !important;
   box-shadow: 0 0 0 2px #37415133;
-  color: #fff !important;        /* stays white on hover */
+  color: #fff !important;
+  /* stays white on hover */
 }
 
 [data-theme="dark"] .analysis-actions {
-  background: #23263a !important;  /* deep dark panel background */
+  background: #23263a !important;
+  /* deep dark panel background */
   padding: 8px 12px;
-  border-bottom: 1px solid #EEEFF7 !important;  /* mild white border */
+  border-bottom: 1px solid #EEEFF7 !important;
+  /* mild white border */
   display: flex;
   justify-content: flex-start;
 }
-.span-text{
+
+.span-text {
   margin-left: 2px;
   margin-bottom: 5px;
 }
