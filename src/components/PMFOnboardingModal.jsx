@@ -60,14 +60,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
   const progressPercentage = (currentStep / TOTAL_STEPS) * 100;
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
-    label: c
+    label: t(c) || c
   }));
 
   const industryOptions = INDUSTRIES_BY_CATEGORY.map(group => ({
-    label: group.category,
+    label: t(group.category) || group.category,
     options: group.industries.map(ind => ({
       value: ind,
-      label: ind
+      label: t(ind) || ind
     }))
   }));
 
@@ -169,14 +169,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
     const newErrors = {};
 
     if (!formData.strategicObjective) {
-      newErrors.strategicObjective = 'Please select an objective';
+      newErrors.strategicObjective = t('Please select an objective');
     }
 
     if (
       formData.strategicObjective === 'Other' &&
       !formData.strategicObjectiveOther.trim()
     ) {
-      newErrors.strategicObjectiveOther = 'Please specify';
+      newErrors.strategicObjectiveOther = t('Please specify');
     }
 
     setErrors(newErrors);
@@ -187,14 +187,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
     const newErrors = {};
 
     if (!formData.keyChallenge) {
-      newErrors.keyChallenge = 'Please select a challenge';
+      newErrors.keyChallenge = t('Please select a challenge');
     }
 
     if (
       formData.keyChallenge === 'Other' &&
       !formData.keyChallengeOther.trim()
     ) {
-      newErrors.keyChallengeOther = 'Please specify';
+      newErrors.keyChallengeOther = t('Please specify');
     }
 
     setErrors(newErrors);
@@ -205,14 +205,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
     const newErrors = {};
 
     if (formData.differentiation.length === 0) {
-      newErrors.differentiation = 'Select at least one option';
+      newErrors.differentiation = t('Select at least one option');
     }
 
     if (
       formData.differentiation.includes('Other') &&
       !formData.differentiationOther.trim()
     ) {
-      newErrors.differentiation = 'Please specify for Other';
+      newErrors.differentiation = t('Please specify for Other');
     }
 
     setErrors(newErrors);
@@ -222,7 +222,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
   const validateStep9 = () => {
     const newErrors = {};
     if (!formData.usageContext) {
-      newErrors.usageContext = 'Please select one option';
+      newErrors.usageContext = t('Please select one option');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -766,7 +766,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                   name="productService2"
                   value={formData.productService2}
                   onChange={handleInputChange}
-                  placeholder={`${t('product_service') || 'Product/Service'} 2`}
+                  placeholder={`${t('product service') || 'Product/Service'} 2`}
                   className="pmf-form-control"
                   isInvalid={!!errors.productService2}
                 />
@@ -902,7 +902,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                   onChange={() => handleRadioSelect(option)}
                   label={
                     <span className="pmf-radio-label">
-                      {option}
+                      {t(option)}
                     </span>
                   }
                 />
@@ -913,7 +913,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
               <Form.Group className="mt-3">
                 <Form.Control
                   type="text"
-                  placeholder="Please specify"
+                  placeholder={t("Please specify")}
                   value={formData.strategicObjectiveOther}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -955,7 +955,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                   type="radio"
                   name="keyChallenge"
                   label={
-                    <span className="pmf-radio-label">{option} </span>
+                    <span className="pmf-radio-label">{t(option)} </span>
                   }
                   checked={formData.keyChallenge === option}
                   onChange={() => handleRadioChange('keyChallenge', option)}
@@ -967,7 +967,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
               <Form.Group className="mt-3">
                 <Form.Control
                   type="text"
-                  placeholder="Please specify"
+                  placeholder={t("Please specify")}
                   value={formData.keyChallengeOther}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -1007,7 +1007,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
               >
                 <Form.Check
                   type="checkbox"
-                  label={option}
+                  label={t(option)}
                   checked={formData.differentiation.includes(option)}
                   onChange={() => handleDifferentiationChange(option)}
                   className="pmf-checkbox-input"
@@ -1017,7 +1017,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                   formData.differentiation.includes('Other') && (
                     <Form.Control
                       type="text"
-                      placeholder="Please specify"
+                      placeholder={t("Please specify")}
                       value={formData.differentiationOther}
                       onChange={(e) =>
                         setFormData(prev => ({
@@ -1061,7 +1061,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                 <Form.Check
                   type="radio"
                   name="usageContext"
-                  label={option}
+                  label={t(option)}
                   checked={formData.usageContext === option}
                   onChange={() =>
                     setFormData(prev => ({
@@ -1147,17 +1147,17 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
               <div className="d-flex align-items-center mb-1">
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 <span style={{ fontSize: "14px" }}>
-                  {submissionStep === 1 && "Saving data..."}
-                  {submissionStep === 2 && "Analyzing market (60-90s)..."}
-                  {submissionStep === 3 && "Finalizing..."}
+                  {submissionStep === 1 && t("Saving data...")}
+                  {submissionStep === 2 && t("Analyzing market (60-90s)...")}
+                  {submissionStep === 3 && t("Finalizing...")}
                 </span>
               </div>
             </div>
           ) : (
             <>
               {currentStep === TOTAL_STEPS
-                ? (t('finish') || 'Complete Onboarding')
-                : (t('next') || 'Next')}
+                ? t('finish')
+                : t('next')}
               {currentStep < TOTAL_STEPS && (
                 <ChevronRight size={18} className="ms-1" />
               )}
