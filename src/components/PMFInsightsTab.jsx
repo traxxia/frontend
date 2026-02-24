@@ -155,18 +155,15 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
           <Badge
             bg="primary-subtle"
             text="primary"
-            className="px-3 py-2 rounded-pill fw-semibold"
+            className="px-4 py-2 rounded-pill fw-bold fs-5"
           >
-            ✨ {t("AHA Insights")}
+            {t("AHA Insights")}
           </Badge>
 
-          <h2 className="fw-bold mt-3 mb-2">
-            {t("Heres what we discovered")}
+          <h2 className="fw-semibold mt-3 mb-2">
+            {t("Key strategic insights based on your onboarding")}
           </h2>
 
-          <p className="text-muted fs-6">
-            {t("Based on your inputs, here are the critical insights about your strategic position.")}
-          </p>
         </div>
 
         <Row className="g-4">

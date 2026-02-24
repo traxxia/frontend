@@ -19,7 +19,7 @@ import "../styles/business.css";
 import { useStreamingManager } from '../components/StreamingManager';
 import ProjectsSection from "../components/ProjectsSection";
 import PMFInsightsTab from "../components/PMFInsightsTab";
-//import ExecutiveSummary from "../components/ExecutiveSummary";
+import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -687,18 +687,18 @@ const BusinessSetupPage = () => {
     }
   };
 
-  /*const handleExecutiveTabClick = () => {
-  if (isMobile) {
-    setActiveTab("executive");
-  } else {
-    if (!isAnalysisExpanded) {
-      setIsAnalysisExpanded(true);
+  const handleExecutiveTabClick = () => {
+    if (isMobile) {
       setActiveTab("executive");
     } else {
-      setActiveTab("executive");
+      if (!isAnalysisExpanded) {
+        setIsAnalysisExpanded(true);
+        setActiveTab("executive");
+      } else {
+        setActiveTab("executive");
+      }
     }
-  }
-  };*/
+  };
 
   const handlePrioritiesTabClick = () => {
     if (isMobile) {
@@ -919,7 +919,15 @@ const BusinessSetupPage = () => {
               className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
               onClick={handleAhaTabClick}
             >
-             {t("aha")} 
+              {t("aha")}
+            </button>
+          )}
+          {ENABLE_PMF && (
+            <button
+              className={`mobile-tab ${activeTab === "executive" ? "active" : ""}`}
+              onClick={handleExecutiveTabClick}
+            >
+              Executive Summary
             </button>
           )}
           {unlockedFeatures.analysis && (
@@ -1010,12 +1018,14 @@ const BusinessSetupPage = () => {
                           {t("aha")}
                         </button>
                       )}
-                      {/*<button
-                        className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                        onClick={handleExecutiveTabClick}
-                      >
-                        Executive Summary
-                      </button>*/}
+                      {ENABLE_PMF && (
+                        <button
+                          className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
+                          onClick={handleExecutiveTabClick}
+                        >
+                          Executive Summary
+                        </button>
+                      )}
 
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
@@ -1159,9 +1169,9 @@ const BusinessSetupPage = () => {
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {/*{activeTab === "executive" && (
-                        <ExecutiveSummary/>
-                      )}*/}
+                      {ENABLE_PMF && activeTab === "executive" && (
+                        <ExecutiveSummary businessId={selectedBusinessId} />
+                      )}
                       {activeTab === "analysis" &&
                         <AnalysisContentManager
                           {...analysisProps}
@@ -1226,12 +1236,14 @@ const BusinessSetupPage = () => {
                         {t("aha")}
                       </button>
                     )}
-                    {/*<button
-                      className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
-                      onClick={handleExecutiveTabClick}
-                    >
-                      Executive Summary
-                    </button>*/}
+                    {ENABLE_PMF && (
+                      <button
+                        className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
+                        onClick={handleExecutiveTabClick}
+                      >
+                        Executive Summary
+                      </button>
+                    )}
 
                     {unlockedFeatures.analysis && (
                       <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
@@ -1312,9 +1324,9 @@ const BusinessSetupPage = () => {
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
-                  {/*{activeTab === "executive" && (
-                    <ExecutiveSummary/>
-                  )}*/}
+                  {ENABLE_PMF && activeTab === "executive" && (
+                    <ExecutiveSummary businessId={selectedBusinessId} />
+                  )}
                   {activeTab === "analysis" && (
                     <div className="analysis-section">
                       <div className="analysis-content">

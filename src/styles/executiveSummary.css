@@ -355,6 +355,24 @@
   margin: 0;
 }
 
+.exc-priority-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  margin-left: 21px; /* Align with title text (number + gap) */
+}
+
+.exc-priority-meta span {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.exc-priority-meta strong {
+  color: #4b5563;
+  font-weight: 600;
+}
+
 .exc-priority-actions {
   display: flex;
   flex-direction: column;

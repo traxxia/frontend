@@ -1,13 +1,50 @@
-import React, { useState } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Circle, Star } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2 } from "lucide-react";
+import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
 
-const ExecutiveSummary = () => {
+const ExecutiveSummary = ({ businessId }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     whereToCompete: true,
     howToCompete: true,
     topPriorities: true,
   });
+
+  // API Service setup
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem("token");
+  const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+
+  const fetchSummary = useCallback(async () => {
+    if (!businessId) return;
+    try {
+      setLoading(true);
+      const [summaryResult, analysisResult] = await Promise.all([
+        analysisService.getPMFExecutiveSummary(businessId),
+        analysisService.getPMFAnalysis(businessId)
+      ]);
+
+      const summaryContent = summaryResult?.summary || summaryResult;
+      const baseAnalysis = analysisResult?.analysis || analysisResult;
+
+      // Merge data: Use summary but fallback to base analysis for core items
+      setData({
+        ...summaryContent,
+        _baseAnalysis: baseAnalysis
+      });
+    } catch (error) {
+      console.error("Error fetching executive summary:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [businessId]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -16,14 +53,59 @@ const ExecutiveSummary = () => {
     }));
   };
 
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <Loader2 className="text-primary animate-spin" />
+        <span className="ms-2 text-muted">Loading executive summary...</span>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-5 text-muted">
+        <Info size={40} className="mb-3 opacity-25" />
+        <p>No executive summary available yet.</p>
+        <p className="small">Complete the PMF onboarding to generate this summary.</p>
+      </div>
+    );
+  }
+
+  // Enhanced helper to find data regardless of snake_case or camelCase or Title Case
+  const getSection = (key) => {
+    if (!data) return null;
+    return data[key] ||
+      data[key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())] || // Title Case
+      data[key.replace(/_/g, "")] || // No spaces
+      data[key.split('_').map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join('')]; // camelCase
+  };
+
+  const whereToCompete = getSection('where_to_compete') || data;
+  const howToCompete = getSection('how_to_compete');
+  const topPriorities = getSection('top_priorities') || data.top_priorities || data.topPriorities || data["Top Priorities"];
+
+  // Helper for nested access
+  const getNested = (obj, path) => {
+    return path.split('.').reduce((acc, part) => {
+      if (!acc) return null;
+      // Try snake_case, then Title Case with spaces
+      return acc[part] || acc[part.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())] || acc[part.replace(/_/g, " ")];
+    }, obj);
+  };
+
+  // Specific mappings for the provided JSON structure
+  const differentiationLevers = howToCompete?.recommended_differentiation?.primary_lever || howToCompete?.differentiation_levers || howToCompete?.["Differentiation Levers"] || "N/A";
+  const implications = howToCompete?.what_this_implies || howToCompete?.implies || howToCompete?.implications || howToCompete?.Implies;
+  const excludes = howToCompete?.what_this_excludes || howToCompete?.excludes || howToCompete?.Excludes;
+  const newAdjacencies = whereToCompete?.new_adjacencies_to_explore || whereToCompete?.new_adjacencies || whereToCompete?.["New Adjacencies"];
+
   return (
     <div className="exc-executive-summary-container">
       <div className="exc-executive-content">
+        {/* WHERE TO COMPETE */}
         <div className="exc-section-card">
-          <div
-            className="exc-section-header"
-            onClick={() => toggleSection("whereToCompete")}
-          >
+          <div className="exc-section-header" onClick={() => toggleSection("whereToCompete")}>
             <div className="exc-section-title-wrapper">
               <div className="exc-section-icon exc-where-icon">
                 <Target size={20} />
@@ -36,16 +118,13 @@ const ExecutiveSummary = () => {
               </div>
             </div>
             <button className="exc-section-toggle">
-              {expandedSections.whereToCompete ? (
-                <ChevronUp size={20} />
-              ) : (
-                <ChevronDown size={20} />
-              )}
+              {expandedSections.whereToCompete ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
           </div>
 
           {expandedSections.whereToCompete && (
             <div className="exc-section-body">
+              {/* Current Core */}
               <div className="exc-subsection exc-current-core">
                 <div className="exc-subsection-icon exc-blue">
                   <Target size={18} />
@@ -53,12 +132,17 @@ const ExecutiveSummary = () => {
                 <div className="exc-subsection-body">
                   <h3 className="exc-subsection-title">Current Core</h3>
                   <p className="exc-source-label">
-                    <Info size={14} /> Profit arenas inferred from Q5
+                    <Info size={14} /> Profit arenas inferred from your data
                   </p>
-                  <p className="exc-content-text"><b>Segments:</b> dfg</p>
+                  <p className="exc-content-text">
+                    <strong>Segments:</strong> {[data._baseAnalysis?.onboarding_data?.customerSegment1, data._baseAnalysis?.onboarding_data?.customerSegment2, data._baseAnalysis?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") || "N/A"}<br />
+                    <strong>Products:</strong> {[data._baseAnalysis?.onboarding_data?.productService1, data._baseAnalysis?.onboarding_data?.productService2, data._baseAnalysis?.onboarding_data?.productService3].filter(Boolean).join(", ") || "N/A"}<br />
+                    <strong>Channels:</strong> {[data._baseAnalysis?.onboarding_data?.channel1, data._baseAnalysis?.onboarding_data?.channel2, data._baseAnalysis?.onboarding_data?.channel3].filter(Boolean).join(", ") || "N/A"}
+                  </p>
                 </div>
               </div>
 
+              {/* Existing Adjacencies */}
               <div className="exc-subsection exc-existing-adjacencies">
                 <div className="exc-subsection-icon exc-orange">
                   <FileText size={18} />
@@ -68,10 +152,17 @@ const ExecutiveSummary = () => {
                   <p className="exc-source-label exc-orange-text">
                     <Info size={14} /> AI-inferred from your core business data
                   </p>
-                  <p className="exc-content-text exc-italic">No existing adjacencies inferred. Business appears focused on core.</p>
+                  {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments)?.length > 0 ? (
+                    <p className="exc-content-text">
+                      <strong>Segments:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments).join(", ")}
+                    </p>
+                  ) : (
+                    <p className="exc-content-text exc-italic">No existing adjacencies inferred. Business appears focused on core.</p>
+                  )}
                 </div>
               </div>
 
+              {/* New Adjacencies */}
               <div className="exc-subsection exc-new-adjacencies">
                 <div className="exc-subsection-icon exc-green">
                   <ListChecks size={18} />
@@ -81,23 +172,23 @@ const ExecutiveSummary = () => {
                   <p className="exc-source-label exc-green-text">
                     <Info size={14} /> AI-recommended based on industry and core business
                   </p>
-                  <div className="exc-option-block">
-                    <p className="exc-option-title"><strong>Option 1</strong></p>
-                    <p className="exc-content-text"><strong>Segments:</strong> Adjacent to dfg</p>
-                    <p className="exc-content-text"><strong>Products:</strong> Complementary products, Value-added services</p>
-                    <p className="exc-content-text"><strong>Channels:</strong> Multi-channel</p>
-                  </div>
+                  {newAdjacencies?.map((adj, idx) => (
+                    <div className="exc-option-block" key={idx}>
+                      <p className="exc-option-title"><strong>Option {idx + 1}: {adj.title || adj.name}</strong></p>
+                      <p className="exc-content-text"><strong>Segments:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : (adj.segments || "N/A")}</p>
+                      <p className="exc-content-text"><strong>Products:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : (adj.products || "N/A")}</p>
+                      <p className="exc-content-text"><strong>Channels:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : (adj.channels || "N/A")}</p>
+                    </div>
+                  )) || <p className="exc-content-text exc-italic">Analyzing potential adjacencies...</p>}
                 </div>
               </div>
             </div>
           )}
         </div>
 
+        {/* HOW TO COMPETE */}
         <div className="exc-section-card">
-          <div
-            className="exc-section-header"
-            onClick={() => toggleSection("howToCompete")}
-          >
+          <div className="exc-section-header" onClick={() => toggleSection("howToCompete")}>
             <div className="exc-section-title-wrapper">
               <div className="exc-section-icon exc-how-icon">
                 <FileText size={20} />
@@ -110,11 +201,7 @@ const ExecutiveSummary = () => {
               </div>
             </div>
             <button className="exc-section-toggle">
-              {expandedSections.howToCompete ? (
-                <ChevronUp size={20} />
-              ) : (
-                <ChevronDown size={20} />
-              )}
+              {expandedSections.howToCompete ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
           </div>
 
@@ -122,10 +209,10 @@ const ExecutiveSummary = () => {
             <div className="exc-section-body">
               <div className="exc-how-compete-box">
                 <p className="exc-box-title">This is how you should differentiate:</p>
-                
+
                 <div className="exc-differentiation-section">
-                  <p className="exc-differentiation-label">Recommended differentiation levers (from Q8)</p>
-                  <p className="exc-differentiation-text"><strong>Relationships / trust + Speed / responsiveness</strong></p>
+                  <p className="exc-differentiation-label">Recommended differentiation levers</p>
+                  <p className="exc-differentiation-text"><strong>{differentiationLevers}</strong></p>
                 </div>
 
                 <div className="exc-implications-section">
@@ -134,7 +221,14 @@ const ExecutiveSummary = () => {
                       <CheckCircle2 size={16} />
                       <span>What this implies:</span>
                     </div>
-                    <p className="exc-implication-text">Focus all resources, messaging, and operations on excelling at relationships / trust speed / responsiveness</p>
+                    <div className="exc-implication-text">
+                      {Array.isArray(implications)
+                        ? implications.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>)
+                        : (typeof implications === 'object'
+                          ? JSON.stringify(implications)
+                          : (implications || "N/A"))
+                      }
+                    </div>
                   </div>
 
                   <div className="exc-implication-item exc-excludes">
@@ -142,7 +236,14 @@ const ExecutiveSummary = () => {
                       <AlertCircle size={16} />
                       <span>What this excludes:</span>
                     </div>
-                    <p className="exc-implication-text">Competing primarily on price or quality / expertise</p>
+                    <div className="exc-implication-text">
+                      {Array.isArray(excludes)
+                        ? excludes.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>)
+                        : (typeof excludes === 'object'
+                          ? JSON.stringify(excludes)
+                          : (excludes || "N/A"))
+                      }
+                    </div>
                   </div>
                 </div>
               </div>
@@ -150,11 +251,9 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
+        {/* TOP PRIORITIES */}
         <div className="exc-section-card">
-          <div
-            className="exc-section-header"
-            onClick={() => toggleSection("topPriorities")}
-          >
+          <div className="exc-section-header" onClick={() => toggleSection("topPriorities")}>
             <div className="exc-section-title-wrapper">
               <div className="exc-section-icon exc-priorities-icon">
                 <ListChecks size={20} />
@@ -167,99 +266,43 @@ const ExecutiveSummary = () => {
               </div>
             </div>
             <button className="exc-section-toggle">
-              {expandedSections.topPriorities ? (
-                <ChevronUp size={20} />
-              ) : (
-                <ChevronDown size={20} />
-              )}
+              {expandedSections.topPriorities ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
           </div>
 
           {expandedSections.topPriorities && (
             <div className="exc-section-body">
-              <div className="exc-priority-item">
-                <div className="exc-priority-header">
-                  <span className="exc-priority-number">1.</span>
-                  <h4 className="exc-priority-title">Strengthen core differentiation</h4>
-                </div>
-                <div className="exc-priority-actions">
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Align all operations and marketing to reinforce Relationships / trust</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Develop brand positioning that clearly communicates core differentiator</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Train team on delivering consistent differentiated experience</span>
-                  </div>
-                </div>
-              </div>
+              {topPriorities?.map((item, idx) => {
+                // Determine actions list
+                const actions = item.actions || item.Actions || [];
 
-              <div className="exc-priority-item">
-                <div className="exc-priority-header">
-                  <span className="exc-priority-number">2.</span>
-                  <h4 className="exc-priority-title">Optimize profit pool concentration</h4>
-                </div>
-                <div className="exc-priority-actions">
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Double down on highest-margin customer segments and products</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Implement tiered pricing strategy for premium segments</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Analyze and phase out unprofitable customer relationships</span>
-                  </div>
-                </div>
-              </div>
+                return (
+                  <div className="exc-priority-item" key={idx}>
+                    <div className="exc-priority-header">
+                      <span className="exc-priority-number">{idx + 1}.</span>
+                      <div>
+                        <h4 className="exc-priority-title">{item.title || item.action || item.Action || item.Title}</h4>
+                      </div>
+                    </div>
 
-              <div className="exc-priority-item">
-                <div className="exc-priority-header">
-                  <span className="exc-priority-number">3.</span>
-                  <h4 className="exc-priority-title">Evaluate and rationalize adjacencies</h4>
-                </div>
-                <div className="exc-priority-actions">
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Exit low-ROI adjacencies, scale what reinforces the core</span>
+                    {actions.length > 0 && (
+                      <div className="exc-priority-actions mt-3 ps-4">
+                        {actions.map((action, aIdx) => {
+                          const actionText = typeof action === 'string' ? action : (action.action || action.Action || JSON.stringify(action));
+                          return (
+                            <div className="exc-action-item" key={aIdx}>
+                              <CheckCircle2 size={16} />
+                              <div>
+                                <span>{actionText}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Conduct ROI analysis on all adjacent business lines</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Develop exit strategy for underperforming initiatives</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="exc-priority-item">
-                <div className="exc-priority-header">
-                  <span className="exc-priority-number">4.</span>
-                  <h4 className="exc-priority-title">Address primary constraint</h4>
-                </div>
-                <div className="exc-priority-actions">
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Tackle execution slippage</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Establish metrics and monitoring system for constraint resolution</span>
-                  </div>
-                  <div className="exc-action-item">
-                    <CheckCircle2 size={16} />
-                    <span>Allocate dedicated resources to resolve primary bottleneck</span>
-                  </div>
-                </div>
-              </div>
+                );
+              }) || <p className="exc-content-text exc-italic">Identifying strategic priorities...</p>}
             </div>
           )}
         </div>

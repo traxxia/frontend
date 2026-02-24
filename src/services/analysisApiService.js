@@ -87,7 +87,8 @@ export const API_ENDPOINTS = {
   liquidityEfficiency: 'excel-analysis',
   investmentPerformance: 'excel-analysis',
   leverageRisk: 'excel-analysis',
-  ahaInsight: 'aha-insight'
+  ahaInsight: 'aha-insight',
+  executiveSummary: 'executive-summary'
 };
 
 // Metric type mapping for excel-analysis
@@ -141,6 +142,40 @@ export class AnalysisApiService {
       return await response.json();
     } catch (error) {
       console.error('Error fetching PMF analysis:', error);
+      throw error;
+    }
+  }
+
+  async savePMFExecutiveSummary(businessId, summary) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ summary })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving PMF executive summary:', error);
+      throw error;
+    }
+  }
+
+  async getPMFExecutiveSummary(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 404) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching PMF executive summary:', error);
       throw error;
     }
   }

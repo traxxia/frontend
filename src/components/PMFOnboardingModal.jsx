@@ -325,12 +325,28 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
         rawPayload // Passing the structured payload
       );
 
+      // 4. Call Executive Summary API with the same rawPayload
+      const summaryResult = await analysisService.makeAPICall(
+        'executive-summary',
+        null,
+        null,
+        businessId,
+        null,
+        null,
+        null,
+        formData.companyName,
+        rawPayload
+      );
+
       setSubmissionStep(3); // Finalizing
 
-      // 4. Save insights to our backend
+      // 5. Save insights to our backend
       await analysisService.savePMFInsights(businessId, insightResult);
 
-      // 5. Fetch final PMF analysis to ensure data is updated
+      // 6. Save executive summary to our backend
+      await analysisService.savePMFExecutiveSummary(businessId, summaryResult);
+
+      // 7. Fetch final PMF analysis to ensure data is updated
       await analysisService.getPMFAnalysis(businessId);
 
       if (onSubmit) {
@@ -395,7 +411,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleInputChange}
-                placeholder={t('enter_company_name') || 'Enter company or client name'}
+                placeholder={t('enter company name') || 'Enter company or client name'}
                 className="pmf-form-control"
                 isInvalid={!!errors.companyName}
                 autoFocus
@@ -441,7 +457,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
-                placeholder={t('select_country') || 'Select country'}
+                placeholder={t('select country') || 'Select country'}
                 options={countryOptions}
                 value={countryOptions.find(o => o.value === formData.country)}
                 onChange={(selected) =>
@@ -523,7 +539,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('primary_industry') || 'Primary Industry'} <span className="text-danger">*</span>
+                {t('primary industry') || 'Primary Industry'} <span className="text-danger">*</span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -591,10 +607,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-3">
-              {t('which_geographies_strategic_answers') || 'Which geographies do you want strategic answers for?'}
+              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
-              {t('enter_up_to_3_geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
+              {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
             </p>
 
             <Form.Group className="mb-3">
@@ -653,18 +669,18 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-2">
-              {t('where_does_profit_come_from') || 'Where does most of your profit come from today?'}
+              {t('where does profit come from') || 'Where does most of your profit come from today?'}
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
-              {t('your_best_estimate_enough') || 'Your best estimate is enough.'}
+              {t('your best estimate enough') || 'Your best estimate is enough.'}
             </p>
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('customer_segments_max_3') || 'Customer segments (max 3)'}
+                {t('customer segments max 3') || 'Customer segments (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('customer_segments_example') || 'e.g., young adults, SMEs, enterprise'}
+                {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
               </p>
 
               <Form.Group className="mb-3">
@@ -721,10 +737,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('products_services_max_3') || 'Products / services (max 3)'}
+                {t('products services max 3') || 'Products / services (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('products_services_example') || 'e.g., ice cream, M&A advisory'}
+                {t('products services example') || 'e.g., ice cream, M&A advisory'}
               </p>
 
               <Form.Group className="mb-3">
@@ -733,7 +749,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                   name="productService1"
                   value={formData.productService1}
                   onChange={handleInputChange}
-                  placeholder={(t('product_service') || 'Product/Service') + ' 1'}
+                  placeholder={(t('product service') || 'Product/Service') + ' 1'}
                   className="pmf-form-control"
                   isInvalid={!!errors.productService1}
                 />
@@ -767,7 +783,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
                   name="productService3"
                   value={formData.productService3}
                   onChange={handleInputChange}
-                  placeholder={`${t('product_service') || 'Product/Service'} 3`}
+                  placeholder={`${t('product service') || 'Product/Service'} 3`}
                   className="pmf-form-control"
                   isInvalid={!!errors.productService3}
                 />
@@ -781,10 +797,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('channels_max_3') || 'Channels (max 3)'}
+                {t('channels max 3') || 'Channels (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('channels_example') || 'e.g., convenience stores, direct sales'}
+                {t('channels example') || 'e.g., convenience stores, direct sales'}
               </p>
 
               <Form.Group className="mb-3">
@@ -823,10 +839,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
 
             <div className="mb-2">
               <Form.Label className="pmf-form-label mb-2">
-                {t('geographies_max_3') || 'Geographies (max 3)'}
+                {t('geographies max_3') || 'Geographies (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('geographies_example') || 'e.g., Lima, nationwide'}
+                {t('geographies example') || 'e.g., Lima, nationwide'}
               </p>
 
               <Form.Group className="mb-3">
@@ -869,7 +885,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-4">
-              {t('strategic_objective') || 'Strategic Objective'}
+              {t('strategic objective') || 'Strategic Objective'}
             </h5>
 
             {STRATEGIC_OBJECTIVES.map((option) => (
@@ -1080,7 +1096,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
       <Modal.Header className="pmf-modal-header">
         <div className="pmf-header-content">
           <Modal.Title className="pmf-modal-title">
-            {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
+            {t('Pmf Onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
           </Modal.Title>
         </div>
         <button
