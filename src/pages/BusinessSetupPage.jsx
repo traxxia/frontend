@@ -927,7 +927,7 @@ const BusinessSetupPage = () => {
               className={`mobile-tab ${activeTab === "executive" ? "active" : ""}`}
               onClick={handleExecutiveTabClick}
             >
-              Executive Summary
+              {t("Executive Summary")}
             </button>
           )}
           {unlockedFeatures.analysis && (
@@ -1023,7 +1023,7 @@ const BusinessSetupPage = () => {
                           className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                           onClick={handleExecutiveTabClick}
                         >
-                          Executive Summary
+                          {t("Executive Summary")}
                         </button>
                       )}
 
@@ -1241,7 +1241,7 @@ const BusinessSetupPage = () => {
                         className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                         onClick={handleExecutiveTabClick}
                       >
-                        Executive Summary
+                        {t("Executive Summary")}
                       </button>
                     )}
 

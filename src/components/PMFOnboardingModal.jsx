@@ -299,9 +299,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
           geographies: [formData.geography1, formData.geography2, formData.geography3].filter(Boolean),
           profits: {
             source: {
-              segments: [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
-              products: [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
-              channels: [formData.channel1, formData.channel2, formData.channel3].filter(Boolean),
+              [t("Segments")]: [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
+              [t("Products")]: [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
+              [t("Channels")]: [formData.channel1, formData.channel2, formData.channel3].filter(Boolean),
             }
           },
           objective: formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,

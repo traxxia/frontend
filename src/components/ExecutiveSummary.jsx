@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Info, Target, FileText, ListChecks, Loader2 } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
+import { useTranslation } from "../hooks/useTranslation";
 
 const ExecutiveSummary = ({ businessId }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
@@ -111,9 +113,9 @@ const ExecutiveSummary = ({ businessId }) => {
                 <Target size={20} />
               </div>
               <div>
-                <h3 className="exc-section-title">WHERE TO COMPETE</h3>
+                <h3 className="exc-section-title">{t("WHERE TO COMPETE")}</h3>
                 <p className="exc-section-subtitle">
-                  Current Core, Existing Adjacencies, and New Adjacencies to Explore
+                  {t("Current Core, Existing Adjacencies, and New Adjacencies to Explore")}
                 </p>
               </div>
             </div>
@@ -130,14 +132,14 @@ const ExecutiveSummary = ({ businessId }) => {
                   <Target size={18} />
                 </div>
                 <div className="exc-subsection-body">
-                  <h3 className="exc-subsection-title">Current Core</h3>
+                  <h3 className="exc-subsection-title">{t("Current Core")}</h3>
                   <p className="exc-source-label">
-                    <Info size={14} /> Profit arenas inferred from your data
+                    <Info size={14} /> {t("Profit arenas inferred from your data")}
                   </p>
                   <p className="exc-content-text">
-                    <strong>Segments:</strong> {[data._baseAnalysis?.onboarding_data?.customerSegment1, data._baseAnalysis?.onboarding_data?.customerSegment2, data._baseAnalysis?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") || "N/A"}<br />
-                    <strong>Products:</strong> {[data._baseAnalysis?.onboarding_data?.productService1, data._baseAnalysis?.onboarding_data?.productService2, data._baseAnalysis?.onboarding_data?.productService3].filter(Boolean).join(", ") || "N/A"}<br />
-                    <strong>Channels:</strong> {[data._baseAnalysis?.onboarding_data?.channel1, data._baseAnalysis?.onboarding_data?.channel2, data._baseAnalysis?.onboarding_data?.channel3].filter(Boolean).join(", ") || "N/A"}
+                    <strong>{t("Segments")}:</strong> {[data._baseAnalysis?.onboarding_data?.customerSegment1, data._baseAnalysis?.onboarding_data?.customerSegment2, data._baseAnalysis?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") || "N/A"}<br />
+                    <strong>{t("Products")}:</strong> {[data._baseAnalysis?.onboarding_data?.productService1, data._baseAnalysis?.onboarding_data?.productService2, data._baseAnalysis?.onboarding_data?.productService3].filter(Boolean).join(", ") || "N/A"}<br />
+                    <strong>{t("Channels")}:</strong> {[data._baseAnalysis?.onboarding_data?.channel1, data._baseAnalysis?.onboarding_data?.channel2, data._baseAnalysis?.onboarding_data?.channel3].filter(Boolean).join(", ") || "N/A"}
                   </p>
                 </div>
               </div>
@@ -148,16 +150,16 @@ const ExecutiveSummary = ({ businessId }) => {
                   <FileText size={18} />
                 </div>
                 <div className="exc-subsection-body">
-                  <h3 className="exc-subsection-title">Existing Adjacencies</h3>
+                  <h3 className="exc-subsection-title">{t("Existing Adjacencies")}</h3>
                   <p className="exc-source-label exc-orange-text">
-                    <Info size={14} /> AI-inferred from your core business data
+                    <Info size={14} /> {t("AI-inferred from your core business data")}
                   </p>
                   {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments)?.length > 0 ? (
                     <p className="exc-content-text">
-                      <strong>Segments:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments).join(", ")}
+                      <strong>{t("Segments")}:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments).join(", ")}
                     </p>
                   ) : (
-                    <p className="exc-content-text exc-italic">No existing adjacencies inferred. Business appears focused on core.</p>
+                    <p className="exc-content-text exc-italic">{t("No existing adjacencies inferred. Business appears focused on core.")}</p>
                   )}
                 </div>
               </div>
@@ -168,18 +170,18 @@ const ExecutiveSummary = ({ businessId }) => {
                   <ListChecks size={18} />
                 </div>
                 <div className="exc-subsection-body">
-                  <h3 className="exc-subsection-title">New Adjacencies to Explore</h3>
+                  <h3 className="exc-subsection-title">{t("New Adjacencies to Explore")}</h3>
                   <p className="exc-source-label exc-green-text">
-                    <Info size={14} /> AI-recommended based on industry and core business
+                    <Info size={14} /> {t("AI-recommended based on industry and core business")}
                   </p>
                   {newAdjacencies?.map((adj, idx) => (
                     <div className="exc-option-block" key={idx}>
-                      <p className="exc-option-title"><strong>Option {idx + 1}: {adj.title || adj.name}</strong></p>
-                      <p className="exc-content-text"><strong>Segments:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : (adj.segments || "N/A")}</p>
-                      <p className="exc-content-text"><strong>Products:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : (adj.products || "N/A")}</p>
-                      <p className="exc-content-text"><strong>Channels:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : (adj.channels || "N/A")}</p>
+                      <p className="exc-option-title"><strong>{t("Option")} {idx + 1}: {adj.title || adj.name}</strong></p>
+                      <p className="exc-content-text"><strong>{t("Segments")}:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : (adj.segments || "N/A")}</p>
+                      <p className="exc-content-text"><strong>{t("Products")}:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : (adj.products || "N/A")}</p>
+                      <p className="exc-content-text"><strong>{t("Channels")}:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : (adj.channels || "N/A")}</p>
                     </div>
-                  )) || <p className="exc-content-text exc-italic">Analyzing potential adjacencies...</p>}
+                  )) || <p className="exc-content-text exc-italic">{t("Analyzing potential adjacencies")}...</p>}
                 </div>
               </div>
             </div>
@@ -194,9 +196,9 @@ const ExecutiveSummary = ({ businessId }) => {
                 <FileText size={20} />
               </div>
               <div>
-                <h3 className="exc-section-title">HOW TO COMPETE</h3>
+                <h3 className="exc-section-title">{t("HOW TO COMPETE")}</h3>
                 <p className="exc-section-subtitle">
-                  Differentiation strategy and what to focus on or exclude
+                  {t("Differentiation strategy and what to focus on or exclude")}
                 </p>
               </div>
             </div>
@@ -208,10 +210,10 @@ const ExecutiveSummary = ({ businessId }) => {
           {expandedSections.howToCompete && (
             <div className="exc-section-body">
               <div className="exc-how-compete-box">
-                <p className="exc-box-title">This is how you should differentiate:</p>
+                <p className="exc-box-title">{t("This is how you should differentiate")}:</p>
 
                 <div className="exc-differentiation-section">
-                  <p className="exc-differentiation-label">Recommended differentiation levers</p>
+                  <p className="exc-differentiation-label">{t("Recommended differentiation levers")}</p>
                   <p className="exc-differentiation-text"><strong>{differentiationLevers}</strong></p>
                 </div>
 
@@ -219,7 +221,7 @@ const ExecutiveSummary = ({ businessId }) => {
                   <div className="exc-implication-item exc-includes">
                     <div className="exc-icon-label">
                       <CheckCircle2 size={16} />
-                      <span>What this implies:</span>
+                      <span>{t("What this implies")}:</span>
                     </div>
                     <div className="exc-implication-text">
                       {Array.isArray(implications)
@@ -234,7 +236,7 @@ const ExecutiveSummary = ({ businessId }) => {
                   <div className="exc-implication-item exc-excludes">
                     <div className="exc-icon-label">
                       <AlertCircle size={16} />
-                      <span>What this excludes:</span>
+                      <span>{t("What this excludes")}:</span>
                     </div>
                     <div className="exc-implication-text">
                       {Array.isArray(excludes)
@@ -259,9 +261,9 @@ const ExecutiveSummary = ({ businessId }) => {
                 <ListChecks size={20} />
               </div>
               <div>
-                <h3 className="exc-section-title">TOP 3-5 PRIORITIES</h3>
+                <h3 className="exc-section-title">{t("TOP 3-5 PRIORITIES")}</h3>
                 <p className="exc-section-subtitle">
-                  Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion
+                  {t("Exactly 3-5 priorities • Priorities = workstreams • Each implies exclusion")}
                 </p>
               </div>
             </div>
@@ -302,7 +304,7 @@ const ExecutiveSummary = ({ businessId }) => {
                     )}
                   </div>
                 );
-              }) || <p className="exc-content-text exc-italic">Identifying strategic priorities...</p>}
+              }) || <p className="exc-content-text exc-italic">{t("Identifying strategic priorities")}...</p>}
             </div>
           )}
         </div>

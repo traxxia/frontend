@@ -189,7 +189,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
                             text={badgeProps.text}
                             className="rounded-pill fw-semibold mb-3"
                           >
-                            Confidence: {insight.confidence}
+                            {t("Confidence")}: {insight.confidence}
                           </Badge>
                         )}
 
