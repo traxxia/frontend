@@ -69,7 +69,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
               className="mt-3 rounded-pill px-4"
               onClick={onStartOnboarding}
             >
-              Start PMF Onboarding
+              {t("startPMFOnboarding")}
             </Button>
           )}
         </Container>
@@ -109,7 +109,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
               className="mt-3 rounded-pill px-4"
               onClick={onStartOnboarding}
             >
-              Start PMF Onboarding
+              {t("startPMFOnboarding")}
             </Button>
           )}
         </Container>
@@ -148,10 +148,10 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
   };
 
   return (
-    <div className="bg-light py-5 min-vh-100">
+    <div className="bg-light">
       <StyleSheet />
-      <Container style={{ maxWidth: "1080px" }}>
-        <div className="text-center mb-5">
+      <Container style={{ maxWidth: "100%" }}>
+        <div className="text-center mb-3">
           <Badge
             bg="primary-subtle"
             text="primary"

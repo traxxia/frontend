@@ -1,62 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, Button, Form, Row, Col, Badge } from "react-bootstrap";
 import { ChevronRight } from "react-bootstrap-icons";
-import { Folder } from "lucide-react";
+import { Folder, Loader2, Info } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
+import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/PrioritiesProjects.css";
 
-
-const PRIORITIES = [
-  {
-    id: 1,
-    title: "Strengthen core differentiation",
-    description: "Align all operations and marketing to reinforce Customization",
-    count: 3,
-    projects: [
-      "Audit current brand positioning",
-      "Redesign customer touchpoints",
-      "Train team on value proposition",
-    ],
-  },
-
-  {
-    id: 2,
-    title: "Optimize profit pool concentration",
-    description: "Double down on highest-margin customer segments and products",
-    count: 2,
-    projects: [
-      "Analyze segment profitability",
-      "Reallocate sales resources",
-    ],
-  },
-
-  {
-    id: 3,
-    title: "Evaluate and rationalize adjacencies",
-    description: "Exit low-ROI adjacencies, scale what reinforces the core",
-    count: 3,
-    projects: [
-      "Score each adjacency on ROI",
-      "Create exit plan for low performers",
-      "Double down on top adjacencies",
-    ],
-  },
-  {
-    id: 4,
-    title: "Address primary constraint",
-    description: "Tackle talent / structure",
-    count: 2,
-    projects: [
-      "Root cause analysis",
-      "Design intervention",
-    ],
-  },
-];
-
-const PrioritiesProjects = () => {
+const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onStartOnboarding }) => {
   const { t } = useTranslation();
   const [selected, setSelected] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // API Service setup
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem("token");
+  const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+
+  const fetchPriorities = useCallback(async () => {
+    if (!selectedBusinessId) return;
+    try {
+      setLoading(true);
+      const summaryResult = await analysisService.getPMFExecutiveSummary(selectedBusinessId);
+
+      const summaryContent = summaryResult?.summary || summaryResult;
+
+      // Extraction logic similar to ExecutiveSummary.jsx
+      const getSection = (key, dataObj) => {
+        if (!dataObj) return null;
+        return dataObj[key] ||
+          dataObj[key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())] ||
+          dataObj[key.replace(/_/g, "")] ||
+          dataObj[key.split('_').map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join('')];
+      };
+
+      const topPriorities = getSection('top_priorities', summaryContent) ||
+        summaryContent?.topPriorities ||
+        summaryContent?.["Top Priorities"];
+
+      if (topPriorities && Array.isArray(topPriorities)) {
+        const formattedPriorities = topPriorities.map((item, idx) => {
+          const actions = item.actions || item.Actions || [];
+          return {
+            id: idx + 1,
+            title: item.title || item.action || item.Action || item.Title || "Untitled Priority",
+            description: item.description || (actions.length > 0 ? `${actions.length} projects recommended` : "Strategic priority from Executive Summary"),
+            count: actions.length,
+            projects: actions.map(a => typeof a === 'string' ? a : (a.action || a.Action || JSON.stringify(a)))
+          };
+        });
+        setData(formattedPriorities);
+      }
+    } catch (error) {
+      console.error("Error fetching priorities for projects tab:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedBusinessId]);
+
+  useEffect(() => {
+    fetchPriorities();
+  }, [fetchPriorities]);
 
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -72,11 +78,40 @@ const PrioritiesProjects = () => {
 
   const handleKickstart = () => {
     console.log("Selected priorities:", selected);
+    // Future integration: redirect to project creation with these pre-filled
   };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <Loader2 className="text-primary animate-spin" />
+        <span className="ms-2 text-muted">Loading your priorities...</span>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
+        <div className="container" style={{ maxWidth: '600px' }}>
+          <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No priorities found for this business yet."}</h3>
+          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate your top priorities."}</p>
+          {onStartOnboarding && (
+            <button
+              className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
+              onClick={onStartOnboarding}
+            >
+              {t("startPMFOnboarding") || "Start PMF Onboarding"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container my-4 priorities-container">
-      
+
       <h4 className="priorities-title">{t("Priorities & Projects")}</h4>
       <p className="priorities-subtitle">{t("What should I work on next")}?</p>
 
@@ -101,7 +136,7 @@ const PrioritiesProjects = () => {
         </Card.Body>
       </Card>
 
-      {PRIORITIES.map((item) => {
+      {data.map((item) => {
         const isExpanded = expandedId === item.id;
 
         return (
@@ -116,7 +151,7 @@ const PrioritiesProjects = () => {
                   />
                 </Col>
 
-                <Col>
+                <Col onClick={() => toggleExpand(item.id)} style={{ cursor: 'pointer' }}>
                   <h6 className="priority-title mb-1">{item.title}</h6>
                   <small className="priority-desc">{item.description}</small>
                 </Col>
@@ -144,7 +179,7 @@ const PrioritiesProjects = () => {
                     <div key={index} className="project-row">
                       <span>{project}</span>
                       <span className="status-badge not-started">
-                        Not Started
+                        {t("Not Started")}
                       </span>
                     </div>
                   ))}
@@ -154,14 +189,6 @@ const PrioritiesProjects = () => {
           </Card>
         );
       })}
-
-      <Card className="footer-note mt-4">
-        <Card.Body>
-          <small className="text-muted">
-            <strong>{t("Note")}:</strong> {t("Note_desc")}
-          </small>
-        </Card.Body>
-      </Card>
     </div>
   );
 };
