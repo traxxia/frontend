@@ -937,6 +937,9 @@ const BusinessSetupPage = () => {
             <button className="mobile-back-button me-2" onClick={handleBack} aria-label="Go Back">
               <ArrowLeft size={20} />
             </button>
+            {selectedBusinessName && (
+              <strong className="ms-1 text-truncate" style={{ maxWidth: '160px', display: 'inline-block', verticalAlign: 'middle' }}>{selectedBusinessName}</strong>
+            )}
             <button
               className="mobile-menu-trigger"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -1037,6 +1040,9 @@ const BusinessSetupPage = () => {
                 <ArrowLeft size={18} />
                 {t("backToOverview")}
               </button>
+              {selectedBusinessName && (
+                <strong className="d-block mt-1" style={{ fontSize: '0.95rem', color: '#1a1a2e' }}>{selectedBusinessName}</strong>
+              )}
             </div>
             <h2 className="welcome-heading">{selectedBusinessName || 'Business Analysis'}</h2>
             <p className="welcome-text">{t("letsBegin")} {t("welcomeToTraxia")}</p>
@@ -1077,10 +1083,15 @@ const BusinessSetupPage = () => {
                 <div className="expanded-analysis-view">
                   <div className="desktop-tabs">
                     <div className="desktop-tabs-left">
-                      <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
-                        <ArrowLeft size={18} />
-                        {t("backToOverview")}
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
+                          <ArrowLeft size={18} />
+                          {t("backToOverview")}
+                        </button>
+                        {selectedBusinessName && (
+                          <strong style={{ fontSize: '0.85rem', color: '#1a1a2e', marginTop: '2px', paddingLeft: '4px' }}>{selectedBusinessName}</strong>
+                        )}
+                      </div>
                       {ENABLE_PMF && (
                         <button
                           className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
