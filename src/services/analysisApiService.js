@@ -226,7 +226,14 @@ export class AnalysisApiService {
         },
         body: JSON.stringify(payload)
       });
-      return await response.json();
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to kickstart project');
+      }
+
+      return data;
     } catch (error) {
       console.error('Error kickstarting project:', error);
       throw error;

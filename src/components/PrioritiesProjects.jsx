@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Card, Button, Form, Row, Col, Badge, Spinner } from "react-bootstrap";
 import { ChevronRight } from "react-bootstrap-icons";
 import { Folder, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
+import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 
 const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
@@ -13,6 +15,9 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
   const [expandedId, setExpandedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [kickstarting, setKickstarting] = useState(false);
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const navigate = useNavigate();
+  const userPlan = sessionStorage.getItem("userPlan")?.toLowerCase() || "essential";
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -54,18 +59,22 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
   const handleKickstart = async () => {
     if (selected.length === 0) return;
 
+    if (userPlan === 'essential') {
+      setShowPlanLimitModal(true);
+      return;
+    }
+
     try {
       setKickstarting(true);
       const selectedPriorities = selected.map(idx => priorities[idx]);
 
-      const promises = selectedPriorities.map(priority =>
-        apiService.kickstartProject({
+      // Process projects sequentially or wait for all, but ensure we handle errors
+      for (const priority of selectedPriorities) {
+        await apiService.kickstartProject({
           businessId: selectedBusinessId,
           priority: priority
-        })
-      );
-
-      await Promise.all(promises);
+        });
+      }
 
       // Refresh data to show kickstarted status
       const data = await apiService.getKickstartData(selectedBusinessId);
@@ -82,7 +91,8 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
       }
     } catch (error) {
       console.error("Error kickstarting projects:", error);
-      alert(t("Failed to kickstart projects. Please try again."));
+      const errorMsg = error.message || t("Failed to kickstart projects. Please try again.");
+      alert(errorMsg);
     } finally {
       setKickstarting(false);
     }
@@ -113,15 +123,24 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
             </small>
           </div>
           <Button
-            className="kickstart-button"
-            variant="success"
-            disabled={selected.length === 0 || kickstarting}
+            className={`kickstart-button ${userPlan === 'essential' ? 'upgrade-needed' : ''}`}
+            variant={userPlan === 'essential' ? "warning" : "success"}
+            disabled={(selected.length === 0 && userPlan !== 'essential') || kickstarting}
             onClick={handleKickstart}
           >
-            {kickstarting ? <Spinner size="sm" /> : "🚀"} {t("Kickstart_Projects")}
+            {kickstarting ? <Spinner size="sm" /> : userPlan === 'essential' ? "⭐" : "🚀"}
+            {userPlan === 'essential' ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}
           </Button>
         </Card.Body>
       </Card>
+
+      <PlanLimitModal
+        show={showPlanLimitModal}
+        onHide={() => setShowPlanLimitModal(false)}
+        title={t("upgrade_required") || "Upgrade Required"}
+        message={t("kickstart_limit_msg") || "Project kickstarting is only available on Advanced plans."}
+        subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
+      />
 
       {priorities.length === 0 ? (
         <div className="text-center py-4">

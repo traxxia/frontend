@@ -74,6 +74,7 @@
   border: 1px solid #cfe2ff;
   border-radius: 8px;
 }
+
 /* Expand click area */
 .expand-trigger {
   cursor: pointer;
@@ -128,6 +129,7 @@
   color: #495057;
   border: 1px solid #dee2e6;
 }
+
 /* =========================
    Mobile Responsive Styles
    ========================= */
@@ -222,4 +224,3 @@
     font-size: 0.8rem;
   }
 }
-

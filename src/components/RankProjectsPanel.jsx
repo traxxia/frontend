@@ -58,11 +58,12 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
     if (!isAdmin) {
       console.log(projects)
-      // For collaborators, we ONLY show projects that have an AI rank AND are not killed
-      // Fallback: if no AI ranks yet, this list will be empty as requested.
+      // For collaborators, we show projects that have an AI rank OR are targeted for launch (launched/pending)
+      // and are not killed.
       const mandatoryProjects = projects.filter(p =>
-        p.ai_rank !== null &&
-        p.ai_rank !== undefined &&
+        ((p.ai_rank !== null && p.ai_rank !== undefined) ||
+          p.launch_status?.toLowerCase() === 'launched' ||
+          p.launch_status?.toLowerCase() === 'pending_launch') &&
         p.status?.toLowerCase() !== 'killed'
       );
 
@@ -686,7 +687,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   );
 
   return (
-    <div className="rank-panel-container responsive-panel compact-mode" > 
+    <div className="rank-panel-container responsive-panel compact-mode" >
 
       <Row className="rank-panel-header align-items-center">
         <Col xs={12} md={8} className="d-flex align-items-center gap-3">
