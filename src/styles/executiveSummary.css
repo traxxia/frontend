@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 2rem;
+  padding: 10px;
   background: #f8f9fa;
   min-height: 100vh;
 }
@@ -13,7 +13,7 @@
 .exc-executive-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 10px;
 }
 
 /* Section Cards */
@@ -126,6 +126,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -136,7 +137,7 @@
 .exc-subsection {
   display: flex;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 10px;
   border-radius: 8px;
   border: 2px solid #e5e7eb;
   overflow: hidden;
@@ -200,7 +201,7 @@
   gap: 0.5rem;
   font-size: 0.85rem;
   color: #3b82f6;
-  margin: 0 0 0.75rem 0;
+  margin: 0;
   font-style: italic;
 }
 
@@ -225,109 +226,86 @@
 
 .exc-option-block {
   background: white;
-  padding: 1.25rem;
   border-radius: 6px;
   margin-top: 1rem;
 }
 
 .exc-option-title {
   color: #1f2937;
-  margin: 0 0 0.75rem 0;
+  margin: 0;
 }
 
 /* HOW TO COMPETE Section */
 .exc-how-compete-box {
   background: white;
-  border: 2px solid #f59e0b;
+  border: 1px solid #f59e0b;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 15px;
 }
 
 .exc-box-title {
   font-size: 0.95rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1rem 0;
 }
 
-.exc-differentiation-section {
-  margin-bottom: 1.25rem;
-  padding: 1rem;
-  border-radius: 6px;
-  background: #dbeafe;
+.exc-differentiation-inner {
+  background: #f0f7ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 1.25rem;
 }
 
 .exc-differentiation-label {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #2563eb;
   margin: 0 0 0.5rem 0;
 }
 
 .exc-differentiation-text {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #1f2937;
-  margin: 0;
-  font-weight: 500;
+  margin: 0 0 1rem 0;
 }
 
-.exc-implications-section {
+.exc-implications-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.exc-implication-item {
-  background: white;
-  padding: 1rem;
-  border-radius: 6px;
-  border-left: 3px solid #f59e0b;
-}
-
-.exc-implication-item.exc-includes {
-  border-left-color: #10b981;
-  background: #f0fdf4;
-}
-
-.exc-implication-item.exc-excludes {
-  border-left-color: #ef4444;
-  background: #fef2f2;
-}
-
-.exc-icon-label {
+.exc-implication-row .exc-icon-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
 }
 
-.exc-icon-label svg {
-  flex-shrink: 0;
-}
-
-.exc-implication-item.exc-includes .exc-icon-label {
+.exc-implication-row.exc-includes .exc-icon-label svg {
   color: #10b981;
 }
 
-.exc-implication-item.exc-excludes .exc-icon-label {
+.exc-implication-row.exc-excludes .exc-icon-label svg {
   color: #ef4444;
 }
 
-.exc-implication-text {
-  font-size: 0.8rem;
-  color: #4b5563;
-  margin: 0;
-  line-height: 1.4;
+.exc-implication-content {
+  font-size: 0.825rem;
+  color: #6b7280;
+  margin-left: 1.5rem;
+  line-height: 1.5;
 }
 
 /* TOP 3-5 PRIORITIES Section */
 .exc-priority-item {
   border: 2px solid #a7f3d0;
   border-radius: 8px;
-  padding: 1.75rem;
+  padding: 10px;
   transition: all 0.2s ease;
 }
 
@@ -337,9 +315,8 @@
 
 .exc-priority-header {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  align-items: center;
+  margin-bottom: 0px;
 }
 
 .exc-priority-number {
@@ -360,7 +337,8 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   margin-top: 0.5rem;
-  margin-left: 21px; /* Align with title text (number + gap) */
+  margin-left: 21px;
+  /* Align with title text (number + gap) */
 }
 
 .exc-priority-meta span {
@@ -426,7 +404,7 @@
   }
 
   .exc-how-compete-box {
-    padding: 1.25rem;
+    padding: 10px;
   }
 
   .exc-priority-item {

@@ -158,7 +158,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
                     </div>
                     <small className="priority-desc">
                       {actions.length > 0
-                        ? (typeof actions[0] === 'object' ? (actions[0].action || actions[0].Action || JSON.stringify(actions[0])) : actions[0])
+                        ? (typeof actions[0].action === 'string' ? actions[0].action : (typeof actions[0] === 'string' ? actions[0] : t("View Projects")))
                         : t("View Projects")}...
                     </small>
                   </Col>
@@ -184,11 +184,19 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
 
                     {actions.map((action, actionIdx) => {
                       const actionText = typeof action === 'object' ? (action.action || action.Action || JSON.stringify(action)) : action;
+                      const isActionKickstarted = action.isKickstarted;
                       return (
-                        <div key={actionIdx} className="project-row">
-                          <div className="d-flex align-items-start gap-2">
-                            <CheckCircle size={16} className="text-success mt-1 flex-shrink-0" />
-                            <span>{actionText}</span>
+                        <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
+                          <div className="d-flex align-items-center justify-content-between w-100">
+                            <div className="d-flex align-items-start gap-2">
+                              <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
+                              <span>{actionText}</span>
+                            </div>
+                            {isActionKickstarted && (
+                              <Badge bg="success" className="ms-2">
+                                {t("Status_Completed") || "Kickstarted"}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       );
@@ -204,7 +212,7 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
       <Card className="footer-note mt-4">
         <Card.Body>
           <small className="text-muted">
-            <strong>{t("Note")}:</strong> {t("Kickstarting a priority creates a new project in Draft status where you can further define scope and metrics.")}
+            <strong>{t("Note")}:</strong> {t("Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.")}
           </small>
         </Card.Body>
       </Card>

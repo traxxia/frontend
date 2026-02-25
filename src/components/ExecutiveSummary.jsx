@@ -4,14 +4,14 @@ import { AnalysisApiService } from "../services/analysisApiService";
 import "../styles/executiveSummary.css";
 import { useTranslation } from "../hooks/useTranslation";
 
-const ExecutiveSummary = ({ businessId }) => {
+const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
-    whereToCompete: true,
-    howToCompete: true,
-    topPriorities: true,
+    whereToCompete: false,
+    howToCompete: false,
+    topPriorities: false,
   });
 
   // API Service setup
@@ -64,12 +64,21 @@ const ExecutiveSummary = ({ businessId }) => {
     );
   }
 
-  if (!data) {
+  if (!data || Object.keys(data).length <= 1) { // _baseAnalysis always exists if call succeeds
     return (
-      <div className="text-center py-5 text-muted">
-        <Info size={40} className="mb-3 opacity-25" />
-        <p>No executive summary available yet.</p>
-        <p className="small">Complete the PMF onboarding to generate this summary.</p>
+      <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
+        <div className="container" style={{ maxWidth: '600px' }}>
+          <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No executive summary available yet."}</h3>
+          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate this summary."}</p>
+          {onStartOnboarding && (
+            <button
+              className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
+              onClick={onStartOnboarding}
+            >
+              {t("startPMFOnboarding") || "Start PMF Onboarding"}
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -212,39 +221,41 @@ const ExecutiveSummary = ({ businessId }) => {
               <div className="exc-how-compete-box">
                 <p className="exc-box-title">{t("This is how you should differentiate")}:</p>
 
-                <div className="exc-differentiation-section">
-                  <p className="exc-differentiation-label">{t("Recommended differentiation levers")}</p>
-                  <p className="exc-differentiation-text"><strong>{differentiationLevers}</strong></p>
-                </div>
-
-                <div className="exc-implications-section">
-                  <div className="exc-implication-item exc-includes">
-                    <div className="exc-icon-label">
-                      <CheckCircle2 size={16} />
-                      <span>{t("What this implies")}:</span>
-                    </div>
-                    <div className="exc-implication-text">
-                      {Array.isArray(implications)
-                        ? implications.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>)
-                        : (typeof implications === 'object'
-                          ? JSON.stringify(implications)
-                          : (implications || "N/A"))
-                      }
-                    </div>
+                <div className="exc-differentiation-inner">
+                  <div className="exc-differentiation-header">
+                    <p className="exc-differentiation-label">{t("Recommended differentiation levers")}</p>
+                    <p className="exc-differentiation-text"><strong>{differentiationLevers}</strong></p>
                   </div>
 
-                  <div className="exc-implication-item exc-excludes">
-                    <div className="exc-icon-label">
-                      <AlertCircle size={16} />
-                      <span>{t("What this excludes")}:</span>
+                  <div className="exc-implications-list">
+                    <div className="exc-implication-row exc-includes">
+                      <div className="exc-icon-label">
+                        <CheckCircle2 size={16} />
+                        <span>{t("What this implies")}:</span>
+                      </div>
+                      <div className="exc-implication-content">
+                        {Array.isArray(implications)
+                          ? implications.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>)
+                          : (typeof implications === 'object'
+                            ? JSON.stringify(implications)
+                            : (implications || "N/A"))
+                        }
+                      </div>
                     </div>
-                    <div className="exc-implication-text">
-                      {Array.isArray(excludes)
-                        ? excludes.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>)
-                        : (typeof excludes === 'object'
-                          ? JSON.stringify(excludes)
-                          : (excludes || "N/A"))
-                      }
+
+                    <div className="exc-implication-row exc-excludes">
+                      <div className="exc-icon-label">
+                        <AlertCircle size={16} />
+                        <span>{t("What this excludes")}:</span>
+                      </div>
+                      <div className="exc-implication-content">
+                        {Array.isArray(excludes)
+                          ? excludes.map((item, i) => <div key={i}>{typeof item === 'object' ? JSON.stringify(item) : item}</div>)
+                          : (typeof excludes === 'object'
+                            ? JSON.stringify(excludes)
+                            : (excludes || "N/A"))
+                        }
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -282,13 +293,11 @@ const ExecutiveSummary = ({ businessId }) => {
                   <div className="exc-priority-item" key={idx}>
                     <div className="exc-priority-header">
                       <span className="exc-priority-number">{idx + 1}.</span>
-                      <div>
-                        <h4 className="exc-priority-title">{item.title || item.action || item.Action || item.Title}</h4>
-                      </div>
+                      <h4 className="exc-priority-title">{item.title || item.action || item.Action || item.Title}</h4>
                     </div>
 
                     {actions.length > 0 && (
-                      <div className="exc-priority-actions mt-3 ps-4">
+                      <div className="exc-priority-actions mt-2 ps-4">
                         {actions.map((action, aIdx) => {
                           const actionText = typeof action === 'string' ? action : (action.action || action.Action || JSON.stringify(action));
                           return (

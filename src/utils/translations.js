@@ -107,6 +107,19 @@ export const staticTranslations = {
     'what_this_question_aims_to_understand_or_analyze': 'What this question aims to understand or analyze...',
     'search_events': 'Search Events',
     'Admin_Panel': 'Admin Panel',
+    'Priorities & Projects': 'Priorities & Projects',
+    "Questions and Answers": "Questions and Answers",
+    "Insight (6 C's)": "Insight (6 C's)",
+    "Appendix (6 C's)": "Appendix (6 C's)",
+    "backToOverview": "Back",
+
+    // PMF Insights Tab
+    "AHA Insights": "AHA Insights",
+    "Key strategic insights based on your onboarding": "Key strategic insights based on your onboarding",
+    "noInsightsAvailable": "No results available yet.",
+    "completeOnboardingPrompt": "Please complete the PMF Onboarding to see insights here.",
+    "startPMFOnboarding": "Start PMF Onboarding",
+    "Confidence": "Confidence",
 
     // ===========================
     // DASHBOARD
@@ -760,7 +773,7 @@ export const staticTranslations = {
     'yourBusiness': 'Your Business',
     'whatWeDo': 'Business description will appear here after answering questions in the chat.',
     'businessInfoMessage': 'Your business information will appear here as you answer questions in the chat.',
-    'backToOverview': 'Back to Overview',
+    'backToOverview': 'Back',
     'goToSection': 'Go to Section',
     'RegenerateAll': 'Regenerate All',
     'assistant': 'Assistant',
@@ -1443,6 +1456,19 @@ export const staticTranslations = {
     // ===========================
     // LOGIN Y AUTENTICACIÓN
     // ===========================
+    'Priorities & Projects': 'Prioridades y Proyectos',
+    'Questions and Answers': 'Preguntas y Respuestas',
+    "Insight (6 C's)": "Insight (6 C's)",
+    "Appendix (6 C's)": "Apéndice (6 C's)",
+    "backToOverview": "Volver",
+
+    // PMF Insights Tab
+    "AHA Insights": "Perspectivas AHA",
+    "Key strategic insights based on your onboarding": "Perspectivas estratégicas clave basadas en tu incorporación",
+    "noInsightsAvailable": "No hay perspectivas disponibles aún.",
+    "completeOnboardingPrompt": "Por favor, completa el PMF Onboarding para ver perspectivas aquí.",
+    "startPMFOnboarding": "Iniciar PMF Onboarding",
+    "Confidence": "Confianza",
     'welcome': '¡Bienvenido!',
     'email_address': 'Correo Electrónico',
     'email': 'Correo Electrónico',
@@ -1802,7 +1828,7 @@ export const staticTranslations = {
     'yourBusiness': 'Tu Negocio',
     'whatWeDo': 'La descripción del negocio aparecerá aquí después de responder a las preguntas en el chat.',
     'businessInfoMessage': 'La información de tu negocio aparecerá aquí a medida que respondas preguntas en el chat.',
-    'backToOverview': 'Atrás a Descripción General',
+    'backToOverview': 'Atrás',
     'goToSection': 'Ir a la Sección',
     'RegenerateAll': 'Regenerar Todo',
     'assistant': 'Asistente',

@@ -13,7 +13,7 @@ import {
   Accordion
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle
+  Info, X, Trash2, AlertTriangle, ArrowLeft
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -619,7 +619,8 @@ const Dashboard = () => {
     if (businessId) {
       sessionStorage.setItem('activeBusinessId', businessId);
     }
-    navigate('/businesspage', { state: { business } });
+    // Navigate directly to business page with AHA tab active
+    navigate('/businesspage', { state: { business, initialTab: 'aha' } });
   };
 
   const handleCloseModal = () => {
@@ -1029,7 +1030,14 @@ const Dashboard = () => {
               businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
               onSubmit={(pmfFormData) => {
                 setShowPMFOnboarding(false);
-                setShowInsights(true);
+                // Instead of showing standalone insights, go straight to the business page
+                // Any "AHA" results will be available in the tabs there
+                setShowInsights(false);
+                navigate("/businesspage", {
+                  state: {
+                    business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id))
+                  }
+                });
               }}
             />
           )}
