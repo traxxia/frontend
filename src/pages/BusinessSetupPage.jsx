@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle, Menu, X } from "lucide-react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 import ChatComponent from "../components/ChatComponent";
@@ -130,6 +130,7 @@ const BusinessSetupPage = () => {
   const hasLoadedAnalysis = useRef(false);
   const streamingManager = useStreamingManager();
   const [showProjectsTab, setShowProjectsTab] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
 
   const setApiLoading = (apiEndpoint, isLoading) => {
@@ -800,15 +801,10 @@ const BusinessSetupPage = () => {
     const handleResize = () => {
       const newIsMobile = window.innerWidth <= 768;
       setIsMobile(newIsMobile);
-      if (newIsMobile && activeTab === "brief") {
-        setActiveTab("chat");
-      } else if (!newIsMobile && activeTab === "chat") {
-        setActiveTab("brief");
-      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [activeTab, setIsMobile, setActiveTab]);
+  }, [setIsMobile]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -925,61 +921,101 @@ const BusinessSetupPage = () => {
       )}
 
       {isMobile && questionsLoaded && (
-        <div className="mobile-tabs">
-          <button className={`mobile-tab ${activeTab === "chat" ? "active" : ""}`} onClick={() => setActiveTab("chat")}>
-            {t("assistant")}
-          </button>
-          {ENABLE_PMF && (
+        <>
+          <div className="mobile-menu-trigger-container">
+            <button className="mobile-back-button me-2" onClick={handleBack} aria-label="Go Back">
+              <ArrowLeft size={20} />
+            </button>
             <button
-              className={`mobile-tab ${activeTab === "aha" ? "active" : ""}`}
-              onClick={handleAhaTabClick}
+              className="mobile-menu-trigger"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              aria-label="Toggle Menu"
             >
-              {t("aha")}
+              {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+              <span className="ms-2">{t("Menu")}</span>
             </button>
+            <div className="active-tab-indicator ms-auto">
+              {activeTab === "aha" && t("aha")}
+              {activeTab === "executive" && t("Executive Summary")}
+              {activeTab === "priorities" && t("Priorities & Projects")}
+              {activeTab === "brief" && t("Questions and Answers")}
+              {activeTab === "analysis" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+              {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+              {activeTab === "projects" && t("Projects")}
+            </div>
+          </div>
+
+          {showMobileMenu && (
+            <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
+              <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
+                <div className="mobile-menu-header">
+                  <h5>{t("Navigation")}</h5>
+                  <button className="close-menu" onClick={() => setShowMobileMenu(false)}>
+                    <X size={24} />
+                  </button>
+                </div>
+                <div className="mobile-menu-items">
+                  {ENABLE_PMF && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "aha" ? "active" : ""}`}
+                      onClick={() => { handleAhaTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {t("aha")}
+                    </button>
+                  )}
+                  {ENABLE_PMF && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "executive" ? "active" : ""}`}
+                      onClick={() => { handleExecutiveTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {t("Executive Summary")}
+                    </button>
+                  )}
+                  {ENABLE_PMF && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
+                      onClick={() => { setActiveTab("priorities"); setShowMobileMenu(false); }}
+                    >
+                      {t("Priorities & Projects")}
+                    </button>
+                  )}
+                  {showProjectsTab && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
+                      onClick={() => { setActiveTab("projects"); setShowMobileMenu(false); }}
+                    >
+                      {t("Projects")}
+                    </button>
+                  )}
+                  {ENABLE_PMF && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "brief" ? "active" : ""}`}
+                      onClick={() => { setActiveTab("brief"); setShowMobileMenu(false); }}
+                    >
+                      {t("Questions and Answers")}
+                    </button>
+                  )}
+                  {unlockedFeatures.analysis && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "analysis" ? "active" : ""}`}
+                      onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                    </button>
+                  )}
+                  {unlockedFeatures.analysis && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
+                      onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                    </button>
+                  )} 
+                </div>
+              </div>
+            </div>
           )}
-          {ENABLE_PMF && (
-            <button
-              className={`mobile-tab ${activeTab === "executive" ? "active" : ""}`}
-              onClick={handleExecutiveTabClick}
-            >
-              {t("Executive Summary")}
-            </button>
-          )}
-          {ENABLE_PMF && (
-            <button
-              className={`mobile-tab ${activeTab === "priorities" ? "active" : ""}`}
-              onClick={() => setActiveTab("priorities")}
-            >
-              {t("Priorities & Projects")}
-            </button>
-          )}
-          {ENABLE_PMF && (
-            <button
-              className={`mobile-tab ${activeTab === "brief" ? "active" : ""}`}
-              onClick={() => setActiveTab("brief")}
-            >
-              {t("Questions and Answers")}
-            </button>
-          )}
-          {unlockedFeatures.analysis && (
-            <button className={`mobile-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-              {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-            </button>
-          )}
-          {unlockedFeatures.analysis && (
-            <button className={`mobile-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-              {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-            </button>
-          )}
-          {showProjectsTab && (
-            <button
-              className={`mobile-tab ${activeTab === "projects" ? "active" : ""}`}
-              onClick={() => setActiveTab("projects")}
-            >
-              {t("Projects")}
-            </button>
-          )}
-        </div>
+        </>
       )}
 
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
@@ -1058,6 +1094,11 @@ const BusinessSetupPage = () => {
                           {t("Priorities & Projects")}
                         </button>
                       )}
+                      {showProjectsTab && (
+                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
+                          {t("Projects")}
+                        </button>
+                      )}
                       {ENABLE_PMF && (
                         <button
                           className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
@@ -1075,11 +1116,6 @@ const BusinessSetupPage = () => {
                       {unlockedFeatures.analysis && (
                         <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
                           {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                        </button>
-                      )}
-                      {showProjectsTab && (
-                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                          {t("Projects")}
                         </button>
                       )}
                     </div>
@@ -1495,6 +1531,12 @@ const BusinessSetupPage = () => {
                   <PMFInsightsTab
                     selectedBusinessId={selectedBusinessId}
                     refreshTrigger={pmfRefreshTrigger}
+                    onStartOnboarding={() => setShowPMFOnboarding(true)}
+                  />
+                )}
+                {ENABLE_PMF && activeTab === "executive" && (
+                  <ExecutiveSummary
+                    businessId={selectedBusinessId}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}

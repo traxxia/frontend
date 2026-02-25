@@ -66,6 +66,10 @@
   font-size: 0.85rem;
   padding: 6px 10px;
   border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 /* Footer note */
@@ -168,7 +172,7 @@
   /* Header row stacking */
   .priority-card .row {
     flex-wrap: nowrap;
-    align-items: flex-start;
+    align-items: center;
   }
 
   /* Checkbox spacing */
@@ -187,7 +191,7 @@
 
   /* Expand trigger */
   .expand-trigger {
-    padding: 6px;
+    padding: 4px;
   }
 
   /* Count badge */
@@ -224,3 +228,4 @@
     font-size: 0.8rem;
   }
 }
+

@@ -4,7 +4,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   // UI State
   const [activeTab, setActiveTab] = useState(() => {
     const isMobileView = window.innerWidth <= 768;
-    return isMobileView ? "chat" : "brief";
+    return isMobileView ? "aha" : "brief";
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
@@ -71,11 +71,11 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [coreAdjacencyData, setCoreAdjacencyData] = useState(null);
   const [isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating] = useState(false);
   const coreAdjacencyRef = useRef(null);
-  
+
   // ✅ NEW: Streaming states for Porter's
   const [portersStreamingText, setPortersStreamingText] = useState('');
   const [isPortersStreaming, setIsPortersStreaming] = useState(false);
-  
+
   // Other states
   const [highlightedMissingQuestions, setHighlightedMissingQuestions] = useState(null);
   const [selectedPhase, setSelectedPhase] = useState('initial');
@@ -134,7 +134,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     swotAnalysisResult, setSwotAnalysisResult,
     purchaseCriteriaData, setPurchaseCriteriaData,
     loyaltyNPSData, setLoyaltyNPSData,
-    strategicData, setStrategicData, 
+    strategicData, setStrategicData,
     portersData, setPortersData,
     pestelData, setPestelData,
     fullSwotData, setFullSwotData,
@@ -168,7 +168,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating,
     isCoreAdjacencyRegenerating, setIsCoreAdjacencyRegenerating,
     isStrategicRegenerating, setIsStrategicRegenerating,
-    
+
     // Financial analysis regenerating states
     isProfitabilityRegenerating, setIsProfitabilityRegenerating,
     isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,

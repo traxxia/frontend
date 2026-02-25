@@ -312,31 +312,31 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
         }
       };
 
-      // 3. Call ML Backend with the rawPayload
-      const insightResult = await analysisService.makeAPICall(
-        'aha-insight',
-        null, // No questionsArray needed
-        null, // No answersArray needed
-        businessId,
-        null,
-        null,
-        null,
-        formData.companyName,
-        rawPayload // Passing the structured payload
-      );
-
-      // 4. Call Executive Summary API with the same rawPayload
-      const summaryResult = await analysisService.makeAPICall(
-        'executive-summary',
-        null,
-        null,
-        businessId,
-        null,
-        null,
-        null,
-        formData.companyName,
-        rawPayload
-      );
+      // 3 & 4. Call ML Backend APIs in parallel
+      const [insightResult, summaryResult] = await Promise.all([
+        analysisService.makeAPICall(
+          'aha-insight',
+          null, // No questionsArray needed
+          null, // No answersArray needed
+          businessId,
+          null,
+          null,
+          null,
+          formData.companyName,
+          rawPayload // Passing the structured payload
+        ),
+        analysisService.makeAPICall(
+          'executive-summary',
+          null,
+          null,
+          businessId,
+          null,
+          null,
+          null,
+          formData.companyName,
+          rawPayload
+        )
+      ]);
 
       setSubmissionStep(3); // Finalizing
 
