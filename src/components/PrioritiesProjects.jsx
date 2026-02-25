@@ -18,6 +18,12 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const navigate = useNavigate();
   const userPlan = sessionStorage.getItem("userPlan")?.toLowerCase() || "essential";
+  const userRole = (
+    sessionStorage.getItem("role") ||
+    sessionStorage.getItem("userRole") ||
+    ""
+  ).toLowerCase();
+  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -134,30 +140,30 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
   return (
     <div className="container my-4 priorities-container">
-      <h4 className="priorities-title">{t("Priorities & Projects")}</h4>
-      <p className="priorities-subtitle">{t("What should I work on next")}?</p>
 
-      <Card className="kickstart-card mb-4">
-        <Card.Body className="d-flex justify-content-between align-items-center">
-          <div>
-            <h6 className="kickstart-title mb-1">
-              {t("Ready to Start Project Planning")}?
-            </h6>
-            <small className="text-muted">
-              {t("Select one or more priorities below")}
-            </small>
-          </div>
-          <Button
-            className={`kickstart-button ${userPlan === 'essential' ? 'upgrade-needed' : ''}`}
-            variant={userPlan === 'essential' ? "warning" : "success"}
-            disabled={(selected.length === 0 && userPlan !== 'essential') || kickstarting}
-            onClick={handleKickstart}
-          >
-            {kickstarting ? <Spinner size="sm" /> : userPlan === 'essential' ? "⭐" : "🚀"}
-            {userPlan === 'essential' ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}
-          </Button>
-        </Card.Body>
-      </Card>
+      {isAdmin && (
+        <Card className="kickstart-card mb-4">
+          <Card.Body className="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 className="kickstart-title mb-1">
+                {t("Ready to Start Project Planning")}?
+              </h6>
+              <small className="text-muted">
+                {t("Select one or more priorities below")}
+              </small>
+            </div>
+            <Button
+              className={`kickstart-button ${userPlan === 'essential' ? 'upgrade-needed' : ''}`}
+              variant={userPlan === 'essential' ? "warning" : "success"}
+              disabled={(selected.length === 0 && userPlan !== 'essential') || kickstarting}
+              onClick={handleKickstart}
+            >
+              {kickstarting ? <Spinner size="sm" /> : userPlan === 'essential' ? "⭐" : "🚀"}
+              {userPlan === 'essential' ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}
+            </Button>
+          </Card.Body>
+        </Card>
+      )}
 
       <PlanLimitModal
         show={showPlanLimitModal}
@@ -176,14 +182,16 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
           <Card key={idx} className={`priority-card mb-3 ${isAlreadyKickstarted ? 'kickstarted' : ''}`}>
             <Card.Body>
               <Row className="align-items-center">
-                <Col xs="auto">
-                  <Form.Check
-                    type="checkbox"
-                    disabled={isAlreadyKickstarted}
-                    checked={selected.includes(idx)}
-                    onChange={() => toggleSelection(idx)}
-                  />
-                </Col>
+                {isAdmin && (
+                  <Col xs="auto">
+                    <Form.Check
+                      type="checkbox"
+                      disabled={isAlreadyKickstarted}
+                      checked={selected.includes(idx)}
+                      onChange={() => toggleSelection(idx)}
+                    />
+                  </Col>
+                )}
 
                 <Col className="expand-trigger" onClick={() => toggleExpand(idx)}>
                   <div className="d-flex align-items-center gap-2">
