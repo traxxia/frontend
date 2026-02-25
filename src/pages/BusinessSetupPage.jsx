@@ -1311,6 +1311,7 @@ const BusinessSetupPage = () => {
                           companyAdminIds={companyAdminIds}
                           onSuccess={handleKickstartSuccess}
                           onToastMessage={showToastMessage}
+                          onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
                     </div>
@@ -1488,6 +1489,7 @@ const BusinessSetupPage = () => {
                       companyAdminIds={companyAdminIds}
                       onSuccess={handleKickstartSuccess}
                       onToastMessage={showToastMessage}
+                      onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
                 </div>
@@ -1612,6 +1614,7 @@ const BusinessSetupPage = () => {
                     companyAdminIds={companyAdminIds}
                     onSuccess={handleKickstartSuccess}
                     onToastMessage={showToastMessage}
+                    onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}
               </div>

@@ -8,7 +8,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 
-const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onToastMessage }) => {
+const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onToastMessage, onStartOnboarding }) => {
   const { t } = useTranslation();
   const [priorities, setPriorities] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -113,6 +113,25 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     );
   }
 
+  if (priorities.length === 0) {
+    return (
+      <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
+        <div className="container" style={{ maxWidth: '600px' }}>
+          <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No results available yet."}</h3>
+          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see insights here."}</p>
+          {onStartOnboarding && (
+            <button
+              className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
+              onClick={onStartOnboarding}
+            >
+              {t("startPMFOnboarding") || "Start PMF Onboarding"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container my-4 priorities-container">
       <h4 className="priorities-title">{t("Priorities & Projects")}</h4>
@@ -148,91 +167,85 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
       />
 
-      {priorities.length === 0 ? (
-        <div className="text-center py-4">
-          <p className="text-muted">{t("No priorities found in the executive summary.")}</p>
-        </div>
-      ) : (
-        priorities.map((item, idx) => {
-          const isExpanded = expandedId === idx;
-          const isAlreadyKickstarted = item.isKickstarted;
-          const actions = item.actions || [];
+      {priorities.map((item, idx) => {
+        const isExpanded = expandedId === idx;
+        const isAlreadyKickstarted = item.isKickstarted;
+        const actions = item.actions || [];
 
-          return (
-            <Card key={idx} className={`priority-card mb-3 ${isAlreadyKickstarted ? 'kickstarted' : ''}`}>
-              <Card.Body>
-                <Row className="align-items-center">
-                  <Col xs="auto">
-                    <Form.Check
-                      type="checkbox"
-                      disabled={isAlreadyKickstarted}
-                      checked={selected.includes(idx)}
-                      onChange={() => toggleSelection(idx)}
-                    />
-                  </Col>
+        return (
+          <Card key={idx} className={`priority-card mb-3 ${isAlreadyKickstarted ? 'kickstarted' : ''}`}>
+            <Card.Body>
+              <Row className="align-items-center">
+                <Col xs="auto">
+                  <Form.Check
+                    type="checkbox"
+                    disabled={isAlreadyKickstarted}
+                    checked={selected.includes(idx)}
+                    onChange={() => toggleSelection(idx)}
+                  />
+                </Col>
 
-                  <Col className="expand-trigger" onClick={() => toggleExpand(idx)}>
-                    <div className="d-flex align-items-center gap-2">
-                      <h6 className="priority-title mb-0">{item.title}</h6>
-                      {isAlreadyKickstarted && (
-                        <Badge bg="success" className="ms-2 kickstarted-badge">
-                          <CheckCircle size={12} className="me-1" />
-                          {t("Kickstarted")}
-                        </Badge>
-                      )}
-                    </div>
-                    <small className="priority-desc">
-                      {actions.length > 0
-                        ? (typeof actions[0].action === 'string' ? actions[0].action : (typeof actions[0] === 'string' ? actions[0] : t("View Projects")))
-                        : t("View Projects")}...
-                    </small>
-                  </Col>
-
-                  <Col
-                    xs="auto"
-                    className="d-flex align-items-center gap-2 expand-trigger"
-                    onClick={() => toggleExpand(idx)}
-                  >
-                    <Badge bg="light" text="dark" className="priority-count">
-                      📄 {actions.length}
-                    </Badge>
-                    <ChevronRight className={isExpanded ? "rotate" : ""} />
-                  </Col>
-                </Row>
-
-                {isExpanded && actions.length > 0 && (
-                  <div className="projects-section mt-3">
-                    <div className="projects-title mb-2 d-flex align-items-center gap-2">
-                      <Folder size={16} className="projects-icon" />
-                      <span>{t("Projects")}</span>
-                    </div>
-
-                    {actions.map((action, actionIdx) => {
-                      const actionText = typeof action === 'object' ? (action.action || action.Action || JSON.stringify(action)) : action;
-                      const isActionKickstarted = action.isKickstarted;
-                      return (
-                        <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
-                          <div className="d-flex align-items-center justify-content-between w-100">
-                            <div className="d-flex align-items-start gap-2">
-                              <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
-                              <span>{actionText}</span>
-                            </div>
-                            {isActionKickstarted && (
-                              <Badge bg="success" className="ms-2">
-                                {t("Status_Completed") || "Kickstarted"}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                <Col className="expand-trigger" onClick={() => toggleExpand(idx)}>
+                  <div className="d-flex align-items-center gap-2">
+                    <h6 className="priority-title mb-0">{item.title}</h6>
+                    {isAlreadyKickstarted && (
+                      <Badge bg="success" className="ms-2 kickstarted-badge">
+                        <CheckCircle size={12} className="me-1" />
+                        {t("Kickstarted")}
+                      </Badge>
+                    )}
                   </div>
-                )}
-              </Card.Body>
-            </Card>
-          );
-        })
-      )}
+                  <small className="priority-desc">
+                    {actions.length > 0
+                      ? (typeof actions[0].action === 'string' ? actions[0].action : (typeof actions[0] === 'string' ? actions[0] : t("View Projects")))
+                      : t("View Projects")}...
+                  </small>
+                </Col>
+
+                <Col
+                  xs="auto"
+                  className="d-flex align-items-center gap-2 expand-trigger"
+                  onClick={() => toggleExpand(idx)}
+                >
+                  <Badge bg="light" text="dark" className="priority-count">
+                    📄 {actions.length}
+                  </Badge>
+                  <ChevronRight className={isExpanded ? "rotate" : ""} />
+                </Col>
+              </Row>
+
+              {isExpanded && actions.length > 0 && (
+                <div className="projects-section mt-3">
+                  <div className="projects-title mb-2 d-flex align-items-center gap-2">
+                    <Folder size={16} className="projects-icon" />
+                    <span>{t("Projects")}</span>
+                  </div>
+
+                  {actions.map((action, actionIdx) => {
+                    const actionText = typeof action === 'object' ? (action.action || action.Action || JSON.stringify(action)) : action;
+                    const isActionKickstarted = action.isKickstarted;
+                    return (
+                      <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
+                        <div className="d-flex align-items-center justify-content-between w-100">
+                          <div className="d-flex align-items-start gap-2">
+                            <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
+                            <span>{actionText}</span>
+                          </div>
+                          {isActionKickstarted && (
+                            <Badge bg="success" className="ms-2">
+                              {t("Status_Completed") || "Kickstarted"}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        );
+      })}
 
       <Card className="footer-note mt-4">
         <Card.Body>
