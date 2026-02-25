@@ -105,12 +105,23 @@ export const callMLRankingAPI = async (projects) => {
     );
     return {
       success: true,
-      rankings: response.data.rankings.map((item, index) => ({
-        project_id: item.id,
-        rank: item.rank,
-        score: parseFloat((1.0 - (item.rank - 1) / projects.length).toFixed(4)),
-        severity: item.severity,
-      }))
+      rankings: response.data.rankings.map((item) => {
+        // Fallback: if 'id' is missing or not found, try to find the project by 'name'
+        let projectId = item.id;
+        if (!projectId || !projects.find(p => p._id === projectId)) {
+          const matchedProject = projects.find(p => p.project_name === item.name);
+          if (matchedProject) {
+            projectId = matchedProject._id;
+          }
+        }
+
+        return {
+          project_id: projectId,
+          rank: item.rank,
+          score: parseFloat((1.0 - (item.rank - 1) / projects.length).toFixed(4)),
+          severity: item.severity,
+        };
+      }).filter(r => r.project_id) // Filter out any that couldn't be matched
     };
   } catch (error) {
     throw new Error('ML ranking service temporarily unavailable');

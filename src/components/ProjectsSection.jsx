@@ -201,12 +201,14 @@ const ProjectsSection = ({
       const rankA = rankMap[String(a._id)];
       const rankB = rankMap[String(b._id)];
 
-      // Treat null/undefined as Infinity to push to bottom
-      const rA = (rankA === null || rankA === undefined) ? Infinity : rankA;
-      const rB = (rankB === null || rankB === undefined) ? Infinity : rankB;
+      // Primary: manual rank
+      // Secondary: AI rank
+      const rA = (rankA !== null && rankA !== undefined) ? rankA :
+        ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
+      const rB = (rankB !== null && rankB !== undefined) ? rankB :
+        ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
 
       if (rA === rB) {
-        // Secondary sort by modification date if ranks are equal (or both unranked)
         return new Date(b.updated_at) - new Date(a.updated_at);
       }
       return rA - rB;

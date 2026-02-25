@@ -98,9 +98,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       );
 
       const sorted = [...selectedProjects].sort((a, b) => {
-        const rankA = a.rank === null || a.rank === undefined ? Infinity : a.rank;
-        const rankB = b.rank === null || b.rank === undefined ? Infinity : b.rank;
-        return rankA - rankB;
+        // Primary: use 'rank' (manual ranking)
+        // Secondary: use 'ai_rank' (AI suggested ranking)
+        const rankA = (a.rank !== null && a.rank !== undefined) ? a.rank :
+          ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
+        const rankB = (b.rank !== null && b.rank !== undefined) ? b.rank :
+          ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
+
+        if (rankA !== rankB) return rankA - rankB;
+        return new Date(b.updated_at) - new Date(a.updated_at);
       });
 
       setProjectList(sorted.map(p => ({
