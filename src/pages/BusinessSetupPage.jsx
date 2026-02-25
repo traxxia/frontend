@@ -713,6 +713,16 @@ const BusinessSetupPage = () => {
     }
   };
 
+  const handleKickstartSuccess = () => {
+    setShowProjectsTab(true);
+    setActiveTab("projects");
+    try {
+      if (selectedBusinessId) {
+        sessionStorage.setItem(`showProjectsTab_${selectedBusinessId}`, 'true');
+      }
+    } catch { }
+  };
+
 
   const getPhaseSpecificOptions = (phase) => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
@@ -1042,7 +1052,7 @@ const BusinessSetupPage = () => {
                           {t("Projects")}
                         </button>
                       )}
-                      {ENABLE_PMF && showProjectsTab && (
+                      {ENABLE_PMF && (
                         <button
                           className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                           onClick={handlePrioritiesTabClick}
@@ -1209,10 +1219,11 @@ const BusinessSetupPage = () => {
                           companyAdminIds={companyAdminIds}
                         />
                       )}
-                      {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
+                      {ENABLE_PMF && activeTab === "priorities" && (
                         <PrioritiesProjects
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
+                          onSuccess={handleKickstartSuccess}
                         />
                       )}
                     </div>
@@ -1242,6 +1253,15 @@ const BusinessSetupPage = () => {
                         onClick={handleExecutiveTabClick}
                       >
                         {t("Executive Summary")}
+                      </button>
+                    )}
+
+                    {ENABLE_PMF && (
+                      <button
+                        className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
+                        onClick={handlePrioritiesTabClick}
+                      >
+                        {t("Priorities & Projects")}
                       </button>
                     )}
 
@@ -1369,10 +1389,11 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
+                  {ENABLE_PMF && activeTab === "priorities" && (
                     <PrioritiesProjects
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
+                      onSuccess={handleKickstartSuccess}
                     />
                   )}
                 </div>
@@ -1485,10 +1506,11 @@ const BusinessSetupPage = () => {
                     isArchived={isArchived}
                   />
                 )}
-                {ENABLE_PMF && showProjectsTab && activeTab === "priorities" && (
+                {ENABLE_PMF && activeTab === "priorities" && (
                   <PrioritiesProjects
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
+                    onSuccess={handleKickstartSuccess}
                   />
                 )}
               </div>

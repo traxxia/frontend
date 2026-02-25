@@ -199,6 +199,40 @@ export class AnalysisApiService {
     }
   }
 
+  async getKickstartData(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart/${businessId}?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 404) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching kickstart data:', error);
+      throw error;
+    }
+  }
+
+  async kickstartProject(payload) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error kickstarting project:', error);
+      throw error;
+    }
+  }
+
   async getBusiness(businessId) {
     try {
       const token = this.getAuthToken();
