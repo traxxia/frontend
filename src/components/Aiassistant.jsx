@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, X, Bot } from "lucide-react";
+import { Sparkles, Send, X, Bot, Zap } from "lucide-react";
 import axios from "axios";
 import "../styles/Ai.css";
 
@@ -10,6 +10,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     { role: "assistant", text: "Hi! How can I help you today? 👋" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null });
   const chatEndRef = useRef(null);
 
   const suggestedQuestions = [
@@ -54,6 +55,34 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     fetchHistory();
   }, []); // Only fetch on mount to retain history during navigation
 
+  // Check quota status when panel is opened
+  useEffect(() => {
+    if (open) {
+      checkQuota();
+    }
+  }, [open]);
+
+  const checkQuota = async () => {
+    const businessId = getBusinessId();
+    const token = getToken();
+    if (!token || !businessId) return;
+
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data) {
+        setQuotaStatus({
+          exceeded: response.data.quotaExceed,
+          resetAt: response.data.quotaResetAt
+        });
+      }
+    } catch (error) {
+      console.error("Error checking AI quota:", error);
+    }
+  };
+
   const saveMessageToHistory = async (role, text) => {
     const token = getToken();
     if (!token) return;
@@ -82,8 +111,36 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     await saveMessageToHistory("user", userText);
 
     let assistantText = "";
+    const businessId = getBusinessId();
+    const token = getToken();
 
     try {
+      // 1. Pre-check: Verify AI token status before calling AI Assistant API
+      const usageResponse = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const usageData = usageResponse.data;
+
+      // Update local state to sync UI
+      setQuotaStatus({
+        exceeded: usageData?.quotaExceed || false,
+        resetAt: usageData?.quotaResetAt || null
+      });
+
+      if (usageData?.quotaExceed) {
+        const resetDate = usageData.quotaResetAt
+          ? new Date(usageData.quotaResetAt).toLocaleDateString()
+          : "soon";
+        assistantText = `⚠️ You have reached the AI token limit for your plan. Your quota will reset on ${resetDate}.`;
+        setIsLoading(false);
+        setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
+        await saveMessageToHistory("assistant", assistantText);
+        return;
+      }
+
+      // 2. Call AI Assistant API
       const requestBody = { message: userText };
       if (projectId) {
         requestBody.projectId = projectId;
@@ -93,7 +150,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-business-id": getBusinessId(),
+          "x-business-id": businessId,
         },
         body: JSON.stringify(requestBody),
       });
@@ -109,14 +166,32 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
         }
       } else {
         assistantText = data.response || data.text || "I'm sorry, I couldn't process that request.";
+
+        // 3. Post-update: Log the tokens consumed
+        // Extracting tokens_used from the AI service response
+        const tokensUsed = data.usage?.totalTokens || data.usage?.total_tokens || data.tokensUsed || 0;
+
+        if (tokensUsed > 0) {
+          try {
+            await axios.post(
+              `${process.env.REACT_APP_BACKEND_URL}/api/companies/update-ai-usage`,
+              { business_id: businessId, tokens_used: tokensUsed },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          } catch (updateError) {
+            console.error("Failed to update AI token usage:", updateError);
+          }
+        }
       }
     } catch (error) {
       console.error("AI Assistant API Error:", error);
       assistantText = "Sorry, I encountered a network error. Please check your connection and try again.";
     } finally {
       // Always show and save the assistant reply — even error messages
-      setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
-      await saveMessageToHistory("assistant", assistantText);
+      if (assistantText) {
+        setMessages((prev) => [...prev, { role: "assistant", text: assistantText }]);
+        await saveMessageToHistory("assistant", assistantText);
+      }
       setIsLoading(false);
     }
   };
@@ -202,21 +277,31 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
 
         {/* Input */}
         <div className="ai-input-row">
-          <input
-            className="ai-input"
-            type="text"
-            placeholder="Ask anything..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <button
-            className="ai-send-btn"
-            onClick={() => handleSend()}
-            disabled={!query.trim() || isLoading}
-          >
-            <Send size={15} color="#fff" />
-          </button>
+          {quotaStatus.exceeded ? (
+            <div className="ai-limit-reached">
+              <Zap size={14} className="ai-limit-icon" />
+              <span>Limit Reached. Quota Resets At : {quotaStatus.resetAt ? new Date(quotaStatus.resetAt).toLocaleDateString() : 'soon'}</span>
+            </div>
+          ) : (
+            <>
+              <input
+                className="ai-input"
+                type="text"
+                placeholder="Ask anything..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading}
+              />
+              <button
+                className="ai-send-btn"
+                onClick={() => handleSend()}
+                disabled={!query.trim() || isLoading}
+              >
+                <Send size={15} color="#fff" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>
