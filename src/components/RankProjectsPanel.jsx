@@ -52,26 +52,40 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [rationaleErrors, setRationaleErrors] = useState({});
+  const [initialAllRanked, setInitialAllRanked] = useState(false);
 
   useEffect(() => {
     if (!projects || projects.length === 0) return;
 
     if (!isAdmin) {
       console.log(projects)
-      // For collaborators, we ONLY show projects that have an AI rank AND are not killed
-      // Fallback: if no AI ranks yet, this list will be empty as requested.
+      // For collaborators, we show projects that have an AI rank OR are targeted for launch (launched/pending)
+      // and are not killed.
       const mandatoryProjects = projects.filter(p =>
-        p.ai_rank !== null &&
-        p.ai_rank !== undefined &&
+        ((p.ai_rank !== null && p.ai_rank !== undefined) ||
+          p.launch_status?.toLowerCase() === 'launched' ||
+          p.launch_status?.toLowerCase() === 'pending_launch') &&
         p.status?.toLowerCase() !== 'killed'
       );
 
-      setProjectList(mandatoryProjects.map(p => ({
+      const sortedMandatory = [...mandatoryProjects].sort((a, b) => {
+        // Primary: use 'rank' (manual ranking)
+        // Secondary: use 'ai_rank' (AI suggested ranking)
+        const rankA = (a.rank !== null && a.rank !== undefined) ? a.rank :
+          ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
+        const rankB = (b.rank !== null && b.rank !== undefined) ? b.rank :
+          ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
+
+        if (rankA !== rankB) return rankA - rankB;
+        return new Date(b.updated_at) - new Date(a.updated_at);
+      });
+
+      setProjectList(sortedMandatory.map(p => ({
         ...p,
         rationale: p.rationale || p.rationals || "",
         description: p.description || p.project_description || ""
       })));
-      setInitialOrder(mandatoryProjects.map(p => p._id));
+      setInitialOrder(sortedMandatory.map(p => p._id));
       setStep(2);
       return;
     }
@@ -97,9 +111,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       );
 
       const sorted = [...selectedProjects].sort((a, b) => {
-        const rankA = a.rank === null || a.rank === undefined ? Infinity : a.rank;
-        const rankB = b.rank === null || b.rank === undefined ? Infinity : b.rank;
-        return rankA - rankB;
+        // Primary: use 'rank' (manual ranking)
+        // Secondary: use 'ai_rank' (AI suggested ranking)
+        const rankA = (a.rank !== null && a.rank !== undefined) ? a.rank :
+          ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
+        const rankB = (b.rank !== null && b.rank !== undefined) ? b.rank :
+          ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
+
+        if (rankA !== rankB) return rankA - rankB;
+        return new Date(b.updated_at) - new Date(a.updated_at);
       });
 
       setProjectList(sorted.map(p => ({
@@ -124,15 +144,35 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   ), [projects]);
 
   useEffect(() => {
-    if (projects && projects.length > 0 && selectedDraftIds.length === 0 && step === 1) {
-      const rankedDrafts = projects
+    if (projects && projects.length > 0 && step === 1) {
+      const rankedDraftIds = projects
         .filter(p => (p.launch_status?.toLowerCase() !== 'launched' || p.status?.toLowerCase() === 'draft') && p.rank !== null && p.rank !== undefined)
         .map(p => p._id);
-      if (rankedDrafts.length > 0) {
-        setSelectedDraftIds(rankedDrafts);
+
+      const unrankedDrafts = projects.filter(p =>
+        (!p.launch_status || (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') || p.status?.toLowerCase() === 'draft') &&
+        p.status?.toLowerCase() !== 'killed' &&
+        (p.rank === null || p.rank === undefined)
+      );
+
+      // Check if ALL potential projects are ranked
+      const allRanked = unrankedDrafts.length === 0;
+      setInitialAllRanked(allRanked);
+
+      // Initialize selectedDraftIds if not already set
+      if (selectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
+        setSelectedDraftIds(rankedDraftIds);
+      }
+
+      // Jump to Step 2 for Admin ONLY if all projects are already ranked
+      if (isAdmin && allRanked) {
+        if (selectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
+          setSelectedDraftIds(rankedDraftIds);
+        }
+        setStep(2);
       }
     }
-  }, [projects, step]); // Run when projects or step changes
+  }, [projects, step, isAdmin]); // Run when projects, step, or role changes
 
   const handleToggleDraft = (projectId) => {
     setSelectedDraftIds(prev =>
@@ -524,8 +564,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const renderStep2 = () => (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        {isAdmin && (
+      <div className={`d-flex ${isAdmin && !initialAllRanked ? "justify-content-between" : "justify-content-end"} align-items-center mb-3`}>
+        {isAdmin && !initialAllRanked && (
           <Button variant="outline-secondary" size="sm" onClick={() => setStep(1)}>
             ← {t("Back to Selection")}
           </Button>
@@ -686,9 +726,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   );
 
   return (
-    <div className="rank-panel-container responsive-panel compact-mode" > 
+    <div className="rank-panel-container responsive-panel compact-mode" >
 
-      <Row className="rank-panel-header align-items-center">
+      <Row className="rank-panel-header responsive-header align-items-center">
         <Col xs={12} md={8} className="d-flex align-items-center gap-3">
           <h5 className="rank-title">{t("Rank_Your_Projects")}</h5>
         </Col>
@@ -696,12 +736,12 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         <Col
           xs={12}
           md={4}
-          className="rank-header-buttons d-flex justify-content-md-end justify-content-start"
+          className="rank-header-buttons responsive-btn-group d-flex justify-content-md-end justify-content-start mt-md-0 mt-3"
         >
           {step === 1 && isAdmin && (
             <Button
               variant="primary"
-              className="responsive-btn"
+              className="responsive-btn w-100-mobile"
               onClick={handleNextToRanking}
               disabled={isGeneratingAI || isArchived}
             >
@@ -710,7 +750,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           )}
           {step === 2 && (isAdmin || !isRankingLocked) && (
             <Button
-              className="btn-save-rank responsive-btn"
+              className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}
               disabled={isSaving || (isSaved && !hasRankingsChanged()) || isArchived}
             >

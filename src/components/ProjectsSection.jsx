@@ -62,6 +62,7 @@ const ProjectsSection = ({
 
   const [projects, setProjects] = useState([]);
   const [teamRankings, setTeamRankings] = useState([]);
+  const [isRankingsLoading, setIsRankingsLoading] = useState(false);
   const [adminRanks, setAdminRanks] = useState([]);
 
   // NEW: Business-level status
@@ -179,7 +180,7 @@ const ProjectsSection = ({
   };
 
   const normalizeId = (id) => String(id);
-  const rankMap = teamRankings.reduce((acc, r) => {
+  const rankMap = (teamRankings || []).reduce((acc, r) => {
     acc[normalizeId(r.project_id)] = r.rank;
     return acc;
   }, {});
@@ -201,12 +202,14 @@ const ProjectsSection = ({
       const rankA = rankMap[String(a._id)];
       const rankB = rankMap[String(b._id)];
 
-      // Treat null/undefined as Infinity to push to bottom
-      const rA = (rankA === null || rankA === undefined) ? Infinity : rankA;
-      const rB = (rankB === null || rankB === undefined) ? Infinity : rankB;
+      // Primary: manual rank
+      // Secondary: AI rank
+      const rA = (rankA !== null && rankA !== undefined) ? rankA :
+        ((a.ai_rank !== null && a.ai_rank !== undefined) ? a.ai_rank : Infinity);
+      const rB = (rankB !== null && rankB !== undefined) ? rankB :
+        ((b.ai_rank !== null && b.ai_rank !== undefined) ? b.ai_rank : Infinity);
 
       if (rA === rB) {
-        // Secondary sort by modification date if ranks are equal (or both unranked)
         return new Date(b.updated_at) - new Date(a.updated_at);
       }
       return rA - rB;
@@ -245,7 +248,7 @@ const ProjectsSection = ({
     return counts;
   }, [projects]);
 
-  const aiRankMap = teamRankings.reduce((acc, r) => {
+  const aiRankMap = (teamRankings || []).reduce((acc, r) => {
     acc[normalizeId(r.project_id)] = r.ai_rank;
     return acc;
   }, {});
@@ -422,8 +425,12 @@ const ProjectsSection = ({
   }, [fetchProjects, checkBusinessAccess, checkProjectsAccess, myUserId]);
 
   const loadTeamRankings = useCallback(async () => {
+    setIsRankingsLoading(true);
     const result = await fetchTeamRankings();
-    if (!result) return;
+    if (!result) {
+      setIsRankingsLoading(false);
+      return;
+    }
 
     setTeamRankings(result.rankings);
 
@@ -448,6 +455,7 @@ const ProjectsSection = ({
     // UPDATED: Check if current user has locked their ranking
     const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
     setRankingsLocked(isCurrentUserLocked);
+    setIsRankingsLoading(false);
   }, [fetchTeamRankings, myUserId]);
 
   const loadAdminRankings = useCallback(async () => {
@@ -458,7 +466,8 @@ const ProjectsSection = ({
   const refreshTeamRankings = useCallback(async () => {
     await loadTeamRankings();
     await loadAdminRankings();
-  }, [loadTeamRankings, loadAdminRankings]);
+    await loadProjects(); // Ensure project data (AI ranks, etc.) is also refreshed
+  }, [loadTeamRankings, loadAdminRankings, loadProjects]);
 
   const handleLockProjectCreation = async () => {
     try {
@@ -814,10 +823,10 @@ const ProjectsSection = ({
 
         {viewMode === "ranking" ? (
           <>
-            <div className="d-flex align-items-center justify-content-between gap-2 mb-4">
-              <div className="d-flex align-items-center gap-2">
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
+              <div className="d-flex align-items-center gap-2 flex-grow-1">
                 {!isViewer && !isArchived && (
-                  <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
                     <button
                       onClick={() => {
                         setShowRankScreen(!showRankScreen);
@@ -843,11 +852,12 @@ const ProjectsSection = ({
 
               {/* Repositioned Collaborator Progress - Admin Only */}
               {isSuperAdmin && (
-                <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2" style={{
+                <div className="collaborator-progress-compact d-flex align-items-center gap-2 px-3 py-2 mt-md-0 mt-2" style={{
                   backgroundColor: '#f8fafc',
-                  borderRadius: '8px',
+                  borderRadius: '100px', // Matches status-tabs
                   border: '1px solid #e2e8f0',
-                  fontSize: '13px'
+                  fontSize: '13px',
+                  whiteSpace: 'nowrap'
                 }}>
                   <Users size={16} className="text-primary" />
                   <span className="fw-600 text-slate-700" style={{ fontWeight: '600' }}>{t("Collaborator Progress")}:</span>
@@ -862,21 +872,23 @@ const ProjectsSection = ({
               )}
             </div>
 
-            <RankProjectsPanel
-              show={showRankScreen}
-              projects={rankedProjects}
-              businessId={selectedBusinessId}
-              onLockRankings={handleLockProjectRanking}
-              onRankSaved={() => {
-                refreshTeamRankings();
-              }}
-              isAdmin={isSuperAdmin}
-              isRankingLocked={isRankingLocked}
-              onShowToast={handleShowToast}
-              isArchived={apiIsArchived}
-            />
+            {showRankScreen && !isLoading && !isRankingsLoading && (
+              <RankProjectsPanel
+                show={showRankScreen}
+                projects={rankedProjects}
+                businessId={selectedBusinessId}
+                onLockRankings={handleLockProjectRanking}
+                onRankSaved={() => {
+                  refreshTeamRankings();
+                }}
+                isAdmin={isSuperAdmin}
+                isRankingLocked={isRankingLocked}
+                onShowToast={handleShowToast}
+                isArchived={apiIsArchived}
+              />
+            )}
 
-            {showTeamRankings && !isViewer && (
+            {showTeamRankings && !isViewer && !isLoading && !isRankingsLoading && (
               <TeamRankingsView
                 activeAccordionKey={activeAccordionKey}
                 onAccordionSelect={handleAccordionSelect}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
 import {
@@ -12,11 +12,23 @@ import {
   USAGE_CONTEXT_OPTIONS,
   TOTAL_STEPS
 } from '../config/pmfOnboardingConfig';
+import { useNavigate } from "react-router-dom";
+import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
+import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
 
-const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
+const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // API Service setup
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem("token");
+  const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
+
   const [currentStep, setCurrentStep] = useState(1);
+  const [submissionStep, setSubmissionStep] = useState(0); // 0: initial, 1: saving, 2: generating, 3: finalizing
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
@@ -45,17 +57,22 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   });
   const [errors, setErrors] = useState({});
 
-  const progressPercentage = (currentStep / TOTAL_STEPS) * 100;
+  // Calculate progress based on 9 steps (dots)
+  // Step 1 = 0% progress, 100% to complete
+  // Step 9 = 100% progress, 0% to complete (or close to it)
+  // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
+  const progressPercentage = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+  const percentToComplete = 100 - Math.round(progressPercentage);
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
-    label: c
+    label: t(c) || c
   }));
 
   const industryOptions = INDUSTRIES_BY_CATEGORY.map(group => ({
-    label: group.category,
+    label: t(group.category) || group.category,
     options: group.industries.map(ind => ({
       value: ind,
-      label: ind
+      label: t(ind) || ind
     }))
   }));
 
@@ -144,7 +161,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   };
 
   const validateStep4 = () => {
-    return true; 
+    return true;
   };
 
   const validateStep5 = () => {
@@ -157,14 +174,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     const newErrors = {};
 
     if (!formData.strategicObjective) {
-      newErrors.strategicObjective = 'Please select an objective';
+      newErrors.strategicObjective = t('Please select an objective');
     }
 
     if (
       formData.strategicObjective === 'Other' &&
       !formData.strategicObjectiveOther.trim()
     ) {
-      newErrors.strategicObjectiveOther = 'Please specify';
+      newErrors.strategicObjectiveOther = t('Please specify');
     }
 
     setErrors(newErrors);
@@ -175,14 +192,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     const newErrors = {};
 
     if (!formData.keyChallenge) {
-      newErrors.keyChallenge = 'Please select a challenge';
+      newErrors.keyChallenge = t('Please select a challenge');
     }
 
     if (
       formData.keyChallenge === 'Other' &&
       !formData.keyChallengeOther.trim()
     ) {
-      newErrors.keyChallengeOther = 'Please specify';
+      newErrors.keyChallengeOther = t('Please specify');
     }
 
     setErrors(newErrors);
@@ -193,14 +210,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     const newErrors = {};
 
     if (formData.differentiation.length === 0) {
-      newErrors.differentiation = 'Select at least one option';
+      newErrors.differentiation = t('Select at least one option');
     }
 
     if (
       formData.differentiation.includes('Other') &&
       !formData.differentiationOther.trim()
     ) {
-      newErrors.differentiation = 'Please specify for Other';
+      newErrors.differentiation = t('Please specify for Other');
     }
 
     setErrors(newErrors);
@@ -210,7 +227,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
   const validateStep9 = () => {
     const newErrors = {};
     if (!formData.usageContext) {
-      newErrors.usageContext = 'Please select one option';
+      newErrors.usageContext = t('Please select one option');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -262,11 +279,97 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
     }
   };
 
-  const handleSubmit = () => {
-    if (onSubmit) {
-      onSubmit(formData); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      setSubmissionStep(1); // Saving data
+
+      // 1. Save onboarding data to our backend
+      await analysisService.savePMFOnboardingData(businessId, formData);
+
+      setSubmissionStep(2); // Generating insights (The long part)
+
+      // 2. Prepare payload for ML backend in the new structured "raw" format
+      const rawPayload = {
+        company: {
+          name: formData.companyName,
+          website: formData.website || "N/A",
+          location: {
+            city: formData.city || "N/A",
+            country: formData.country,
+          },
+          industry: formData.primaryIndustry,
+          geographies: [formData.geography1, formData.geography2, formData.geography3].filter(Boolean),
+          profits: {
+            source: {
+              [t("Segments")]: [formData.customerSegment1, formData.customerSegment2, formData.customerSegment3].filter(Boolean),
+              [t("Products")]: [formData.productService1, formData.productService2, formData.productService3].filter(Boolean),
+              [t("Channels")]: [formData.channel1, formData.channel2, formData.channel3].filter(Boolean),
+            }
+          },
+          objective: formData.strategicObjective === "Other" ? formData.strategicObjectiveOther : formData.strategicObjective,
+          constraint: {
+            primary: formData.keyChallenge === "Other" ? formData.keyChallengeOther : formData.keyChallenge,
+          },
+          usp: [...formData.differentiation.filter(d => d !== 'Other'), formData.differentiationOther].filter(Boolean),
+        }
+      };
+
+      // 3 & 4. Call ML Backend APIs in parallel
+      const [insightResult, summaryResult] = await Promise.all([
+        analysisService.makeAPICall(
+          'aha-insight',
+          null, // No questionsArray needed
+          null, // No answersArray needed
+          businessId,
+          null,
+          null,
+          null,
+          formData.companyName,
+          rawPayload // Passing the structured payload
+        ),
+        analysisService.makeAPICall(
+          'executive-summary',
+          null,
+          null,
+          businessId,
+          null,
+          null,
+          null,
+          formData.companyName,
+          rawPayload
+        )
+      ]);
+
+      setSubmissionStep(3); // Finalizing
+
+      // 5. Save insights to our backend
+      await analysisService.savePMFInsights(businessId, insightResult);
+
+      // 6. Save executive summary to our backend
+      await analysisService.savePMFExecutiveSummary(businessId, summaryResult);
+
+      // 7. Fetch final PMF analysis to ensure data is updated
+      await analysisService.getPMFAnalysis(businessId);
+
+      if (onSubmit) {
+        onSubmit(formData);
+      }
+      handleClose();
+    } catch (error) {
+      console.error("Error during PMF onboarding submission:", error);
+      const errorMsg = t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
+      if (onToastMessage) {
+        onToastMessage(errorMsg, "error");
+      } else {
+        alert(errorMsg);
+      }
+    } finally {
+      setIsSubmitting(false);
+      setSubmissionStep(0);
     }
-    handleClose(); 
   };
 
 
@@ -311,14 +414,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('company_client_name') || 'Company / Client Name'} <span className="text-danger">*</span>
+                {t('company client name') || 'Company / Client Name'} <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="text"
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleInputChange}
-                placeholder={t('enter_company_name') || 'Enter company or client name'}
+                placeholder={t('enter company name') || 'Enter company or client name'}
                 className="pmf-form-control"
                 isInvalid={!!errors.companyName}
                 autoFocus
@@ -364,7 +467,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
-                placeholder={t('select_country') || 'Select country'}
+                placeholder={t('select country') || 'Select country'}
                 options={countryOptions}
                 value={countryOptions.find(o => o.value === formData.country)}
                 onChange={(selected) =>
@@ -399,8 +502,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                     backgroundColor: state.isSelected
                       ? "#217aff"
                       : state.isFocused
-                      ? "#eef4ff"
-                      : "#fff",
+                        ? "#eef4ff"
+                        : "#fff",
                     color: state.isSelected ? "#fff" : "#111",
                     cursor: "pointer"
                   }),
@@ -446,7 +549,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('primary_industry') || 'Primary Industry'} <span className="text-danger">*</span>
+                {t('primary industry') || 'Primary Industry'} <span className="text-danger">*</span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -489,8 +592,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                     backgroundColor: state.isSelected
                       ? "#217aff"
                       : state.isFocused
-                      ? "#eef4ff"
-                      : "#fff",
+                        ? "#eef4ff"
+                        : "#fff",
                     color: state.isSelected ? "#fff" : "#111",
                     cursor: "pointer"
                   }),
@@ -500,7 +603,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                     borderRadius: 6
                   })
                 }}
-                />
+              />
 
               {errors.primaryIndustry && (
                 <Form.Text className="text-danger d-block mt-1">
@@ -514,10 +617,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-3">
-              {t('which_geographies_strategic_answers') || 'Which geographies do you want strategic answers for?'}
+              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
-              {t('enter_up_to_3_geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
+              {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
             </p>
 
             <Form.Group className="mb-3">
@@ -576,18 +679,18 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-2">
-              {t('where_does_profit_come_from') || 'Where does most of your profit come from today?'}
+              {t('where does profit come from') || 'Where does most of your profit come from today?'}
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
-              {t('your_best_estimate_enough') || 'Your best estimate is enough.'}
+              {t('your best estimate enough') || 'Your best estimate is enough.'}
             </p>
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('customer_segments_max_3') || 'Customer segments (max 3)'}
+                {t('customer segments max 3') || 'Customer segments (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('customer_segments_example') || 'e.g., young adults, SMEs, enterprise'}
+                {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
               </p>
 
               <Form.Group className="mb-3">
@@ -644,10 +747,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('products_services_max_3') || 'Products / services (max 3)'}
+                {t('products services max 3') || 'Products / services (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('products_services_example') || 'e.g., ice cream, M&A advisory'}
+                {t('products services example') || 'e.g., ice cream, M&A advisory'}
               </p>
 
               <Form.Group className="mb-3">
@@ -656,7 +759,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="productService1"
                   value={formData.productService1}
                   onChange={handleInputChange}
-                  placeholder={(t('product_service') || 'Product/Service') + ' 1'}
+                  placeholder={(t('product service') || 'Product/Service') + ' 1'}
                   className="pmf-form-control"
                   isInvalid={!!errors.productService1}
                 />
@@ -673,7 +776,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="productService2"
                   value={formData.productService2}
                   onChange={handleInputChange}
-                  placeholder={`${t('product_service') || 'Product/Service'} 2`}
+                  placeholder={`${t('product service') || 'Product/Service'} 2`}
                   className="pmf-form-control"
                   isInvalid={!!errors.productService2}
                 />
@@ -690,7 +793,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   name="productService3"
                   value={formData.productService3}
                   onChange={handleInputChange}
-                  placeholder={`${t('product_service') || 'Product/Service'} 3`}
+                  placeholder={`${t('product service') || 'Product/Service'} 3`}
                   className="pmf-form-control"
                   isInvalid={!!errors.productService3}
                 />
@@ -701,13 +804,13 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 )}
               </Form.Group>
             </div>
-            
+
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('channels_max_3') || 'Channels (max 3)'}
+                {t('channels max 3') || 'Channels (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('channels_example') || 'e.g., convenience stores, direct sales'}
+                {t('channels example') || 'e.g., convenience stores, direct sales'}
               </p>
 
               <Form.Group className="mb-3">
@@ -746,10 +849,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
 
             <div className="mb-2">
               <Form.Label className="pmf-form-label mb-2">
-                {t('geographies_max_3') || 'Geographies (max 3)'}
+                {t('geographies max_3') || 'Geographies (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('geographies_example') || 'e.g., Lima, nationwide'}
+                {t('geographies example') || 'e.g., Lima, nationwide'}
               </p>
 
               <Form.Group className="mb-3">
@@ -792,7 +895,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-4">
-              {t('strategic_objective') || 'Strategic Objective'}
+              {t('strategic objective') || 'Strategic Objective'}
             </h5>
 
             {STRATEGIC_OBJECTIVES.map((option) => (
@@ -809,7 +912,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   onChange={() => handleRadioSelect(option)}
                   label={
                     <span className="pmf-radio-label">
-                      {option}
+                      {t(option)}
                     </span>
                   }
                 />
@@ -820,7 +923,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               <Form.Group className="mt-3">
                 <Form.Control
                   type="text"
-                  placeholder="Please specify"
+                  placeholder={t("Please specify")}
                   value={formData.strategicObjectiveOther}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -862,7 +965,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   type="radio"
                   name="keyChallenge"
                   label={
-                    <span className="pmf-radio-label">{option} </span>
+                    <span className="pmf-radio-label">{t(option)} </span>
                   }
                   checked={formData.keyChallenge === option}
                   onChange={() => handleRadioChange('keyChallenge', option)}
@@ -874,7 +977,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               <Form.Group className="mt-3">
                 <Form.Control
                   type="text"
-                  placeholder="Please specify"
+                  placeholder={t("Please specify")}
                   value={formData.keyChallengeOther}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -914,7 +1017,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
               >
                 <Form.Check
                   type="checkbox"
-                  label={option}
+                  label={t(option)}
                   checked={formData.differentiation.includes(option)}
                   onChange={() => handleDifferentiationChange(option)}
                   className="pmf-checkbox-input"
@@ -924,7 +1027,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                   formData.differentiation.includes('Other') && (
                     <Form.Control
                       type="text"
-                      placeholder="Please specify"
+                      placeholder={t("Please specify")}
                       value={formData.differentiationOther}
                       onChange={(e) =>
                         setFormData(prev => ({
@@ -968,7 +1071,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
                 <Form.Check
                   type="radio"
                   name="usageContext"
-                  label={option}
+                  label={t(option)}
                   checked={formData.usageContext === option}
                   onChange={() =>
                     setFormData(prev => ({
@@ -1003,7 +1106,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
       <Modal.Header className="pmf-modal-header">
         <div className="pmf-header-content">
           <Modal.Title className="pmf-modal-title">
-            {t('pmf_onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
+            {t('Pmf Onboarding') || 'PMF Onboarding'} - {t('step') || 'Step'} {currentStep} {t('of') || 'of'} {TOTAL_STEPS}
           </Modal.Title>
         </div>
         <button
@@ -1017,10 +1120,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
       </Modal.Header>
 
       <Modal.Body className="pmf-modal-body">
-        <div className="pmf-progress-container">
-          <div className="pmf-progress-bar">
+        <div className="pmf-progress-wrapper">
+          <div className="pmf-progress-header-simple">
+            <span className="pmf-progress-title-simple">{t('Pmf Onboarding') || 'PMF Onboarding'}</span>
+            <span className="pmf-progress-percent-simple">{Math.round(progressPercentage)}%</span>
+          </div>
+          <div className="pmf-progress-bar-simple">
             <div
-              className="pmf-progress-fill"
+              className="pmf-progress-fill-simple"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -1047,12 +1154,28 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit }) => {
           variant="primary"
           onClick={handleNext}
           className="pmf-next-button"
+          disabled={isSubmitting}
         >
-          {currentStep === TOTAL_STEPS
-            ? (t('finish') || 'Complete Onboarding')
-            : (t('next') || 'Next')}
-          {currentStep < TOTAL_STEPS && (
-            <ChevronRight size={18} className="ms-1" />
+          {isSubmitting ? (
+            <div className="d-flex flex-column align-items-center" style={{ minWidth: "160px" }}>
+              <div className="d-flex align-items-center mb-1">
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span style={{ fontSize: "14px" }}>
+                  {submissionStep === 1 && t("Saving data...")}
+                  {submissionStep === 2 && t("Analyzing market (60-90s)...")}
+                  {submissionStep === 3 && t("Finalizing...")}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <>
+              {currentStep === TOTAL_STEPS
+                ? t('finish')
+                : t('next')}
+              {currentStep < TOTAL_STEPS && (
+                <ChevronRight size={18} className="ms-1" />
+              )}
+            </>
           )}
         </Button>
       </Modal.Footer>

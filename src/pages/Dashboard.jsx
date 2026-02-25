@@ -13,7 +13,7 @@ import {
   Accordion
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle
+  Info, X, Trash2, AlertTriangle, ArrowLeft
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -34,6 +34,7 @@ const Dashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+  const [newlyCreatedBusiness, setNewlyCreatedBusiness] = useState(null);
   const [isCreatingBusiness, setIsCreatingBusiness] = useState(false);
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
@@ -248,6 +249,10 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (response.ok) {
+        setNewlyCreatedBusiness(data.business);
+        if (data.business && (data.business._id || data.business.id)) {
+          sessionStorage.setItem('activeBusinessId', data.business._id || data.business.id);
+        }
         setSuccessMessage(t('business_created_successfully'));
         setShowSuccessPopup(true);
 
@@ -610,7 +615,12 @@ const Dashboard = () => {
 
   // Event Handlers
   const handleBusinessClick = (business) => {
-    navigate('/businesspage', { state: { business } });
+    const businessId = business._id || business.id;
+    if (businessId) {
+      sessionStorage.setItem('activeBusinessId', businessId);
+    }
+    // Navigate directly to business page with AHA tab active
+    navigate('/businesspage', { state: { business, initialTab: 'aha' } });
   };
 
   const handleCloseModal = () => {
@@ -633,9 +643,14 @@ const Dashboard = () => {
       {showInsights ? (
         ENABLE_PMF ? (
           <PMFInsights
+            businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
             onContinue={() => {
               setShowInsights(false);
-              navigate("/businesspage");
+              navigate("/businesspage", {
+                state: {
+                  business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id)) || businesses[0]
+                }
+              });
             }}
           />
         ) : null
@@ -1012,9 +1027,17 @@ const Dashboard = () => {
             <PMFOnboardingModal
               show={showPMFOnboarding}
               onHide={() => setShowPMFOnboarding(false)}
+              businessId={newlyCreatedBusiness?._id || sessionStorage.getItem('activeBusinessId') || businesses[0]?._id}
               onSubmit={(pmfFormData) => {
                 setShowPMFOnboarding(false);
-                setShowInsights(true);
+                // Instead of showing standalone insights, go straight to the business page
+                // Any "AHA" results will be available in the tabs there
+                setShowInsights(false);
+                navigate("/businesspage", {
+                  state: {
+                    business: newlyCreatedBusiness || businesses.find(b => b._id === (sessionStorage.getItem('activeBusinessId') || businesses[0]?._id))
+                  }
+                });
               }}
             />
           )}

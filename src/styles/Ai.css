@@ -370,3 +370,40 @@
 [data-theme="dark"] .ai-backdrop {
   background: rgba(0, 0, 0, 0.35);
 }
+/* Limit reached message */
+.ai-limit-reached {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #fff1f2;
+  color: #e11d48;
+  padding: 10px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #fda4af;
+  animation: ai-shake 0.4s ease-in-out;
+}
+
+.ai-limit-icon {
+  color: #e11d48;
+}
+
+[data-theme='dark'] .ai-limit-reached {
+  background: #4c0519;
+  color: #fda4af;
+  border-color: #881337;
+}
+
+[data-theme='dark'] .ai-limit-icon {
+  color: #fda4af;
+}
+
+@keyframes ai-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}

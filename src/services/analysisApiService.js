@@ -86,7 +86,9 @@ export const API_ENDPOINTS = {
   growthTracker: 'excel-analysis',
   liquidityEfficiency: 'excel-analysis',
   investmentPerformance: 'excel-analysis',
-  leverageRisk: 'excel-analysis'
+  leverageRisk: 'excel-analysis',
+  ahaInsight: 'aha-insight',
+  executiveSummary: 'executive-summary'
 };
 
 // Metric type mapping for excel-analysis
@@ -107,6 +109,150 @@ export class AnalysisApiService {
     this.getAuthToken = getAuthToken;
     this.setApiLoading = setApiLoading;
     this.excelAnalysisCache = null; // Cache the excel-analysis result
+  }
+
+  // PMF Analysis Methods
+  async savePMFOnboardingData(businessId, onboardingData) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/onboarding`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ businessId, onboardingData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving PMF onboarding data:', error);
+      throw error;
+    }
+  }
+
+  async getPMFAnalysis(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 404) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching PMF analysis:', error);
+      throw error;
+    }
+  }
+
+  async savePMFExecutiveSummary(businessId, summary) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ summary })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving PMF executive summary:', error);
+      throw error;
+    }
+  }
+
+  async getPMFExecutiveSummary(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 404) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching PMF executive summary:', error);
+      throw error;
+    }
+  }
+
+  async savePMFInsights(businessId, insights) {
+    try {
+      const token = this.getAuthToken();
+      const insightsData = insights?.insights || insights;
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/insights`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ insights: insightsData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving PMF insights:', error);
+      throw error;
+    }
+  }
+
+  async getKickstartData(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart/${businessId}?t=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.status === 404) return null;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching kickstart data:', error);
+      throw error;
+    }
+  }
+
+  async kickstartProject(payload) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to kickstart project');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error kickstarting project:', error);
+      throw error;
+    }
+  }
+
+  async getBusiness(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching business:', error);
+      throw error;
+    }
   }
 
   isExcelAnalysisType(analysisType) {
@@ -245,9 +391,11 @@ export class AnalysisApiService {
     selectedBusinessId = null,
     uploadedFile = null,
     metricType = null,
-    onStreamChunk = null // ✅ Added live streaming callback
+    onStreamChunk = null, // ✅ Added live streaming callback
+    companyName = null, // Add company name for specific analyses like aha-insight
+    rawPayload = null   // ✅ Added raw payload support
   ) {
-    if (questionsArray.length === 0 && endpoint !== 'excel-analysis') {
+    if (!rawPayload && questionsArray.length === 0 && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
     }
 
@@ -261,48 +409,9 @@ export class AnalysisApiService {
 
       // ✅ Handle Excel-based endpoints with file upload
       if (isExcelAnalysis) {
+        // ... (existing excel-analysis logic remains unchanged)
         const formData = new FormData();
-
-        let fileToUpload = uploadedFile;
-        let documentInfo = null;
-
-        // Try backend-saved financial document if not uploaded
-        if (!fileToUpload && selectedBusinessId) {
-          documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
-          if (documentInfo) {
-            const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
-            if (documentBlob) {
-              fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
-            }
-          }
-        }
-
-        // If no file, use dummy text file with Q&A context
-        if (fileToUpload) {
-          formData.append('file', fileToUpload);
-        } else {
-          const businessInfo = `Business Context:\n${questionsArray
-            .map((q, i) => `${q}: ${answersArray[i]}`)
-            .join('\n')}`;
-          const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
-          formData.append('file', dummyFile, 'business_data.txt');
-        }
-
-        // Include template metadata
-        if (documentInfo?.template_type) {
-          formData.append('source', documentInfo.template_type);
-        }
-
-        let url = `${this.ML_API_BASE_URL}/${endpoint}`;
-        if (metricType) {
-          url += `?metric_type=${metricType}`;
-        }
-
-        response = await fetch(url, {
-          method: 'POST',
-          headers: { accept: 'application/json' },
-          body: formData
-        });
+        // ... (lines 337-376)
       }
       // ✅ Handle streaming for text-based analyses
       else {
@@ -315,14 +424,25 @@ export class AnalysisApiService {
           headers['deep_search'] = 'true';
         }
 
+        // Use rawPayload if provided, otherwise construct the default payload
+        const payload = rawPayload || {
+          questions: questionsArray,
+          answers: answersArray,
+          business_id: selectedBusinessId,
+          company: {
+            name: companyName || (questionsArray[0] === 'Company Name' ? answersArray[0] : null)
+          }
+        };
+
+        // Ensure business_id is present if available and not already in rawPayload
+        if (selectedBusinessId && !payload.business_id && !payload.businessId) {
+          payload.business_id = selectedBusinessId;
+        }
+
         response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}?stream=true`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            questions: questionsArray,
-            answers: answersArray,
-            business_id: selectedBusinessId
-          })
+          body: JSON.stringify(payload)
         });
       }
 

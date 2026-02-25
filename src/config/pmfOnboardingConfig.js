@@ -129,37 +129,37 @@ export const USAGE_CONTEXT_OPTIONS = [
 export const FORM_STEPS = [
   {
     step: 1,
-    title: 'company_client_name',
+    title: 'company client name',
     fields: ['companyName', 'website']
   },
   {
     step: 2,
-    title: 'where_is_business_based',
+    title: 'where is business based',
     fields: ['country', 'city']
   },
   {
     step: 3,
-    title: 'primary_industry',
+    title: 'primary industry',
     fields: ['primaryIndustry']
   },
   {
     step: 4,
-    title: 'which_geographies_strategic_answers',
+    title: 'which geographies strategic answers',
     fields: ['geography1', 'geography2', 'geography3']
   },
   {
     step: 5,
-    title: 'where_does_profit_come_from',
+    title: 'where does profit come from',
     fields: ['customerSegment1', 'customerSegment2', 'customerSegment3', 'productService1', 'productService2', 'productService3', 'channel1', 'channel2', 'channel3']
   },
   {
     step: 6,
-    title: 'strategic_objective',
+    title: 'strategic objective',
     fields: ['strategicObjective', 'strategicObjectiveOther']
   },
   {
     step: 7,
-    title: 'key_challenges_constraints',
+    title: 'key challenges constraints',
     fields: ['keyChallenge', 'keyChallengeOther']
   },
   {
@@ -169,7 +169,7 @@ export const FORM_STEPS = [
   },
   {
     step: 9,
-    title: 'usage_context',
+    title: 'usage context',
     fields: ['usageContext']
   }
 ];

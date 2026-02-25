@@ -84,7 +84,13 @@ export const useProjectForm = () => {
     setSuccessCriteria(project.success_criteria || "");
     setKillCriteria(project.kill_criteria || "");
     setReviewCadence(project.review_cadence || "");
-    setLearningState(project.learning_state || "");
+    // Normalize learning_state to match dropdown option values (Title Case)
+    const rawLearning = (project.learning_state || "").toLowerCase();
+    let normalizedLearning = "";
+    if (rawLearning === "testing") normalizedLearning = "Testing";
+    else if (rawLearning === "validated") normalizedLearning = "Validated";
+    else if (rawLearning === "invalidated") normalizedLearning = "Invalidated";
+    setLearningState(normalizedLearning || project.learning_state || "");
 
     // Normalize status string to match UI options (capitalized)
     const rawStatus = (project.status || "").toLowerCase();

@@ -48,23 +48,46 @@
 }
 
 /* Progress Bar */
-.pmf-progress-container {
-  margin-bottom: 32px;
+/* Progress Bar */
+.pmf-progress-wrapper {
+  margin-bottom: 20px;
 }
 
-.pmf-progress-bar {
+.pmf-progress-header-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pmf-progress-title-simple {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a8a;
+  /* Dark blue/navy color from design */
+}
+
+.pmf-progress-percent-simple {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.pmf-progress-bar-simple {
   width: 100%;
-  height: 8px;
-  background-color: #e5e7eb;
+  height: 12px;
+  background-color: #f0f7ff;
+  /* Very light blue background */
   border-radius: 4px;
   overflow: hidden;
 }
 
-.pmf-progress-fill {
+.pmf-progress-fill-simple {
   height: 100%;
-  background: linear-gradient(90deg, #217aff, #4a90e2);
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  /* Purple to Indigo gradient */
+  transition: width 0.4s ease;
   border-radius: 4px;
-  transition: width 0.3s ease;
 }
 
 /* Step Content */
@@ -236,7 +259,8 @@
 }
 
 .pmf-radio-label.active {
-  font-weight: 600; /* bold */
+  font-weight: 600;
+  /* bold */
 }
 
 /* default radio border */
@@ -298,6 +322,7 @@
   border-color: #6b7280;
   box-shadow: none;
 }
+
 .pmf-select__control {
   font-size: 14px;
 }
@@ -341,7 +366,8 @@
     width: 100%;
     justify-content: center;
   }
-    .pmf-select__menu {
+
+  .pmf-select__menu {
     max-height: 200px !important;
   }
 
@@ -357,6 +383,3 @@
     line-height: 18px;
   }
 }
-
-
-
