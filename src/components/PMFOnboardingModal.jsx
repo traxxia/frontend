@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
 import {
@@ -17,7 +17,7 @@ import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
 import { AnalysisApiService } from "../services/analysisApiService";
 import '../styles/pmf-onboarding.css';
 
-const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
+const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -57,7 +57,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
   });
   const [errors, setErrors] = useState({});
 
-  const progressPercentage = (currentStep / TOTAL_STEPS) * 100;
+  // Calculate progress based on 9 steps (dots)
+  // Step 1 = 0% progress, 100% to complete
+  // Step 9 = 100% progress, 0% to complete (or close to it)
+  // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
+  const progressPercentage = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+  const percentToComplete = 100 - Math.round(progressPercentage);
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
     label: t(c) || c
@@ -355,7 +360,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
       handleClose();
     } catch (error) {
       console.error("Error during PMF onboarding submission:", error);
-      alert("Failed to complete onboarding. Please try again.");
+      const errorMsg = t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
+      if (onToastMessage) {
+        onToastMessage(errorMsg, "error");
+      } else {
+        alert(errorMsg);
+      }
     } finally {
       setIsSubmitting(false);
       setSubmissionStep(0);
@@ -1110,10 +1120,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId }) => {
       </Modal.Header>
 
       <Modal.Body className="pmf-modal-body">
-        <div className="pmf-progress-container">
-          <div className="pmf-progress-bar">
+        <div className="pmf-progress-wrapper">
+          <div className="pmf-progress-header-simple">
+            <span className="pmf-progress-title-simple">{t('Pmf Onboarding') || 'PMF Onboarding'}</span>
+            <span className="pmf-progress-percent-simple">{Math.round(progressPercentage)}%</span>
+          </div>
+          <div className="pmf-progress-bar-simple">
             <div
-              className="pmf-progress-fill"
+              className="pmf-progress-fill-simple"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>

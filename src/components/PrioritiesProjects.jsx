@@ -8,7 +8,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
 
-const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
+const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onToastMessage }) => {
   const { t } = useTranslation();
   const [priorities, setPriorities] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -86,13 +86,19 @@ const PrioritiesProjects = ({ selectedBusinessId, onSuccess }) => {
       // Redirect to projects if callback provided
       if (onSuccess) {
         onSuccess();
+      } else if (onToastMessage) {
+        onToastMessage(t("Projects kickstarted successfully!"), "success");
       } else {
         alert(t("Projects kickstarted successfully!"));
       }
     } catch (error) {
       console.error("Error kickstarting projects:", error);
       const errorMsg = error.message || t("Failed to kickstart projects. Please try again.");
-      alert(errorMsg);
+      if (onToastMessage) {
+        onToastMessage(errorMsg, "error");
+      } else {
+        alert(errorMsg);
+      }
     } finally {
       setKickstarting(false);
     }

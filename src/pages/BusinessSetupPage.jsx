@@ -1010,7 +1010,7 @@ const BusinessSetupPage = () => {
                     >
                       {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
                     </button>
-                  )} 
+                  )}
                 </div>
               </div>
             </div>
@@ -1310,6 +1310,7 @@ const BusinessSetupPage = () => {
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
                           onSuccess={handleKickstartSuccess}
+                          onToastMessage={showToastMessage}
                         />
                       )}
                     </div>
@@ -1486,6 +1487,7 @@ const BusinessSetupPage = () => {
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
                       onSuccess={handleKickstartSuccess}
+                      onToastMessage={showToastMessage}
                     />
                   )}
                 </div>
@@ -1609,6 +1611,7 @@ const BusinessSetupPage = () => {
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
                     onSuccess={handleKickstartSuccess}
+                    onToastMessage={showToastMessage}
                   />
                 )}
               </div>
@@ -1627,6 +1630,7 @@ const BusinessSetupPage = () => {
           show={showPMFOnboarding}
           onHide={() => setShowPMFOnboarding(false)}
           businessId={selectedBusinessId}
+          onToastMessage={showToastMessage}
           onSubmit={() => {
             setShowPMFOnboarding(false);
             setPmfRefreshTrigger(prev => prev + 1);
