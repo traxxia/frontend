@@ -72,10 +72,11 @@ const ChatComponent = ({
 
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-    loadQuestionsAndConversations();
+    if (selectedBusinessId) {
+      loadQuestionsAndConversations();
+    }
   }, [selectedBusinessId]);
+
 
   useEffect(() => {
     if (uploadedFileForAnalysis) {

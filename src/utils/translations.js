@@ -109,7 +109,9 @@ export const staticTranslations = {
     'Admin_Panel': 'Admin Panel',
     'Priorities & Projects': 'Priorities',
     "Questions and Answers": "Advanced",
+    "Not Answered": "Not Answered",
     "Insight (6 C's)": "Insight (6 C's)",
+
     "Appendix (6 C's)": "Appendix (6 C's)",
     "backToOverview": "Back",
 
@@ -1646,7 +1648,9 @@ export const staticTranslations = {
     'questions': 'Preguntas',
     'analysis': 'Perspectivas (6 Cs)',
     'strategic': 'E.S.T.R.A.T.É.G.I.C.O',
+    'Not Answered': 'No Respondida',
     'saving': 'Guardando...',
+
     'save_successful': '¡Guardado exitoso!',
     'save_failed': 'Error al guardar',
     "no_businesses_yet": "Aún no hay negocios",

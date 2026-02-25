@@ -362,6 +362,17 @@ const BusinessSetupPage = () => {
     setTimeout(() => setHighlightedMissingQuestions(null), 30000);
   };
 
+  const handleBriefTabClick = () => {
+    if (!isAnalysisExpanded) {
+      setIsSliding(true);
+      setIsAnalysisExpanded(true);
+      setActiveTab("brief");
+      setTimeout(() => setIsSliding(false), 1000);
+    } else {
+      setActiveTab("brief");
+    }
+  };
+
   const getCurrentPhase = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     if (unlockedFeatures.advancedPhase) return 'advanced';
@@ -990,7 +1001,7 @@ const BusinessSetupPage = () => {
                   {ENABLE_PMF && (
                     <button
                       className={`mobile-menu-item ${activeTab === "brief" ? "active" : ""}`}
-                      onClick={() => { setActiveTab("brief"); setShowMobileMenu(false); }}
+                      onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
                     >
                       {t("Questions and Answers")}
                     </button>
@@ -1102,7 +1113,7 @@ const BusinessSetupPage = () => {
                       {ENABLE_PMF && (
                         <button
                           className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
-                          onClick={() => setActiveTab("brief")}
+                          onClick={handleBriefTabClick}
                         >
                           {t("Questions and Answers")}
                         </button>
@@ -1351,7 +1362,7 @@ const BusinessSetupPage = () => {
                     {ENABLE_PMF && (
                       <button
                         className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
-                        onClick={() => setActiveTab("brief")}
+                        onClick={handleBriefTabClick}
                       >
                         {t("Questions and Answers")}
                       </button>
