@@ -883,6 +883,8 @@ const ProjectsSection = ({
                 }}
                 isAdmin={isSuperAdmin}
                 isRankingLocked={isRankingLocked}
+                businessStatus={businessStatus}
+                userHasRerankAccess={userHasRerankAccess}
                 onShowToast={handleShowToast}
                 isArchived={apiIsArchived}
               />

@@ -34,7 +34,7 @@ function RationaleToggle({ eventKey, children }) {
   );
 }
 
-const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, onShowToast, isArchived }) => {
+const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankSaved, isAdmin, isRankingLocked, businessStatus, userHasRerankAccess, onShowToast, isArchived }) => {
   const { t } = useTranslation();
   const [projectList, setProjectList] = useState([]);
   const [initialOrder, setInitialOrder] = useState([]);
@@ -278,8 +278,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-
-    if (isRankingLocked && !isAdmin) return;
+    const isRestrictedState = businessStatus === "launched" || businessStatus === "reprioritizing";
+    if (!isAdmin && (isRankingLocked || (isRestrictedState && !userHasRerankAccess))) return;
 
     const sourceIndex = result.source.index;
     const destIndex = result.destination.index;
@@ -610,7 +610,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={(isRankingLocked && !isAdmin) || isArchived}
+                      isDragDisabled={(isRankingLocked && !isAdmin) || isArchived || (!isAdmin && (businessStatus === "launched" || businessStatus === "reprioritizing") && !userHasRerankAccess)}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -748,7 +748,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
             </Button>
           )}
-          {step === 2 && (isAdmin || !isRankingLocked) && (
+          {step === 2 && (isAdmin || (!isRankingLocked && (!(businessStatus === "launched" || businessStatus === "reprioritizing") || userHasRerankAccess))) && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}
