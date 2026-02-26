@@ -10,7 +10,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     { role: "assistant", text: "Hi! How can I help you today? 👋" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null });
+  const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0 });
   const chatEndRef = useRef(null);
 
   const suggestedQuestions = [
@@ -75,7 +75,8 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
       if (response.data) {
         setQuotaStatus({
           exceeded: response.data.quotaExceed,
-          resetAt: response.data.quotaResetAt
+          resetAt: response.data.quotaResetAt,
+          usedTokens: response.data.ai_token_usage || 0
         });
       }
     } catch (error) {
@@ -126,7 +127,8 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
       // Update local state to sync UI
       setQuotaStatus({
         exceeded: usageData?.quotaExceed || false,
-        resetAt: usageData?.quotaResetAt || null
+        resetAt: usageData?.quotaResetAt || null,
+        usedTokens: usageData?.ai_token_usage || 0
       });
 
       if (usageData?.quotaExceed) {
@@ -178,6 +180,20 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
               { business_id: businessId, tokens_used: tokensUsed },
               { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            // Refresh usage data after update to show current count
+            const updatedUsageResp = await axios.get(
+              `${process.env.REACT_APP_BACKEND_URL}/api/companies/ai-usage/${businessId}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (updatedUsageResp.data) {
+              setQuotaStatus(prev => ({
+                ...prev,
+                usedTokens: updatedUsageResp.data.ai_token_usage || 0,
+                exceeded: updatedUsageResp.data.quotaExceed || false
+              }));
+            }
           } catch (updateError) {
             console.error("Failed to update AI token usage:", updateError);
           }
@@ -227,7 +243,10 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
             </div>
             <div>
               <div className="ai-header__title">AI Assistant</div>
-              <div className="ai-header__subtitle">Powered by Traxxia</div>
+              <div className="ai-header__usage">
+                <Zap size={10} fill="currentColor" />
+                <span>Usage: {quotaStatus.usedTokens?.toLocaleString() || 0} / 3,000,000</span>
+              </div>
             </div>
           </div>
           <button className="ai-header__close" onClick={() => setOpen(false)}>

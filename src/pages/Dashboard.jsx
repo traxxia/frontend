@@ -673,28 +673,30 @@ const Dashboard = () => {
                       </div>
                       <Accordion className="px-4 mb-4" defaultActiveKey="0">
                         {/* My Businesses */}
-                        <Accordion.Item eventKey="0">
-                          <Accordion.Header>
-                            <div className="accordion-header-content">
-                              <span className="accordion-title-text">
-                                {t("my_businesses")}
-                              </span>
-                              <span className="accordion-count-pill">
-                                {myBusinesses.length}
-                              </span>
-                            </div>
-                          </Accordion.Header>
+                        {!isCollaborator && (
+                          <Accordion.Item eventKey="0">
+                            <Accordion.Header>
+                              <div className="accordion-header-content">
+                                <span className="accordion-title-text">
+                                  {t("my_businesses")}
+                                </span>
+                                <span className="accordion-count-pill">
+                                  {myBusinesses.length}
+                                </span>
+                              </div>
+                            </Accordion.Header>
 
-                          <Accordion.Body>
-                            <BusinessList
-                              businesses={myBusinesses}
-                              viewType="mobile"
-                            />
-                          </Accordion.Body>
-                        </Accordion.Item>
+                            <Accordion.Body>
+                              <BusinessList
+                                businesses={myBusinesses}
+                                viewType="mobile"
+                              />
+                            </Accordion.Body>
+                          </Accordion.Item>
+                        )}
 
                         {/* Project Phase */}
-                        {projectPhaseBusinesses.length > 0 && (
+                        {!isCollaborator && projectPhaseBusinesses.length > 0 && (
                           <Accordion.Item eventKey="1">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -805,27 +807,29 @@ const Dashboard = () => {
                         <Col md={6} className="businesses-section">
                           <Accordion defaultActiveKey="0">
                             {/* My Businesses */}
-                            <Accordion.Item eventKey="0">
-                              <Accordion.Header>
-                                <div className="accordion-header-content">
-                                  <span className="accordion-title-text">
-                                    {t("my_businesses")}
-                                  </span>
-                                  <span className="accordion-count-pill">
-                                    {myBusinesses.length}
-                                  </span>
-                                </div>
-                              </Accordion.Header>
-                              <Accordion.Body>
-                                <BusinessList
-                                  businesses={myBusinesses}
-                                  viewType="desktop"
-                                />
-                              </Accordion.Body>
-                            </Accordion.Item>
+                            {!isCollaborator && (
+                              <Accordion.Item eventKey="0">
+                                <Accordion.Header>
+                                  <div className="accordion-header-content">
+                                    <span className="accordion-title-text">
+                                      {t("my_businesses")}
+                                    </span>
+                                    <span className="accordion-count-pill">
+                                      {myBusinesses.length}
+                                    </span>
+                                  </div>
+                                </Accordion.Header>
+                                <Accordion.Body>
+                                  <BusinessList
+                                    businesses={myBusinesses}
+                                    viewType="desktop"
+                                  />
+                                </Accordion.Body>
+                              </Accordion.Item>
+                            )}
 
                             {/* Project Phase */}
-                            {projectPhaseBusinesses.length > 0 && (
+                            {!isCollaborator && projectPhaseBusinesses.length > 0 && (
                               <Accordion.Item eventKey="1">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">
@@ -1306,16 +1310,16 @@ const Dashboard = () => {
             </Modal.Footer>
           </Modal>
 
-          <UpgradeModal
-            show={showUpgradeModal}
-            onHide={() => setShowUpgradeModal(false)}
+            <UpgradeModal
+              show={showUpgradeModal}
+              onHide={() => setShowUpgradeModal(false)}
             onUpgradeSuccess={(updatedSub) => {
               setShowUpgradeModal(false);
               setSuccessMessage(`Plan updated to ${updatedSub.plan} successfully!`);
-              setShowSuccessPopup(true);
+                setShowSuccessPopup(true);
               setTimeout(() => setShowSuccessPopup(false), 3000);
-            }}
-          />
+              }}
+            />
         </>
       )}
     </div>
