@@ -9,8 +9,7 @@ import UpgradeReactivationModal from './UpgradeReactivationModal';
 import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
 
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+// Stripe initialization will be handled inside the component for lazy loading
 
 const UpgradeModalContent = ({
     onHide,
@@ -223,6 +222,12 @@ const UpgradeModalContent = ({
 };
 
 const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
+    // Lazy load Stripe only when the modal is active
+    const stripePromise = React.useMemo(() => {
+        if (!show) return null;
+        return loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+    }, [show]);
+
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);

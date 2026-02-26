@@ -121,15 +121,13 @@ const Register = () => {
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
-  const [stripePromise, setStripePromise] = useState(null);
-
-  useEffect(() => {
-    if (activeTab === 3 && isNewCompany && !stripePromise) {
-      loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).then(stripe => {
-        setStripePromise(stripe);
-      });
+  // Lazy load Stripe only when needed for the payment step
+  const stripePromise = React.useMemo(() => {
+    if (activeTab === 3 && isNewCompany) {
+      return loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
     }
-  }, [activeTab, isNewCompany, stripePromise]);
+    return null;
+  }, [activeTab, isNewCompany]);
 
   useEffect(() => {
     fetchCompanies();
