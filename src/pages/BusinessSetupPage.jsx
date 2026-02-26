@@ -399,7 +399,7 @@ const BusinessSetupPage = () => {
     setExpandedCapabilityData, setStrategicRadarData, setProductivityData,
     setMaturityData, setProfitabilityData, setGrowthTrackerData,
     setLiquidityEfficiencyData, setInvestmentPerformanceData, setLeverageRiskData,
-    setCompetitiveLandscapeData, setCoreAdjacencyData,
+    setCompetitiveLandscapeData, setCoreAdjacencyData, setStrategicData,
     uploadedFile: uploadedFileForAnalysis,
   };
 
@@ -1485,6 +1485,7 @@ const BusinessSetupPage = () => {
 
                         onAnalysisRegenerate={handleRegenerateAllAnalysis}
                         isAnalysisRegenerating={isAnalysisRegenerating}
+                        isStrategicRegenerating={isStrategicRegenerating}
                         isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                         highlightedMissingQuestions={highlightedMissingQuestions}
                         onClearHighlight={() => setHighlightedMissingQuestions(null)}
@@ -1588,6 +1589,7 @@ const BusinessSetupPage = () => {
 
                       onAnalysisRegenerate={handleRegenerateAllAnalysis}
                       isAnalysisRegenerating={isAnalysisRegenerating}
+                      isStrategicRegenerating={isStrategicRegenerating}
                       isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                       highlightedMissingQuestions={highlightedMissingQuestions}
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}

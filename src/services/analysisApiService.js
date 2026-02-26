@@ -804,7 +804,8 @@ export class AnalysisApiService {
       growthTracker: 'setGrowthTrackerData',
       liquidityEfficiency: 'setLiquidityEfficiencyData',
       investmentPerformance: 'setInvestmentPerformanceData',
-      leverageRisk: 'setLeverageRiskData'
+      leverageRisk: 'setLeverageRiskData',
+      strategic: 'setStrategicData'
     };
     return setterMap[analysisType];
   }

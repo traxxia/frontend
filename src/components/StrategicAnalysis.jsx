@@ -21,6 +21,8 @@ import {
   Heart,
   DollarSign,
   Link2,
+  AlertTriangle,
+  Lock,
   ChevronDown,
   ChevronUp,
   Info,
@@ -358,13 +360,20 @@ const StrategicAnalysis = ({
     const recommendations = analysisData.strategic_recommendations;
     if (!recommendations) return true;
 
-    const hasStrategyBlock = recommendations.strategy_block &&
+    const hasStrategyBlock = !!(recommendations.strategy_block &&
       (recommendations.strategy_block.S_strategy ||
         recommendations.strategy_block.T_tactics ||
-        recommendations.strategy_block.R_resources);
+        recommendations.strategy_block.R_resources));
 
-    const hasExecutionBlock = recommendations.execution_block;
-    const hasSustainabilityBlock = recommendations.sustainability_block;
+    const hasExecutionBlock = !!(recommendations.execution_block &&
+      (recommendations.execution_block.A_analysis_data ||
+        recommendations.execution_block.T_technology_digitalization ||
+        recommendations.execution_block.E_execution));
+
+    const hasSustainabilityBlock = !!(recommendations.sustainability_block &&
+      (recommendations.sustainability_block.G_governance ||
+        recommendations.sustainability_block.I_innovation ||
+        recommendations.sustainability_block.C_culture));
 
     return !hasStrategyBlock && !hasExecutionBlock && !hasSustainabilityBlock;
   };
@@ -2537,12 +2546,61 @@ const StrategicAnalysis = ({
     return (
       <div className="strategic-analysis-container">
         <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Analysis Error</h3>
+          <div className="error-icon">
+            <AlertTriangle size={48} style={{ color: '#ef4444' }} />
+          </div>
+          <h3>Action Required</h3>
           <p>{errorMessage}</p>
-          <button onClick={handleRegenerate} className="retry-button">
-            Retry Analysis
-          </button>
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
+            <button onClick={handleRegenerate} className="retry-button" style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}>
+              Retry Generation
+            </button>
+            <button onClick={() => handleRedirectToBrief()} className="retry-button" style={{
+              backgroundColor: 'white',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}>
+              Review Brief
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const unlockedFeatures = phaseManager?.getUnlockedFeatures?.() || {};
+  if (!unlockedFeatures.analysis) {
+    return (
+      <div className="strategic-analysis-container">
+        <div className="modern-locked-state" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '60px 20px',
+          textAlign: 'center',
+          background: 'rgba(255, 255, 255, 0.5)',
+          borderRadius: '16px',
+          border: '1px dashed #cbd5e1',
+          margin: '20px'
+        }}>
+          <Lock size={60} style={{ color: '#94a3b8', marginBottom: '20px' }} />
+          <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>Strategic Analysis Locked</h3>
+          <p style={{ maxWidth: '400px', color: '#64748b', lineHeight: '1.6' }}>
+            Start answering questions in the business brief to unlock your professional strategic roadmap and execution frameworks.
+          </p>
         </div>
       </div>
     );
@@ -2565,9 +2623,9 @@ const StrategicAnalysis = ({
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate && !!onRegenerate}
           userAnswers={userAnswers}
-          minimumAnswersRequired={5}
-          customMessage="Complete essential phase questions to unlock comprehensive strategic analysis with implementation roadmaps and accountability frameworks."
-          showImproveButton={!hideImproveButton}
+          minimumAnswersRequired={1}
+          customMessage="If you have completed the onboarding process or answered the questions but still haven't received your strategic analysis, try regenerating or answering more questions in the Advanced tab."
+          showImproveButton={false}
         />
       </div>
     );
