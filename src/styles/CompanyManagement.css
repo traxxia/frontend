@@ -1109,3 +1109,24 @@ body.modal-open {
     text-align: center; 
   }
 } */
+
+/* Feature Blocks in Advanced Tab */
+.feature-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 0 8px 8px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.feature-card .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 1024px) {
+  .feature-blocks-row {
+    flex-direction: column;
+  }
+}

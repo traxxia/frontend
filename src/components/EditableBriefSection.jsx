@@ -16,6 +16,7 @@ const EditableField = ({
   canEdit,
   handleEdit,
   isAnalysisRegenerating,
+  isStrategicRegenerating,
   isSaving,
   isEssentialPhaseGenerating,
   isLaunchedStatus,
@@ -58,24 +59,49 @@ const EditableField = ({
       <div className="item-row">
         <span className="item-label" style={{
           color: isHighlighted ? '#92400e' : 'inherit',
-          fontWeight: isHighlighted ? '600' : '500'
+          fontWeight: isHighlighted ? '600' : '500',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
         }}>
           <span style={{
             fontSize: '14px',
             fontWeight: 'bold',
             padding: '2px 6px',
             borderRadius: '4px',
+            backgroundColor: '#f3f4f6',
+            color: '#374151'
           }}>
             {field.sequentialNumber}.
           </span>
           {field.label}
 
+          {field.phase && (
+            <span style={{
+              fontSize: '10px',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              backgroundColor:
+                field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
+                  field.phase.toLowerCase() === 'essential' ? '#dcfce7' :
+                    field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
+              color:
+                field.phase.toLowerCase() === 'initial' ? '#1e40af' :
+                  field.phase.toLowerCase() === 'essential' ? '#166534' :
+                    field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
+              letterSpacing: '0.025em'
+            }}>
+              {field.phase}
+            </span>
+          )}
+
           {isHighlighted && (
             <span style={{
               fontSize: '12px',
               color: '#dc2626',
-              fontWeight: '500',
-              marginLeft: '8px'
+              fontWeight: '500'
             }}>
               (Required for analysis)
             </span>
@@ -86,7 +112,7 @@ const EditableField = ({
             className="edit-button prominent"
             onClick={() => handleEdit(field)}
             type="button"
-            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
+            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating}
             title="Edit answer"
             style={{
               background: '#f3f4f6',
@@ -122,7 +148,7 @@ const EditableField = ({
             ref={el => inputRefs.current[field.key] = el}
             className="edit-textarea"
             defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
-            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
+            disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating}
             style={{ minHeight: '100px', resize: 'vertical' }}
             placeholder={`Enter your answer for: ${field.label}`}
             onChange={(e) => handleAutoSave(field, e.target.value)}
@@ -238,150 +264,278 @@ const FinancialUploadBlock = ({
   hasUploadedDocument,
   uploadedFileInfo,
   onOpenManagement,
-  canEdit
+  canEdit,
+  isAnalysisRegenerating,
+  isStrategicRegenerating
 }) => {
   const styles = {
-    container: { 
-      padding: '10px',
-      backgroundColor: '#f8fafc',
-      borderRadius: '12px',
-      border: '1px solid #e2e8f0',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+    container: {
+      flex: 1,
+      padding: '16px 20px',
+      background: 'linear-gradient(135deg, #f0fdf4 0%, #e1faf1 100%)',
+      borderRadius: '16px',
+      border: '1px solid #bbf7d0',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      minHeight: '120px',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
     },
     header: {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      marginBottom: '16px'
+      marginBottom: '12px'
     },
     iconWrapper: {
-      backgroundColor: '#eff6ff',
+      backgroundColor: '#dcfce7',
       padding: '10px',
-      borderRadius: '10px',
-      color: '#2563eb'
+      borderRadius: '12px',
+      color: '#059669'
     },
     title: {
       margin: 0,
-      fontSize: '18px',
+      fontSize: '17px',
       fontWeight: '700',
-      color: '#1e293b'
+      color: '#064e3b'
     },
     subtitle: {
-      margin: 0,
-      fontSize: '13px',
-      color: '#64748b'
+      margin: '4px 0 0 0',
+      fontSize: '12px',
+      color: '#065f46',
+      lineHeight: '1.4'
     },
     card: {
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '10px',
-      padding: '16px',
+      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+      backdropFilter: 'blur(4px)',
+      border: '1px solid #bbf7d0',
+      borderRadius: '12px',
+      padding: '12px 16px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: '16px'
+      marginTop: 'auto'
     },
-    fileIcon: { color: '#0ea5e9' },
+    fileIcon: { color: '#059669' },
     fileName: {
       fontWeight: '600',
-      fontSize: '14px',
-      color: '#1e293b'
+      fontSize: '13px',
+      color: '#064e3b',
+      maxWidth: '150px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     },
     fileMeta: {
-      fontSize: '12px',
-      color: '#64748b'
+      fontSize: '10px',
+      color: '#065f46'
     },
     actionBtn: {
-      fontSize: '13px',
-      color: '#2563eb',
+      fontSize: '12px',
+      color: '#059669',
       fontWeight: '600',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
+      background: 'white',
+      border: '1px solid #bbf7d0',
+      padding: '4px 10px',
+      borderRadius: '6px',
+      cursor: (isAnalysisRegenerating || isStrategicRegenerating) ? 'not-allowed' : 'pointer',
       display: 'flex',
       alignItems: 'center',
-      gap: '4px'
-    },
-    emptyCard: {
-       
+      gap: '4px',
+      transition: 'all 0.2s',
+      opacity: (isAnalysisRegenerating || isStrategicRegenerating) ? 0.7 : 1
     },
     uploadBtn: {
-      backgroundColor: '#2563eb',
+      backgroundColor: '#059669',
       color: 'white',
       border: 'none',
-      padding: '10px 24px',
-      borderRadius: '8px',
-      fontSize: '14px',
+      padding: '10px 20px',
+      borderRadius: '10px',
+      fontSize: '13px',
       fontWeight: '600',
-      cursor: 'pointer',
+      cursor: (isAnalysisRegenerating || isStrategicRegenerating) ? 'not-allowed' : 'pointer',
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
       transition: 'all 0.2s',
-      margin: '0 auto'
+      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
+      marginTop: 'auto',
+      opacity: (isAnalysisRegenerating || isStrategicRegenerating) ? 0.7 : 1
     }
   };
 
   return (
-    <div className="financial-upload-block" style={styles.container}>
+    <div className="financial-upload-block feature-card" style={styles.container}>
       <div style={styles.header}>
         <div style={styles.iconWrapper}>
           <Database size={24} />
         </div>
         <div>
-          <h3 style={styles.title}>Financial Data & Templates</h3>
-          <p style={styles.subtitle}>Manage financial statements and download reporting templates</p>
+          <h3 style={styles.title}>Financial Data</h3>
+          <p style={styles.subtitle}>Report templates & statements</p>
         </div>
       </div>
 
       {hasUploadedDocument && uploadedFileInfo ? (
         <div style={styles.card}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={styles.fileIcon}>
-              <FileText size={24} />
+              <FileText size={20} />
             </div>
             <div>
               <div style={styles.fileName}>{uploadedFileInfo.name}</div>
               <div style={styles.fileMeta}>
-                Uploaded on {uploadedFileInfo.uploadDate} • {(uploadedFileInfo.size / 1024).toFixed(1)} KB
+                {(uploadedFileInfo.size / 1024).toFixed(1)} KB
               </div>
             </div>
           </div>
           {canEdit && (
-            <button onClick={onOpenManagement} style={styles.actionBtn}>
-              <RefreshCw size={14} />
-              Manage / Replace
+            <button
+              onClick={onOpenManagement}
+              style={styles.actionBtn}
+              disabled={isAnalysisRegenerating || isStrategicRegenerating}
+            >
+              <RefreshCw size={12} className={isAnalysisRegenerating || isStrategicRegenerating ? "animate-spin" : ""} />
+              Manage
             </button>
           )}
         </div>
       ) : (
-        <div style={styles.emptyCard}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-            <div style={{ color: '#94a3b8' }}>
-              <Upload size={32} />
-            </div>
-            <div>
-              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#64748b' }}>
-                No financial document uploaded yet.
-              </p>
-              {canEdit && (
-                <button
-                  onClick={onOpenManagement}
-                  style={styles.uploadBtn}
-                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#1d4ed8'; }}
-                  onMouseLeave={(e) => { e.target.style.backgroundColor = '#2563eb'; }}
-                >
-                  <Upload size={16} />
-                  Upload or Get Templates
-                </button>
-              )}
-            </div>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          {canEdit && (
+            <button
+              onClick={onOpenManagement}
+              style={styles.uploadBtn}
+              disabled={isAnalysisRegenerating || isStrategicRegenerating}
+              onMouseEnter={(e) => {
+                if (!isAnalysisRegenerating && !isStrategicRegenerating) {
+                  e.currentTarget.style.backgroundColor = '#047857';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isAnalysisRegenerating && !isStrategicRegenerating) {
+                  e.currentTarget.style.backgroundColor = '#059669';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }
+              }}
+            >
+              <Upload size={16} />
+              Get Started
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 };
+
+const AIAnswerSupportBlock = ({
+  onGenerateEnrichment,
+  isEnriching,
+  isApplyingEnrichment,
+  isAnalysisRegenerating,
+  isStrategicRegenerating,
+  isSaving,
+  canEnrich
+}) => {
+  const styles = {
+    container: {
+      flex: 1,
+      padding: '16px 20px',
+      background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+      borderRadius: '16px',
+      border: '1px solid #ddd6fe',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      minHeight: '120px',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      marginBottom: '12px'
+    },
+    iconWrapper: {
+      backgroundColor: '#ede9fe',
+      padding: '10px',
+      borderRadius: '12px',
+      color: '#7c3aed'
+    },
+    title: {
+      margin: 0,
+      fontSize: '17px',
+      fontWeight: '700',
+      color: '#4c1d95'
+    },
+    subtitle: {
+      margin: '4px 0 0 0',
+      fontSize: '12px',
+      color: '#5b21b6',
+      lineHeight: '1.4'
+    },
+    enrichBtn: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '10px',
+      padding: '10px 20px',
+      backgroundColor: '#7c3aed',
+      color: 'white',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: '13px',
+      fontWeight: '600',
+      cursor: (isEnriching || !canEnrich || isAnalysisRegenerating || isStrategicRegenerating) ? 'not-allowed' : 'pointer',
+      transition: 'all 0.2s ease',
+      opacity: (!canEnrich || isAnalysisRegenerating || isStrategicRegenerating) ? 0.6 : 1,
+      boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+      marginTop: '8px'
+    }
+  };
+
+  return (
+    <div className="ai-support-block feature-card" style={styles.container}>
+      <div style={styles.header}>
+        <div style={styles.iconWrapper}>
+          <Sparkles size={24} />
+        </div>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h3 style={styles.title}>AI Answer Support</h3>
+          </div>
+          <p style={styles.subtitle}>Professional answers based on your onboarding</p>
+        </div>
+      </div>
+
+      <button
+        onClick={onGenerateEnrichment}
+        disabled={isEnriching || isApplyingEnrichment || isAnalysisRegenerating || isStrategicRegenerating || isSaving || !canEnrich}
+        style={styles.enrichBtn}
+        onMouseEnter={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = '#6d28d9';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!e.currentTarget.disabled) {
+            e.currentTarget.style.backgroundColor = '#7c3aed';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }
+        }}
+      >
+        {isEnriching ? <Loader size={18} className="spinner" /> : <Wand2 size={18} />}
+        {isEnriching ? 'Generating Suggestions...' : 'Generate AI Answers'}
+      </button>
+    </div>
+  );
+};
+
 
 const EditableBriefSection = ({
   questions = [],
@@ -391,6 +545,7 @@ const EditableBriefSection = ({
   onAnalysisRegenerate,
   isEssentialPhaseGenerating = false,
   isAnalysisRegenerating = false,
+  isStrategicRegenerating = false,
   selectedBusinessId,
   highlightedMissingQuestions,
   onClearHighlight,
@@ -963,65 +1118,6 @@ const EditableBriefSection = ({
 
       {renderMissingQuestionsBanner()}
 
-      <div className="enrichment-header" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '12px 16px',
-        backgroundColor: '#f8fafc',
-        border: '1px solid #e2e8f0',
-        borderRadius: '10px',
-        marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            backgroundColor: '#eff6ff',
-            padding: '8px',
-            borderRadius: '8px',
-            color: '#2563eb'
-          }}>
-            <Sparkles size={20} />
-          </div>
-          <div>
-            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
-              AI Answer Support
-            </h4>
-            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-              Get detailed, professional answers based on your onboarding
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={handleGenerateEnrichment}
-          disabled={isEnriching || isApplyingEnrichment || isAnalysisRegenerating || isSaving || !canEnrich}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            backgroundColor: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: (isEnriching || !canEnrich) ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s ease',
-            opacity: (!canEnrich) ? 0.6 : 1,
-            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)'
-          }}
-          onMouseEnter={(e) => {
-            if (!e.target.disabled) e.target.style.backgroundColor = '#1d4ed8';
-          }}
-          onMouseLeave={(e) => {
-            if (!e.target.disabled) e.target.style.backgroundColor = '#2563eb';
-          }}
-        >
-          {isEnriching ? <Loader size={16} className="spinner" /> : <Wand2 size={16} />}
-          {isEnriching ? 'Generating...' : 'AI Enrichment'}
-        </button>
-      </div>
 
       {enrichedAnswers && (
         <div className="enrichment-preview" style={{
@@ -1074,7 +1170,7 @@ const EditableBriefSection = ({
                 }}
               >
                 {isApplyingEnrichment ? <Loader size={14} className="spinner" /> : <Check size={14} />}
-                Apply All to My Brief
+                Apply All Answers
               </button>
             </div>
           </div>
@@ -1103,13 +1199,13 @@ const EditableBriefSection = ({
         </div>
       )}
 
-      {(isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment) && (
+      {(isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment) && (
         <div className="analysis-regenerating-banner">
           <Loader size={16} className="spinner" />
           <span>
             {isSaving && 'Saving changes...'}
             {isApplyingEnrichment && 'Applying enriched answers...'}
-            {isAnalysisRegenerating && 'Regenerating Insight & STRATEGIC...'}
+            {(isAnalysisRegenerating || isStrategicRegenerating) && 'Regenerating Insight & STRATEGIC...'}
             {isEssentialPhaseGenerating && 'Generating essential phase analysis...'}
           </span>
         </div>
@@ -1165,45 +1261,63 @@ const EditableBriefSection = ({
             </div>
           ) : briefFields.length > 0 ? (
             (() => {
-  const rows = [];
+              const rows = [];
 
-  // Insert FinancialUploadBlock at the top, before the first question
-  rows.push(
-    <FinancialUploadBlock
-      key="financial-upload-row"
-      hasUploadedDocument={hasUploadedDocument}
-      uploadedFileInfo={uploadedFileInfo}
-      onOpenManagement={() => setShowTemplatesPopup(true)}
-      canEdit={canEdit}
-      t={t}
-    />
-  );
+              // Insert Feature Row at the top
+              rows.push(
+                <div key="feature-blocks-row" style={{
+                  display: 'flex',
+                  gap: '20px',
+                  marginBottom: '28px',
+                  flexWrap: 'wrap'
+                }}>
+                  <AIAnswerSupportBlock
+                    onGenerateEnrichment={handleGenerateEnrichment}
+                    isEnriching={isEnriching}
+                    isApplyingEnrichment={isApplyingEnrichment}
+                    isAnalysisRegenerating={isAnalysisRegenerating}
+                    isStrategicRegenerating={isStrategicRegenerating}
+                    isSaving={isSaving}
+                    canEnrich={canEnrich}
+                  />
 
-  briefFields.forEach((field, index) => {
-    rows.push(
-      <EditableField
-        key={field.key}
-        field={field}
-        editingField={editingField}
-        editedFields={editedFields}
-        isQuestionHighlighted={isQuestionHighlighted}
-        canEdit={canEdit}
-        handleEdit={handleEdit}
-        isAnalysisRegenerating={isAnalysisRegenerating}
-        isSaving={isSaving}
-        isEssentialPhaseGenerating={isEssentialPhaseGenerating}
-        isLaunchedStatus={isLaunchedStatus}
-        inputRefs={inputRefs}
-        fieldRefs={fieldRefs}
-        handleSave={handleSave}
-        handleCancel={handleCancel}
-        handleAutoSave={handleAutoSave}
-      />
-    );
-  });
+                  <FinancialUploadBlock
+                    hasUploadedDocument={hasUploadedDocument}
+                    uploadedFileInfo={uploadedFileInfo}
+                    onOpenManagement={() => setShowTemplatesPopup(true)}
+                    canEdit={canEdit}
+                    isAnalysisRegenerating={isAnalysisRegenerating}
+                    isStrategicRegenerating={isStrategicRegenerating}
+                  />
+                </div>
+              );
 
-  return rows;
-})()
+              briefFields.forEach((field, index) => {
+                rows.push(
+                  <EditableField
+                    key={field.key}
+                    field={field}
+                    editingField={editingField}
+                    editedFields={editedFields}
+                    isQuestionHighlighted={isQuestionHighlighted}
+                    canEdit={canEdit}
+                    handleEdit={handleEdit}
+                    isAnalysisRegenerating={isAnalysisRegenerating}
+                    isStrategicRegenerating={isStrategicRegenerating}
+                    isSaving={isSaving}
+                    isEssentialPhaseGenerating={isEssentialPhaseGenerating}
+                    isLaunchedStatus={isLaunchedStatus}
+                    inputRefs={inputRefs}
+                    fieldRefs={fieldRefs}
+                    handleSave={handleSave}
+                    handleCancel={handleCancel}
+                    handleAutoSave={handleAutoSave}
+                  />
+                );
+              });
+
+              return rows;
+            })()
           ) : (
             <div className="no-data">
               <p>{t('businessInfoMessage') || 'Your business info will show here once you answer questions.'}</p>

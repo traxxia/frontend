@@ -26,21 +26,21 @@ import { useStreamingManager } from './StreamingManager';
 import { useTranslation } from "../hooks/useTranslation";
 
 const MemoizedAnalysisCard = React.memo(
-  ({ 
-    id, 
-    title, 
-    description, 
-    children, 
-    onRegenerate, 
-    isRegenerating, 
-    hasData, 
+  ({
+    id,
+    title,
+    description,
+    children,
+    onRegenerate,
+    isRegenerating,
+    hasData,
     isLoading,
     isExpanded,
     isHighlighted,
     onToggleCard,
     streamingManager,
     hideRegenerateButtons,
-    canRegenerate 
+    canRegenerate
   }) => {
     const getStatusIcon = () => {
       if (isRegenerating || isLoading) {
@@ -60,8 +60,8 @@ const MemoizedAnalysisCard = React.memo(
         id={id}
         className={`modern-analysis-card ${getActualStatus()} ${isHighlighted ? 'highlighted' : ''}`}
       >
-        <div 
-          className={`modern-card-header ${isExpanded ? 'expanded' : ''}`} 
+        <div
+          className={`modern-card-header ${isExpanded ? 'expanded' : ''}`}
           onClick={() => onToggleCard(id)}
         >
           <div className="modern-card-header-left">
@@ -81,7 +81,7 @@ const MemoizedAnalysisCard = React.memo(
                   onRegenerate?.();
                 }}
                 isRegenerating={isRegenerating || isLoading}
-                canRegenerate={canRegenerate}  
+                canRegenerate={canRegenerate}
                 sectionName={title}
                 size="small"
                 hideRegenerateButtons={hideRegenerateButtons}
@@ -165,7 +165,7 @@ CategorySection.displayName = 'CategorySection';
 
 const AnalysisContentManager = (props) => {
   const { t } = useTranslation();
-  
+
   const CATEGORIES = [
     {
       id: 'costs-financial',
@@ -517,7 +517,7 @@ const AnalysisContentManager = (props) => {
             businessName={props.businessData.name}
             onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
-            canRegenerate={props.canRegenerate} 
+            canRegenerate={props.canRegenerate}
             {...{ [dataKey]: data }}
             selectedBusinessId={props.selectedBusinessId}
             onRedirectToBrief={props.handleRedirectToBrief}
@@ -634,21 +634,36 @@ const AnalysisContentManager = (props) => {
 
   // Get unlocked features and determine current analyses
   const unlockedFeatures = phaseManager.getUnlockedFeatures();
-  
+
   const currentAnalyses = useMemo(() => {
-    const visibleAnalyses = {
+    const sets = {
       initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
-      essential: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics'],
-      good: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk', 'productivityMetrics', 'fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency']
+      essential: ['fullSwot', 'strategicRadar', 'competitiveAdvantage', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics'],
+      financial: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'],
+      advanced: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics']
     };
 
-    if (unlockedFeatures.goodPhase) {
-      return visibleAnalyses.good;
-    } else if (unlockedFeatures.fullSwot) {
-      return visibleAnalyses.essential;
+    const activeAnalyses = new Set();
+
+    if (unlockedFeatures.initialPhase) {
+      sets.initial.forEach(a => activeAnalyses.add(a));
     }
-    return visibleAnalyses.initial;
-  }, [unlockedFeatures.analysis, unlockedFeatures.goodPhase, unlockedFeatures.fullSwot]);
+
+    if (unlockedFeatures.essentialPhase) {
+      sets.essential.forEach(a => activeAnalyses.add(a));
+    }
+
+    if (unlockedFeatures.hasDocument) {
+      sets.financial.forEach(a => activeAnalyses.add(a));
+    }
+
+    if (unlockedFeatures.advancedPhase) {
+      sets.advanced.forEach(a => activeAnalyses.add(a));
+    }
+
+    return Array.from(activeAnalyses);
+  }, [unlockedFeatures.initialPhase, unlockedFeatures.essentialPhase, unlockedFeatures.hasDocument, unlockedFeatures.advancedPhase]);
+
 
   // Memoize the categorized analyses
   const categorizedAnalyses = useMemo(() => {
@@ -672,7 +687,7 @@ const AnalysisContentManager = (props) => {
       <div className="modern-locked-state">
         <Lock size={60} className="modern-locked-icon" />
         <h3>Analysis Locked</h3>
-        <p>Complete all initial phase questions to unlock your comprehensive business analysis.</p>
+        <p>Start answering questions in the business brief to unlock your comprehensive business analysis.</p>
       </div>
     );
   }

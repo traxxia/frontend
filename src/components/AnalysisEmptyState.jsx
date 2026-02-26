@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X, Loader } from 'lucide-react';
+import { Upload, X, Loader, MessageSquareQuote, Sparkles } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
+import '../styles/AnalysisEmptyState.css';
 
 const AnalysisEmptyState = ({
   // Required props
@@ -31,9 +32,9 @@ const AnalysisEmptyState = ({
   acceptedFileTypes = ".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png",
 
   // Styling props
-  iconSize = 48,
-  buttonGap = '12px',
-  marginTop = '16px'
+  iconSize = 40,
+  buttonGap = '16px',
+  marginTop = '0px'
 }) => {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
@@ -56,78 +57,54 @@ const AnalysisEmptyState = ({
     }
 
     if (!hasEnoughAnswers) {
-      return `Answer more questions to generate ${analysisDisplayName.toLowerCase()} insights.`;
+      return `Start providing more specific details in the business brief to unlock your ${analysisDisplayName.toLowerCase()} and strategic insights.`;
     }
 
-    return `You answered the required questions, but the responses need more detail to generate meaningful ${analysisDisplayName.toLowerCase()}.`;
+    return `You've provided some great initial information, but we need more strategic depth to generate a high-quality ${analysisDisplayName.toLowerCase()}.`;
   };
 
-  const shouldShowButtons = hasEnoughAnswers && (effectiveShowImproveButton || effectiveShowRegenerateButton);
-
-  const handleFileUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && onFileUpload) {
-      onFileUpload(file);
-    }
-  };
-
-  const handleRemoveFile = () => {
-    if (onRemoveFile) {
-      onRemoveFile();
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+  const shouldShowButtons = (hasEnoughAnswers && (effectiveShowImproveButton || effectiveShowRegenerateButton)) || (customMessage && (onRegenerate || onImproveAnswers));
 
   return (
-    <div className="empty-state">
-      <p>{getMessage()}</p>
+    <div className="empty-state-container"> 
+
+      <h3 className="empty-state-title">
+        {isRegenerating ? 'Generating Insights...' : `${analysisDisplayName}`}
+      </h3>
+
+      <p className="empty-state-message">
+        {getMessage()}
+      </p>
 
       {/* Regular Action Buttons */}
-      {shouldShowButtons && (
-        <div style={{
-          display: 'flex',
-          gap: buttonGap,
-          marginTop: marginTop,
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
-
+      {shouldShowButtons && !isRegenerating && (
+        <div className="empty-state-actions" style={{ marginTop: marginTop }}>
           {effectiveShowImproveButton && (
             <button
               onClick={onImproveAnswers}
-              className="redirect-button"
-              style={{
-                backgroundColor: '#f59e0b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#d97706';
-                e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#f59e0b';
-                e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-              }}
+              className="empty-state-btn empty-state-btn-secondary"
             >
-              Improve Your Answers
+              <Sparkles size={18} />
+              Improve Answers
             </button>
           )}
 
+          {effectiveShowRegenerateButton && onRegenerate && (
+            <button
+              onClick={onRegenerate}
+              className="empty-state-btn empty-state-btn-primary"
+            >
+              <Loader size={18} className={isRegenerating ? 'spin-animation' : ''} />
+              {isRegenerating ? 'Regenerating...' : 'Regenerate Analysis'}
+            </button>
+          )}
+        </div>
+      )}
 
+      {isRegenerating && (
+        <div className="empty-state-regenerating">
+          <Loader size={24} className="spin-animation" />
+          <span>Building your strategy...</span>
         </div>
       )}
     </div>
