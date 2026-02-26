@@ -62,7 +62,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
       <div className="bg-light py-5 min-vh-100 text-center">
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
-          <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see insights here."}</p>
+          <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
           {onStartOnboarding && (
             <Button
               variant="primary"
@@ -102,7 +102,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
       <div className="bg-light py-5 min-vh-100 text-center">
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
-          <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see insights here."}</p>
+          <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
           {onStartOnboarding && (
             <Button
               variant="primary"

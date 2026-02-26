@@ -63,6 +63,13 @@ export const PHASE_API_CONFIG = {
     'liquidityEfficiency',
     'investmentPerformance',
     'leverageRisk'
+  ],
+  financial: [
+    'profitabilityAnalysis',
+    'growthTracker',
+    'liquidityEfficiency',
+    'investmentPerformance',
+    'leverageRisk'
   ]
 };
 
@@ -88,7 +95,8 @@ export const API_ENDPOINTS = {
   investmentPerformance: 'excel-analysis',
   leverageRisk: 'excel-analysis',
   ahaInsight: 'aha-insight',
-  executiveSummary: 'executive-summary'
+  executiveSummary: 'executive-summary',
+  answerQuestionsWithEnrichment: 'answer-questions-with-enrichment'
 };
 
 // Metric type mapping for excel-analysis
@@ -365,6 +373,30 @@ export class AnalysisApiService {
     }
   }
 
+  async bulkUpdateConversations(businessId, answers) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/conversations/bulk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ business_id: businessId, answers })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to bulk update conversations');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error in bulkUpdateConversations:', error);
+      throw error;
+    }
+  }
+
   // Helper method to prepare questions and answers
   prepareQuestionsAndAnswers(questions, answers, filterFn = null) {
     const questionsArray = [];
@@ -409,9 +441,38 @@ export class AnalysisApiService {
 
       // ✅ Handle Excel-based endpoints with file upload
       if (isExcelAnalysis) {
-        // ... (existing excel-analysis logic remains unchanged)
         const formData = new FormData();
-        // ... (lines 337-376)
+
+        if (uploadedFile) {
+          formData.append('file', uploadedFile);
+        } else {
+          // Create a text fallback with business Q&A data when no file is available
+          const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
+          const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
+          formData.append('file', dummyFile, 'business_data.txt');
+        }
+
+        // Build URL with metric_type query parameter
+        let url = `${this.ML_API_BASE_URL}/excel-analysis`;
+        const params = new URLSearchParams();
+        if (metricType) {
+          params.append('metric_type', metricType);
+        }
+        if (selectedBusinessId) {
+          params.append('business_id', selectedBusinessId);
+        }
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'source': 'simple'
+          },
+          body: formData
+        });
       }
       // ✅ Handle streaming for text-based analyses
       else {
