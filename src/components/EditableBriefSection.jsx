@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit3, Check, X, Loader, AlertCircle } from 'lucide-react';
+import { Edit3, Check, X, Loader, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw } from 'lucide-react';
+import { AnalysisApiService } from '../services/analysisApiService';
 import { useTranslation } from "../hooks/useTranslation";
+import FinancialTemplatesPopup from './FinancialTemplatesPopup';
+import { detectTemplateType, validateAgainstTemplate } from '../utils/templateValidator';
 import '../styles/CompanyManagement.css';
 
 
@@ -83,7 +86,7 @@ const EditableField = ({
             className="edit-button prominent"
             onClick={() => handleEdit(field)}
             type="button"
-            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
             title="Edit answer"
             style={{
               background: '#f3f4f6',
@@ -119,7 +122,7 @@ const EditableField = ({
             ref={el => inputRefs.current[field.key] = el}
             className="edit-textarea"
             defaultValue={field.value === '[Question Skipped]' ? '' : field.value}
-            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+            disabled={isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating}
             style={{ minHeight: '100px', resize: 'vertical' }}
             placeholder={`Enter your answer for: ${field.label}`}
             onChange={(e) => handleAutoSave(field, e.target.value)}
@@ -141,7 +144,7 @@ const EditableField = ({
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={handleCancel}
-                disabled={isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+                disabled={isSaving || isEssentialPhaseGenerating}
                 className="cancel-button enhanced"
                 title="Cancel changes"
                 style={{
@@ -177,7 +180,7 @@ const EditableField = ({
               </button>
               <button
                 onClick={() => handleSave(field)}
-                disabled={isSaving || isEssentialPhaseGenerating || isLaunchedStatus}
+                disabled={isSaving || isEssentialPhaseGenerating}
                 className="save-button enhanced"
                 title="Save changes"
                 style={{
@@ -225,7 +228,155 @@ const EditableField = ({
           }}
         >
           {field.value || t('Not Answered') || 'Not Answered'}
-          {isEdited && <span className="edited-indicator" title="Modified"> ✏️</span>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FinancialUploadBlock = ({
+  hasUploadedDocument,
+  uploadedFileInfo,
+  onOpenManagement,
+  canEdit
+}) => {
+  const styles = {
+    container: { 
+      padding: '10px',
+      backgroundColor: '#f8fafc',
+      borderRadius: '12px',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      marginBottom: '16px'
+    },
+    iconWrapper: {
+      backgroundColor: '#eff6ff',
+      padding: '10px',
+      borderRadius: '10px',
+      color: '#2563eb'
+    },
+    title: {
+      margin: 0,
+      fontSize: '18px',
+      fontWeight: '700',
+      color: '#1e293b'
+    },
+    subtitle: {
+      margin: 0,
+      fontSize: '13px',
+      color: '#64748b'
+    },
+    card: {
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '10px',
+      padding: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: '16px'
+    },
+    fileIcon: { color: '#0ea5e9' },
+    fileName: {
+      fontWeight: '600',
+      fontSize: '14px',
+      color: '#1e293b'
+    },
+    fileMeta: {
+      fontSize: '12px',
+      color: '#64748b'
+    },
+    actionBtn: {
+      fontSize: '13px',
+      color: '#2563eb',
+      fontWeight: '600',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px'
+    },
+    emptyCard: {
+       
+    },
+    uploadBtn: {
+      backgroundColor: '#2563eb',
+      color: 'white',
+      border: 'none',
+      padding: '10px 24px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      transition: 'all 0.2s',
+      margin: '0 auto'
+    }
+  };
+
+  return (
+    <div className="financial-upload-block" style={styles.container}>
+      <div style={styles.header}>
+        <div style={styles.iconWrapper}>
+          <Database size={24} />
+        </div>
+        <div>
+          <h3 style={styles.title}>Financial Data & Templates</h3>
+          <p style={styles.subtitle}>Manage financial statements and download reporting templates</p>
+        </div>
+      </div>
+
+      {hasUploadedDocument && uploadedFileInfo ? (
+        <div style={styles.card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={styles.fileIcon}>
+              <FileText size={24} />
+            </div>
+            <div>
+              <div style={styles.fileName}>{uploadedFileInfo.name}</div>
+              <div style={styles.fileMeta}>
+                Uploaded on {uploadedFileInfo.uploadDate} • {(uploadedFileInfo.size / 1024).toFixed(1)} KB
+              </div>
+            </div>
+          </div>
+          {canEdit && (
+            <button onClick={onOpenManagement} style={styles.actionBtn}>
+              <RefreshCw size={14} />
+              Manage / Replace
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={styles.emptyCard}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <div style={{ color: '#94a3b8' }}>
+              <Upload size={32} />
+            </div>
+            <div>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#64748b' }}>
+                No financial document uploaded yet.
+              </p>
+              {canEdit && (
+                <button
+                  onClick={onOpenManagement}
+                  style={styles.uploadBtn}
+                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#1d4ed8'; }}
+                  onMouseLeave={(e) => { e.target.style.backgroundColor = '#2563eb'; }}
+                >
+                  <Upload size={16} />
+                  Upload or Get Templates
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -251,29 +402,67 @@ const EditableBriefSection = ({
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichedAnswers, setEnrichedAnswers] = useState(null);
+  const [isApplyingEnrichment, setIsApplyingEnrichment] = useState(false);
+  const [showTemplatesPopup, setShowTemplatesPopup] = useState(false);
+  const [isFileUploading, setIsFileUploading] = useState(false);
+  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
+  const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+  const getAuthToken = () => sessionStorage.getItem('token');
+  const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
+  const analysisService = useRef(new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken)).current;
 
   const inputRefs = useRef({});
   const fieldRefs = useRef({});
   const autoSaveTimeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
   const { t } = useTranslation();
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    const role = sessionStorage.getItem("userRole");
+    const role = (sessionStorage.getItem("role") || sessionStorage.getItem("userRole") || "").toLowerCase();
     setUserRole(role);
   }, []);
 
   const isViewer = userRole === "viewer";
-  const canEdit = !isViewer && !isLaunchedStatus;
-
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
-  const getAuthToken = () => sessionStorage.getItem('token');
+  const canEdit = !isViewer;
+  const canEnrich = !isViewer;
 
   useEffect(() => {
     if (questions && questions.length > 0) {
       generateBriefFields();
     }
   }, [questions, userAnswers]);
+
+  useEffect(() => {
+    if (selectedBusinessId) {
+      loadDocumentInfo();
+    }
+  }, [selectedBusinessId]);
+
+  const loadDocumentInfo = async () => {
+    try {
+      const doc = await analysisService.fetchFinancialDocument(selectedBusinessId);
+      if (doc) {
+        setHasUploadedDocument(true);
+        setUploadedFileInfo({
+          name: doc.filename || 'Financial Document',
+          size: doc.file_size || 0,
+          uploadDate: doc.upload_date ?
+            new Date(doc.upload_date).toLocaleDateString() :
+            'Previously uploaded'
+        });
+      } else {
+        setHasUploadedDocument(false);
+        setUploadedFileInfo(null);
+      }
+    } catch (error) {
+      console.error('Error loading document info:', error);
+    }
+  };
 
 
   useEffect(() => {
@@ -441,7 +630,7 @@ const EditableBriefSection = ({
           showToastMessage('Auto-save failed', 'error');
         }
       }
-    }, 5000); // Auto-save after 5 seconds of no typing
+    }, 3000); // Auto-save after 3 seconds of no typing
   };
 
   const handleEdit = (field) => {
@@ -516,6 +705,254 @@ const EditableBriefSection = ({
   const isInitialPhaseComplete = completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
   const isEssentialPhaseComplete = completedEssentialQuestions.length === essentialQuestions.length && essentialQuestions.length > 0;
 
+  const handleGenerateEnrichment = async () => {
+    try {
+      setIsEnriching(true);
+      setEnrichedAnswers(null);
+
+      // 1. Fetch real onboarding data for this business
+      let onboardingData = null;
+      try {
+        const analysisResult = await analysisService.getPMFAnalysis(selectedBusinessId);
+        onboardingData = analysisResult?.analysis?.onboarding_data || analysisResult?.onboarding_data;
+      } catch (err) {
+        console.warn("Could not fetch onboarding data:", err);
+      }
+
+      // Check if onboarding data is missing
+      if (!onboardingData || Object.keys(onboardingData).length === 0) {
+        showToastMessage(t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see answers here.", 'error');
+        setIsEnriching(false);
+        return;
+      }
+
+      // Find company name from current brief fields/user answers as backup
+      const companyNameField = briefFields.find(f => f.label.toLowerCase().includes('company') || f.label.toLowerCase().includes('name'));
+      const companyName = onboardingData?.companyName || companyNameField?.value || "";
+
+      // 2. Construct the rich payload for the ML enrichment API
+      // We follow the same structure as the executive summary payload in PMFOnboardingModal
+      const rawPayload = {
+        company: {
+          name: companyName || "N/A",
+          website: onboardingData?.website || "N/A",
+          location: {
+            city: onboardingData?.city || "N/A",
+            country: onboardingData?.country || "N/A",
+          },
+          industry: onboardingData?.primaryIndustry || "N/A",
+          geographies: [onboardingData?.geography1, onboardingData?.geography2, onboardingData?.geography3].filter(Boolean),
+          profits: {
+            source: {
+              [t("Segments")]: [onboardingData?.customerSegment1, onboardingData?.customerSegment2, onboardingData?.customerSegment3].filter(Boolean),
+              [t("Products")]: [onboardingData?.productService1, onboardingData?.productService2, onboardingData?.productService3].filter(Boolean),
+              [t("Channels")]: [onboardingData?.channel1, onboardingData?.channel2, onboardingData?.channel3].filter(Boolean),
+            }
+          },
+          objective: onboardingData?.strategicObjective === "Other" ? onboardingData?.strategicObjectiveOther : onboardingData?.strategicObjective || "N/A",
+          constraint: {
+            primary: onboardingData?.keyChallenge === "Other" ? onboardingData?.keyChallengeOther : onboardingData?.keyChallenge || "N/A",
+          },
+          usp: onboardingData?.differentiation ? [...onboardingData.differentiation.filter(d => d !== 'Other'), onboardingData.differentiationOther].filter(Boolean) : [],
+        },
+      };
+
+      const result = await analysisService.makeAPICall(
+        'answer-questions-with-enrichment',
+        null,
+        null,
+        selectedBusinessId,
+        null,
+        null,
+        null,
+        companyName,
+        rawPayload
+      );
+
+      if (Array.isArray(result)) {
+        setEnrichedAnswers(result);
+        showToastMessage('Enrichment suggestions generated!', 'success');
+      } else {
+        throw new Error('Invalid response format from enrichment API');
+      }
+    } catch (error) {
+      console.error('Enrichment error:', error);
+      showToastMessage('Failed to generate enrichment', 'error');
+    } finally {
+      setIsEnriching(false);
+    }
+  };
+
+  const saveFileToDatabase = async (file, validationResult) => {
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('Authentication token not found');
+      if (!selectedBusinessId) throw new Error('No business selected');
+
+      const formData = new FormData();
+      formData.append('document', file);
+
+      const templateComplexityMap = {
+        'simplified': 'simple',
+        'standard': 'medium',
+        'detailed': 'medium'
+      };
+
+      const backendTemplateType = templateComplexityMap[validationResult.templateType] || 'simple';
+      formData.append('template_type', backendTemplateType);
+      formData.append('template_name', validationResult.templateName || '');
+      formData.append('validation_confidence', validationResult.confidence || 'high');
+      formData.append('upload_mode', validationResult.uploadMode || 'auto-detect');
+
+      const response = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to save file to database');
+
+      return result;
+    } catch (error) {
+      console.error('Database save error:', error);
+      throw error;
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      showToastMessage('Please upload Excel (.xlsx, .xls) or CSV files only.', 'error');
+      return;
+    }
+
+    try {
+      setIsFileUploading(true);
+      const detection = await detectTemplateType(file);
+
+      if (detection.confidence === 'none' || detection.score < 0.3) {
+        throw new Error(`Unable to identify template type. Please ensure your file is based on one of our template files.`);
+      }
+
+      const validation = await validateAgainstTemplate(file, detection.type);
+      if (!validation.isValid) {
+        let errorMessage = `Your file doesn't match the ${validation.templateName} format:\n\n`;
+        validation.errors.forEach(error => errorMessage += `• ${error}\n`);
+        throw new Error(errorMessage);
+      }
+
+      const validationResult = {
+        templateType: detection.type,
+        templateName: validation.templateName,
+        validation: validation,
+        confidence: detection.confidence,
+        uploadMode: 'auto-detect'
+      };
+
+      await saveFileToDatabase(file, validationResult);
+
+      setHasUploadedDocument(true);
+      setUploadedFileInfo({
+        name: file.name,
+        size: file.size,
+        uploadDate: new Date().toLocaleDateString()
+      });
+
+      showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
+
+      // Trigger financial analysis via excel-analysis endpoint
+      const financialMetrics = ['profitability', 'growth_trends', 'liquidity', 'investment', 'leverage'];
+      for (const metricType of financialMetrics) {
+        try {
+          await analysisService.makeAPICall(
+            'excel-analysis',
+            [],
+            [],
+            selectedBusinessId,
+            null,
+            metricType
+          );
+        } catch (err) {
+          console.warn(`Financial analysis failed for metric: ${metricType}`, err);
+        }
+      }
+
+      showToastMessage('✅ Financial analysis complete!', 'success');
+
+      // Also notify parent to refresh display
+      if (onAnalysisRegenerate) {
+        onAnalysisRegenerate({ onlyFinancial: true });
+      }
+    } catch (error) {
+      console.error('File upload/validation error:', error);
+      showToastMessage(error.message || 'Failed to process file. Please try again.', 'error');
+    } finally {
+      setIsFileUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleApplyEnrichedAnswers = async () => {
+    if (!enrichedAnswers || enrichedAnswers.length === 0) return;
+
+    try {
+      setIsApplyingEnrichment(true);
+
+      // Map enriched answers back to question IDs
+      const answersToSave = enrichedAnswers.map(enriched => {
+        const field = briefFields.find(f => f.label === enriched.question);
+        if (field) {
+          return {
+            question_id: field.questionId,
+            answer_text: enriched.answer
+          };
+        }
+        return null;
+      }).filter(Boolean);
+
+      if (answersToSave.length === 0) {
+        showToastMessage('No matching questions found to apply', 'warning');
+        return;
+      }
+
+      await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
+
+      // Update local state for immediate UI feedback
+      const newlyEdited = new Set(editedFields);
+      answersToSave.forEach(item => {
+        if (onAnswerUpdate) {
+          onAnswerUpdate(item.question_id, item.answer_text);
+        }
+        newlyEdited.add(`question_${item.question_id}`);
+      });
+      setEditedFields(newlyEdited);
+
+      setEnrichedAnswers(null);
+      showToastMessage('Enriched answers applied and saved!', 'success');
+
+      // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
+      if (onAnalysisRegenerate) {
+        onAnalysisRegenerate();
+      }
+    } catch (error) {
+      console.error('Apply enrichment error:', error);
+      showToastMessage('Failed to apply enriched answers', 'error');
+    } finally {
+      setIsApplyingEnrichment(false);
+    }
+  };
+
   return (
     <div className="editable-brief-section">
       {showToast.show && (
@@ -526,12 +963,153 @@ const EditableBriefSection = ({
 
       {renderMissingQuestionsBanner()}
 
-      {(isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating) && (
+      <div className="enrichment-header" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '12px 16px',
+        backgroundColor: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderRadius: '10px',
+        marginBottom: '20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            backgroundColor: '#eff6ff',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#2563eb'
+          }}>
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+              AI Answer Support
+            </h4>
+            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+              Get detailed, professional answers based on your onboarding
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleGenerateEnrichment}
+          disabled={isEnriching || isApplyingEnrichment || isAnalysisRegenerating || isSaving || !canEnrich}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            backgroundColor: '#2563eb',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: (isEnriching || !canEnrich) ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            opacity: (!canEnrich) ? 0.6 : 1,
+            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)'
+          }}
+          onMouseEnter={(e) => {
+            if (!e.target.disabled) e.target.style.backgroundColor = '#1d4ed8';
+          }}
+          onMouseLeave={(e) => {
+            if (!e.target.disabled) e.target.style.backgroundColor = '#2563eb';
+          }}
+        >
+          {isEnriching ? <Loader size={16} className="spinner" /> : <Wand2 size={16} />}
+          {isEnriching ? 'Generating...' : 'AI Enrichment'}
+        </button>
+      </div>
+
+      {enrichedAnswers && (
+        <div className="enrichment-preview" style={{
+          backgroundColor: '#f0f9ff',
+          border: '1px solid #bae6fd',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '24px',
+          animation: 'fadeIn 0.3s ease-in'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px'
+          }}>
+            <h5 style={{ margin: 0, color: '#0369a1', fontSize: '15px', fontWeight: '600' }}>
+              AI Enrichment Suggestions ({enrichedAnswers.length})
+            </h5>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setEnrichedAnswers(null)}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: 'white',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  color: '#64748b',
+                  cursor: 'pointer'
+                }}
+              >
+                Discard
+              </button>
+              <button
+                onClick={handleApplyEnrichedAnswers}
+                disabled={isApplyingEnrichment}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 16px',
+                  backgroundColor: '#0284c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: isApplyingEnrichment ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isApplyingEnrichment ? <Loader size={14} className="spinner" /> : <Check size={14} />}
+                Apply All to My Brief
+              </button>
+            </div>
+          </div>
+          <div style={{
+            maxHeight: '300px',
+            overflowY: 'auto',
+            paddingRight: '10px'
+          }}>
+            {enrichedAnswers.map((item, idx) => (
+              <div key={idx} style={{
+                backgroundColor: 'white',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '10px',
+                border: '1px solid #e0f2fe'
+              }}>
+                <div style={{ fontWeight: '600', fontSize: '13px', color: '#0c4a6e', marginBottom: '4px' }}>
+                  {item.question}
+                </div>
+                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.5' }}>
+                  {item.answer}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(isAnalysisRegenerating || isSaving || isEssentialPhaseGenerating || isApplyingEnrichment) && (
         <div className="analysis-regenerating-banner">
           <Loader size={16} className="spinner" />
           <span>
             {isSaving && 'Saving changes...'}
-            {isAnalysisRegenerating && 'Regenerating Insight...'}
+            {isApplyingEnrichment && 'Applying enriched answers...'}
+            {isAnalysisRegenerating && 'Regenerating Insight & STRATEGIC...'}
             {isEssentialPhaseGenerating && 'Generating essential phase analysis...'}
           </span>
         </div>
@@ -586,26 +1164,46 @@ const EditableBriefSection = ({
               <p>Loading your business information...</p>
             </div>
           ) : briefFields.length > 0 ? (
-            briefFields.map(field => (
-              <EditableField
-                key={field.key}
-                field={field}
-                editingField={editingField}
-                editedFields={editedFields}
-                isQuestionHighlighted={isQuestionHighlighted}
-                canEdit={canEdit}
-                handleEdit={handleEdit}
-                isAnalysisRegenerating={isAnalysisRegenerating}
-                isSaving={isSaving}
-                isEssentialPhaseGenerating={isEssentialPhaseGenerating}
-                isLaunchedStatus={isLaunchedStatus}
-                inputRefs={inputRefs}
-                fieldRefs={fieldRefs}
-                handleSave={handleSave}
-                handleCancel={handleCancel}
-                handleAutoSave={handleAutoSave}
-              />
-            ))
+            (() => {
+  const rows = [];
+
+  // Insert FinancialUploadBlock at the top, before the first question
+  rows.push(
+    <FinancialUploadBlock
+      key="financial-upload-row"
+      hasUploadedDocument={hasUploadedDocument}
+      uploadedFileInfo={uploadedFileInfo}
+      onOpenManagement={() => setShowTemplatesPopup(true)}
+      canEdit={canEdit}
+      t={t}
+    />
+  );
+
+  briefFields.forEach((field, index) => {
+    rows.push(
+      <EditableField
+        key={field.key}
+        field={field}
+        editingField={editingField}
+        editedFields={editedFields}
+        isQuestionHighlighted={isQuestionHighlighted}
+        canEdit={canEdit}
+        handleEdit={handleEdit}
+        isAnalysisRegenerating={isAnalysisRegenerating}
+        isSaving={isSaving}
+        isEssentialPhaseGenerating={isEssentialPhaseGenerating}
+        isLaunchedStatus={isLaunchedStatus}
+        inputRefs={inputRefs}
+        fieldRefs={fieldRefs}
+        handleSave={handleSave}
+        handleCancel={handleCancel}
+        handleAutoSave={handleAutoSave}
+      />
+    );
+  });
+
+  return rows;
+})()
           ) : (
             <div className="no-data">
               <p>{t('businessInfoMessage') || 'Your business info will show here once you answer questions.'}</p>
@@ -618,6 +1216,18 @@ const EditableBriefSection = ({
           )}
         </div>
       </div>
+      {showTemplatesPopup && (
+        <FinancialTemplatesPopup
+          isOpen={showTemplatesPopup}
+          onClose={() => setShowTemplatesPopup(false)}
+          isFileUploading={isFileUploading}
+          onFileUploaded={(file, validation) => {
+            const mockEvent = { target: { files: [file] } };
+            handleFileUpload(mockEvent);
+            setShowTemplatesPopup(false);
+          }}
+        />
+      )}
     </div>
   );
 };
