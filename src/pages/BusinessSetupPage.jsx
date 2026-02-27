@@ -1096,31 +1096,39 @@ const BusinessSetupPage = () => {
 
       {isMobile && questionsLoaded && (
         <>
-          <div className="mobile-menu-trigger-container">
-            <button className="mobile-back-button me-2" onClick={handleBack} aria-label="Go Back">
-              <ArrowLeft size={20} />
-            </button>
-            {selectedBusinessName && (
-              <strong className="ms-1 text-truncate" style={{ maxWidth: '160px', display: 'inline-block', verticalAlign: 'middle' }}>{selectedBusinessName}</strong>
-            )}
-            <button
-              className="mobile-menu-trigger"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              aria-label="Toggle Menu"
-            >
-              {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
-              <span className="ms-2">{t("Menu")}</span>
-            </button>
-            <div className="active-tab-indicator ms-auto">
-              {activeTab === "aha" && t("aha")}
-              {activeTab === "executive" && t("Executive Summary")}
-              {activeTab === "priorities" && t("Priorities & Projects")}
-              {activeTab === "brief" && t("Questions and Answers")}
-              {activeTab === "analysis" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
-              {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
-              {activeTab === "projects" && t("Projects")}
-            </div>
-          </div>
+          <div className="mobile-header">
+  <div className="mobile-header-top">
+    <button
+      className="mobile-back-button"
+      onClick={handleBack}
+      aria-label="Go Back"
+    >
+      <ArrowLeft size={20} />
+    </button>
+
+    <div className="mobile-business-name">
+      {selectedBusinessName}
+    </div>
+
+    <button
+      className="mobile-menu-trigger"
+      onClick={() => setShowMobileMenu(!showMobileMenu)}
+      aria-label="Toggle Menu"
+    >
+      {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
+    </button>
+  </div>
+
+  <div className="mobile-active-tab">
+    {activeTab === "aha" && t("aha")}
+    {activeTab === "executive" && t("Executive Summary")}
+    {activeTab === "priorities" && t("Priorities & Projects")}
+    {activeTab === "brief" && t("Questions and Answers")}
+    {activeTab === "analysis" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+    {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+    {activeTab === "projects" && t("Projects")}
+  </div>
+</div>
 
           {showMobileMenu && (
             <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>

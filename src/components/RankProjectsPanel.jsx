@@ -542,16 +542,22 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       <h6 className="mb-3 text-secondary">{t("Unlaunched/Draft Projects (Optional)")}</h6>
       <div className="selection-list mb-4">
         {draftProjects.map(p => (
-          <div key={p._id} className="selection-item">
-            <Form.Check
-              type="checkbox"
-              id={`draft-${p._id}`}
-              checked={selectedDraftIds.includes(p._id)}
-              onChange={() => handleToggleDraft(p._id)}
-              label={p.project_name}
-              disabled={isArchived}
-            />
-          </div>
+          <div
+  key={p._id}
+  className="selection-item clickable-row"
+  onClick={() => !isArchived && handleToggleDraft(p._id)}
+  style={{ cursor: isArchived ? "not-allowed" : "pointer" }}
+>
+  <Form.Check
+    type="checkbox"
+    id={`draft-${p._id}`}
+    checked={selectedDraftIds.includes(p._id)}
+    onChange={() => handleToggleDraft(p._id)}
+    onClick={(e) => e.stopPropagation()}   
+    label={p.project_name}
+    disabled={isArchived}
+  />
+</div>
         ))}
         {draftProjects.length === 0 && <p className="text-muted small">{t("No draft projects found.")}</p>}
       </div>
