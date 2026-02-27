@@ -119,7 +119,6 @@ const UserHistory = ({ onToast }) => {
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-    setCurrentPage(1);
     const filtered = users.filter(u =>
       u.name.toLowerCase().includes(value.toLowerCase()) ||
       u.email.toLowerCase().includes(value.toLowerCase())

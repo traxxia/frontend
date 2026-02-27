@@ -88,10 +88,10 @@ const ProjectsSection = ({
   ];
 
   const onToggleTeamRankings = () => {
-    const newState = !showTeamRankings;
-    setShowTeamRankings(newState);
-    if (newState) setShowRankScreen(false);
-  };
+    
+  setShowTeamRankings(true);
+  setShowRankScreen(false);
+};
 
   // UPDATED: This should reflect if the CURRENT USER has locked their ranking
   const [rankingsLocked, setRankingsLocked] = useState(false);
@@ -828,10 +828,10 @@ const ProjectsSection = ({
                 {!isViewer && !isArchived && (
                   <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
                     <button
-                      onClick={() => {
-                        setShowRankScreen(!showRankScreen);
-                        if (!showRankScreen) setShowTeamRankings(false);
-                      }}
+                     onClick={() => {
+  setShowRankScreen(true);
+  setShowTeamRankings(false);
+}}
                       className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
                     >
                       <ListOrdered size={16} />

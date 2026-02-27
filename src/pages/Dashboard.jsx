@@ -298,16 +298,16 @@ const Dashboard = () => {
     const errors = {};
 
     // Business Name validation
-    const businessName = businessFormData.business_name.trim();
-    if (!businessName) {
-      errors.business_name = t('business_name_cannot_be_empty');
-    } else if (businessName.length > 20) {
-      errors.business_name = t('business_name_max_length');
-    } else if (!/[a-zA-Z]/.test(businessName)) {
-      errors.business_name = t('business_name_must_contain_alphabetic_characters') || 'Business name must contain at least some alphabetic characters';
-    } else if (startsWithSymbolOrNumber(businessName)) {
-      errors.business_name = t('business_name_invalid_start');
-    }
+const businessName = businessFormData.business_name.trim();
+if (!businessName) {
+  errors.business_name = t('business_name_cannot_be_empty');
+} else if (businessName.length > 20) {
+  errors.business_name = t('business_name_max_length');
+} else if (!/^[A-Za-z]+$/.test(businessName)) {
+  errors.business_name = "Business name must contain only alphabetic characters (A–Z)";
+} else if (startsWithSymbolOrNumber(businessName)) {
+  errors.business_name = t('business_name_invalid_start');
+}
 
     // Business Purpose validation
     const businessPurpose = businessFormData.business_purpose.trim();

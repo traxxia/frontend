@@ -479,3 +479,14 @@
 [data-theme="dark"] .selection-item.mandatory label {
   color: #bfdbfe;
 }
+
+
+.selection-item.clickable-row {
+  padding: 10px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.selection-item.clickable-row:hover {
+  background-color: #f1f5f9;
+}

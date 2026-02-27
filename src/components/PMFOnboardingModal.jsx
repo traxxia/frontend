@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Select from "react-select";
@@ -20,6 +20,8 @@ import '../styles/pmf-onboarding.css';
 const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const modalBodyRef = useRef(null);
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -61,7 +63,19 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   // Step 1 = 0% progress, 100% to complete
   // Step 9 = 100% progress, 0% to complete (or close to it)
   // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
-  const progressPercentage = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+  let completedSteps = currentStep - 1;
+
+// If we are on last step AND it is completed, count it
+if (
+  currentStep === TOTAL_STEPS &&
+  formData.usageContext
+) {
+  completedSteps = TOTAL_STEPS;
+}
+
+const progressPercentage =
+  (completedSteps / TOTAL_STEPS) * 100;
+  
   const percentToComplete = 100 - Math.round(progressPercentage);
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
@@ -1096,6 +1110,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     }
   };
 
+  useEffect(() => {
+  if (modalBodyRef.current) {
+    modalBodyRef.current.scrollTop = 0;
+  }
+}, [currentStep]);
+
   return (
     <Modal
       show={show}
@@ -1122,7 +1142,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         </button>
       </Modal.Header>
 
-      <Modal.Body className="pmf-modal-body">
+      <Modal.Body className="pmf-modal-body" ref={modalBodyRef}>
         <div className="pmf-progress-wrapper">
           <div className="pmf-progress-header-simple">
             <span className="pmf-progress-title-simple">{t('Pmf Onboarding') || 'PMF Onboarding'}</span>
@@ -1137,6 +1157,21 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         </div>
 
         {renderStepContent()}
+        {isSubmitting && (
+  <div className="pmf-modal-overlay-minimal">
+    <div className="pmf-loader-minimal">
+      <div className="spinner-border text-primary mb-3" role="status" />
+      <div className="pmf-loader-text">
+        {submissionStep === 1 && "Saving your data..."}
+        {submissionStep === 2 && "Analyzing market (60–90s)..."}
+        {submissionStep === 3 && "Finalizing insights..."}
+      </div>
+      <small className="text-muted">
+        Please wait while we generate insights
+      </small>
+    </div>
+  </div>
+)}
       </Modal.Body>
 
 

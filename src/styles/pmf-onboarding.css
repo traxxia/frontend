@@ -341,6 +341,33 @@
 }
 
 
+/* Limit modal height */
+.pmf-onboarding-modal .modal-dialog {
+  max-width: 800px;
+}
+
+.pmf-onboarding-modal .modal-content {
+  height: 85vh;         
+  display: flex;
+  flex-direction: column;
+}
+
+.pmf-onboarding-modal .modal-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 24px;
+}
+
+.pmf-onboarding-modal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pmf-onboarding-modal .modal-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .pmf-modal-header {
@@ -382,4 +409,35 @@
     font-size: 14px;
     line-height: 18px;
   }
+}
+
+
+
+
+
+
+
+.pmf-modal-body {
+  position: relative;
+}
+
+.pmf-modal-overlay-minimal {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  border-radius: 12px;
+}
+
+.pmf-loader-minimal {
+  text-align: center;
+}
+
+.pmf-loader-text {
+  font-weight: 500;
+  font-size: 15px;
+  margin-bottom: 4px;
 }
