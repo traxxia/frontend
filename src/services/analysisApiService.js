@@ -141,7 +141,7 @@ export class AnalysisApiService {
   async getPMFAnalysis(businessId) {
     try {
       const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}?t=${Date.now()}`, {
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -175,7 +175,7 @@ export class AnalysisApiService {
   async getPMFExecutiveSummary(businessId) {
     try {
       const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary?t=${Date.now()}`, {
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf-analysis/${businessId}/executive-summary`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -210,7 +210,7 @@ export class AnalysisApiService {
   async getKickstartData(businessId) {
     try {
       const token = this.getAuthToken();
-      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart/${businessId}?t=${Date.now()}`, {
+      const response = await fetch(`${this.API_BASE_URL}/api/pmf/kickstart/${businessId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

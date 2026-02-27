@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle, Menu, X } from "lucide-react";
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
 
 import MenuBar from "../components/MenuBar";
@@ -68,9 +68,14 @@ const CARD_ID_MAP = {
 
 const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
 
+// Helper: turn a business name into a URL-safe slug
+const toSlug = (name = '') =>
+  name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 const BusinessSetupPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
 
   // State management for business context
@@ -144,6 +149,13 @@ const BusinessSetupPage = () => {
     setApiLoading
   );
 
+  // Write nav state synchronously before useBusinessSetup so its useState() initializer
+  // can read the correct initial tab on first render
+  const _navInitialTab = location.state?.initialTab;
+  if (_navInitialTab) {
+    window.__businessPageNavState = { initialTab: _navInitialTab };
+  }
+
   const state = useBusinessSetup(currentBusiness, selectedBusinessId);
   const {
     activeTab, setActiveTab, isMobile, setIsMobile, isAnalysisExpanded, setIsAnalysisExpanded,
@@ -182,17 +194,20 @@ const BusinessSetupPage = () => {
   } = state;
 
   const isArchived = (currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden') || (businessData?.access_mode === 'archived' || businessData?.access_mode === 'hidden');
-  const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus && !isArchived;
+  const canShowRegenerateButtons = canRegenerate && !isArchived;
 
-  // Set initial tab from navigation state (e.g. when clicking a business from the Dashboard)
-  // Since chat section is removed, always expand the analysis panel
+  // Set initial tab from URL query param (?tab=aha) or navigation state.
+  // URL param takes priority so page refresh / shared URLs restore the correct tab.
   useEffect(() => {
-    const initialTab = location.state?.initialTab;
+    const urlTab = searchParams.get('tab');
+    const initialTab = urlTab || location.state?.initialTab;
     if (ENABLE_PMF && initialTab) {
       setActiveTab(initialTab);
     } else if (ENABLE_PMF) {
       setActiveTab("aha");
     }
+    // Clean up the temporary window flag used by useBusinessSetup's initializer
+    delete window.__businessPageNavState;
     // Always expand the analysis panel (no chat section)
     if (window.innerWidth > 768) {
       setIsAnalysisExpanded(true);
@@ -213,7 +228,13 @@ const BusinessSetupPage = () => {
       sessionStorage.setItem('activeBusinessId', selectedBusinessId);
 
       // If we don't have the full business object, fetch it
+      // Skip fetch if we are on Priorities tab and already have basic info or if tab is projects (as requested for optimization)
       if (!currentBusiness) {
+        // Only skip if we already have the name, otherwise we must fetch for the header
+        if ((activeTab === 'priorities' || activeTab === 'projects') && selectedBusinessName && selectedBusinessName !== "") {
+          console.log("Skipping business recovery fetch for tab:", activeTab);
+          return;
+        }
         try {
           console.log("Recovering business data for:", selectedBusinessId);
           const businessDataResult = await apiService.getBusiness(selectedBusinessId);
@@ -230,7 +251,7 @@ const BusinessSetupPage = () => {
     };
 
     recoverBusinessContext();
-  }, [selectedBusinessId, currentBusiness]);
+  }, [selectedBusinessId, currentBusiness, activeTab, selectedBusinessName]);
 
   // Sync businessData in useBusinessSetup when currentBusiness changes
   useEffect(() => {
@@ -246,28 +267,22 @@ const BusinessSetupPage = () => {
   }, [currentBusiness, setBusinessData]);
 
   // Load questions directly (previously handled by ChatComponent)
+  // Only needed for tabs that use the question/answer/analysis workflow
   useEffect(() => {
+    const tabsNeedingQuestions = ['brief', 'analysis', 'strategic'];
+    if (!tabsNeedingQuestions.includes(activeTab)) {
+      // Mark questionsLoaded so the UI doesn't stay blank on AHA/executive/priorities tabs
+      if (!questionsLoaded) setQuestionsLoaded(true);
+      return;
+    }
+
     const loadQuestions = async () => {
       if (!selectedBusinessId) return;
       try {
         const token = sessionStorage.getItem('token');
         if (!token) return;
 
-        const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!questionsResponse.ok) throw new Error('Failed to load questions');
-
-        const questionsData = await questionsResponse.json();
-        const availableQuestions = questionsData.questions || [];
-        setQuestions(availableQuestions);
-        setQuestionsLoaded(true);
-
-        // Also load conversation data for answers and document info
+        // Load conversation data for answers and document info
         const conversationUrl = `${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`;
         const conversationsResponse = await fetch(conversationUrl, {
           headers: {
@@ -281,14 +296,49 @@ const BusinessSetupPage = () => {
           const documentExists = conversationsData.document_info?.has_document === true;
           setHasUploadedDocument(documentExists);
 
-          // Extract answered questions from conversations
+          // If on the 'brief' tab (Advanced), specifically call the financial-document API as well
+          if (activeTab === 'brief') {
+            try {
+              const docResponse = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              if (docResponse.ok) {
+                const docData = await docResponse.json();
+                // Extract the nested document object to ensure filename and file_size are at the top level
+                if (docData.has_document && docData.document) {
+                  setDocumentInfo(docData.document);
+                } else {
+                  setDocumentInfo({ has_document: false });
+                }
+              } else {
+                // If 404 or other error, signal no document to child components
+                setDocumentInfo({ has_document: false });
+              }
+            } catch (docError) {
+              console.error('Error calling financial-document API:', docError);
+              setDocumentInfo({ has_document: false });
+            }
+          }
+
+          // Populate questions from conversation data to keep UI functional
           if (conversationsData.conversations?.length > 0) {
+            const mappedQuestions = conversationsData.conversations.map(conv => ({
+              _id: conv.question_id,
+              question_text: conv.question_text,
+              phase: conv.phase,
+              order: conv.order
+            }));
+            setQuestions(mappedQuestions);
+
             const answersMap = {};
             const completedSet = new Set();
             conversationsData.conversations.forEach(conv => {
-              if (conv.question_id && conv.answer) {
-                answersMap[conv.question_id] = conv.answer;
-                if (conv.is_complete) {
+              if (conv.question_id && conv.latest_answer) {
+                answersMap[conv.question_id] = conv.latest_answer;
+                if (conv.completion_status === 'complete') {
                   completedSet.add(conv.question_id);
                 }
               }
@@ -299,15 +349,16 @@ const BusinessSetupPage = () => {
             }
           }
         }
+        setQuestionsLoaded(true);
       } catch (error) {
-        console.error('Error loading questions:', error);
-        // Still set questionsLoaded so UI isn't blank
+        console.error('Error loading data:', error);
         setQuestionsLoaded(true);
       }
     };
 
     loadQuestions();
-  }, [selectedBusinessId, API_BASE_URL]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBusinessId, API_BASE_URL, activeTab]);
 
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
@@ -350,7 +401,10 @@ const BusinessSetupPage = () => {
   }, [activeTab, showProjectsTab, selectedBusinessId]);
 
   // Automatically show Projects tab if this business already has projects
+  // Skip this check when on tabs that never show the projects button (aha / executive)
   useEffect(() => {
+    if (showProjectsTab || !selectedBusinessId) return;
+
     const fetchProjectsForBusiness = async () => {
       if (!selectedBusinessId) return;
 
@@ -389,7 +443,8 @@ const BusinessSetupPage = () => {
     };
 
     fetchProjectsForBusiness();
-  }, [selectedBusinessId, API_BASE_URL]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBusinessId, API_BASE_URL, activeTab]);
 
   //const showToastMessage = createToastMessage(setShowToast);
 
@@ -897,12 +952,24 @@ const BusinessSetupPage = () => {
     setSelectedDropdownValue(t("Go_to_Section"));
   }, []);
 
+  // Sync URL: update ?business=slug&tab=activeTab whenever the active tab or business name changes
   useEffect(() => {
+    if (!selectedBusinessId) return;
+    const slug = toSlug(selectedBusinessName || '');
+    const params = {};
+    if (slug) params.business = slug;
+    if (activeTab) params.tab = activeTab;
+    setSearchParams(params, { replace: true });
+  }, [activeTab, selectedBusinessName, selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Only load stored analysis data when user first visits the analysis or strategic tab
+  useEffect(() => {
+    if (activeTab !== 'analysis' && activeTab !== 'strategic') return;
     if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
       hasLoadedAnalysis.current = true;
       setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
     }
-  }, [selectedBusinessId, questionsLoaded, questions.length, phaseManager]);
+  }, [selectedBusinessId, questionsLoaded, questions.length, phaseManager, activeTab]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -1126,7 +1193,6 @@ const BusinessSetupPage = () => {
 
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
 
-
         {questionsLoaded && (
           <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" || activeTab === "priorities" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
@@ -1246,7 +1312,7 @@ const BusinessSetupPage = () => {
                             />
                           )}
 
-                          {canShowRegenerateButtons && (
+                          {canShowRegenerateButtons && unlockedFeatures.analysis && (
                             <button
                               onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
                               disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
@@ -1275,7 +1341,7 @@ const BusinessSetupPage = () => {
                               strategicData={strategicData}
                             />
                           )}
-                          {canShowRegenerateButtons && (
+                          {unlockedFeatures.analysis && (
                             <button
                               onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
                               disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
@@ -1331,6 +1397,7 @@ const BusinessSetupPage = () => {
                             highlightedMissingQuestions={highlightedMissingQuestions}
                             onClearHighlight={() => setHighlightedMissingQuestions(null)}
                             isLaunchedStatus={isLaunchedStatus}
+                            documentInfo={documentInfo}
                           />
                         </div>
                       )}
@@ -1346,7 +1413,7 @@ const BusinessSetupPage = () => {
                             businessName={businessData.name}
                             onRegenerate={handleStrategicAnalysisRegenerate}
                             isRegenerating={isStrategicRegenerating}
-                            canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                            canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
                             strategicData={strategicData}
                             selectedBusinessId={selectedBusinessId}
                             phaseManager={phaseManager}
@@ -1413,6 +1480,11 @@ const BusinessSetupPage = () => {
                         {t("Priorities & Projects")}
                       </button>
                     )}
+                    {showProjectsTab && (
+                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
+                          {t("Projects")}
+                        </button>
+                      )}
                     {ENABLE_PMF && (
                       <button
                         className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
@@ -1431,7 +1503,7 @@ const BusinessSetupPage = () => {
 
                   {activeTab === "analysis" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
-                      {canShowRegenerateButtons && (
+                      {canShowRegenerateButtons && hasAnalysisData && (
                         <button
                           onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
                           disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
@@ -1482,6 +1554,7 @@ const BusinessSetupPage = () => {
                         highlightedMissingQuestions={highlightedMissingQuestions}
                         onClearHighlight={() => setHighlightedMissingQuestions(null)}
                         isLaunchedStatus={isLaunchedStatus}
+                        documentInfo={documentInfo}
                       />
                     </div>
                   )}
@@ -1515,7 +1588,7 @@ const BusinessSetupPage = () => {
                         businessName={businessData.name}
                         onRegenerate={handleStrategicAnalysisRegenerate}
                         isRegenerating={isStrategicRegenerating}
-                        canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                        canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
                         strategicData={strategicData}
                         selectedBusinessId={selectedBusinessId}
                         phaseManager={phaseManager}
@@ -1586,6 +1659,7 @@ const BusinessSetupPage = () => {
                       highlightedMissingQuestions={highlightedMissingQuestions}
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}
                       isLaunchedStatus={isLaunchedStatus}
+                      documentInfo={documentInfo}
                     />
                   </div>
                 )}
@@ -1606,7 +1680,7 @@ const BusinessSetupPage = () => {
                   <div className="analysis-section">
                     {unlockedFeatures.analysis && (
                       <div className="analysis-section-mobile-controls">
-                        {canShowRegenerateButtons && (
+                        {canShowRegenerateButtons && hasAnalysisData && (
                           <button
                             onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
                             disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
@@ -1637,7 +1711,7 @@ const BusinessSetupPage = () => {
                       businessName={businessData.name}
                       onRegenerate={handleStrategicAnalysisRegenerate}
                       isRegenerating={isStrategicRegenerating}
-                      canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
+                      canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
                       strategicData={strategicData}
                       selectedBusinessId={selectedBusinessId}
                       phaseManager={phaseManager}

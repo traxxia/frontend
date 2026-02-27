@@ -24,19 +24,9 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     if (!businessId) return;
     try {
       setLoading(true);
-      const [summaryResult, analysisResult] = await Promise.all([
-        analysisService.getPMFExecutiveSummary(businessId),
-        analysisService.getPMFAnalysis(businessId)
-      ]);
-
+      const summaryResult = await analysisService.getPMFExecutiveSummary(businessId);
       const summaryContent = summaryResult?.summary || summaryResult;
-      const baseAnalysis = analysisResult?.analysis || analysisResult;
-
-      // Merge data: Use summary but fallback to base analysis for core items
-      setData({
-        ...summaryContent,
-        _baseAnalysis: baseAnalysis
-      });
+      setData(summaryContent);
     } catch (error) {
       console.error("Error fetching executive summary:", error);
     } finally {
@@ -146,9 +136,9 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                     <Info size={14} /> {t("Profit arenas inferred from your data")}
                   </p>
                   <p className="exc-content-text">
-                    <strong>{t("Segments")}:</strong> {[data._baseAnalysis?.onboarding_data?.customerSegment1, data._baseAnalysis?.onboarding_data?.customerSegment2, data._baseAnalysis?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") || "N/A"}<br />
-                    <strong>{t("Products")}:</strong> {[data._baseAnalysis?.onboarding_data?.productService1, data._baseAnalysis?.onboarding_data?.productService2, data._baseAnalysis?.onboarding_data?.productService3].filter(Boolean).join(", ") || "N/A"}<br />
-                    <strong>{t("Channels")}:</strong> {[data._baseAnalysis?.onboarding_data?.channel1, data._baseAnalysis?.onboarding_data?.channel2, data._baseAnalysis?.onboarding_data?.channel3].filter(Boolean).join(", ") || "N/A"}
+                    <strong>{t("Segments")}:</strong> {[data?.onboarding_data?.customerSegment1, data?.onboarding_data?.customerSegment2, data?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") || "N/A"}<br />
+                    <strong>{t("Products")}:</strong> {[data?.onboarding_data?.productService1, data?.onboarding_data?.productService2, data?.onboarding_data?.productService3].filter(Boolean).join(", ") || "N/A"}<br />
+                    <strong>{t("Channels")}:</strong> {[data?.onboarding_data?.channel1, data?.onboarding_data?.channel2, data?.onboarding_data?.channel3].filter(Boolean).join(", ") || "N/A"}
                   </p>
                 </div>
               </div>
@@ -163,9 +153,9 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                   <p className="exc-source-label exc-orange-text">
                     <Info size={14} /> {t("AI-inferred from your core business data")}
                   </p>
-                  {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments)?.length > 0 ? (
+                  {(getNested(whereToCompete, 'existing_adjacencies.segments'))?.length > 0 ? (
                     <p className="exc-content-text">
-                      <strong>{t("Segments")}:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments') || data._baseAnalysis?.insights?.adjacencies?.segments).join(", ")}
+                      <strong>{t("Segments")}:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments')).join(", ")}
                     </p>
                   ) : (
                     <p className="exc-content-text exc-italic">{t("No existing adjacencies inferred. Business appears focused on core.")}</p>

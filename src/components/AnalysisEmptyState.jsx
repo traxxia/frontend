@@ -77,7 +77,7 @@ const AnalysisEmptyState = ({
       </p>
 
       {/* Regular Action Buttons */}
-      {shouldShowButtons && !isRegenerating && (
+      {shouldShowButtons && (
         <div className="empty-state-actions" style={{ marginTop: marginTop }}>
           {effectiveShowImproveButton && (
             <button

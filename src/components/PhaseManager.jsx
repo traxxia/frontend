@@ -32,7 +32,6 @@ const PhaseManager = ({
     const PHASES = {
         INITIAL: "initial",
         ESSENTIAL: "essential",
-        GOOD: "good",
         ADVANCED: "advanced",
     };
 
@@ -80,7 +79,6 @@ const PhaseManager = ({
 
         const hasAnyInitial = checkPhase('initial');
         const hasAnyEssential = checkPhase('essential');
-        const hasAnyGood = checkPhase('good');
         const hasAnyAdvanced = checkPhase('advanced');
         const hasDoc = !!hasUploadedDocument;
 
@@ -157,12 +155,10 @@ const PhaseManager = ({
 
                     const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
                     const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL && q.severity === "mandatory");
-                    const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
                     const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
 
                     const completedInitialQuestions = initialQuestions.filter(q => completedSet.has(q._id));
                     const completedEssentialQuestions = essentialQuestions.filter(q => completedSet.has(q._id));
-                    const completedGoodQuestions = goodQuestions.filter(q => completedSet.has(q._id));
                     const completedAdvancedQuestions = advancedQuestions.filter(q => completedSet.has(q._id));
 
                     const newCompletedPhases = new Set();
@@ -173,10 +169,6 @@ const PhaseManager = ({
 
                     if (essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length) {
                         newCompletedPhases.add('essential');
-                    }
-
-                    if (data.document_info?.has_document) {
-                        newCompletedPhases.add('good');
                     }
 
                     if (advancedQuestions.length > 0 && completedAdvancedQuestions.length === advancedQuestions.length) {
@@ -235,10 +227,6 @@ const PhaseManager = ({
                     await onAnalysisGeneration(newCompletedSet);
                 } else if (phase === 'essential') {
                     await onFullSwotGeneration(newCompletedSet);
-                } else if (phase === 'good') {
-                    if (onGoodPhaseGeneration) {
-                        await onGoodPhaseGeneration(newCompletedSet);
-                    }
                 } else if (phase === 'advanced') {
                     if (onAdvancedPhaseGeneration) {
                         await onAdvancedPhaseGeneration(newCompletedSet);
@@ -285,14 +273,6 @@ const PhaseManager = ({
             if (isEssentialCompleted && !completedPhases.has('essential')) {
                 phaseToTrigger = 'essential';
             }
-        } else if (questionPhase === 'good') {
-            const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
-            const completedGoodQuestions = goodQuestions.filter(q => newCompletedSet.has(q._id));
-            const isGoodCompleted = goodQuestions.length > 0 && completedGoodQuestions.length === goodQuestions.length;
-
-            if (isGoodCompleted && !completedPhases.has('good')) {
-                phaseToTrigger = 'good';
-            }
         } else if (questionPhase === 'advanced') {
             const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
             const completedAdvancedQuestions = advancedQuestions.filter(q => newCompletedSet.has(q._id));
@@ -309,8 +289,7 @@ const PhaseManager = ({
             onCompletedPhasesUpdate(newPhases);
             const nextPhaseMap = {
                 initial: "essential",
-                essential: "good",
-                good: "advanced",
+                essential: "advanced",
             };
             const nextPhase = nextPhaseMap[phaseToTrigger];
 
@@ -327,7 +306,7 @@ const PhaseManager = ({
     };
 
     useEffect(() => {
-        const phaseList = ['initial', 'essential', 'good', 'advanced'];
+        const phaseList = ['initial', 'essential', 'advanced'];
         const allDone = phaseList.every(p => completedPhases.has(p));
         if (allDone && !allPhasesCelebratedRef.current) {
             allPhasesCelebratedRef.current = true;
@@ -346,12 +325,6 @@ const PhaseManager = ({
         const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL);
         const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
         return essentialQuestions.length > 0 && completedEssentialQuestions.length === essentialQuestions.length;
-    };
-
-    const canGenerateGoodPhase = () => {
-        const goodQuestions = questions.filter(q => q.phase === PHASES.GOOD);
-        const completedGoodQuestions = goodQuestions.filter(q => completedQuestions.has(q._id));
-        return goodQuestions.length > 0 && completedGoodQuestions.length === goodQuestions.length;
     };
 
     const canGenerateAdvancedPhase = () => {
@@ -435,7 +408,6 @@ const PhaseManager = ({
         handleQuestionCompleted,
         canRegenerateAnalysis,
         canGenerateFullSwot,
-        canGenerateGoodPhase,
         canGenerateAdvancedPhase,
         loadExistingAnalysis,
         regeneratePhase,
