@@ -40,21 +40,40 @@ To ensure maximum focus and minimum cognitive load, the product follows this man
 All answers autosave immediately. The goal is speed and accuracy.
 
 *   **Q1. Company / Client Name**: Single-line text.
-*   **Q2. Website (Optional)**: Used for automated scraping.
-*   **Q2a. Business Location**: Country (Required) and City (Optional). Used for trends and regulatory context.
+        **Website (Optional)**: Used for automated scraping.
+![Step 1](/academy-screenshots/pmf/step-1.png)
+
+*   **Q2. Business Location**: Country (Required) and City (Optional). Used for trends and regulatory context.
+![Step 2](/academy-screenshots/pmf/step-2.png)
+
 *   **Q3. Primary Industry**: Selected from a standardized list (e.g., Technology/SaaS, Financial Services).
+![Step 3](/academy-screenshots/pmf/step-3.png)
+
 *   **Q4. Strategic Geography**: Multi-select (max 2) of major regions or specific countries.
+![Step 4](/academy-screenshots/pmf/step-4.png)
+
 *   **Q5. Current Core (The Profit Engine)**: Defines where most profit comes from today across Customer Segments, Products/Services, Channels, and Geographies.
+![Step 5](/academy-screenshots/pmf/step-5.png)
+
 *   **Q6. Strategic Objective**: What is the primary goal? (e.g., Grow, Focus/Simplify).
+![Step 6](/academy-screenshots/pmf/step-6.png)
+
 *   **Q7. Primary Constraint**: What is blocking progress? (e.g., Too many initiatives, Pricing pressure).
+![Step 7](/academy-screenshots/pmf/step-7.png)
+
 *   **Q8. Differentiation**: How do you win? (e.g., Price, Quality, Relationships).
+![Step 8](/academy-screenshots/pmf/step-8.png)
+
 *   **Q9. Usage Context**: Is this for your own company or a client?
+![Step 9](/academy-screenshots/pmf/step-9.png)
 
 ---
 
 ## 3️⃣ AHA Cards (Directional Insights)
 
 Shown immediately after onboarding. These provide instant feedback without complex charts.
+
+![AHA Insights](/academy-screenshots/pmf/aha-cards.png)
 
 | Card | Title | Context |
 | :--- | :--- | :--- |
@@ -67,8 +86,6 @@ Shown immediately after onboarding. These provide instant feedback without compl
 
 ## 4️⃣ Executive Summary
 
-Exactly one page. No scrolling. This is the strategic roadmap.
-
 ### Where to Compete
 *   **Current Core**: Profit arenas identified in onboarding.
 *   **Existing Adjacencies**: Already entered; evaluates ROI to fix, scale, or exit.
@@ -79,6 +96,8 @@ Explicitly defines the differentiation strategy (max 2 levers) and what it impli
 
 ### Top 3–5 Priorities
 Focused workstreams that group initiatives. Each priority implies the exclusion of other activities.
+
+![Executive Summary](/academy-screenshots/pmf/executive-summary.png)
 
 ---
 
