@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Loader } from 'lucide-react';
+import { FileDown, Loader } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 
 const PDFExportButton = ({
@@ -141,27 +141,27 @@ const PDFExportButton = ({
       const html2canvas = (await import('html2canvas')).default;
 
       const canvas = await html2canvas(component, {
-  scale: 1.5, // ⚡ Faster, still sharp
-  useCORS: true,
-  allowTaint: true,
-  backgroundColor: '#ffffff',
-  logging: false,
-  removeContainer: true,
-  imageTimeout: 2000,
-  windowWidth: component.scrollWidth,
-  windowHeight: component.scrollHeight,
-  onclone: (clonedDoc) => {
-    const style = clonedDoc.createElement('style');
-    style.textContent = `
+        scale: 1.5, // ⚡ Faster, still sharp
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        removeContainer: true,
+        imageTimeout: 2000,
+        windowWidth: component.scrollWidth,
+        windowHeight: component.scrollHeight,
+        onclone: (clonedDoc) => {
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
       * { 
         animation: none !important; 
         transition: none !important; 
         opacity: 1 !important;
       }
     `;
-    clonedDoc.head.appendChild(style);
-  }
-});
+          clonedDoc.head.appendChild(style);
+        }
+      });
 
 
       return {
@@ -177,89 +177,89 @@ const PDFExportButton = ({
 
   // Main strategic export function
   const handleDownloadStrategicAnalysis = async () => {
-  if (!strategicData) {
-    onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
-    return;
-  }
-
-  let changes = [];
-
-  try {
-    setIsExportingPDF(true);
-    changes = prepareForCapture();
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const jsPDF = (await import('jspdf')).default;
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    // 🧾 Title Page
-    pdf.setFontSize(24);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(59, 130, 246);
-    pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
-
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
-
-    pdf.setFontSize(12);
-    pdf.setTextColor(128, 128, 128);
-    pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
-
-    // 🧠 Define your 3 strategic blocks here
-    const strategicBlocks = [
-      { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
-      { selector: '[data-component="strategic-execution"]', name: 'Execution & Monitoring' },
-      { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Long-Term Reinforcement' },
-    ];
-
-    let capturedCount = 0;
-
-    for (const { selector, name } of strategicBlocks) {
-      const result = await captureComponent(selector, name);
-      if (result) {
-        pdf.addPage();
-        const marginX = 20;
-        const marginTop = 20;
-
-        pdf.setFontSize(18);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(59, 130, 246);
-        pdf.text(name, marginX, marginTop);
-
-        const canvas = result.canvas;
-        const imgWidth = pageWidth - marginX * 2;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const maxHeight = pageHeight - 40;
-        const finalHeight = Math.min(imgHeight, maxHeight);
-
-        pdf.addImage(result.imgData, 'PNG', marginX, marginTop + 10, imgWidth, finalHeight);
-        capturedCount++;
-      }
-    }
-
-    if (capturedCount === 0) {
-      onToastMessage?.('No strategic blocks could be captured.', 'error');
+    if (!strategicData) {
+      onToastMessage?.('No strategic analysis data available to export. Generate strategic analysis first.', 'warning');
       return;
     }
 
-    // 💾 Save the PDF
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${timestamp}.pdf`;
-    pdf.save(filename);
+    let changes = [];
 
-    onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
+    try {
+      setIsExportingPDF(true);
+      changes = prepareForCapture();
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-  } catch (error) {
-    console.error('Strategic PDF export error:', error);
-    onToastMessage?.('Failed to generate strategic PDF. Please try again.', 'error');
-  } finally {
-    if (changes.length > 0) restoreChanges(changes);
-    setIsExportingPDF(false);
-  }
-};
+      const jsPDF = (await import('jspdf')).default;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // 🧾 Title Page
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(59, 130, 246);
+      pdf.text('Strategic Analysis Report', pageWidth / 2, 30, { align: 'center' });
+
+      pdf.setFontSize(16);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(businessName, pageWidth / 2, 45, { align: 'center' });
+
+      pdf.setFontSize(12);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 55, { align: 'center' });
+
+      // 🧠 Define your 3 strategic blocks here
+      const strategicBlocks = [
+        { selector: '[data-component="strategic-direction"]', name: 'Direction & Positioning' },
+        { selector: '[data-component="strategic-execution"]', name: 'Execution & Monitoring' },
+        { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Long-Term Reinforcement' },
+      ];
+
+      let capturedCount = 0;
+
+      for (const { selector, name } of strategicBlocks) {
+        const result = await captureComponent(selector, name);
+        if (result) {
+          pdf.addPage();
+          const marginX = 20;
+          const marginTop = 20;
+
+          pdf.setFontSize(18);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(59, 130, 246);
+          pdf.text(name, marginX, marginTop);
+
+          const canvas = result.canvas;
+          const imgWidth = pageWidth - marginX * 2;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const maxHeight = pageHeight - 40;
+          const finalHeight = Math.min(imgHeight, maxHeight);
+
+          pdf.addImage(result.imgData, 'PNG', marginX, marginTop + 10, imgWidth, finalHeight);
+          capturedCount++;
+        }
+      }
+
+      if (capturedCount === 0) {
+        onToastMessage?.('No strategic blocks could be captured.', 'error');
+        return;
+      }
+
+      // 💾 Save the PDF
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${timestamp}.pdf`;
+      pdf.save(filename);
+
+      onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
+
+    } catch (error) {
+      console.error('Strategic PDF export error:', error);
+      onToastMessage?.('Failed to generate strategic PDF. Please try again.', 'error');
+    } finally {
+      if (changes.length > 0) restoreChanges(changes);
+      setIsExportingPDF(false);
+    }
+  };
 
 
   // Main analysis export function (enhanced with phase-by-phase content)
@@ -382,10 +382,10 @@ const PDFExportButton = ({
       const visibleComponents = components.filter(({ selector }) => {
         const element = document.querySelector(selector);
         return element &&
-  element.offsetHeight > 80 &&
-  element.offsetWidth > 80 &&
-  window.getComputedStyle(element).display !== 'none' &&
-  !element.closest('.collapsed');
+          element.offsetHeight > 80 &&
+          element.offsetWidth > 80 &&
+          window.getComputedStyle(element).display !== 'none' &&
+          !element.closest('.collapsed');
       });
 
       if (visibleComponents.length === 0) {
@@ -457,7 +457,7 @@ const PDFExportButton = ({
       setIsExportingPDF(false);
     }
   };
-  
+
   // Determine button text and action based on export type
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
 
@@ -513,13 +513,15 @@ const PDFExportButton = ({
           color: "#fff",
           border: "none",
           borderRadius: "10px",
-          padding: "10px 18px",
+          padding: "10px",  // Square-ish padding for icon
+          width: "40px",    // Fixed width for icon button
+          height: "40px",   // Fixed height for icon button
           fontSize: "14px",
           fontWeight: 600,
           display: "flex",
           alignItems: "center",
+          justifyContent: "center", // Center the icon
           cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
-          gap: "5px",
           transition: "all 0.2s ease",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           ...style
@@ -527,15 +529,9 @@ const PDFExportButton = ({
         title={`Export ${phaseLabel} Phase PDF`}
       >
         {isExportingPDF ? (
-          <>
-            <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
-            Generating...
-          </>
+          <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
         ) : (
-          <>
-            <Download size={16} />
-            {t("Export_PDF")}
-          </>
+          <FileDown size={18} />
         )}
       </button>
     </>
