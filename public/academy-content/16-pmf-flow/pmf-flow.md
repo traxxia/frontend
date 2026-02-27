@@ -28,7 +28,8 @@ To ensure maximum focus and minimum cognitive load, the product follows this man
 2.  **AHA Cards**: Four directional insights shown immediately.
 3.  **Executive Summary**: The strategic core on a single page.
 4.  **Priorities & Projects**: Transitioning strategy into execution.
-5.  **Supporting Analysis**: Detailed inputs (6Cs, 7S, etc.) moved to the appendix.
+5.  **Advanced Tools**: AI insights and financial data.
+6.  **Supporting Analysis**: Detailed inputs (6Cs, 7S, etc.) moved to the appendix.
 
 > [!IMPORTANT]
 > Anything shown earlier than this order is considered "wrong for PMF" as it distracts from immediate value.
@@ -92,7 +93,7 @@ Shown immediately after onboarding. These provide instant feedback without compl
 *   **New Adjacencies**: High-potential areas close to the core.
 
 ### How to Compete
-Explicitly defines the differentiation strategy (max 2 levers) and what it implies vs. what it excludes.
+Explicitly defines the differentiation strategy (max 2) and what it implies vs. what it excludes.
 
 ### Top 3–5 Priorities
 Focused workstreams that group initiatives. Each priority implies the exclusion of other activities.
@@ -108,3 +109,27 @@ Focused workstreams that group initiatives. Each priority implies the exclusion 
 *   **Priorities first**: Strategy drives execution.
 *   **Projects nested**: Initiatives are grouped under a priority.
 *   **Weekly Focus**: Select exactly **one** priority to focus on for the week.
+*   **Select one or more**: Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.
+
+![priorities](/academy-screenshots/pmf/priorities.png)
+
+---
+
+## 6️⃣ Advanced Tools
+
+The Advanced tab provides deeper strategic support and data management.
+
+![Advanced Tab](/academy-screenshots/pmf/advanced.png)
+
+### Features
+*   **AI Answer Support**: Generates professional strategic answers based on your onboarding data.
+*   **Financial Data**: Access to report templates and financial statements.
+
+### Strategic Deep Dive (Initial Questions)
+The Advanced section captures core narrative details that feed the AI engine:
+1.  **Identity**: Business name, core activity, and the main problem solved.
+2.  **Operations**: Primary internal strengths and weaknesses.
+3.  **Environment**: Industry, operations geography, and recent external impacts.
+4.  **Competitive Edge**: Differentiation and why customers choose you.
+
+
