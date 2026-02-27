@@ -458,9 +458,6 @@ export class AnalysisApiService {
         if (metricType) {
           params.append('metric_type', metricType);
         }
-        if (selectedBusinessId) {
-          params.append('business_id', selectedBusinessId);
-        }
         if (params.toString()) {
           url += `?${params.toString()}`;
         }
@@ -474,7 +471,6 @@ export class AnalysisApiService {
           body: formData
         });
       }
-      // ✅ Handle streaming for text-based analyses
       else {
         const headers = {
           'Accept': 'application/json',
@@ -557,86 +553,9 @@ export class AnalysisApiService {
 
 
   async callAnalysisEndpoint(analysisType, payload) {
-    const endpoint = API_ENDPOINTS[analysisType];
-    if (!endpoint) {
-      throw new Error(`Unknown analysis type: ${analysisType}`);
-    }
-
-    // For excel-analysis types, call with specific metric_type
-    if (this.isExcelAnalysisType(analysisType)) {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-        payload.questions,
-        payload.userAnswers
-      );
-
-      const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
-
-      const result = await this.makeAPICall(
-        'excel-analysis',
-        questionsArray,
-        answersArray,
-        payload.selectedBusinessId,
-        payload.stateSetters?.uploadedFile || null,
-        metricType
-      );
-
-      // The API now returns the specific metric data directly
-      return { data: result };
-    }
-
-    // For other analysis types, use existing logic
-    const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(
-      payload.questions,
-      payload.userAnswers
-    );
-
-    const result = await this.makeAPICall(
-      endpoint,
-      questionsArray,
-      answersArray,
-      payload.selectedBusinessId,
-      payload.stateSetters?.uploadedFile || null
-    );
-
-    let processedData = null;
-
-    switch (analysisType) {
-      case 'swot':
-        processedData = typeof result === 'string' ? result : JSON.stringify(result);
-        break;
-      case 'porters':
-        processedData = result.porters_analysis || result.porters || result;
-        break;
-      case 'purchaseCriteria':
-        processedData = result.purchase_criteria || result.purchaseCriteria || result;
-        break;
-      case 'loyaltyNPS':
-        processedData = result.loyalty_nps || result.loyaltyNPS || result;
-        break;
-      case 'expandedCapability':
-        processedData = result.expandedCapabilityHeatmap ? result : { expandedCapabilityHeatmap: result.expanded_capability_heatmap || result };
-        break;
-      case 'strategicRadar':
-        processedData = result.strategicRadar ? result : { strategicRadar: result.strategic_radar || result };
-        break;
-      case 'productivityMetrics':
-        processedData = result.productivityMetrics ? result : { productivityMetrics: result.productivity_metrics || result };
-        break;
-      case 'maturityScore':
-        processedData = result.maturityScore || result.maturity_score ? result : { maturityScore: result };
-        break;
-      case 'competitiveLandscape':
-        processedData = result.competitive_landscape || result.competitiveLandscape || result;
-        break;
-      case 'coreAdjacency': // ADD THIS CASE
-        processedData = result.core_adjacency || result.coreAdjacency || result;
-        break;
-      default:
-        processedData = result;
-    }
-
-    return { data: processedData };
+    return await this.callAnalysisEndpointWithStreaming(analysisType, payload);
   }
+
 
   async handlePhaseCompletion(
     phase,
