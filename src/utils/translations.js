@@ -119,7 +119,7 @@ export const staticTranslations = {
     "AHA Insights": "AHA Insights",
     "Key strategic insights based on your onboarding": "Key strategic insights based on your onboarding",
     "noInsightsAvailable": "No results available yet.",
-    "completeOnboardingPrompt": "Please complete the PMF Onboarding to see insights here.",
+    "completeOnboardingPrompt": "Please complete the PMF Onboarding to see results here.",
     "startPMFOnboarding": "Start PMF Onboarding",
     "Confidence": "Confidence",
 
@@ -939,6 +939,24 @@ export const staticTranslations = {
     'Ready_to_Start_Project_Planning': 'Ready to Start Project Planning',
     'Kickstart_your_project_workflow_by_cloning_initiatives_into_actionable_projects.': 'Kickstart your project workflow by cloning initiatives into actionable projects.',
     'Kickstart_Projects': 'Kickstart Projects',
+
+    // ===========================
+    // PRIORITIES & PROJECTS PAGE
+    // ===========================
+    'Projects kickstarted successfully!': 'Projects kickstarted successfully!',
+    'Failed to kickstart projects. Please try again.': 'Failed to kickstart projects. Please try again.',
+    'Loading priorities...': 'Loading priorities...',
+    'Ready to Start Project Planning': 'Ready to Start Project Planning',
+    'Select one or more priorities below': 'Select one or more priorities below',
+    'Upgrade to Kickstart': 'Upgrade to Kickstart',
+    'upgrade_required': 'Upgrade Required',
+    'kickstart_limit_msg': 'Project kickstarting is only available on Advanced plans.',
+    'upgrade_to_execute': 'Upgrade to Advanced to execute your strategy with AI-powered kickstart.',
+    'Kickstarted': 'Kickstarted',
+    'View Projects': 'View Projects',
+    'Status_Completed': 'Kickstarted',
+    'Note': 'Note',
+    'Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.': 'Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.',
 
 
     // ===========================
@@ -2639,6 +2657,29 @@ export const staticTranslations = {
     'upgrade': 'Mejorar',
     'downgrade': 'Degradar',
     'billing_history': 'Historial de Facturación',
+
+    // ===========================
+    // PRIORITIES & PROJECTS PAGE
+    // ===========================
+    'Projects kickstarted successfully!': '¡Proyectos iniciados con éxito!',
+    'Failed to kickstart projects. Please try again.': 'Error al iniciar los proyectos. Por favor, inténtelo de nuevo.',
+    'Loading priorities...': 'Cargando prioridades...',
+    'Ready to Start Project Planning': '¿Listo para comenzar la planificación del proyecto?',
+    'Select one or more priorities below': 'Seleccione una o más prioridades a continuación',
+    'Upgrade to Kickstart': 'Actualizar para iniciar',
+    'Kickstart_Projects': 'Iniciar Proyectos',
+    'upgrade_required': 'Actualización Requerida',
+    'kickstart_limit_msg': 'El inicio de proyectos solo está disponible en planes Avanzados.',
+    'upgrade_to_execute': 'Actualice a Avanzado para ejecutar su estrategia con inicio impulsado por IA.',
+    'Kickstarted': 'Iniciado',
+    'View Projects': 'Ver Proyectos',
+    'Status_Completed': 'Iniciado',
+    'Note': 'Nota',
+    'Kickstarting a priority creates separate draft projects for each tactical action where you can further define scope and metrics.': 'Iniciar una prioridad crea borradores de proyectos separados para cada acción táctica donde puede definir el alcance y las métricas.',
+    'noInsightsAvailable': 'No hay resultados disponibles aún.',
+    'completeOnboardingPrompt': 'Por favor complete la Incorporación PMF para ver los resultados aquí.',
+    'startPMFOnboarding': 'Iniciar Incorporación PMF',
+    'Projects': 'Proyectos',
   }
 };
 

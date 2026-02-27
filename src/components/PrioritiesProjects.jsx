@@ -124,7 +124,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
       <div className="bg-light py-5 text-center rounded-4 m-3 shadow-sm border">
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No results available yet."}</h3>
-          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see insights here."}</p>
+          <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
           {onStartOnboarding && (
             <button
               className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"

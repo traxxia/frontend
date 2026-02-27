@@ -81,9 +81,10 @@
 }
 
 .exc-section-title {
-  font-size: 15px;
+  font-size: 16px;
   color: #1f2937;
   margin: 0 0 0.35rem 0;
+  font-weight: 700;
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }

@@ -51,36 +51,50 @@ const PhaseManager = ({
     };
 
     const getUnlockedFeatures = () => {
-        if (!questions.length) return {
+        if (!questions || !questions.length) return {
             brief: true,
             analysis: false,
-            fullSwot: false,
-            goodPhase: false,
-            advancedPhase: false
+            initialPhase: false,
+            essentialPhase: false,
+            advancedPhase: false,
+            hasDocument: false
         };
 
-        const initialQuestions = questions.filter(q => q.phase === 'initial' && q.severity === 'mandatory');
-        const essentialQuestions = questions.filter(q => q.phase === 'essential');
-        const advancedQuestions = questions.filter(q => q.phase === 'advanced');
+        const hasAnswer = (qId) => {
+            const answered = (userAnswers[qId] && String(userAnswers[qId]).trim().length > 0) || completedQuestions.has(qId);
+            if (!answered && typeof qId === 'number') return completedQuestions.has(String(qId));
+            if (!answered && typeof qId === 'string') {
+                const numId = Number(qId);
+                if (!isNaN(numId)) return completedQuestions.has(numId);
+            }
+            return !!answered;
+        };
 
-        const completedInitial = initialQuestions.filter(q => completedQuestions.has(q._id));
-        const completedEssential = essentialQuestions.filter(q => completedQuestions.has(q._id));
-        const completedAdvanced = advancedQuestions.filter(q => completedQuestions.has(q._id));
+        const checkPhase = (phaseName) => {
+            const lowerPhase = phaseName.toLowerCase();
+            return questions.some(q => {
+                const qPhase = (q.phase || 'initial').toLowerCase();
+                return qPhase === lowerPhase && hasAnswer(q._id);
+            });
+        };
 
-        const isInitialComplete = initialQuestions.length > 0 && completedInitial.length === initialQuestions.length;
-        const isEssentialComplete = essentialQuestions.length > 0 && completedEssential.length === essentialQuestions.length;
-        const isAdvancedComplete = advancedQuestions.length > 0 && completedAdvanced.length === advancedQuestions.length;
-
-        const isGoodPhaseUnlocked = hasUploadedDocument || false;
+        const hasAnyInitial = checkPhase('initial');
+        const hasAnyEssential = checkPhase('essential');
+        const hasAnyGood = checkPhase('good');
+        const hasAnyAdvanced = checkPhase('advanced');
+        const hasDoc = !!hasUploadedDocument;
 
         return {
             brief: true,
-            analysis: isInitialComplete,
-            fullSwot: isEssentialComplete,
-            goodPhase: isGoodPhaseUnlocked,
-            advancedPhase: isAdvancedComplete
+            analysis: hasAnyInitial || hasAnyEssential || hasAnyAdvanced || hasDoc,
+            initialPhase: hasAnyInitial,
+            essentialPhase: hasAnyEssential,
+            advancedPhase: hasAnyAdvanced,
+            hasDocument: hasDoc
         };
     };
+
+
 
     const loadCompletedQuestionsFromAPI = (conversations) => {
         const completedSet = new Set();
@@ -325,9 +339,7 @@ const PhaseManager = ({
     };
 
     const canRegenerateAnalysis = () => {
-        const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
-        const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
-        return completedInitialQuestions.length === initialQuestions.length && initialQuestions.length > 0;
+        return Object.values(userAnswers).some(answer => answer && String(answer).trim().length > 0);
     };
 
     const canGenerateFullSwot = () => {

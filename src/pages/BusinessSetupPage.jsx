@@ -3,7 +3,7 @@ import axios from "axios";
 import { ArrowLeft, Loader, RefreshCw, ChevronDown, AlertTriangle, Menu, X } from "lucide-react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from "../hooks/useTranslation";
-import ChatComponent from "../components/ChatComponent";
+
 import MenuBar from "../components/MenuBar";
 import EditableBriefSection from "../components/EditableBriefSection";
 import StrategicAnalysis from "../components/StrategicAnalysis";
@@ -185,14 +185,17 @@ const BusinessSetupPage = () => {
   const canShowRegenerateButtons = canRegenerate && !isLaunchedStatus && !isArchived;
 
   // Set initial tab from navigation state (e.g. when clicking a business from the Dashboard)
+  // Since chat section is removed, always expand the analysis panel
   useEffect(() => {
     const initialTab = location.state?.initialTab;
     if (ENABLE_PMF && initialTab) {
       setActiveTab(initialTab);
-      // On desktop, expand the analysis panel so chat is hidden and tab fills the full screen
-      if (window.innerWidth > 768) {
-        setIsAnalysisExpanded(true);
-      }
+    } else if (ENABLE_PMF) {
+      setActiveTab("aha");
+    }
+    // Always expand the analysis panel (no chat section)
+    if (window.innerWidth > 768) {
+      setIsAnalysisExpanded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -241,6 +244,70 @@ const BusinessSetupPage = () => {
       });
     }
   }, [currentBusiness, setBusinessData]);
+
+  // Load questions directly (previously handled by ChatComponent)
+  useEffect(() => {
+    const loadQuestions = async () => {
+      if (!selectedBusinessId) return;
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) return;
+
+        const questionsResponse = await fetch(`${API_BASE_URL}/api/questions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!questionsResponse.ok) throw new Error('Failed to load questions');
+
+        const questionsData = await questionsResponse.json();
+        const availableQuestions = questionsData.questions || [];
+        setQuestions(availableQuestions);
+        setQuestionsLoaded(true);
+
+        // Also load conversation data for answers and document info
+        const conversationUrl = `${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`;
+        const conversationsResponse = await fetch(conversationUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (conversationsResponse.ok) {
+          const conversationsData = await conversationsResponse.json();
+          const documentExists = conversationsData.document_info?.has_document === true;
+          setHasUploadedDocument(documentExists);
+
+          // Extract answered questions from conversations
+          if (conversationsData.conversations?.length > 0) {
+            const answersMap = {};
+            const completedSet = new Set();
+            conversationsData.conversations.forEach(conv => {
+              if (conv.question_id && conv.answer) {
+                answersMap[conv.question_id] = conv.answer;
+                if (conv.is_complete) {
+                  completedSet.add(conv.question_id);
+                }
+              }
+            });
+            if (Object.keys(answersMap).length > 0) {
+              setUserAnswers(prev => ({ ...prev, ...answersMap }));
+              setCompletedQuestions(prev => new Set([...prev, ...completedSet]));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading questions:', error);
+        // Still set questionsLoaded so UI isn't blank
+        setQuestionsLoaded(true);
+      }
+    };
+
+    loadQuestions();
+  }, [selectedBusinessId, API_BASE_URL]);
 
   useEffect(() => {
     setHasUploadedDocument(!!uploadedFileForAnalysis);
@@ -332,13 +399,35 @@ const BusinessSetupPage = () => {
     setExpandedCapabilityData, setStrategicRadarData, setProductivityData,
     setMaturityData, setProfitabilityData, setGrowthTrackerData,
     setLiquidityEfficiencyData, setInvestmentPerformanceData, setLeverageRiskData,
-    setCompetitiveLandscapeData, setCoreAdjacencyData,
+    setCompetitiveLandscapeData, setCoreAdjacencyData, setStrategicData,
     uploadedFile: uploadedFileForAnalysis,
   };
 
-  const handleFileUploaded = (file, validationResult) => {
+  const handleFileUploaded = async (file, validationResult) => {
     setUploadedFileForAnalysis(file);
     setHasUploadedDocument(true);
+
+    try {
+      showToastMessage("Generating financial analyses from your document...", "info");
+
+      // Pass the new file directly in stateSetters to avoid stale state issues
+      const stateSettersWithFile = {
+        ...stateSetters,
+        uploadedFile: file
+      };
+
+      await apiService.handlePhaseCompletion(
+        'financial',
+        questions,
+        userAnswers,
+        selectedBusinessId,
+        stateSettersWithFile,
+        showToastMessage
+      );
+    } catch (error) {
+      console.error("Error generating financial analysis after upload:", error);
+      showToastMessage("Failed to generate financial analysis from the uploaded document.", "error");
+    }
   };
 
   const handleRedirectToBrief = (missingQuestionsData) => {
@@ -381,11 +470,11 @@ const BusinessSetupPage = () => {
     return 'initial';
   };
 
-  const handleRegeneratePhase = async (phaseOverride = null) => {
-    if (isRegeneratingRef.current) return;
+  const handleRegeneratePhase = async (phaseOverride = null, alsoRegenerateStrategic = false, ignoreGuard = false) => {
+    if (isRegeneratingRef.current && !alsoRegenerateStrategic && !ignoreGuard) return;
 
     try {
-      isRegeneratingRef.current = true;
+      if (!alsoRegenerateStrategic) isRegeneratingRef.current = true;
       setIsAnalysisRegenerating(true);
       const targetPhase = phaseOverride || getCurrentPhase();
 
@@ -397,11 +486,15 @@ const BusinessSetupPage = () => {
         stateSetters,
         showToastMessage
       );
+
+      if (alsoRegenerateStrategic) {
+        await handleStrategicAnalysisRegenerate(true);
+      }
     } catch (error) {
       console.error(`Error regenerating phase:`, error);
       showToastMessage(`Failed to regenerate phase.`, "error");
     } finally {
-      isRegeneratingRef.current = false;
+      if (!alsoRegenerateStrategic) isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
     }
   };
@@ -420,27 +513,20 @@ const BusinessSetupPage = () => {
           }
         });
 
-      const setterMap = {
-        'swot': setSwotAnalysisResult,
-        'strategic': setStrategicData,
-        'fullSwot': setFullSwotData,
-        'competitiveAdvantage': setCompetitiveAdvantageData,
-        'expandedCapability': setExpandedCapabilityData,
-        'strategicRadar': setStrategicRadarData,
-        'productivityMetrics': setProductivityData,
-        'maturityScore': setMaturityData,
-        'purchaseCriteria': setPurchaseCriteriaData,
-        'loyaltyNPS': setLoyaltyNPSData,
-        'porters': setPortersData,
-        'pestel': setPestelData,
-        'profitabilityAnalysis': setProfitabilityData,
-        'growthTracker': setGrowthTrackerData,
-        'liquidityEfficiency': setLiquidityEfficiencyData,
-        'investmentPerformance': setInvestmentPerformanceData,
-        'leverageRisk': setLeverageRiskData,
-        'competitiveLandscape': setCompetitiveLandscapeData,
-        'coreAdjacency': setCoreAdjacencyData,
-      };
+      const analysisTypes = [
+        'swot', 'strategic', 'fullSwot', 'competitiveAdvantage', 'expandedCapability',
+        'strategicRadar', 'productivityMetrics', 'maturityScore', 'purchaseCriteria',
+        'loyaltyNPS', 'porters', 'pestel', 'profitabilityAnalysis', 'growthTracker',
+        'liquidityEfficiency', 'investmentPerformance', 'leverageRisk',
+        'competitiveLandscape', 'coreAdjacency'
+      ];
+
+      const setterMap = analysisTypes.reduce((acc, type) => {
+        const stateKey = type === 'swot' ? 'SwotAnalysisResult' : type.charAt(0).toUpperCase() + type.slice(1) + 'Data';
+        const setter = stateSetters[`set${stateKey}`];
+        if (setter) acc[type] = setter;
+        return acc;
+      }, {});
 
       let hasAnyAnalysis = false;
       Object.values(latestAnalysisByType).forEach(analysis => {
@@ -478,11 +564,11 @@ const BusinessSetupPage = () => {
     API_BASE_URL, getAuthToken, apiService, stateSetters, showToastMessage
   });
 
-  const handleStrategicAnalysisRegenerate = async () => {
-    if (!phaseManager.canRegenerateAnalysis() || isRegeneratingRef.current) return;
+  const handleStrategicAnalysisRegenerate = async (bypassRef = false) => {
+    if (!phaseManager.canRegenerateAnalysis() || (isRegeneratingRef.current && !bypassRef)) return;
 
     try {
-      isRegeneratingRef.current = true;
+      if (!bypassRef) isRegeneratingRef.current = true;
       setIsStrategicRegenerating(true);
       showToastMessage("Regenerating Strategic Analysis...", "info");
 
@@ -506,8 +592,36 @@ const BusinessSetupPage = () => {
       console.error('Error regenerating Strategic Analysis:', error);
       showToastMessage("Failed to regenerate Strategic Analysis.", "error");
     } finally {
-      isRegeneratingRef.current = false;
+      if (!bypassRef) isRegeneratingRef.current = false;
       setIsStrategicRegenerating(false);
+    }
+  };
+
+  const handleRegenerateAllAnalysis = async (options = {}) => {
+    if (isRegeneratingRef.current) return;
+    isRegeneratingRef.current = true;
+    try {
+      if (options?.onlyFinancial) {
+        await handleRegeneratePhase('financial', false, true);
+        return;
+      }
+
+      const findHighestAnsweredPhase = () => {
+        const phases = ['advanced', 'essential', 'initial'];
+        return phases.find(phase =>
+          questions.some(q => q.phase === phase && userAnswers[q._id]?.trim())
+        ) || 'initial';
+      };
+
+      const targetPhase = findHighestAnsweredPhase();
+
+      if (options?.includeFinancial && targetPhase !== 'advanced') {
+        await handleRegeneratePhase('financial', false, true);
+      }
+
+      await handleRegeneratePhase(targetPhase, true, true);
+    } finally {
+      isRegeneratingRef.current = false;
     }
   };
 
@@ -556,8 +670,7 @@ const BusinessSetupPage = () => {
   };
 
   const handleAnalysisTabClick = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-    if (!unlockedFeatures.analysis) return;
+    // Removed unlockedFeatures.analysis check to make it always accessible
     if (isMobile) {
       setActiveTab("analysis");
     } else {
@@ -569,8 +682,7 @@ const BusinessSetupPage = () => {
   };
 
   const handleStrategicTabClick = () => {
-    const unlockedFeatures = phaseManager.getUnlockedFeatures();
-    if (!unlockedFeatures.analysis) return;
+    // Removed unlockedFeatures.analysis check to make it always accessible
     if (isMobile) {
       setActiveTab("strategic");
     } else {
@@ -666,23 +778,7 @@ const BusinessSetupPage = () => {
     );
   };
 
-  const handleRedirectToChat = (params = {}) => {
-    if (isMobile) {
-      setActiveTab("chat");
-    } else {
-      if (isAnalysisExpanded) {
-        setIsSliding(true);
-        setIsAnalysisExpanded(false);
-        setActiveTab("brief");
-        setTimeout(() => setIsSliding(false), 1000);
-      } else {
-        setActiveTab("brief");
-      }
-    }
-    if (params.scrollToUploadCard) {
-      setShouldScrollToUpload(true);
-    }
-  };
+
 
   const handleAhaTabClick = () => {
     const currentIdInStorage = sessionStorage.getItem('activeBusinessId');
@@ -854,7 +950,7 @@ const BusinessSetupPage = () => {
     investmentPerformanceRef, leverageRiskRef, competitiveLandscapeRef, coreAdjacencyRef,
     uploadedFileForAnalysis, handleRedirectToBrief, showToastMessage, apiService,
     createSimpleRegenerationHandler, highlightedCard, expandedCards, setExpandedCards,
-    onRedirectToChat: handleRedirectToChat, isMobile, setActiveTab,
+    isMobile, setActiveTab,
     hasUploadedDocument, documentInfo, collapsedCategories, setCollapsedCategories,
     readOnly: false, isCardExpanded: (cardId) => expandedCards.has(cardId),
   };
@@ -1009,22 +1105,18 @@ const BusinessSetupPage = () => {
                       {t("Questions and Answers")}
                     </button>
                   )}
-                  {unlockedFeatures.analysis && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "analysis" ? "active" : ""}`}
-                      onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                    </button>
-                  )}
-                  {unlockedFeatures.analysis && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
-                      onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                    </button>
-                  )}
+                  <button
+                    className={`mobile-menu-item ${activeTab === "analysis" ? "active" : ""}`}
+                    onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
+                  >
+                    {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                  </button>
+                  <button
+                    className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
+                    onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
+                  >
+                    {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1033,48 +1125,7 @@ const BusinessSetupPage = () => {
       )}
 
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
-        <div className={`chat-section ${isMobile && activeTab !== "chat" ? "hidden" : ""} ${isAnalysisExpanded && !isMobile ? "slide-out" : ""}`}>
-          <div className="welcome-area">
-            <div className="header-section">
-              <button className="back-button" onClick={handleBack} aria-label="Go Back">
-                <ArrowLeft size={18} />
-                {t("backToOverview")}
-              </button>
-              {selectedBusinessName && (
-                <strong className="d-block mt-1" style={{ fontSize: '0.95rem', color: '#1a1a2e' }}>{selectedBusinessName}</strong>
-              )}
-            </div>
-            <h2 className="welcome-heading">{selectedBusinessName || 'Business Analysis'}</h2>
-            <p className="welcome-text">{t("letsBegin")} {t("welcomeToTraxia")}</p>
-          </div>
 
-          <ChatComponent
-            selectedBusinessId={selectedBusinessId}
-            userAnswers={userAnswers}
-            onBusinessDataUpdate={handleBusinessDataUpdate}
-            onNewAnswer={handleNewAnswer}
-            isArchived={currentBusiness?.access_mode === 'archived' || currentBusiness?.access_mode === 'hidden'}
-            onQuestionsLoaded={(loadedQuestions) => {
-              setQuestions(loadedQuestions);
-              setQuestionsLoaded(true);
-            }}
-            onQuestionCompleted={handleQuestionCompleted}
-            onPhaseCompleted={async (phase) => {
-              if (phase === 'good') {
-                try {
-                  await apiService.handlePhaseCompletion('good', questions, userAnswers, selectedBusinessId, stateSetters, showToastMessage);
-                  showToastMessage('Good Phase completed! Next: Advanced Phase.', 'success');
-                } catch (error) {
-                  console.error('Error generating Good phase analysis:', error);
-                  showToastMessage('File uploaded but analysis generation failed', 'error');
-                }
-              }
-            }}
-            onFileUploaded={handleFileUploaded}
-            scrollToUploadCard={shouldScrollToUpload}
-            onScrollCompleted={() => setShouldScrollToUpload(false)}
-          />
-        </div>
 
         {questionsLoaded && (
           <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" || activeTab === "priorities" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
@@ -1130,16 +1181,12 @@ const BusinessSetupPage = () => {
                         </button>
                       )}
 
-                      {unlockedFeatures.analysis && (
-                        <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
-                          {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                        </button>
-                      )}
-                      {unlockedFeatures.analysis && (
-                        <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
-                          {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                        </button>
-                      )}
+                      <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
+                        {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                      </button>
+                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
+                        {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                      </button>
                     </div>
 
                     <div className="desktop-tabs-buttons">
@@ -1281,7 +1328,7 @@ const BusinessSetupPage = () => {
                                 })
                               );
                             }}
-                            onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
+                            onAnalysisRegenerate={handleRegenerateAllAnalysis}
                             isAnalysisRegenerating={isAnalysisRegenerating}
                             isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                             highlightedMissingQuestions={highlightedMissingQuestions}
@@ -1309,7 +1356,6 @@ const BusinessSetupPage = () => {
                             saveAnalysisToBackend={(data, type) => apiService.saveAnalysisToBackend(data, type, selectedBusinessId)}
                             hideDownload={false}
                             phaseAnalysisArray={phaseAnalysisArray}
-                            onRedirectToChat={handleRedirectToChat}
                             onRedirectToBrief={handleRedirectToBrief}
                             streamingManager={streamingManager}  // ADD THIS LINE
                             isExpanded={true}
@@ -1378,16 +1424,12 @@ const BusinessSetupPage = () => {
                         {t("Questions and Answers")}
                       </button>
                     )}
-                    {unlockedFeatures.analysis && (
-                      <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                        {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                      </button>
-                    )}
-                    {unlockedFeatures.analysis && (
-                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                        {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                      </button>
-                    )}
+                    <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                      {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                    </button>
+                    <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+                      {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                    </button>
                   </div>
 
                   {activeTab === "analysis" && unlockedFeatures.analysis && (
@@ -1441,8 +1483,9 @@ const BusinessSetupPage = () => {
 
 
 
-                        onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
+                        onAnalysisRegenerate={handleRegenerateAllAnalysis}
                         isAnalysisRegenerating={isAnalysisRegenerating}
+                        isStrategicRegenerating={isStrategicRegenerating}
                         isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                         highlightedMissingQuestions={highlightedMissingQuestions}
                         onClearHighlight={() => setHighlightedMissingQuestions(null)}
@@ -1544,8 +1587,9 @@ const BusinessSetupPage = () => {
                         );
                       }}
 
-                      onAnalysisRegenerate={() => handleRegeneratePhase(currentPhase)}
+                      onAnalysisRegenerate={handleRegenerateAllAnalysis}
                       isAnalysisRegenerating={isAnalysisRegenerating}
+                      isStrategicRegenerating={isStrategicRegenerating}
                       isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                       highlightedMissingQuestions={highlightedMissingQuestions}
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}

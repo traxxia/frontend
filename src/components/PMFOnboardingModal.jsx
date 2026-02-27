@@ -375,6 +375,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
 
   const handleClose = () => {
+    if (isSubmitting) return;
+
     setCurrentStep(1);
     setFormData({
       companyName: '',
@@ -1114,6 +1116,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
           className="pmf-close-button"
           onClick={handleClose}
           aria-label="Close"
+          disabled={isSubmitting}
         >
           <X size={20} />
         </button>
@@ -1143,7 +1146,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         <Button
           variant="outline-secondary"
           onClick={handleBack}
-          disabled={currentStep === 1}
+          disabled={currentStep === 1 || isSubmitting}
           className="pmf-back-button"
         >
           <ChevronLeft size={18} className="me-1" />

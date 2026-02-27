@@ -124,7 +124,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                 <div className="nav-footer-links">
                     <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link" style={{ marginBottom: '8px' }}>
                         <LucideIcons.LayoutDashboard size={16} />
-                        <span>Back to Dashboard</span>
+                        <span>Back to Main</span>
                     </Link>
                     <Link to="/academy" className="footer-link">
                         <LucideIcons.Home size={16} />

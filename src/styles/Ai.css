@@ -103,6 +103,25 @@
   line-height: 1.2;
 }
 
+.ai-header__usage {
+  font-size: 10px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  width: fit-content;
+  backdrop-filter: blur(4px);
+}
+
+.ai-header__usage span {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
 .ai-header__subtitle {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.75);
@@ -370,6 +389,7 @@
 [data-theme="dark"] .ai-backdrop {
   background: rgba(0, 0, 0, 0.35);
 }
+
 /* Limit reached message */
 .ai-limit-reached {
   flex: 1;
@@ -402,8 +422,21 @@
 }
 
 @keyframes ai-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  50% {
+    transform: translateX(4px);
+  }
+
+  75% {
+    transform: translateX(-4px);
+  }
 }
