@@ -2,9 +2,17 @@ import { useState, useRef } from 'react';
 
 export const useBusinessSetup = (business, selectedBusinessId) => {
   // UI State
+  // Initialize activeTab from URL (?tab=) or navigation state so guards work on first render
   const [activeTab, setActiveTab] = useState(() => {
-    const isMobileView = window.innerWidth <= 768;
-    return isMobileView ? "aha" : "brief";
+    // Read URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTab = urlParams.get('tab');
+    if (urlTab) return urlTab;
+    // Read react-router navigation state stored temporarily
+    const navState = window.__businessPageNavState;
+    if (navState?.initialTab) return navState.initialTab;
+    // Default: aha on all screens (AHA is the landing tab from Dashboard)
+    return 'aha';
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);

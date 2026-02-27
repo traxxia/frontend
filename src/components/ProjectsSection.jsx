@@ -88,10 +88,10 @@ const ProjectsSection = ({
   ];
 
   const onToggleTeamRankings = () => {
-    const newState = !showTeamRankings;
-    setShowTeamRankings(newState);
-    if (newState) setShowRankScreen(false);
-  };
+    
+  setShowTeamRankings(true);
+  setShowRankScreen(false);
+};
 
   // UPDATED: This should reflect if the CURRENT USER has locked their ranking
   const [rankingsLocked, setRankingsLocked] = useState(false);
@@ -132,6 +132,7 @@ const ProjectsSection = ({
     userHasRerankAccess,
     checkBusinessAccess,
     checkProjectsAccess,
+    checkAllAccess,
     canEditProject
   } = useAccessControl(selectedBusinessId);
   const {
@@ -180,8 +181,8 @@ const ProjectsSection = ({
   };
 
   const normalizeId = (id) => String(id);
-  const rankMap = (teamRankings || []).reduce((acc, r) => {
-    acc[normalizeId(r.project_id)] = r.rank;
+  const rankMap = (projects || []).reduce((acc, p) => {
+    acc[normalizeId(p._id)] = p.rank;
     return acc;
   }, {});
 
@@ -248,8 +249,8 @@ const ProjectsSection = ({
     return counts;
   }, [projects]);
 
-  const aiRankMap = (teamRankings || []).reduce((acc, r) => {
-    acc[normalizeId(r.project_id)] = r.ai_rank;
+  const aiRankMap = (projects || []).reduce((acc, p) => {
+    acc[normalizeId(p._id)] = p.ai_rank;
     return acc;
   }, {});
 
@@ -353,23 +354,34 @@ const ProjectsSection = ({
     );
   };
 
+  const loadAdminRankings = useCallback(async () => {
+    const rankings = await fetchAdminRankings();
+    setAdminRanks(rankings);
+  }, [fetchAdminRankings]);
+
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
-    const result = await fetchProjects();
+    
+    // Call new consolidated access check API
+    const accessData = await checkAllAccess();
+    
+    // Fetch rankings (this also returns projects list, business status, etc.)
+    const result = await fetchTeamRankings();
+    
     if (!result) {
       setIsLoading(false);
       return;
     }
 
-    const fetched = result.projects;
+    const fetched = result.rankings; // In getRankings, this is the projects array
     setProjects(fetched);
 
-    // UPDATED: Set business status from API response
+    // Set business status from API response
     if (result.businessStatus) {
       setBusinessStatus(result.businessStatus);
     }
 
-    // UPDATED: Set lock summary with locked_users array
+    // Set lock summary with locked_users array
     const lockSummaryData = {
       locked_users_count: result.lockSummary?.locked_users_count ?? 0,
       total_users: result.lockSummary?.total_users ?? 0,
@@ -377,17 +389,17 @@ const ProjectsSection = ({
     };
     setLockSummary(lockSummaryData);
 
-    // UPDATED: Check if current user has locked their ranking
+    // Check if current user has locked their ranking
     const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
     setRankingsLocked(isCurrentUserLocked);
 
-    // UPDATED: Set archival status from API response
+    // Set archival status from API response
     if (result.businessAccessMode) {
       const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
       setApiIsArchived(apiArchived);
     }
 
-    // UPDATED: Use business status from API instead of deriving from projects
+    // Use business status from API to set internal lock states
     const backendStatus = result.businessStatus || "draft";
 
     if (backendStatus === "draft") {
@@ -412,62 +424,12 @@ const ProjectsSection = ({
       setLaunched(true);
     }
 
-    await checkBusinessAccess();
-
-    if (backendStatus === "launched") {
-      const launchedProjectIds = fetched.map((p) => p._id);
-
-      if (launchedProjectIds.length > 0) {
-        await checkProjectsAccess(launchedProjectIds);
-      }
-    }
     setIsLoading(false);
-  }, [fetchProjects, checkBusinessAccess, checkProjectsAccess, myUserId]);
-
-  const loadTeamRankings = useCallback(async () => {
-    setIsRankingsLoading(true);
-    const result = await fetchTeamRankings();
-    if (!result) {
-      setIsRankingsLoading(false);
-      return;
-    }
-
-    setTeamRankings(result.rankings);
-
-    // UPDATED: Set business status from ranking response
-    if (result.businessStatus) {
-      setBusinessStatus(result.businessStatus);
-    }
-    if (result.businessAccessMode) {
-      const apiArchived = result.businessAccessMode === 'archived' || result.businessAccessMode === 'hidden';
-      setApiIsArchived(apiArchived);
-    }
-
-    // UPDATED: Set lock summary with locked_users array
-    const lockSummaryData = {
-      locked_users_count: result.lockSummary?.locked_users_count ?? 0,
-      total_users: result.lockSummary?.total_users ?? 0,
-      locked_users: result.lockSummary?.locked_users ?? [],
-      pending_users: result.lockSummary?.pending_users ?? [],
-    };
-    setLockSummary(lockSummaryData);
-
-    // UPDATED: Check if current user has locked their ranking
-    const isCurrentUserLocked = checkIfCurrentUserLocked(lockSummaryData.locked_users);
-    setRankingsLocked(isCurrentUserLocked);
-    setIsRankingsLoading(false);
-  }, [fetchTeamRankings, myUserId]);
-
-  const loadAdminRankings = useCallback(async () => {
-    const rankings = await fetchAdminRankings();
-    setAdminRanks(rankings);
-  }, [fetchAdminRankings]);
+  }, [checkAllAccess, fetchTeamRankings, myUserId]);
 
   const refreshTeamRankings = useCallback(async () => {
-    await loadTeamRankings();
-    await loadAdminRankings();
-    await loadProjects(); // Ensure project data (AI ranks, etc.) is also refreshed
-  }, [loadTeamRankings, loadAdminRankings, loadProjects]);
+    await loadProjects(); // Use the consolidated loader
+  }, [loadProjects]);
 
   const handleLockProjectCreation = async () => {
     try {
@@ -712,11 +674,7 @@ const ProjectsSection = ({
     loadProjects();
   }, [selectedBusinessId, loadProjects]);
 
-  useEffect(() => {
-    if (!selectedBusinessId) return;
-    loadTeamRankings();
-    loadAdminRankings();
-  }, [selectedBusinessId, isPrioritizing, isPrioritized, loadTeamRankings, loadAdminRankings]);
+  // Removed redundant loadTeamRankings and loadAdminRankings effects as they are now in loadProjects
 
   const renderProjectForm = () => {
     // Use ProjectDetails component for view mode
@@ -828,10 +786,10 @@ const ProjectsSection = ({
                 {!isViewer && !isArchived && (
                   <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
                     <button
-                      onClick={() => {
-                        setShowRankScreen(!showRankScreen);
-                        if (!showRankScreen) setShowTeamRankings(false);
-                      }}
+                     onClick={() => {
+  setShowRankScreen(true);
+  setShowTeamRankings(false);
+}}
                       className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
                     >
                       <ListOrdered size={16} />

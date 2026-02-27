@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import Select from "react-select";
@@ -21,6 +21,8 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  const modalBodyRef = useRef(null);
+
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -29,6 +31,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const [currentStep, setCurrentStep] = useState(1);
   const [submissionStep, setSubmissionStep] = useState(0); // 0: initial, 1: saving, 2: generating, 3: finalizing
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
@@ -56,12 +59,46 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     usageContext: ''
   });
   const [errors, setErrors] = useState({});
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  const loadingMessages = [
+    t("Analyzing market conditions...") || "Analyzing market conditions...",
+    t("Getting business information...") || "Getting business information...",
+    t("Checking industry trends...") || "Checking industry trends...",
+    t("Identifying growth opportunities...") || "Identifying growth opportunities...",
+    t("Structuring your strategy...") || "Structuring your strategy...",
+    t("Finalizing your customized insights...") || "Finalizing your customized insights..."
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (isSubmitting && submissionStep === 2) {
+      interval = setInterval(() => {
+        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 6000);
+    } else {
+      setLoadingMessageIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isSubmitting, submissionStep, loadingMessages.length]);
 
   // Calculate progress based on 9 steps (dots)
   // Step 1 = 0% progress, 100% to complete
   // Step 9 = 100% progress, 0% to complete (or close to it)
   // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
-  const progressPercentage = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+  let completedSteps = currentStep - 1;
+
+// If we are on last step AND it is completed, count it
+if (
+  currentStep === TOTAL_STEPS &&
+  formData.usageContext
+) {
+  completedSteps = TOTAL_STEPS;
+}
+
+const progressPercentage =
+  (completedSteps / TOTAL_STEPS) * 100;
+  
   const percentToComplete = 100 - Math.round(progressPercentage);
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
@@ -279,7 +316,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     }
   };
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const handleSubmit = async () => {
     try {
@@ -1063,8 +1100,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                 key={option}
                 className={`pmf-radio-card ${formData.usageContext === option ? 'selected' : ''
                   }`}
+                style={{
+                  pointerEvents: isSubmitting ? 'none' : 'auto',
+                  opacity: isSubmitting ? 0.7 : 1
+                }}
                 onClick={() =>
-                  setFormData(prev => ({
+                  !isSubmitting && setFormData(prev => ({
                     ...prev,
                     usageContext: option
                   }))
@@ -1075,8 +1116,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                   name="usageContext"
                   label={t(option)}
                   checked={formData.usageContext === option}
+                  disabled={isSubmitting}
                   onChange={() =>
-                    setFormData(prev => ({
+                    !isSubmitting && setFormData(prev => ({
                       ...prev,
                       usageContext: option
                     }))
@@ -1095,6 +1137,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         );
     }
   };
+
+  useEffect(() => {
+  if (modalBodyRef.current) {
+    modalBodyRef.current.scrollTop = 0;
+  }
+}, [currentStep]);
 
   return (
     <Modal
@@ -1122,7 +1170,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         </button>
       </Modal.Header>
 
-      <Modal.Body className="pmf-modal-body">
+      <Modal.Body className="pmf-modal-body" ref={modalBodyRef}>
         <div className="pmf-progress-wrapper">
           <div className="pmf-progress-header-simple">
             <span className="pmf-progress-title-simple">{t('Pmf Onboarding') || 'PMF Onboarding'}</span>
@@ -1137,6 +1185,21 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         </div>
 
         {renderStepContent()}
+        {isSubmitting && (
+  <div className="pmf-modal-overlay-minimal">
+    <div className="pmf-loader-minimal">
+      <div className="spinner-border text-primary mb-3" role="status" />
+      <div className="pmf-loader-text">
+        {submissionStep === 1 && "Saving your data..."}
+        {submissionStep === 2 && "Analyzing market (60–90s)..."}
+        {submissionStep === 3 && "Finalizing insights..."}
+      </div>
+      <small className="text-muted">
+        Please wait while we generate insights
+      </small>
+    </div>
+  </div>
+)}
       </Modal.Body>
 
 
@@ -1161,12 +1224,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         >
           {isSubmitting ? (
             <div className="d-flex flex-column align-items-center" style={{ minWidth: "160px" }}>
-              <div className="d-flex align-items-center mb-1">
+              <div className="d-flex align-items-center mb-1 text-center">
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 <span style={{ fontSize: "14px" }}>
-                  {submissionStep === 1 && t("Saving data...")}
-                  {submissionStep === 2 && t("Analyzing market (60-90s)...")}
-                  {submissionStep === 3 && t("Finalizing...")}
+                  {submissionStep === 1 && (t("Saving data...") || "Saving data...")}
+                  {submissionStep === 2 && loadingMessages[loadingMessageIndex]}
+                  {submissionStep === 3 && (t("Finalizing...") || "Finalizing...")}
                 </span>
               </div>
             </div>
