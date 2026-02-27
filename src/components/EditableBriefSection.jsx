@@ -322,10 +322,7 @@ const FinancialUploadBlock = ({
       fontWeight: '600',
       fontSize: '13px',
       color: '#064e3b',
-      maxWidth: '150px',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap'
+      wordBreak: 'break-all'
     },
     fileMeta: {
       fontSize: '10px',

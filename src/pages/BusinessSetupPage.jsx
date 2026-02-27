@@ -1134,13 +1134,16 @@ const BusinessSetupPage = () => {
                 <div className="expanded-analysis-view">
                   <div className="desktop-tabs">
                     <div className="desktop-tabs-left">
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div className="business-header-container">
                         <button className="back-button" onClick={handleBackFromAnalysis} aria-label="Go Back">
                           <ArrowLeft size={18} />
                           {t("backToOverview")}
                         </button>
                         {selectedBusinessName && (
-                          <strong style={{ fontSize: '0.85rem', color: '#1a1a2e', marginTop: '2px', paddingLeft: '4px' }}>{selectedBusinessName}</strong>
+                          <div className="business-breadcrumb">
+                            <span className="breadcrumb-separator">/</span>
+                            <span className="business-header-name">{selectedBusinessName}</span>
+                          </div>
                         )}
                       </div>
                       {ENABLE_PMF && (
@@ -1221,42 +1224,39 @@ const BusinessSetupPage = () => {
                             })()}
                           </div>
 
-                          <PDFExportButton
-                            className="pdf-export-button"
-                            businessName={businessData.name}
-                            onToastMessage={showToastMessage}
-                            currentPhase={currentPhase}
-                            disabled={isAnalysisRegenerating}
-                            unlockedFeatures={unlockedFeatures}
-                            fullSwotData={fullSwotData}
-                            competitiveAdvantageData={competitiveAdvantageData}
-                            expandedCapabilityData={expandedCapabilityData}
-                            strategicRadarData={strategicRadarData}
-                            productivityData={productivityData}
-                            maturityData={maturityData}
-                            profitabilityData={profitabilityData}
-                            growthTrackerData={growthTrackerData}
-                            liquidityEfficiencyData={liquidityEfficiencyData}
-                            investmentPerformanceData={investmentPerformanceData}
-                            leverageRiskData={leverageRiskData}
-                          />
+                          {unlockedFeatures.analysis && (
+                            <PDFExportButton
+                              className="pdf-export-button"
+                              businessName={businessData.name}
+                              onToastMessage={showToastMessage}
+                              currentPhase={currentPhase}
+                              disabled={isAnalysisRegenerating}
+                              unlockedFeatures={unlockedFeatures}
+                              fullSwotData={fullSwotData}
+                              competitiveAdvantageData={competitiveAdvantageData}
+                              expandedCapabilityData={expandedCapabilityData}
+                              strategicRadarData={strategicRadarData}
+                              productivityData={productivityData}
+                              maturityData={maturityData}
+                              profitabilityData={profitabilityData}
+                              growthTrackerData={growthTrackerData}
+                              liquidityEfficiencyData={liquidityEfficiencyData}
+                              investmentPerformanceData={investmentPerformanceData}
+                              leverageRiskData={leverageRiskData}
+                            />
+                          )}
 
                           {canShowRegenerateButtons && (
                             <button
                               onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
                               disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
                               className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                              title={t('RegenerateAll') || 'Regenerate All'}
                             >
                               {isAnalysisRegenerating ? (
-                                <>
-                                  <Loader size={16} className="animate-spin" />
-                                  Regenerating...
-                                </>
+                                <Loader size={16} className="animate-spin" />
                               ) : (
-                                <>
-                                  <RefreshCw size={16} />
-                                  {t('RegenerateAll') || 'Regenerate All'}
-                                </>
+                                <RefreshCw size={16} />
                               )}
                             </button>
                           )}
@@ -1265,30 +1265,27 @@ const BusinessSetupPage = () => {
 
                       {activeTab === "strategic" && (
                         <>
-                          <PDFExportButton
-                            className="pdf-export-button"
-                            businessName={businessData.name}
-                            onToastMessage={showToastMessage}
-                            disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                            exportType="strategic"
-                            strategicData={strategicData}
-                          />
+                          {unlockedFeatures.analysis && (
+                            <PDFExportButton
+                              className="pdf-export-button"
+                              businessName={businessData.name}
+                              onToastMessage={showToastMessage}
+                              disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                              exportType="strategic"
+                              strategicData={strategicData}
+                            />
+                          )}
                           {canShowRegenerateButtons && (
                             <button
                               onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate}
-                              className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating ? 'disabled' : ''}`}
+                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                              className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                              title={t("regenerate") || "Regenerate Strategic Analysis"}
                             >
                               {isStrategicRegenerating ? (
-                                <>
-                                  <Loader size={16} className="animate-spin" />
-                                  Regenerating...
-                                </>
+                                <Loader size={16} className="animate-spin" />
                               ) : (
-                                <>
-                                  <RefreshCw size={16} />
-                                  {t("regenerate")}
-                                </>
+                                <RefreshCw size={16} />
                               )}
                             </button>
                           )}
@@ -1349,7 +1346,7 @@ const BusinessSetupPage = () => {
                             businessName={businessData.name}
                             onRegenerate={handleStrategicAnalysisRegenerate}
                             isRegenerating={isStrategicRegenerating}
-                            canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating}
+                            canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
                             strategicData={strategicData}
                             selectedBusinessId={selectedBusinessId}
                             phaseManager={phaseManager}
@@ -1439,17 +1436,12 @@ const BusinessSetupPage = () => {
                           onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
                           disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
                           className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                          title={t('RegenerateAll') || 'Regenerate All'}
                         >
                           {isAnalysisRegenerating ? (
-                            <>
-                              <Loader size={16} className="animate-spin" />
-                              Regenerating...
-                            </>
+                            <Loader size={16} className="animate-spin" />
                           ) : (
-                            <>
-                              <RefreshCw size={16} />
-                              {t('RegenerateAll') || 'Regenerate All'}
-                            </>
+                            <RefreshCw size={16} />
                           )}
                         </button>
                       )}
@@ -1523,7 +1515,7 @@ const BusinessSetupPage = () => {
                         businessName={businessData.name}
                         onRegenerate={handleStrategicAnalysisRegenerate}
                         isRegenerating={isStrategicRegenerating}
-                        canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating}
+                        canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
                         strategicData={strategicData}
                         selectedBusinessId={selectedBusinessId}
                         phaseManager={phaseManager}
@@ -1619,17 +1611,12 @@ const BusinessSetupPage = () => {
                             onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
                             disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
                             className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                            title={t('RegenerateAll') || 'Regenerate All'}
                           >
                             {isAnalysisRegenerating ? (
-                              <>
-                                <Loader size={16} className="animate-spin" />
-                                Regenerating...
-                              </>
+                              <Loader size={16} className="animate-spin" />
                             ) : (
-                              <>
-                                <RefreshCw size={16} />
-                                {t('RegenerateAll') || 'Regenerate All'}
-                              </>
+                              <RefreshCw size={16} />
                             )}
                           </button>
                         )}
@@ -1650,7 +1637,7 @@ const BusinessSetupPage = () => {
                       businessName={businessData.name}
                       onRegenerate={handleStrategicAnalysisRegenerate}
                       isRegenerating={isStrategicRegenerating}
-                      canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating}
+                      canRegenerate={canShowRegenerateButtons && !isAnalysisRegenerating && unlockedFeatures.analysis}
                       strategicData={strategicData}
                       selectedBusinessId={selectedBusinessId}
                       phaseManager={phaseManager}
