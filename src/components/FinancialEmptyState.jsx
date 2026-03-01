@@ -100,8 +100,8 @@ const FinancialEmptyState = ({
                     fontWeight: '500',
                     margin: '0 auto'
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#0284c7'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#0ea5e9'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0ea5e9'}
                 >
                   <Edit size={16} />
                   Change Financial Document

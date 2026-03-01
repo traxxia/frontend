@@ -132,31 +132,32 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
   }, [projects, step, selectedDraftIds, isAdmin]);
 
   const activeProjects = useMemo(() => projects.filter(p =>
-    p.launch_status?.toLowerCase() === 'launched' ||
-    p.status?.toLowerCase() !== 'killed' && // Exclude killed projects
-    p.status?.toLowerCase() === 'active' // Only show Active status projects
+    (p.launch_status?.toLowerCase() === 'launched' ||
+    p.launch_status?.toLowerCase() === 'pending_launch') &&
+    p.status?.toLowerCase() !== 'killed'
   ), [projects]);
+
   const draftProjects = useMemo(() => projects.filter(p =>
-    (!p.launch_status ||
-      (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') ||
-      p.status?.toLowerCase() === 'draft') &&
-    p.status?.toLowerCase() !== 'killed' // Exclude killed projects
+    (p.launch_status?.toLowerCase() !== 'launched' && 
+     p.launch_status?.toLowerCase() !== 'pending_launch') &&
+    p.status?.toLowerCase() !== 'killed'
   ), [projects]);
 
   useEffect(() => {
     if (projects && projects.length > 0 && step === 1) {
       const rankedDraftIds = projects
-        .filter(p => (p.launch_status?.toLowerCase() !== 'launched' || p.status?.toLowerCase() === 'draft') && p.rank !== null && p.rank !== undefined)
+        .filter(p => (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') && p.rank !== null && p.rank !== undefined)
         .map(p => p._id);
 
-      const unrankedDrafts = projects.filter(p =>
-        (!p.launch_status || (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') || p.status?.toLowerCase() === 'draft') &&
-        p.status?.toLowerCase() !== 'killed' &&
-        (p.rank === null || p.rank === undefined)
+      // Check if ALL non-killed projects are ranked
+      const allEligibleProjects = projects.filter(p => p.status?.toLowerCase() !== 'killed');
+      
+      const unrankedProjects = allEligibleProjects.filter(p => 
+        p.rank === null || p.rank === undefined
       );
 
-      // Check if ALL potential projects are ranked
-      const allRanked = unrankedDrafts.length === 0;
+      // Check if ALL eligible projects are ranked
+      const allRanked = unrankedProjects.length === 0;
       setInitialAllRanked(allRanked);
 
       // Initialize selectedDraftIds if not already set
@@ -164,11 +165,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
         setSelectedDraftIds(rankedDraftIds);
       }
 
-      // Jump to Step 2 for Admin ONLY if all projects are already ranked
+      // Jump to Step 2 for Admin ONLY if all projects are ranked
       if (isAdmin && allRanked) {
-        if (selectedDraftIds.length === 0 && rankedDraftIds.length > 0) {
-          setSelectedDraftIds(rankedDraftIds);
-        }
         setStep(2);
       }
     }
@@ -278,8 +276,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const isRestrictedState = businessStatus === "launched" || businessStatus === "reprioritizing";
-    if (!isAdmin && (isRankingLocked || (isRestrictedState && !userHasRerankAccess))) return;
+    if (!isAdmin && !userHasRerankAccess) return;
 
     const sourceIndex = result.source.index;
     const destIndex = result.destination.index;
@@ -545,16 +542,22 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       <h6 className="mb-3 text-secondary">{t("Unlaunched/Draft Projects (Optional)")}</h6>
       <div className="selection-list mb-4">
         {draftProjects.map(p => (
-          <div key={p._id} className="selection-item">
-            <Form.Check
-              type="checkbox"
-              id={`draft-${p._id}`}
-              checked={selectedDraftIds.includes(p._id)}
-              onChange={() => handleToggleDraft(p._id)}
-              label={p.project_name}
-              disabled={isArchived}
-            />
-          </div>
+          <div
+  key={p._id}
+  className="selection-item clickable-row"
+  onClick={() => !isArchived && handleToggleDraft(p._id)}
+  style={{ cursor: isArchived ? "not-allowed" : "pointer" }}
+>
+  <Form.Check
+    type="checkbox"
+    id={`draft-${p._id}`}
+    checked={selectedDraftIds.includes(p._id)}
+    onChange={() => handleToggleDraft(p._id)}
+    onClick={(e) => e.stopPropagation()}   
+    label={p.project_name}
+    disabled={isArchived}
+  />
+</div>
         ))}
         {draftProjects.length === 0 && <p className="text-muted small">{t("No draft projects found.")}</p>}
       </div>
@@ -610,7 +613,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
                       key={item._id}
                       draggableId={item._id}
                       index={index}
-                      isDragDisabled={(isRankingLocked && !isAdmin) || isArchived || (!isAdmin && (businessStatus === "launched" || businessStatus === "reprioritizing") && !userHasRerankAccess)}
+                      isDragDisabled={isArchived || (!isAdmin && !userHasRerankAccess)}
                     >
                       {(provided, snapshot) => (
                         <Card
@@ -641,7 +644,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
                               <div
                                 className="rank-move-buttons responsive-move-buttons"
-                                style={{ cursor: isRankingLocked && !isAdmin ? "not-allowed" : "grab" }}
+                                style={{ cursor: (!isAdmin && !userHasRerankAccess) ? "not-allowed" : "grab" }}
                               >
                                 <ChevronUp size={18} />
                                 <ChevronDown size={18} />
@@ -748,7 +751,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
             </Button>
           )}
-          {step === 2 && (isAdmin || (!isRankingLocked && (!(businessStatus === "launched" || businessStatus === "reprioritizing") || userHasRerankAccess))) && (
+          {step === 2 && (isAdmin || userHasRerankAccess) && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}

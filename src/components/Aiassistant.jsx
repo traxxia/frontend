@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, X, Bot, Zap } from "lucide-react";
+import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/Ai.css";
 
@@ -11,6 +11,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0 });
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const chatEndRef = useRef(null);
 
   const suggestedQuestions = [
@@ -30,36 +31,37 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     if (open) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open, isLoading]);
 
-  // Fetch unified history on mount.
-  // We use 'all' to get the continuous thread across the entire session.
-  useEffect(() => {
-    const fetchHistory = async () => {
-      const token = getToken();
-      if (!token) return;
+  const historyFetchedRef = useRef(false);
 
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/all`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (response.data.history && response.data.history.length > 0) {
-          setMessages(response.data.history.map((msg) => ({ role: msg.role, text: msg.text })));
-        } else {
+  // Check quota status and fetch history when panel is opened (lazy — not on mount)
+  useEffect(() => {
+    if (!open) return;
+
+    // Fetch history only on the first open
+    if (!historyFetchedRef.current) {
+      historyFetchedRef.current = true;
+      const fetchHistory = async () => {
+        const token = getToken();
+        if (!token) return;
+        try {
+          const response = await axios.get(
+            `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/all`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.data.history && response.data.history.length > 0) {
+            setMessages(response.data.history.map((msg) => ({ role: msg.role, text: msg.text })));
+          } else {
+            setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
+          }
+        } catch (error) {
+          console.error("Error fetching AI chat history:", error);
           setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
         }
-      } catch (error) {
-        console.error("Error fetching AI chat history:", error);
-        setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
-      }
-    };
-    fetchHistory();
-  }, []); // Only fetch on mount to retain history during navigation
-
-  // Check quota status when panel is opened
-  useEffect(() => {
-    if (open) {
-      checkQuota();
+      };
+      fetchHistory();
     }
+
+    checkQuota();
   }, [open]);
 
   const checkQuota = async () => {
@@ -99,6 +101,28 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
       );
     } catch (error) {
       console.error("Error saving AI chat message:", error);
+    }
+  };
+
+  const handleClearHistory = () => {
+    setShowClearConfirm(true);
+  };
+
+  const confirmClear = async () => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const resolvedProjectId = projectId || 'global';
+      await axios.delete(
+        `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessages([{ role: "assistant", text: "Hi! How can I help you today? 👋" }]);
+    } catch (error) {
+      console.error("Error clearing AI chat history:", error);
+    } finally {
+      setShowClearConfirm(false);
     }
   };
 
@@ -249,9 +273,18 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
               </div>
             </div>
           </div>
-          <button className="ai-header__close" onClick={() => setOpen(false)}>
-            <X size={18} />
-          </button>
+          <div className="ai-header__actions">
+            <button
+              className="ai-header__clear"
+              onClick={handleClearHistory}
+              title="Clear History"
+            >
+              <Trash2 size={16} />
+            </button>
+            <button className="ai-header__close" onClick={() => setOpen(false)}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages */}
@@ -323,6 +356,35 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
           )}
         </div>
       </div>
+
+      {/* Clear History Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="ai-modal-overlay">
+          <div className="ai-modal">
+            <div className="ai-modal__icon">
+              <AlertTriangle size={24} color="#ef4444" />
+            </div>
+            <h3 className="ai-modal__title">Clear History?</h3>
+            <p className="ai-modal__text">
+              This will permanently delete your chat conversation. This action cannot be undone.
+            </p>
+            <div className="ai-modal__actions">
+              <button
+                className="ai-modal__btn ai-modal__btn--cancel"
+                onClick={() => setShowClearConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="ai-modal__btn ai-modal__btn--delete"
+                onClick={confirmClear}
+              >
+                Clear History
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
