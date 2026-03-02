@@ -29,6 +29,9 @@
   background-color: #22c55e !important;
   border-color: #22c55e !important;
   white-space: nowrap;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 .kickstart-button:hover {

@@ -22,9 +22,12 @@
   border: none !important;
   padding: 10px 16px !important;
   border-radius: 8px !important;
-  color:#fff;
+  color: #fff;
   font-weight: 700;
   font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 /* ----------------------------- */
@@ -32,23 +35,23 @@
 /* ----------------------------- */
 
 [data-theme="dark"] .kickstart-wrapper {
-  background-color: #1f2430 !important;   
-  border-color: #9671c0 !important;       
+  background-color: #1f2430 !important;
+  border-color: #9671c0 !important;
 }
 
 [data-theme="dark"] .kickstart-title {
-  color: #e5e7eb !important;              
+  color: #e5e7eb !important;
 }
 
 [data-theme="dark"] .kickstart-description {
-  color: #cbd5e1 !important;              
+  color: #cbd5e1 !important;
 }
 
 [data-theme="dark"] .kickstart-button {
-  background-color: #5b21b6 !important;   
+  background-color: #5b21b6 !important;
   color: #fff !important;
 }
 
 [data-theme="dark"] .kickstart-button:hover {
-  background-color: #6d28d9 !important;   
+  background-color: #6d28d9 !important;
 }
