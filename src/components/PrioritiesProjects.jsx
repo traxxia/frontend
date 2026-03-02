@@ -181,52 +181,67 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         return (
           <Card key={idx} className={`priority-card mb-3 ${isAlreadyKickstarted ? 'kickstarted' : ''}`}>
             <Card.Body>
-              <Row className="align-items-center">
-                {isAdmin && (
-                  <Col xs="auto">
-                    <Form.Check
-                      type="checkbox"
-                      disabled={isAlreadyKickstarted}
-                      checked={selected.includes(idx)}
-                      onChange={() => toggleSelection(idx)}
-                    />
-                  </Col>
-                )}
+              <div className="priority-card-inner">
+  {/* TOP SECTION */}
+  <div className="priority-top">
 
-                <Col className="expand-trigger" onClick={() => toggleExpand(idx)}>
-                  <div className="d-flex align-items-center gap-2">
-                    <h6 className="priority-title mb-0">{item.title}</h6>
-                    {isAlreadyKickstarted && (
-                      <Badge bg="success" className="ms-2 kickstarted-badge">
-                        <CheckCircle size={12} className="me-1" />
-                        {t("Kickstarted")}
-                      </Badge>
-                    )}
-                  </div>
-                  <small className="priority-desc">
-                    {actions.length > 0
-                      ? (typeof actions[0].action === 'string' ? actions[0].action : (typeof actions[0] === 'string' ? actions[0] : t("View Projects")))
-                      : t("View Projects")}...
-                  </small>
-                </Col>
+    {isAdmin && (
+      <Form.Check
+        type="checkbox"
+        disabled={isAlreadyKickstarted}
+        checked={selected.includes(idx)}
+        onChange={() => toggleSelection(idx)}
+      />
+    )}
 
-                <Col
-                  xs="auto"
-                  className="d-flex align-items-center gap-2 expand-trigger"
-                  onClick={() => toggleExpand(idx)}
-                >
-                  <Badge bg="light" text="dark" className="priority-count">
-                    📄 {actions.length}
-                  </Badge>
-                  <ChevronRight className={isExpanded ? "rotate" : ""} />
-                </Col>
-              </Row>
+    <div
+      className="priority-title-area expand-trigger"
+      onClick={() => toggleExpand(idx)}
+    >
+      <h6 className="priority-title mb-0">{item.title}</h6>
+      {isAlreadyKickstarted && (
+        <span className="priority-status">
+          <CheckCircle size={14} />
+          {t("Kickstarted")}
+        </span>
+      )}
+    </div>
+  </div>
+
+  {/* DESCRIPTION */}
+  <div
+    className="priority-description expand-trigger"
+    onClick={() => toggleExpand(idx)}
+  >
+    {actions.length > 0
+      ? (typeof actions[0].action === 'string' ? actions[0].action :t("View Projects")):
+      t("View Projects")}
+  </div>
+
+  {/* BOTTOM SECTION */}
+  <div
+    className="priority-bottom expand-trigger"
+    onClick={() => toggleExpand(idx)}
+  >
+    <div className="priority-project-count">
+      <Folder size={14} />
+      <span>
+        {actions.length} {t("Projects")}
+      </span>
+    </div>
+
+    <ChevronRight
+      size={18}
+      className={`priority-chevron ${isExpanded ? "rotate" : ""}`}
+    />
+  </div>
+
+</div>
 
               {isExpanded && actions.length > 0 && (
                 <div className="projects-section mt-3">
                   <div className="projects-title mb-2 d-flex align-items-center gap-2">
-                    <Folder size={16} className="projects-icon" />
-                    <span>{t("Projects")}</span>
+
                   </div>
 
                   {actions.map((action, actionIdx) => {

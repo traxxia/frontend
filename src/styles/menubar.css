@@ -321,3 +321,12 @@
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
+
+/* DROPDOWN ALIGNMENT */
+.traxia-dropdown .dropdown-item-traxia {
+  display: flex !important;
+  align-items: center !important;
+  padding: 6px 18px !important;
+  gap: 1px !important;
+  width: 100%;
+}
