@@ -303,8 +303,8 @@ if (!businessName) {
   errors.business_name = t('business_name_cannot_be_empty');
 } else if (businessName.length > 20) {
   errors.business_name = t('business_name_max_length');
-} else if (!/^[A-Za-z]+$/.test(businessName)) {
-  errors.business_name = "Business name must contain only alphabetic characters (A–Z)";
+} else if (!/^[A-Za-z\s]+$/.test(businessName)) {
+  errors.business_name = "Business name must contain only letters and spaces";
 } else if (startsWithSymbolOrNumber(businessName)) {
   errors.business_name = t('business_name_invalid_start');
 }

@@ -57,7 +57,7 @@ const KickstartProjectsCard = ({ onKickstart, isLocked = false }) => {
               ) : (
                 <>
                   <Rocket size={18} />
-                  {isLocked ? "Upgrade to Execute" : t("Kickstart_Projects")}
+                  <span>{isLocked ? "Upgrade to Execute" : t("Kickstart_Projects")}</span>
                 </>
               )}
             </Button>

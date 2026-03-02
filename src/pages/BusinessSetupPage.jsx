@@ -1214,8 +1214,7 @@ const BusinessSetupPage = () => {
                           {t("backToOverview")}
                         </button>
                         {selectedBusinessName && (
-                          <div className="business-breadcrumb">
-                            <span className="breadcrumb-separator">/</span>
+                          <div className="business-breadcrumb"> 
                             <span className="business-header-name">{selectedBusinessName}</span>
                           </div>
                         )}
