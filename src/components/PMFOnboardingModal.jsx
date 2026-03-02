@@ -239,53 +239,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   };
 
   const validateStep5 = () => {
-    const newErrors = {};
-    const nameRegex = /^[a-zA-Z\s]+$/;
-
-    if (!formData.customerSegment1.trim()) {
-      newErrors.customerSegment1 = t('segment_required') || 'At least one customer segment is required';
-    } else if (!nameRegex.test(formData.customerSegment1.trim())) {
-      newErrors.customerSegment1 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.customerSegment2.trim() && !nameRegex.test(formData.customerSegment2.trim())) {
-      newErrors.customerSegment2 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.customerSegment3.trim() && !nameRegex.test(formData.customerSegment3.trim())) {
-      newErrors.customerSegment3 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (!formData.productService1.trim()) {
-      newErrors.productService1 = t('product_required') || 'At least one product/service is required';
-    } else if (!nameRegex.test(formData.productService1.trim())) {
-      newErrors.productService1 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.productService2.trim() && !nameRegex.test(formData.productService2.trim())) {
-      newErrors.productService2 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.productService3.trim() && !nameRegex.test(formData.productService3.trim())) {
-      newErrors.productService3 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (!formData.channel1.trim()) {
-      newErrors.channel1 = t('channel_required') || 'At least one channel is required';
-    } else if (!nameRegex.test(formData.channel1.trim())) {
-      newErrors.channel1 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.channel2.trim() && !nameRegex.test(formData.channel2.trim())) {
-      newErrors.channel2 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.channel3.trim() && !nameRegex.test(formData.channel3.trim())) {
-      newErrors.channel3 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Step 5 is now optional and allows alphabets, numbers, and symbols.
+    // No specific validation required for these fields.
+    setErrors({});
+    return true;
   };
 
   const validateStep6 = () => {
@@ -828,7 +785,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('customer segments max 3') || 'Customer segments (max 3)'}<span className="text-danger">*</span>
+                {t('customer segments max 3') || 'Customer segments (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
@@ -888,7 +845,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('products services max 3') || 'Products / services (max 3)'}<span className="text-danger">*</span>
+                {t('products services max 3') || 'Products / services (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('products services example') || 'e.g., ice cream, M&A advisory'}
@@ -948,7 +905,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('channels max 3') || 'Channels (max 3)'}<span className="text-danger">*</span>
+                {t('channels max 3') || 'Channels (max 3)'}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('channels example') || 'e.g., convenience stores, direct sales'}
