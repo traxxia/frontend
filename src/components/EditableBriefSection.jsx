@@ -268,6 +268,7 @@ const FinancialUploadBlock = ({
   isAnalysisRegenerating,
   isStrategicRegenerating
 }) => {
+  const { t } = useTranslation();
   const styles = {
     container: {
       flex: 1,
@@ -322,10 +323,7 @@ const FinancialUploadBlock = ({
       fontWeight: '600',
       fontSize: '13px',
       color: '#064e3b',
-      maxWidth: '150px',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap'
+      wordBreak: 'break-all'
     },
     fileMeta: {
       fontSize: '10px',
@@ -397,7 +395,7 @@ const FinancialUploadBlock = ({
               disabled={isAnalysisRegenerating || isStrategicRegenerating}
             >
               <RefreshCw size={12} className={isAnalysisRegenerating || isStrategicRegenerating ? "animate-spin" : ""} />
-              Manage
+              {t("Replace") || "Replace"}
             </button>
           )}
         </div>
@@ -549,7 +547,8 @@ const EditableBriefSection = ({
   selectedBusinessId,
   highlightedMissingQuestions,
   onClearHighlight,
-  isLaunchedStatus = false
+  isLaunchedStatus = false,
+  documentInfo = null
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
@@ -593,10 +592,32 @@ const EditableBriefSection = ({
   }, [questions, userAnswers]);
 
   useEffect(() => {
-    if (selectedBusinessId) {
+    if (selectedBusinessId && !documentInfo) {
       loadDocumentInfo();
     }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, documentInfo]);
+
+  useEffect(() => {
+    if (documentInfo) {
+      if (documentInfo.filename || documentInfo.id || documentInfo.has_document || documentInfo.file_size) {
+        setHasUploadedDocument(true);
+        setUploadedFileInfo({
+          name: documentInfo.filename || 'Financial Document',
+          size: documentInfo.file_size || documentInfo.size || 0,
+          uploadDate: documentInfo.upload_date ?
+            new Date(documentInfo.upload_date).toLocaleDateString() :
+            'Previously uploaded'
+        });
+      } else {
+        setHasUploadedDocument(false);
+        setUploadedFileInfo(null);
+      }
+    } else if (documentInfo === null && !selectedBusinessId) {
+      // Clear if both are null
+      setHasUploadedDocument(false);
+      setUploadedFileInfo(null);
+    }
+  }, [documentInfo, selectedBusinessId]);
 
   const loadDocumentInfo = async () => {
     try {
@@ -1135,7 +1156,7 @@ const EditableBriefSection = ({
             marginBottom: '16px'
           }}>
             <h5 style={{ margin: 0, color: '#0369a1', fontSize: '15px', fontWeight: '600' }}>
-              AI Enrichment Suggestions ({enrichedAnswers.length})
+              AI Enrichment Suggestions 
             </h5>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button

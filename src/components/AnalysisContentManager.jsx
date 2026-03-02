@@ -508,7 +508,7 @@ const AnalysisContentManager = (props) => {
         onToggleCard={toggleCard}
         streamingManager={streamingManager}
         hideRegenerateButtons={hideRegenerateButtons}
-        canRegenerate={props.canRegenerate}
+        canRegenerate={props.canRegenerate && !!data}
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component
@@ -517,7 +517,7 @@ const AnalysisContentManager = (props) => {
             businessName={props.businessData.name}
             onRegenerate={createSimpleRegenerationHandler(analysisKey)}
             isRegenerating={isRegenerating || isAnalysisLoading(analysisKey)}
-            canRegenerate={props.canRegenerate}
+            canRegenerate={props.canRegenerate && !!data}
             {...{ [dataKey]: data }}
             selectedBusinessId={props.selectedBusinessId}
             onRedirectToBrief={props.handleRedirectToBrief}

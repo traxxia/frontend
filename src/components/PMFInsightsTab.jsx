@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
-import { useCallback } from "react";
+
 
 const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
@@ -22,32 +22,36 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
   const getAuthToken = () => sessionStorage.getItem("token");
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
-  const fetchInsights = useCallback(async () => {
-    let businessId = selectedBusinessId;
-    if (!businessId) {
-      businessId = sessionStorage.getItem('activeBusinessId');
-    }
-
-    if (!businessId) {
-      console.warn("PMFInsightsTab: No business ID found, skipping fetch.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const result = await analysisService.getPMFAnalysis(businessId);
-      setData(result);
-    } catch (error) {
-      console.error("PMFInsightsTab: Error fetching insights:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedBusinessId]);
-
   useEffect(() => {
+    let cancelled = false;
+
+    const fetchInsights = async () => {
+      let businessId = selectedBusinessId;
+      if (!businessId) {
+        businessId = sessionStorage.getItem('activeBusinessId');
+      }
+
+      if (!businessId) {
+        console.warn("PMFInsightsTab: No business ID found, skipping fetch.");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const result = await analysisService.getPMFAnalysis(businessId);
+        if (!cancelled) setData(result);
+      } catch (error) {
+        console.error("PMFInsightsTab: Error fetching insights:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     fetchInsights();
-  }, [fetchInsights, refreshTrigger]);
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBusinessId, refreshTrigger]);
 
   if (loading) {
     return (

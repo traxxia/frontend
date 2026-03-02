@@ -31,6 +31,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const [currentStep, setCurrentStep] = useState(1);
   const [submissionStep, setSubmissionStep] = useState(0); // 0: initial, 1: saving, 2: generating, 3: finalizing
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
@@ -58,6 +59,28 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     usageContext: ''
   });
   const [errors, setErrors] = useState({});
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  const loadingMessages = [
+    t("Analyzing market conditions...") || "Analyzing market conditions...",
+    t("Getting business information...") || "Getting business information...",
+    t("Checking industry trends...") || "Checking industry trends...",
+    t("Identifying growth opportunities...") || "Identifying growth opportunities...",
+    t("Structuring your strategy...") || "Structuring your strategy...",
+    t("Finalizing your customized insights...") || "Finalizing your customized insights..."
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (isSubmitting && submissionStep === 2) {
+      interval = setInterval(() => {
+        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 6000);
+    } else {
+      setLoadingMessageIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isSubmitting, submissionStep, loadingMessages.length]);
 
   // Calculate progress based on 9 steps (dots)
   // Step 1 = 0% progress, 100% to complete
@@ -293,7 +316,7 @@ const progressPercentage =
     }
   };
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const handleSubmit = async () => {
     try {
@@ -1077,8 +1100,12 @@ const progressPercentage =
                 key={option}
                 className={`pmf-radio-card ${formData.usageContext === option ? 'selected' : ''
                   }`}
+                style={{
+                  pointerEvents: isSubmitting ? 'none' : 'auto',
+                  opacity: isSubmitting ? 0.7 : 1
+                }}
                 onClick={() =>
-                  setFormData(prev => ({
+                  !isSubmitting && setFormData(prev => ({
                     ...prev,
                     usageContext: option
                   }))
@@ -1089,8 +1116,9 @@ const progressPercentage =
                   name="usageContext"
                   label={t(option)}
                   checked={formData.usageContext === option}
+                  disabled={isSubmitting}
                   onChange={() =>
-                    setFormData(prev => ({
+                    !isSubmitting && setFormData(prev => ({
                       ...prev,
                       usageContext: option
                     }))
@@ -1196,12 +1224,12 @@ const progressPercentage =
         >
           {isSubmitting ? (
             <div className="d-flex flex-column align-items-center" style={{ minWidth: "160px" }}>
-              <div className="d-flex align-items-center mb-1">
+              <div className="d-flex align-items-center mb-1 text-center">
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 <span style={{ fontSize: "14px" }}>
-                  {submissionStep === 1 && t("Saving data...")}
-                  {submissionStep === 2 && t("Analyzing market (60-90s)...")}
-                  {submissionStep === 3 && t("Finalizing...")}
+                  {submissionStep === 1 && (t("Saving data...") || "Saving data...")}
+                  {submissionStep === 2 && loadingMessages[loadingMessageIndex]}
+                  {submissionStep === 3 && (t("Finalizing...") || "Finalizing...")}
                 </span>
               </div>
             </div>

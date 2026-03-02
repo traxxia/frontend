@@ -279,6 +279,22 @@ export const academyStructure = {
                     tags: ["admin", "orgadmin", "monitoring"]
                 }
             ]
+        },
+        {
+            id: "pmf-flow",
+            title: "11. PMF Flow",
+            icon: "Zap",
+            description: "Master the core strategic value engine for clear priorities and execution.",
+            articles: [
+                {
+                    id: "pmf-flow-details",
+                    title: "PMF Flow",
+                    path: "16-pmf-flow/pmf-flow.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["pmf", "strategy", "execution", "onboarding"]
+                }
+            ]
         }
     ]
 };
