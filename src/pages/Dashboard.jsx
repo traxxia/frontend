@@ -542,7 +542,7 @@ if (!businessName) {
       >
         <div
           style={{ width: 60, height: 60, cursor: "pointer" }}
-          className="progress-circle me-3"
+          className="progress-circle me-3 progress-wrapper"
           onClick={() => handleBusinessClick(business)}
         >
           <CircularProgressbar
@@ -573,11 +573,15 @@ if (!businessName) {
             )}
           </small>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-2 gap-md-2">
           <span className={`status-badge ${statusInfo.className}`}>
             {statusInfo.label}
           </span>
-          {canDelete && <SimpleDeleteButton />}
+          {canDelete && (
+      <div className="delete-btn-wrapper">
+        <SimpleDeleteButton />
+      </div>
+    )}
         </div>
       </div>
     );

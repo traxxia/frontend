@@ -57,7 +57,7 @@ const EditableField = ({
       )}
 
       <div className="item-row">
-        <span className="item-label" style={{
+        <div className="item-label" style={{
           color: isHighlighted ? '#92400e' : 'inherit',
           fontWeight: isHighlighted ? '600' : '500',
           display: 'flex',
@@ -77,11 +77,10 @@ const EditableField = ({
           {field.label}
 
           {field.phase && (
-            <span style={{
+            <span className='edit-batch' style={{
               fontSize: '10px',
               fontWeight: '600',
               textTransform: 'uppercase',
-              padding: '2px 6px',
               borderRadius: '4px',
               backgroundColor:
                 field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
@@ -106,7 +105,7 @@ const EditableField = ({
               (Required for analysis)
             </span>
           )}
-        </span>
+        </div>
         {!isEditing && canEdit && (
           <button
             className="edit-button prominent"
@@ -115,6 +114,7 @@ const EditableField = ({
             disabled={isAnalysisRegenerating || isStrategicRegenerating || isSaving || isEssentialPhaseGenerating}
             title="Edit answer"
             style={{
+              marginTop: '0',
               background: '#f3f4f6',
               border: '1px solid #e5e7eb',
               borderRadius: '6px',
@@ -454,16 +454,20 @@ const AIAnswerSupportBlock = ({
     },
     header: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: '12px',
       marginBottom: '12px'
     },
     iconWrapper: {
-      backgroundColor: '#ede9fe',
-      padding: '10px',
-      borderRadius: '12px',
-      color: '#7c3aed'
-    },
+  backgroundColor: '#ede9fe',
+  padding: '10px',
+  borderRadius: '12px',
+  color: '#7c3aed',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0
+},
     title: {
       margin: 0,
       fontSize: '17px',
@@ -503,10 +507,12 @@ const AIAnswerSupportBlock = ({
           <Sparkles size={24} />
         </div>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <h3 style={styles.title}>AI Answer Support</h3>
-          </div>
-          <p style={styles.subtitle}>Professional answers based on your onboarding</p>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+  <h3 style={styles.title}>AI Answer Support</h3>
+  <p style={styles.subtitle}>
+    Professional answers based on your onboarding
+  </p>
+</div>
         </div>
       </div>
 

@@ -644,7 +644,7 @@ const ProjectForm = ({
     <>
       <fieldset disabled={isSubmitting || isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
         {/* Breadcrumb & Actions Header */}
-        <div className="projects-breadcrumb" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="projects-breadcrumb">
           <Breadcrumb style={{ margin: 0 }}>
             <Breadcrumb.Item onClick={onBack} style={{ cursor: "pointer" }}>
               {t("Projects")}
@@ -654,7 +654,7 @@ const ProjectForm = ({
 
           {/* Actions - Moved to Top */}
           {!isReadOnly && (
-            <div className="actions-row-top" style={{ display: "flex", gap: "12px" }}>
+            <div className="actions-row-top">
               <button type="button" className="btn-cancel" onClick={onBack} style={{ padding: "8px 16px" }}>
                 {t("cancel")}
               </button>

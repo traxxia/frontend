@@ -1130,3 +1130,88 @@ body.modal-open {
     flex-direction: column;
   }
 }
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.item-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.edit-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.edit-batch {
+  padding: 2px 6px;
+}
+
+
+@media (max-width: 768px) {
+
+  .item-row {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .item-label {
+    display: flex;
+    flex-wrap: wrap;
+    padding-right: 90px; 
+  }
+
+  .item-row .edit-button,
+  .item-label span[style*="text-transform"] {
+    position: absolute;
+    top: 0;
+  }
+
+  /* INITIAL badge */
+  .item-label span[style*="text-transform"] {
+    right: 70px;
+  }
+
+  /* Edit button */
+  .edit-button {
+    right: 0;
+  }
+
+  .edit-batch {
+    padding: 6px 6px !important;
+  }
+
+  .edit-button{
+    margin-bottom: 4px !important;
+  }
+
+   .item-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .edit-button {
+    align-self: flex-end;
+    margin-top: 6px;
+  }
+
+  .item-label span:first-child {
+    font-size: 12px !important;
+    padding: 2px 5px !important;
+  }
+
+  .brief-item {
+    padding: 12px !important;
+  }
+
+}
