@@ -88,17 +88,17 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
   let completedSteps = currentStep - 1;
 
-// If we are on last step AND it is completed, count it
-if (
-  currentStep === TOTAL_STEPS &&
-  formData.usageContext
-) {
-  completedSteps = TOTAL_STEPS;
-}
+  // If we are on last step AND it is completed, count it
+  if (
+    currentStep === TOTAL_STEPS &&
+    formData.usageContext
+  ) {
+    completedSteps = TOTAL_STEPS;
+  }
 
-const progressPercentage =
-  (completedSteps / TOTAL_STEPS) * 100;
-  
+  const progressPercentage =
+    (completedSteps / TOTAL_STEPS) * 100;
+
   const percentToComplete = 100 - Math.round(progressPercentage);
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
@@ -549,7 +549,7 @@ const progressPercentage =
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('Company client name') || 'Company / Client Name'} <span className="text-danger">*</span>
+                {t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="text"
@@ -598,7 +598,7 @@ const progressPercentage =
 
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('country') || 'Country'} <span className="text-danger">*</span>
+                {t('country') || 'Country'}<span className="text-danger">*</span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -687,7 +687,7 @@ const progressPercentage =
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('primary industry') || 'Primary Industry'} <span className="text-danger">*</span>
+                {t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -758,7 +758,7 @@ const progressPercentage =
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-3">
-              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'} <span className="text-danger">*</span>
+              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span>
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
@@ -828,7 +828,7 @@ const progressPercentage =
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('customer segments max 3') || 'Customer segments (max 3)'} <span className="text-danger">*</span>
+                {t('customer segments max 3') || 'Customer segments (max 3)'}<span className="text-danger">*</span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
@@ -888,7 +888,7 @@ const progressPercentage =
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('products services max 3') || 'Products / services (max 3)'} <span className="text-danger">*</span>
+                {t('products services max 3') || 'Products / services (max 3)'}<span className="text-danger">*</span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('products services example') || 'e.g., ice cream, M&A advisory'}
@@ -948,7 +948,7 @@ const progressPercentage =
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('channels max 3') || 'Channels (max 3)'} <span className="text-danger">*</span>
+                {t('channels max 3') || 'Channels (max 3)'}<span className="text-danger">*</span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('channels example') || 'e.g., convenience stores, direct sales'}
@@ -1226,10 +1226,10 @@ const progressPercentage =
   };
 
   useEffect(() => {
-  if (modalBodyRef.current) {
-    modalBodyRef.current.scrollTop = 0;
-  }
-}, [currentStep]);
+    if (modalBodyRef.current) {
+      modalBodyRef.current.scrollTop = 0;
+    }
+  }, [currentStep]);
 
   return (
     <Modal
@@ -1273,20 +1273,20 @@ const progressPercentage =
 
         {renderStepContent()}
         {isSubmitting && (
-  <div className="pmf-modal-overlay-minimal">
-    <div className="pmf-loader-minimal">
-      <div className="spinner-border text-primary mb-3" role="status" />
-      <div className="pmf-loader-text">
-        {submissionStep === 1 && "Saving your data..."}
-        {submissionStep === 2 && "Analyzing market (60–90s)..."}
-        {submissionStep === 3 && "Finalizing insights..."}
-      </div>
-      <small className="text-muted">
-        Please wait while we generate insights
-      </small>
-    </div>
-  </div>
-)}
+          <div className="pmf-modal-overlay-minimal">
+            <div className="pmf-loader-minimal">
+              <div className="spinner-border text-primary mb-3" role="status" />
+              <div className="pmf-loader-text">
+                {submissionStep === 1 && "Saving your data..."}
+                {submissionStep === 2 && "Analyzing market (60–90s)..."}
+                {submissionStep === 3 && "Finalizing insights..."}
+              </div>
+              <small className="text-muted">
+                Please wait while we generate insights
+              </small>
+            </div>
+          </div>
+        )}
       </Modal.Body>
 
 
