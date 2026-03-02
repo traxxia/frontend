@@ -298,23 +298,37 @@ const Dashboard = () => {
     const errors = {};
 
     // Business Name validation
-const businessName = businessFormData.business_name.trim();
-if (!businessName) {
-  errors.business_name = t('business_name_cannot_be_empty');
-} else if (businessName.length > 20) {
-  errors.business_name = t('business_name_max_length');
-} else if (!/^[A-Za-z\s]+$/.test(businessName)) {
-  errors.business_name = "Business name must contain only letters and spaces";
-} else if (startsWithSymbolOrNumber(businessName)) {
-  errors.business_name = t('business_name_invalid_start');
-}
+    const businessName = businessFormData.business_name.trim();
 
-    // Business Purpose validation
+    if (!businessName) {
+      errors.business_name = t('business_name_cannot_be_empty');
+    }
+    else if (businessName.length > 50) {
+      errors.business_name = t('business_name_max_length');
+    }
+    else if (!/^[A-Za-z0-9]/.test(businessName)) {
+      errors.business_name = t('business_name_invalid_start');
+    }
+    else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
+      errors.business_name = "Business name contains invalid characters";
+    }
+
+    // Business purpose validation
     const businessPurpose = businessFormData.business_purpose.trim();
+
     if (!businessPurpose) {
       errors.business_purpose = t('business_purpose_required');
-    } else if (!/[a-zA-Z]/.test(businessPurpose)) {
-      errors.business_purpose = t('business_purpose_must_contain_alphabetic_characters') || 'Business purpose must contain at least some alphabetic characters';
+    }
+    else if (businessPurpose.length < 10) {
+      errors.business_purpose = "Business purpose must be at least 10 characters long";
+    }
+    else if (!/[A-Za-z]/.test(businessPurpose)) {
+      errors.business_purpose =
+        t('business_purpose_must_contain_alphabetic_characters') ||
+        "Business purpose must contain alphabetic characters";
+    }
+    else if (!/^[A-Za-z0-9&.,()\- ]+$/.test(businessPurpose)) {
+      errors.business_purpose = "Business purpose contains invalid characters";
     }
 
     // City validation (optional but if provided, must be valid)
@@ -1314,16 +1328,16 @@ if (!businessName) {
             </Modal.Footer>
           </Modal>
 
-            <UpgradeModal
-              show={showUpgradeModal}
-              onHide={() => setShowUpgradeModal(false)}
+          <UpgradeModal
+            show={showUpgradeModal}
+            onHide={() => setShowUpgradeModal(false)}
             onUpgradeSuccess={(updatedSub) => {
               setShowUpgradeModal(false);
               setSuccessMessage(`Plan updated to ${updatedSub.plan} successfully!`);
-                setShowSuccessPopup(true);
+              setShowSuccessPopup(true);
               setTimeout(() => setShowSuccessPopup(false), 3000);
-              }}
-            />
+            }}
+          />
         </>
       )}
     </div>
