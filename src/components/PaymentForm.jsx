@@ -14,7 +14,8 @@ const PaymentForm = ({
     isActive = true,
     onMethodSelect,
     cardHolderName = '',
-    onCardHolderNameChange = () => { }
+    onCardHolderNameChange = () => { },
+    onCardChange = () => { }
 }) => {
     const stripe = useStripe();
     const elements = useElements();
@@ -59,6 +60,7 @@ const PaymentForm = ({
     const handleCardNumberChange = (e) => {
         setCardBrand(e.brand || 'unknown');
         setCardComplete(e.complete);
+        if (onCardChange) onCardChange(e);
         if (e.error) {
             setLocalError(e.error.message);
         } else {

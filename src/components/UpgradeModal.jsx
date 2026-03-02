@@ -196,7 +196,13 @@ const UpgradeModalContent = ({
                                 isActive={selectedMethodId === 'new'}
                                 onMethodSelect={() => setSelectedMethodId('new')}
                                 cardHolderName={cardHolderName}
-                                onCardHolderNameChange={setCardHolderName}
+                                onCardHolderNameChange={(name) => {
+                                    setCardHolderName(name);
+                                    if (localError) setLocalError(null);
+                                }}
+                                onCardChange={() => {
+                                    if (localError) setLocalError(null);
+                                }}
                             />
                         </div>
                     </>
