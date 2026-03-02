@@ -813,3 +813,18 @@
 [data-theme="dark"] .admin-table-logo-placeholder {
     background: rgba(255, 255, 255, 0.08);
 }
+
+.compact-confirm-modal .modal-content {
+  height: auto !important;
+  min-height: unset !important;
+  display: block !important;
+}
+
+.compact-confirm-modal .modal-body {
+  height: 30vh !important;
+  min-height: unset !important;
+}
+
+.compact-confirm-modal .modal-dialog {
+  max-width: 420px;
+}

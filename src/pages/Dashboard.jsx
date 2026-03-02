@@ -536,50 +536,59 @@ if (!businessName) {
 
     return (
       <div
-        className="business-item d-flex align-items-center p-3 border-bottom position-relative"
-        onMouseEnter={() => setHoveredItem(business._id)}
-        onMouseLeave={() => setHoveredItem(null)}
-      >
-        <div
-          style={{ width: 60, height: 60, cursor: "pointer" }}
-          className="progress-circle me-3"
-          onClick={() => handleBusinessClick(business)}
-        >
-          <CircularProgressbar
-            value={progress}
-            text={`${Math.round(progress)}%`}
-            styles={buildStyles({
-              pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
+  className="business-card d-flex align-items-center justify-content-between p-3 mb-3"
+  onMouseEnter={() => setHoveredItem(business._id)}
+  onMouseLeave={() => setHoveredItem(null)}
+>
+  {/* LEFT SECTION */}
+  <div className="d-flex align-items-center gap-3 flex-grow-1">
+
+    <div
+      className="progress-wrapper"
+      onClick={() => handleBusinessClick(business)}
+    >
+      <CircularProgressbar
+        value={progress}
+        text={`${Math.round(progress)}%`}
+        styles={buildStyles({
+           pathColor: progress === 100 ? "#28a745" : progress > 50 ? "#ffc107" : "#17a2b8",
               textColor: "#000",
               trailColor: "#e9ecef",
               textSize: "28px",
               pathTransitionDuration: 0.5,
-            })}
-          />
-        </div>
+        })}
+      />
+    </div>
 
-        <div
-          className="flex-grow-1"
-          onClick={() => handleBusinessClick(business)}
-          style={{ cursor: "pointer" }}
-        >
-          <h6 className="mb-1">{business.business_name}</h6>
-          <small className="text-muted">
-            {completedQuestions}/{totalQuestions} {t('questions_completed')}
-            {remainingQuestions > 0 && (
-              <span className="text-warning ms-2">
-                • {remainingQuestions} {t('questions_remaining')}
-              </span>
-            )}
-          </small>
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          <span className={`status-badge ${statusInfo.className}`}>
-            {statusInfo.label}
+    <div
+      onClick={() => handleBusinessClick(business)}
+      style={{ cursor: "pointer" }}
+    >
+      <h6 className="mb-1 fw-semibold">{business.business_name}</h6>
+      <small className="text-muted">
+        {completedQuestions}/{totalQuestions} {t('questions_completed')}
+        {remainingQuestions > 0 && (
+          <span className="text-warning ms-2">
+            • {remainingQuestions} {t('questions_remaining')}
           </span>
-          {canDelete && <SimpleDeleteButton />}
-        </div>
+        )}
+      </small>
+    </div>
+  </div>
+
+  {/* RIGHT SECTION */}
+  <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-2 gap-md-3">
+    <span className={`status-badge ${statusInfo.className}`}>
+      {statusInfo.label}
+    </span>
+
+    {canDelete && (
+      <div className="delete-btn-wrapper">
+        <SimpleDeleteButton />
       </div>
+    )}
+  </div>
+</div>
     );
   };
 
