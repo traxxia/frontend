@@ -78,7 +78,13 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
         <PaymentForm
           error={localError || error}
           cardHolderName={cardHolderName}
-          onCardHolderNameChange={setCardHolderName}
+          onCardHolderNameChange={(name) => {
+            setCardHolderName(name);
+            if (localError) setLocalError(null);
+          }}
+          onCardChange={() => {
+            if (localError) setLocalError(null);
+          }}
         />
       </div>
 
