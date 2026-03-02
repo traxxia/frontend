@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react'; 
+import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -46,10 +46,10 @@ const PurchaseCriteria = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.purchaseCriteria; 
-    
+    const analysisConfig = ANALYSIS_TYPES.purchaseCriteria;
+
     await checkMissingQuestionsAndRedirect(
-      'purchaseCriteria', 
+      'purchaseCriteria',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -76,15 +76,15 @@ const PurchaseCriteria = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-        try {
-            await onRegenerate(); // Add await here
-        } catch (error) {
-            console.error('Error in PurchaseCriteria regeneration:', error);
-            setError(error.message || 'Failed to regenerate analysis');
-        }
+      try {
+        await onRegenerate(); // Add await here
+      } catch (error) {
+        console.error('Error in PurchaseCriteria regeneration:', error);
+        setError(error.message || 'Failed to regenerate analysis');
+      }
     } else {
-        setCriteriaData(null);
-        setError(null);
+      setCriteriaData(null);
+      setError(null);
     }
   };
 
@@ -260,23 +260,9 @@ const PurchaseCriteria = ({
     );
   }
 
-  if (error) {
+  if (error || (isCriteriaDataIncomplete(criteriaData) && Object.keys(userAnswers).length > 0)) {
     return (
       <div className="purchase-criteria">
-        <AnalysisError 
-          error={error}
-          onRetry={handleRetry}
-          title="Purchase Criteria Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  if (!criteriaData || isCriteriaDataIncomplete(criteriaData)) {
-    return (
-      <div className="purchase-criteria"> 
-
-        {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
           analysisType="purchaseCriteria"
           analysisDisplayName="Purchase Criteria Analysis"
@@ -287,8 +273,9 @@ const PurchaseCriteria = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
-        /> 
+          showImproveButton={false}
+          showRegenerateButton={false}
+        />
       </div>
     );
   }
@@ -300,7 +287,7 @@ const PurchaseCriteria = ({
       data-analysis-type="purchase-criteria"
       data-analysis-name="Purchase Criteria Matrix"
       data-analysis-order="2">
-       
+
       {/* Key Metrics */}
       <div className="pc-metrics">
         <div className="pc-metric-card pc-metric-blue">

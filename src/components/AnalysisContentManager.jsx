@@ -508,7 +508,7 @@ const AnalysisContentManager = (props) => {
         onToggleCard={toggleCard}
         streamingManager={streamingManager}
         hideRegenerateButtons={hideRegenerateButtons}
-        canRegenerate={props.canRegenerate && !!data}
+        canRegenerate={props.canRegenerate && (!!data || (config.category !== 'costs-financial' || analysisKey === 'productivityMetrics'))}
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component

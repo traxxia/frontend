@@ -305,17 +305,20 @@ const CompetitiveLandscape = ({
     if (error ||
         (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
 
-        let errorMessage = error;
-        if (!errorMessage) {
-            errorMessage = "Unable to generate Competitive Landscape analysis. Please try regenerating or check your inputs.";
-        }
-
         return (
             <div className="porters-container">
-                <AnalysisError
-                    error={errorMessage}
-                    onRetry={handleRetry}
-                    title="Competitive Landscape Analysis Error"
+                <AnalysisEmptyState
+                    analysisType="competitiveLandscape"
+                    analysisDisplayName="Competitive Landscape"
+                    icon={Users}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -334,7 +337,8 @@ const CompetitiveLandscape = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                    showImproveButton={!hideImproveButton}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );

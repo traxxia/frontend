@@ -386,21 +386,7 @@ const SwotAnalysis = ({
     );
   }
 
-  // Error state - using AnalysisError component
-  if (errorMessage) {
-    return (
-      <div className="porters-container">
-        <AnalysisError 
-          error={errorMessage}
-          onRetry={handleRetry}
-          title="SWOT Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  // Check if data is incomplete and show missing questions checker - only for truly empty data
-  if (isSwotDataIncomplete(analysisResult)) {
+  if (errorMessage || (isSwotDataIncomplete(analysisResult) && Object.keys(userAnswers).length > 0)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState
@@ -413,7 +399,8 @@ const SwotAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

@@ -5,23 +5,8 @@ import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
-const AnalysisEmptyState = ({ analysisDisplayName, icon: Icon, onImproveAnswers, onRegenerate, isRegenerating, canRegenerate, userAnswers, minimumAnswersRequired }) => (
-  <div style={{ textAlign: 'center', padding: '40px' }}>
-    <Icon size={48} color="#999" />
-    <h3>No {analysisDisplayName} Available</h3>
-    <p>Please provide more answers or regenerate the analysis.</p>
-    {onImproveAnswers && <button onClick={onImproveAnswers}>Improve Answers</button>}
-    {canRegenerate && <button onClick={onRegenerate} disabled={isRegenerating}>Regenerate</button>}
-  </div>
-);
-
-const AnalysisError = ({ error, onRetry, title }) => (
-  <div style={{ textAlign: 'center', padding: '40px', color: '#d9534f' }}>
-    <h3>{title}</h3>
-    <p>{error}</p>
-    <button onClick={onRetry}>Retry</button>
-  </div>
-);
+import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 
 const ProductivityMetrics = ({
   questions = [],
@@ -125,7 +110,7 @@ const ProductivityMetrics = ({
 
   const typeText = (text, rowIndex, field, delay = 0) => {
     if (text === null || text === undefined) return;
-    
+
     const textStr = typeof text === 'string' ? text : String(text);
 
     setTimeout(() => {
@@ -198,13 +183,13 @@ const ProductivityMetrics = ({
         // Process all array sections
         Object.keys(metrics).forEach(sectionKey => {
           const sectionData = metrics[sectionKey];
-          
+
           if (Array.isArray(sectionData) && sectionData.length > 0) {
             const index = currentRow - rowsProcessed;
-            
+
             if (index >= 0 && index < sectionData.length) {
               const item = sectionData[index];
-              
+
               if (typeof item === 'string') {
                 typeText(item, currentRow, 'item', 0);
               } else if (typeof item === 'object' && item !== null) {
@@ -214,16 +199,16 @@ const ProductivityMetrics = ({
                 });
               }
             }
-            
+
             if (index >= 0 && index < sectionData.length) {
               currentRow++;
               return;
             }
-            
+
             if (currentRow >= rowsProcessed && currentRow < rowsProcessed + sectionData.length) {
               return;
             }
-            
+
             rowsProcessed += sectionData.length;
           }
         });
@@ -330,7 +315,7 @@ const ProductivityMetrics = ({
     return (
       <div className="section-container" key={sectionKey} style={{
         backgroundColor: 'white',
-        borderRadius: '8px',  
+        borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -345,7 +330,7 @@ const ProductivityMetrics = ({
         </div>
 
         {expandedSections[sectionKey] !== false && (
-          <div style={{ width: '100%'}}>
+          <div style={{ width: '100%' }}>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart
                 data={chartData}
@@ -381,7 +366,7 @@ const ProductivityMetrics = ({
       return (
         <div className="section-container" key={sectionKey} style={{
           backgroundColor: 'white',
-          borderRadius: '8px',  
+          borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -446,7 +431,7 @@ const ProductivityMetrics = ({
       return (
         <div className="section-container" key={sectionKey} style={{
           backgroundColor: 'white',
-          borderRadius: '8px',  
+          borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -494,7 +479,7 @@ const ProductivityMetrics = ({
                         isStreaming={isStreaming}
                       >
                         {keys.map((key, keyIndex) => (
-                          <td key={key} style={{ 
+                          <td key={key} style={{
                             padding: '12px',
                             opacity: isVisible ? 1 : 0,
                             transition: !isStreaming ? 'none' : `opacity 0.3s ${keyIndex * 0.1}s`
@@ -532,31 +517,7 @@ const ProductivityMetrics = ({
     );
   }
 
-  if (error) {
-    return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Productivity Metrics Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-    return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <AnalysisError
-          error="Unable to generate productivity metrics analysis. Please try regenerating or check your inputs."
-          onRetry={handleRetry}
-          title="Analysis Generation Error"
-        />
-      </div>
-    );
-  }
-
-  if (!productivityData || isProductivityDataIncomplete(productivityData)) {
+  if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0) || (!productivityData || isProductivityDataIncomplete(productivityData)) || !data?.productivityMetrics) {
     return (
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <AnalysisEmptyState
@@ -569,19 +530,8 @@ const ProductivityMetrics = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
-        />
-      </div>
-    );
-  }
-
-  if (!data?.productivityMetrics) {
-    return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto'}}>
-        <AnalysisError
-          error="The productivity metrics data received is not in the expected format. Please regenerate the analysis."
-          onRetry={handleRetry}
-          title="Invalid Data Structure"
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );
@@ -595,7 +545,7 @@ const ProductivityMetrics = ({
 
   Object.keys(productivityMetrics).forEach(sectionKey => {
     const sectionData = productivityMetrics[sectionKey];
-    
+
     if (Array.isArray(sectionData) && sectionData.length > 0) {
       sectionIndices[sectionKey] = {};
       sectionData.forEach((_, index) => {

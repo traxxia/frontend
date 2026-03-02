@@ -56,17 +56,13 @@ const AnalysisEmptyState = ({
       return customMessage;
     }
 
-    if (!hasEnoughAnswers) {
-      return `Start providing more specific details in the business brief to unlock your ${analysisDisplayName.toLowerCase()} and strategic insights.`;
-    }
-
-    return `You've provided some great initial information, but we need more strategic depth to generate a high-quality ${analysisDisplayName.toLowerCase()}.`;
+    return `You've provided some great initial information, but we need more strategic depth to generate a high-quality ${analysisDisplayName.toLowerCase()}. Kindly regenerate the insights.`;
   };
 
   const shouldShowButtons = (hasEnoughAnswers && (effectiveShowImproveButton || effectiveShowRegenerateButton)) || (customMessage && (onRegenerate || onImproveAnswers));
 
   return (
-    <div className="empty-state-container"> 
+    <div className="empty-state-container">
 
       <h3 className="empty-state-title">
         {isRegenerating ? 'Generating Insights...' : `${analysisDisplayName}`}

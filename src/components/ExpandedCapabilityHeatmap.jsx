@@ -20,7 +20,7 @@ const ExpandedCapabilityHeatmap = ({
     const [hasGenerated, setHasGenerated] = useState(false);
     const [error, setError] = useState(null);
     const [hoveredCell, setHoveredCell] = useState(null);
-    
+
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -256,28 +256,25 @@ const ExpandedCapabilityHeatmap = ({
     }
 
     // Single consolidated error state for all error conditions
-    if (error || 
+    if (error ||
         (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
         (data && !data?.expandedCapabilityHeatmap) ||
         (data && !getHeatmapData())) {
-        
-        let errorMessage = error;
-        if (!errorMessage) {
-            if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-                errorMessage = "Unable to generate expanded capability analysis. Please try regenerating or check your inputs.";
-            } else if (data && !data?.expandedCapabilityHeatmap) {
-                errorMessage = "The expanded capability data received is not in the expected format. Please regenerate the analysis.";
-            } else if (data && !getHeatmapData()) {
-                errorMessage = "Unable to generate capability heatmap. Please try regenerating.";
-            }
-        }
 
         return (
             <div className="expanded-capability-heatmap">
-                <AnalysisError 
-                    error={errorMessage}
-                    onRetry={handleRetry}
-                    title="Expanded Capability Analysis Error"
+                <AnalysisEmptyState
+                    analysisType="expandedCapability"
+                    analysisDisplayName="Expanded Capability Analysis"
+                    icon={Grid3x3}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -296,6 +293,8 @@ const ExpandedCapabilityHeatmap = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );

@@ -15,7 +15,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
@@ -194,6 +193,7 @@ const MaturityScore = ({
       setHasGenerated(false);
     }
   }, [maturityData]);
+
 
   useEffect(() => {
     const totalRows = calculateTotalRows(data);
@@ -387,6 +387,26 @@ const MaturityScore = ({
       }
     };
   }, []);
+
+  if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
+    return (
+      <div className="maturity-score-container">
+        <AnalysisEmptyState
+          analysisType="maturityScore"
+          analysisDisplayName="Maturity Score Analysis"
+          icon={Award}
+          onImproveAnswers={handleMissingQuestionsCheck}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+          showImproveButton={false}
+          showRegenerateButton={false}
+        />
+      </div>
+    );
+  }
 
   const getTransformedData = (sourceData = data) => {
     if (!sourceData?.maturityScore) {
@@ -700,10 +720,10 @@ const MaturityScore = ({
                           }
                         </span>
                       </td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
+                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                         {dimension.benchmark || 'N/A'}
                       </td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.8s' }}>
+                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.8s' }}>
                         {dimension.gap && (
                           <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>
                             {dimension.gap}
@@ -1115,31 +1135,9 @@ const MaturityScore = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="maturity-container">
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Business Maturity Score Analysis Error"
-        />
-      </div>
-    );
-  }
+  const transformedData = getTransformedData();
 
-  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-    return (
-      <div className="maturity-container">
-        <AnalysisError
-          error="Unable to generate business maturity score analysis. Please try regenerating or check your inputs."
-          onRetry={handleRetry}
-          title="Analysis Generation Error"
-        />
-      </div>
-    );
-  }
-
-  if (!maturityData || isMaturityDataIncomplete(maturityData)) {
+  if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0) || !maturityData || isMaturityDataIncomplete(maturityData) || !data?.maturityScore || !transformedData) {
     return (
       <div className="maturity-container">
         <AnalysisEmptyState
@@ -1152,33 +1150,8 @@ const MaturityScore = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
-        />
-      </div>
-    );
-  }
-
-  if (!data?.maturityScore) {
-    return (
-      <div className="maturity-container">
-        <AnalysisError
-          error="The maturity score data received is not in the expected format. Please regenerate the analysis."
-          onRetry={handleRetry}
-          title="Invalid Data Structure"
-        />
-      </div>
-    );
-  }
-
-  const transformedData = getTransformedData();
-
-  if (!transformedData) {
-    return (
-      <div className="maturity-container">
-        <AnalysisError
-          error="Unable to process maturity score data. Please try regenerating."
-          onRetry={handleRetry}
-          title="Data Processing Error"
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

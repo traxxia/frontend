@@ -2626,6 +2626,7 @@ const StrategicAnalysis = ({
           minimumAnswersRequired={1}
           customMessage="If you have completed the onboarding process or answered the questions but still haven't received your strategic analysis, try regenerating or answering more questions in the Advanced tab."
           showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

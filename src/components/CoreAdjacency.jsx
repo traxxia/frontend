@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Loader, TrendingUp, Target, Lightbulb, AlertTriangle, Award, 
-    ChevronDown, ChevronRight, Shield, Users, BarChart3, Map, 
+    Loader, TrendingUp, Target, Lightbulb, AlertTriangle, Award,
+    ChevronDown, ChevronRight, Shield, Users, BarChart3, Map,
     DollarSign, Activity, Zap, Package, Globe, ArrowRight
 } from 'lucide-react';
 import '../styles/EssentialPhase.css';
@@ -86,15 +86,15 @@ const CoreAdjacency = ({
     const isCoreAdjacencyDataIncomplete = (data) => {
         if (!data) return true;
 
-        const hasCore = data.coreBusinessDefinition && 
-            (data.coreBusinessDefinition.keySegments?.length > 0 || 
-             data.coreBusinessDefinition.primaryCapabilities?.length > 0 ||
-             data.coreBusinessDefinition.profitDrivers?.length > 0);
+        const hasCore = data.coreBusinessDefinition &&
+            (data.coreBusinessDefinition.keySegments?.length > 0 ||
+                data.coreBusinessDefinition.primaryCapabilities?.length > 0 ||
+                data.coreBusinessDefinition.profitDrivers?.length > 0);
 
-        const hasGrowth = data.growthOpportunities && 
+        const hasGrowth = data.growthOpportunities &&
             (data.growthOpportunities.withinCore?.length > 0 ||
-             data.growthOpportunities.adjacent?.length > 0 ||
-             data.growthOpportunities.nonAdjacent?.length > 0);
+                data.growthOpportunities.adjacent?.length > 0 ||
+                data.growthOpportunities.nonAdjacent?.length > 0);
 
         const hasVectors = data.growthVectorCategorization &&
             Object.values(data.growthVectorCategorization).some(arr => arr?.length > 0);
@@ -153,7 +153,7 @@ const CoreAdjacency = ({
 
     const typeText = (text, rowIndex, field, delay = 0) => {
         if (text === null || text === undefined) return;
-        
+
         const textStr = typeof text === 'string' ? text : String(text);
 
         setTimeout(() => {
@@ -214,7 +214,7 @@ const CoreAdjacency = ({
 
                 if (coreAdjacencyData.coreBusinessDefinition) {
                     const cbd = coreAdjacencyData.coreBusinessDefinition;
-                    
+
                     if (cbd.keySegments && Array.isArray(cbd.keySegments) && cbd.keySegments.length > 0) {
                         const segmentIndex = currentRow - rowsProcessed;
                         if (segmentIndex >= 0 && segmentIndex < cbd.keySegments.length) {
@@ -248,7 +248,7 @@ const CoreAdjacency = ({
 
                 if (coreAdjacencyData.growthOpportunities) {
                     const go = coreAdjacencyData.growthOpportunities;
-                    
+
                     if (go.withinCore && Array.isArray(go.withinCore) && go.withinCore.length > 0) {
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < go.withinCore.length) {
@@ -288,10 +288,10 @@ const CoreAdjacency = ({
 
                 if (coreAdjacencyData.growthVectorCategorization) {
                     const gvc = coreAdjacencyData.growthVectorCategorization;
-                    const allVectors = Object.entries(gvc).flatMap(([key, items]) => 
+                    const allVectors = Object.entries(gvc).flatMap(([key, items]) =>
                         (Array.isArray(items) ? items : []).map(item => ({ ...item, category: key }))
                     );
-                    
+
                     const vectorIndex = currentRow - rowsProcessed;
                     if (vectorIndex >= 0 && vectorIndex < allVectors.length) {
                         const item = allVectors[vectorIndex];
@@ -398,17 +398,20 @@ const CoreAdjacency = ({
     }
 
     if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
-        let errorMessage = error;
-        if (!errorMessage) {
-            errorMessage = "Unable to generate Core vs. Adjacency analysis. Please try regenerating or check your inputs.";
-        }
-
         return (
             <div className="porters-container">
-                <AnalysisError 
-                    error={errorMessage}
-                    onRetry={handleRetry}
-                    title="Core vs. Adjacency Analysis Error"
+                <AnalysisEmptyState
+                    analysisType="coreAdjacency"
+                    analysisDisplayName="Core vs. Adjacency Analysis"
+                    icon={Target}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -427,7 +430,8 @@ const CoreAdjacency = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                    showImproveButton={!hideImproveButton}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -529,7 +533,7 @@ const CoreAdjacency = ({
                                     <p style={{ margin: 0, lineHeight: '1.6' }}>{data.coreBusinessDefinition.description}</p>
                                 </div>
                             )}
-                            
+
                             <table className="data-table">
                                 <tbody>
                                     {data.coreBusinessDefinition.keySegments && data.coreBusinessDefinition.keySegments.length > 0 && (
@@ -654,7 +658,7 @@ const CoreAdjacency = ({
                                                         isLast={isLast && isStreaming}
                                                         lastRowRef={lastRowRef}
                                                         isStreaming={isStreaming}
-                                                        
+
                                                     >
                                                         <td>
                                                             <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
@@ -762,7 +766,7 @@ const CoreAdjacency = ({
                         <div className="table-container">
                             {Object.entries(data.growthVectorCategorization).map(([category, items]) => {
                                 if (!items || items.length === 0) return null;
-                                
+
                                 return (
                                     <div key={category}>
                                         <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{formatLabel(category)}</h6>
@@ -809,7 +813,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('missingInformation')}>
                         <h5>
                             <AlertTriangle size={20} style={{ marginRight: '8px' }} />
-                           {t('Missing_Information')}
+                            {t('Missing_Information')}
                         </h5>
                         {expandedSections.missingInformation ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>

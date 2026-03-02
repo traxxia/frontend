@@ -222,7 +222,7 @@ const PestelAnalysis = ({
     );
   }
 
-  if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
+  if ((!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) && Object.keys(userAnswers).length > 0) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState
@@ -235,7 +235,8 @@ const PestelAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );
@@ -312,13 +313,13 @@ const PestelAnalysis = ({
                         <td>
                           {hasStreamed ? (data?.strategic_priority || 'N/A') : (typingTexts[`${rowIndex}-priority`] || (data?.strategic_priority || 'N/A'))}
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.4s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                           {data?.total_mentions || 0}
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.5s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
                           {data?.high_impact_count || 0}
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                           <div className="forces-tags">
                             {(data?.key_themes || []).map((theme, idx) => (
                               <span key={idx} className="force-tag">{theme}</span>
