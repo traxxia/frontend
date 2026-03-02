@@ -88,17 +88,17 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   // We use TOTAL_STEPS - 1 to handle 8 intervals between 9 dots
   let completedSteps = currentStep - 1;
 
-// If we are on last step AND it is completed, count it
-if (
-  currentStep === TOTAL_STEPS &&
-  formData.usageContext
-) {
-  completedSteps = TOTAL_STEPS;
-}
+  // If we are on last step AND it is completed, count it
+  if (
+    currentStep === TOTAL_STEPS &&
+    formData.usageContext
+  ) {
+    completedSteps = TOTAL_STEPS;
+  }
 
-const progressPercentage =
-  (completedSteps / TOTAL_STEPS) * 100;
-  
+  const progressPercentage =
+    (completedSteps / TOTAL_STEPS) * 100;
+
   const percentToComplete = 100 - Math.round(progressPercentage);
   const countryOptions = COUNTRIES.map(c => ({
     value: c,
@@ -173,8 +173,21 @@ const progressPercentage =
   const validateStep1 = () => {
     const newErrors = {};
     if (!formData.companyName.trim()) {
-      newErrors.companyName = t('company_name_required') || 'Company / Client Name is required';
+      newErrors.companyName = t('company_name_required') || 'Company name is required';
+    } else {
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(formData.companyName.trim())) {
+        newErrors.companyName = t('company_name_invalid') || 'Company name can only contain letters';
+      }
     }
+
+    if (formData.website.trim()) {
+      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+      if (!urlRegex.test(formData.website.trim())) {
+        newErrors.website = t('invalid_url') || 'Please enter a valid URL';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -183,6 +196,12 @@ const progressPercentage =
     const newErrors = {};
     if (!formData.country.trim()) {
       newErrors.country = t('country_required') || 'Country is required';
+    }
+    if (formData.city.trim()) {
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (!nameRegex.test(formData.city.trim())) {
+        newErrors.city = t('city_invalid') || 'City can only contain letters';
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -198,13 +217,75 @@ const progressPercentage =
   };
 
   const validateStep4 = () => {
-    return true;
+    const newErrors = {};
+    const nameRegex = /^[a-zA-Z\s]+$/;
+
+    if (!formData.geography1.trim()) {
+      newErrors.geography1 = t('geography_required') || 'At least one geography is required';
+    } else if (!nameRegex.test(formData.geography1.trim())) {
+      newErrors.geography1 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.geography2.trim() && !nameRegex.test(formData.geography2.trim())) {
+      newErrors.geography2 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.geography3.trim() && !nameRegex.test(formData.geography3.trim())) {
+      newErrors.geography3 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const validateStep5 = () => {
     const newErrors = {};
+    const nameRegex = /^[a-zA-Z\s]+$/;
+
+    if (!formData.customerSegment1.trim()) {
+      newErrors.customerSegment1 = t('segment_required') || 'At least one customer segment is required';
+    } else if (!nameRegex.test(formData.customerSegment1.trim())) {
+      newErrors.customerSegment1 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.customerSegment2.trim() && !nameRegex.test(formData.customerSegment2.trim())) {
+      newErrors.customerSegment2 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.customerSegment3.trim() && !nameRegex.test(formData.customerSegment3.trim())) {
+      newErrors.customerSegment3 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (!formData.productService1.trim()) {
+      newErrors.productService1 = t('product_required') || 'At least one product/service is required';
+    } else if (!nameRegex.test(formData.productService1.trim())) {
+      newErrors.productService1 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.productService2.trim() && !nameRegex.test(formData.productService2.trim())) {
+      newErrors.productService2 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.productService3.trim() && !nameRegex.test(formData.productService3.trim())) {
+      newErrors.productService3 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (!formData.channel1.trim()) {
+      newErrors.channel1 = t('channel_required') || 'At least one channel is required';
+    } else if (!nameRegex.test(formData.channel1.trim())) {
+      newErrors.channel1 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.channel2.trim() && !nameRegex.test(formData.channel2.trim())) {
+      newErrors.channel2 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
+    if (formData.channel3.trim() && !nameRegex.test(formData.channel3.trim())) {
+      newErrors.channel3 = t('invalid_input_text') || 'This field can only contain letters';
+    }
+
     setErrors(newErrors);
-    return true;
+    return Object.keys(newErrors).length === 0;
   };
 
   const validateStep6 = () => {
@@ -215,10 +296,15 @@ const progressPercentage =
     }
 
     if (
-      formData.strategicObjective === 'Other' &&
-      !formData.strategicObjectiveOther.trim()
-    ) {
-      newErrors.strategicObjectiveOther = t('Please specify');
+      formData.strategicObjective === 'Other') {
+      if (!formData.strategicObjectiveOther.trim()) {
+        newErrors.strategicObjectiveOther = t('Please specify');
+      } else {
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.strategicObjectiveOther.trim())) {
+          newErrors.strategicObjectiveOther = t('strategic_objective_invalid') || 'Strategic objective can only contain letters';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -233,10 +319,15 @@ const progressPercentage =
     }
 
     if (
-      formData.keyChallenge === 'Other' &&
-      !formData.keyChallengeOther.trim()
-    ) {
-      newErrors.keyChallengeOther = t('Please specify');
+      formData.keyChallenge === 'Other') {
+      if (!formData.keyChallengeOther.trim()) {
+        newErrors.keyChallengeOther = t('Please specify');
+      } else {
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.keyChallengeOther.trim())) {
+          newErrors.keyChallengeOther = t('key_challenge_invalid') || 'Key challenge can only contain letters';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -251,10 +342,15 @@ const progressPercentage =
     }
 
     if (
-      formData.differentiation.includes('Other') &&
-      !formData.differentiationOther.trim()
-    ) {
-      newErrors.differentiation = t('Please specify for Other');
+      formData.differentiation.includes('Other')) {
+      if (!formData.differentiationOther.trim()) {
+        newErrors.differentiation = t('Please specify for Other');
+      } else {
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.differentiationOther.trim())) {
+          newErrors.differentiation = t('differentiation_invalid') || 'Differentiation can only contain letters';
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -453,7 +549,7 @@ const progressPercentage =
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('company client name') || 'Company / Client Name'} <span className="text-danger">*</span>
+                {t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="text"
@@ -502,19 +598,22 @@ const progressPercentage =
 
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('country') || 'Country'} <span className="text-danger">*</span>
+                {t('country') || 'Country'}<span className="text-danger">*</span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
                 placeholder={t('select country') || 'Select country'}
                 options={countryOptions}
                 value={countryOptions.find(o => o.value === formData.country)}
-                onChange={(selected) =>
+                onChange={(selected) => {
                   setFormData(prev => ({
                     ...prev,
                     country: selected?.value || ''
-                  }))
-                }
+                  }));
+                  if (errors.country) {
+                    setErrors(prev => ({ ...prev, country: '' }));
+                  }
+                }}
                 menuPortalTarget={document.body}
                 styles={{
                   menuPortal: base => ({
@@ -588,7 +687,7 @@ const progressPercentage =
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
               <Form.Label className="pmf-form-label">
-                {t('primary industry') || 'Primary Industry'} <span className="text-danger">*</span>
+                {t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span>
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -599,12 +698,15 @@ const progressPercentage =
                     .flatMap(g => g.options)
                     .find(o => o.value === formData.primaryIndustry)
                 }
-                onChange={(selected) =>
+                onChange={(selected) => {
                   setFormData(prev => ({
                     ...prev,
                     primaryIndustry: selected?.value || ''
-                  }))
-                }
+                  }));
+                  if (errors.primaryIndustry) {
+                    setErrors(prev => ({ ...prev, primaryIndustry: '' }));
+                  }
+                }}
                 menuPortalTarget={document.body}
                 styles={{
                   menuPortal: base => ({
@@ -656,7 +758,7 @@ const progressPercentage =
         return (
           <div className="pmf-step-content">
             <h5 className="pmf-step-question mb-3">
-              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}
+              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span>
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
@@ -726,7 +828,7 @@ const progressPercentage =
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('customer segments max 3') || 'Customer segments (max 3)'}
+                {t('customer segments max 3') || 'Customer segments (max 3)'}<span className="text-danger">*</span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
@@ -786,7 +888,7 @@ const progressPercentage =
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('products services max 3') || 'Products / services (max 3)'}
+                {t('products services max 3') || 'Products / services (max 3)'}<span className="text-danger">*</span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('products services example') || 'e.g., ice cream, M&A advisory'}
@@ -846,7 +948,7 @@ const progressPercentage =
 
             <div className="mb-4">
               <Form.Label className="pmf-form-label mb-2">
-                {t('channels max 3') || 'Channels (max 3)'}
+                {t('channels max 3') || 'Channels (max 3)'}<span className="text-danger">*</span>
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('channels example') || 'e.g., convenience stores, direct sales'}
@@ -860,7 +962,13 @@ const progressPercentage =
                   onChange={handleInputChange}
                   placeholder={t("Channel 1")}
                   className="pmf-form-control"
+                  isInvalid={!!errors.channel1}
                 />
+                {errors.channel1 && (
+                  <Form.Text className="text-danger d-block mt-1">
+                    {errors.channel1}
+                  </Form.Text>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-3">
@@ -871,7 +979,13 @@ const progressPercentage =
                   onChange={handleInputChange}
                   placeholder={t("Channel 2")}
                   className="pmf-form-control"
+                  isInvalid={!!errors.channel2}
                 />
+                {errors.channel2 && (
+                  <Form.Text className="text-danger d-block mt-1">
+                    {errors.channel2}
+                  </Form.Text>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-4">
@@ -882,49 +996,13 @@ const progressPercentage =
                   onChange={handleInputChange}
                   placeholder={t("Channel 3")}
                   className="pmf-form-control"
+                  isInvalid={!!errors.channel3}
                 />
-              </Form.Group>
-            </div>
-
-            <div className="mb-2">
-              <Form.Label className="pmf-form-label mb-2">
-                {t('geographies max_3') || 'Geographies (max 3)'}
-              </Form.Label>
-              <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
-                {t('geographies example') || 'e.g., Lima, nationwide'}
-              </p>
-
-              <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="geography1"
-                  value={formData.geography1}
-                  onChange={handleInputChange}
-                  placeholder={t("Geography 1")}
-                  className="pmf-form-control"
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Control
-                  type="text"
-                  name="geography2"
-                  value={formData.geography2}
-                  onChange={handleInputChange}
-                  placeholder={t("Geography 2")}
-                  className="pmf-form-control"
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-4">
-                <Form.Control
-                  type="text"
-                  name="geography3"
-                  value={formData.geography3}
-                  onChange={handleInputChange}
-                  placeholder={t("Geography 3")}
-                  className="pmf-form-control"
-                />
+                {errors.channel3 && (
+                  <Form.Text className="text-danger d-block mt-1">
+                    {errors.channel3}
+                  </Form.Text>
+                )}
               </Form.Group>
             </div>
 
@@ -1018,12 +1096,16 @@ const progressPercentage =
                   type="text"
                   placeholder={t("Please specify")}
                   value={formData.keyChallengeOther}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = e.target.value;
                     setFormData(prev => ({
                       ...prev,
-                      keyChallengeOther: e.target.value
-                    }))
-                  }
+                      keyChallengeOther: val
+                    }));
+                    if (errors.keyChallengeOther) {
+                      setErrors(prev => ({ ...prev, keyChallengeOther: '' }));
+                    }
+                  }}
                   isInvalid={!!errors.keyChallengeOther}
                 />
                 <Form.Text className="text-danger">
@@ -1068,13 +1150,18 @@ const progressPercentage =
                       type="text"
                       placeholder={t("Please specify")}
                       value={formData.differentiationOther}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setFormData(prev => ({
                           ...prev,
-                          differentiationOther: e.target.value
-                        }))
-                      }
+                          differentiationOther: val
+                        }));
+                        if (errors.differentiation) {
+                          setErrors(prev => ({ ...prev, differentiation: '' }));
+                        }
+                      }}
                       className="pmf-form-control mt-3"
+                      isInvalid={!!errors.differentiationOther}
                     />
                   )}
               </div>
@@ -1139,10 +1226,10 @@ const progressPercentage =
   };
 
   useEffect(() => {
-  if (modalBodyRef.current) {
-    modalBodyRef.current.scrollTop = 0;
-  }
-}, [currentStep]);
+    if (modalBodyRef.current) {
+      modalBodyRef.current.scrollTop = 0;
+    }
+  }, [currentStep]);
 
   return (
     <Modal
@@ -1186,35 +1273,37 @@ const progressPercentage =
 
         {renderStepContent()}
         {isSubmitting && (
-  <div className="pmf-modal-overlay-minimal">
-    <div className="pmf-loader-minimal">
-      <div className="spinner-border text-primary mb-3" role="status" />
-      <div className="pmf-loader-text">
-        {submissionStep === 1 && "Saving your data..."}
-        {submissionStep === 2 && "Analyzing market (60–90s)..."}
-        {submissionStep === 3 && "Finalizing insights..."}
-      </div>
-      <small className="text-muted">
-        Please wait while we generate insights
-      </small>
-    </div>
-  </div>
-)}
+          <div className="pmf-modal-overlay-minimal">
+            <div className="pmf-loader-minimal">
+              <div className="spinner-border text-primary mb-3" role="status" />
+              <div className="pmf-loader-text">
+                {submissionStep === 1 && "Saving your data..."}
+                {submissionStep === 2 && "Analyzing market (60–90s)..."}
+                {submissionStep === 3 && "Finalizing insights..."}
+              </div>
+              <small className="text-muted">
+                Please wait while we generate insights
+              </small>
+            </div>
+          </div>
+        )}
       </Modal.Body>
 
 
       <Modal.Footer className="pmf-modal-footer">
 
 
-        <Button
-          variant="outline-secondary"
-          onClick={handleBack}
-          disabled={currentStep === 1 || isSubmitting}
-          className="pmf-back-button"
-        >
-          <ChevronLeft size={18} className="me-1" />
-          {t('back') || 'Back'}
-        </Button>
+        {currentStep > 1 && (
+          <Button
+            variant="outline-secondary"
+            onClick={handleBack}
+            disabled={isSubmitting}
+            className="pmf-back-button"
+          >
+            <ChevronLeft size={18} className="me-1" />
+            {t('back') || 'Back'}
+          </Button>
+        )}
 
         <Button
           variant="primary"

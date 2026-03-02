@@ -127,22 +127,23 @@
 @media (max-width: 480px) {
     .plans-grid {
         grid-template-columns: 1fr;
-
-        /* Fix scroll capturing issues in Modal */
-        .upgrade-modal .modal-body {
-            overflow: visible !important;
-        }
-
-        .upgrade-modal .payment-form-container {
-            overflow: visible !important;
-            height: auto !important;
-        }
-
-        /* Ensure saved cards look neat */
-        .upgrade-modal .saved-payment-method {
-            width: fit-content;
-            min-width: 320px;
-            margin-right: auto;
-        }
     }
+
+    /* Ensure saved cards look neat */
+    .upgrade-modal .saved-payment-method {
+        width: fit-content;
+        min-width: 320px;
+        margin-right: auto;
+    }
+}
+
+/* Explicit scroll handling for Plan Management Modal */
+.upgrade-modal .modal-body {
+    max-height: 65vh;
+    overflow-y: auto !important;
+}
+
+.upgrade-modal .payment-form-container {
+    overflow: visible !important;
+    height: auto !important;
 }

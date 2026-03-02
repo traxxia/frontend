@@ -107,6 +107,9 @@
   color: #374151;
   margin-bottom: 8px;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .pmf-form-control {
@@ -180,6 +183,9 @@
   color: #1f2937;
   margin-bottom: 24px;
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Modal Footer */
@@ -347,7 +353,7 @@
 }
 
 .pmf-onboarding-modal .modal-content {
-  height: 85vh;         
+  height: 85vh;
   display: flex;
   flex-direction: column;
 }
