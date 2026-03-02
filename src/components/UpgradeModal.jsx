@@ -411,7 +411,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
 
     return (
         <>
-            <Modal show={show} onHide={onHide} size="lg" centered className="upgrade-modal" backdrop="static" keyboard={false}>
+            <Modal show={show} onHide={onHide} size="lg" centered scrollable className="upgrade-modal" backdrop="static" keyboard={false}>
                 <Elements stripe={stripePromise}>
                     <UpgradeModalContent
                         onHide={onHide}

@@ -14,7 +14,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import PaymentForm from '../components/PaymentForm';
 
+
 const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice }) => {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
   const [localError, setLocalError] = useState(null);
@@ -26,6 +28,12 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
 
     if (!cardHolderName.trim()) {
       setLocalError("Please enter card holder name.");
+      return;
+    }
+
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    if (!nameRegex.test(cardHolderName.trim())) {
+      setLocalError(t('card_holder_name_invalid') || "Card holder name can only contain letters.");
       return;
     }
 
@@ -185,12 +193,19 @@ const Register = () => {
   const validateTab2 = () => {
     const newErrors = {};
     if (isNewCompany) {
-      if (!form.company_name.trim()) newErrors.company_name = t('company_name_required') || 'Company name is required';
+      if (!form.company_name.trim()) {
+        newErrors.company_name = t('company_name_required') || 'Company name is required';
+      } else {
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(form.company_name.trim())) {
+          newErrors.company_name = t('company_name_invalid') || 'Company name can only contain letters and spaces';
+        }
+      }
       if (!selectedPlanId) newErrors.selectedPlanId = t('plan_selection_required') || 'Please select a pricing plan';
     } else if (!form.company_id) {
       newErrors.company_id = t('Company_selection_is_required') || 'Company selection is required';
     }
-    if (!form.terms) newErrors.terms = t('terms_agreement_required') || 'You must agree to terms and conditions';
+    if (!form.terms) newErrors.terms = t('You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed') || 'You must agree to the Terms & Conditions and Privacy Policy to proceed';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -444,7 +459,14 @@ const Register = () => {
                               <div className="action-selection-group">
                                 <div
                                   className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
-                                  onClick={() => setIsNewCompany(false)}
+                                  onClick={() => {
+                                    setIsNewCompany(false);
+                                    setForm(prev => ({ ...prev, terms: false }));
+                                    setErrors(prev => {
+                                      const { terms, company_id, company_name, selectedPlanId, ...rest } = prev;
+                                      return rest;
+                                    });
+                                  }}
                                 >
                                   {!isNewCompany && (
                                     <motion.div
@@ -457,7 +479,14 @@ const Register = () => {
                                 </div>
                                 <div
                                   className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
-                                  onClick={() => setIsNewCompany(true)}
+                                  onClick={() => {
+                                    setIsNewCompany(true);
+                                    setForm(prev => ({ ...prev, terms: false }));
+                                    setErrors(prev => {
+                                      const { terms, company_id, company_name, selectedPlanId, ...rest } = prev;
+                                      return rest;
+                                    });
+                                  }}
                                 >
                                   {isNewCompany && (
                                     <motion.div

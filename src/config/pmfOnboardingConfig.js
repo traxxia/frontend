@@ -129,47 +129,47 @@ export const USAGE_CONTEXT_OPTIONS = [
 export const FORM_STEPS = [
   {
     step: 1,
-    title: 'company client name',
+    title: 'Company client name',
     fields: ['companyName', 'website']
   },
   {
     step: 2,
-    title: 'where is business based',
+    title: 'Where is business based',
     fields: ['country', 'city']
   },
   {
     step: 3,
-    title: 'primary industry',
+    title: 'Primary industry',
     fields: ['primaryIndustry']
   },
   {
     step: 4,
-    title: 'which geographies strategic answers',
+    title: 'Which geographies strategic answers',
     fields: ['geography1', 'geography2', 'geography3']
   },
   {
     step: 5,
-    title: 'where does profit come from',
+    title: 'Where does profit come from',
     fields: ['customerSegment1', 'customerSegment2', 'customerSegment3', 'productService1', 'productService2', 'productService3', 'channel1', 'channel2', 'channel3']
   },
   {
     step: 6,
-    title: 'strategic objective',
+    title: 'Strategic objective',
     fields: ['strategicObjective', 'strategicObjectiveOther']
   },
   {
     step: 7,
-    title: 'key challenges constraints',
+    title: 'Key challenges constraints',
     fields: ['keyChallenge', 'keyChallengeOther']
   },
   {
     step: 8,
-    title: 'differentiation',
+    title: 'Differentiation',
     fields: ['differentiation', 'differentiationOther']
   },
   {
     step: 9,
-    title: 'usage context',
+    title: 'Usage context',
     fields: ['usageContext']
   }
 ];
@@ -180,7 +180,7 @@ export const TOTAL_STEPS = FORM_STEPS.length;
 // Field hints and examples
 export const FIELD_HINTS = {
   geography: 'e.g., United States, LATAM, Southeast Asia',
-  customerSegment: 'e.g., young adults, SMEs, enterprise',
-  productService: 'e.g., ice cream, M&A advisory',
-  channel: 'e.g., convenience stores, direct sales'
+  customerSegment: 'e.g., Young adults, SMEs, Enterprise',
+  productService: 'e.g., Ice cream, M&A advisory',
+  channel: 'e.g., Convenience stores, Direct sales'
 };
