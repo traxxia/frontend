@@ -4688,3 +4688,111 @@
   background: #151921 !important;
   border-bottom: 1px solid #23304b !important;
 }
+
+
+@media (max-width: 576px) {
+  .user-history-redesign {
+    padding: 0 8px;
+  }
+
+  .admin-table-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .admin-table-scroll {
+    overflow-x: auto;
+  }
+
+  .admin-data-table {
+    min-width: 600px; 
+  }
+
+  .admin-data-table th,
+  .admin-data-table td {
+    padding: 10px 12px !important;
+    font-size: 13px;
+  }
+
+  .admin-cell-primary {
+    font-size: 13px;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .admin-cell-secondary {
+    font-size: 12px;
+    color: #6b7280;
+    word-break: break-word;
+  }
+  .admin-status-badge {
+    font-size: 11px !important;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  .admin-data-table td:last-child .td-inner {
+    justify-content: flex-start !important;
+  }
+
+  .admin-data-table td:last-child button {
+    width: 100%;
+    font-size: 12px;
+  }
+
+  .admin-search-wrapper {
+    width: 100%;
+  }
+
+  .admin-search-input {
+    width: 100%;
+  }
+
+  .admin-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .admin-table-title-group {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .admin-pagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .admin-pagination-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .admin-nav {
+    display: flex;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; 
+  }
+
+  .admin-nav::-webkit-scrollbar {
+    display: none; 
+  }
+
+  .admin-nav .nav-tab {
+    flex: 0 0 auto;
+    min-width: max-content;
+    padding: 10px 14px;
+  }
+
+}
