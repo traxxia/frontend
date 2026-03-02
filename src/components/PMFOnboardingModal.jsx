@@ -172,13 +172,22 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const validateStep1 = () => {
     const newErrors = {};
-    if (!formData.companyName.trim()) {
-      newErrors.companyName = t('company_name_required') || 'Company name is required';
-    } else {
-      const nameRegex = /^[a-zA-Z\s]+$/;
-      if (!nameRegex.test(formData.companyName.trim())) {
-        newErrors.companyName = t('company_name_invalid') || 'Company name can only contain letters';
-      }
+    const companyName = formData.companyName.trim();
+
+    if (!companyName) {
+      newErrors.companyName =
+        t('company_name_required') || 'Company name is required';
+    }
+    // Must start with letter OR number (not special character)
+    else if (!/^[A-Za-z0-9]/.test(companyName)) {
+      newErrors.companyName =
+        'Company name cannot start with a special character';
+    }
+    // Allow letters, numbers, spaces and selected special characters
+    else if (!/^[A-Za-z0-9][A-Za-z0-9&.,()\- ]*$/.test(companyName)) {
+      newErrors.companyName =
+        t('company_name_invalid') ||
+        'Company name contains invalid characters';
     }
 
     if (formData.website.trim()) {
