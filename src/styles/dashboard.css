@@ -1618,3 +1618,16 @@
 .business-card:hover .delete-btn-wrapper {
   opacity: 1;
 }
+
+@media (max-width: 767.98px) {
+  .business-item {
+    margin-bottom: 10px !important;
+  }
+}
+
+
+
+
+
+
+
