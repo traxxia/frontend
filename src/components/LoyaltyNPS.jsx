@@ -316,10 +316,18 @@ const LoyaltyNPS = ({
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="loyalty-nps">
-        <AnalysisError
-          error="Unable to generate loyalty & NPS analysis. Please try regenerating or check your inputs."
-          onRetry={handleRetry}
-          title="Loyalty & NPS Analysis Error"
+        <AnalysisEmptyState
+          analysisType="loyaltyNPS"
+          analysisDisplayName="Loyalty & NPS Analysis"
+          icon={Heart}
+          onImproveAnswers={handleMissingQuestionsCheck}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );
@@ -339,7 +347,8 @@ const LoyaltyNPS = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

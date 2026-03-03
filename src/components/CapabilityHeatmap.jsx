@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Zap, TrendingUp, Loader, Target, Award, Activity } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const CapabilityHeatmap = ({
@@ -134,12 +133,7 @@ const CapabilityHeatmap = ({
     }
   };
 
-  const handleRetry = () => {
-    setError(null);
-    if (onRegenerate) {
-      onRegenerate();
-    }
-  };
+
 
   useEffect(() => {
     const extractedData = extractCapabilityData(capabilityHeatmapData);
@@ -229,19 +223,7 @@ const CapabilityHeatmap = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="capability-heatmap">
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Capability Heatmap Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  if (!capabilityData || isCapabilityDataIncomplete(capabilityData)) {
+  if (error || !capabilityData || isCapabilityDataIncomplete(capabilityData)) {
     return (
       <div className="capability-heatmap">
         <AnalysisEmptyState
@@ -254,7 +236,8 @@ const CapabilityHeatmap = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

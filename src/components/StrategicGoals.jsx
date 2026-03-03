@@ -482,20 +482,19 @@ const StrategicGoals = ({
     if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
         return (
             <div className="strategic-goals-container">
-                <div className="error-state">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Analysis Error</h3>
-                    <p>Unable to generate strategic goals. Please try regenerating or check your inputs.</p>
-                    {sessionStorage.getItem("userRole") !== "viewer" && (
-                        <button onClick={() => {
-                            if (onRegenerate) {
-                                onRegenerate();
-                            }
-                        }} className="retry-button">
-                            Retry Analysis
-                        </button>
-                    )}
-                </div>
+                <AnalysisEmptyState
+                    analysisType="strategicGoals"
+                    analysisDisplayName="Strategic Goals & OKR Analysis"
+                    icon={Target}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
+                />
             </div>
         );
     }
@@ -516,6 +515,8 @@ const StrategicGoals = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );

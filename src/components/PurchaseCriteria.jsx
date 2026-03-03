@@ -300,23 +300,9 @@ const PurchaseCriteria = ({
     );
   }
 
-  if (error) {
+  if (error || (isCriteriaDataIncomplete(criteriaData) && Object.keys(userAnswers).length > 0)) {
     return (
       <div className="purchase-criteria">
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Purchase Criteria Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  if (!criteriaData || isCriteriaDataIncomplete(criteriaData)) {
-    return (
-      <div className="purchase-criteria">
-
-        {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
           analysisType="purchaseCriteria"
           analysisDisplayName="Purchase Criteria Analysis"
@@ -327,7 +313,8 @@ const PurchaseCriteria = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

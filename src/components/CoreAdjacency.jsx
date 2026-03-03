@@ -413,17 +413,20 @@ const CoreAdjacency = ({
     }
 
     if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
-        let errorMessage = error;
-        if (!errorMessage) {
-            errorMessage = "Unable to generate Core vs. Adjacency analysis. Please try regenerating or check your inputs.";
-        }
-
         return (
             <div className="porters-container">
-                <AnalysisError
-                    error={errorMessage}
-                    onRetry={handleRetry}
-                    title="Core vs. Adjacency Analysis Error"
+                <AnalysisEmptyState
+                    analysisType="coreAdjacency"
+                    analysisDisplayName="Core vs. Adjacency Analysis"
+                    icon={Target}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -442,7 +445,8 @@ const CoreAdjacency = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                    showImproveButton={!hideImproveButton}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
