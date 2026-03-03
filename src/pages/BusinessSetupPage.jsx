@@ -989,7 +989,7 @@ const BusinessSetupPage = () => {
     isProfitabilityRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
     isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating,
     isCompetitiveLandscapeRegenerating, isCoreAdjacencyRegenerating,
-    isAnalysisRegenerating,
+    isAnalysisRegenerating, isStrategicRegenerating,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
     competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
     maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,

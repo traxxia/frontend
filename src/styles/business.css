@@ -205,8 +205,8 @@
 }
 
 .modern-analysis-card.error {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border-color: #ef4444;
+  background: white;
+  border-color: #e1e5e9;
 }
 
 .modern-analysis-card.locked {
@@ -772,7 +772,7 @@
 .categorized-analysis {
   display: flex;
   flex-direction: column;
-  gap: 0px; 
+  gap: 0px;
 }
 
 .analysis-category {
