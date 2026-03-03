@@ -10,7 +10,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
     { role: "assistant", text: "Hi! How can I help you today? 👋" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0 });
+  const [quotaStatus, setQuotaStatus] = useState({ exceeded: false, resetAt: null, usedTokens: 0, limit: 3000000 });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const chatEndRef = useRef(null);
 
@@ -78,7 +78,8 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
         setQuotaStatus({
           exceeded: response.data.quotaExceed,
           resetAt: response.data.quotaResetAt,
-          usedTokens: response.data.ai_token_usage || 0
+          usedTokens: response.data.ai_token_usage || 0,
+          limit: response.data.ai_limit || 3000000
         });
       }
     } catch (error) {
@@ -152,7 +153,8 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
       setQuotaStatus({
         exceeded: usageData?.quotaExceed || false,
         resetAt: usageData?.quotaResetAt || null,
-        usedTokens: usageData?.ai_token_usage || 0
+        usedTokens: usageData?.ai_token_usage || 0,
+        limit: usageData?.ai_limit || 3000000
       });
 
       if (usageData?.quotaExceed) {
@@ -215,7 +217,8 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
               setQuotaStatus(prev => ({
                 ...prev,
                 usedTokens: updatedUsageResp.data.ai_token_usage || 0,
-                exceeded: updatedUsageResp.data.quotaExceed || false
+                exceeded: updatedUsageResp.data.quotaExceed || false,
+                limit: updatedUsageResp.data.ai_limit || 3000000
               }));
             }
           } catch (updateError) {
@@ -265,11 +268,45 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
             <div className="ai-header__icon">
               <Sparkles size={16} color="#fff" />
             </div>
-            <div>
+            <div className="ai-header__content">
               <div className="ai-header__title">AI Assistant</div>
-              <div className="ai-header__usage">
-                <Zap size={10} fill="currentColor" />
-                <span>Usage: {quotaStatus.usedTokens?.toLocaleString() || 0} / 3,000,000</span>
+              <div className="ai-header__usage-circle-container">
+                {(() => {
+                  const used = quotaStatus.usedTokens || 0;
+                  const limit = quotaStatus.limit || 3000000;
+                  const percentage = Math.min(Math.round((used / limit) * 100), 100);
+                  const radius = 10;
+                  const circumference = 2 * Math.PI * radius;
+                  const offset = circumference - (percentage / 100) * circumference;
+
+                  let colorClass = "usage-low";
+                  if (percentage >= 90) colorClass = "usage-high";
+                  else if (percentage >= 70) colorClass = "usage-medium";
+
+                  return (
+                    <div className="ai-usage-minimal" title={`Used: ${used.toLocaleString()} / ${limit.toLocaleString()}`}>
+                      <div className="ai-usage-circle-wrap">
+                        <svg className="ai-usage-svg" viewBox="0 0 24 24">
+                          <circle
+                            className="ai-usage-bg"
+                            cx="12"
+                            cy="12"
+                            r={radius}
+                          />
+                          <circle
+                            className={`ai-usage-fill ${colorClass}`}
+                            cx="12"
+                            cy="12"
+                            r={radius}
+                            strokeDasharray={circumference}
+                            strokeDashoffset={offset}
+                          />
+                        </svg>
+                        <span className="ai-usage-text">{percentage}%</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
