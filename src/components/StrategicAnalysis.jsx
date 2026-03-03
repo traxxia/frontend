@@ -1675,15 +1675,36 @@ const StrategicAnalysis = ({
   };
 
   const renderStrategicRecommendationsFromAnalyses = () => {
-    const pestelAnalysis = phaseAnalysisArray.find(analysis =>
-      analysis.analysis_type === 'pestel'
-    );
-    const portersAnalysis = phaseAnalysisArray.find(analysis =>
-      analysis.analysis_type === 'porters'
-    );
+    const pestelAnalysis = (phaseAnalysisArray || []).find(analysis => {
+      const type = (analysis.analysis_type || analysis.name || '').toLowerCase();
+      return type === 'pestel' || type === 'pestel_analysis';
+    });
+    const portersAnalysis = (phaseAnalysisArray || []).find(analysis => {
+      const type = (analysis.analysis_type || analysis.name || '').toLowerCase();
+      return type === 'porters' || type === 'porter_analysis' || type === 'porters_five_forces';
+    });
 
-    const pestelRecommendations = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
-    const portersRecommendations = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
+    const getRecommendations = (analysis, typeKey) => {
+      if (!analysis) return null;
+      const data = analysis.analysis_data || analysis.analysis_result;
+      if (!data) return null;
+
+      try {
+        // Handle stringified data if it somehow got through
+        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+
+        // Check both nested key and top level
+        return parsedData[typeKey]?.strategic_recommendations ||
+          parsedData.strategic_recommendations ||
+          parsedData;
+      } catch (e) {
+        console.error("Error parsing recommendations data:", e);
+        return null;
+      }
+    };
+
+    const pestelRecommendations = getRecommendations(pestelAnalysis, 'pestel_analysis');
+    const portersRecommendations = getRecommendations(portersAnalysis, 'porter_analysis');
 
     const hasPestelRecommendations = pestelRecommendations && (
       (pestelRecommendations.immediate_actions && pestelRecommendations.immediate_actions.length > 0) ||

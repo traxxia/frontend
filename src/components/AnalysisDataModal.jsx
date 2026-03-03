@@ -151,6 +151,8 @@ const AnalysisDataModal = ({
           <StrategicAnalysis
             {...mockProps}
             strategicData={analysisData}
+            phaseManager={{ getUnlockedFeatures: () => ({ analysis: true }) }}
+            phaseAnalysisArray={[]}
             readOnly={false}
             hideDownload={true}
             hideKickstart={true}

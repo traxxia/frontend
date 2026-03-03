@@ -305,7 +305,8 @@ const parseAnalysisData = (userDetails, user) => {
 
     businessName: user?.name || 'Business',
     userAnswers: {},
-    questions: []
+    questions: [],
+    phaseAnalysisArray: userDetails.system || []
   };
 
   // Process conversation data
@@ -501,7 +502,35 @@ const parseAnalysisData = (userDetails, user) => {
     }
   });
 
-  return analysisData;
+  // Create a clean, normalized array for phase-based components
+  const normalizedSystemResults = (userDetails.system || []).map(result => {
+    try {
+      const parsedData = typeof result.analysis_result === 'string'
+        ? JSON.parse(result.analysis_result)
+        : result.analysis_result;
+
+      let type = (result.analysis_type || result.name || result.normalized_type || '').toLowerCase();
+      // Standardize types
+      if (['porters', 'porter_analysis', 'porters_five_forces'].includes(type)) type = 'porters';
+      if (['pestel', 'pestel_analysis'].includes(type)) type = 'pestel';
+      if (['swot'].includes(type)) type = 'swot';
+      if (['strategic', 'strategic_analysis'].includes(type)) type = 'strategic';
+
+      return {
+        ...result,
+        analysis_type: type,
+        analysis_data: parsedData,
+        analysis_result: parsedData // keep both for compatibility
+      };
+    } catch (e) {
+      return result;
+    }
+  });
+
+  return {
+    ...analysisData,
+    phaseAnalysisArray: normalizedSystemResults
+  };
 };
 
 // Check if analysis data exists
@@ -1472,6 +1501,7 @@ const StrategicTab = ({
           userAnswers={analysisData.userAnswers}
           businessName={analysisData.businessName}
           strategicData={analysisData.strategic}
+          phaseAnalysisArray={analysisData.phaseAnalysisArray || []}
           onRegenerate={null}
           isRegenerating={false}
           canRegenerate={false}
