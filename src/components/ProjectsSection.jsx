@@ -88,10 +88,10 @@ const ProjectsSection = ({
   ];
 
   const onToggleTeamRankings = () => {
-    
-  setShowTeamRankings(true);
-  setShowRankScreen(false);
-};
+
+    setShowTeamRankings(true);
+    setShowRankScreen(false);
+  };
 
   // UPDATED: This should reflect if the CURRENT USER has locked their ranking
   const [rankingsLocked, setRankingsLocked] = useState(false);
@@ -361,13 +361,13 @@ const ProjectsSection = ({
 
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
-    
+
     // Call new consolidated access check API
     const accessData = await checkAllAccess();
-    
+
     // Fetch rankings (this also returns projects list, business status, etc.)
     const result = await fetchTeamRankings();
-    
+
     if (!result) {
       setIsLoading(false);
       return;
@@ -786,10 +786,10 @@ const ProjectsSection = ({
                 {!isViewer && !isArchived && (
                   <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
                     <button
-                     onClick={() => {
-  setShowRankScreen(true);
-  setShowTeamRankings(false);
-}}
+                      onClick={() => {
+                        setShowRankScreen(true);
+                        setShowTeamRankings(false);
+                      }}
                       className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
                     >
                       <ListOrdered size={16} />
@@ -838,6 +838,7 @@ const ProjectsSection = ({
                 onLockRankings={handleLockProjectRanking}
                 onRankSaved={() => {
                   refreshTeamRankings();
+                  onToggleTeamRankings();
                 }}
                 isAdmin={isSuperAdmin}
                 isRankingLocked={isRankingLocked}
