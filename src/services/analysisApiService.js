@@ -35,13 +35,7 @@ export const PHASE_API_CONFIG = {
     'productivityMetrics',
     'maturityScore',
     'competitiveLandscape',
-    'coreAdjacency',
-    // 5 financial analyses
-    'profitabilityAnalysis',
-    'growthTracker',
-    'liquidityEfficiency',
-    'investmentPerformance',
-    'leverageRisk'
+    'coreAdjacency'
   ],
   financial: [
     'profitabilityAnalysis',
@@ -463,7 +457,7 @@ export class AnalysisApiService {
         // Use rawPayload if provided, otherwise construct the default payload
         const payload = rawPayload || {
           questions: questionsArray,
-          answers: answersArray, 
+          answers: answersArray,
         };
 
         response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}?stream=true`, {

@@ -459,15 +459,15 @@ const AIAnswerSupportBlock = ({
       marginBottom: '12px'
     },
     iconWrapper: {
-  backgroundColor: '#ede9fe',
-  padding: '10px',
-  borderRadius: '12px',
-  color: '#7c3aed',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0
-},
+      backgroundColor: '#ede9fe',
+      padding: '10px',
+      borderRadius: '12px',
+      color: '#7c3aed',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0
+    },
     title: {
       margin: 0,
       fontSize: '17px',
@@ -508,11 +508,11 @@ const AIAnswerSupportBlock = ({
         </div>
         <div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-  <h3 style={styles.title}>AI Answer Support</h3>
-  <p style={styles.subtitle}>
-    Professional answers based on your onboarding
-  </p>
-</div>
+            <h3 style={styles.title}>AI Answer Support</h3>
+            <p style={styles.subtitle}>
+              Professional answers based on your onboarding
+            </p>
+          </div>
         </div>
       </div>
 
@@ -1051,25 +1051,6 @@ const EditableBriefSection = ({
 
       showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
 
-      // Trigger financial analysis via excel-analysis endpoint
-      const financialMetrics = ['profitability', 'growth_trends', 'liquidity', 'investment', 'leverage'];
-      for (const metricType of financialMetrics) {
-        try {
-          await analysisService.makeAPICall(
-            'excel-analysis',
-            [],
-            [],
-            selectedBusinessId,
-            null,
-            metricType
-          );
-        } catch (err) {
-          console.warn(`Financial analysis failed for metric: ${metricType}`, err);
-        }
-      }
-
-      showToastMessage('✅ Financial analysis complete!', 'success');
-
       // Also notify parent to refresh display
       if (onAnalysisRegenerate) {
         onAnalysisRegenerate({ onlyFinancial: true });
@@ -1091,10 +1072,11 @@ const EditableBriefSection = ({
     try {
       setIsApplyingEnrichment(true);
 
-      // Map enriched answers back to question IDs
+      const updatedQuestionIds = [];
       const answersToSave = enrichedAnswers.map(enriched => {
         const field = briefFields.find(f => f.label === enriched.question);
         if (field) {
+          updatedQuestionIds.push(field.questionId);
           return {
             question_id: field.questionId,
             answer_text: enriched.answer
@@ -1125,7 +1107,7 @@ const EditableBriefSection = ({
 
       // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate();
+        onAnalysisRegenerate({ updatedQuestionIds });
       }
     } catch (error) {
       console.error('Apply enrichment error:', error);
@@ -1162,7 +1144,7 @@ const EditableBriefSection = ({
             marginBottom: '16px'
           }}>
             <h5 style={{ margin: 0, color: '#0369a1', fontSize: '15px', fontWeight: '600' }}>
-              AI Enrichment Suggestions 
+              AI Enrichment Suggestions
             </h5>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button

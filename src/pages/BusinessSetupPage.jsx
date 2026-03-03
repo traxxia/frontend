@@ -652,6 +652,17 @@ const BusinessSetupPage = () => {
       }
 
       const findHighestAnsweredPhase = () => {
+        // If we have specific updated questions, prioritize based on them first
+        if (options?.updatedQuestionIds && options.updatedQuestionIds.length > 0) {
+          const updatedPhases = questions
+            .filter(q => options.updatedQuestionIds.includes(q._id || q.question_id))
+            .map(q => q.phase);
+
+          if (updatedPhases.includes('advanced')) return 'advanced';
+          if (updatedPhases.includes('essential')) return 'essential';
+          if (updatedPhases.includes('initial')) return 'initial';
+        }
+
         const phases = ['advanced', 'essential', 'initial'];
         return phases.find(phase =>
           questions.some(q => q.phase === phase && userAnswers[q._id]?.trim())
