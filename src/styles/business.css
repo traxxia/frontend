@@ -192,6 +192,7 @@
   border: 1px solid #e1e5e9;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
   position: relative;
+  scroll-margin-top: 80px;
 }
 
 .modern-analysis-card:hover {

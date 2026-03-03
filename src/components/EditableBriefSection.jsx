@@ -36,6 +36,7 @@ const EditableField = ({
     <div
       ref={el => fieldRefs.current[field.key] = el}
       className={`brief-item ${isEdited ? 'edited' : ''}`}
+      data-component="advanced-brief"
       style={{
         border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
         backgroundColor: isHighlighted ? '#fef3c7' : 'white',
@@ -61,7 +62,8 @@ const EditableField = ({
           color: isHighlighted ? '#92400e' : 'inherit',
           fontWeight: isHighlighted ? '600' : '500',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
           gap: '8px'
         }}>
           <span style={{
@@ -70,11 +72,15 @@ const EditableField = ({
             padding: '2px 6px',
             borderRadius: '4px',
             backgroundColor: '#f3f4f6',
-            color: '#374151'
+            color: '#374151',
+            flexShrink: 0,
+            marginTop: '2px'
           }}>
             {field.sequentialNumber}.
           </span>
-          {field.label}
+          <span style={{ flex: 1, wordBreak: 'break-word' }}>
+            {field.label}
+          </span>
 
           {field.phase && (
             <span className='edit-batch' style={{
@@ -90,7 +96,11 @@ const EditableField = ({
                 field.phase.toLowerCase() === 'initial' ? '#1e40af' :
                   field.phase.toLowerCase() === 'essential' ? '#166534' :
                     field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
-              letterSpacing: '0.025em'
+              letterSpacing: '0.025em',
+              flexShrink: 0,
+              padding: '2px 8px',
+              whiteSpace: 'nowrap',
+              marginLeft: 'auto'
             }}>
               {field.phase}
             </span>

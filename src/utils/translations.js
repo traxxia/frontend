@@ -293,7 +293,7 @@ export const staticTranslations = {
     // BUSINESS DETAIL PAGE
     // ===========================
     'questions': 'Questions',
-    'analysis': 'Insights (6 Cs)',
+    'insights': 'Insights (6 Cs)',
     'strategic': 'S.T.R.A.T.E.G.I.C',
     'saving': 'Saving...',
     'save_successful': 'Save successful!',
@@ -777,7 +777,7 @@ export const staticTranslations = {
     // ===========================
     'unlockBusinessAnalysis': 'Unlock Business Analysis',
     'completePhaseMessage': 'Complete all questions in the initial phase to unlock SWOT analysis and strategic insights!',
-    'brief': 'Brief',
+    'advanced': 'Brief',
     'letsBegin': "Let's Begin!",
     'welcomeToTraxia': 'Welcome to Traxxia AI: your strategic business advisor!',
     'typeYourAnswer': 'Type your answer here...',
@@ -1679,7 +1679,7 @@ export const staticTranslations = {
     // PÁGINA DE DETALLE DEL NEGOCIO
     // ===========================
     'questions': 'Preguntas',
-    'analysis': 'Perspectivas (6 Cs)',
+    'insights': 'Perspectivas (6 Cs)',
     'strategic': 'E.S.T.R.A.T.É.G.I.C.O',
     'Not Answered': 'No Respondida',
     'saving': 'Guardando...',
@@ -1852,7 +1852,7 @@ export const staticTranslations = {
     'regenerate': 'Regenerar',
     'unlockBusinessAnalysis': 'Desbloquear Análisis de Negocios',
     'completePhaseMessage': '¡Completa todas las preguntas de la fase inicial para desbloquear el análisis FODA y conocimientos estratégicos!',
-    'brief': 'Breve',
+    'advanced': 'Breve',
     'letsBegin': '¡Comencemos!',
     'welcomeToTraxia': '¡Bienvenido a Traxxia AI: tu asesor comercial estratégico!',
     'typeYourAnswer': 'Escribe tu respuesta aquí...',

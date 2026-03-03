@@ -851,11 +851,11 @@ const TabNavigation = ({
         <span>{t('conversation')}</span>
       </button>
       <button
-        onClick={() => onTabChange('analysis')}
-        className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+        onClick={() => onTabChange('insights')}
+        className={`nav-tab ${activeTab === 'insights' ? 'active' : ''}`}
       >
         <Target size={16} />
-        <span>{t('analysis')}</span>
+        <span>{t('insights')}</span>
       </button>
       <button
         onClick={() => onTabChange('strategic')}
@@ -913,7 +913,7 @@ const TabContent = ({
           isLoadingBusiness={isLoadingBusiness}
         />
       );
-    case 'analysis':
+    case 'insights':
       return (
         <AnalysisTab
           analysisData={analysisData}
