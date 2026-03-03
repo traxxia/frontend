@@ -738,9 +738,13 @@ const EditableBriefSection = ({
       'advanced': 3
     };
 
-    const sortedQuestions = [...questions].sort((a, b) => {
-      const phaseA = phaseOrderMap[a.phase] || 4;
-      const phaseB = phaseOrderMap[b.phase] || 4;
+    const filteredQuestions = questions.filter(q =>
+      q.phase && !['good'].includes(q.phase.toLowerCase())
+    );
+
+    const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+      const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
+      const phaseB = phaseOrderMap[b.phase?.toLowerCase()] || 4;
 
       if (phaseA !== phaseB) {
         return phaseA - phaseB;
