@@ -666,12 +666,7 @@ const AnalysisContentManager = (props) => {
         'productivityMetrics',
         'maturityScore',
         'competitiveLandscape',
-        'coreAdjacency',
-        'profitabilityAnalysis',
-        'growthTracker',
-        'liquidityEfficiency',
-        'investmentPerformance',
-        'leverageRisk'
+        'coreAdjacency'
       ],
       financial: [
         'profitabilityAnalysis',
