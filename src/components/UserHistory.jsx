@@ -424,20 +424,16 @@ const parseAnalysisData = (userDetails, user) => {
 
         case 'competitivelandscape':
         case 'competitive landscape':
+        case 'competitive_landscape':
           analysisData.competitiveLandscapeData = analysisResult;
           break;
 
         case 'coreadjacency':
         case 'core adjacency':
+        case 'core_adjacency':
+        case 'core_adjacency_matrix':
           analysisData.coreAdjacencyData = analysisResult;
           break;
-
-        case 'profitabilityanalysis':
-        case 'profitability_analysis':
-        case 'profitability':
-          analysisData.profitabilityData = analysisResult;
-          break;
-
 
         // Financial Analysis Types - SIMPLIFIED: Just check if data exists
         case 'profitabilityanalysis':
@@ -486,7 +482,6 @@ const parseAnalysisData = (userDetails, user) => {
         default:
           // Fallback detection for financial analyses based on is_financial_analysis flag
           if (result.is_financial_analysis) {
-
             if (analysisType.includes('profitab')) {
               analysisData.profitabilityData = analysisResult;
             } else if (analysisType.includes('growth')) {
@@ -525,21 +520,34 @@ const hasAnalysisData = (analysisData) => {
     analysisData.strategicRadar || analysisData.cultureProfile ||
     analysisData.productivityMetrics || analysisData.maturityScore ||
     analysisData.costEfficiency || analysisData.financialPerformance ||
-    analysisData.financialBalance || analysisData.operationalEfficiency
+    analysisData.financialBalance || analysisData.operationalEfficiency ||
+    analysisData.competitiveLandscapeData || analysisData.coreAdjacencyData ||
+    analysisData.profitabilityData || analysisData.growthTrackerData ||
+    analysisData.liquidityEfficiencyData || analysisData.investmentPerformanceData ||
+    analysisData.leverageRiskData
   );
 };
 const createSimplePhaseManager = (analysisData, userDetails) => {
   // Simplified logic - similar to AnalysisContentManager
-  const hasFullSwot = !!analysisData?.fullSwot;
-  const hasEssentialAnalyses = !!(
+  const hasInitial = !!(
+    analysisData?.swot ||
+    analysisData?.purchaseCriteria ||
+    analysisData?.loyaltyNPS ||
+    analysisData?.porters ||
+    analysisData?.pestel
+  );
+
+  const hasEssential = !!(
+    analysisData?.fullSwot ||
     analysisData?.competitiveAdvantage ||
     analysisData?.expandedCapability ||
     analysisData?.strategicRadar ||
     analysisData?.productivityMetrics ||
-    analysisData?.maturityScore
+    analysisData?.maturityScore ||
+    analysisData?.competitiveLandscapeData ||
+    analysisData?.coreAdjacencyData
   );
 
-  // Financial analyses show if we have any financial data (similar to AnalysisContentManager)
   const hasAnyFinancialData = !!(
     analysisData?.profitabilityData ||
     analysisData?.growthTrackerData ||
@@ -548,11 +556,21 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
     analysisData?.leverageRiskData
   );
 
+  // Determine phases reached
+  const isAdvancedReached = hasAnyFinancialData;
+  const isEssentialReached = hasEssential || isAdvancedReached;
+  const isInitialReached = hasInitial || isEssentialReached;
+
   return {
     getUnlockedFeatures: () => ({
       analysis: true,
-      fullSwot: hasFullSwot && hasEssentialAnalyses,
-      goodPhase: hasAnyFinancialData // Simple: show if we have any financial data
+      initialPhase: isInitialReached,
+      essentialPhase: isEssentialReached,
+      advancedPhase: isAdvancedReached,
+      hasDocument: hasAnyFinancialData,
+      // Legacy flags
+      fullSwot: hasEssential,
+      goodPhase: hasAnyFinancialData
     })
   };
 };
