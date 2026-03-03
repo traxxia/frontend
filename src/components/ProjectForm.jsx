@@ -415,23 +415,34 @@ const ProjectForm = ({
   };
 
   const handleProjectNameChange = (e) => {
-    const value = e.target.value;
-    setProjectName(value);
+  let value = e.target.value;
+  value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
 
-    if (showErrors) {
-      const validation = validateField('Project Name', value, {
-        required: true,
-        minLength: 3,
-        maxLength: 100,
-        requiresText: true
-      });
-      setFieldErrors(prev => ({
-        ...prev,
-        projectName: validation.isValid ? null : validation.message
-      }));
-    }
-    handleFieldEdit("project_name");
-  };
+  setProjectName(value);
+
+  let customError = null;
+  if (/^[0-9]+$/.test(value.trim())) {
+    customError = "Project name cannot contain only numbers.";
+  }
+
+  if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
+    customError = "Cannot use more than 5 consecutive special characters.";
+  }
+
+  if (showErrors || customError) {
+    const validation = validateField('Project Name', value, {
+      required: true,
+      minLength: 3,
+      maxLength: 100,
+      requiresText: true
+    });
+    setFieldErrors(prev => ({
+      ...prev,
+      projectName: customError || (validation.isValid ? null : validation.message)
+    }));
+  }
+  handleFieldEdit("project_name");
+};
 
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
@@ -490,21 +501,34 @@ const ProjectForm = ({
   };
 
   const handleAccountableOwnerChange = (e) => {
-    const value = e.target.value;
-    setAccountableOwner(value);
+  let value = e.target.value;
 
-    if (showErrors) {
-      const validation = validateField('Accountable Owner', value, {
-        required: true,
-        requiresText: true
-      });
-      setFieldErrors(prev => ({
-        ...prev,
-        accountableOwner: validation.isValid ? null : validation.message
-      }));
-    }
-    handleFieldEdit("accountable_owner");
-  };
+  // Allow letters, numbers, spaces, dot, hyphen, @
+  value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
+
+  setAccountableOwner(value);
+
+  let customError = null;
+
+  // Required
+  if (!value.trim()) {
+    customError = "Accountable Owner is required.";
+  }
+
+  // Must contain at least one alphabet
+  else if (!/[A-Za-z]/.test(value)) {
+    customError = "Accountable Owner must contain at least one alphabet.";
+  }
+
+  if (showErrors || customError) {
+    setFieldErrors(prev => ({
+      ...prev,
+      accountableOwner: customError
+    }));
+  }
+
+  handleFieldEdit("accountable_owner");
+};
 
   const handleSuccessCriteriaChange = (e) => {
     const value = e.target.value;

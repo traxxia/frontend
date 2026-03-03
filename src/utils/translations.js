@@ -1355,6 +1355,18 @@ export const staticTranslations = {
     'Technology / SaaS': 'Technology / SaaS',
     'Government / Public Sector': 'Government / Public Sector',
 
+    // ========================
+    // Create project form
+    // ==========================
+    'Owner_Placeholder': 'Owner name or email',
+    'Assumption_Placeholder': 'Describe the assumption',
+    'Success_Criteria_Placeholder': 'Describe the success criteria',
+    'Kill_Criteria_Placeholder': 'Describe the kill criteria',
+    'Status_is_required': 'Status is required',
+    'what_are_the_main_requirements_or_constraints': 'What are the main requirements or constraints',
+    'define_what_is_not_included_in_this_project': 'Define what is not included in this project',
+    'what_is_the_end_result_use_outcome_based_wording': 'What is the end result use outcome based wording'
+
 
   },
 
@@ -2695,6 +2707,18 @@ export const staticTranslations = {
     'completeOnboardingPrompt': 'Por favor complete la Incorporación PMF para ver los resultados aquí.',
     'startPMFOnboarding': 'Iniciar Incorporación PMF',
     'Projects': 'Proyectos',
+
+    // ========================
+    // Create project form
+    // ==========================
+    'Owner_Placeholder': 'Nombre del propietario o dirección de correo electrónico',
+    'Assumption_Placeholder': 'Describe la suposición',
+    'Success_Criteria_Placeholder': 'Describe el criterio de éxito',
+    'Kill_Criteria_Placeholder': 'Describe los criterios de eliminación.',
+    'Status_is_required': 'Se requiere estado',
+    'what_are_the_main_requirements_or_constraints': '¿Cuáles son los principales requisitos o limitaciones?',
+    'define_what_is_not_included_in_this_project': 'Define lo que no está incluido en este proyecto',
+    'what_is_the_end_result_use_outcome_based_wording': '¿Cuál es el resultado final? Utilice una redacción basada en resultados.'
   }
 };
 

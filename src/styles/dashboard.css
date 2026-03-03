@@ -162,19 +162,16 @@
   .status-badge.status-active {
     background-color: #ecfdf5 !important;
     color: #059669 !important;
-    border: 1px solid #10b981 !important;
   }
 
   .status-badge.status-archived {
     background-color: #fffbeb !important;
     color: #d97706 !important;
-    border: 1px solid #f59e0b !important;
   }
 
   .status-badge.status-deleted {
     background-color: #fef2f2 !important;
     color: #dc2626 !important;
-    border: 1px solid #ef4444 !important;
   }
 
   .business-item:hover {
@@ -1625,7 +1622,96 @@
   }
 }
 
+.text-grey-custom {
+  color: #6c757d !important; 
+}
 
+/* Gradient Accordion Header */
+.businesses-section .accordion-button {
+  background: linear-gradient(
+    135deg,
+    #1f6bff 0%,
+    #2db4ff 100%
+  ) !important;
+
+  color: #ffffff !important;
+ 
+}
+
+.businesses-section .accordion-button::after {
+  filter: brightness(0) invert(1);
+}
+
+.businesses-section .accordion-button:not(.collapsed) {
+  background: linear-gradient(
+    135deg,
+    #1a5ae0 0%,
+    #1f6bff 100%
+  ) !important;
+}
+
+
+.businesses-section .accordion-title-text {
+  color: #ffffff !important;
+}
+
+.status-badge {
+  font-size: 12px;
+  font-weight: 500;
+  height: 28px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px; 
+  border: 1px solid rgba(0, 0, 0, 0.06); 
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* ACTIVE */
+.status-active {
+  background-color: #d1fae5;
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.18);
+}
+
+/* DELETED */
+.status-deleted {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.18); 
+}
+
+/* ARCHIVED */
+.status-archived {
+  background-color: #e5e7eb;
+  color: #374151;
+  border-color: rgba(55, 65, 81, 0.15);
+}
+
+/* Delete button */
+.delete-btn-simple {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+  height: 28px;
+  width: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px !important;  
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.delete-btn-simple:hover {
+  background-color: #fecaca !important;
+  transform: translateY(-1px);
+}
+
+.delete-btn-simple:focus {
+  outline: none !important;
+}
 
 
 

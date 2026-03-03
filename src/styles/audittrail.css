@@ -835,7 +835,7 @@
 }
 
 .analysis-modal-content-wrapper {
-  pointer-events: none;
+  /* pointer-events: none; */
   user-select: text;
 }
 
@@ -1364,3 +1364,36 @@
   }
 
 }
+
+
+@media (max-width: 576px) {
+
+  .admin-data-table td:last-child .analysis-details {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .admin-data-table td:last-child .analysis-details button {
+    width: 100%;
+    display: flex;
+    justify-content: center;   
+    align-items: center;       
+    text-align: center;
+  }
+
+   .analysis-modal-content .section-container > div {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .analysis-modal-content .section-container button {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+}
+
