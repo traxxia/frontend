@@ -520,8 +520,8 @@ const BusinessSetupPage = () => {
   const getCurrentPhase = () => {
     const unlockedFeatures = phaseManager.getUnlockedFeatures();
     if (unlockedFeatures.advancedPhase) return 'advanced';
-    if (unlockedFeatures.goodPhase) return 'good';
-    if (unlockedFeatures.fullSwot) return 'essential';
+    if (unlockedFeatures.essentialPhase) return 'essential';
+    if (unlockedFeatures.initialPhase) return 'initial';
     return 'initial';
   };
 
@@ -568,31 +568,21 @@ const BusinessSetupPage = () => {
           }
         });
 
-      const analysisTypes = [
-        'swot', 'strategic', 'fullSwot', 'competitiveAdvantage', 'expandedCapability',
-        'strategicRadar', 'productivityMetrics', 'maturityScore', 'purchaseCriteria',
-        'loyaltyNPS', 'porters', 'pestel', 'profitabilityAnalysis', 'growthTracker',
-        'liquidityEfficiency', 'investmentPerformance', 'leverageRisk',
-        'competitiveLandscape', 'coreAdjacency'
-      ];
-
-      const setterMap = analysisTypes.reduce((acc, type) => {
-        const stateKey = type === 'swot' ? 'SwotAnalysisResult' : type.charAt(0).toUpperCase() + type.slice(1) + 'Data';
-        const setter = stateSetters[`set${stateKey}`];
-        if (setter) acc[type] = setter;
-        return acc;
-      }, {});
-
       let hasAnyAnalysis = false;
       Object.values(latestAnalysisByType).forEach(analysis => {
         const { analysis_type, analysis_data } = analysis;
         hasAnyAnalysis = true;
-        const setter = setterMap[analysis_type];
+
+        const setterName = apiService.getStateSetterName(analysis_type);
+        const setter = stateSetters[setterName];
+
         if (setter) {
           const data = analysis_type === 'swot'
             ? (typeof analysis_data === 'string' ? analysis_data : JSON.stringify(analysis_data))
             : analysis_data;
           setter(data);
+        } else {
+          console.warn(`No setter found for analysis type: ${analysis_type} (expected ${setterName})`);
         }
       });
 
@@ -900,7 +890,7 @@ const BusinessSetupPage = () => {
 
     const categoryOptions = {
       initial: {
-        "Context/Industry": ["Porter's Five Forces", "PESTEL Analysis"],
+        "Context/Industry": ["SWOT Analysis", "Porter's Five Forces", "PESTEL Analysis"],
         "Customer": ["Purchase Criteria", "Loyalty/NPS"]
       },
       essential: {
@@ -911,26 +901,10 @@ const BusinessSetupPage = () => {
         "Competition": ["Competitive Landscape"],
         "Current Strategy": ["Core"]
       },
-      good: {
-        "Costs/Financial": [
-          ...(hasUploadedDocument ? [
-            "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
-            "Investment Performance", "Leverage & Risk"
-          ] : []),
-          "Productivity Metrics"
-        ],
-        "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
-        "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
-        "Capabilities": ["Capability Heatmap", "Maturity Score"],
-        "Competition": ["Competitive Landscape"],
-        "Current Strategy": ["Core"]
-      },
       advanced: {
         "Costs/Financial": [
-          ...(hasUploadedDocument ? [
-            "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
-            "Investment Performance", "Leverage & Risk"
-          ] : []),
+          "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
+          "Investment Performance", "Leverage & Risk",
           "Productivity Metrics"
         ],
         "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
@@ -941,8 +915,13 @@ const BusinessSetupPage = () => {
       }
     };
 
-    if (!unlockedFeatures.fullSwot && categoryOptions.initial && categoryOptions.initial["Context/Industry"]) {
-      categoryOptions.initial["Context/Industry"].unshift("SWOT");
+    // If a document is uploaded, always add financial options regardless of phase
+    if (unlockedFeatures.hasDocument && (phase === 'initial' || phase === 'essential')) {
+      categoryOptions[phase]["Costs/Financial"] = [
+        ...(categoryOptions[phase]["Costs/Financial"] || []),
+        "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
+        "Investment Performance", "Leverage & Risk"
+      ];
     }
 
     return categoryOptions[phase] || {};
@@ -1097,38 +1076,38 @@ const BusinessSetupPage = () => {
       {isMobile && questionsLoaded && (
         <>
           <div className="mobile-header">
-  <div className="mobile-header-top">
-    <button
-      className="mobile-back-button"
-      onClick={handleBack}
-      aria-label="Go Back"
-    >
-      <ArrowLeft size={20} />
-    </button>
+            <div className="mobile-header-top">
+              <button
+                className="mobile-back-button"
+                onClick={handleBack}
+                aria-label="Go Back"
+              >
+                <ArrowLeft size={20} />
+              </button>
 
-    <div className="mobile-business-name">
-      {selectedBusinessName}
-    </div>
+              <div className="mobile-business-name">
+                {selectedBusinessName}
+              </div>
 
-    <button
-      className="mobile-menu-trigger"
-      onClick={() => setShowMobileMenu(!showMobileMenu)}
-      aria-label="Toggle Menu"
-    >
-      {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
-    </button>
-  </div>
+              <button
+                className="mobile-menu-trigger"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                aria-label="Toggle Menu"
+              >
+                {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
 
-  <div className="mobile-active-tab">
-    {activeTab === "aha" && t("aha")}
-    {activeTab === "executive" && t("Executive Summary")}
-    {activeTab === "priorities" && t("Priorities & Projects")}
-    {activeTab === "brief" && t("Questions and Answers")}
-    {activeTab === "analysis" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
-    {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
-    {activeTab === "projects" && t("Projects")}
-  </div>
-</div>
+            <div className="mobile-active-tab">
+              {activeTab === "aha" && t("aha")}
+              {activeTab === "executive" && t("Executive Summary")}
+              {activeTab === "priorities" && t("Priorities & Projects")}
+              {activeTab === "brief" && t("Questions and Answers")}
+              {activeTab === "analysis" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+              {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+              {activeTab === "projects" && t("Projects")}
+            </div>
+          </div>
 
           {showMobileMenu && (
             <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
@@ -1214,7 +1193,7 @@ const BusinessSetupPage = () => {
                           {t("backToOverview")}
                         </button>
                         {selectedBusinessName && (
-                          <div className="business-breadcrumb"> 
+                          <div className="business-breadcrumb">
                             <span className="business-header-name">{selectedBusinessName}</span>
                           </div>
                         )}
@@ -1419,7 +1398,7 @@ const BusinessSetupPage = () => {
                             userAnswers={userAnswers}
                             businessName={businessData.name}
                             onRegenerate={handleStrategicAnalysisRegenerate}
-                            isRegenerating={isStrategicRegenerating}
+                            isRegenerating={isStrategicRegenerating || isAnalysisRegenerating}
                             canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
                             strategicData={strategicData}
                             selectedBusinessId={selectedBusinessId}
@@ -1488,10 +1467,10 @@ const BusinessSetupPage = () => {
                       </button>
                     )}
                     {showProjectsTab && (
-                        <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
-                          {t("Projects")}
-                        </button>
-                      )}
+                      <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
+                        {t("Projects")}
+                      </button>
+                    )}
                     {ENABLE_PMF && (
                       <button
                         className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
@@ -1594,7 +1573,7 @@ const BusinessSetupPage = () => {
                         userAnswers={userAnswers}
                         businessName={businessData.name}
                         onRegenerate={handleStrategicAnalysisRegenerate}
-                        isRegenerating={isStrategicRegenerating}
+                        isRegenerating={isStrategicRegenerating || isAnalysisRegenerating}
                         canRegenerate={canShowRegenerateButtons && strategicData && !isAnalysisRegenerating && unlockedFeatures.analysis}
                         strategicData={strategicData}
                         selectedBusinessId={selectedBusinessId}

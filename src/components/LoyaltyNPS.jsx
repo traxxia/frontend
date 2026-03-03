@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react'; 
+import { Heart, TrendingUp, Users, Calendar, Loader, Target, Award, BarChart3 } from 'lucide-react';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import AnalysisError from './AnalysisError';
@@ -17,11 +17,11 @@ const LoyaltyNPS = ({
   selectedBusinessId,
   onRedirectToBrief,
   hideImproveButton = false,
-}) => { 
-  
+}) => {
+
   const [data, setData] = useState(loyaltyNPSData);
   const [hasGenerated, setHasGenerated] = useState(false);
-  
+
   const { t } = useTranslation();
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -31,10 +31,10 @@ const LoyaltyNPS = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.loyaltyNPS; 
-    
+    const analysisConfig = ANALYSIS_TYPES.loyaltyNPS;
+
     await checkMissingQuestionsAndRedirect(
-      'loyaltyNPS', 
+      'loyaltyNPS',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -60,22 +60,24 @@ const LoyaltyNPS = ({
   // Simplified validation - EXACTLY like other components
   const isLoyaltyNPSDataIncomplete = (data) => {
     if (!data) return true;
-    
+
     // Handle both wrapped and direct API response formats
     let normalizedData;
-    if (data.loyaltyMetrics) {
-      normalizedData = data;
+    const wrappedData = data.loyaltyMetrics || data.loyalty_metrics || data.loyaltyNPS || data.loyalty_nps || data.LoyaltyNPS;
+
+    if (wrappedData) {
+      normalizedData = { loyaltyMetrics: wrappedData };
     } else if (data.method && data.overallScore !== undefined) {
       normalizedData = { loyaltyMetrics: data };
     } else {
       return true;
     }
-    
+
     // Check if loyaltyMetrics exists
     if (!normalizedData.loyaltyMetrics) {
       return true;
     }
-    
+
     const metrics = normalizedData.loyaltyMetrics;
     const hasOverallScore = metrics.overallScore !== null && metrics.overallScore !== undefined;
     const hasMethod = metrics.method && metrics.method !== '';
@@ -90,16 +92,18 @@ const LoyaltyNPS = ({
     if (loyaltyNPSData) {
       // Handle both wrapped and direct API response formats
       let normalizedData;
-      if (loyaltyNPSData.loyaltyMetrics) {
-        // Data is already wrapped
-        normalizedData = loyaltyNPSData;
+      const wrappedData = loyaltyNPSData.loyaltyMetrics || loyaltyNPSData.loyalty_metrics || loyaltyNPSData.loyaltyNPS || loyaltyNPSData.loyalty_nps || loyaltyNPSData.LoyaltyNPS;
+
+      if (wrappedData) {
+        // Data is wrapped
+        normalizedData = { loyaltyMetrics: wrappedData };
       } else if (loyaltyNPSData.method && loyaltyNPSData.overallScore !== undefined) {
         // Data is direct from API, needs wrapping
         normalizedData = { loyaltyMetrics: loyaltyNPSData };
       } else {
         normalizedData = null;
       }
-      
+
       if (normalizedData) {
         setData(normalizedData);
         setHasGenerated(true);
@@ -159,10 +163,10 @@ const LoyaltyNPS = ({
     if (method === 'NPS' && scale?.zones) {
       // Calculate proportional positions based on actual scale values
       const totalRange = scale.max - scale.min; // 200 for NPS (-100 to 100)
-      
+
       const detractorEnd = (scale.zones.detractors[1] - scale.min) / totalRange; // 0.5
       const passiveEnd = (scale.zones.passives[1] - scale.min) / totalRange; // 0.65
-      
+
       zones = [
         { name: 'Detractors', range: scale.zones.detractors, color: '#EF4444', start: 0, end: detractorEnd },
         { name: 'Passives', range: scale.zones.passives, color: '#F59E0B', start: detractorEnd, end: passiveEnd },
@@ -312,7 +316,7 @@ const LoyaltyNPS = ({
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="loyalty-nps">
-        <AnalysisError 
+        <AnalysisError
           error="Unable to generate loyalty & NPS analysis. Please try regenerating or check your inputs."
           onRetry={handleRetry}
           title="Loyalty & NPS Analysis Error"
@@ -322,9 +326,9 @@ const LoyaltyNPS = ({
   }
 
   // Check if data is incomplete and show missing questions checker
-  if (!loyaltyNPSData || isLoyaltyNPSDataIncomplete(loyaltyNPSData)) { 
+  if (!loyaltyNPSData || isLoyaltyNPSDataIncomplete(loyaltyNPSData)) {
     return (
-      <div className="loyalty-nps"> 
+      <div className="loyalty-nps">
         <AnalysisEmptyState
           analysisType="loyaltyNPS"
           analysisDisplayName="Loyalty & NPS Analysis"
@@ -336,7 +340,7 @@ const LoyaltyNPS = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showImproveButton={!hideImproveButton}
-        /> 
+        />
       </div>
     );
   }
@@ -345,7 +349,7 @@ const LoyaltyNPS = ({
   if (!data?.loyaltyMetrics) {
     return (
       <div className="loyalty-nps">
-        <AnalysisError 
+        <AnalysisError
           error="The loyalty NPS data received is not in the expected format. Please regenerate the analysis."
           onRetry={handleRetry}
           title="Invalid Data Structure"
@@ -356,12 +360,12 @@ const LoyaltyNPS = ({
 
   const loyaltyData = data.loyaltyMetrics;
   const classification = getScoreClassification(loyaltyData.overallScore, loyaltyData.method);
-  const trendIndicator = getTrendIndicator(loyaltyData.trend); 
+  const trendIndicator = getTrendIndicator(loyaltyData.trend);
 
   return (
     <div className="loyalty-nps" data-analysis-type="loyalty-nps"
       data-analysis-name="Loyalty & NPS Analysis"
-      data-analysis-order="4"> 
+      data-analysis-order="4">
 
       {/* Key Metrics */}
       <div className="ln-metrics">

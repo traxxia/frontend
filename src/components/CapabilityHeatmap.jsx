@@ -33,12 +33,23 @@ const CapabilityHeatmap = ({
 
   const extractCapabilityData = (data) => {
     if (!data) return null;
-    if (data.capabilityHeatmap) {
-      return data.capabilityHeatmap;
-    }
+
+    // Direct data format
     if (data.capabilities && data.maturityScale) {
       return data;
     }
+
+    // Wrapped data formats
+    const heatmap = data.capabilityHeatmap || data.capability_heatmap || data.CapabilityHeatmap;
+    if (heatmap && heatmap.capabilities && heatmap.maturityScale) {
+      return heatmap;
+    }
+
+    // Fallback for wrapped object without property check if it looks like the content
+    if (heatmap && typeof heatmap === 'object') {
+      return heatmap;
+    }
+
     return null;
   };
 

@@ -45,7 +45,7 @@ const FullSWOTPortfolio = ({
     const [typingTexts, setTypingTexts] = useState({});
     const streamingIntervalRef = useRef(null);
 
-   const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
+    const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -84,14 +84,12 @@ const FullSWOTPortfolio = ({
     const isFullSwotDataIncomplete = (data) => {
         if (!data) return true;
 
-        let normalizedData;
-        if (data.swotPortfolio) {
-            normalizedData = data;
-        } else if (data.strengths || data.weaknesses) {
-            normalizedData = { swotPortfolio: data };
-        } else {
+        const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
+        if (!swotPortfolio) {
             return true;
         }
+
+        const normalizedData = { swotPortfolio };
 
         if (!normalizedData.swotPortfolio) {
             return true;
@@ -112,16 +110,12 @@ const FullSWOTPortfolio = ({
             return 0;
         }
 
-        let normalizedData;
-        if (data.swotPortfolio) {
-            normalizedData = data;
-        } else if (data.strengths || data.weaknesses) {
-            normalizedData = { swotPortfolio: data };
-        } else {
+        const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
+        if (!swotPortfolio) {
             return 0;
         }
 
-        const portfolio = normalizedData.swotPortfolio;
+        const portfolio = swotPortfolio;
         let total = 0;
 
         if (portfolio.strengths && Array.isArray(portfolio.strengths)) total += portfolio.strengths.length;
@@ -158,7 +152,7 @@ const FullSWOTPortfolio = ({
 
     const typeText = (text, rowIndex, field, delay = 0) => {
         if (text === null || text === undefined) return;
-        
+
         const textStr = typeof text === 'string' ? text : String(text);
 
         setTimeout(() => {
@@ -200,16 +194,12 @@ const FullSWOTPortfolio = ({
             return;
         }
 
-        let normalizedData;
-        if (fullSwotData.swotPortfolio) {
-            normalizedData = fullSwotData;
-        } else if (fullSwotData.strengths || fullSwotData.weaknesses) {
-            normalizedData = { swotPortfolio: fullSwotData };
-        } else {
+        const swotPortfolio = fullSwotData.swotPortfolio || fullSwotData.swot_portfolio || fullSwotData.fullSwot || fullSwotData.full_swot || (fullSwotData.strengths || fullSwotData.weaknesses ? fullSwotData : null);
+        if (!swotPortfolio) {
             return;
         }
 
-        const portfolio = normalizedData.swotPortfolio;
+        const portfolio = swotPortfolio;
 
         if (streamingIntervalRef.current) {
             clearInterval(streamingIntervalRef.current);
@@ -284,7 +274,7 @@ const FullSWOTPortfolio = ({
                 // Process strategic options
                 if (portfolio.strategicOptions) {
                     const so = portfolio.strategicOptions;
-                    
+
                     if (so.SO_strategies && Array.isArray(so.SO_strategies)) {
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < so.SO_strategies.length) {
@@ -329,7 +319,7 @@ const FullSWOTPortfolio = ({
                 // Process risk assessment
                 if (portfolio.riskAssessment) {
                     const ra = portfolio.riskAssessment;
-                    
+
                     if (ra.operationalRisks && Array.isArray(ra.operationalRisks)) {
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < ra.operationalRisks.length) {
@@ -387,17 +377,10 @@ const FullSWOTPortfolio = ({
 
     useEffect(() => {
         if (fullSwotData) {
-            let normalizedData;
-            if (fullSwotData.swotPortfolio) {
-                normalizedData = fullSwotData;
-            } else if (fullSwotData.strengths || fullSwotData.weaknesses) {
-                normalizedData = { swotPortfolio: fullSwotData };
-            } else {
-                normalizedData = null;
-            }
+            const swotPortfolio = fullSwotData.swotPortfolio || fullSwotData.swot_portfolio || fullSwotData.fullSwot || fullSwotData.full_swot || (fullSwotData.strengths || fullSwotData.weaknesses ? fullSwotData : null);
 
-            if (normalizedData) {
-                setData(normalizedData);
+            if (swotPortfolio && (swotPortfolio.strengths || swotPortfolio.weaknesses)) {
+                setData({ swotPortfolio });
                 setHasGenerated(true);
                 setError(null);
             } else {
@@ -449,10 +432,10 @@ const FullSWOTPortfolio = ({
     }
 
     // Consolidated error state
-    if (error || 
+    if (error ||
         (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
         (data && !data?.swotPortfolio)) {
-        
+
         let errorMessage = error;
         if (!errorMessage) {
             if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
@@ -464,7 +447,7 @@ const FullSWOTPortfolio = ({
 
         return (
             <div className="porters-container">
-                <AnalysisError 
+                <AnalysisError
                     error={errorMessage}
                     onRetry={handleRetry}
                     title="Full SWOT Portfolio Analysis Error"
@@ -625,19 +608,19 @@ const FullSWOTPortfolio = ({
                                                     <td>
                                                         {hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
                                                         {item.score && (
                                                             <span className={`status-badge ${getScoreColor(item.score)}`}>
                                                                 {item.score}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
                                                         <span className="force-tag">
                                                             {hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}
                                                         </span>
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
                                                         {item.competitiveAdvantage ? (
                                                             <span className="status-badge high-intensity">
                                                                 Yes
@@ -648,7 +631,7 @@ const FullSWOTPortfolio = ({
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         {item.customerValidated ? (
                                                             <span className="status-badge high-intensity">
                                                                 Yes
@@ -698,19 +681,19 @@ const FullSWOTPortfolio = ({
                                                     <td>
                                                         {hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
                                                         {item.score && (
                                                             <span className={`status-badge ${getScoreColor(item.score)}`}>
                                                                 {item.score}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
                                                         <span className="force-tag">
                                                             {hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}
                                                         </span>
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
                                                         {item.improvementPriority && (
                                                             <span className={`status-badge ${getPriorityColor(item.improvementPriority)}`}>
                                                                 {item.improvementPriority}
@@ -757,19 +740,19 @@ const FullSWOTPortfolio = ({
                                                     <td>
                                                         {hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
                                                         {item.score && (
                                                             <span className={`status-badge ${getScoreColor(item.score)}`}>
                                                                 {item.score}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
                                                         <span className="force-tag">
                                                             {hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}
                                                         </span>
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
                                                         {item.marketTrend ? (
                                                             <span className="status-badge high-intensity">
                                                                 Yes
@@ -780,7 +763,7 @@ const FullSWOTPortfolio = ({
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         {item.timeframe && (
                                                             <span className="timeline-badge">
                                                                 {hasStreamed ? item.timeframe : (typingTexts[`${rowIndex}-timeframe`] || item.timeframe)}
@@ -827,26 +810,26 @@ const FullSWOTPortfolio = ({
                                                     <td>
                                                         {hasStreamed ? item.item : (typingTexts[`${rowIndex}-item`] || item.item)}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
                                                         {item.score && (
                                                             <span className={`status-badge ${getScoreColor(item.score)}`}>
                                                                 {item.score}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
                                                         <span className="force-tag">
                                                             {hasStreamed ? (item.category?.replace(/_/g, ' ') || 'N/A') : (typingTexts[`${rowIndex}-category`]?.replace(/_/g, ' ') || item.category?.replace(/_/g, ' ') || 'N/A')}
                                                         </span>
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
                                                         {item.likelihood && (
                                                             <span className={`status-badge ${getPriorityColor(item.likelihood)}`}>
                                                                 {item.likelihood}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.4s' }}>
+                                                    <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                                                         {item.impact && (
                                                             <span className={`status-badge ${getPriorityColor(item.impact)}`}>
                                                                 {item.impact}
@@ -1031,17 +1014,17 @@ const FullSWOTPortfolio = ({
                                                 <td>
                                                     {hasStreamed ? risk.risk : (typingTexts[`${rowIndex}-risk`] || risk.risk)}
                                                 </td>
-                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
                                                     <span className={`status-badge ${getLikelihoodColor(risk.likelihood)}`}>
                                                         {risk.likelihood}
                                                     </span>
                                                 </td>
-                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
                                                     <span className="status-badge medium-intensity">
                                                         {risk.potentialFinancialImpact}
                                                     </span>
                                                 </td>
-                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
                                                     {hasStreamed ? risk.mitigationMeasures : (typingTexts[`${rowIndex}-mitigation`] || risk.mitigationMeasures)}
                                                 </td>
                                             </StreamingRow>
@@ -1068,17 +1051,17 @@ const FullSWOTPortfolio = ({
                                                 <td>
                                                     {hasStreamed ? risk.risk : (typingTexts[`${rowIndex}-risk`] || risk.risk)}
                                                 </td>
-                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.1s' }}>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.1s' }}>
                                                     <span className={`status-badge ${getLikelihoodColor(risk.likelihood)}`}>
                                                         {risk.likelihood}
                                                     </span>
                                                 </td>
-                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.2s' }}>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
                                                     <span className="status-badge medium-intensity">
                                                         {risk.potentialFinancialImpact}
                                                     </span>
                                                 </td>
-                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.3s' }}>
+                                                <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.3s' }}>
                                                     {hasStreamed ? risk.mitigationMeasures : (typingTexts[`${rowIndex}-mitigation`] || risk.mitigationMeasures)}
                                                 </td>
                                             </StreamingRow>

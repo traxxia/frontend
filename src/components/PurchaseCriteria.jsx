@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react'; 
+import { Target, TrendingUp, Star, Calendar, Loader, BarChart3, Zap, RefreshCw } from 'lucide-react';
 import '../styles/Analytics.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
@@ -46,10 +46,10 @@ const PurchaseCriteria = ({
   };
 
   const handleMissingQuestionsCheck = async () => {
-    const analysisConfig = ANALYSIS_TYPES.purchaseCriteria; 
-    
+    const analysisConfig = ANALYSIS_TYPES.purchaseCriteria;
+
     await checkMissingQuestionsAndRedirect(
-      'purchaseCriteria', 
+      'purchaseCriteria',
       selectedBusinessId,
       handleRedirectToBrief,
       {
@@ -63,12 +63,24 @@ const PurchaseCriteria = ({
   const isCriteriaDataIncomplete = (data) => {
     if (!data) return true;
 
+    // Handle both wrapped and direct API response formats
+    let normalizedData;
+    if (data.purchaseCriteria) {
+      normalizedData = data.purchaseCriteria;
+    } else if (data.purchase_criteria) {
+      normalizedData = data.purchase_criteria;
+    } else if (data.criteria) {
+      normalizedData = data;
+    } else {
+      return true;
+    }
+
     // Check if criteria array is empty or null
-    if (!data.criteria || data.criteria.length === 0) return true;
+    if (!normalizedData.criteria || normalizedData.criteria.length === 0) return true;
 
     // Check if any critical fields are null/undefined
     const criticalFields = ['scale', 'overallAlignment'];
-    const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
+    const hasNullFields = criticalFields.some(field => normalizedData[field] === null || normalizedData[field] === undefined);
 
     return hasNullFields;
   };
@@ -76,15 +88,15 @@ const PurchaseCriteria = ({
   // Handle regeneration
   const handleRegenerate = async () => {
     if (onRegenerate) {
-        try {
-            await onRegenerate(); // Add await here
-        } catch (error) {
-            console.error('Error in PurchaseCriteria regeneration:', error);
-            setError(error.message || 'Failed to regenerate analysis');
-        }
+      try {
+        await onRegenerate(); // Add await here
+      } catch (error) {
+        console.error('Error in PurchaseCriteria regeneration:', error);
+        setError(error.message || 'Failed to regenerate analysis');
+      }
     } else {
-        setCriteriaData(null);
-        setError(null);
+      setCriteriaData(null);
+      setError(null);
     }
   };
 
@@ -98,10 +110,24 @@ const PurchaseCriteria = ({
 
   // Update criteria data when prop changes
   useEffect(() => {
-    if (purchaseCriteriaData && purchaseCriteriaData !== criteriaData) {
-      setCriteriaData(purchaseCriteriaData);
-      if (onDataGenerated) {
-        onDataGenerated(purchaseCriteriaData);
+    if (purchaseCriteriaData) {
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (purchaseCriteriaData.purchaseCriteria) {
+        normalizedData = purchaseCriteriaData.purchaseCriteria;
+      } else if (purchaseCriteriaData.purchase_criteria) {
+        normalizedData = purchaseCriteriaData.purchase_criteria;
+      } else if (purchaseCriteriaData.criteria) {
+        normalizedData = purchaseCriteriaData;
+      } else {
+        normalizedData = null;
+      }
+
+      if (normalizedData && normalizedData !== criteriaData) {
+        setCriteriaData(normalizedData);
+        if (onDataGenerated) {
+          onDataGenerated(normalizedData);
+        }
       }
     }
   }, [purchaseCriteriaData]);
@@ -114,7 +140,21 @@ const PurchaseCriteria = ({
     hasInitialized.current = true;
 
     if (purchaseCriteriaData) {
-      setCriteriaData(purchaseCriteriaData);
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (purchaseCriteriaData.purchaseCriteria) {
+        normalizedData = purchaseCriteriaData.purchaseCriteria;
+      } else if (purchaseCriteriaData.purchase_criteria) {
+        normalizedData = purchaseCriteriaData.purchase_criteria;
+      } else if (purchaseCriteriaData.criteria) {
+        normalizedData = purchaseCriteriaData;
+      } else {
+        normalizedData = null;
+      }
+
+      if (normalizedData) {
+        setCriteriaData(normalizedData);
+      }
     }
 
     return () => {
@@ -263,7 +303,7 @@ const PurchaseCriteria = ({
   if (error) {
     return (
       <div className="purchase-criteria">
-        <AnalysisError 
+        <AnalysisError
           error={error}
           onRetry={handleRetry}
           title="Purchase Criteria Analysis Error"
@@ -274,7 +314,7 @@ const PurchaseCriteria = ({
 
   if (!criteriaData || isCriteriaDataIncomplete(criteriaData)) {
     return (
-      <div className="purchase-criteria"> 
+      <div className="purchase-criteria">
 
         {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
@@ -288,7 +328,7 @@ const PurchaseCriteria = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showImproveButton={!hideImproveButton}
-        /> 
+        />
       </div>
     );
   }
@@ -300,7 +340,7 @@ const PurchaseCriteria = ({
       data-analysis-type="purchase-criteria"
       data-analysis-name="Purchase Criteria Matrix"
       data-analysis-order="2">
-       
+
       {/* Key Metrics */}
       <div className="pc-metrics">
         <div className="pc-metric-card pc-metric-blue">

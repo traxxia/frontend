@@ -23,27 +23,6 @@ export const PHASE_API_CONFIG = {
     'coreAdjacency' // Add this line
   ],
 
-  good: [
-    'purchaseCriteria',
-    'loyaltyNPS',
-    'porters',
-    'pestel',
-    'fullSwot',
-    'competitiveAdvantage',
-    'expandedCapability',
-    'strategicRadar',
-    'productivityMetrics',
-    'maturityScore',
-    'competitiveLandscape',
-    'coreAdjacency',
-    // 5 financial analyses
-    'profitabilityAnalysis',
-    'growthTracker',
-    'liquidityEfficiency',
-    'investmentPerformance',
-    'leverageRisk'
-  ],
-
   advanced: [
     'purchaseCriteria',
     'loyaltyNPS',
@@ -484,17 +463,8 @@ export class AnalysisApiService {
         // Use rawPayload if provided, otherwise construct the default payload
         const payload = rawPayload || {
           questions: questionsArray,
-          answers: answersArray,
-          business_id: selectedBusinessId,
-          company: {
-            name: companyName || (questionsArray[0] === 'Company Name' ? answersArray[0] : null)
-          }
+          answers: answersArray, 
         };
-
-        // Ensure business_id is present if available and not already in rawPayload
-        if (selectedBusinessId && !payload.business_id && !payload.businessId) {
-          payload.business_id = selectedBusinessId;
-        }
 
         response = await fetch(`${this.ML_API_BASE_URL}/${endpoint}?stream=true`, {
           method: 'POST',

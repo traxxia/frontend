@@ -37,7 +37,7 @@ const CompetitiveAdvantageMatrix = ({
     const [typingTexts, setTypingTexts] = useState({});
     const streamingIntervalRef = useRef(null);
     const { t } = useTranslation();
- 
+
     const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(streamingManager, cardId, isExpanded, visibleRows);
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -85,21 +85,20 @@ const CompetitiveAdvantageMatrix = ({
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
 
-        let normalizedData;
+        // Handle both wrapped and direct API response formats
+        let advantage;
         if (data.competitiveAdvantage) {
-            normalizedData = data;
-        } else if (data.differentiators || data.competitivePosition) {
-            normalizedData = { competitiveAdvantage: data };
+            advantage = data.competitiveAdvantage;
+        } else if (data.competitive_advantage) {
+            advantage = data.competitive_advantage;
+        } else if (data.differentiators || data.competitivePosition || data.customerChoiceReasons) {
+            advantage = data;
         } else {
             return true;
         }
-        if (!normalizedData.competitiveAdvantage) {
-            return true;
-        }
 
-        const advantage = normalizedData.competitiveAdvantage;
         const hasDifferentiators = advantage.differentiators && advantage.differentiators.length > 0;
-        const hasCompetitivePosition = advantage.competitivePosition && advantage.competitivePosition.overallScore;
+        const hasCompetitivePosition = advantage.competitivePosition && (advantage.competitivePosition.overallScore || advantage.competitivePosition.marketPosition);
         const hasCustomerChoiceReasons = advantage.customerChoiceReasons && advantage.customerChoiceReasons.length > 0;
         const sectionsWithData = [hasDifferentiators, hasCompetitivePosition, hasCustomerChoiceReasons].filter(Boolean).length;
 
@@ -118,26 +117,27 @@ const CompetitiveAdvantageMatrix = ({
             return 0;
         }
 
-        let normalizedData;
+        let advantage;
         if (data.competitiveAdvantage) {
-            normalizedData = data;
-        } else if (data.differentiators || data.competitivePosition) {
-            normalizedData = { competitiveAdvantage: data };
+            advantage = data.competitiveAdvantage;
+        } else if (data.competitive_advantage) {
+            advantage = data.competitive_advantage;
+        } else if (data.differentiators || data.competitivePosition || data.customerChoiceReasons) {
+            advantage = data;
         } else {
             return 0;
         }
 
-        const advantage = normalizedData.competitiveAdvantage;
         let total = 0;
- 
+
         if (advantage.competitivePosition) {
-            total += 4; 
+            total += 4;
         }
- 
+
         if (advantage.customerChoiceReasons && Array.isArray(advantage.customerChoiceReasons)) {
             total += advantage.customerChoiceReasons.length;
         }
- 
+
         if (advantage.differentiators && Array.isArray(advantage.differentiators)) {
             total += advantage.differentiators.length;
         }
@@ -168,10 +168,13 @@ const CompetitiveAdvantageMatrix = ({
 
     useEffect(() => {
         if (competitiveAdvantageData) {
+            // Handle both wrapped and direct API response formats
             let normalizedData;
             if (competitiveAdvantageData.competitiveAdvantage) {
                 normalizedData = competitiveAdvantageData;
-            } else if (competitiveAdvantageData.differentiators || competitiveAdvantageData.competitivePosition) {
+            } else if (competitiveAdvantageData.competitive_advantage) {
+                normalizedData = { competitiveAdvantage: competitiveAdvantageData.competitive_advantage };
+            } else if (competitiveAdvantageData.differentiators || competitiveAdvantageData.competitivePosition || competitiveAdvantageData.customerChoiceReasons) {
                 normalizedData = { competitiveAdvantage: competitiveAdvantageData };
             } else {
                 normalizedData = null;
@@ -239,10 +242,10 @@ const CompetitiveAdvantageMatrix = ({
                 setVisibleRows(currentRow + 1);
 
                 let rowsProcessed = 0;
- 
+
                 if (advantage.competitivePosition) {
                     const positionIndex = currentRow - rowsProcessed;
-                    
+
                     if (positionIndex === 0) {
                         typeText('Overall Score', currentRow, 'metric', 0);
                         typeText(String(advantage.competitivePosition.overallScore), currentRow, 'value', 200);
@@ -264,10 +267,10 @@ const CompetitiveAdvantageMatrix = ({
 
                     rowsProcessed += 4;
                 }
- 
+
                 if (advantage.customerChoiceReasons && Array.isArray(advantage.customerChoiceReasons)) {
                     const choiceIndex = currentRow - rowsProcessed;
-                    
+
                     if (choiceIndex >= 0 && choiceIndex < advantage.customerChoiceReasons.length) {
                         const reason = advantage.customerChoiceReasons[choiceIndex];
                         typeText(reason.reason, currentRow, 'reason', 0);
@@ -281,10 +284,10 @@ const CompetitiveAdvantageMatrix = ({
 
                     rowsProcessed += advantage.customerChoiceReasons.length;
                 }
- 
+
                 if (advantage.differentiators && Array.isArray(advantage.differentiators)) {
                     const diffIndex = currentRow - rowsProcessed;
-                    
+
                     if (diffIndex >= 0 && diffIndex < advantage.differentiators.length) {
                         const diff = advantage.differentiators[diffIndex];
                         typeText(diff.type, currentRow, 'type', 0);
@@ -552,7 +555,7 @@ const CompetitiveAdvantageMatrix = ({
     if (error) {
         return (
             <div className="competitive-advantage-container">
-                <AnalysisError 
+                <AnalysisError
                     error={error}
                     onRetry={handleRetry}
                     title="Competitive Advantage Analysis Error"
@@ -583,7 +586,7 @@ const CompetitiveAdvantageMatrix = ({
 
     const advantage = data.competitiveAdvantage;
     const isStreaming = streamingManager?.shouldStream(cardId);
-    const hasStreamed = streamingManager?.hasStreamed(cardId); 
+    const hasStreamed = streamingManager?.hasStreamed(cardId);
     let currentRowIndex = 0;
     const positionIndices = {};
     const choiceIndices = {};
@@ -784,17 +787,17 @@ const CompetitiveAdvantageMatrix = ({
                                                                     {hasStreamed ? `${diff.uniqueness}/10` : (typingTexts[`${rowIndex}-uniqueness`] || `${diff.uniqueness}/10`)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.5s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
                                                                 <span className={`score-badge ${getIntensityColor(diff.customerValue)}`}>
                                                                     {hasStreamed ? `${diff.customerValue}/10` : (typingTexts[`${rowIndex}-customerValue`] || `${diff.customerValue}/10`)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                                                                 <span className={`score-badge ${getIntensityColor(diff.sustainability)}`}>
                                                                     {hasStreamed ? `${diff.sustainability}/10` : (typingTexts[`${rowIndex}-sustainability`] || `${diff.sustainability}/10`)}
                                                                 </span>
                                                             </td>
-                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.7s' }}>
+                                                            <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.7s' }}>
                                                                 {diff.proofPoints && diff.proofPoints.length > 0 && (
                                                                     <ul className="list-items">
                                                                         {diff.proofPoints.map((point, idx) => (

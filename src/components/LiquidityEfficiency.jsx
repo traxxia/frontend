@@ -17,7 +17,7 @@ const LiquidityEfficiency = ({
   canRegenerate = true,
   liquidityData = null,
   selectedBusinessId,
-  onRedirectToBrief, 
+  onRedirectToBrief,
   uploadedFile = null,
   onRedirectToChat,
   isMobile,
@@ -60,21 +60,13 @@ const LiquidityEfficiency = ({
   const isLiquidityDataIncomplete = (data) => {
     if (!data) return true;
 
-    let liquidityMetrics = null;
+    const normalized = data.liquidity || data['Liquidity & Efficiency'] || data.liquidityEfficiency || data.liquidity_efficiency || data.LiquidityEfficiency || (Object.keys(data).length > 0 && !data.liquidity ? data : null);
 
-    if (data.liquidity) {
-      liquidityMetrics = data.liquidity;
-    } else if (data['Liquidity & Efficiency']) {
-      liquidityMetrics = data['Liquidity & Efficiency'];
-    } else if (data.liquidityEfficiency) {
-      liquidityMetrics = data.liquidityEfficiency;
-    } else if (data.liquidity_efficiency) {
-      liquidityMetrics = data.liquidity_efficiency;
-    } else if (data.LiquidityEfficiency) {
-      liquidityMetrics = data.LiquidityEfficiency;
-    } else if (data && typeof data === 'object') {
-      liquidityMetrics = data;
+    if (!normalized || typeof normalized !== 'object') {
+      return true;
     }
+
+    const liquidityMetrics = normalized;
 
     if (!liquidityMetrics || typeof liquidityMetrics !== 'object') {
       return true;
@@ -135,16 +127,16 @@ const LiquidityEfficiency = ({
   // Helper function to parse ratio values
   const parseRatioValue = (value, type) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
-    
+
     if (typeof value === 'string') {
       const numValue = parseFloat(value.replace(/[,$%days ]/g, ''));
       return isNaN(numValue) ? 0 : numValue;
     }
-    
+
     if (typeof value === 'number') {
       return value;
     }
-    
+
     return 0;
   };
 
@@ -223,147 +215,151 @@ const LiquidityEfficiency = ({
     };
 
     return (
-      <div 
+      <div
         ref={containerRef}
-        style={{ 
+        style={{
           width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
           border: '1px solid #e5e7eb'
         }}>
-        <h3 style={{ 
-          marginBottom: '20px', 
+        <h3 style={{
+          marginBottom: '20px',
           color: '#1f2937',
           fontSize: '18px',
           fontWeight: '600'
         }}>
           Liquidity & Efficiency Metrics vs Industry Benchmarks
         </h3>
-        
+
         <div style={{ overflowX: 'auto' }}>
           <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
-          {/* Chart background */}
-          <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
-          
-          {/* Y-axis labels and bars */}
-          {chartData.map((data, index) => {
-            const y = index * groupSpacing + 30;
-            const barWidth = (chartWidth - leftMargin - rightMargin);
-            
-            // Calculate bar lengths as percentages of max value
-            const actualBarLength = (data.actualValue / maxValue) * barWidth;
-            const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
-            
-            return (
-              <g key={data.metric}>
-                {/* Metric label */}
-                <text
-                  x={leftMargin - 10}
-                  y={y + 15}
-                  textAnchor="end"
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    fill: '#374151'
-                  }}
-                >
-                  {data.metric}
-                </text>
-                
-                {/* Actual value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y}
-                  width={actualBarLength}
-                  height={barHeight}
-                  fill={data.color}
-                  opacity={0.8}
-                />
-                
-                {/* Benchmark value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y + barHeight + 5}
-                  width={benchmarkBarLength}
-                  height={barHeight}
-                  fill="#94a3b8"
-                  opacity={0.6}
-                />
-                
-                {/* Value labels */}
-                <text
-                  x={leftMargin + actualBarLength + 5}
-                  y={y + 17}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    fill: data.color
-                  }}
-                >
-                  {formatDisplayValue(data.actualValue, data.type)}
-                </text>
-                
-                <text
-                  x={leftMargin + benchmarkBarLength + 5}
-                  y={y + barHeight + 22}
-                  style={{
-                    fontSize: '12px',
-                    fill: '#64748b'
-                  }}
-                >
-                  {formatDisplayValue(data.benchmarkValue, data.type)}
-                </text>
+            {/* Chart background */}
+            <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
 
-                {/* Citation using CitationSource component */}
-                <CitationSource
-                  url={data.citationUrl}
-                  x={leftMargin}
-                  y={y + barHeight * 2 + 20}
-                />
-                
-                {/* Grid lines */}
-                <line
-                  x1={leftMargin}
-                  y1={y + barHeight * 2 + 40}
-                  x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 40}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                  opacity={0.3}
-                />
-              </g>
-            );
-          })}
-          
-          {/* Legend */}
-          <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
-            <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
-            <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Your Business
-            </text>
-            
-            <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
-            <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Industry Average
-            </text>
-          </g>
+            {/* Y-axis labels and bars */}
+            {chartData.map((data, index) => {
+              const y = index * groupSpacing + 30;
+              const barWidth = (chartWidth - leftMargin - rightMargin);
+
+              // Calculate bar lengths as percentages of max value
+              const actualBarLength = (data.actualValue / maxValue) * barWidth;
+              const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
+
+              return (
+                <g key={data.metric}>
+                  {/* Metric label */}
+                  <text
+                    x={leftMargin - 10}
+                    y={y + 15}
+                    textAnchor="end"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      fill: '#374151'
+                    }}
+                  >
+                    {data.metric}
+                  </text>
+
+                  {/* Actual value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y}
+                    width={actualBarLength}
+                    height={barHeight}
+                    fill={data.color}
+                    opacity={0.8}
+                  />
+
+                  {/* Benchmark value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y + barHeight + 5}
+                    width={benchmarkBarLength}
+                    height={barHeight}
+                    fill="#94a3b8"
+                    opacity={0.6}
+                  />
+
+                  {/* Value labels */}
+                  <text
+                    x={leftMargin + actualBarLength + 5}
+                    y={y + 17}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      fill: data.color
+                    }}
+                  >
+                    {formatDisplayValue(data.actualValue, data.type)}
+                  </text>
+
+                  <text
+                    x={leftMargin + benchmarkBarLength + 5}
+                    y={y + barHeight + 22}
+                    style={{
+                      fontSize: '12px',
+                      fill: '#64748b'
+                    }}
+                  >
+                    {formatDisplayValue(data.benchmarkValue, data.type)}
+                  </text>
+
+                  {/* Citation using CitationSource component */}
+                  <CitationSource
+                    url={data.citationUrl}
+                    x={leftMargin}
+                    y={y + barHeight * 2 + 20}
+                  />
+
+                  {/* Grid lines */}
+                  <line
+                    x1={leftMargin}
+                    y1={y + barHeight * 2 + 40}
+                    x2={chartWidth - rightMargin}
+                    y2={y + barHeight * 2 + 40}
+                    stroke="#e5e7eb"
+                    strokeWidth="1"
+                    opacity={0.3}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Legend */}
+            <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
+              <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
+              <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Your Business
+              </text>
+
+              <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
+              <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Industry Average
+              </text>
+            </g>
           </svg>
-        </div> 
+        </div>
       </div>
     );
   };
 
   useEffect(() => {
-    if (liquidityData && liquidityData !== analysisData) {
-      setAnalysisData(liquidityData);
-      setError(null);
+    if (liquidityData) {
+      const normalized = liquidityData.liquidity || liquidityData['Liquidity & Efficiency'] || liquidityData.liquidityEfficiency || liquidityData.liquidity_efficiency || liquidityData.LiquidityEfficiency || (Object.keys(liquidityData).length > 0 && !liquidityData.liquidity ? liquidityData : null);
 
-      if (onDataGenerated) {
-        onDataGenerated(liquidityData);
+      if (normalized && typeof normalized === 'object') {
+        setAnalysisData({ liquidity: normalized });
+        setError(null);
+
+        if (onDataGenerated) {
+          onDataGenerated({ liquidity: normalized });
+        }
       }
     }
-  }, [liquidityData, analysisData, onDataGenerated]);
+  }, [liquidityData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -526,7 +522,7 @@ const LiquidityEfficiency = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
@@ -539,9 +535,9 @@ const LiquidityEfficiency = ({
           hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"           
-          documentInfo={documentInfo} 
-          />
+          acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo}
+        />
       );
     }
 
@@ -556,7 +552,7 @@ const LiquidityEfficiency = ({
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
@@ -570,7 +566,7 @@ const LiquidityEfficiency = ({
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          documentInfo={documentInfo} 
+          documentInfo={documentInfo}
         />
       );
     }
