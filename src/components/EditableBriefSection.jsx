@@ -720,7 +720,24 @@ const EditableBriefSection = ({
 
   const generateBriefFields = () => {
     const fields = [];
-    const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    // Order: initial (1), essential (2), advanced (3)
+    const phaseOrderMap = {
+      'initial': 1,
+      'essential': 2,
+      'advanced': 3
+    };
+
+    const sortedQuestions = [...questions].sort((a, b) => {
+      const phaseA = phaseOrderMap[a.phase] || 4;
+      const phaseB = phaseOrderMap[b.phase] || 4;
+
+      if (phaseA !== phaseB) {
+        return phaseA - phaseB;
+      }
+
+      return (a.order || 0) - (b.order || 0);
+    });
 
     let sequentialNumber = 1; // Add sequential counter
 
