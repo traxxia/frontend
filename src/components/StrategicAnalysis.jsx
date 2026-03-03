@@ -2534,9 +2534,8 @@ const StrategicAnalysis = ({
     return (
       <div className="strategic-analysis-container">
         <div className="loading-state">
-          <Loader className="loading-spinner spin-animation" size={40} />
-          <h3 className="loading-title">Generating Strategic Analysis</h3>
-          <p className="loading-text">Building comprehensive strategic insights...</p>
+          <Loader className="loading-spinner animate-spin" size={24} />
+          <span>Generating Strategic Analysis...</span>
         </div>
       </div>
     );

@@ -25,7 +25,7 @@ const ProfitabilityAnalysis = ({
   uploadedFile = null,
   readOnly = false,
   documentInfo = null,
-}) => { 
+}) => {
   const [analysisData, setAnalysisData] = useState(profitabilityData);
   const [error, setError] = useState(null);
 
@@ -62,11 +62,9 @@ const ProfitabilityAnalysis = ({
   };
 
   const isProfitabilityDataIncomplete = (data) => {
-    if (!data || !data.profitability) {
-      return true;
-    }
+    if (!data) return true;
 
-    const profitabilityMetrics = data.profitability;
+    const profitabilityMetrics = data.profitability || data.profitability_analysis || data.profitabilityAnalysis || data.ProfitabilityAnalysis || (Object.keys(data).length > 0 && !data.profitability ? data : null);
 
     if (!profitabilityMetrics || typeof profitabilityMetrics !== 'object') {
       return true;
@@ -341,15 +339,19 @@ const ProfitabilityAnalysis = ({
   };
 
   useEffect(() => {
-    if (profitabilityData && profitabilityData !== analysisData) {
-      setAnalysisData(profitabilityData);
-      setError(null);
+    if (profitabilityData) {
+      const normalized = profitabilityData.profitability || profitabilityData.profitability_analysis || profitabilityData.profitabilityAnalysis || profitabilityData.ProfitabilityAnalysis || (Object.keys(profitabilityData).length > 0 && !profitabilityData.profitability ? profitabilityData : null);
 
-      if (onDataGenerated) {
-        onDataGenerated(profitabilityData);
+      if (normalized && typeof normalized === 'object') {
+        setAnalysisData({ profitability: normalized });
+        setError(null);
+
+        if (onDataGenerated) {
+          onDataGenerated({ profitability: normalized });
+        }
       }
     }
-  }, [profitabilityData, analysisData, onDataGenerated]);
+  }, [profitabilityData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -434,11 +436,14 @@ const ProfitabilityAnalysis = ({
   };
 
   const extractProfitabilityMetrics = (data) => {
-    if (!data || !data.profitability) {
+    if (!data) {
       return { metrics: {}, thresholds: {}, citations: {} };
     }
 
-    const profitabilityData = data.profitability;
+    const profitabilityData = data.profitability || data.profitability_analysis || data.profitabilityAnalysis || data.ProfitabilityAnalysis || (Object.keys(data).length > 0 && !data.profitability ? data : null);
+    if (!profitabilityData) {
+      return { metrics: {}, thresholds: {}, citations: {} };
+    }
     const metrics = {};
     const thresholds = {};
     const citations = profitabilityData.citations || {};
@@ -507,7 +512,7 @@ const ProfitabilityAnalysis = ({
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
-          documentInfo={documentInfo} 
+          documentInfo={documentInfo}
           readOnly={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
@@ -541,7 +546,7 @@ const ProfitabilityAnalysis = ({
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for profitability analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          documentInfo={documentInfo} 
+          documentInfo={documentInfo}
         />
       );
     }

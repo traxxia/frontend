@@ -93,16 +93,12 @@ const MaturityScore = ({
   const isMaturityDataIncomplete = (data) => {
     if (!data) return true;
 
-    let normalizedData;
-    if (data.maturityScore) {
-      normalizedData = data;
-    } else if (data.maturityScoring) {
-      normalizedData = { maturityScore: data.maturityScoring };
-    } else if (data.dimensions || data.overallMaturity) {
-      normalizedData = { maturityScore: data };
-    } else {
+    const scoreData = data.maturityScore || data.maturity_score || data.MaturityScore || data.maturityScoring || (data.dimensions || data.overallMaturity ? data : null);
+    if (!scoreData) {
       return true;
     }
+
+    const normalizedData = { maturityScore: scoreData };
 
     if (!normalizedData.maturityScore) {
       return true;
@@ -169,19 +165,10 @@ const MaturityScore = ({
 
   useEffect(() => {
     if (maturityData) {
-      let normalizedData;
-      if (maturityData.maturityScore) {
-        normalizedData = maturityData;
-      } else if (maturityData.maturityScoring) {
-        normalizedData = { maturityScore: maturityData.maturityScoring };
-      } else if (maturityData.dimensions || maturityData.overallMaturity) {
-        normalizedData = { maturityScore: maturityData };
-      } else {
-        normalizedData = null;
-      }
+      const scoreData = maturityData.maturityScore || maturityData.maturity_score || maturityData.MaturityScore || maturityData.maturityScoring || (maturityData.dimensions || maturityData.overallMaturity ? maturityData : null);
 
-      if (normalizedData) {
-        setData(normalizedData);
+      if (scoreData && (scoreData.dimensions || scoreData.overallMaturity)) {
+        setData({ maturityScore: scoreData });
         setHasGenerated(true);
         setError(null);
       } else {
@@ -700,10 +687,10 @@ const MaturityScore = ({
                           }
                         </span>
                       </td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
+                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                         {dimension.benchmark || 'N/A'}
                       </td>
-                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.8s' }}>
+                      <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.8s' }}>
                         {dimension.gap && (
                           <span className={dimension.gap > 0 ? 'benchmark-positive' : 'benchmark-negative'}>
                             {dimension.gap}

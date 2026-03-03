@@ -24,7 +24,7 @@ const LeverageRisk = ({
   setActiveTab,
   hasUploadedDocument = false,
   readOnly = false,
-  documentInfo = null,  
+  documentInfo = null,
 }) => {
   const [analysisData, setAnalysisData] = useState(leverageData);
   const [error, setError] = useState(null);
@@ -58,11 +58,9 @@ const LeverageRisk = ({
   };
 
   const isLeverageDataIncomplete = (data) => {
-    if (!data || !data.leverage) {
-      return true;
-    }
+    if (!data) return true;
 
-    const leverageMetrics = data.leverage;
+    const leverageMetrics = data.leverage || data.leverage_risk || data.leverageRisk || data.LeverageRisk || (Object.keys(data).length > 0 && !data.leverage ? data : null);
 
     if (!leverageMetrics || typeof leverageMetrics !== 'object') {
       return true;
@@ -203,11 +201,14 @@ const LeverageRisk = ({
   };
 
   const extractLeverageMetrics = (data) => {
-    if (!data || !data.leverage) {
+    if (!data) {
       return { metrics: {}, thresholds: {}, citations: {} };
     }
 
-    const leverageData = data.leverage;
+    const leverageData = data.leverage || data.leverage_risk || data.leverageRisk || data.LeverageRisk || (Object.keys(data).length > 0 && !data.leverage ? data : null);
+    if (!leverageData) {
+      return { metrics: {}, thresholds: {}, citations: {} };
+    }
     const metrics = {};
     const thresholds = {};
     const citations = leverageData.citations || {};
@@ -231,16 +232,16 @@ const LeverageRisk = ({
   // Helper function to parse ratio values
   const parseRatioValue = (value, type) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
-    
+
     if (typeof value === 'string') {
       const numValue = parseFloat(value.replace(/[,$%]/g, ''));
       return isNaN(numValue) ? 0 : numValue;
     }
-    
+
     if (typeof value === 'number') {
       return value;
     }
-    
+
     return 0;
   };
 
@@ -294,147 +295,151 @@ const LeverageRisk = ({
     };
 
     return (
-      <div 
+      <div
         ref={containerRef}
-        style={{ 
+        style={{
           width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
           border: '1px solid #e5e7eb'
         }}>
-        <h3 style={{ 
-          marginBottom: '20px', 
+        <h3 style={{
+          marginBottom: '20px',
           color: '#1f2937',
           fontSize: '18px',
           fontWeight: '600'
         }}>
           Leverage & Risk Metrics vs Industry Benchmarks
         </h3>
-        
+
         <div style={{ overflowX: 'auto' }}>
           <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
-          {/* Chart background */}
-          <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
-          
-          {/* Y-axis labels and bars */}
-          {chartData.map((data, index) => {
-            const y = index * groupSpacing + 30;
-            const barWidth = (chartWidth - leftMargin - rightMargin);
-            
-            // Calculate bar lengths as percentages of max value
-            const actualBarLength = (data.actualValue / maxValue) * barWidth;
-            const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
-            
-            return (
-              <g key={data.metric}>
-                {/* Metric label */}
-                <text
-                  x={leftMargin - 10}
-                  y={y + 15}
-                  textAnchor="end"
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    fill: '#374151'
-                  }}
-                >
-                  {data.metric}
-                </text>
-                
-                {/* Actual value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y}
-                  width={actualBarLength}
-                  height={barHeight}
-                  fill={data.color}
-                  opacity={0.8}
-                />
-                
-                {/* Benchmark value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y + barHeight + 5}
-                  width={benchmarkBarLength}
-                  height={barHeight}
-                  fill="#94a3b8"
-                  opacity={0.6}
-                />
-                
-                {/* Value labels */}
-                <text
-                  x={leftMargin + actualBarLength + 5}
-                  y={y + 17}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    fill: data.color
-                  }}
-                >
-                  {formatDisplayValue(data.actualValue, data.type)}
-                </text>
-                
-                <text
-                  x={leftMargin + benchmarkBarLength + 5}
-                  y={y + barHeight + 22}
-                  style={{
-                    fontSize: '12px',
-                    fill: '#64748b'
-                  }}
-                >
-                  {formatDisplayValue(data.benchmarkValue, data.type)}
-                </text>
-                
-                {/* Citation using CitationSource component */}
-                <CitationSource
-                  url={data.citationUrl}
-                  x={leftMargin}
-                  y={y + barHeight * 2 + 20}
-                />
-                
-                {/* Grid lines */}
-                <line
-                  x1={leftMargin}
-                  y1={y + barHeight * 2 + 40}
-                  x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 40}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                  opacity={0.3}
-                />
-              </g>
-            );
-          })}
-          
-          {/* Legend */}
-          <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
-            <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
-            <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Your Business
-            </text>
-            
-            <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
-            <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Industry Average
-            </text>
-          </g>
+            {/* Chart background */}
+            <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
+
+            {/* Y-axis labels and bars */}
+            {chartData.map((data, index) => {
+              const y = index * groupSpacing + 30;
+              const barWidth = (chartWidth - leftMargin - rightMargin);
+
+              // Calculate bar lengths as percentages of max value
+              const actualBarLength = (data.actualValue / maxValue) * barWidth;
+              const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
+
+              return (
+                <g key={data.metric}>
+                  {/* Metric label */}
+                  <text
+                    x={leftMargin - 10}
+                    y={y + 15}
+                    textAnchor="end"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      fill: '#374151'
+                    }}
+                  >
+                    {data.metric}
+                  </text>
+
+                  {/* Actual value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y}
+                    width={actualBarLength}
+                    height={barHeight}
+                    fill={data.color}
+                    opacity={0.8}
+                  />
+
+                  {/* Benchmark value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y + barHeight + 5}
+                    width={benchmarkBarLength}
+                    height={barHeight}
+                    fill="#94a3b8"
+                    opacity={0.6}
+                  />
+
+                  {/* Value labels */}
+                  <text
+                    x={leftMargin + actualBarLength + 5}
+                    y={y + 17}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      fill: data.color
+                    }}
+                  >
+                    {formatDisplayValue(data.actualValue, data.type)}
+                  </text>
+
+                  <text
+                    x={leftMargin + benchmarkBarLength + 5}
+                    y={y + barHeight + 22}
+                    style={{
+                      fontSize: '12px',
+                      fill: '#64748b'
+                    }}
+                  >
+                    {formatDisplayValue(data.benchmarkValue, data.type)}
+                  </text>
+
+                  {/* Citation using CitationSource component */}
+                  <CitationSource
+                    url={data.citationUrl}
+                    x={leftMargin}
+                    y={y + barHeight * 2 + 20}
+                  />
+
+                  {/* Grid lines */}
+                  <line
+                    x1={leftMargin}
+                    y1={y + barHeight * 2 + 40}
+                    x2={chartWidth - rightMargin}
+                    y2={y + barHeight * 2 + 40}
+                    stroke="#e5e7eb"
+                    strokeWidth="1"
+                    opacity={0.3}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Legend */}
+            <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
+              <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
+              <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Your Business
+              </text>
+
+              <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
+              <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Industry Average
+              </text>
+            </g>
           </svg>
-        </div> 
+        </div>
       </div>
     );
   };
 
   useEffect(() => {
-    if (leverageData && leverageData !== analysisData) {
-      setAnalysisData(leverageData);
-      setError(null);
+    if (leverageData) {
+      const normalized = leverageData.leverage || leverageData.leverage_risk || leverageData.leverageRisk || leverageData.LeverageRisk || (Object.keys(leverageData).length > 0 && !leverageData.leverage ? leverageData : null);
 
-      if (onDataGenerated) {
-        onDataGenerated(leverageData);
+      if (normalized && typeof normalized === 'object') {
+        setAnalysisData({ leverage: normalized });
+        setError(null);
+
+        if (onDataGenerated) {
+          onDataGenerated({ leverage: normalized });
+        }
       }
     }
-  }, [leverageData, analysisData, onDataGenerated]);
+  }, [leverageData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -487,7 +492,7 @@ const LeverageRisk = ({
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
@@ -502,7 +507,7 @@ const LeverageRisk = ({
           hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          documentInfo={documentInfo}  />
+          documentInfo={documentInfo} />
       );
     }
 
@@ -518,7 +523,7 @@ const LeverageRisk = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
@@ -530,8 +535,8 @@ const LeverageRisk = ({
           hasUploadedDocument={hasUploadedDocument}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for leverage & risk analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"         
-          documentInfo={documentInfo} 
+          acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo}
         />
       );
     }

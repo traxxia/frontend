@@ -63,8 +63,12 @@ const GrowthTracker = ({
 
   const isGrowthDataIncomplete = (data) => {
     if (!data) return true;
+
+    const normalized = data.growthTracker || data.growth_tracker || data.GrowthTracker || (data.growth_trends ? data : null);
+    if (!normalized) return true;
+
     // Check if revenue data exists - actual API structure: growth_trends.revenue.values
-    const hasRevenueData = data.growth_trends?.revenue?.values && Object.keys(data.growth_trends.revenue.values).length > 0;
+    const hasRevenueData = normalized.growth_trends?.revenue?.values && Object.keys(normalized.growth_trends.revenue.values).length > 0;
 
     return !hasRevenueData;
   };
@@ -86,15 +90,19 @@ const GrowthTracker = ({
 
   // Fixed useEffect pattern - same as ProfitabilityAnalysis
   useEffect(() => {
-    if (growthData && growthData !== analysisData) {
-      setAnalysisData(growthData);
-      setError(null);
+    if (growthData) {
+      const normalized = growthData.growthTracker || growthData.growth_tracker || growthData.GrowthTracker || (growthData.growth_trends ? growthData : null);
 
-      if (onDataGenerated) {
-        onDataGenerated(growthData);
+      if (normalized && normalized.growth_trends) {
+        setAnalysisData(normalized);
+        setError(null);
+
+        if (onDataGenerated) {
+          onDataGenerated(normalized);
+        }
       }
     }
-  }, [growthData, analysisData, onDataGenerated]);
+  }, [growthData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -151,11 +159,13 @@ const GrowthTracker = ({
   };
 
   const extractGrowthMetrics = (data) => {
-    if (!data || !data.growth_trends?.revenue?.values) {
+    const normalized = data.growthTracker || data.growth_tracker || data.GrowthTracker || (data.growth_trends ? data : null);
+
+    if (!normalized || !normalized.growth_trends?.revenue?.values) {
       return { chartData: [], metrics: {} };
     }
 
-    const chartData = prepareChartData(data.growth_trends.revenue);
+    const chartData = prepareChartData(normalized.growth_trends.revenue);
     const revenueValues = Object.values(data.growth_trends.revenue.values);
     const totalRevenue = revenueValues.reduce((sum, val) => sum + val, 0);
     const avgMonthlyRevenue = totalRevenue / revenueValues.length;
@@ -250,7 +260,7 @@ const GrowthTracker = ({
           onRegenerate={handleRegenerate}
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
@@ -263,9 +273,9 @@ const GrowthTracker = ({
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"          
-          documentInfo={documentInfo} 
-         />
+          acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo}
+        />
       );
     }
 
@@ -283,7 +293,7 @@ const GrowthTracker = ({
           isRegenerating={isRegenerating}
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           minimumAnswersRequired={3}
           showFileUpload={true}
           onFileUpload={handleFileUpload}
@@ -293,7 +303,7 @@ const GrowthTracker = ({
           isMobile={isMobile}
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
-          documentInfo={documentInfo} 
+          documentInfo={documentInfo}
           fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
         />

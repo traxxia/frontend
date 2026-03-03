@@ -67,80 +67,12 @@ const FinancialEmptyState = ({
 
   return (
     <div className="financial-empty-state">
-      <div className="financial-empty-content">
-        {/* Icon */} 
-
-        {/* Missing Metrics Display - Show when ANY document exists */}
-        {hasDocumentUploaded && (
-          <MissingMetricsDisplay
+      <div className="financial-empty-content"> 
+         <MissingMetricsDisplay
             documentInfo={effectiveDocumentInfo}
             analysisType={analysisType}
             className="missing-metrics-section"
           />
-        )}
-        {/* Only show upload/change buttons if not in read-only mode */}
-        {!readOnly && (
-          <>
-            {/* File Management Redirect Button - Show if document exists */}
-            {hasDocumentUploaded && (
-              <div style={{ marginTop: '16px' }}>
-                <button
-                  onClick={handleRedirectToFileManagement}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    backgroundColor: '#0ea5e9',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    margin: '0 auto'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0284c7'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0ea5e9'}
-                >
-                  <Edit size={16} />
-                  Change Financial Document
-                </button>
-                <br />
-              </div>
-            )}
-
-            {/* Show file upload option if no document exists */}
-            {!hasDocumentUploaded && showFileUpload && (
-              <div style={{ marginTop: '16px' }}>
-                <button
-                  onClick={handleRedirectToFileManagement}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    margin: '0 auto'
-                  }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
-                >
-                  <Upload size={16} />
-                  Upload Financial Document
-                </button>
-                <br />
-              </div>
-            )}
-          </>
-        )}
-
       </div>
     </div>
   );

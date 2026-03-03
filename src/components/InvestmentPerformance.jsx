@@ -58,11 +58,9 @@ const InvestmentPerformance = ({
   };
 
   const isInvestmentDataIncomplete = (data) => {
-    if (!data || !data.investment) {
-      return true;
-    }
+    if (!data) return true;
 
-    const investmentMetrics = data.investment;
+    const investmentMetrics = data.investment || data.investment_performance || data.investmentPerformance || data.InvestmentPerformance || (Object.keys(data).length > 0 && !data.investment ? data : null);
 
     if (!investmentMetrics || typeof investmentMetrics !== 'object') {
       return true;
@@ -209,11 +207,14 @@ const InvestmentPerformance = ({
   };
 
   const extractInvestmentMetrics = (data) => {
-    if (!data || !data.investment) {
+    if (!data) {
       return { metrics: {}, thresholds: {}, citations: {} };
     }
 
-    const investmentData = data.investment;
+    const investmentData = data.investment || data.investment_performance || data.investmentPerformance || data.InvestmentPerformance || (Object.keys(data).length > 0 && !data.investment ? data : null);
+    if (!investmentData) {
+      return { metrics: {}, thresholds: {}, citations: {} };
+    }
     const metrics = {};
     const thresholds = {};
     const citations = investmentData.citations || {};
@@ -237,16 +238,16 @@ const InvestmentPerformance = ({
   // Helper function to parse percentage values
   const parsePercentageValue = (value) => {
     if (value === null || value === undefined || value === '' || value === 'NA') return 0;
-    
+
     if (typeof value === 'string') {
       const numValue = parseFloat(value.replace(/[,$%]/g, ''));
       return isNaN(numValue) ? 0 : numValue;
     }
-    
+
     if (typeof value === 'number') {
       return value;
     }
-    
+
     return 0;
   };
 
@@ -295,147 +296,151 @@ const InvestmentPerformance = ({
     const groupSpacing = 120; // Increased spacing for citations
 
     return (
-      <div 
+      <div
         ref={containerRef}
-        style={{ 
+        style={{
           width: '100%',
           padding: '20px',
           background: '#fff',
           borderRadius: '8px',
           border: '1px solid #e5e7eb'
         }}>
-        <h3 style={{ 
-          marginBottom: '20px', 
+        <h3 style={{
+          marginBottom: '20px',
           color: '#1f2937',
           fontSize: '18px',
           fontWeight: '600'
         }}>
           Investment Performance vs Industry Benchmarks
         </h3>
-        
+
         <div style={{ overflowX: 'auto' }}>
           <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
-          {/* Chart background */}
-          <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
-          
-          {/* Y-axis labels and bars */}
-          {chartData.map((data, index) => {
-            const y = index * groupSpacing + 30;
-            const barWidth = (chartWidth - leftMargin - rightMargin);
-            
-            // Calculate bar lengths as percentages of max value
-            const actualBarLength = (data.actualValue / maxValue) * barWidth;
-            const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
-            
-            return (
-              <g key={data.metric}>
-                {/* Metric label */}
-                <text
-                  x={leftMargin - 10}
-                  y={y + 15}
-                  textAnchor="end"
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    fill: '#374151'
-                  }}
-                >
-                  {data.metric}
-                </text>
-                
-                {/* Actual value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y}
-                  width={actualBarLength}
-                  height={barHeight}
-                  fill={data.color}
-                  opacity={0.8}
-                />
-                
-                {/* Benchmark value bar */}
-                <rect
-                  x={leftMargin}
-                  y={y + barHeight + 5}
-                  width={benchmarkBarLength}
-                  height={barHeight}
-                  fill="#94a3b8"
-                  opacity={0.6}
-                />
-                
-                {/* Value labels */}
-                <text
-                  x={leftMargin + actualBarLength + 5}
-                  y={y + 17}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    fill: data.color
-                  }}
-                >
-                  {data.actualValue.toFixed(1)}%
-                </text>
-                
-                <text
-                  x={leftMargin + benchmarkBarLength + 5}
-                  y={y + barHeight + 22}
-                  style={{
-                    fontSize: '12px',
-                    fill: '#64748b'
-                  }}
-                >
-                  {data.benchmarkValue.toFixed(1)}%
-                </text>
-                
-                {/* Citation using CitationSource component */}
-                <CitationSource
-                  url={data.citationUrl}
-                  x={leftMargin}
-                  y={y + barHeight * 2 + 20}
-                />
-                
-                {/* Grid lines */}
-                <line
-                  x1={leftMargin}
-                  y1={y + barHeight * 2 + 40}
-                  x2={chartWidth - rightMargin}
-                  y2={y + barHeight * 2 + 40}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                  opacity={0.3}
-                />
-              </g>
-            );
-          })}
-          
-          {/* Legend */}
-          <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
-            <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
-            <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Your Business
-            </text>
-            
-            <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
-            <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-              Industry Average
-            </text>
-          </g>
+            {/* Chart background */}
+            <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
+
+            {/* Y-axis labels and bars */}
+            {chartData.map((data, index) => {
+              const y = index * groupSpacing + 30;
+              const barWidth = (chartWidth - leftMargin - rightMargin);
+
+              // Calculate bar lengths as percentages of max value
+              const actualBarLength = (data.actualValue / maxValue) * barWidth;
+              const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
+
+              return (
+                <g key={data.metric}>
+                  {/* Metric label */}
+                  <text
+                    x={leftMargin - 10}
+                    y={y + 15}
+                    textAnchor="end"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      fill: '#374151'
+                    }}
+                  >
+                    {data.metric}
+                  </text>
+
+                  {/* Actual value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y}
+                    width={actualBarLength}
+                    height={barHeight}
+                    fill={data.color}
+                    opacity={0.8}
+                  />
+
+                  {/* Benchmark value bar */}
+                  <rect
+                    x={leftMargin}
+                    y={y + barHeight + 5}
+                    width={benchmarkBarLength}
+                    height={barHeight}
+                    fill="#94a3b8"
+                    opacity={0.6}
+                  />
+
+                  {/* Value labels */}
+                  <text
+                    x={leftMargin + actualBarLength + 5}
+                    y={y + 17}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      fill: data.color
+                    }}
+                  >
+                    {data.actualValue.toFixed(1)}%
+                  </text>
+
+                  <text
+                    x={leftMargin + benchmarkBarLength + 5}
+                    y={y + barHeight + 22}
+                    style={{
+                      fontSize: '12px',
+                      fill: '#64748b'
+                    }}
+                  >
+                    {data.benchmarkValue.toFixed(1)}%
+                  </text>
+
+                  {/* Citation using CitationSource component */}
+                  <CitationSource
+                    url={data.citationUrl}
+                    x={leftMargin}
+                    y={y + barHeight * 2 + 20}
+                  />
+
+                  {/* Grid lines */}
+                  <line
+                    x1={leftMargin}
+                    y1={y + barHeight * 2 + 40}
+                    x2={chartWidth - rightMargin}
+                    y2={y + barHeight * 2 + 40}
+                    stroke="#e5e7eb"
+                    strokeWidth="1"
+                    opacity={0.3}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Legend */}
+            <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
+              <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
+              <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Your Business
+              </text>
+
+              <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
+              <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
+                Industry Average
+              </text>
+            </g>
           </svg>
-        </div> 
+        </div>
       </div>
     );
   };
 
   useEffect(() => {
-    if (investmentData && investmentData !== analysisData) {
-      setAnalysisData(investmentData);
-      setError(null);
+    if (investmentData) {
+      const normalized = investmentData.investment || investmentData.investment_performance || investmentData.investmentPerformance || investmentData.InvestmentPerformance || (Object.keys(investmentData).length > 0 && !investmentData.investment ? investmentData : null);
 
-      if (onDataGenerated) {
-        onDataGenerated(investmentData);
+      if (normalized && typeof normalized === 'object') {
+        setAnalysisData({ investment: normalized });
+        setError(null);
+
+        if (onDataGenerated) {
+          onDataGenerated({ investment: normalized });
+        }
       }
     }
-  }, [investmentData, analysisData, onDataGenerated]);
+  }, [investmentData, onDataGenerated]);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -500,10 +505,10 @@ const InvestmentPerformance = ({
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
           isUploading={false}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv" 
-          documentInfo={documentInfo} 
+          acceptedFileTypes=".xlsx,.xls,.csv"
+          documentInfo={documentInfo}
         />
       );
     }
@@ -527,13 +532,13 @@ const InvestmentPerformance = ({
           onRedirectToChat={onRedirectToChat}
           isMobile={isMobile}
           setActiveTab={setActiveTab}
-          readOnly ={readOnly}
+          readOnly={readOnly}
           hasUploadedDocument={hasUploadedDocument}
           uploadedFile={uploadedFile}
           onRemoveFile={removeFile}
           fileUploadMessage="Upload Excel or CSV files with financial data for investment performance analysis"
           acceptedFileTypes=".xlsx,.xls,.csv"
-          documentInfo={documentInfo} 
+          documentInfo={documentInfo}
         />
       );
     }

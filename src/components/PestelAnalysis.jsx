@@ -62,7 +62,7 @@ const PestelAnalysis = ({
 
   const isPestelDataIncomplete = (data) => {
     if (!data) return true;
-    const analysis = data.pestel_analysis || data;
+    const analysis = data.pestel_analysis || data.pestelAnalysis || data.pestel || data.PestelAnalysis || data;
     if (!analysis.factor_summary || Object.keys(analysis.factor_summary).length === 0) return true;
     const criticalFields = ['executive_summary', 'strategic_recommendations'];
     const hasNullFields = criticalFields.some(field => analysis[field] === null || analysis[field] === undefined);
@@ -81,7 +81,7 @@ const PestelAnalysis = ({
       return 0;
     }
 
-    const analysis = data.pestel_analysis || data;
+    const analysis = data.pestel_analysis || data.pestelAnalysis || data.pestel || data.PestelAnalysis || data;
     let total = 0;
 
     if (analysis.factor_summary) {
@@ -137,7 +137,7 @@ const PestelAnalysis = ({
       return;
     }
 
-    const analysis = pestelData.pestel_analysis || pestelData;
+    const analysis = pestelData.pestel_analysis || pestelData.pestelAnalysis || pestelData.pestel || pestelData.PestelAnalysis || pestelData;
 
     if (streamingIntervalRef.current) {
       clearInterval(streamingIntervalRef.current);
@@ -241,7 +241,7 @@ const PestelAnalysis = ({
     );
   }
 
-  const analysis = pestelData.pestel_analysis || pestelData;
+  const analysis = pestelData.pestel_analysis || pestelData.pestelAnalysis || pestelData.pestel || pestelData.PestelAnalysis || pestelData;
   const factorEntries = analysis.factor_summary ? Object.entries(analysis.factor_summary) : [];
 
   let currentRowIndex = 0;
@@ -312,13 +312,13 @@ const PestelAnalysis = ({
                         <td>
                           {hasStreamed ? (data?.strategic_priority || 'N/A') : (typingTexts[`${rowIndex}-priority`] || (data?.strategic_priority || 'N/A'))}
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.4s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.4s' }}>
                           {data?.total_mentions || 0}
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.5s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.5s' }}>
                           {data?.high_impact_count || 0}
                         </td>
-                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming  ? 'none' : 'opacity 0.3s 0.6s' }}>
+                        <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.6s' }}>
                           <div className="forces-tags">
                             {(data?.key_themes || []).map((theme, idx) => (
                               <span key={idx} className="force-tag">{theme}</span>

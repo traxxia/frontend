@@ -20,7 +20,7 @@ const ExpandedCapabilityHeatmap = ({
     const [hasGenerated, setHasGenerated] = useState(false);
     const [error, setError] = useState(null);
     const [hoveredCell, setHoveredCell] = useState(null);
-    
+
 
     const handleRedirectToBrief = (missingQuestionsData = null) => {
         if (onRedirectToBrief) {
@@ -59,41 +59,25 @@ const ExpandedCapabilityHeatmap = ({
 
     const isExpandedCapabilityDataIncomplete = (data) => {
         if (!data) return true;
-        let normalizedData;
-        if (data.expandedCapabilityHeatmap) {
-            normalizedData = data;
-        } else if (data.expanded_capability_heatmap) {
-            normalizedData = { expandedCapabilityHeatmap: data.expanded_capability_heatmap };
-        } else if (data.capabilities) {
-            normalizedData = { expandedCapabilityHeatmap: data };
-        } else {
+
+        const heatmap = data.expandedCapabilityHeatmap || data.expanded_capability_heatmap || data.ExpandedCapabilityHeatmap || data.expandedCapability || data.expanded_capability || (data.capabilities ? data : null);
+        if (!heatmap) {
             return true;
         }
 
-        if (!normalizedData.expandedCapabilityHeatmap) {
-            return true;
-        }
+        const normalizedData = { expandedCapabilityHeatmap: heatmap };
 
-        const heatmap = normalizedData.expandedCapabilityHeatmap;
-        const hasCapabilities = heatmap.capabilities && heatmap.capabilities.length > 0;
+        const heatmapObj = normalizedData.expandedCapabilityHeatmap;
+        const hasCapabilities = heatmapObj.capabilities && heatmapObj.capabilities.length > 0;
         return !hasCapabilities;
     };
 
     useEffect(() => {
         if (expandedCapabilityData) {
-            let normalizedData;
-            if (expandedCapabilityData.expandedCapabilityHeatmap) {
-                normalizedData = expandedCapabilityData;
-            } else if (expandedCapabilityData.expanded_capability_heatmap) {
-                normalizedData = { expandedCapabilityHeatmap: expandedCapabilityData.expanded_capability_heatmap };
-            } else if (expandedCapabilityData.capabilities) {
-                normalizedData = { expandedCapabilityHeatmap: expandedCapabilityData };
-            } else {
-                normalizedData = null;
-            }
+            const heatmap = expandedCapabilityData.expandedCapabilityHeatmap || expandedCapabilityData.expanded_capability_heatmap || expandedCapabilityData.ExpandedCapabilityHeatmap || expandedCapabilityData.expandedCapability || expandedCapabilityData.expanded_capability || (expandedCapabilityData.capabilities ? expandedCapabilityData : null);
 
-            if (normalizedData) {
-                setData(normalizedData);
+            if (heatmap && heatmap.capabilities) {
+                setData({ expandedCapabilityHeatmap: heatmap });
                 setHasGenerated(true);
                 setError(null);
             } else {
@@ -256,11 +240,11 @@ const ExpandedCapabilityHeatmap = ({
     }
 
     // Single consolidated error state for all error conditions
-    if (error || 
+    if (error ||
         (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
         (data && !data?.expandedCapabilityHeatmap) ||
         (data && !getHeatmapData())) {
-        
+
         let errorMessage = error;
         if (!errorMessage) {
             if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
@@ -274,7 +258,7 @@ const ExpandedCapabilityHeatmap = ({
 
         return (
             <div className="expanded-capability-heatmap">
-                <AnalysisError 
+                <AnalysisError
                     error={errorMessage}
                     onRetry={handleRetry}
                     title="Expanded Capability Analysis Error"

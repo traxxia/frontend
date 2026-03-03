@@ -61,9 +61,20 @@ const FinancialPerformance = ({
 
     const isFinancialPerformanceDataIncomplete = (data) => {
         if (!data) return true;
-        if (!data.financialPerformance) return true;
 
-        const fp = data.financialPerformance;
+        // Handle both wrapped and direct API response formats
+        let normalizedData;
+        if (data.financialPerformance) {
+            normalizedData = data.financialPerformance;
+        } else if (data.financial_performance) {
+            normalizedData = data.financial_performance;
+        } else if (data.currentYear && data.previousYear) {
+            normalizedData = data;
+        } else {
+            return true;
+        }
+
+        const fp = normalizedData;
 
         // Check currentYear
         if (!fp.currentYear ||
@@ -128,10 +139,24 @@ const FinancialPerformance = ({
 
     // Update analysis data when prop changes
     useEffect(() => {
-        if (financialPerformanceData && financialPerformanceData !== analysisData) {
-            setAnalysisData(financialPerformanceData);
-            if (onDataGenerated) {
-                onDataGenerated(financialPerformanceData);
+        if (financialPerformanceData) {
+            // Handle both wrapped and direct API response formats
+            let normalizedData;
+            if (financialPerformanceData.financialPerformance) {
+                normalizedData = financialPerformanceData;
+            } else if (financialPerformanceData.financial_performance) {
+                normalizedData = { financialPerformance: financialPerformanceData.financial_performance };
+            } else if (financialPerformanceData.currentYear && financialPerformanceData.previousYear) {
+                normalizedData = { financialPerformance: financialPerformanceData };
+            } else {
+                normalizedData = null;
+            }
+
+            if (normalizedData && normalizedData !== analysisData) {
+                setAnalysisData(normalizedData);
+                if (onDataGenerated) {
+                    onDataGenerated(normalizedData);
+                }
             }
         }
     }, [financialPerformanceData]);
@@ -144,7 +169,21 @@ const FinancialPerformance = ({
         hasInitialized.current = true;
 
         if (financialPerformanceData) {
-            setAnalysisData(financialPerformanceData);
+            // Handle both wrapped and direct API response formats
+            let normalizedData;
+            if (financialPerformanceData.financialPerformance) {
+                normalizedData = financialPerformanceData;
+            } else if (financialPerformanceData.financial_performance) {
+                normalizedData = { financialPerformance: financialPerformanceData.financial_performance };
+            } else if (financialPerformanceData.currentYear && financialPerformanceData.previousYear) {
+                normalizedData = { financialPerformance: financialPerformanceData };
+            } else {
+                normalizedData = null;
+            }
+
+            if (normalizedData) {
+                setAnalysisData(normalizedData);
+            }
         }
 
         return () => {
@@ -395,7 +434,7 @@ const FinancialPerformance = ({
     if (error) {
         return (
             <div className="channel-heatmap channel-heatmap-container">
-                <AnalysisError 
+                <AnalysisError
                     error={error}
                     onRetry={handleRetry}
                     title="Financial Performance Analysis Error"

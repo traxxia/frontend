@@ -78,7 +78,10 @@ const CompetitiveLandscape = ({
     const isCompetitiveLandscapeDataIncomplete = (data) => {
         if (!data || typeof data !== 'object') return true;
 
-        const competitors = Object.keys(data);
+        const landscape = data.competitiveLandscape || data.competitive_landscape || data.CompetitiveLandscape || (Object.keys(data).length > 0 && !data.competitiveLandscape && !data.competitive_landscape ? data : null);
+        if (!landscape || typeof landscape !== 'object') return true;
+
+        const competitors = Object.keys(landscape);
         if (competitors.length === 0) return true;
 
         const hasValidCompetitor = competitors.some(competitor => {
@@ -102,11 +105,14 @@ const CompetitiveLandscape = ({
             return 0;
         }
 
+        const landscape = data.competitiveLandscape || data.competitive_landscape || data.CompetitiveLandscape || (Object.keys(data).length > 0 && !data.competitiveLandscape && !data.competitive_landscape ? data : null);
+        if (!landscape) return 0;
+
         let total = 0;
-        const competitors = Object.keys(data);
+        const competitors = Object.keys(landscape);
 
         competitors.forEach(competitor => {
-            const competitorData = data[competitor];
+            const competitorData = landscape[competitor];
             const categories = Object.keys(competitorData);
 
             categories.forEach(category => {
@@ -181,10 +187,13 @@ const CompetitiveLandscape = ({
                 setVisibleRows(currentRow + 1);
 
                 let rowCounter = 0;
-                const competitors = Object.keys(competitiveLandscapeData);
+                const landscape = competitiveLandscapeData.competitiveLandscape || competitiveLandscapeData.competitive_landscape || competitiveLandscapeData.CompetitiveLandscape || (Object.keys(competitiveLandscapeData).length > 0 && !competitiveLandscapeData.competitiveLandscape && !competitiveLandscapeData.competitive_landscape ? competitiveLandscapeData : null);
+                if (!landscape) return;
+
+                const competitors = Object.keys(landscape);
 
                 for (const competitor of competitors) {
-                    const competitorData = competitiveLandscapeData[competitor];
+                    const competitorData = landscape[competitor];
                     const categories = Object.keys(competitorData);
 
                     for (const category of categories) {
@@ -235,16 +244,23 @@ const CompetitiveLandscape = ({
 
     useEffect(() => {
         if (competitiveLandscapeData) {
-            setData(competitiveLandscapeData);
-            setHasGenerated(true);
-            setError(null);
+            const landscape = competitiveLandscapeData.competitiveLandscape || competitiveLandscapeData.competitive_landscape || competitiveLandscapeData.CompetitiveLandscape || (Object.keys(competitiveLandscapeData).length > 0 && !competitiveLandscapeData.competitiveLandscape && !competitiveLandscapeData.competitive_landscape ? competitiveLandscapeData : null);
 
-            const competitors = Object.keys(competitiveLandscapeData);
-            const initialExpandedState = {};
-            competitors.forEach(competitor => {
-                initialExpandedState[competitor] = true;
-            });
-            setExpandedSections(initialExpandedState);
+            if (landscape && Object.keys(landscape).length > 0) {
+                setData(landscape);
+                setHasGenerated(true);
+                setError(null);
+
+                const competitors = Object.keys(landscape);
+                const initialExpandedState = {};
+                competitors.forEach(competitor => {
+                    initialExpandedState[competitor] = true;
+                });
+                setExpandedSections(initialExpandedState);
+            } else {
+                setData(null);
+                setHasGenerated(false);
+            }
         } else {
             setData(null);
             setHasGenerated(false);

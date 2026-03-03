@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Loader, TrendingUp, Target, Lightbulb, AlertTriangle, Award, 
-    ChevronDown, ChevronRight, Shield, Users, BarChart3, Map, 
+    Loader, TrendingUp, Target, Lightbulb, AlertTriangle, Award,
+    ChevronDown, ChevronRight, Shield, Users, BarChart3, Map,
     DollarSign, Activity, Zap, Package, Globe, ArrowRight
 } from 'lucide-react';
 import '../styles/EssentialPhase.css';
@@ -86,18 +86,21 @@ const CoreAdjacency = ({
     const isCoreAdjacencyDataIncomplete = (data) => {
         if (!data) return true;
 
-        const hasCore = data.coreBusinessDefinition && 
-            (data.coreBusinessDefinition.keySegments?.length > 0 || 
-             data.coreBusinessDefinition.primaryCapabilities?.length > 0 ||
-             data.coreBusinessDefinition.profitDrivers?.length > 0);
+        const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
+        if (!normalized) return true;
 
-        const hasGrowth = data.growthOpportunities && 
-            (data.growthOpportunities.withinCore?.length > 0 ||
-             data.growthOpportunities.adjacent?.length > 0 ||
-             data.growthOpportunities.nonAdjacent?.length > 0);
+        const hasCore = normalized.coreBusinessDefinition &&
+            (normalized.coreBusinessDefinition.keySegments?.length > 0 ||
+                normalized.coreBusinessDefinition.primaryCapabilities?.length > 0 ||
+                normalized.coreBusinessDefinition.profitDrivers?.length > 0);
 
-        const hasVectors = data.growthVectorCategorization &&
-            Object.values(data.growthVectorCategorization).some(arr => arr?.length > 0);
+        const hasGrowth = normalized.growthOpportunities &&
+            (normalized.growthOpportunities.withinCore?.length > 0 ||
+                normalized.growthOpportunities.adjacent?.length > 0 ||
+                normalized.growthOpportunities.nonAdjacent?.length > 0);
+
+        const hasVectors = normalized.growthVectorCategorization &&
+            Object.values(normalized.growthVectorCategorization).some(arr => arr?.length > 0);
 
         const sectionsWithData = [hasCore, hasGrowth, hasVectors].filter(Boolean).length;
         return sectionsWithData < 2;
@@ -108,44 +111,47 @@ const CoreAdjacency = ({
             return 0;
         }
 
+        const normalized = data.coreAdjacency || data.core_adjacency || data.CoreAdjacency || (data.coreBusinessDefinition || data.growthOpportunities ? data : null);
+        if (!normalized) return 0;
+
         let total = 0;
 
-        if (data.coreBusinessDefinition) {
-            if (data.coreBusinessDefinition.keySegments && Array.isArray(data.coreBusinessDefinition.keySegments)) {
-                total += data.coreBusinessDefinition.keySegments.length;
+        if (normalized.coreBusinessDefinition) {
+            if (normalized.coreBusinessDefinition.keySegments && Array.isArray(normalized.coreBusinessDefinition.keySegments)) {
+                total += normalized.coreBusinessDefinition.keySegments.length;
             }
-            if (data.coreBusinessDefinition.primaryCapabilities && Array.isArray(data.coreBusinessDefinition.primaryCapabilities)) {
-                total += data.coreBusinessDefinition.primaryCapabilities.length;
+            if (normalized.coreBusinessDefinition.primaryCapabilities && Array.isArray(normalized.coreBusinessDefinition.primaryCapabilities)) {
+                total += normalized.coreBusinessDefinition.primaryCapabilities.length;
             }
-            if (data.coreBusinessDefinition.profitDrivers && Array.isArray(data.coreBusinessDefinition.profitDrivers)) {
-                total += data.coreBusinessDefinition.profitDrivers.length;
-            }
-        }
-
-        if (data.growthOpportunities) {
-            if (data.growthOpportunities.withinCore && Array.isArray(data.growthOpportunities.withinCore)) {
-                total += data.growthOpportunities.withinCore.length;
-            }
-            if (data.growthOpportunities.adjacent && Array.isArray(data.growthOpportunities.adjacent)) {
-                total += data.growthOpportunities.adjacent.length;
-            }
-            if (data.growthOpportunities.nonAdjacent && Array.isArray(data.growthOpportunities.nonAdjacent)) {
-                total += data.growthOpportunities.nonAdjacent.length;
+            if (normalized.coreBusinessDefinition.profitDrivers && Array.isArray(normalized.coreBusinessDefinition.profitDrivers)) {
+                total += normalized.coreBusinessDefinition.profitDrivers.length;
             }
         }
 
-        if (data.growthVectorCategorization) {
-            Object.values(data.growthVectorCategorization).forEach(arr => {
+        if (normalized.growthOpportunities) {
+            if (normalized.growthOpportunities.withinCore && Array.isArray(normalized.growthOpportunities.withinCore)) {
+                total += normalized.growthOpportunities.withinCore.length;
+            }
+            if (normalized.growthOpportunities.adjacent && Array.isArray(normalized.growthOpportunities.adjacent)) {
+                total += normalized.growthOpportunities.adjacent.length;
+            }
+            if (normalized.growthOpportunities.nonAdjacent && Array.isArray(normalized.growthOpportunities.nonAdjacent)) {
+                total += normalized.growthOpportunities.nonAdjacent.length;
+            }
+        }
+
+        if (normalized.growthVectorCategorization) {
+            Object.values(normalized.growthVectorCategorization).forEach(arr => {
                 if (Array.isArray(arr)) total += arr.length;
             });
         }
 
-        if (data.missingInformation && Array.isArray(data.missingInformation)) {
-            total += data.missingInformation.length;
+        if (normalized.missingInformation && Array.isArray(normalized.missingInformation)) {
+            total += normalized.missingInformation.length;
         }
 
-        if (data.recommendedNextSteps && Array.isArray(data.recommendedNextSteps)) {
-            total += data.recommendedNextSteps.length;
+        if (normalized.recommendedNextSteps && Array.isArray(normalized.recommendedNextSteps)) {
+            total += normalized.recommendedNextSteps.length;
         }
 
         return total;
@@ -153,7 +159,7 @@ const CoreAdjacency = ({
 
     const typeText = (text, rowIndex, field, delay = 0) => {
         if (text === null || text === undefined) return;
-        
+
         const textStr = typeof text === 'string' ? text : String(text);
 
         setTimeout(() => {
@@ -211,10 +217,12 @@ const CoreAdjacency = ({
                 setVisibleRows(currentRow + 1);
 
                 let rowsProcessed = 0;
+                const normalized = coreAdjacencyData.coreAdjacency || coreAdjacencyData.core_adjacency || coreAdjacencyData.CoreAdjacency || (coreAdjacencyData.coreBusinessDefinition || coreAdjacencyData.growthOpportunities ? coreAdjacencyData : null);
+                if (!normalized) return;
 
-                if (coreAdjacencyData.coreBusinessDefinition) {
-                    const cbd = coreAdjacencyData.coreBusinessDefinition;
-                    
+                if (normalized.coreBusinessDefinition) {
+                    const cbd = normalized.coreBusinessDefinition;
+
                     if (cbd.keySegments && Array.isArray(cbd.keySegments) && cbd.keySegments.length > 0) {
                         const segmentIndex = currentRow - rowsProcessed;
                         if (segmentIndex >= 0 && segmentIndex < cbd.keySegments.length) {
@@ -246,9 +254,9 @@ const CoreAdjacency = ({
                     }
                 }
 
-                if (coreAdjacencyData.growthOpportunities) {
-                    const go = coreAdjacencyData.growthOpportunities;
-                    
+                if (normalized.growthOpportunities) {
+                    const go = normalized.growthOpportunities;
+
                     if (go.withinCore && Array.isArray(go.withinCore) && go.withinCore.length > 0) {
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < go.withinCore.length) {
@@ -286,12 +294,12 @@ const CoreAdjacency = ({
                     }
                 }
 
-                if (coreAdjacencyData.growthVectorCategorization) {
-                    const gvc = coreAdjacencyData.growthVectorCategorization;
-                    const allVectors = Object.entries(gvc).flatMap(([key, items]) => 
+                if (normalized.growthVectorCategorization) {
+                    const gvc = normalized.growthVectorCategorization;
+                    const allVectors = Object.entries(gvc).flatMap(([key, items]) =>
                         (Array.isArray(items) ? items : []).map(item => ({ ...item, category: key }))
                     );
-                    
+
                     const vectorIndex = currentRow - rowsProcessed;
                     if (vectorIndex >= 0 && vectorIndex < allVectors.length) {
                         const item = allVectors[vectorIndex];
@@ -303,20 +311,20 @@ const CoreAdjacency = ({
                     rowsProcessed += allVectors.length;
                 }
 
-                if (coreAdjacencyData.missingInformation && Array.isArray(coreAdjacencyData.missingInformation) && coreAdjacencyData.missingInformation.length > 0) {
+                if (normalized.missingInformation && Array.isArray(normalized.missingInformation) && normalized.missingInformation.length > 0) {
                     const index = currentRow - rowsProcessed;
-                    if (index >= 0 && index < coreAdjacencyData.missingInformation.length) {
-                        typeText(coreAdjacencyData.missingInformation[index], currentRow, 'content', 0);
+                    if (index >= 0 && index < normalized.missingInformation.length) {
+                        typeText(normalized.missingInformation[index], currentRow, 'content', 0);
                         currentRow++;
                         return;
                     }
-                    rowsProcessed += coreAdjacencyData.missingInformation.length;
+                    rowsProcessed += normalized.missingInformation.length;
                 }
 
-                if (coreAdjacencyData.recommendedNextSteps && Array.isArray(coreAdjacencyData.recommendedNextSteps) && coreAdjacencyData.recommendedNextSteps.length > 0) {
+                if (normalized.recommendedNextSteps && Array.isArray(normalized.recommendedNextSteps) && normalized.recommendedNextSteps.length > 0) {
                     const index = currentRow - rowsProcessed;
-                    if (index >= 0 && index < coreAdjacencyData.recommendedNextSteps.length) {
-                        typeText(coreAdjacencyData.recommendedNextSteps[index], currentRow, 'content', 0);
+                    if (index >= 0 && index < normalized.recommendedNextSteps.length) {
+                        typeText(normalized.recommendedNextSteps[index], currentRow, 'content', 0);
                         currentRow++;
                         return;
                     }
@@ -355,9 +363,16 @@ const CoreAdjacency = ({
 
     useEffect(() => {
         if (coreAdjacencyData) {
-            setData(coreAdjacencyData);
-            setHasGenerated(true);
-            setError(null);
+            const normalized = coreAdjacencyData.coreAdjacency || coreAdjacencyData.core_adjacency || coreAdjacencyData.CoreAdjacency || (coreAdjacencyData.coreBusinessDefinition || coreAdjacencyData.growthOpportunities ? coreAdjacencyData : null);
+
+            if (normalized && (normalized.coreBusinessDefinition || normalized.growthOpportunities)) {
+                setData(normalized);
+                setHasGenerated(true);
+                setError(null);
+            } else {
+                setData(null);
+                setHasGenerated(false);
+            }
         } else {
             setData(null);
             setHasGenerated(false);
@@ -405,7 +420,7 @@ const CoreAdjacency = ({
 
         return (
             <div className="porters-container">
-                <AnalysisError 
+                <AnalysisError
                     error={errorMessage}
                     onRetry={handleRetry}
                     title="Core vs. Adjacency Analysis Error"
@@ -529,7 +544,7 @@ const CoreAdjacency = ({
                                     <p style={{ margin: 0, lineHeight: '1.6' }}>{data.coreBusinessDefinition.description}</p>
                                 </div>
                             )}
-                            
+
                             <table className="data-table">
                                 <tbody>
                                     {data.coreBusinessDefinition.keySegments && data.coreBusinessDefinition.keySegments.length > 0 && (
@@ -654,10 +669,10 @@ const CoreAdjacency = ({
                                                         isLast={isLast && isStreaming}
                                                         lastRowRef={lastRowRef}
                                                         isStreaming={isStreaming}
-                                                        
+
                                                     >
                                                         <td>
-                                                            <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                            {hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}
                                                         </td>
                                                         {rationale && (
                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
@@ -693,7 +708,7 @@ const CoreAdjacency = ({
                                                         isStreaming={isStreaming}
                                                     >
                                                         <td>
-                                                            <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                            {hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}
                                                         </td>
                                                         {rationale && (
                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
@@ -728,8 +743,7 @@ const CoreAdjacency = ({
                                                         lastRowRef={lastRowRef}
                                                         isStreaming={isStreaming}
                                                     >
-                                                        <td>
-                                                            <strong>{hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}</strong>
+                                                        <td> {hasStreamed ? opportunity : (typingTexts[`${rowIndex}-opportunity`] || opportunity)}
                                                         </td>
                                                         {rationale && (
                                                             <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
@@ -762,7 +776,7 @@ const CoreAdjacency = ({
                         <div className="table-container">
                             {Object.entries(data.growthVectorCategorization).map(([category, items]) => {
                                 if (!items || items.length === 0) return null;
-                                
+
                                 return (
                                     <div key={category}>
                                         <h6 style={{ margin: '1rem 0 0.5rem 0', color: '#2c5282' }}>{formatLabel(category)}</h6>
@@ -783,8 +797,7 @@ const CoreAdjacency = ({
                                                             lastRowRef={lastRowRef}
                                                             isStreaming={isStreaming}
                                                         >
-                                                            <td style={{ width: '40%' }}>
-                                                                <strong>{hasStreamed ? vector : (typingTexts[`${rowIndex}-vector`] || vector)}</strong>
+                                                            <td style={{ width: '40%' }}> {hasStreamed ? vector : (typingTexts[`${rowIndex}-vector`] || vector)}
                                                             </td>
                                                             {description && (
                                                                 <td style={{ opacity: isVisible ? 1 : 0, transition: !isStreaming ? 'none' : 'opacity 0.3s 0.2s' }}>
@@ -809,7 +822,7 @@ const CoreAdjacency = ({
                     <div className="section-header" onClick={() => toggleSection('missingInformation')}>
                         <h5>
                             <AlertTriangle size={20} style={{ marginRight: '8px' }} />
-                           {t('Missing_Information')}
+                            {t('Missing_Information')}
                         </h5>
                         {expandedSections.missingInformation ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                     </div>

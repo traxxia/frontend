@@ -73,24 +73,22 @@ const ProductivityMetrics = ({
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
 
+    // Handle both wrapped and direct API response formats
     let normalizedData;
     if (data.productivityMetrics) {
-      normalizedData = data;
+      normalizedData = data.productivityMetrics;
+    } else if (data.productivity_metrics) {
+      normalizedData = data.productivity_metrics;
     } else if (data.employeeProductivity || data.costStructure) {
-      normalizedData = { productivityMetrics: data };
+      normalizedData = data;
     } else {
       return true;
     }
 
-    if (!normalizedData.productivityMetrics) {
-      return true;
-    }
-
-    const metrics = normalizedData.productivityMetrics;
-    const hasEmployeeData = metrics.employeeProductivity && Object.keys(metrics.employeeProductivity).length > 0;
-    const hasCostData = metrics.costStructure && Object.keys(metrics.costStructure).length > 0;
-    const hasValueDrivers = metrics.valueDrivers && metrics.valueDrivers.length > 0;
-    const hasImprovements = metrics.improvementOpportunities && metrics.improvementOpportunities.length > 0;
+    const hasEmployeeData = normalizedData.employeeProductivity && Object.keys(normalizedData.employeeProductivity).length > 0;
+    const hasCostData = normalizedData.costStructure && Object.keys(normalizedData.costStructure).length > 0;
+    const hasValueDrivers = normalizedData.valueDrivers && normalizedData.valueDrivers.length > 0;
+    const hasImprovements = normalizedData.improvementOpportunities && normalizedData.improvementOpportunities.length > 0;
 
     const sectionsWithData = [hasEmployeeData, hasCostData, hasValueDrivers, hasImprovements].filter(Boolean).length;
     return sectionsWithData === 0;
@@ -103,18 +101,18 @@ const ProductivityMetrics = ({
 
     let normalizedData;
     if (data.productivityMetrics) {
-      normalizedData = data;
+      normalizedData = data.productivityMetrics;
+    } else if (data.productivity_metrics) {
+      normalizedData = data.productivity_metrics;
     } else if (data.employeeProductivity || data.costStructure) {
-      normalizedData = { productivityMetrics: data };
+      normalizedData = data;
     } else {
       return 0;
     }
 
-    const metrics = normalizedData.productivityMetrics;
     let total = 0;
-
-    Object.keys(metrics).forEach(key => {
-      const value = metrics[key];
+    Object.keys(normalizedData).forEach(key => {
+      const value = normalizedData[key];
       if (Array.isArray(value)) {
         total += value.length;
       }
@@ -125,7 +123,7 @@ const ProductivityMetrics = ({
 
   const typeText = (text, rowIndex, field, delay = 0) => {
     if (text === null || text === undefined) return;
-    
+
     const textStr = typeof text === 'string' ? text : String(text);
 
     setTimeout(() => {
@@ -169,14 +167,14 @@ const ProductivityMetrics = ({
 
     let normalizedData;
     if (productivityData.productivityMetrics) {
-      normalizedData = productivityData;
+      normalizedData = productivityData.productivityMetrics;
+    } else if (productivityData.productivity_metrics) {
+      normalizedData = productivityData.productivity_metrics;
     } else if (productivityData.employeeProductivity || productivityData.costStructure) {
-      normalizedData = { productivityMetrics: productivityData };
+      normalizedData = productivityData;
     } else {
       return;
     }
-
-    const metrics = normalizedData.productivityMetrics;
 
     if (streamingIntervalRef.current) {
       clearInterval(streamingIntervalRef.current);
@@ -196,15 +194,15 @@ const ProductivityMetrics = ({
         let rowsProcessed = 0;
 
         // Process all array sections
-        Object.keys(metrics).forEach(sectionKey => {
-          const sectionData = metrics[sectionKey];
-          
+        Object.keys(normalizedData).forEach(sectionKey => {
+          const sectionData = normalizedData[sectionKey];
+
           if (Array.isArray(sectionData) && sectionData.length > 0) {
             const index = currentRow - rowsProcessed;
-            
+
             if (index >= 0 && index < sectionData.length) {
               const item = sectionData[index];
-              
+
               if (typeof item === 'string') {
                 typeText(item, currentRow, 'item', 0);
               } else if (typeof item === 'object' && item !== null) {
@@ -214,16 +212,16 @@ const ProductivityMetrics = ({
                 });
               }
             }
-            
+
             if (index >= 0 && index < sectionData.length) {
               currentRow++;
               return;
             }
-            
+
             if (currentRow >= rowsProcessed && currentRow < rowsProcessed + sectionData.length) {
               return;
             }
-            
+
             rowsProcessed += sectionData.length;
           }
         });
@@ -263,15 +261,17 @@ const ProductivityMetrics = ({
     if (productivityData) {
       let normalizedData;
       if (productivityData.productivityMetrics) {
-        normalizedData = productivityData;
+        normalizedData = productivityData.productivityMetrics;
+      } else if (productivityData.productivity_metrics) {
+        normalizedData = productivityData.productivity_metrics;
       } else if (productivityData.employeeProductivity || productivityData.costStructure) {
-        normalizedData = { productivityMetrics: productivityData };
+        normalizedData = productivityData;
       } else {
         normalizedData = null;
       }
 
       if (normalizedData) {
-        setData(normalizedData);
+        setData({ productivityMetrics: normalizedData });
         setHasGenerated(true);
         setError(null);
       } else {
@@ -330,7 +330,7 @@ const ProductivityMetrics = ({
     return (
       <div className="section-container" key={sectionKey} style={{
         backgroundColor: 'white',
-        borderRadius: '8px',  
+        borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -345,7 +345,7 @@ const ProductivityMetrics = ({
         </div>
 
         {expandedSections[sectionKey] !== false && (
-          <div style={{ width: '100%'}}>
+          <div style={{ width: '100%' }}>
             <ResponsiveContainer width="100%" height={350}>
               <BarChart
                 data={chartData}
@@ -381,7 +381,7 @@ const ProductivityMetrics = ({
       return (
         <div className="section-container" key={sectionKey} style={{
           backgroundColor: 'white',
-          borderRadius: '8px',  
+          borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -446,7 +446,7 @@ const ProductivityMetrics = ({
       return (
         <div className="section-container" key={sectionKey} style={{
           backgroundColor: 'white',
-          borderRadius: '8px',  
+          borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           <div className="section-header" onClick={() => toggleSection(sectionKey)} style={{
@@ -494,7 +494,7 @@ const ProductivityMetrics = ({
                         isStreaming={isStreaming}
                       >
                         {keys.map((key, keyIndex) => (
-                          <td key={key} style={{ 
+                          <td key={key} style={{
                             padding: '12px',
                             opacity: isVisible ? 1 : 0,
                             transition: !isStreaming ? 'none' : `opacity 0.3s ${keyIndex * 0.1}s`
@@ -534,7 +534,7 @@ const ProductivityMetrics = ({
 
   if (error) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto'  }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <AnalysisError
           error={error}
           onRetry={handleRetry}
@@ -577,7 +577,7 @@ const ProductivityMetrics = ({
 
   if (!data?.productivityMetrics) {
     return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto'}}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <AnalysisError
           error="The productivity metrics data received is not in the expected format. Please regenerate the analysis."
           onRetry={handleRetry}
@@ -595,7 +595,7 @@ const ProductivityMetrics = ({
 
   Object.keys(productivityMetrics).forEach(sectionKey => {
     const sectionData = productivityMetrics[sectionKey];
-    
+
     if (Array.isArray(sectionData) && sectionData.length > 0) {
       sectionIndices[sectionKey] = {};
       sectionData.forEach((_, index) => {

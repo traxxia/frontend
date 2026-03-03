@@ -638,31 +638,66 @@ const AnalysisContentManager = (props) => {
   const currentAnalyses = useMemo(() => {
     const sets = {
       initial: ['swot', 'purchaseCriteria', 'loyaltyNPS', 'porters', 'pestel'],
-      essential: ['fullSwot', 'strategicRadar', 'competitiveAdvantage', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics'],
-      financial: ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'],
-      advanced: ['fullSwot', 'strategicRadar', 'porters', 'pestel', 'competitiveAdvantage', 'purchaseCriteria', 'loyaltyNPS', 'expandedCapability', 'maturityScore', 'competitiveLandscape', 'coreAdjacency', 'productivityMetrics']
+      essential: [
+        'purchaseCriteria',
+        'loyaltyNPS',
+        'porters',
+        'pestel',
+        'fullSwot',
+        'competitiveAdvantage',
+        'expandedCapability',
+        'strategicRadar',
+        'productivityMetrics',
+        'maturityScore',
+        'competitiveLandscape',
+        'coreAdjacency'
+      ],
+      advanced: [
+        'purchaseCriteria',
+        'loyaltyNPS',
+        'porters',
+        'pestel',
+        'fullSwot',
+        'competitiveAdvantage',
+        'expandedCapability',
+        'strategicRadar',
+        'productivityMetrics',
+        'maturityScore',
+        'competitiveLandscape',
+        'coreAdjacency',
+        'profitabilityAnalysis',
+        'growthTracker',
+        'liquidityEfficiency',
+        'investmentPerformance',
+        'leverageRisk'
+      ],
+      financial: [
+        'profitabilityAnalysis',
+        'growthTracker',
+        'liquidityEfficiency',
+        'investmentPerformance',
+        'leverageRisk'
+      ]
     };
 
     const activeAnalyses = new Set();
 
-    if (unlockedFeatures.initialPhase) {
+    // Determine the highest phase reached for brief-based analyses (Exclusive logic)
+    if (unlockedFeatures.advancedPhase) {
+      sets.advanced.forEach(a => activeAnalyses.add(a));
+    } else if (unlockedFeatures.essentialPhase) {
+      sets.essential.forEach(a => activeAnalyses.add(a));
+    } else if (unlockedFeatures.initialPhase) {
       sets.initial.forEach(a => activeAnalyses.add(a));
     }
 
-    if (unlockedFeatures.essentialPhase) {
-      sets.essential.forEach(a => activeAnalyses.add(a));
-    }
-
+    // Financial analyses are always additive if a document is present
     if (unlockedFeatures.hasDocument) {
       sets.financial.forEach(a => activeAnalyses.add(a));
     }
 
-    if (unlockedFeatures.advancedPhase) {
-      sets.advanced.forEach(a => activeAnalyses.add(a));
-    }
-
     return Array.from(activeAnalyses);
-  }, [unlockedFeatures.initialPhase, unlockedFeatures.essentialPhase, unlockedFeatures.hasDocument, unlockedFeatures.advancedPhase]);
+  }, [unlockedFeatures]);
 
 
   // Memoize the categorized analyses
