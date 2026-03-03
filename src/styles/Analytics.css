@@ -580,6 +580,11 @@
    margin-bottom: 0px;
  }
 
+ .pc-charts,
+ .ln-content {
+   margin-top: 15px;
+ }
+
  .ch-categories {
    display: flex;
    flex-direction: column;
@@ -1638,7 +1643,7 @@
 
  .radar-chart {
    width: 400px;
-   height: 350px;
+   height: 400px;
    max-width: 100%;
    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
  }
