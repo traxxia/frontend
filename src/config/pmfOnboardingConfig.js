@@ -6,14 +6,14 @@
 
 // Countries list
 export const COUNTRIES = [
-  'United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Chile', 
-  'Colombia', 'Peru', 'United Kingdom', 'Germany', 'France', 'Spain', 
-  'Italy', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Sweden', 
-  'Norway', 'Denmark', 'Finland', 'Poland', 'Portugal', 'Greece', 
+  'United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Chile',
+  'Colombia', 'Peru', 'United Kingdom', 'Germany', 'France', 'Spain',
+  'Italy', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Sweden',
+  'Norway', 'Denmark', 'Finland', 'Poland', 'Portugal', 'Greece',
   'Ireland', 'Czech Republic', 'Hungary', 'Romania', 'Bulgaria', 'Croatia',
-  'Australia', 'New Zealand', 'Japan', 'China', 'India', 'South Korea', 
+  'Australia', 'New Zealand', 'Japan', 'China', 'India', 'South Korea',
   'Singapore', 'Malaysia', 'Thailand', 'Indonesia', 'Philippines', 'Vietnam',
-  'South Africa', 'Egypt', 'Nigeria', 'Kenya', 'Morocco', 'Israel', 
+  'South Africa', 'Egypt', 'Nigeria', 'Kenya', 'Morocco', 'Israel',
   'Turkey', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Kuwait'
 ];
 
@@ -183,4 +183,21 @@ export const FIELD_HINTS = {
   customerSegment: 'e.g., Young adults, SMEs, Enterprise',
   productService: 'e.g., Ice cream, M&A advisory',
   channel: 'e.g., Convenience stores, Direct sales'
+};
+
+// Field descriptions for tooltips
+export const FIELD_DESCRIPTIONS = {
+  companyName: 'The official name of the company or the specific client you are analyzing.',
+  website: 'The primary URL of the business. This helps in identifying the industry and online presence.',
+  country: 'The primary country where the business is registered or has its main operations.',
+  city: 'The specific city of the main office or headquarters.',
+  primaryIndustry: 'Select the industry that best represents the core of the business activities.',
+  geographies: 'List the key geographic markets where the business currently operates or plans to operate.',
+  customerSegments: 'Define the different groups of people or organizations the business aims to reach and serve.',
+  productServices: 'Specify the key products or services the business offers to its customers.',
+  channels: 'The methods used to deliver and sell the products or services to customers (e.g., retail, online, direct sales).',
+  strategicObjective: 'The primary long-term goal the business is currently focused on achieving.',
+  keyChallenges: 'Identify the main obstacles or constraints currently hindering business growth or performance.',
+  differentiation: 'Select the key factors that provide the business with a competitive advantage in the market.',
+  usageContext: 'Specify whether you are creating this strategy for your own company or for a client.'
 };

@@ -13,7 +13,7 @@ import {
   Accordion
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle, ArrowLeft
+  Info, X, Trash2, AlertTriangle, ArrowLeft, Check
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -592,10 +592,10 @@ const Dashboard = () => {
             {statusInfo.label}
           </span>
           {canDelete && (
-      <div className="delete-btn-wrapper">
-        <SimpleDeleteButton />
-      </div>
-    )}
+            <div className="delete-btn-wrapper">
+              <SimpleDeleteButton />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1211,8 +1211,8 @@ const Dashboard = () => {
             <div className="success-popup-overlay">
               <div className="success-popup">
                 <div className="success-popup-content">
-                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger shadow-sm' : ''}`}>
-                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : '✅'}
+                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger' : 'bg-success'}`}>
+                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : <Check size={40} color="white" strokeWidth={3} />}
                   </div>
                   <h5 className={`mb-2 ${businessError ? 'text-danger' : ''}`}>
                     {businessError ? t('alert') : t('success')}
