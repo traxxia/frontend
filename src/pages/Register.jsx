@@ -202,9 +202,20 @@ const Register = () => {
       if (!form.company_name.trim()) {
         newErrors.company_name = t('company_name_required') || 'Company name is required';
       } else {
-        const nameRegex = /^[a-zA-Z\s]+$/;
-        if (!nameRegex.test(form.company_name.trim())) {
-          newErrors.company_name = t('company_name_invalid') || 'Company name can only contain letters and spaces';
+        const name = form.company_name.trim();
+        const hasLetter = /[a-zA-Z]/.test(name);
+        const continuousSpecial = /[^a-zA-Z0-9\s]{2,}/.test(name);
+        const continuousNumbers = /\d{4,}/.test(name);
+        const validChars = /^[a-zA-Z0-9\s!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(name);
+
+        if (!validChars) {
+          newErrors.company_name = t('company_name_invalid_chars') || 'Company name contains invalid characters';
+        } else if (!hasLetter) {
+          newErrors.company_name = t('company_name_needs_letter') || 'Company name must contain at least one letter';
+        } else if (continuousSpecial) {
+          newErrors.company_name = t('company_name_continuous_special') || 'Company name cannot have continuous special characters';
+        } else if (continuousNumbers) {
+          newErrors.company_name = t('company_name_continuous_numbers') || 'Company name cannot have continuous numbers (max 3)';
         }
       }
       if (!selectedPlanId) newErrors.selectedPlanId = t('plan_selection_required') || 'Please select a pricing plan';

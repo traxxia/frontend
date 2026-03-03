@@ -117,6 +117,10 @@ export const staticTranslations = {
     'differentiation_invalid': 'Differentiation can only contain letters',
     'card_holder_name_invalid': 'Card holder name can only contain letters',
     'company_name_invalid': 'Company name can only contain letters',
+    'company_name_invalid_chars': 'Company name contains invalid characters',
+    'company_name_needs_letter': 'Company name must contain at least one letter',
+    'company_name_continuous_special': 'Company name cannot have continuous special characters',
+    'company_name_continuous_numbers': 'Company name cannot have continuous numbers (max 3)',
     'enter_your_question_here': 'Enter your question here...',
     'what_this_question_aims_to_understand_or_analyze': 'What this question aims to understand or analyze...',
     'search_events': 'Search Events',
@@ -1602,6 +1606,10 @@ export const staticTranslations = {
     'select_a_company': 'Selecciona una compañía',
     'password_must_be_at_least_8_characters_contain_uppercase_lowercase_and_numbers': 'La contraseña debe tener al menos 8 caracteres y contener mayúsculas, minúsculas y números',
     'Company_selection_is_required': 'La selección de la compañía es obligatoria',
+    'company_name_invalid_chars': 'El nombre de la empresa contiene caracteres no válidos',
+    'company_name_needs_letter': 'El nombre de la empresa debe contener al menos una letra',
+    'company_name_continuous_special': 'El nombre de la empresa no puede tener caracteres especiales continuos',
+    'company_name_continuous_numbers': 'El nombre de la empresa no puede tener números continuos (máx. 3)',
 
     // ===========================
     // PANEL DE CONTROL
