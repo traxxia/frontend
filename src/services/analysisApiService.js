@@ -592,6 +592,46 @@ export class AnalysisApiService {
 
       const results = await Promise.allSettled(wrappedPromises);
 
+      // --- Second Level Call for Failed APIs ---
+      const failedTypes = results
+        .filter(r => r.status === 'rejected')
+        .map(r => r.reason.analysisType);
+
+      if (failedTypes.length > 0) {
+        showToastMessage(
+          `Retrying ${failedTypes.length} failed analyses...`,
+          "info",
+          { duration: 3000 }
+        );
+
+        const retryPromises = failedTypes.map((analysisType) => {
+          const displayName =
+            typeof this.getDisplayName === "function"
+              ? this.getDisplayName(analysisType)
+              : analysisType;
+
+          return this
+            .callAnalysisAPIWithSave(analysisType, payload, stateSetters, selectedBusinessId)
+            .then((res) => {
+              successes++;
+              failures--;
+              showToastMessage(
+                `Retry for "${displayName}" completed successfully`,
+                "info",
+                { duration: 3000 }
+              );
+              return { status: "fulfilled", analysisType, value: res };
+            })
+            .catch((err) => {
+              console.error(`Second attempt failed for ${analysisType}:`, err);
+              // Leave as it is, empty state will be shown
+              return { status: "rejected", analysisType, reason: err };
+            });
+        });
+
+        await Promise.allSettled(retryPromises);
+      }
+
       if (failures > 0) {
         showToastMessage(
           `${successes}/${analysisTypes.length} ${phase} phase analyses completed successfully.`,
