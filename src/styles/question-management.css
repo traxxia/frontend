@@ -1325,3 +1325,28 @@ button:focus {
 [data-theme="dark"] .phase-section__header:focus {
   background-color: #283047 !important; /* even deeper on hover */
 }
+
+@media (max-width: 576px) {
+  .question-management__header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+  }
+
+  .question-management__header h2 {
+    font-size: 1.1rem; 
+    margin: 0;
+  }
+
+  .question-management__add-btn {
+    padding: 5px 10px;  
+    font-size: 0.8rem;
+    height: auto;
+    white-space: nowrap;
+  }
+
+  .question-management__add-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}

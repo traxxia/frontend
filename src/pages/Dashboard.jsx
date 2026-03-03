@@ -567,13 +567,13 @@ if (!businessName) {
           <small className="text-muted">
             {completedQuestions}/{totalQuestions} {t('questions_completed')}
             {remainingQuestions > 0 && (
-              <span className="text-warning ms-2">
+              <span className="text-warning ms-2 text-grey-custom">
                 • {remainingQuestions} {t('questions_remaining')}
               </span>
             )}
           </small>
         </div>
-        <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-2 gap-md-2">
+        <div className="right-side d-flex flex-column flex-md-row align-items-end align-items-md-center gap-1">
           <span className={`status-badge ${statusInfo.className}`}>
             {statusInfo.label}
           </span>
@@ -774,7 +774,7 @@ if (!businessName) {
                   {/* Desktop View */}
                   <Card className="desktop-view-card d-none d-md-block">
                     <Card.Body className="p-0 h-100">
-                      <Row className="h-100 g-0">
+                      <Row className="h-100 px-4">
                         <Col md={6} className="welcome-section">
                           <div>
                             <div className="d-flex justify-content-between align-items-start mb-4">
