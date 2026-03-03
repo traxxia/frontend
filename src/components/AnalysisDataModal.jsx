@@ -35,7 +35,8 @@ const AnalysisDataModal = ({
   analysisName,
   businessName = "Business",
   auditId,
-  documentInfo = null // Added new prop for document information
+  documentInfo = null, // Added new prop for document information
+  phaseAnalysisArray = [] // Added phaseAnalysisArray prop
 }) => {
   if (!isOpen) return null;
 
@@ -152,7 +153,7 @@ const AnalysisDataModal = ({
             {...mockProps}
             strategicData={analysisData}
             phaseManager={{ getUnlockedFeatures: () => ({ analysis: true }) }}
-            phaseAnalysisArray={[]}
+            phaseAnalysisArray={phaseAnalysisArray}
             readOnly={false}
             hideDownload={true}
             hideKickstart={true}
