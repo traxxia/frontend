@@ -62,7 +62,7 @@ const PestelAnalysis = ({
 
   const isPestelDataIncomplete = (data) => {
     if (!data) return true;
-    const analysis = data.pestel_analysis || data;
+    const analysis = data.pestel_analysis || data.pestelAnalysis || data.pestel || data.PestelAnalysis || data;
     if (!analysis.factor_summary || Object.keys(analysis.factor_summary).length === 0) return true;
     const criticalFields = ['executive_summary', 'strategic_recommendations'];
     const hasNullFields = criticalFields.some(field => analysis[field] === null || analysis[field] === undefined);
@@ -81,7 +81,7 @@ const PestelAnalysis = ({
       return 0;
     }
 
-    const analysis = data.pestel_analysis || data;
+    const analysis = data.pestel_analysis || data.pestelAnalysis || data.pestel || data.PestelAnalysis || data;
     let total = 0;
 
     if (analysis.factor_summary) {
@@ -137,7 +137,7 @@ const PestelAnalysis = ({
       return;
     }
 
-    const analysis = pestelData.pestel_analysis || pestelData;
+    const analysis = pestelData.pestel_analysis || pestelData.pestelAnalysis || pestelData.pestel || pestelData.PestelAnalysis || pestelData;
 
     if (streamingIntervalRef.current) {
       clearInterval(streamingIntervalRef.current);
@@ -242,7 +242,7 @@ const PestelAnalysis = ({
     );
   }
 
-  const analysis = pestelData.pestel_analysis || pestelData;
+  const analysis = pestelData.pestel_analysis || pestelData.pestelAnalysis || pestelData.pestel || pestelData.PestelAnalysis || pestelData;
   const factorEntries = analysis.factor_summary ? Object.entries(analysis.factor_summary) : [];
 
   let currentRowIndex = 0;

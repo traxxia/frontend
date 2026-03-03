@@ -179,28 +179,38 @@ const PhaseManager = ({
                     onCompletedPhasesUpdate(newCompletedPhases);
                 }
 
+                const analysisArray = [];
+                const phaseKeys = ['initial', 'essential', 'advanced', 'financial', 'good'];
+
+                // 1. Check in phase_analysis wrapper
                 if (data.phase_analysis && typeof data.phase_analysis === 'object') {
-                    const analysisArray = [];
                     Object.values(data.phase_analysis).forEach(phaseData => {
                         if (phaseData.analyses && Array.isArray(phaseData.analyses)) {
                             analysisArray.push(...phaseData.analyses);
                         }
                     });
+                }
 
-                    /*
-                    try {
-                        const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
-                        if (newAnalysisData && Array.isArray(newAnalysisData)) {
-                            analysisArray.push(...newAnalysisData);
-                        }
-                    } catch (analysisErr) {
-                        console.warn("Failed to load from Analysis API", analysisErr);
+                // 2. Check at top level (matching user's provided structure)
+                phaseKeys.forEach(key => {
+                    if (data[key] && data[key].analyses && Array.isArray(data[key].analyses)) {
+                        analysisArray.push(...data[key].analyses);
                     }
-                    */
+                });
 
-                    if (onAnalysisDataLoad && analysisArray.length > 0) {
-                        onAnalysisDataLoad(analysisArray);
+                /*
+                try {
+                    const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
+                    if (newAnalysisData && Array.isArray(newAnalysisData)) {
+                        analysisArray.push(...newAnalysisData);
                     }
+                } catch (analysisErr) {
+                    console.warn("Failed to load from Analysis API", analysisErr);
+                }
+                */
+
+                if (onAnalysisDataLoad && analysisArray.length > 0) {
+                    onAnalysisDataLoad(analysisArray);
                 }
             }
         } catch (error) {

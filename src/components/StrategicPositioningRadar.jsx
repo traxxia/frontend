@@ -60,26 +60,15 @@ const StrategicPositioningRadar = ({
     };
 
     const isStrategicRadarDataIncomplete = (data) => {
+        console.log("Traxxia Debug - Checking strategic radar data:", data);
         if (!data) return true;
 
-        let normalizedData;
-        if (data.strategicRadar) {
-            normalizedData = data;
-        } else if (data.dimensions) {
-            normalizedData = { strategicRadar: data };
-        } else {
+        const strategicRadar = data.strategicRadar || data.strategic_radar || (data.dimensions ? data : null);
+        if (!strategicRadar || !strategicRadar.dimensions) {
             return true;
         }
 
-        if (!normalizedData.strategicRadar || !normalizedData.strategicRadar.dimensions) {
-            return true;
-        }
-
-        if (!Array.isArray(normalizedData.strategicRadar.dimensions) || normalizedData.strategicRadar.dimensions.length === 0) {
-            return true;
-        }
-
-        const hasValidDimensions = normalizedData.strategicRadar.dimensions.some(dimension =>
+        const hasValidDimensions = strategicRadar.dimensions.some(dimension =>
             dimension.name &&
             (dimension.currentScore !== undefined || dimension.targetScore !== undefined)
         );
@@ -92,23 +81,19 @@ const StrategicPositioningRadar = ({
             return 0;
         }
 
-        let normalizedData;
-        if (data.strategicRadar) {
-            normalizedData = data;
-        } else if (data.dimensions) {
-            normalizedData = { strategicRadar: data };
-        } else {
+        const strategicRadar = data.strategicRadar || data.strategic_radar || (data.dimensions ? data : null);
+        if (!strategicRadar) {
             return 0;
         }
 
         let total = 0;
 
-        if (normalizedData.strategicRadar.overallPosition) {
+        if (strategicRadar.overallPosition) {
             total += 3;
         }
 
-        if (normalizedData.strategicRadar.dimensions) {
-            total += normalizedData.strategicRadar.dimensions.length;
+        if (strategicRadar.dimensions) {
+            total += strategicRadar.dimensions.length;
         }
 
         return total;
@@ -171,12 +156,10 @@ const StrategicPositioningRadar = ({
             if (currentRow < totalItems) {
                 setVisibleRows(currentRow + 1);
 
-                let normalizedData;
-                if (strategicRadarData.strategicRadar) {
-                    normalizedData = strategicRadarData;
-                } else if (strategicRadarData.dimensions) {
-                    normalizedData = { strategicRadar: strategicRadarData };
-                }
+                const strategicRadar = strategicRadarData.strategicRadar || strategicRadarData.strategic_radar || (strategicRadarData.dimensions ? strategicRadarData : null);
+                if (!strategicRadar) return;
+
+                const normalizedData = { strategicRadar };
 
                 let rowsProcessed = 0;
 
@@ -258,17 +241,10 @@ const StrategicPositioningRadar = ({
 
     useEffect(() => {
         if (strategicRadarData) {
-            let normalizedData;
-            if (strategicRadarData.strategicRadar) {
-                normalizedData = strategicRadarData;
-            } else if (strategicRadarData.dimensions) {
-                normalizedData = { strategicRadar: strategicRadarData };
-            } else {
-                normalizedData = null;
-            }
+            const strategicRadar = strategicRadarData.strategicRadar || strategicRadarData.strategic_radar || (strategicRadarData.dimensions ? strategicRadarData : null);
 
-            if (normalizedData) {
-                setData(normalizedData);
+            if (strategicRadar && strategicRadar.dimensions) {
+                setData({ strategicRadar });
                 setHasGenerated(true);
             } else {
                 setData(null);

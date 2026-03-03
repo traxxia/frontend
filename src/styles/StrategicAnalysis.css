@@ -17,7 +17,7 @@
 
 .loading-spinner {
   color: #3b82f6;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .spin-animation {
@@ -647,7 +647,7 @@
 /* Tables */
 .table-container {
   margin: 0;
-  padding: 0 !important;
+  padding: 10px !important;
   overflow-x: auto;
   border-radius: 0px !important;
 }

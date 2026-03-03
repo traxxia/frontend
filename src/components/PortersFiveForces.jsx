@@ -103,9 +103,7 @@ const PortersFiveForces = ({
 
   const parsePortersData = (data) => {
     if (!data) return null;
-    if (data.portersAnalysis) return data.portersAnalysis;
-    if (data.porter_analysis) return data.porter_analysis;
-    return data;
+    return data.portersAnalysis || data.porter_analysis || data.porters_analysis || data.porters || data.PorterAnalysis || data;
   };
 
   const calculateTotalRows = (parsedData) => {

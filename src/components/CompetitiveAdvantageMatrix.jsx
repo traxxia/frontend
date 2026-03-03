@@ -79,21 +79,20 @@ const CompetitiveAdvantageMatrix = ({
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
 
-        let normalizedData;
+        // Handle both wrapped and direct API response formats
+        let advantage;
         if (data.competitiveAdvantage) {
-            normalizedData = data;
-        } else if (data.differentiators || data.competitivePosition) {
-            normalizedData = { competitiveAdvantage: data };
+            advantage = data.competitiveAdvantage;
+        } else if (data.competitive_advantage) {
+            advantage = data.competitive_advantage;
+        } else if (data.differentiators || data.competitivePosition || data.customerChoiceReasons) {
+            advantage = data;
         } else {
             return true;
         }
-        if (!normalizedData.competitiveAdvantage) {
-            return true;
-        }
 
-        const advantage = normalizedData.competitiveAdvantage;
         const hasDifferentiators = advantage.differentiators && advantage.differentiators.length > 0;
-        const hasCompetitivePosition = advantage.competitivePosition && advantage.competitivePosition.overallScore;
+        const hasCompetitivePosition = advantage.competitivePosition && (advantage.competitivePosition.overallScore || advantage.competitivePosition.marketPosition);
         const hasCustomerChoiceReasons = advantage.customerChoiceReasons && advantage.customerChoiceReasons.length > 0;
         const sectionsWithData = [hasDifferentiators, hasCompetitivePosition, hasCustomerChoiceReasons].filter(Boolean).length;
 
@@ -112,16 +111,17 @@ const CompetitiveAdvantageMatrix = ({
             return 0;
         }
 
-        let normalizedData;
+        let advantage;
         if (data.competitiveAdvantage) {
-            normalizedData = data;
-        } else if (data.differentiators || data.competitivePosition) {
-            normalizedData = { competitiveAdvantage: data };
+            advantage = data.competitiveAdvantage;
+        } else if (data.competitive_advantage) {
+            advantage = data.competitive_advantage;
+        } else if (data.differentiators || data.competitivePosition || data.customerChoiceReasons) {
+            advantage = data;
         } else {
             return 0;
         }
 
-        const advantage = normalizedData.competitiveAdvantage;
         let total = 0;
 
         if (advantage.competitivePosition) {
@@ -162,10 +162,13 @@ const CompetitiveAdvantageMatrix = ({
 
     useEffect(() => {
         if (competitiveAdvantageData) {
+            // Handle both wrapped and direct API response formats
             let normalizedData;
             if (competitiveAdvantageData.competitiveAdvantage) {
                 normalizedData = competitiveAdvantageData;
-            } else if (competitiveAdvantageData.differentiators || competitiveAdvantageData.competitivePosition) {
+            } else if (competitiveAdvantageData.competitive_advantage) {
+                normalizedData = { competitiveAdvantage: competitiveAdvantageData.competitive_advantage };
+            } else if (competitiveAdvantageData.differentiators || competitiveAdvantageData.competitivePosition || competitiveAdvantageData.customerChoiceReasons) {
                 normalizedData = { competitiveAdvantage: competitiveAdvantageData };
             } else {
                 normalizedData = null;

@@ -78,14 +78,12 @@ const FullSWOTPortfolio = ({
     const isFullSwotDataIncomplete = (data) => {
         if (!data) return true;
 
-        let normalizedData;
-        if (data.swotPortfolio) {
-            normalizedData = data;
-        } else if (data.strengths || data.weaknesses) {
-            normalizedData = { swotPortfolio: data };
-        } else {
+        const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
+        if (!swotPortfolio) {
             return true;
         }
+
+        const normalizedData = { swotPortfolio };
 
         if (!normalizedData.swotPortfolio) {
             return true;
@@ -106,16 +104,12 @@ const FullSWOTPortfolio = ({
             return 0;
         }
 
-        let normalizedData;
-        if (data.swotPortfolio) {
-            normalizedData = data;
-        } else if (data.strengths || data.weaknesses) {
-            normalizedData = { swotPortfolio: data };
-        } else {
+        const swotPortfolio = data.swotPortfolio || data.swot_portfolio || data.fullSwot || data.full_swot || (data.strengths || data.weaknesses ? data : null);
+        if (!swotPortfolio) {
             return 0;
         }
 
-        const portfolio = normalizedData.swotPortfolio;
+        const portfolio = swotPortfolio;
         let total = 0;
 
         if (portfolio.strengths && Array.isArray(portfolio.strengths)) total += portfolio.strengths.length;
@@ -194,16 +188,12 @@ const FullSWOTPortfolio = ({
             return;
         }
 
-        let normalizedData;
-        if (fullSwotData.swotPortfolio) {
-            normalizedData = fullSwotData;
-        } else if (fullSwotData.strengths || fullSwotData.weaknesses) {
-            normalizedData = { swotPortfolio: fullSwotData };
-        } else {
+        const swotPortfolio = fullSwotData.swotPortfolio || fullSwotData.swot_portfolio || fullSwotData.fullSwot || fullSwotData.full_swot || (fullSwotData.strengths || fullSwotData.weaknesses ? fullSwotData : null);
+        if (!swotPortfolio) {
             return;
         }
 
-        const portfolio = normalizedData.swotPortfolio;
+        const portfolio = swotPortfolio;
 
         if (streamingIntervalRef.current) {
             clearInterval(streamingIntervalRef.current);
@@ -381,17 +371,10 @@ const FullSWOTPortfolio = ({
 
     useEffect(() => {
         if (fullSwotData) {
-            let normalizedData;
-            if (fullSwotData.swotPortfolio) {
-                normalizedData = fullSwotData;
-            } else if (fullSwotData.strengths || fullSwotData.weaknesses) {
-                normalizedData = { swotPortfolio: fullSwotData };
-            } else {
-                normalizedData = null;
-            }
+            const swotPortfolio = fullSwotData.swotPortfolio || fullSwotData.swot_portfolio || fullSwotData.fullSwot || fullSwotData.full_swot || (fullSwotData.strengths || fullSwotData.weaknesses ? fullSwotData : null);
 
-            if (normalizedData) {
-                setData(normalizedData);
+            if (swotPortfolio && (swotPortfolio.strengths || swotPortfolio.weaknesses)) {
+                setData({ swotPortfolio });
                 setHasGenerated(true);
                 setError(null);
             } else {

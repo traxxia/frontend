@@ -63,8 +63,10 @@ const LoyaltyNPS = ({
 
     // Handle both wrapped and direct API response formats
     let normalizedData;
-    if (data.loyaltyMetrics) {
-      normalizedData = data;
+    const wrappedData = data.loyaltyMetrics || data.loyalty_metrics || data.loyaltyNPS || data.loyalty_nps || data.LoyaltyNPS;
+
+    if (wrappedData) {
+      normalizedData = { loyaltyMetrics: wrappedData };
     } else if (data.method && data.overallScore !== undefined) {
       normalizedData = { loyaltyMetrics: data };
     } else {
@@ -90,9 +92,11 @@ const LoyaltyNPS = ({
     if (loyaltyNPSData) {
       // Handle both wrapped and direct API response formats
       let normalizedData;
-      if (loyaltyNPSData.loyaltyMetrics) {
-        // Data is already wrapped
-        normalizedData = loyaltyNPSData;
+      const wrappedData = loyaltyNPSData.loyaltyMetrics || loyaltyNPSData.loyalty_metrics || loyaltyNPSData.loyaltyNPS || loyaltyNPSData.loyalty_nps || loyaltyNPSData.LoyaltyNPS;
+
+      if (wrappedData) {
+        // Data is wrapped
+        normalizedData = { loyaltyMetrics: wrappedData };
       } else if (loyaltyNPSData.method && loyaltyNPSData.overallScore !== undefined) {
         // Data is direct from API, needs wrapping
         normalizedData = { loyaltyMetrics: loyaltyNPSData };

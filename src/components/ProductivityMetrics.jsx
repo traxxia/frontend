@@ -58,24 +58,22 @@ const ProductivityMetrics = ({
   const isProductivityDataIncomplete = (data) => {
     if (!data) return true;
 
+    // Handle both wrapped and direct API response formats
     let normalizedData;
     if (data.productivityMetrics) {
-      normalizedData = data;
+      normalizedData = data.productivityMetrics;
+    } else if (data.productivity_metrics) {
+      normalizedData = data.productivity_metrics;
     } else if (data.employeeProductivity || data.costStructure) {
-      normalizedData = { productivityMetrics: data };
+      normalizedData = data;
     } else {
       return true;
     }
 
-    if (!normalizedData.productivityMetrics) {
-      return true;
-    }
-
-    const metrics = normalizedData.productivityMetrics;
-    const hasEmployeeData = metrics.employeeProductivity && Object.keys(metrics.employeeProductivity).length > 0;
-    const hasCostData = metrics.costStructure && Object.keys(metrics.costStructure).length > 0;
-    const hasValueDrivers = metrics.valueDrivers && metrics.valueDrivers.length > 0;
-    const hasImprovements = metrics.improvementOpportunities && metrics.improvementOpportunities.length > 0;
+    const hasEmployeeData = normalizedData.employeeProductivity && Object.keys(normalizedData.employeeProductivity).length > 0;
+    const hasCostData = normalizedData.costStructure && Object.keys(normalizedData.costStructure).length > 0;
+    const hasValueDrivers = normalizedData.valueDrivers && normalizedData.valueDrivers.length > 0;
+    const hasImprovements = normalizedData.improvementOpportunities && normalizedData.improvementOpportunities.length > 0;
 
     const sectionsWithData = [hasEmployeeData, hasCostData, hasValueDrivers, hasImprovements].filter(Boolean).length;
     return sectionsWithData === 0;
@@ -88,18 +86,18 @@ const ProductivityMetrics = ({
 
     let normalizedData;
     if (data.productivityMetrics) {
-      normalizedData = data;
+      normalizedData = data.productivityMetrics;
+    } else if (data.productivity_metrics) {
+      normalizedData = data.productivity_metrics;
     } else if (data.employeeProductivity || data.costStructure) {
-      normalizedData = { productivityMetrics: data };
+      normalizedData = data;
     } else {
       return 0;
     }
 
-    const metrics = normalizedData.productivityMetrics;
     let total = 0;
-
-    Object.keys(metrics).forEach(key => {
-      const value = metrics[key];
+    Object.keys(normalizedData).forEach(key => {
+      const value = normalizedData[key];
       if (Array.isArray(value)) {
         total += value.length;
       }
@@ -154,14 +152,14 @@ const ProductivityMetrics = ({
 
     let normalizedData;
     if (productivityData.productivityMetrics) {
-      normalizedData = productivityData;
+      normalizedData = productivityData.productivityMetrics;
+    } else if (productivityData.productivity_metrics) {
+      normalizedData = productivityData.productivity_metrics;
     } else if (productivityData.employeeProductivity || productivityData.costStructure) {
-      normalizedData = { productivityMetrics: productivityData };
+      normalizedData = productivityData;
     } else {
       return;
     }
-
-    const metrics = normalizedData.productivityMetrics;
 
     if (streamingIntervalRef.current) {
       clearInterval(streamingIntervalRef.current);
@@ -181,8 +179,8 @@ const ProductivityMetrics = ({
         let rowsProcessed = 0;
 
         // Process all array sections
-        Object.keys(metrics).forEach(sectionKey => {
-          const sectionData = metrics[sectionKey];
+        Object.keys(normalizedData).forEach(sectionKey => {
+          const sectionData = normalizedData[sectionKey];
 
           if (Array.isArray(sectionData) && sectionData.length > 0) {
             const index = currentRow - rowsProcessed;
@@ -248,15 +246,17 @@ const ProductivityMetrics = ({
     if (productivityData) {
       let normalizedData;
       if (productivityData.productivityMetrics) {
-        normalizedData = productivityData;
+        normalizedData = productivityData.productivityMetrics;
+      } else if (productivityData.productivity_metrics) {
+        normalizedData = productivityData.productivity_metrics;
       } else if (productivityData.employeeProductivity || productivityData.costStructure) {
-        normalizedData = { productivityMetrics: productivityData };
+        normalizedData = productivityData;
       } else {
         normalizedData = null;
       }
 
       if (normalizedData) {
-        setData(normalizedData);
+        setData({ productivityMetrics: normalizedData });
         setHasGenerated(true);
         setError(null);
       } else {

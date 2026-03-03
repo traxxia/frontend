@@ -63,12 +63,24 @@ const PurchaseCriteria = ({
   const isCriteriaDataIncomplete = (data) => {
     if (!data) return true;
 
+    // Handle both wrapped and direct API response formats
+    let normalizedData;
+    if (data.purchaseCriteria) {
+      normalizedData = data.purchaseCriteria;
+    } else if (data.purchase_criteria) {
+      normalizedData = data.purchase_criteria;
+    } else if (data.criteria) {
+      normalizedData = data;
+    } else {
+      return true;
+    }
+
     // Check if criteria array is empty or null
-    if (!data.criteria || data.criteria.length === 0) return true;
+    if (!normalizedData.criteria || normalizedData.criteria.length === 0) return true;
 
     // Check if any critical fields are null/undefined
     const criticalFields = ['scale', 'overallAlignment'];
-    const hasNullFields = criticalFields.some(field => data[field] === null || data[field] === undefined);
+    const hasNullFields = criticalFields.some(field => normalizedData[field] === null || normalizedData[field] === undefined);
 
     return hasNullFields;
   };
@@ -98,10 +110,24 @@ const PurchaseCriteria = ({
 
   // Update criteria data when prop changes
   useEffect(() => {
-    if (purchaseCriteriaData && purchaseCriteriaData !== criteriaData) {
-      setCriteriaData(purchaseCriteriaData);
-      if (onDataGenerated) {
-        onDataGenerated(purchaseCriteriaData);
+    if (purchaseCriteriaData) {
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (purchaseCriteriaData.purchaseCriteria) {
+        normalizedData = purchaseCriteriaData.purchaseCriteria;
+      } else if (purchaseCriteriaData.purchase_criteria) {
+        normalizedData = purchaseCriteriaData.purchase_criteria;
+      } else if (purchaseCriteriaData.criteria) {
+        normalizedData = purchaseCriteriaData;
+      } else {
+        normalizedData = null;
+      }
+
+      if (normalizedData && normalizedData !== criteriaData) {
+        setCriteriaData(normalizedData);
+        if (onDataGenerated) {
+          onDataGenerated(normalizedData);
+        }
       }
     }
   }, [purchaseCriteriaData]);
@@ -114,7 +140,21 @@ const PurchaseCriteria = ({
     hasInitialized.current = true;
 
     if (purchaseCriteriaData) {
-      setCriteriaData(purchaseCriteriaData);
+      // Handle both wrapped and direct API response formats
+      let normalizedData;
+      if (purchaseCriteriaData.purchaseCriteria) {
+        normalizedData = purchaseCriteriaData.purchaseCriteria;
+      } else if (purchaseCriteriaData.purchase_criteria) {
+        normalizedData = purchaseCriteriaData.purchase_criteria;
+      } else if (purchaseCriteriaData.criteria) {
+        normalizedData = purchaseCriteriaData;
+      } else {
+        normalizedData = null;
+      }
+
+      if (normalizedData) {
+        setCriteriaData(normalizedData);
+      }
     }
 
     return () => {
