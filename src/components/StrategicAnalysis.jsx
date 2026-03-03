@@ -29,9 +29,6 @@ import {
 } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
-import { StreamingRow } from './StreamingManager';
-import { useAutoScroll } from '../hooks/useAutoScroll';
-import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 import KickstartProjectsCard from "../components/KickstartProjectsCard";
 import UpgradeModal from "./UpgradeModal";
 import PlanLimitModal from "./PlanLimitModal";
@@ -53,7 +50,6 @@ const StrategicAnalysis = ({
   showImproveButton = true,
   onRedirectToBrief,
   phaseAnalysisArray = [],
-  streamingManager,
   onKickstartProjects,
   hasProjectsTab = false,
   onToastMessage,
@@ -70,7 +66,6 @@ const StrategicAnalysis = ({
   const isCompanyAdmin = userRole === "company_admin";
   const canShowKickstart = isSuperAdmin || isCompanyAdmin;
   const { t } = useTranslation();
-  const cardId = 'strategic-analysis';
   const isExpanded = true;
 
   const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
@@ -80,7 +75,6 @@ const StrategicAnalysis = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [kickstartError, setKickstartError] = useState('');
-  const [isFreshGeneration, setIsFreshGeneration] = useState(false);
   const [hasKickstarted, setHasKickstarted] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
@@ -279,18 +273,6 @@ const StrategicAnalysis = ({
     new Set(['strategy-block', 'execution-block', 'sustainability-block'])
   );
 
-  const [visibleRows, setVisibleRows] = useState(0);
-  const [typingTexts, setTypingTexts] = useState({});
-  const streamingIntervalRef = useRef(null);
-  const hasStartedStreaming = useRef(false);
-
-  const { lastRowRef, userHasScrolled, setUserHasScrolled } = useAutoScroll(
-    streamingManager,
-    cardId,
-    false,
-    visibleRows
-  );
-
   const hasInitialized = useRef(false);
 
   const handleRedirectToBrief = (missingQuestionsData = null) => {
@@ -316,12 +298,6 @@ const StrategicAnalysis = ({
   const handleRegenerate = async () => {
     if (onRegenerate) {
       try {
-        // Reset streaming states
-        if (streamingManager) {
-          streamingManager.resetCard(cardId);
-          hasStartedStreaming.current = false;
-        }
-
         setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
         setLocalStrategicData(null);
         setIsLoading(true);
@@ -469,91 +445,7 @@ const StrategicAnalysis = ({
     if (portersRec?.long_term_strategic_shifts) total += portersRec.long_term_strategic_shifts.length;
     return total;
   };
-  useEffect(() => {
-    if (!isFreshGeneration || !strategicData || isStrategicDataIncomplete(strategicData)) {
-      return;
-    }
 
-    if (streamingManager && !hasStartedStreaming.current) {
-      hasStartedStreaming.current = true;
-      setCollapsedCategories(new Set([])); // Expand all
-
-      if (!streamingManager.hasStreamed(cardId)) {
-        setTimeout(() => {
-          streamingManager.startStreaming(cardId);
-        }, 100);
-      }
-    }
-  }, [strategicData, streamingManager, cardId, isFreshGeneration]);
-
-
-  useEffect(() => {
-    const totalRows = calculateTotalRows(strategicData);
-
-    if (totalRows === 0) {
-      return;
-    }
-
-    if (!streamingManager?.shouldStream(cardId)) {
-      setVisibleRows(totalRows);
-    }
-  }, [strategicData, cardId, streamingManager, phaseAnalysisArray]);
-
-  useEffect(() => {
-    if (!streamingManager?.shouldStream(cardId) || !isFreshGeneration) {
-      return;
-    }
-
-    if (!strategicData || isRegenerating || isStrategicDataIncomplete(strategicData)) {
-      return;
-    }
-
-    if (streamingIntervalRef.current) {
-      clearInterval(streamingIntervalRef.current);
-      streamingIntervalRef.current = null;
-    }
-
-    setVisibleRows(0);
-    setTypingTexts({});
-
-    const totalItems = calculateTotalRows(strategicData);
-    let currentRow = 0;
-    let scrollEnabled = false;
-
-    streamingIntervalRef.current = setInterval(() => {
-      if (currentRow < totalItems) {
-        currentRow++;
-        setVisibleRows(currentRow);
-
-        if (currentRow === 5 && !scrollEnabled) {
-          scrollEnabled = true;
-          setUserHasScrolled(false);
-        }
-      } else {
-        clearInterval(streamingIntervalRef.current);
-        streamingIntervalRef.current = null;
-        if (streamingManager) {
-          streamingManager.stopStreaming(cardId);
-        }
-        setIsFreshGeneration(false); // Reset flag after streaming
-      }
-    }, STREAMING_CONFIG.ROW_INTERVAL);
-
-    return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-        streamingIntervalRef.current = null;
-      }
-    };
-  }, [cardId, strategicData, isRegenerating, streamingManager, isFreshGeneration, setUserHasScrolled]);
-
-  useEffect(() => {
-    return () => {
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
-    };
-  }, []);
 
 
   useEffect(() => {
@@ -563,17 +455,14 @@ const StrategicAnalysis = ({
       setErrorMessage('');
       setIsLoading(false);
 
-      // Check if this is a fresh generation
       const isFresh = strategicData._isFreshGeneration === true;
 
       // Only expand on fresh generation
       if (isFresh && !isStrategicDataIncomplete(strategicData)) {
-        setIsFreshGeneration(true); // SET THIS FIRST
         setCollapsedCategories(new Set([]));
       } else if (!hasInitialized.current) {
         // First load - keep collapsed
         hasInitialized.current = true;
-        setIsFreshGeneration(false);
         setCollapsedCategories(new Set(['strategy-block', 'execution-block', 'sustainability-block']));
       }
     } else if (strategicData === null) {
@@ -582,209 +471,8 @@ const StrategicAnalysis = ({
     }
   }, [strategicData]);
 
-  const getRowIndex = () => {
-    const analysisData = localStrategicData?.strategic_analysis || localStrategicData;
-    const recommendations = analysisData?.strategic_recommendations;
-    let currentIndex = 0;
-    const indices = {};
 
-    if (!recommendations) return indices;
 
-    // ===== STRATEGY BLOCK (S.T.R) - These render together =====
-
-    // S - Strategy: Where to Compete
-    if (recommendations.strategy_block?.S_strategy?.where_to_compete) {
-      indices.whereToCompete = {};
-      recommendations.strategy_block.S_strategy.where_to_compete.forEach((_, idx) => {
-        indices.whereToCompete[idx] = currentIndex++;
-      });
-    }
-    if (recommendations.strategy_block?.S_strategy?.how_to_compete) {
-      indices.howToCompete = {};
-      recommendations.strategy_block.S_strategy.how_to_compete.forEach((_, idx) => {
-        indices.howToCompete[idx] = currentIndex++;
-      });
-    }
-
-    // T - Tactics: Strategic Linkages (renders in Tactics pillar)
-    if (analysisData.strategic_linkages?.objective_to_initiative_map) {
-      indices.strategicLinkages = {};
-      analysisData.strategic_linkages.objective_to_initiative_map.forEach((_, idx) => {
-        indices.strategicLinkages[idx] = currentIndex++;
-      });
-    }
-
-    // T - Tactics: Strategic Recommendations from Analyses (renders in Tactics pillar)
-    const pestelAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'pestel');
-    const portersAnalysis = phaseAnalysisArray.find(a => a.analysis_type === 'porters');
-
-    const pestelRec = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
-    const portersRec = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
-
-    const combinedImmediateActions = [
-      ...(pestelRec?.immediate_actions || []),
-      ...(portersRec?.immediate_actions || [])
-    ];
-
-    const combinedShortTermInitiatives = [
-      ...(pestelRec?.short_term_initiatives || []),
-      ...(portersRec?.short_term_initiatives || [])
-    ];
-
-    const combinedLongTermShifts = [
-      ...(pestelRec?.long_term_strategic_shifts || []),
-      ...(portersRec?.long_term_strategic_shifts || [])
-    ];
-
-    if (combinedImmediateActions.length > 0) {
-      indices.immediateActions = {};
-      combinedImmediateActions.forEach((_, idx) => {
-        indices.immediateActions[idx] = currentIndex++;
-      });
-    }
-
-    if (combinedShortTermInitiatives.length > 0) {
-      indices.shortTermInitiatives = {};
-      combinedShortTermInitiatives.forEach((_, idx) => {
-        indices.shortTermInitiatives[idx] = currentIndex++;
-      });
-    }
-
-    if (combinedLongTermShifts.length > 0) {
-      indices.longTermShifts = {};
-      combinedLongTermShifts.forEach((_, idx) => {
-        indices.longTermShifts[idx] = currentIndex++;
-      });
-    }
-
-    // R - Resources Block
-    if (recommendations.strategy_block?.R_resources) {
-      if (recommendations.strategy_block.R_resources.capital_priorities) {
-        indices.capitalPriorities = {};
-        recommendations.strategy_block.R_resources.capital_priorities.forEach((_, idx) => {
-          indices.capitalPriorities[idx] = currentIndex++;
-        });
-      }
-      if (recommendations.strategy_block.R_resources.talent_priorities) {
-        indices.talentPriorities = {};
-        recommendations.strategy_block.R_resources.talent_priorities.forEach((_, idx) => {
-          indices.talentPriorities[idx] = currentIndex++;
-        });
-      }
-      if (recommendations.strategy_block.R_resources.technology_investments) {
-        indices.technologyInvestments = {};
-        recommendations.strategy_block.R_resources.technology_investments.forEach((_, idx) => {
-          indices.technologyInvestments[idx] = currentIndex++;
-        });
-      }
-    }
-
-    // ===== EXECUTION BLOCK (A.T.E) - These render together =====
-
-    // A - Analysis Data Block
-    if (recommendations.execution_block?.A_analysis_data?.recommendations) {
-      indices.analysisData = {};
-      recommendations.execution_block.A_analysis_data.recommendations.forEach((_, idx) => {
-        indices.analysisData[idx] = currentIndex++;
-      });
-    }
-
-    // T - Technology Block
-    if (recommendations.execution_block?.T_technology_digitalization) {
-      if (recommendations.execution_block.T_technology_digitalization.infrastructure_initiatives) {
-        indices.infrastructureInitiatives = {};
-        recommendations.execution_block.T_technology_digitalization.infrastructure_initiatives.forEach((_, idx) => {
-          indices.infrastructureInitiatives[idx] = currentIndex++;
-        });
-      }
-      if (recommendations.execution_block.T_technology_digitalization.platform_priorities) {
-        indices.platformPriorities = {};
-        recommendations.execution_block.T_technology_digitalization.platform_priorities.forEach((_, idx) => {
-          indices.platformPriorities[idx] = currentIndex++;
-        });
-      }
-    }
-
-    // E - Execution Block - Implementation Roadmap
-    if (recommendations.execution_block?.E_execution?.implementation_roadmap) {
-      indices.implementationRoadmap = {};
-      recommendations.execution_block.E_execution.implementation_roadmap.forEach((_, idx) => {
-        indices.implementationRoadmap[idx] = currentIndex++;
-      });
-    }
-
-    // E - Execution Block - KPI Dashboard
-    const kpi = recommendations.execution_block?.E_execution?.kpi_dashboard;
-    if (kpi) {
-      if (kpi.adoption_metrics) {
-        indices.adoptionMetrics = {};
-        kpi.adoption_metrics.forEach((_, idx) => {
-          indices.adoptionMetrics[idx] = currentIndex++;
-        });
-      }
-      if (kpi.network_metrics) {
-        indices.networkMetrics = {};
-        kpi.network_metrics.forEach((_, idx) => {
-          indices.networkMetrics[idx] = currentIndex++;
-        });
-      }
-      if (kpi.operational_metrics) {
-        indices.operationalMetrics = {};
-        kpi.operational_metrics.forEach((_, idx) => {
-          indices.operationalMetrics[idx] = currentIndex++;
-        });
-      }
-      if (kpi.financial_metrics) {
-        indices.financialMetrics = {};
-        kpi.financial_metrics.forEach((_, idx) => {
-          indices.financialMetrics[idx] = currentIndex++;
-        });
-      }
-    }
-    if (recommendations.sustainability_block?.G_governance) {
-      if (recommendations.sustainability_block.G_governance.decision_delegation) {
-        indices.decisionDelegation = {};
-        recommendations.sustainability_block.G_governance.decision_delegation.forEach((_, idx) => {
-          indices.decisionDelegation[idx] = currentIndex++;
-        });
-      }
-      if (recommendations.sustainability_block.G_governance.accountability_framework) {
-        indices.accountabilityFramework = {};
-        recommendations.sustainability_block.G_governance.accountability_framework.forEach((_, idx) => {
-          indices.accountabilityFramework[idx] = currentIndex++;
-        });
-      }
-    }
-
-    // I - Innovation Block
-    if (recommendations.sustainability_block?.I_innovation?.priority_innovation_bets) {
-      indices.innovationBets = {};
-      recommendations.sustainability_block.I_innovation.priority_innovation_bets.forEach((_, idx) => {
-        indices.innovationBets[idx] = currentIndex++;
-      });
-    }
-
-    // C - Culture Block
-    if (recommendations.sustainability_block?.C_culture) {
-      if (recommendations.sustainability_block.C_culture.cultural_shifts) {
-        indices.culturalShifts = {};
-        recommendations.sustainability_block.C_culture.cultural_shifts.forEach((_, idx) => {
-          indices.culturalShifts[idx] = currentIndex++;
-        });
-      }
-      if (recommendations.sustainability_block.C_culture.change_approach) {
-        indices.changeApproach = {};
-        recommendations.sustainability_block.C_culture.change_approach.forEach((_, idx) => {
-          indices.changeApproach[idx] = currentIndex++;
-        });
-      }
-    }
-    return indices;
-  };
-
-  const rowIndices = getRowIndex();
-  const isStreaming = streamingManager?.shouldStream(cardId);
-  const hasStreamed = streamingManager?.hasStreamed(cardId);
 
   const CategorySection = ({ id, title, icon: IconComponent, children, description }) => {
     const isCollapsed = collapsedCategories.has(id);
@@ -874,22 +562,15 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {strategy.where_to_compete.map((item, idx) => {
-                        const rowIndex = rowIndices.whereToCompete?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               <strong>{item.position}:</strong>{' '}
                               {item.description}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -908,22 +589,15 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {strategy.how_to_compete.map((item, idx) => {
-                        const rowIndex = rowIndices.howToCompete?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               <strong>{item.approach}:</strong>{' '}
                               {item.description}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -997,21 +671,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {resources.capital_priorities.map((priority, idx) => {
-                        const rowIndex = rowIndices.capitalPriorities?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {priority}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1031,21 +698,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {resources.talent_priorities.map((talent, idx) => {
-                        const rowIndex = rowIndices.talentPriorities?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {talent}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1065,21 +725,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {resources.technology_investments.map((tech, idx) => {
-                        const rowIndex = rowIndices.technologyInvestments?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {tech}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1114,21 +767,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {analysisData.recommendations.map((rec, idx) => {
-                        const rowIndex = rowIndices.analysisData?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {rec}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1167,21 +813,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {tech.infrastructure_initiatives.map((initiative, idx) => {
-                        const rowIndex = rowIndices.infrastructureInitiatives?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {initiative}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1201,21 +840,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {tech.platform_priorities.map((priority, idx) => {
-                        const rowIndex = rowIndices.platformPriorities?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {priority}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1436,26 +1068,19 @@ const StrategicAnalysis = ({
                     </thead>
                     <tbody>
                       {execution.implementation_roadmap.map((item, idx) => {
-                        const rowIndex = rowIndices.implementationRoadmap?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="table-value">
                               <div style={{ fontWeight: '600', fontSize: '14px' }}>
                                 {item.initiative}
                               </div>
                             </td>
-                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                            <td className="table-value">
                               {item.milestone}
                             </td>
-                            <td className="table-value text-center" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                            <td className="table-value text-center">
                               <div className="flex-center" style={{ justifyContent: 'center' }}>
                                 <Calendar size={12} />
                                 <span style={{ fontSize: '13px', fontWeight: '500' }}>
@@ -1463,13 +1088,13 @@ const StrategicAnalysis = ({
                                 </span>
                               </div>
                             </td>
-                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                            <td className="table-value">
                               <div className="flex-center">
                                 <Users size={12} />
                                 {item.owner}
                               </div>
                             </td>
-                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                            <td className="table-value">
                               {item.success_metrics && item.success_metrics.length > 0 && (
                                 <ul className="table-list">
                                   {item.success_metrics.map((metric, metricIdx) => (
@@ -1485,7 +1110,7 @@ const StrategicAnalysis = ({
                                 </ul>
                               )}
                             </td>
-                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.6s' }}>
+                            <td className="table-value">
                               {item.resources_required && (
                                 <div style={{ fontSize: '12px' }}>
                                   {item.resources_required.budget && (
@@ -1511,7 +1136,7 @@ const StrategicAnalysis = ({
                                 </div>
                               )}
                             </td>
-                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.7s' }}>
+                            <td className="table-value">
                               {item.dependencies && item.dependencies.length > 0 && (
                                 <ul className="table-list">
                                   {item.dependencies.map((dep, depIdx) => (
@@ -1523,7 +1148,7 @@ const StrategicAnalysis = ({
                                 </ul>
                               )}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1566,32 +1191,25 @@ const StrategicAnalysis = ({
                       </thead>
                       <tbody>
                         {execution.kpi_dashboard.adoption_metrics.map((metric, idx) => {
-                          const rowIndex = rowIndices.adoptionMetrics?.[idx];
-                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                          const isLast = rowIndex === visibleRows - 1;
-
                           return (
-                            <StreamingRow
+                            <tr
                               key={idx}
-                              isVisible={isVisible}
-                              isLast={isLast && isStreaming}
-                              lastRowRef={lastRowRef}
                             >
                               <td className="table-value">
                                 {metric.metric}
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                              <td className="table-value">
                                 <span className="badge adoption">
                                   {metric.target}
                                 </span>
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                              <td className="table-value">
                                 <div className="flex-center">
                                   <Users size={12} />
                                   {metric.owner}
                                 </div>
                               </td>
-                            </StreamingRow>
+                            </tr>
                           );
                         })}
                       </tbody>
@@ -1617,32 +1235,25 @@ const StrategicAnalysis = ({
                       </thead>
                       <tbody>
                         {execution.kpi_dashboard.network_metrics.map((metric, idx) => {
-                          const rowIndex = rowIndices.networkMetrics?.[idx];
-                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                          const isLast = rowIndex === visibleRows - 1;
-
                           return (
-                            <StreamingRow
+                            <tr
                               key={idx}
-                              isVisible={isVisible}
-                              isLast={isLast && isStreaming}
-                              lastRowRef={lastRowRef}
                             >
                               <td className="table-value">
                                 {metric.metric}
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                              <td className="table-value">
                                 <span className="badge network">
                                   {metric.target}
                                 </span>
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                              <td className="table-value">
                                 <div className="flex-center">
                                   <Users size={12} />
                                   {metric.owner}
                                 </div>
                               </td>
-                            </StreamingRow>
+                            </tr>
                           );
                         })}
                       </tbody>
@@ -1668,32 +1279,25 @@ const StrategicAnalysis = ({
                       </thead>
                       <tbody>
                         {execution.kpi_dashboard.operational_metrics.map((metric, idx) => {
-                          const rowIndex = rowIndices.operationalMetrics?.[idx];
-                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                          const isLast = rowIndex === visibleRows - 1;
-
                           return (
-                            <StreamingRow
+                            <tr
                               key={idx}
-                              isVisible={isVisible}
-                              isLast={isLast && isStreaming}
-                              lastRowRef={lastRowRef}
                             >
                               <td className="table-value">
                                 {metric.metric}
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                              <td className="table-value">
                                 <span className="badge operational">
                                   {metric.target}
                                 </span>
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                              <td className="table-value">
                                 <div className="flex-center">
                                   <Users size={12} />
                                   {metric.owner}
                                 </div>
                               </td>
-                            </StreamingRow>
+                            </tr>
                           );
                         })}
                       </tbody>
@@ -1719,32 +1323,25 @@ const StrategicAnalysis = ({
                       </thead>
                       <tbody>
                         {execution.kpi_dashboard.financial_metrics.map((metric, idx) => {
-                          const rowIndex = rowIndices.financialMetrics?.[idx];
-                          const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                          const isLast = rowIndex === visibleRows - 1;
-
                           return (
-                            <StreamingRow
+                            <tr
                               key={idx}
-                              isVisible={isVisible}
-                              isLast={isLast && isStreaming}
-                              lastRowRef={lastRowRef}
                             >
                               <td className="table-value">
                                 {metric.metric}
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                              <td className="table-value">
                                 <span className="badge financial">
                                   {metric.target}
                                 </span>
                               </td>
-                              <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                              <td className="table-value">
                                 <div className="flex-center">
                                   <Users size={12} />
                                   {metric.owner}
                                 </div>
                               </td>
-                            </StreamingRow>
+                            </tr>
                           );
                         })}
                       </tbody>
@@ -1791,29 +1388,22 @@ const StrategicAnalysis = ({
                     </thead>
                     <tbody>
                       {governance.decision_delegation.map((delegation, idx) => {
-                        const rowIndex = rowIndices.decisionDelegation?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="table-value">
                               <div style={{ fontWeight: '600' }}>
                                 {delegation.decision_type}
                               </div>
                             </td>
-                            <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                            <td className="table-value">
                               <div className="flex-center">
                                 <Users size={12} />
                                 {delegation.delegate_to}
                               </div>
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1833,21 +1423,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {governance.accountability_framework.map((item, idx) => {
-                        const rowIndex = rowIndices.accountabilityFramework?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {item}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1927,21 +1510,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {innovation.priority_innovation_bets.map((bet, idx) => {
-                        const rowIndex = rowIndices.innovationBets?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {bet}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -1978,18 +1554,10 @@ const StrategicAnalysis = ({
                 </h4>
                 <div className="cultural-shifts-container">
                   {culture.cultural_shifts.map((shift, idx) => {
-                    const rowIndex = rowIndices.culturalShifts?.[idx];
-                    const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-
                     return (
                       <div
                         key={idx}
                         className="cultural-shift-card"
-                        style={{
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-                          transition: hasStreamed ? 'none' : 'opacity 0.3s, transform 0.3s'
-                        }}
                       >
                         <div className="cultural-shift-content">
                           <div className="cultural-shift-from">
@@ -2020,21 +1588,14 @@ const StrategicAnalysis = ({
                   <table className="data-table">
                     <tbody>
                       {culture.change_approach.map((approach, idx) => {
-                        const rowIndex = rowIndices.changeApproach?.[idx];
-                        const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                        const isLast = rowIndex === visibleRows - 1;
-
                         return (
-                          <StreamingRow
+                          <tr
                             key={idx}
-                            isVisible={isVisible}
-                            isLast={isLast && isStreaming}
-                            lastRowRef={lastRowRef}
                           >
                             <td className="subsection-list-item">
                               {approach}
                             </td>
-                          </StreamingRow>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -2071,23 +1632,16 @@ const StrategicAnalysis = ({
               </thead>
               <tbody>
                 {linkages.objective_to_initiative_map.map((link, idx) => {
-                  const rowIndex = rowIndices.strategicLinkages?.[idx];
-                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                  const isLast = rowIndex === visibleRows - 1;
-
                   return (
-                    <StreamingRow
+                    <tr
                       key={idx}
-                      isVisible={isVisible}
-                      isLast={isLast && isStreaming}
-                      lastRowRef={lastRowRef}
                     >
                       <td className="table-value">
                         <div style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>
                           {link.strategic_objective}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                      <td className="table-value">
                         {link.linked_initiatives && link.linked_initiatives.length > 0 && (
                           <ul className="table-list">
                             {link.linked_initiatives.map((initiative, initIdx) => (
@@ -2099,7 +1653,7 @@ const StrategicAnalysis = ({
                           </ul>
                         )}
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                      <td className="table-value">
                         <div className="flex-center" style={{
                           fontSize: '13px',
                           color: '#059669',
@@ -2109,7 +1663,7 @@ const StrategicAnalysis = ({
                           {link.success_criteria}
                         </div>
                       </td>
-                    </StreamingRow>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -2121,15 +1675,36 @@ const StrategicAnalysis = ({
   };
 
   const renderStrategicRecommendationsFromAnalyses = () => {
-    const pestelAnalysis = phaseAnalysisArray.find(analysis =>
-      analysis.analysis_type === 'pestel'
-    );
-    const portersAnalysis = phaseAnalysisArray.find(analysis =>
-      analysis.analysis_type === 'porters'
-    );
+    const pestelAnalysis = (phaseAnalysisArray || []).find(analysis => {
+      const type = (analysis.analysis_type || analysis.name || '').toLowerCase();
+      return type === 'pestel' || type === 'pestel_analysis';
+    });
+    const portersAnalysis = (phaseAnalysisArray || []).find(analysis => {
+      const type = (analysis.analysis_type || analysis.name || '').toLowerCase();
+      return type === 'porters' || type === 'porter_analysis' || type === 'porters_five_forces';
+    });
 
-    const pestelRecommendations = pestelAnalysis?.analysis_data?.pestel_analysis?.strategic_recommendations;
-    const portersRecommendations = portersAnalysis?.analysis_data?.porter_analysis?.strategic_recommendations;
+    const getRecommendations = (analysis, typeKey) => {
+      if (!analysis) return null;
+      const data = analysis.analysis_data || analysis.analysis_result;
+      if (!data) return null;
+
+      try {
+        // Handle stringified data if it somehow got through
+        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+
+        // Check both nested key and top level
+        return parsedData[typeKey]?.strategic_recommendations ||
+          parsedData.strategic_recommendations ||
+          parsedData;
+      } catch (e) {
+        console.error("Error parsing recommendations data:", e);
+        return null;
+      }
+    };
+
+    const pestelRecommendations = getRecommendations(pestelAnalysis, 'pestel_analysis');
+    const portersRecommendations = getRecommendations(portersAnalysis, 'porter_analysis');
 
     const hasPestelRecommendations = pestelRecommendations && (
       (pestelRecommendations.immediate_actions && pestelRecommendations.immediate_actions.length > 0) ||
@@ -2178,28 +1753,21 @@ const StrategicAnalysis = ({
               </thead>
               <tbody>
                 {actions.map((action, index) => {
-                  const rowIndex = rowIndices[indexKey]?.[index];
-                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                  const isLast = rowIndex === visibleRows - 1;
-
                   return (
-                    <StreamingRow
+                    <tr
                       key={index}
-                      isVisible={isVisible}
-                      isLast={isLast && isStreaming}
-                      lastRowRef={lastRowRef}
                     >
                       <td className="table-value">
                         <div style={{ fontWeight: '600', fontSize: '14px' }}>
                           {action.action}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                      <td className="table-value">
                         <div style={{ fontSize: '13px', color: '#374151' }}>
                           {action.rationale}
                         </div>
                       </td>
-                      <td className="table-value text-center" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                      <td className="table-value text-center">
                         <div style={{
                           backgroundColor: '#3b82f6',
                           color: 'white',
@@ -2212,7 +1780,7 @@ const StrategicAnalysis = ({
                           {action.timeline}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                      <td className="table-value">
                         {action.resources_required && (
                           <ul className="table-list">
                             {(Array.isArray(action.resources_required) ? action.resources_required : [action.resources_required]).map((resource, idx) => (
@@ -2234,7 +1802,7 @@ const StrategicAnalysis = ({
                           </ul>
                         )}
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.5s' }}>
+                      <td className="table-value">
                         {action.success_metrics && action.success_metrics.length > 0 && (
                           <ul className="table-list">
                             {action.success_metrics.map((metric, idx) => (
@@ -2266,7 +1834,7 @@ const StrategicAnalysis = ({
                           </div>
                         )}
                       </td>
-                    </StreamingRow>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -2306,23 +1874,16 @@ const StrategicAnalysis = ({
               </thead>
               <tbody>
                 {initiatives.map((initiative, index) => {
-                  const rowIndex = rowIndices[indexKey]?.[index];
-                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                  const isLast = rowIndex === visibleRows - 1;
-
                   return (
-                    <StreamingRow
+                    <tr
                       key={index}
-                      isVisible={isVisible}
-                      isLast={isLast && isStreaming}
-                      lastRowRef={lastRowRef}
                     >
                       <td className="table-value">
                         <div style={{ fontWeight: '600', fontSize: '14px' }}>
                           {initiative.initiative}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                      <td className="table-value">
                         <div style={{
                           backgroundColor: '#8b5cf6',
                           color: 'white',
@@ -2335,17 +1896,17 @@ const StrategicAnalysis = ({
                           {initiative.strategic_pillar}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                      <td className="table-value">
                         <div style={{ fontSize: '13px', color: '#374151' }}>
                           {initiative.expected_outcome}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                      <td className="table-value">
                         <div style={{ fontSize: '13px', color: '#dc2626' }}>
                           {initiative.risk_mitigation}
                         </div>
                       </td>
-                    </StreamingRow>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -2385,28 +1946,21 @@ const StrategicAnalysis = ({
               </thead>
               <tbody>
                 {shifts.map((shift, index) => {
-                  const rowIndex = rowIndices[indexKey]?.[index];
-                  const isVisible = rowIndex !== undefined && rowIndex < visibleRows;
-                  const isLast = rowIndex === visibleRows - 1;
-
                   return (
-                    <StreamingRow
+                    <tr
                       key={index}
-                      isVisible={isVisible}
-                      isLast={isLast && isStreaming}
-                      lastRowRef={lastRowRef}
                     >
                       <td className="table-value">
                         <div style={{ fontWeight: '600', fontSize: '14px' }}>
                           {shift.shift}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.2s' }}>
+                      <td className="table-value">
                         <div style={{ fontSize: '13px', color: '#374151' }}>
                           {shift.transformation_required}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.3s' }}>
+                      <td className="table-value">
                         <div style={{
                           fontSize: '13px',
                           color: '#059669',
@@ -2418,12 +1972,12 @@ const StrategicAnalysis = ({
                           {shift.competitive_advantage}
                         </div>
                       </td>
-                      <td className="table-value" style={{ opacity: isVisible ? 1 : 0, transition: hasStreamed ? 'none' : 'opacity 0.3s 0.4s' }}>
+                      <td className="table-value">
                         <div style={{ fontSize: '13px', color: '#374151' }}>
                           {shift.sustainability}
                         </div>
                       </td>
-                    </StreamingRow>
+                    </tr>
                   );
                 })}
               </tbody>

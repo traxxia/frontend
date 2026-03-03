@@ -4,13 +4,13 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 48px 24px;
+    padding: 28px 24px;
     background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
     border: 1px solid rgba(59, 130, 246, 0.15);
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04), 0 2px 10px rgba(59, 130, 246, 0.05);
     max-width: 800px;
-    margin: 40px auto;
+    margin: 10px auto;
     position: relative;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -64,7 +64,7 @@
     color: #64748b;
     line-height: 1.6;
     max-width: 500px;
-    margin-bottom: 32px;
+    margin-bottom: 0px;
 }
 
 .empty-state-actions {

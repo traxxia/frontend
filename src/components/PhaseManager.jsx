@@ -51,7 +51,7 @@ const PhaseManager = ({
 
     const getUnlockedFeatures = () => {
         if (!questions || !questions.length) return {
-            brief: true,
+            advanced: true,
             analysis: false,
             initialPhase: false,
             essentialPhase: false,
@@ -83,7 +83,7 @@ const PhaseManager = ({
         const hasDoc = !!hasUploadedDocument;
 
         return {
-            brief: true,
+            advanced: true,
             analysis: hasAnyInitial || hasAnyEssential || hasAnyAdvanced || hasDoc,
             initialPhase: hasAnyInitial,
             essentialPhase: hasAnyEssential,

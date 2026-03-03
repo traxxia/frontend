@@ -7,10 +7,18 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     // Read URL params
     const urlParams = new URLSearchParams(window.location.search);
     const urlTab = urlParams.get('tab');
-    if (urlTab) return urlTab;
+    if (urlTab) {
+      if (urlTab === 'brief') return 'advanced';
+      if (urlTab === 'analysis') return 'insights';
+      return urlTab;
+    }
     // Read react-router navigation state stored temporarily
     const navState = window.__businessPageNavState;
-    if (navState?.initialTab) return navState.initialTab;
+    if (navState?.initialTab) {
+      if (navState.initialTab === 'brief') return 'advanced';
+      if (navState.initialTab === 'analysis') return 'insights';
+      return navState.initialTab;
+    }
     // Default: aha on all screens (AHA is the landing tab from Dashboard)
     return 'aha';
   });

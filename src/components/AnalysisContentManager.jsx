@@ -418,6 +418,8 @@ const AnalysisContentManager = (props) => {
     setCollapsedCategories,
     highlightedCard,
     hideRegenerateButtons = false,
+    isAnalysisRegenerating = false,
+    isStrategicRegenerating = false
   } = props;
 
   const streamingManager = useStreamingManager();
@@ -664,12 +666,7 @@ const AnalysisContentManager = (props) => {
         'productivityMetrics',
         'maturityScore',
         'competitiveLandscape',
-        'coreAdjacency',
-        'profitabilityAnalysis',
-        'growthTracker',
-        'liquidityEfficiency',
-        'investmentPerformance',
-        'leverageRisk'
+        'coreAdjacency'
       ],
       financial: [
         'profitabilityAnalysis',
@@ -729,6 +726,12 @@ const AnalysisContentManager = (props) => {
 
   return (
     <div className="modern-analysis-container">
+      {(isAnalysisRegenerating || isStrategicRegenerating) && (
+        <div className="analysis-regenerating-banner" style={{ margin: '10px 0' }}>
+          <Loader size={16} className="spinner" />
+          <span>Regenerating insights...</span>
+        </div>
+      )}
       <div className="modern-analysis-content">
         <div className="categorized-analysis">
           {CATEGORIES.map(category => {
