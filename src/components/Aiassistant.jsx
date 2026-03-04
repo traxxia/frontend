@@ -3,7 +3,7 @@ import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle } from "lucide-react
 import axios from "axios";
 import "../styles/Ai.css";
 
-const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
+const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
@@ -172,6 +172,13 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
       const requestBody = { message: userText };
       if (projectId) {
         requestBody.projectId = projectId;
+      }
+      if (pageContext) {
+        requestBody.current_page = pageContext.current_page;
+        requestBody.page_description = pageContext.page_description;
+        if (pageContext.page_content) {
+          requestBody.page_content = pageContext.page_content;
+        }
       }
 
       const response = await fetch(process.env.REACT_APP_AI_CHAT_URL, {
