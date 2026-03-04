@@ -15,6 +15,8 @@ export const staticTranslations = {
     'hide_password': 'Hide password',
     'show_password': 'Show password',
     'login_failed': 'Login failed',
+    'login_failed_title': 'Login Failed',
+    'try_again': 'Try Again',
     'login_email_required': 'Email is required',
     'login_password_required': 'Password is required',
 
@@ -1532,6 +1534,8 @@ export const staticTranslations = {
     'hide_password': 'Ocultar contraseña',
     'show_password': 'Mostrar contraseña',
     'login_failed': 'Error al iniciar sesión',
+    'login_failed_title': 'Inicio de Sesión Fallido',
+    'try_again': 'Intentar de Nuevo',
     'login_email_required': 'Se requiere usuario/correo electrónico',
     'login_password_required': 'Se requiere contraseña',
 

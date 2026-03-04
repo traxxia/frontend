@@ -514,8 +514,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
     return (
       <OverlayTrigger
-        placement="top"
+        placement="right"
         trigger={['hover', 'focus', 'click']}
+        animation={false}
         overlay={
           <Tooltip id={`tooltip-${fieldKey}`} className="pmf-tooltip">
             {description}
