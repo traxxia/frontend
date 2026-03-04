@@ -16,6 +16,7 @@ import {
   CircleUserRound,
   Key,
   CreditCard,
+  ClipboardList,
 } from "lucide-react";
 import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
@@ -26,6 +27,7 @@ import Usermanagement from "./Usermanagement";
 import AccessManagement from "./AccessManagement";
 import BusinessOverview from "./BusinessOverview";
 import SubscriptionTab from "./SubscriptionTab";
+import PlanManagement from "./PlanManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -91,6 +93,12 @@ const SuperAdminPanel = () => {
       label: t('subscription') || "Subscription",
       icon: CreditCard,
       superAdminHidden: true  // Hide for super admin
+    },
+    {
+      id: "plans",
+      label: t('plan_management') || "Plan Management",
+      icon: ClipboardList,
+      superAdminOnly: true,
     }
   ];
 
@@ -129,6 +137,8 @@ const SuperAdminPanel = () => {
         return <BusinessOverview onToast={showToastMessage} />;
       case "subscription":
         return <SubscriptionTab onToast={showToastMessage} />;
+      case "plans":
+        return <PlanManagement onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }
