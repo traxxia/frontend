@@ -14,17 +14,21 @@ import AcademyPage from './pages/AcademyPage'; // Traxxia Academy documentation
 import Aiassistant from './components/Aiassistant';
 
 // Pages where the AI assistant should NOT appear
-const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register','/dashboard', '/admin', '/super-admin'];
+const AI_EXCLUDED_EXACT_PATHS = ['/', '/login', '/register', '/dashboard', '/admin', '/super-admin'];
 const AI_EXCLUDED_PREFIX_PATHS = ['/academy'];
 
 const GlobalAiAssistant = () => {
   const location = useLocation();
   const [projectId, setProjectId] = useState(null);
+  const [pageContext, setPageContext] = useState(null);
 
   useEffect(() => {
     const handleContextChange = (event) => {
       if (event.detail && event.detail.projectId !== undefined) {
         setProjectId(event.detail.projectId);
+      }
+      if (event.detail && event.detail.pageContext !== undefined) {
+        setPageContext(event.detail.pageContext);
       }
     };
 
@@ -38,6 +42,7 @@ const GlobalAiAssistant = () => {
   // Reset project context on route change
   useEffect(() => {
     setProjectId(null);
+    setPageContext(null);
   }, [location.pathname]);
 
   const isExcluded =
@@ -46,7 +51,7 @@ const GlobalAiAssistant = () => {
 
   if (isExcluded) return null;
 
-  return <Aiassistant projectId={projectId} />;
+  return <Aiassistant projectId={projectId} pageContext={pageContext} />;
 };
 
 const Register = React.lazy(() => import('./pages/Register'));

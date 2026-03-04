@@ -23,6 +23,7 @@ import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -217,6 +218,33 @@ const BusinessSetupPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    let pageContext = null;
+    if (activeTab === "aha") pageContext = AI_PAGE_CONTEXTS.AHA;
+    else if (activeTab === "executive") pageContext = AI_PAGE_CONTEXTS.EXECUTIVE_SUMMARY;
+    else if (activeTab === "priorities") pageContext = AI_PAGE_CONTEXTS.PRIORITIES;
+    else if (activeTab === "advanced") pageContext = AI_PAGE_CONTEXTS.ADVANCED;
+    else if (activeTab === "insights") pageContext = AI_PAGE_CONTEXTS.INSIGHTS;
+    else if (activeTab === "strategic") pageContext = AI_PAGE_CONTEXTS.STRATEGIC;
+    let contextPayload = { ...pageContext };
+
+    if (activeTab === "advanced" && questions && questions.length > 0) {
+      const qaData = questions.map(q => ({
+        question: q.question_text,
+        answer: userAnswers[q._id || q.question_id] || "Not Answered"
+      }));
+      contextPayload.page_content = qaData;
+    }
+
+    if (pageContext) {
+      window.dispatchEvent(
+        new CustomEvent("ai_context_changed", {
+          detail: { pageContext: contextPayload }
+        })
+      );
+    }
+  }, [activeTab, questions, userAnswers]);
 
   // Effect to handle business context recovery on refresh
   useEffect(() => {

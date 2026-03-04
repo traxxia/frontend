@@ -9,6 +9,7 @@ import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
+import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 import { MdArrowDownward } from "react-icons/md";
 import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
@@ -71,7 +72,24 @@ const ProjectsSection = ({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isRankingBlinking, setIsRankingBlinking] = useState(false);
+  useEffect(() => {
+    let pageContext = null;
+    if (activeView === "new") {
+      pageContext = AI_PAGE_CONTEXTS.PROJECT_CREATE;
+    } else if (activeView === "edit" || activeView === "view") {
+      pageContext = AI_PAGE_CONTEXTS.PROJECT_EDIT;
+    } else {
+      pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    }
 
+    if (pageContext) {
+      window.dispatchEvent(
+        new CustomEvent("ai_context_changed", {
+          detail: { pageContext }
+        })
+      );
+    }
+  }, [activeView, viewMode]);
   // Sync prop to internal state
   useEffect(() => {
     setApiIsArchived(isArchived);
