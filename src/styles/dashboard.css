@@ -375,6 +375,23 @@
       border-radius: 8px;
       transform: none !important;
     }
+
+    /* Mobile Carousel Captions */
+    .carousel-external-caption {
+      min-height: 60px;
+      padding: 0 15px;
+    }
+
+    .carousel-external-caption h5 {
+      font-size: 0.9rem !important;
+      font-weight: 600 !important;
+      margin-bottom: 6px !important;
+    }
+
+    .carousel-external-caption p {
+      font-size: 0.7rem !important;
+      line-height: 1.4 !important;
+    }
   }
 
   /* Desktop screens */
@@ -769,17 +786,32 @@
     color: #000
   }
 
-  .carousel-caption h5 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  }
-
   .carousel-caption p {
     font-size: 0.95rem;
     margin-bottom: 0;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  /* External Carousel Captions */
+  .carousel-external-caption {
+    padding: 0 20px;
+    min-height: 60px;
+    /* Ensure space for 2 lines */
+  }
+
+  .carousel-external-caption h5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+  }
+
+  .carousel-external-caption p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    max-width: 800px;
+    margin: 0 auto;
   }
 
   /* Modal Popup Enhancements */
