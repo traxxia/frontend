@@ -1,26 +1,32 @@
-# Kickstarting Initiatives
+# The Kickstart Process
 
-When you are satisfied with a strategic theme or initiative suggested by the AI, you can "Kickstart" it to transform it into a formal project.
+The Kickstart process is the final step in the **PMF (Product-Market Fit)** journey. It is the moment where your strategic planning transitions into active project management.
 
-## 1. Execution Gating
-A crucial distinction in Phase 3 is the split between **Insight** (Essential) and **Execution** (Advanced):
--   **Essential Users**: Can generate unlimited strategic initiatives but **cannot** convert them into projects. The Kickstart button is replaced with an "Upgrade to Execute" call-to-action.
--   **Advanced Users**: Have full access to the complete project lifecycle, including kickstarting and monitoring.
+## 1. Flow Overview
+The journey to kickstarting follows a precise sequence:
+1. **PMF Onboarding**: Completing the essential questions about your business.
+2. **Executive Summary**: Reviewing the high-level strategic priorities identified by Traxxia.
+3. **Priorities Tab**: Selecting specific workstreams to execute.
+4. **Kickstart Action**: Converting those selections into live "Draft Projects."
 
-## 2. The Upgrade Trigger
-When you finish a strategic plan or initiative in the Essential tier, Traxxia will prompt you to upgrade. This is the logical moment to transition from purely thinking about strategy to actually managing its delivery.
+## 2. From Strategy to Action
+In the **Priorities** tab, each strategic initiative is presented as a card. These cards contain tactical projects derived from your strategic analysis.
 
-## 3. From Thinking to Doing
-### **Phase 3: Advanced (Alignment)**
--   **Goal**: Comprehensive strategic blueprint and risk assessment.
--   **Outcome**: Complete readiness for project kickstarting.
+### **Kickstart Checkpoints**
+-   **Admin Only**: Only Company Admins can initiate a kickstart.
+-   **Plan Required**: Full project execution is an **Advanced** tier feature.
+-   **One-Time Action**: Once a priority is kickstarted, it is marked as such and cannot be re-kickstarted. This ensures your project list remains clean and organized.
 
-![Kickstart Project](/academy-screenshots/projects/kickstart-project.png)
-*Screenshot of the Strategic Dashboard with highlighted "Kickstart Projects" button*
+![Kickstart Overview](/academy-screenshots/projects/kickstart-overview-banner.png)
+*Diagram: The flow from PMF Insights to Project Creation*
 
--   **Locked for Essential**: Project Kickoff, Monitoring, Maintenance, and Health Tracking.
--   **Unlocked for Advanced**: Complete visibility and rigor throughout the project lifecycle.
+## 3. What Happens During Kickstart?
+When you click the **Kickstart Projects** button, Traxxia's AI engine performs several automated actions:
+- **Cloning**: The tactical actions are cloned into the **Projects** module.
+- **Population**: Project fields like "Expected Outcome" and "Success Metrics" are pre-filled using the strategic data.
+- **Organization**: Projects are set to "Draft" status, allowing you to refine them before launching.
 
-> [!IMPORTANT]  A minimum of **one collaborator** is required for Advanced users to kickstart a project, ensuring a collaborative "sanity check" before execution begins.
+> [!TIP]
+> Use the **Priorities** tab to manage your execution roadmap. You can kickstart priorities one by one or in bulk, and the system will keep track of your progress.
 
-Next: [AI-Driven Project Creation](./ai-projects.md)
+Next: [Priorities & Kickstarting Detailed Guide](./02-priorities-kickstart.md)

@@ -71,20 +71,36 @@ export const academyStructure = {
             description: "Answering the core questions to define your business strategy.",
             articles: [
                 {
-                    id: "questionnaire-phases",
-                    title: "Questionnaire Phases",
-                    path: "03-ai-questionnaire/questionnaire-phases.md",
-                    phase: 2,
-                    roles: ["all"],
-                    tags: ["ai", "questions"]
-                },
-                {
-                    id: "the-brief",
-                    title: "The Brief: Your Business Profile",
-                    path: "03-ai-questionnaire/the-brief.md",
+                    id: "questionnaire-overview",
+                    title: "AI Questionnaire Overview",
+                    path: "03-ai-questionnaire/01-questionnaire-overview.md",
                     phase: 1,
                     roles: ["all"],
-                    tags: ["profile", "brief", "editing"]
+                    tags: ["ai", "overview"]
+                },
+                {
+                    id: "phases-and-ordering",
+                    title: "Phases & Question Ordering",
+                    path: "03-ai-questionnaire/02-phases-and-ordering.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["phases", "ordering"]
+                },
+                {
+                    id: "editing-and-ai-generation",
+                    title: "Editing & AI Generation",
+                    path: "03-ai-questionnaire/03-editing-and-ai-generation.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["editing", "autosave"]
+                },
+                {
+                    id: "financial-uploads-insights",
+                    title: "Financial Uploads & Insights",
+                    path: "03-ai-questionnaire/04-financial-uploads-insights.md",
+                    phase: 2,
+                    roles: ["all"],
+                    tags: ["financial", "insights"]
                 }
             ]
         },
@@ -183,12 +199,12 @@ export const academyStructure = {
                     tags: ["projects", "kickstart"]
                 },
                 {
-                    id: "ai-projects",
-                    title: "AI-Driven Project Creation",
-                    path: "06-kickstart-projects/Ai-Projects.md",
+                    id: "priorities-kickstart",
+                    title: "Priorities & Kickstarting",
+                    path: "06-kickstart-projects/02-priorities-kickstart.md",
                     phase: 3,
                     roles: ["orgadmin"],
-                    tags: ["ai", "projects", "creation"]
+                    tags: ["priorities", "kickstart", "execution"]
                 }
             ]
         },
@@ -287,12 +303,28 @@ export const academyStructure = {
             description: "Master the core strategic value engine for clear priorities and execution.",
             articles: [
                 {
-                    id: "pmf-flow-details",
-                    title: "PMF Flow",
-                    path: "16-pmf-flow/pmf-flow.md",
+                    id: "pmf-foundation",
+                    title: "Foundation & Onboarding",
+                    path: "16-pmf-flow/01-pmf-foundation.md",
                     phase: 1,
                     roles: ["all"],
-                    tags: ["pmf", "strategy", "execution", "onboarding"]
+                    tags: ["pmf", "foundations", "onboarding"]
+                },
+                {
+                    id: "pmf-insights",
+                    title: "Insights & Strategic Core",
+                    path: "16-pmf-flow/02-pmf-insights.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["pmf", "insights", "strategy"]
+                },
+                {
+                    id: "pmf-execution",
+                    title: "Execution & Priorities",
+                    path: "16-pmf-flow/03-pmf-execution.md",
+                    phase: 1,
+                    roles: ["all"],
+                    tags: ["pmf", "execution", "priorities", "kickstart"]
                 }
             ]
         }
