@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Card, Form, Button, Dropdown, Modal } from "react-bootstrap";
+import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert } from "react-bootstrap";
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
 import UpgradeModal from "./UpgradeModal";
@@ -185,7 +185,9 @@ const UserManagement = ({ onToast }) => {
       handleCloseModal();
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || t("Failed_to_add_user");
-      onToast(message, "error");
+      setErrors(prev => ({ ...prev, apiError: message }));
+      // Optional: still show toast as backup, or remove it as requested
+      // onToast(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -582,6 +584,11 @@ const UserManagement = ({ onToast }) => {
           <Modal.Title>{t("New_user")}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {errors.apiError && (
+            <Alert variant="danger" onClose={() => setErrors(prev => ({ ...prev, apiError: "" }))} dismissible>
+              {errors.apiError}
+            </Alert>
+          )}
           <Form onSubmit={handleAddUser}>
             <fieldset disabled={isSubmitting} style={{ border: 'none', padding: 0 }}>
               <Form.Group as={Row} className="mb-4 align-items-center">
@@ -590,7 +597,10 @@ const UserManagement = ({ onToast }) => {
                   <Form.Control
                     type="email"
                     value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
+                    onChange={(e) => {
+                      setNewEmail(e.target.value);
+                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                    }}
                     isInvalid={!!errors.email}
                   />
                   <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
@@ -603,7 +613,10 @@ const UserManagement = ({ onToast }) => {
                   <Form.Control
                     type="text"
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={(e) => {
+                      setNewName(e.target.value);
+                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                    }}
                     isInvalid={!!errors.name}
                   />
                   <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
@@ -617,7 +630,10 @@ const UserManagement = ({ onToast }) => {
                     <Form.Control
                       type={showPassword ? "text" : "password"}
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      }}
                       isInvalid={!!errors.password}
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="password-toggle-btn">
@@ -635,7 +651,10 @@ const UserManagement = ({ onToast }) => {
                     <Form.Control
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      }}
                       isInvalid={!!errors.confirmPassword}
                     />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="password-toggle-btn">
@@ -651,7 +670,10 @@ const UserManagement = ({ onToast }) => {
                 <Col sm={8}>
                   <Form.Select
                     value={newRole}
-                    onChange={(e) => setNewRole(e.target.value)}
+                    onChange={(e) => {
+                      setNewRole(e.target.value);
+                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                    }}
                     isInvalid={!!errors.role}
                   >
                     <option value="">{t("Select_Role")}</option>
@@ -673,7 +695,10 @@ const UserManagement = ({ onToast }) => {
                   <Col sm={8}>
                     <Form.Select
                       value={selectedCompanyId}
-                      onChange={(e) => setSelectedCompanyId(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedCompanyId(e.target.value);
+                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      }}
                       isInvalid={!!errors.company}
                     >
                       <option value="">{t("Select_Company")}</option>

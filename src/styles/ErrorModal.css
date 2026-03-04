@@ -1,0 +1,127 @@
+/* ErrorModal.css - Styled to match success popup */
+
+.error-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    backdrop-filter: blur(4px);
+}
+
+.error-modal-container {
+    background: white !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    max-width: 440px !important;
+    width: 90% !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    animation: slideInUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    overflow: hidden;
+    padding: 3rem 2rem !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.error-modal-icon {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto 1.5rem auto !important;
+    animation: bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 88px !important;
+    height: 88px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #dc3545 0%, #ff4d5a 100%) !important;
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3) !important;
+}
+
+.error-modal-container h5 {
+    color: #dc3545 !important;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+}
+
+.error-modal-container p {
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+    font-size: 1.1rem;
+    font-weight: 400;
+    padding: 0 10px;
+}
+
+.error-modal-container .btn-try-again {
+    border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+    background-color: #dc3545 !important;
+    border: none !important;
+    color: white !important;
+    padding: 0.75rem 3rem !important;
+    font-weight: 600 !important;
+}
+
+.error-modal-container .btn-try-again:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3) !important;
+    background-color: #c82333 !important;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    20%,
+    53%,
+    80%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    40%,
+    43% {
+        transform: translate3d(0, -5px, 0);
+    }
+
+    70% {
+        transform: translate3d(0, -3px, 0);
+    }
+
+    90% {
+        transform: translate3d(0, -1px, 0);
+    }
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .error-modal-container {
+    background: #1c1c1e !important;
+}
+
+[data-theme="dark"] .error-modal-container p {
+    color: #a1a1a6;
+}
