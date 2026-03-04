@@ -918,93 +918,87 @@ const Dashboard = () => {
 
                 <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
                   <div className="carousel-indicators">
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="0"
-                      className="active"
-                      aria-label="Slide 1"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="1"
-                      aria-label="Slide 2"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="2"
-                      aria-label="Slide 3"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="3"
-                      aria-label="Slide 4"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="4"
-                      aria-label="Slide 5"
-                    ></button>
+                    {[...Array(10)].map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        data-bs-target="#howItWorksCarousel"
+                        data-bs-slide-to={i}
+                        className={i === 0 ? "active" : ""}
+                        aria-label={`Slide ${i + 1}`}
+                      ></button>
+                    ))}
                   </div>
 
                   <div className="carousel-inner">
                     <div className="carousel-item active">
-                      <img
-                        src="/slides/slide1.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_1_login_alt')}
-                      />
+                      <img src="/slides/slide1.jpeg" className="d-block w-100" alt={t('step_1_login_alt')} />
                       <div className="carousel-caption d-none d-md-block">
                         <h5>{t('step_1_login')}</h5>
                         <p>{t('step_1_login_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide2.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_2_create_business_alt')}
-                      />
+                      <img src="/slides/slide2.jpeg" className="d-block w-100" alt={t('step_2_create_business_alt')} />
                       <div className="carousel-caption d-none d-md-block">
                         <h5>{t('step_2_create_business')}</h5>
                         <p>{t('step_2_create_business_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide3.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_3_complete_assessment_alt')}
-                      />
+                      <img src="/slides/slide3.jpeg" className="d-block w-100" alt={t('step_3_onboarding_pmf_alt')} />
                       <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_3_complete_assessment')}</h5>
-                        <p>{t('step_3_complete_assessment_description')}</p>
+                        <h5>{t('step_3_onboarding_pmf')}</h5>
+                        <p>{t('step_3_onboarding_pmf_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide4.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_4_get_insights_alt')}
-                      />
+                      <img src="/slides/slide4.jpeg" className="d-block w-100" alt={t('step_4_aha_insights_alt')} />
                       <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_4_get_insights')}</h5>
-                        <p>{t('step_4_get_insights_description')}</p>
+                        <h5>{t('step_4_aha_insights')}</h5>
+                        <p>{t('step_4_aha_insights_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide5.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_5_strategic_recommendations_alt')}
-                      />
+                      <img src="/slides/slide5.jpeg" className="d-block w-100" alt={t('step_5_exec_summary_alt')} />
                       <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_5_strategic_recommendations')}</h5>
-                        <p>{t('step_5_strategic_recommendations_description')}</p>
+                        <h5>{t('step_5_exec_summary')}</h5>
+                        <p>{t('step_5_exec_summary_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide6.jpeg" className="d-block w-100" alt={t('step_6_kickstart_projects_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_6_kickstart_projects')}</h5>
+                        <p>{t('step_6_kickstart_projects_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide7.jpeg" className="d-block w-100" alt={t('step_7_project_ranking_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_7_project_ranking')}</h5>
+                        <p>{t('step_7_project_ranking_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide8.jpeg" className="d-block w-100" alt={t('step_8_ai_answers_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_8_ai_answers')}</h5>
+                        <p>{t('step_8_ai_answers_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide9.jpeg" className="d-block w-100" alt={t('step_9_insights_6cs_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_9_insights_6cs')}</h5>
+                        <p>{t('step_9_insights_6cs_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide10.jpeg" className="d-block w-100" alt={t('step_10_strategic_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_10_strategic')}</h5>
+                        <p>{t('step_10_strategic_description')}</p>
                       </div>
                     </div>
                   </div>
