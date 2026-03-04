@@ -78,7 +78,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
   const [isCompetitiveLandscapeRegenerating, setIsCompetitiveLandscapeRegenerating] = useState(false);
 
   // Financial analysis regenerating states
-  const [isProfitabilityRegenerating, setIsProfitabilityRegenerating] = useState(false);
+  const [isProfitabilityAnalysisRegenerating, setIsProfitabilityAnalysisRegenerating] = useState(false);
   const [isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating] = useState(false);
   const [isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating] = useState(false);
   const [isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating] = useState(false);
@@ -186,7 +186,7 @@ export const useBusinessSetup = (business, selectedBusinessId) => {
     isStrategicRegenerating, setIsStrategicRegenerating,
 
     // Financial analysis regenerating states
-    isProfitabilityRegenerating, setIsProfitabilityRegenerating,
+    isProfitabilityAnalysisRegenerating, setIsProfitabilityAnalysisRegenerating,
     isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
     isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
     isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
