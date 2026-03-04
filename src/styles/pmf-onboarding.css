@@ -473,27 +473,34 @@
   box-shadow: none !important;
   padding: 0 !important;
   z-index: 10000 !important;
+  transition: none !important;
+  margin-left: 6px !important;
+  /* Gap from the icon */
 }
 
 .pmf-tooltip.tooltip .tooltip-inner {
-  background-color: #496bf4 !important;
-  color: #fafafb !important;
-  padding: 10px 14px !important;
-  border-radius: 8px !important;
-  font-size: 13px !important;
-  line-height: 1.5 !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid #d1d5db !important;
-  max-width: 350px !important;
+  background-color: transparent !important;
+  color: #4f556e !important;
+  /* Changed to darker blue for readability on transparent bg */
+  padding: 0px !important;
+  /* Minimal padding for single line */
+  border-radius: 0px !important;
+  font-size: 11px !important;
+  /* Slightly bigger than 10px for readability */
+  line-height: 1.2 !important;
+  /* Corrected from 0.2 */
+  box-shadow: none !important;
+  border: none !important;
+  max-width: none !important;
   text-align: left !important;
-  white-space: normal !important;
-  word-wrap: break-word !important;
+  /* Corrected to left for subsequent reading */
+  white-space: nowrap !important;
+  transition: none !important;
 }
 
-.pmf-tooltip.bs-tooltip-top .tooltip-arrow::before {
-  border-top-color: #d1d5db !important;
-}
-
-.pmf-tooltip.bs-tooltip-bottom .tooltip-arrow::before {
-  border-bottom-color: #010915 !important;
+.pmf-tooltip.bs-tooltip-top .tooltip-arrow,
+.pmf-tooltip.bs-tooltip-bottom .tooltip-arrow,
+.pmf-tooltip.bs-tooltip-start .tooltip-arrow,
+.pmf-tooltip.bs-tooltip-end .tooltip-arrow {
+  display: none !important;
 }

@@ -181,9 +181,12 @@ const BusinessSetupPage = () => {
     isFullSwotRegenerating, isCompetitiveAdvantageRegenerating,
     isExpandedCapabilityRegenerating, isStrategicRadarRegenerating,
     isProductivityRegenerating, isMaturityRegenerating,
-    isProfitabilityRegenerating, isGrowthTrackerRegenerating,
-    isLiquidityEfficiencyRegenerating, isInvestmentPerformanceRegenerating,
-    isLeverageRiskRegenerating, isCompetitiveLandscapeRegenerating,
+    isProfitabilityAnalysisRegenerating, setIsProfitabilityAnalysisRegenerating,
+    isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
+    isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
+    isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
+    isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
+    isCompetitiveLandscapeRegenerating,
     isCoreAdjacencyRegenerating, highlightedMissingQuestions, setHighlightedMissingQuestions,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, dropdownRef, isRegeneratingRef,
     portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef,
@@ -533,24 +536,46 @@ const BusinessSetupPage = () => {
       setIsAnalysisRegenerating(true);
       const targetPhase = phaseOverride || getCurrentPhase();
 
-      await apiService.handlePhaseCompletion(
-        targetPhase,
-        questions,
-        userAnswers,
-        selectedBusinessId,
-        stateSetters,
-        showToastMessage
+      if (targetPhase === 'financial') {
+        setIsProfitabilityAnalysisRegenerating(true);
+        setIsGrowthTrackerRegenerating(true);
+        setIsLiquidityEfficiencyRegenerating(true);
+        setIsInvestmentPerformanceRegenerating(true);
+        setIsLeverageRiskRegenerating(true);
+      }
+
+      const regenerationPromises = [];
+
+      // Add Phase (Insight) regeneration to promises
+      regenerationPromises.push(
+        apiService.handlePhaseCompletion(
+          targetPhase,
+          questions,
+          userAnswers,
+          selectedBusinessId,
+          stateSetters,
+          showToastMessage
+        )
       );
 
-      if (alsoRegenerateStrategic) {
-        await handleStrategicAnalysisRegenerate(true);
+      // Add Strategic regeneration to promises if requested AND not already included in phase
+      if (alsoRegenerateStrategic && targetPhase !== 'advanced') {
+        regenerationPromises.push(handleStrategicAnalysisRegenerate(true));
       }
+
+      // Execute all in parallel
+      await Promise.all(regenerationPromises);
     } catch (error) {
       console.error(`Error regenerating phase:`, error);
       showToastMessage(`Failed to regenerate phase.`, "error");
     } finally {
       if (!alsoRegenerateStrategic) isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
+      setIsProfitabilityAnalysisRegenerating(false);
+      setIsGrowthTrackerRegenerating(false);
+      setIsLiquidityEfficiencyRegenerating(false);
+      setIsInvestmentPerformanceRegenerating(false);
+      setIsLeverageRiskRegenerating(false);
     }
   };
 
@@ -962,7 +987,7 @@ const BusinessSetupPage = () => {
     isPortersRegenerating, isPestelRegenerating, isFullSwotRegenerating,
     isCompetitiveAdvantageRegenerating, isExpandedCapabilityRegenerating,
     isStrategicRadarRegenerating, isProductivityRegenerating, isMaturityRegenerating,
-    isProfitabilityRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
+    isProfitabilityAnalysisRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
     isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating,
     isCompetitiveLandscapeRegenerating, isCoreAdjacencyRegenerating,
     isAnalysisRegenerating, isStrategicRegenerating,
@@ -1506,6 +1531,8 @@ const BusinessSetupPage = () => {
                             }}
                             onAnalysisRegenerate={handleRegenerateAllAnalysis}
                             isAnalysisRegenerating={isAnalysisRegenerating}
+                            isStrategicRegenerating={isStrategicRegenerating}
+                            isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating}
                             isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                             highlightedMissingQuestions={highlightedMissingQuestions}
                             onClearHighlight={() => setHighlightedMissingQuestions(null)}

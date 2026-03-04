@@ -1220,7 +1220,7 @@ const Dashboard = () => {
                   <p className="mb-3">{businessError || successMessage}</p>
                   <Button
                     variant={businessError ? "danger" : "primary"}
-                    size="sm"
+                    className="px-5 py-2 fw-semibold"
                     onClick={() => {
                       setShowSuccessPopup(false);
                       setSuccessMessage('');

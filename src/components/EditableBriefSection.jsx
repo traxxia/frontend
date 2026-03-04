@@ -564,7 +564,8 @@ const EditableBriefSection = ({
   highlightedMissingQuestions,
   onClearHighlight,
   isLaunchedStatus = false,
-  documentInfo = null
+  documentInfo = null,
+  isFinancialRegeneratingProp = false
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
@@ -579,6 +580,15 @@ const EditableBriefSection = ({
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
+  const [isFinancialRegenerating, setIsFinancialRegenerating] = useState(false);
+
+  useEffect(() => {
+    if (isFinancialRegeneratingProp) {
+      setIsFinancialRegenerating(true);
+    } else if (!isAnalysisRegenerating && !isStrategicRegenerating) {
+      setIsFinancialRegenerating(false);
+    }
+  }, [isFinancialRegeneratingProp, isAnalysisRegenerating, isStrategicRegenerating]);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -1080,10 +1090,11 @@ const EditableBriefSection = ({
         uploadDate: new Date().toLocaleDateString()
       });
 
-      showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
+      //showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
 
       // Also notify parent to refresh display
       if (onAnalysisRegenerate) {
+        setIsFinancialRegenerating(true);
         onAnalysisRegenerate({ onlyFinancial: true });
       }
     } catch (error) {
@@ -1243,10 +1254,11 @@ const EditableBriefSection = ({
         <div className="analysis-regenerating-banner">
           <Loader size={16} className="spinner" />
           <span>
-            {isSaving && 'Saving changes...'}
-            {isApplyingEnrichment && 'Applying enriched answers...'}
-            {(isAnalysisRegenerating || isStrategicRegenerating) && 'Regenerating Insight & STRATEGIC...'}
-            {isEssentialPhaseGenerating && 'Generating essential phase analysis...'}
+            {isApplyingEnrichment ? 'Applying enriched answers...' :
+              isSaving ? 'Saving changes...' :
+                isEssentialPhaseGenerating ? 'Generating essential phase analysis...' :
+                  isFinancialRegenerating ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
+                    (isAnalysisRegenerating || isStrategicRegenerating) ? 'Regenerating Insight & STRATEGIC...' : ''}
           </span>
         </div>
       )}

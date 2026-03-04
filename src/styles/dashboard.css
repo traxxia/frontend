@@ -1244,6 +1244,16 @@
     width: 100% !important;
   }
 
+  .success-popup-content .btn {
+    border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .success-popup-content .btn:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+  }
+
   .dashboard-success-icon {
     display: flex !important;
     justify-content: center !important;
