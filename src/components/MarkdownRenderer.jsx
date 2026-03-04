@@ -162,7 +162,8 @@ const MarkdownRenderer = ({ content, articleId }) => {
                     '08-prioritization-launch': 'prioritization-launch',
                     '09-ai-assistant': 'ai-assistant',
                     '10-admin-panel': 'admin-panel',
-                    '11-account-management': 'account-management'
+                    '11-account-management': 'account-management',
+                    '16-pmf-flow': 'pmf-flow'
                 };
 
                 if (category && categoryMap[category]) {
