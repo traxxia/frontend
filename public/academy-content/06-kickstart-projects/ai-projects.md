@@ -13,7 +13,7 @@ The "Kickstart" button is the bridge between strategy and project management. th
 2.  Short-term Initiatives.
 3.  Long-term Initiatives.
 
-![Initiatives](/academy-screenshots/projects/Strategic-initiatives.png)
+![Initiatives](/academy-screenshots/projects/kickstart-overview-banner.png)
 *Screenshot of the Strategic Dashboard with initiatives*
 ![Projects](/academy-screenshots/projects/Ai-projects.png)
 *Screenshot of the Projects that created from initiatives*
