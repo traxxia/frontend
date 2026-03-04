@@ -5,7 +5,8 @@ export const PHASE_API_CONFIG = {
     'purchaseCriteria',
     'loyaltyNPS',
     'porters',
-    'pestel'
+    'pestel',
+    'strategic' 
   ],
 
   essential: [
@@ -20,7 +21,8 @@ export const PHASE_API_CONFIG = {
     'productivityMetrics',
     'maturityScore',
     'competitiveLandscape',
-    'coreAdjacency' // Add this line
+    'coreAdjacency',
+    'strategic'  // Add this line
   ],
 
   advanced: [
@@ -35,7 +37,8 @@ export const PHASE_API_CONFIG = {
     'productivityMetrics',
     'maturityScore',
     'competitiveLandscape',
-    'coreAdjacency'
+    'coreAdjacency',
+    'strategic' // Add strategic to advanced phase
   ],
   financial: [
     'profitabilityAnalysis',
@@ -61,6 +64,7 @@ export const API_ENDPOINTS = {
   maturityScore: 'maturity-scoring',
   competitiveLandscape: 'simple-swot-portfolio',
   coreAdjacency: 'core-adjacency-matrix',
+  strategic: 'strategic-analysis',
 
   profitabilityAnalysis: 'excel-analysis',
   growthTracker: 'excel-analysis',
@@ -398,7 +402,8 @@ export class AnalysisApiService {
     metricType = null,
     onStreamChunk = null, // ✅ Added live streaming callback
     companyName = null, // Add company name for specific analyses like aha-insight
-    rawPayload = null   // ✅ Added raw payload support
+    rawPayload = null,   // ✅ Added raw payload support
+    loadingKey = null   // ✅ NEW: Added loading key support
   ) {
     if (!rawPayload && questionsArray.length === 0 && endpoint !== 'excel-analysis') {
       throw new Error(`No questions available for ${endpoint} analysis`);
@@ -406,7 +411,7 @@ export class AnalysisApiService {
 
     try {
       if (this.setApiLoading) {
-        this.setApiLoading(endpoint, true);
+        this.setApiLoading(loadingKey || endpoint, true);
       }
 
       const isExcelAnalysis = endpoint === 'excel-analysis';
@@ -510,7 +515,7 @@ export class AnalysisApiService {
       return await response.json();
     } finally {
       if (this.setApiLoading) {
-        this.setApiLoading(endpoint, false);
+        this.setApiLoading(loadingKey || endpoint, false);
       }
     }
   }
@@ -615,10 +620,11 @@ export class AnalysisApiService {
             .then((res) => {
               successes++;
               failures--;
+              // Stay in progress mode until all retries finish
               showToastMessage(
-                `Retry for "${displayName}" completed successfully`,
+                `${successes}/${total} analyses — "${displayName}" completed successfully (after retry)`,
                 "info",
-                { duration: 3000 }
+                { duration: 0 }
               );
               return { status: "fulfilled", analysisType, value: res };
             })
@@ -764,11 +770,8 @@ export class AnalysisApiService {
         'competitiveLandscape': 'essential',
         'coreAdjacency': 'essential',
         // 5 financial analysis types
-        'profitabilityAnalysis': 'good',
-        'growthTracker': 'good',
-        'liquidityEfficiency': 'good',
-        'investmentPerformance': 'good',
-        'leverageRisk': 'good'
+        'leverageRisk': 'good',
+        'strategic': 'advanced'
       };
 
       const displayNames = {
@@ -945,6 +948,7 @@ export class AnalysisApiService {
       );
 
       const metricType = EXCEL_ANALYSIS_METRIC_TYPES[analysisType];
+      const loadingKey = `excel-analysis-${metricType?.replace('_trends', '')}`;
 
       const result = await this.makeAPICall(
         'excel-analysis',
@@ -953,7 +957,10 @@ export class AnalysisApiService {
         payload.selectedBusinessId,
         payload.stateSetters?.uploadedFile || null,
         metricType,
-        onStreamChunk  // ✅ Pass streaming callback
+        onStreamChunk,  // ✅ Pass streaming callback
+        null,           // companyName
+        null,           // rawPayload
+        loadingKey      // ✅ Pass specific loading key
       );
 
       return { data: result };
@@ -980,16 +987,29 @@ export class AnalysisApiService {
 
   // Strategic Analysis (kept for compatibility)
   async generateStrategicAnalysis(questions, answers, selectedBusinessId) {
-    try {
-      const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, answers);
-      const result = await this.makeAPICall('strategic-analysis', questionsArray, answersArray);
-      const strategicContent = result.strategic_analysis || result.strategic || result;
-      await this.saveAnalysisToBackend(strategicContent, 'strategic', selectedBusinessId);
-      return strategicContent;
-    } catch (error) {
-      console.error('Error generating strategic analysis:', error);
-      throw error;
-    }
+    const performGeneration = async (isRetry = false) => {
+      try {
+        // Fetch fresh conversation data to ensure we have the absolute latest answers
+        // especially when called immediately after bulk updates
+        const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+        const combinedAnswers = { ...answers, ...freshAnswers };
+
+        const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, combinedAnswers);
+        const result = await this.makeAPICall('strategic-analysis', questionsArray, answersArray);
+        const strategicContent = result.strategic_analysis || result.strategic || result;
+        await this.saveAnalysisToBackend(strategicContent, 'strategic', selectedBusinessId);
+        return strategicContent;
+      } catch (error) {
+        if (!isRetry) {
+          console.warn('Strategic analysis failed, retrying...', error);
+          return await performGeneration(true);
+        }
+        console.error('Error generating strategic analysis after retry:', error);
+        throw error;
+      }
+    };
+
+    return await performGeneration();
   }
 
   async generateCompetitiveLandscape(questions, answers, selectedBusinessId) {

@@ -284,7 +284,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId }) => {
                   else if (percentage >= 70) colorClass = "usage-medium";
 
                   return (
-                    <div className="ai-usage-minimal" title={`Used: ${used.toLocaleString()} / ${limit.toLocaleString()}`}>
+                    <div title={`Used: ${used.toLocaleString()} / ${limit.toLocaleString()}`}>
                       <div className="ai-usage-circle-wrap">
                         <svg className="ai-usage-svg" viewBox="0 0 24 24">
                           <circle
