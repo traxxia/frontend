@@ -19,4 +19,4 @@ Collaborator will have the same interface in business but the access can be diff
 
 > [!NOTE] Only Company Admins can manage collaborator access across businesses and projects.
 
-Next: [Kickstarting Initiatives](../06-kickstart-projects/kickstart-process.md)
+Next: [Projects Overview](../05-project-management/project-overview.md)

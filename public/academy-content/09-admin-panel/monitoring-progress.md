@@ -23,4 +23,6 @@ Super Admin can drill down into any project state to read **Mandatory Justificat
 
 > [!NOTE] Access to the Admin Panel is restricted based on user role. Collaborators do not have access to these management functions.
 
-Next: [Admin Panel](monitoring-process-company-admin.md)
+Back to: [Question Management](./question-management.md)
+
+Next: [Monitoring Process for Company admin](monitoring-process-company-admin.md)

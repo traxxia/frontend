@@ -40,4 +40,6 @@ While the PMF Flow gives you immediate results, you can provide more context lat
 
 Providing this deeper narrative allows the AI to offer even more tailored advice across all sections of the application.
 
-Back to: [PMF Foundation & Onboarding](01-pmf-foundation.md)
+Back to: [Insights & Strategic Core](02-pmf-insights.md)
+
+Next: [Kickstart Process](../04-kickstart-projects/kickstart-process.md)

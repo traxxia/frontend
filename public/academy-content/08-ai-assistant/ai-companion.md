@@ -49,4 +49,4 @@ Based on the field you are editing or the phase you are in, the AI will suggest 
 
 > [!TIP] Use the AI as a "sparring partner" to challenge your strategic assumptions and help you write more professional business descriptions.
 
-Next: [Admin Panel Control](../10-admin-panel/monitoring-progress.md)
+Next: [Super Admin Panel Overview](../09-admin-panel/super-admin-overview.md)

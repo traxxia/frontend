@@ -1,5 +1,7 @@
 # Team Collaboration
 
+Back to: [Priorities & Kickstarting](./02-priorities-kickstart.md)
+
 Strategy is a team sport. Traxxia allows you to bring your colleagues into the analysis process to build consensus and leverage diverse perspectives.
 
 ## 1. Plan Requirement

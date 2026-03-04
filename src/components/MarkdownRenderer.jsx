@@ -154,16 +154,13 @@ const MarkdownRenderer = ({ content, articleId }) => {
                 const categoryMap = {
                     '01-auth-onboarding': 'auth-onboarding',
                     '02-dashboard-business': 'dashboard-business',
-                    '03-ai-questionnaire': 'ai-questionnaire',
-                    '04-insights-strategy': 'insights-strategy',
-                    '05-collaboration': 'collaboration',
-                    '06-kickstart-projects': 'kickstart-projects',
-                    '07-project-management': 'project-management',
-                    '08-prioritization-launch': 'prioritization-launch',
-                    '09-ai-assistant': 'ai-assistant',
-                    '10-admin-panel': 'admin-panel',
-                    '11-account-management': 'account-management',
-                    '16-pmf-flow': 'pmf-flow'
+                    '03-pmf-flow': 'pmf-flow',
+                    '04-kickstart-projects': 'kickstart-projects',
+                    '05-project-management': 'project-management',
+                    '06-ai-questionnaire': 'ai-questionnaire',
+                    '07-insights-strategy': 'insights-strategy',
+                    '08-ai-assistant': 'ai-assistant',
+                    '09-admin-panel': 'admin-panel'
                 };
 
                 if (category && categoryMap[category]) {

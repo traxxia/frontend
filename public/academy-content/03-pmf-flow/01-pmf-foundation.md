@@ -72,4 +72,6 @@ Specify the context for the final output.
 
 As you move through the journey, the progress bar indicates how close you are to generating your initial strategy. Once finished, the system generates your **AHA Insights** and **Executive Summary** in parallel, ready for immediate review.
 
+Back to: [Business Overview](../02-dashboard-business/creating-your-business.md)
+
 Next: [Insights & Strategic Core](02-pmf-insights.md)

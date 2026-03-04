@@ -34,4 +34,4 @@ To unlock the full potential of this analysis, you must upload your financial da
 
 > [!IMPORTANT] Your financial data remains private and secure. It is only used to generate insights for your business and is never shared externally.
 
-Next: [Team Collaboration](../05-collaboration/collaborators.md)
+Next: [The AI Assistant](../08-ai-assistant/ai-companion.md)
