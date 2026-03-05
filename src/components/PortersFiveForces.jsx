@@ -317,21 +317,9 @@ const PortersFiveForces = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="porters-container">
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Porter's Five Forces Analysis Error"
-        />
-      </div>
-    );
-  }
-
   const parsedData = parsePortersData(portersAnalysisData);
 
-  if (!parsedData || isPortersDataIncomplete(parsedData)) {
+  if (error || ((!parsedData || isPortersDataIncomplete(parsedData)) && Object.keys(userAnswers).length > 0)) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState
@@ -344,7 +332,8 @@ const PortersFiveForces = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

@@ -67,7 +67,7 @@ const LoyaltyNPS = ({
 
     if (wrappedData) {
       normalizedData = { loyaltyMetrics: wrappedData };
-    } else if (data.method && data.overallScore !== undefined) {
+    } else if (data.method || data.overallScore !== undefined) {
       normalizedData = { loyaltyMetrics: data };
     } else {
       return true;
@@ -82,9 +82,12 @@ const LoyaltyNPS = ({
     const hasOverallScore = metrics.overallScore !== null && metrics.overallScore !== undefined;
     const hasMethod = metrics.method && metrics.method !== '';
     const hasScale = metrics.scale && metrics.scale.min !== undefined && metrics.scale.max !== undefined;
+    const hasBenchmark = metrics.benchmark !== null && metrics.benchmark !== undefined;
 
-    // Need at least basic data to show something meaningful
-    return !hasOverallScore || !hasMethod || !hasScale;
+    // Relaxed validation: show if we have a score OR (method and scale) OR benchmark
+    const hasSufficientData = hasOverallScore || (hasMethod && hasScale) || hasBenchmark;
+
+    return !hasSufficientData;
   };
 
   // EXACTLY the same useEffect pattern as other components
@@ -122,6 +125,10 @@ const LoyaltyNPS = ({
 
   // Get score classification based on NPS zones
   const getScoreClassification = (score, method = 'NPS') => {
+    if (score === null || score === undefined) {
+      return { label: 'No Data', color: '#6B7280', zone: 'none' };
+    }
+
     if (method === 'NPS') {
       if (score >= 50) return { label: 'Excellent', color: '#10B981', zone: 'promoters' };
       if (score >= 30) return { label: 'Good', color: '#06B6D4', zone: 'promoters' };
@@ -147,16 +154,21 @@ const LoyaltyNPS = ({
     const { overallScore, method, scale } = loyaltyData;
     const classification = getScoreClassification(overallScore, method);
 
+    const hasScore = overallScore !== null && overallScore !== undefined;
+
     // Normalize score to 0-1 range for gauge
-    const normalizedScore = method === 'NPS'
-      ? (overallScore + 100) / 200  // NPS is -100 to 100
-      : overallScore / 100;         // CSAT and others are 0 to 100
+    let normalizedScore = 0;
+    if (hasScore) {
+      normalizedScore = method === 'NPS'
+        ? (overallScore + 100) / 200  // NPS is -100 to 100
+        : overallScore / 100;         // CSAT and others are 0 to 100
+    }
 
     const radius = 80;
     const strokeWidth = 12;
     const circumference = 2 * Math.PI * radius;
     const strokeDasharray = circumference * 0.75; // 3/4 circle
-    const strokeDashoffset = strokeDasharray * (1 - normalizedScore);
+    const strokeDashoffset = hasScore ? strokeDasharray * (1 - normalizedScore) : strokeDasharray;
 
     // Calculate zones for NPS
     let zones = [];
@@ -220,7 +232,7 @@ const LoyaltyNPS = ({
 
             {/* Center score */}
             <text x="100" y="85" textAnchor="middle" className="gauge-score">
-              {overallScore}
+              {hasScore ? overallScore : '--'}
             </text>
             <text x="100" y="100" textAnchor="middle" className="gauge-label">
               {classification.label}
@@ -316,10 +328,18 @@ const LoyaltyNPS = ({
   if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
     return (
       <div className="loyalty-nps">
-        <AnalysisError
-          error="Unable to generate loyalty & NPS analysis. Please try regenerating or check your inputs."
-          onRetry={handleRetry}
-          title="Loyalty & NPS Analysis Error"
+        <AnalysisEmptyState
+          analysisType="loyaltyNPS"
+          analysisDisplayName="Loyalty & NPS Analysis"
+          icon={Heart}
+          onImproveAnswers={handleMissingQuestionsCheck}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isRegenerating}
+          canRegenerate={canRegenerate}
+          userAnswers={userAnswers}
+          minimumAnswersRequired={3}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );
@@ -339,7 +359,8 @@ const LoyaltyNPS = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );
@@ -375,7 +396,7 @@ const LoyaltyNPS = ({
             <span>{loyaltyData.method} Score</span>
           </div>
           <p className="ln-metric-value" style={{ color: classification.color }}>
-            {loyaltyData.overallScore}
+            {loyaltyData.overallScore !== null && loyaltyData.overallScore !== undefined ? loyaltyData.overallScore : '--'}
           </p>
           <p className="ln-metric-label">{classification.label}</p>
         </div>

@@ -5,23 +5,8 @@ import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { STREAMING_CONFIG } from '../hooks/streamingConfig';
 
-const AnalysisEmptyState = ({ analysisDisplayName, icon: Icon, onImproveAnswers, onRegenerate, isRegenerating, canRegenerate, userAnswers, minimumAnswersRequired }) => (
-  <div style={{ textAlign: 'center', padding: '40px' }}>
-    <Icon size={48} color="#999" />
-    <h3>No {analysisDisplayName} Available</h3>
-    <p>Please provide more answers or regenerate the analysis.</p>
-    {onImproveAnswers && <button onClick={onImproveAnswers}>Improve Answers</button>}
-    {canRegenerate && <button onClick={onRegenerate} disabled={isRegenerating}>Regenerate</button>}
-  </div>
-);
-
-const AnalysisError = ({ error, onRetry, title }) => (
-  <div style={{ textAlign: 'center', padding: '40px', color: '#d9534f' }}>
-    <h3>{title}</h3>
-    <p>{error}</p>
-    <button onClick={onRetry}>Retry</button>
-  </div>
-);
+import AnalysisEmptyState from './AnalysisEmptyState';
+import AnalysisError from './AnalysisError';
 
 const ProductivityMetrics = ({
   questions = [],
@@ -532,31 +517,7 @@ const ProductivityMetrics = ({
     );
   }
 
-  if (error) {
-    return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Productivity Metrics Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-    return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <AnalysisError
-          error="Unable to generate productivity metrics analysis. Please try regenerating or check your inputs."
-          onRetry={handleRetry}
-          title="Analysis Generation Error"
-        />
-      </div>
-    );
-  }
-
-  if (!productivityData || isProductivityDataIncomplete(productivityData)) {
+  if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0) || (!productivityData || isProductivityDataIncomplete(productivityData)) || !data?.productivityMetrics) {
     return (
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <AnalysisEmptyState
@@ -569,19 +530,8 @@ const ProductivityMetrics = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
-        />
-      </div>
-    );
-  }
-
-  if (!data?.productivityMetrics) {
-    return (
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <AnalysisError
-          error="The productivity metrics data received is not in the expected format. Please regenerate the analysis."
-          onRetry={handleRetry}
-          title="Invalid Data Structure"
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

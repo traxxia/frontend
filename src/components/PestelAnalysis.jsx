@@ -222,7 +222,7 @@ const PestelAnalysis = ({
     );
   }
 
-  if (!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) {
+  if ((!pestelData || Array.isArray(pestelData) || isPestelDataIncomplete(pestelData)) && Object.keys(userAnswers).length > 0) {
     return (
       <div className="porters-container">
         <AnalysisEmptyState
@@ -235,7 +235,8 @@ const PestelAnalysis = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );

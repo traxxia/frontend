@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import '../styles/EssentialPhase.css';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
@@ -74,12 +73,7 @@ const FullSWOTPortfolio = ({
         }
     };
 
-    const handleRetry = () => {
-        setError(null);
-        if (onRegenerate) {
-            onRegenerate();
-        }
-    };
+
 
     const isFullSwotDataIncomplete = (data) => {
         if (!data) return true;
@@ -432,25 +426,21 @@ const FullSWOTPortfolio = ({
     }
 
     // Consolidated error state
-    if (error ||
-        (!hasGenerated && !data && Object.keys(userAnswers).length > 0) ||
-        (data && !data?.swotPortfolio)) {
-
-        let errorMessage = error;
-        if (!errorMessage) {
-            if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-                errorMessage = "Unable to generate Full SWOT Portfolio analysis. Please try regenerating or check your inputs.";
-            } else if (data && !data?.swotPortfolio) {
-                errorMessage = "The Full SWOT Portfolio data received is not in the expected format. Please regenerate the analysis.";
-            }
-        }
-
+    if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
         return (
             <div className="porters-container">
-                <AnalysisError
-                    error={errorMessage}
-                    onRetry={handleRetry}
-                    title="Full SWOT Portfolio Analysis Error"
+                <AnalysisEmptyState
+                    analysisType="fullSwot"
+                    analysisDisplayName="Full SWOT Portfolio"
+                    icon={Target}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -470,6 +460,8 @@ const FullSWOTPortfolio = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );

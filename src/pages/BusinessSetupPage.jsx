@@ -23,6 +23,7 @@ import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -181,9 +182,12 @@ const BusinessSetupPage = () => {
     isFullSwotRegenerating, isCompetitiveAdvantageRegenerating,
     isExpandedCapabilityRegenerating, isStrategicRadarRegenerating,
     isProductivityRegenerating, isMaturityRegenerating,
-    isProfitabilityRegenerating, isGrowthTrackerRegenerating,
-    isLiquidityEfficiencyRegenerating, isInvestmentPerformanceRegenerating,
-    isLeverageRiskRegenerating, isCompetitiveLandscapeRegenerating,
+    isProfitabilityAnalysisRegenerating, setIsProfitabilityAnalysisRegenerating,
+    isGrowthTrackerRegenerating, setIsGrowthTrackerRegenerating,
+    isLiquidityEfficiencyRegenerating, setIsLiquidityEfficiencyRegenerating,
+    isInvestmentPerformanceRegenerating, setIsInvestmentPerformanceRegenerating,
+    isLeverageRiskRegenerating, setIsLeverageRiskRegenerating,
+    isCompetitiveLandscapeRegenerating,
     isCoreAdjacencyRegenerating, highlightedMissingQuestions, setHighlightedMissingQuestions,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, dropdownRef, isRegeneratingRef,
     portersRef, pestelRef, fullSwotRef, competitiveAdvantageRef,
@@ -214,6 +218,33 @@ const BusinessSetupPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    let pageContext = null;
+    if (activeTab === "aha") pageContext = AI_PAGE_CONTEXTS.AHA;
+    else if (activeTab === "executive") pageContext = AI_PAGE_CONTEXTS.EXECUTIVE_SUMMARY;
+    else if (activeTab === "priorities") pageContext = AI_PAGE_CONTEXTS.PRIORITIES;
+    else if (activeTab === "advanced") pageContext = AI_PAGE_CONTEXTS.ADVANCED;
+    else if (activeTab === "insights") pageContext = AI_PAGE_CONTEXTS.INSIGHTS;
+    else if (activeTab === "strategic") pageContext = AI_PAGE_CONTEXTS.STRATEGIC;
+    let contextPayload = { ...pageContext };
+
+    if (activeTab === "advanced" && questions && questions.length > 0) {
+      const qaData = questions.map(q => ({
+        question: q.question_text,
+        answer: userAnswers[q._id || q.question_id] || "Not Answered"
+      }));
+      contextPayload.page_content = qaData;
+    }
+
+    if (pageContext) {
+      window.dispatchEvent(
+        new CustomEvent("ai_context_changed", {
+          detail: { pageContext: contextPayload }
+        })
+      );
+    }
+  }, [activeTab, questions, userAnswers]);
 
   // Effect to handle business context recovery on refresh
   useEffect(() => {
@@ -269,7 +300,7 @@ const BusinessSetupPage = () => {
   // Load questions directly (previously handled by ChatComponent)
   // Only needed for tabs that use the question/answer/analysis workflow
   useEffect(() => {
-    const tabsNeedingQuestions = ['brief', 'analysis', 'strategic'];
+    const tabsNeedingQuestions = ['advanced', 'insights', 'strategic'];
     if (!tabsNeedingQuestions.includes(activeTab)) {
       // Mark questionsLoaded so the UI doesn't stay blank on AHA/executive/priorities tabs
       if (!questionsLoaded) setQuestionsLoaded(true);
@@ -296,8 +327,8 @@ const BusinessSetupPage = () => {
           const documentExists = conversationsData.document_info?.has_document === true;
           setHasUploadedDocument(documentExists);
 
-          // If on the 'brief' tab (Advanced), specifically call the financial-document API as well
-          if (activeTab === 'brief') {
+          // If on the 'advanced' tab (Advanced), specifically call the financial-document API as well
+          if (activeTab === 'advanced') {
             try {
               const docResponse = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
                 headers: {
@@ -488,15 +519,15 @@ const BusinessSetupPage = () => {
   const handleRedirectToBrief = (missingQuestionsData) => {
     setHighlightedMissingQuestions(missingQuestionsData);
     if (isMobile) {
-      setActiveTab("brief");
+      setActiveTab("advanced");
     } else {
       if (isAnalysisExpanded) {
         setIsSliding(true);
         setIsAnalysisExpanded(false);
-        setActiveTab("brief");
+        setActiveTab("advanced");
         setTimeout(() => setIsSliding(false), 1000);
       } else {
-        setActiveTab("brief");
+        setActiveTab("advanced");
       }
     }
     showToastMessage(
@@ -510,10 +541,10 @@ const BusinessSetupPage = () => {
     if (!isAnalysisExpanded) {
       setIsSliding(true);
       setIsAnalysisExpanded(true);
-      setActiveTab("brief");
+      setActiveTab("advanced");
       setTimeout(() => setIsSliding(false), 1000);
     } else {
-      setActiveTab("brief");
+      setActiveTab("advanced");
     }
   };
 
@@ -533,24 +564,46 @@ const BusinessSetupPage = () => {
       setIsAnalysisRegenerating(true);
       const targetPhase = phaseOverride || getCurrentPhase();
 
-      await apiService.handlePhaseCompletion(
-        targetPhase,
-        questions,
-        userAnswers,
-        selectedBusinessId,
-        stateSetters,
-        showToastMessage
+      if (targetPhase === 'financial') {
+        setIsProfitabilityAnalysisRegenerating(true);
+        setIsGrowthTrackerRegenerating(true);
+        setIsLiquidityEfficiencyRegenerating(true);
+        setIsInvestmentPerformanceRegenerating(true);
+        setIsLeverageRiskRegenerating(true);
+      }
+
+      const regenerationPromises = [];
+
+      // Add Phase (Insight) regeneration to promises
+      regenerationPromises.push(
+        apiService.handlePhaseCompletion(
+          targetPhase,
+          questions,
+          userAnswers,
+          selectedBusinessId,
+          stateSetters,
+          showToastMessage
+        )
       );
 
-      if (alsoRegenerateStrategic) {
-        await handleStrategicAnalysisRegenerate(true);
+      // Add Strategic regeneration to promises if requested AND not already included in phase
+      if (alsoRegenerateStrategic && targetPhase !== 'advanced') {
+        regenerationPromises.push(handleStrategicAnalysisRegenerate(true));
       }
+
+      // Execute all in parallel
+      await Promise.all(regenerationPromises);
     } catch (error) {
       console.error(`Error regenerating phase:`, error);
       showToastMessage(`Failed to regenerate phase.`, "error");
     } finally {
       if (!alsoRegenerateStrategic) isRegeneratingRef.current = false;
       setIsAnalysisRegenerating(false);
+      setIsProfitabilityAnalysisRegenerating(false);
+      setIsGrowthTrackerRegenerating(false);
+      setIsLiquidityEfficiencyRegenerating(false);
+      setIsInvestmentPerformanceRegenerating(false);
+      setIsLeverageRiskRegenerating(false);
     }
   };
 
@@ -652,6 +705,17 @@ const BusinessSetupPage = () => {
       }
 
       const findHighestAnsweredPhase = () => {
+        // If we have specific updated questions, prioritize based on them first
+        if (options?.updatedQuestionIds && options.updatedQuestionIds.length > 0) {
+          const updatedPhases = questions
+            .filter(q => options.updatedQuestionIds.includes(q._id || q.question_id))
+            .map(q => q.phase);
+
+          if (updatedPhases.includes('advanced')) return 'advanced';
+          if (updatedPhases.includes('essential')) return 'essential';
+          if (updatedPhases.includes('initial')) return 'initial';
+        }
+
         const phases = ['advanced', 'essential', 'initial'];
         return phases.find(phase =>
           questions.some(q => q.phase === phase && userAnswers[q._id]?.trim())
@@ -717,11 +781,11 @@ const BusinessSetupPage = () => {
   const handleAnalysisTabClick = () => {
     // Removed unlockedFeatures.analysis check to make it always accessible
     if (isMobile) {
-      setActiveTab("analysis");
+      setActiveTab("insights");
     } else {
       if (!isAnalysisExpanded) {
         setIsAnalysisExpanded(true);
-        setActiveTab("analysis");
+        setActiveTab("insights");
       }
     }
   };
@@ -770,46 +834,8 @@ const BusinessSetupPage = () => {
     setTimeout(() => {
       const cardElement = document.getElementById(cardId);
       if (!cardElement) return;
-
-      const getScrollParent = (el) => {
-        let cur = el.parentElement;
-        while (cur && cur !== document.body) {
-          const style = window.getComputedStyle(cur);
-          const overflowY = style.overflowY;
-          if (overflowY === 'auto' || overflowY === 'scroll' || cur === document.scrollingElement) return cur;
-          cur = cur.parentElement;
-        }
-        return window;
-      };
-
-      const scrollContainer = getScrollParent(cardElement);
-
-      const headerEls = [
-        document.querySelector('.traxia-navbar'),
-        document.querySelector('.main-header'),
-        document.querySelector('.sub-header'),
-        document.querySelector('.desktop-tabs')
-      ].filter(Boolean);
-
-      const totalHeaderHeight = headerEls.reduce((sum, el) => {
-        const r = el.getBoundingClientRect();
-        return sum + (r.height > 0 && r.bottom > 0 ? r.height : 0);
-      }, 0);
-
-      const gap = 8;
-
-      if (scrollContainer === window) {
-        const top = cardElement.getBoundingClientRect().top + window.pageYOffset;
-        const target = Math.max(0, top - totalHeaderHeight - gap);
-        window.scrollTo({ top: target, behavior: 'smooth' });
-      } else {
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const elRect = cardElement.getBoundingClientRect();
-        const offsetWithin = elRect.top - containerRect.top + scrollContainer.scrollTop;
-        const target = Math.max(0, offsetWithin - totalHeaderHeight - gap);
-        scrollContainer.scrollTo({ top: target, behavior: 'smooth' });
-      }
-    }, 600);
+      cardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 800);
   };
 
   const createSimpleRegenerationHandler = (analysisType) => {
@@ -902,11 +928,7 @@ const BusinessSetupPage = () => {
         "Current Strategy": ["Core"]
       },
       advanced: {
-        "Costs/Financial": [
-          "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
-          "Investment Performance", "Leverage & Risk",
-          "Productivity Metrics"
-        ],
+        "Costs/Financial": ["Productivity Metrics"],
         "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
         "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
         "Capabilities": ["Capability Heatmap", "Maturity Score"],
@@ -916,12 +938,19 @@ const BusinessSetupPage = () => {
     };
 
     // If a document is uploaded, always add financial options regardless of phase
-    if (unlockedFeatures.hasDocument && (phase === 'initial' || phase === 'essential')) {
-      categoryOptions[phase]["Costs/Financial"] = [
-        ...(categoryOptions[phase]["Costs/Financial"] || []),
+    if (unlockedFeatures.hasDocument) {
+      const financialOptions = [
         "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
         "Investment Performance", "Leverage & Risk"
       ];
+
+      // Add to current phase
+      if (categoryOptions[phase]) {
+        categoryOptions[phase]["Costs/Financial"] = [
+          ...(categoryOptions[phase]["Costs/Financial"] || []),
+          ...financialOptions
+        ];
+      }
     }
 
     return categoryOptions[phase] || {};
@@ -941,9 +970,9 @@ const BusinessSetupPage = () => {
     setSearchParams(params, { replace: true });
   }, [activeTab, selectedBusinessName, selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Only load stored analysis data when user first visits the analysis or strategic tab
+  // Only load stored analysis data when user first visits the insights or strategic tab
   useEffect(() => {
-    if (activeTab !== 'analysis' && activeTab !== 'strategic') return;
+    if (activeTab !== 'insights' && activeTab !== 'strategic') return;
     if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
       hasLoadedAnalysis.current = true;
       setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
@@ -986,10 +1015,10 @@ const BusinessSetupPage = () => {
     isPortersRegenerating, isPestelRegenerating, isFullSwotRegenerating,
     isCompetitiveAdvantageRegenerating, isExpandedCapabilityRegenerating,
     isStrategicRadarRegenerating, isProductivityRegenerating, isMaturityRegenerating,
-    isProfitabilityRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
+    isProfitabilityAnalysisRegenerating, isGrowthTrackerRegenerating, isLiquidityEfficiencyRegenerating,
     isInvestmentPerformanceRegenerating, isLeverageRiskRegenerating,
     isCompetitiveLandscapeRegenerating, isCoreAdjacencyRegenerating,
-    isAnalysisRegenerating,
+    isAnalysisRegenerating, isStrategicRegenerating,
     swotRef, purchaseCriteriaRef, loyaltyNpsRef, portersRef, pestelRef, fullSwotRef,
     competitiveAdvantageRef, expandedCapabilityRef, strategicRadarRef, productivityRef,
     maturityScoreRef, profitabilityRef, growthTrackerRef, liquidityEfficiencyRef,
@@ -1102,10 +1131,137 @@ const BusinessSetupPage = () => {
               {activeTab === "aha" && t("aha")}
               {activeTab === "executive" && t("Executive Summary")}
               {activeTab === "priorities" && t("Priorities & Projects")}
-              {activeTab === "brief" && t("Questions and Answers")}
-              {activeTab === "analysis" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+              {activeTab === "advanced" && t("Questions and Answers")}
+              {activeTab === "insights" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
               {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
               {activeTab === "projects" && t("Projects")}
+            </div>
+
+            <div className="mobile-action-bar">
+              {activeTab === "insights" && (
+                <>
+                  <div ref={dropdownRef} className="dropdown-wrapper">
+                    <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
+                      <span>{selectedDropdownValue}</span>
+                      <ChevronDown size={14} className={`chevron ${showDropdown ? 'open' : ''}`} />
+                    </button>
+                    {showDropdown && (() => {
+                      const categoryOptions = getPhaseSpecificOptions(currentPhase);
+                      return Object.keys(categoryOptions).length > 0 && (
+                        <div className="dropdown-menu-options">
+                          {Object.entries(categoryOptions).map(([category, items]) =>
+                            items.length > 0 && (
+                              <div key={category}>
+                                <div className="dropdown-category-header">{category}</div>
+                                {items.map((item) => (
+                                  <div key={item} onClick={() => {
+                                    handleOptionClick(item);
+                                    setSelectedDropdownValue(item);
+                                    setShowDropdown(false);
+                                  }} className="dropdown-option dropdown-sub-option">
+                                    <span className="bullet"></span>
+                                    {item}
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {unlockedFeatures.analysis && (
+                    <PDFExportButton
+                      className="pdf-export-button"
+                      businessName={businessData.name}
+                      onToastMessage={showToastMessage}
+                      currentPhase={currentPhase}
+                      disabled={isAnalysisRegenerating}
+                      unlockedFeatures={unlockedFeatures}
+                      fullSwotData={fullSwotData}
+                      competitiveAdvantageData={competitiveAdvantageData}
+                      expandedCapabilityData={expandedCapabilityData}
+                      strategicRadarData={strategicRadarData}
+                      productivityData={productivityData}
+                      maturityData={maturityData}
+                      profitabilityData={profitabilityData}
+                      growthTrackerData={growthTrackerData}
+                      liquidityEfficiencyData={liquidityEfficiencyData}
+                      investmentPerformanceData={investmentPerformanceData}
+                      leverageRiskData={leverageRiskData}
+                    />
+                  )}
+
+                  {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                    <button
+                      onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
+                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                      className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
+                      title={t('RegenerateAll') || 'Regenerate All'}
+                    >
+                      {isAnalysisRegenerating ? (
+                        <Loader size={16} className="animate-spin" />
+                      ) : (
+                        <RefreshCw size={16} />
+                      )}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {activeTab === "advanced" && (
+                <>
+                  <PDFExportButton
+                    className="pdf-export-button"
+                    businessName={businessData.name}
+                    onToastMessage={showToastMessage}
+                    disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                    exportType="advanced-brief"
+                  />
+                  <button
+                    onClick={handleRegenerateAllAnalysis}
+                    disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                    className={`regenerate-button ${isAnalysisRegenerating || isStrategicRegenerating ? 'disabled' : ''}`}
+                    title={t("regenerate") || "Regenerate All Analysis"}
+                  >
+                    {isAnalysisRegenerating || isStrategicRegenerating ? (
+                      <Loader size={16} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={16} />
+                    )}
+                  </button>
+                </>
+              )}
+
+              {activeTab === "strategic" && (
+                <>
+                  {unlockedFeatures.analysis && (
+                    <PDFExportButton
+                      className="pdf-export-button"
+                      businessName={businessData.name}
+                      onToastMessage={showToastMessage}
+                      disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                      exportType="strategic"
+                      strategicData={strategicData}
+                    />
+                  )}
+                  {unlockedFeatures.analysis && (
+                    <button
+                      onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
+                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                      className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
+                      title={t("regenerate") || "Regenerate Strategic Analysis"}
+                    >
+                      {isStrategicRegenerating ? (
+                        <Loader size={16} className="animate-spin" />
+                      ) : (
+                        <RefreshCw size={16} />
+                      )}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
@@ -1153,14 +1309,14 @@ const BusinessSetupPage = () => {
                   )}
                   {ENABLE_PMF && (
                     <button
-                      className={`mobile-menu-item ${activeTab === "brief" ? "active" : ""}`}
+                      className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
                       onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
                     >
                       {t("Questions and Answers")}
                     </button>
                   )}
                   <button
-                    className={`mobile-menu-item ${activeTab === "analysis" ? "active" : ""}`}
+                    className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
                     onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
                   >
                     {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
@@ -1181,7 +1337,7 @@ const BusinessSetupPage = () => {
       <div className={`main-container ${isAnalysisExpanded && !isMobile ? "analysis-expanded" : ""}`}>
 
         {questionsLoaded && (
-          <div className={`info-panel ${isMobile ? (activeTab === "brief" || activeTab === "analysis" || activeTab === "strategic" || activeTab === "projects" || activeTab === "priorities" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
+          <div className={`info-panel ${isMobile ? (activeTab === "advanced" || activeTab === "insights" || activeTab === "strategic" || activeTab === "projects" || activeTab === "priorities" || activeTab === "aha" || activeTab === "executive" ? "active" : "") : ""} ${isAnalysisExpanded && !isMobile ? "expanded" : ""}`}>
             {!isMobile && isAnalysisExpanded && (
               <div className="desktop-expanded-analysis">
                 <div className="expanded-analysis-view">
@@ -1229,14 +1385,14 @@ const BusinessSetupPage = () => {
                       )}
                       {ENABLE_PMF && (
                         <button
-                          className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
+                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
                           onClick={handleBriefTabClick}
                         >
                           {t("Questions and Answers")}
                         </button>
                       )}
 
-                      <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={() => setActiveTab("analysis")}>
+                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
                         {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                       </button>
                       <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
@@ -1245,7 +1401,7 @@ const BusinessSetupPage = () => {
                     </div>
 
                     <div className="desktop-tabs-buttons">
-                      {activeTab === "analysis" && (
+                      {activeTab === "insights" && (
                         <>
                           <div ref={dropdownRef} className="dropdown-wrapper">
                             <button className="dropdown-button" onClick={() => setShowDropdown(prev => !prev)}>
@@ -1343,6 +1499,30 @@ const BusinessSetupPage = () => {
                           )}
                         </>
                       )}
+
+                      {activeTab === "advanced" && (
+                        <>
+                          <PDFExportButton
+                            className="pdf-export-button"
+                            businessName={businessData.name}
+                            onToastMessage={showToastMessage}
+                            disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                            exportType="advanced-brief"
+                          />
+                          <button
+                            onClick={handleRegenerateAllAnalysis}
+                            disabled={isAnalysisRegenerating || isStrategicRegenerating}
+                            className={`regenerate-button ${isAnalysisRegenerating || isStrategicRegenerating ? 'disabled' : ''}`}
+                            title={t("regenerate") || "Regenerate All Analysis"}
+                          >
+                            {isAnalysisRegenerating || isStrategicRegenerating ? (
+                              <Loader size={16} className="animate-spin" />
+                            ) : (
+                              <RefreshCw size={16} />
+                            )}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1361,7 +1541,7 @@ const BusinessSetupPage = () => {
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "brief" && (
+                      {ENABLE_PMF && activeTab === "advanced" && (
                         <div className="brief-section">
                           <EditableBriefSection
                             selectedBusinessId={selectedBusinessId}
@@ -1379,6 +1559,8 @@ const BusinessSetupPage = () => {
                             }}
                             onAnalysisRegenerate={handleRegenerateAllAnalysis}
                             isAnalysisRegenerating={isAnalysisRegenerating}
+                            isStrategicRegenerating={isStrategicRegenerating}
+                            isFinancialRegeneratingProp={isProfitabilityAnalysisRegenerating || isGrowthTrackerRegenerating || isLiquidityEfficiencyRegenerating || isInvestmentPerformanceRegenerating || isLeverageRiskRegenerating}
                             isEssentialPhaseGenerating={isFullSwotRegenerating || isCompetitiveAdvantageRegenerating || isExpandedCapabilityRegenerating || isStrategicRadarRegenerating || isProductivityRegenerating || isMaturityRegenerating}
                             highlightedMissingQuestions={highlightedMissingQuestions}
                             onClearHighlight={() => setHighlightedMissingQuestions(null)}
@@ -1387,7 +1569,7 @@ const BusinessSetupPage = () => {
                           />
                         </div>
                       )}
-                      {activeTab === "analysis" &&
+                      {activeTab === "insights" &&
                         <AnalysisContentManager
                           {...analysisProps}
                           canRegenerate={canShowRegenerateButtons} />}
@@ -1473,13 +1655,13 @@ const BusinessSetupPage = () => {
                     )}
                     {ENABLE_PMF && (
                       <button
-                        className={`desktop-tab ${activeTab === "brief" ? "active" : ""}`}
+                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
                         onClick={handleBriefTabClick}
                       >
                         {t("Questions and Answers")}
                       </button>
                     )}
-                    <button className={`desktop-tab ${activeTab === "analysis" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                    <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                       {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                     </button>
                     <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
@@ -1487,7 +1669,7 @@ const BusinessSetupPage = () => {
                     </button>
                   </div>
 
-                  {activeTab === "analysis" && unlockedFeatures.analysis && (
+                  {activeTab === "insights" && unlockedFeatures.analysis && (
                     <div className="desktop-tabs-buttons">
                       {canShowRegenerateButtons && hasAnalysisData && (
                         <button
@@ -1508,7 +1690,7 @@ const BusinessSetupPage = () => {
                 </div>
 
                 <div className="info-panel-content">
-                  {activeTab === "brief" && (
+                  {activeTab === "advanced" && (
                     <div className="brief-section">
                       {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
                         <div className="unlock-hint">
@@ -1557,7 +1739,7 @@ const BusinessSetupPage = () => {
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
-                  {activeTab === "analysis" && (
+                  {activeTab === "insights" && (
                     <div className="analysis-section">
                       <div className="analysis-content">
                         <AnalysisContentManager
@@ -1614,7 +1796,7 @@ const BusinessSetupPage = () => {
 
             {(!isAnalysisExpanded || isMobile) && isMobile && (
               <div className="info-panel-content">
-                {activeTab === "brief" && (
+                {activeTab === "advanced" && (
                   <div className="brief-section">
                     {!unlockedFeatures.analysis && completedQuestions.size > 0 && (
                       <div className="unlock-hint">
@@ -1662,26 +1844,8 @@ const BusinessSetupPage = () => {
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}
-                {activeTab === "analysis" && (
+                {activeTab === "insights" && (
                   <div className="analysis-section">
-                    {unlockedFeatures.analysis && (
-                      <div className="analysis-section-mobile-controls">
-                        {canShowRegenerateButtons && hasAnalysisData && (
-                          <button
-                            onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                            disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
-                            className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
-                            title={t('RegenerateAll') || 'Regenerate All'}
-                          >
-                            {isAnalysisRegenerating ? (
-                              <Loader size={16} className="animate-spin" />
-                            ) : (
-                              <RefreshCw size={16} />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
                     <div className="analysis-content">
                       <AnalysisContentManager
                         {...analysisProps}

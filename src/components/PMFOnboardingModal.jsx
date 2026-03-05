@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form, Button } from 'react-bootstrap';
-import { X, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Modal, Form, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { X, ChevronLeft, ChevronRight, Clock, HelpCircle } from 'lucide-react';
 import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
 import {
@@ -10,7 +10,8 @@ import {
   KEY_CHALLENGES,
   DIFFERENTIATION_OPTIONS,
   USAGE_CONTEXT_OPTIONS,
-  TOTAL_STEPS
+  TOTAL_STEPS,
+  FIELD_DESCRIPTIONS
 } from '../config/pmfOnboardingConfig';
 import { useNavigate } from "react-router-dom";
 import { PMF_ONBOARDING_CONFIG } from "../config/pmfOnboardingConfig";
@@ -172,13 +173,22 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const validateStep1 = () => {
     const newErrors = {};
-    if (!formData.companyName.trim()) {
-      newErrors.companyName = t('company_name_required') || 'Company name is required';
-    } else {
-      const nameRegex = /^[a-zA-Z\s]+$/;
-      if (!nameRegex.test(formData.companyName.trim())) {
-        newErrors.companyName = t('company_name_invalid') || 'Company name can only contain letters';
-      }
+    const companyName = formData.companyName.trim();
+
+    if (!companyName) {
+      newErrors.companyName =
+        t('company_name_required') || 'Company name is required';
+    }
+    // Must start with letter OR number (not special character)
+    else if (!/^[A-Za-z0-9]/.test(companyName)) {
+      newErrors.companyName =
+        'Company name cannot start with a special character';
+    }
+    // Allow letters, numbers, spaces and selected special characters
+    else if (!/^[A-Za-z0-9][A-Za-z0-9&.,()\- ]*$/.test(companyName)) {
+      newErrors.companyName =
+        t('company_name_invalid') ||
+        'Company name contains invalid characters';
     }
 
     if (formData.website.trim()) {
@@ -239,53 +249,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   };
 
   const validateStep5 = () => {
-    const newErrors = {};
-    const nameRegex = /^[a-zA-Z\s]+$/;
-
-    if (!formData.customerSegment1.trim()) {
-      newErrors.customerSegment1 = t('segment_required') || 'At least one customer segment is required';
-    } else if (!nameRegex.test(formData.customerSegment1.trim())) {
-      newErrors.customerSegment1 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.customerSegment2.trim() && !nameRegex.test(formData.customerSegment2.trim())) {
-      newErrors.customerSegment2 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.customerSegment3.trim() && !nameRegex.test(formData.customerSegment3.trim())) {
-      newErrors.customerSegment3 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (!formData.productService1.trim()) {
-      newErrors.productService1 = t('product_required') || 'At least one product/service is required';
-    } else if (!nameRegex.test(formData.productService1.trim())) {
-      newErrors.productService1 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.productService2.trim() && !nameRegex.test(formData.productService2.trim())) {
-      newErrors.productService2 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.productService3.trim() && !nameRegex.test(formData.productService3.trim())) {
-      newErrors.productService3 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (!formData.channel1.trim()) {
-      newErrors.channel1 = t('channel_required') || 'At least one channel is required';
-    } else if (!nameRegex.test(formData.channel1.trim())) {
-      newErrors.channel1 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.channel2.trim() && !nameRegex.test(formData.channel2.trim())) {
-      newErrors.channel2 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    if (formData.channel3.trim() && !nameRegex.test(formData.channel3.trim())) {
-      newErrors.channel3 = t('invalid_input_text') || 'This field can only contain letters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Step 5 is now optional and allows alphabets, numbers, and symbols.
+    // No specific validation required for these fields.
+    setErrors({});
+    return true;
   };
 
   const validateStep6 = () => {
@@ -541,6 +508,27 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     onHide();
   };
 
+  const renderTooltip = (fieldKey) => {
+    const description = FIELD_DESCRIPTIONS[fieldKey];
+    if (!description) return null;
+
+    return (
+      <OverlayTrigger
+        placement="right"
+        trigger={['hover', 'focus', 'click']}
+        animation={false}
+        overlay={
+          <Tooltip id={`tooltip-${fieldKey}`} className="pmf-tooltip">
+            {description}
+          </Tooltip>
+        }
+      >
+        <span className="pmf-tooltip-icon ms-2">
+          <HelpCircle size={16} />
+        </span>
+      </OverlayTrigger>
+    );
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -548,8 +536,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return (
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label">
-                {t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span>
+              <Form.Label className="pmf-form-label d-flex align-items-center">
+                <span>{t('Company client name') || 'Company / Client Name'}<span className="text-danger">*</span></span>
+                {renderTooltip('companyName')}
               </Form.Label>
               <Form.Control
                 type="text"
@@ -569,8 +558,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label">
-                {t('website') || 'Website'} ({t('optional') || 'optional'})
+              <Form.Label className="pmf-form-label d-flex align-items-center">
+                <span>{t('website') || 'Website'} ({t('optional') || 'optional'})</span>
+                {renderTooltip('website')}
               </Form.Label>
               <Form.Control
                 type="url"
@@ -592,13 +582,15 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 2:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4">
-              {t('where_is_business_based') || 'Where is this business primarily based?'}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
+              <span>{t('where_is_business_based') || 'Where is this business primarily based?'}</span>
+              {renderTooltip('city')}
             </h5>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label">
-                {t('country') || 'Country'}<span className="text-danger">*</span>
+              <Form.Label className="pmf-form-label d-flex align-items-center">
+                <span>{t('country') || 'Country'}<span className="text-danger">*</span></span>
+                {renderTooltip('country')}
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -662,8 +654,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label">
-                {t('city') || 'City'} ({t('optional') || 'optional'})
+              <Form.Label className="pmf-form-label d-flex align-items-center">
+                <span>{t('city') || 'City'} ({t('optional') || 'optional'})</span>
+                {renderTooltip('city')}
               </Form.Label>
               <Form.Control
                 type="text"
@@ -686,8 +679,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return (
           <div className="pmf-step-content">
             <Form.Group className="mb-4">
-              <Form.Label className="pmf-form-label">
-                {t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span>
+              <Form.Label className="pmf-form-label d-flex align-items-center">
+                <span>{t('primary industry') || 'Primary Industry'}<span className="text-danger">*</span></span>
+                {renderTooltip('primaryIndustry')}
               </Form.Label>
               <Select
                 classNamePrefix="pmf-select"
@@ -757,8 +751,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 4:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-3">
-              {t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span>
+            <h5 className="pmf-step-question mb-3 d-flex align-items-center">
+              <span>{t('which geographies strategic answers') || 'Which geographies do you want strategic answers for?'}<span className="text-danger">*</span></span>
+              {renderTooltip('geographies')}
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('enter up to 3 geographies') || "Enter up to 3 specific geographies (e.g., 'United States', 'LATAM', 'Southeast Asia')"}
@@ -819,16 +814,18 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 5:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-2">
-              {t('where does profit come from') || 'Where does most of your profit come from today?'}
+            <h5 className="pmf-step-question mb-2 d-flex align-items-center">
+              <span>{t('where does profit come from') || 'Where does most of your profit come from today?'}</span>
+              {renderTooltip('customerSegments')}
             </h5>
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
               {t('your best estimate enough') || 'Your best estimate is enough.'}
             </p>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2">
-                {t('customer segments max 3') || 'Customer segments (max 3)'}<span className="text-danger">*</span>
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
+                <span>{t('customer segments max 3') || 'Customer segments (max 3)'}</span>
+                {renderTooltip('customerSegments')}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('customer segments example') || 'e.g., young adults, SMEs, enterprise'}
@@ -887,8 +884,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </div>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2">
-                {t('products services max 3') || 'Products / services (max 3)'}<span className="text-danger">*</span>
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
+                <span>{t('products services max 3') || 'Products / services (max 3)'}</span>
+                {renderTooltip('productServices')}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('products services example') || 'e.g., ice cream, M&A advisory'}
@@ -947,8 +945,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             </div>
 
             <div className="mb-4">
-              <Form.Label className="pmf-form-label mb-2">
-                {t('channels max 3') || 'Channels (max 3)'}<span className="text-danger">*</span>
+              <Form.Label className="pmf-form-label mb-2 d-flex align-items-center">
+                <span>{t('channels max 3') || 'Channels (max 3)'}</span>
+                {renderTooltip('channels')}
               </Form.Label>
               <p className="text-muted mb-3" style={{ fontSize: '13px', marginTop: '-4px' }}>
                 {t('channels example') || 'e.g., convenience stores, direct sales'}
@@ -1011,8 +1010,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 6:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4">
-              {t('strategic objective') || 'Strategic Objective'}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
+              <span>{t('strategic objective') || 'Strategic Objective'}</span>
+              {renderTooltip('strategicObjective')}
             </h5>
 
             {STRATEGIC_OBJECTIVES.map((option) => (
@@ -1067,8 +1067,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 7:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4">
-              {t("Key challenges / constraints")}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
+              <span>{t("Key challenges / constraints")}</span>
+              {renderTooltip('keyChallenges')}
             </h5>
 
             {KEY_CHALLENGES.map(option => (
@@ -1122,8 +1123,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 8:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-2">
-              {t("Today, you primarily differentiate through")}:
+            <h5 className="pmf-step-question mb-2 d-flex align-items-center">
+              <span>{t("Today, you primarily differentiate through")}:</span>
+              {renderTooltip('differentiation')}
             </h5>
 
             <p className="text-muted mb-4" style={{ fontSize: '14px' }}>
@@ -1178,8 +1180,9 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       case 9:
         return (
           <div className="pmf-step-content">
-            <h5 className="pmf-step-question mb-4">
-              {t("Usage Context")}
+            <h5 className="pmf-step-question mb-4 d-flex align-items-center">
+              <span>{t("Usage Context")}</span>
+              {renderTooltip('usageContext')}
             </h5>
 
             {USAGE_CONTEXT_OPTIONS.map(option => (

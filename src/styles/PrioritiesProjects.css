@@ -237,7 +237,7 @@
 .priority-card {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 16px;
+  padding: 0px;
   transition: all 0.2s ease;
   background: #ffffff;
 }

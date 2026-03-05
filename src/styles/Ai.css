@@ -82,7 +82,7 @@
 .ai-header__left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .ai-header__icon {
@@ -96,25 +96,95 @@
   flex-shrink: 0;
 }
 
-.ai-header__title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.2;
-}
-
-.ai-header__usage {
-  font-size: 10px;
-  color: #fff;
+.ai-header__content {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 12px;
-  width: fit-content;
+  gap: 10px;
+}
+
+.ai-header__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ai-header__usage-circle-container {
+  display: flex;
+  align-items: center;
+}
+
+.ai-usage-minimal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
   backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.ai-usage-minimal:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.ai-usage-circle-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-usage-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.ai-usage-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 3;
+}
+
+.ai-usage-fill {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease;
+}
+
+.ai-usage-fill.usage-low {
+  stroke: #22c55e;
+  /* Green */
+}
+
+.ai-usage-fill.usage-medium {
+  stroke: #f59e0b;
+  /* Orange */
+}
+
+.ai-usage-fill.usage-high {
+  stroke: #ef4444;
+  /* Red */
+}
+
+.ai-usage-text {
+  font-size: 9px;
+  font-weight: 800;
+  color: #fff;
+  position: relative;
+  z-index: 1;
 }
 
 .ai-header__usage span {
@@ -600,11 +670,11 @@
   background: #451212;
 }
 
- /* AI ASSISTANT RESPONSIVE FIX */
+/* AI ASSISTANT RESPONSIVE FIX */
 .ai-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 99997;
 }
 

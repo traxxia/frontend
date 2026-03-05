@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader, Shield, Target, Award, TrendingUp, BarChart3, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import AnalysisEmptyState from './AnalysisEmptyState';
-import AnalysisError from './AnalysisError';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 import { StreamingRow } from './StreamingManager';
 import { useAutoScroll } from '../hooks/useAutoScroll';
@@ -75,12 +74,7 @@ const CompetitiveAdvantageMatrix = ({
         }
     };
 
-    const handleRetry = () => {
-        setError(null);
-        if (onRegenerate) {
-            handleRegenerate();
-        }
-    };
+
 
     const isCompetitiveAdvantageDataIncomplete = (data) => {
         if (!data) return true;
@@ -552,19 +546,7 @@ const CompetitiveAdvantageMatrix = ({
         );
     }
 
-    if (error) {
-        return (
-            <div className="competitive-advantage-container">
-                <AnalysisError
-                    error={error}
-                    onRetry={handleRetry}
-                    title="Competitive Advantage Analysis Error"
-                />
-            </div>
-        );
-    }
-
-    if (!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) {
+    if (error || ((!hasGenerated || !data?.competitiveAdvantage || isCompetitiveAdvantageDataIncomplete(data)) && Object.keys(userAnswers).length > 0)) {
         return (
             <div className="competitive-advantage-container">
                 <AnalysisEmptyState
@@ -577,8 +559,8 @@ const CompetitiveAdvantageMatrix = ({
                     canRegenerate={canRegenerate && !!onRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={5}
-                    showImproveButton={!hideImproveButton}
-                    customMessage="Complete essential phase questions to unlock competitive advantage analysis."
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );

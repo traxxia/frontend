@@ -13,7 +13,7 @@ import {
   Accordion
 } from "react-bootstrap";
 import {
-  Info, X, Trash2, AlertTriangle, ArrowLeft
+  Info, X, Trash2, AlertTriangle, ArrowLeft, Check
 } from "lucide-react";
 import MenuBar from "../components/MenuBar";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
@@ -298,23 +298,37 @@ const Dashboard = () => {
     const errors = {};
 
     // Business Name validation
-const businessName = businessFormData.business_name.trim();
-if (!businessName) {
-  errors.business_name = t('business_name_cannot_be_empty');
-} else if (businessName.length > 20) {
-  errors.business_name = t('business_name_max_length');
-} else if (!/^[A-Za-z\s]+$/.test(businessName)) {
-  errors.business_name = "Business name must contain only letters and spaces";
-} else if (startsWithSymbolOrNumber(businessName)) {
-  errors.business_name = t('business_name_invalid_start');
-}
+    const businessName = businessFormData.business_name.trim();
 
-    // Business Purpose validation
+    if (!businessName) {
+      errors.business_name = t('business_name_cannot_be_empty');
+    }
+    else if (businessName.length > 50) {
+      errors.business_name = t('business_name_max_length');
+    }
+    else if (!/^[A-Za-z0-9]/.test(businessName)) {
+      errors.business_name = t('business_name_invalid_start');
+    }
+    else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
+      errors.business_name = "Business name contains invalid characters";
+    }
+
+    // Business purpose validation
     const businessPurpose = businessFormData.business_purpose.trim();
+
     if (!businessPurpose) {
       errors.business_purpose = t('business_purpose_required');
-    } else if (!/[a-zA-Z]/.test(businessPurpose)) {
-      errors.business_purpose = t('business_purpose_must_contain_alphabetic_characters') || 'Business purpose must contain at least some alphabetic characters';
+    }
+    else if (businessPurpose.length < 10) {
+      errors.business_purpose = "Business purpose must be at least 10 characters long";
+    }
+    else if (!/[A-Za-z]/.test(businessPurpose)) {
+      errors.business_purpose =
+        t('business_purpose_must_contain_alphabetic_characters') ||
+        "Business purpose must contain alphabetic characters";
+    }
+    else if (!/^[A-Za-z0-9&.,()\- ]+$/.test(businessPurpose)) {
+      errors.business_purpose = "Business purpose contains invalid characters";
     }
 
     // City validation (optional but if provided, must be valid)
@@ -578,10 +592,10 @@ if (!businessName) {
             {statusInfo.label}
           </span>
           {canDelete && (
-      <div className="delete-btn-wrapper">
-        <SimpleDeleteButton />
-      </div>
-    )}
+            <div className="delete-btn-wrapper">
+              <SimpleDeleteButton />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -904,93 +918,87 @@ if (!businessName) {
 
                 <div id="howItWorksCarousel" className="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
                   <div className="carousel-indicators">
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="0"
-                      className="active"
-                      aria-label="Slide 1"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="1"
-                      aria-label="Slide 2"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="2"
-                      aria-label="Slide 3"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="3"
-                      aria-label="Slide 4"
-                    ></button>
-                    <button
-                      type="button"
-                      data-bs-target="#howItWorksCarousel"
-                      data-bs-slide-to="4"
-                      aria-label="Slide 5"
-                    ></button>
+                    {[...Array(10)].map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        data-bs-target="#howItWorksCarousel"
+                        data-bs-slide-to={i}
+                        className={i === 0 ? "active" : ""}
+                        aria-label={`Slide ${i + 1}`}
+                      ></button>
+                    ))}
                   </div>
 
                   <div className="carousel-inner">
                     <div className="carousel-item active">
-                      <img
-                        src="/slides/slide1.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_1_login_alt')}
-                      />
+                      <img src="/slides/slide1.jpeg" className="d-block w-100" alt={t('step_1_login_alt')} />
                       <div className="carousel-caption d-none d-md-block">
                         <h5>{t('step_1_login')}</h5>
                         <p>{t('step_1_login_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide2.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_2_create_business_alt')}
-                      />
+                      <img src="/slides/slide2.jpeg" className="d-block w-100" alt={t('step_2_create_business_alt')} />
                       <div className="carousel-caption d-none d-md-block">
                         <h5>{t('step_2_create_business')}</h5>
                         <p>{t('step_2_create_business_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide3.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_3_complete_assessment_alt')}
-                      />
+                      <img src="/slides/slide3.jpeg" className="d-block w-100" alt={t('step_3_onboarding_pmf_alt')} />
                       <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_3_complete_assessment')}</h5>
-                        <p>{t('step_3_complete_assessment_description')}</p>
+                        <h5>{t('step_3_onboarding_pmf')}</h5>
+                        <p>{t('step_3_onboarding_pmf_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide4.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_4_get_insights_alt')}
-                      />
+                      <img src="/slides/slide4.jpeg" className="d-block w-100" alt={t('step_4_aha_insights_alt')} />
                       <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_4_get_insights')}</h5>
-                        <p>{t('step_4_get_insights_description')}</p>
+                        <h5>{t('step_4_aha_insights')}</h5>
+                        <p>{t('step_4_aha_insights_description')}</p>
                       </div>
                     </div>
                     <div className="carousel-item">
-                      <img
-                        src="/slides/slide5.jpeg"
-                        className="d-block w-100"
-                        alt={t('step_5_strategic_recommendations_alt')}
-                      />
+                      <img src="/slides/slide5.jpeg" className="d-block w-100" alt={t('step_5_exec_summary_alt')} />
                       <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_5_strategic_recommendations')}</h5>
-                        <p>{t('step_5_strategic_recommendations_description')}</p>
+                        <h5>{t('step_5_exec_summary')}</h5>
+                        <p>{t('step_5_exec_summary_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide6.jpeg" className="d-block w-100" alt={t('step_6_kickstart_projects_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_6_kickstart_projects')}</h5>
+                        <p>{t('step_6_kickstart_projects_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide7.jpeg" className="d-block w-100" alt={t('step_7_project_ranking_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_7_project_ranking')}</h5>
+                        <p>{t('step_7_project_ranking_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide8.jpeg" className="d-block w-100" alt={t('step_8_ai_answers_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_8_ai_answers')}</h5>
+                        <p>{t('step_8_ai_answers_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide9.jpeg" className="d-block w-100" alt={t('step_9_insights_6cs_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_9_insights_6cs')}</h5>
+                        <p>{t('step_9_insights_6cs_description')}</p>
+                      </div>
+                    </div>
+                    <div className="carousel-item">
+                      <img src="/slides/slide10.jpeg" className="d-block w-100" alt={t('step_10_strategic_alt')} />
+                      <div className="carousel-caption d-none d-md-block">
+                        <h5>{t('step_10_strategic')}</h5>
+                        <p>{t('step_10_strategic_description')}</p>
                       </div>
                     </div>
                   </div>
@@ -1197,8 +1205,8 @@ if (!businessName) {
             <div className="success-popup-overlay">
               <div className="success-popup">
                 <div className="success-popup-content">
-                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger shadow-sm' : ''}`}>
-                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : '✅'}
+                  <div className={`dashboard-success-icon ${businessError ? 'bg-danger' : 'bg-success'}`}>
+                    {businessError ? <AlertTriangle size={36} color="white" strokeWidth={3} /> : <Check size={40} color="white" strokeWidth={3} />}
                   </div>
                   <h5 className={`mb-2 ${businessError ? 'text-danger' : ''}`}>
                     {businessError ? t('alert') : t('success')}
@@ -1206,7 +1214,7 @@ if (!businessName) {
                   <p className="mb-3">{businessError || successMessage}</p>
                   <Button
                     variant={businessError ? "danger" : "primary"}
-                    size="sm"
+                    className="px-5 py-2 fw-semibold"
                     onClick={() => {
                       setShowSuccessPopup(false);
                       setSuccessMessage('');
@@ -1314,16 +1322,16 @@ if (!businessName) {
             </Modal.Footer>
           </Modal>
 
-            <UpgradeModal
-              show={showUpgradeModal}
-              onHide={() => setShowUpgradeModal(false)}
+          <UpgradeModal
+            show={showUpgradeModal}
+            onHide={() => setShowUpgradeModal(false)}
             onUpgradeSuccess={(updatedSub) => {
               setShowUpgradeModal(false);
               setSuccessMessage(`Plan updated to ${updatedSub.plan} successfully!`);
-                setShowSuccessPopup(true);
+              setShowSuccessPopup(true);
               setTimeout(() => setShowSuccessPopup(false), 3000);
-              }}
-            />
+            }}
+          />
         </>
       )}
     </div>

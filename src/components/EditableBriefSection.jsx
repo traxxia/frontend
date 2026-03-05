@@ -36,6 +36,7 @@ const EditableField = ({
     <div
       ref={el => fieldRefs.current[field.key] = el}
       className={`brief-item ${isEdited ? 'edited' : ''}`}
+      data-component="advanced-brief"
       style={{
         border: isHighlighted ? '2px solid #f59e0b' : '1px solid #e5e7eb',
         backgroundColor: isHighlighted ? '#fef3c7' : 'white',
@@ -61,7 +62,8 @@ const EditableField = ({
           color: isHighlighted ? '#92400e' : 'inherit',
           fontWeight: isHighlighted ? '600' : '500',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
           gap: '8px'
         }}>
           <span style={{
@@ -70,11 +72,15 @@ const EditableField = ({
             padding: '2px 6px',
             borderRadius: '4px',
             backgroundColor: '#f3f4f6',
-            color: '#374151'
+            color: '#374151',
+            flexShrink: 0,
+            marginTop: '2px'
           }}>
             {field.sequentialNumber}.
           </span>
-          {field.label}
+          <span style={{ flex: 1, wordBreak: 'break-word' }}>
+            {field.label}
+          </span>
 
           {field.phase && (
             <span className='edit-batch' style={{
@@ -90,7 +96,11 @@ const EditableField = ({
                 field.phase.toLowerCase() === 'initial' ? '#1e40af' :
                   field.phase.toLowerCase() === 'essential' ? '#166534' :
                     field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
-              letterSpacing: '0.025em'
+              letterSpacing: '0.025em',
+              flexShrink: 0,
+              padding: '2px 8px',
+              whiteSpace: 'nowrap',
+              marginLeft: 'auto'
             }}>
               {field.phase}
             </span>
@@ -459,15 +469,15 @@ const AIAnswerSupportBlock = ({
       marginBottom: '12px'
     },
     iconWrapper: {
-  backgroundColor: '#ede9fe',
-  padding: '10px',
-  borderRadius: '12px',
-  color: '#7c3aed',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0
-},
+      backgroundColor: '#ede9fe',
+      padding: '10px',
+      borderRadius: '12px',
+      color: '#7c3aed',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0
+    },
     title: {
       margin: 0,
       fontSize: '17px',
@@ -508,11 +518,11 @@ const AIAnswerSupportBlock = ({
         </div>
         <div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-  <h3 style={styles.title}>AI Answer Support</h3>
-  <p style={styles.subtitle}>
-    Professional answers based on your onboarding
-  </p>
-</div>
+            <h3 style={styles.title}>AI Answer Support</h3>
+            <p style={styles.subtitle}>
+              Professional answers based on your onboarding
+            </p>
+          </div>
         </div>
       </div>
 
@@ -554,7 +564,8 @@ const EditableBriefSection = ({
   highlightedMissingQuestions,
   onClearHighlight,
   isLaunchedStatus = false,
-  documentInfo = null
+  documentInfo = null,
+  isFinancialRegeneratingProp = false
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
@@ -569,6 +580,15 @@ const EditableBriefSection = ({
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
   const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
+  const [isFinancialRegenerating, setIsFinancialRegenerating] = useState(false);
+
+  useEffect(() => {
+    if (isFinancialRegeneratingProp) {
+      setIsFinancialRegenerating(true);
+    } else if (!isAnalysisRegenerating && !isStrategicRegenerating) {
+      setIsFinancialRegenerating(false);
+    }
+  }, [isFinancialRegeneratingProp, isAnalysisRegenerating, isStrategicRegenerating]);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
@@ -720,7 +740,28 @@ const EditableBriefSection = ({
 
   const generateBriefFields = () => {
     const fields = [];
-    const sortedQuestions = [...questions].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    // Order: initial (1), essential (2), advanced (3)
+    const phaseOrderMap = {
+      'initial': 1,
+      'essential': 2,
+      'advanced': 3
+    };
+
+    const filteredQuestions = questions.filter(q =>
+      q.phase && !['good'].includes(q.phase.toLowerCase())
+    );
+
+    const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+      const phaseA = phaseOrderMap[a.phase?.toLowerCase()] || 4;
+      const phaseB = phaseOrderMap[b.phase?.toLowerCase()] || 4;
+
+      if (phaseA !== phaseB) {
+        return phaseA - phaseB;
+      }
+
+      return (a.order || 0) - (b.order || 0);
+    });
 
     let sequentialNumber = 1; // Add sequential counter
 
@@ -1049,29 +1090,11 @@ const EditableBriefSection = ({
         uploadDate: new Date().toLocaleDateString()
       });
 
-      showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
-
-      // Trigger financial analysis via excel-analysis endpoint
-      const financialMetrics = ['profitability', 'growth_trends', 'liquidity', 'investment', 'leverage'];
-      for (const metricType of financialMetrics) {
-        try {
-          await analysisService.makeAPICall(
-            'excel-analysis',
-            [],
-            [],
-            selectedBusinessId,
-            null,
-            metricType
-          );
-        } catch (err) {
-          console.warn(`Financial analysis failed for metric: ${metricType}`, err);
-        }
-      }
-
-      showToastMessage('✅ Financial analysis complete!', 'success');
+      //showToastMessage(`✅ File uploaded successfully! Detected as ${validation.templateName}. Running financial analysis...`, 'success');
 
       // Also notify parent to refresh display
       if (onAnalysisRegenerate) {
+        setIsFinancialRegenerating(true);
         onAnalysisRegenerate({ onlyFinancial: true });
       }
     } catch (error) {
@@ -1091,10 +1114,11 @@ const EditableBriefSection = ({
     try {
       setIsApplyingEnrichment(true);
 
-      // Map enriched answers back to question IDs
+      const updatedQuestionIds = [];
       const answersToSave = enrichedAnswers.map(enriched => {
         const field = briefFields.find(f => f.label === enriched.question);
         if (field) {
+          updatedQuestionIds.push(field.questionId);
           return {
             question_id: field.questionId,
             answer_text: enriched.answer
@@ -1125,7 +1149,7 @@ const EditableBriefSection = ({
 
       // Trigger auto-regeneration of Insights 6'Cs and Strategic Tab
       if (onAnalysisRegenerate) {
-        onAnalysisRegenerate();
+        onAnalysisRegenerate({ updatedQuestionIds });
       }
     } catch (error) {
       console.error('Apply enrichment error:', error);
@@ -1162,7 +1186,7 @@ const EditableBriefSection = ({
             marginBottom: '16px'
           }}>
             <h5 style={{ margin: 0, color: '#0369a1', fontSize: '15px', fontWeight: '600' }}>
-              AI Enrichment Suggestions 
+              AI Enrichment Suggestions
             </h5>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
@@ -1230,10 +1254,11 @@ const EditableBriefSection = ({
         <div className="analysis-regenerating-banner">
           <Loader size={16} className="spinner" />
           <span>
-            {isSaving && 'Saving changes...'}
-            {isApplyingEnrichment && 'Applying enriched answers...'}
-            {(isAnalysisRegenerating || isStrategicRegenerating) && 'Regenerating Insight & STRATEGIC...'}
-            {isEssentialPhaseGenerating && 'Generating essential phase analysis...'}
+            {isApplyingEnrichment ? 'Applying enriched answers...' :
+              isSaving ? 'Saving changes...' :
+                isEssentialPhaseGenerating ? 'Generating essential phase analysis...' :
+                  isFinancialRegenerating ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
+                    (isAnalysisRegenerating || isStrategicRegenerating) ? 'Regenerating Insight & STRATEGIC...' : ''}
           </span>
         </div>
       )}

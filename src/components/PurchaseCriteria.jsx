@@ -164,9 +164,9 @@ const PurchaseCriteria = ({
 
   // Create radar chart points
   const createRadarChart = () => {
-    if (!criteriaData?.criteria) return { points: '', viewBox: '0 0 200 200' };
+    if (!criteriaData?.criteria) return { points: '', viewBox: '0 0 240 240' };
 
-    const center = 100;
+    const center = 120;
     const radius = 70;
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
@@ -179,14 +179,14 @@ const PurchaseCriteria = ({
       return `${x},${y}`;
     }).join(' ');
 
-    return { points, viewBox: '0 0 200 200' };
+    return { points, viewBox: '0 0 240 240' };
   };
 
   // Create radar chart grid lines
   const createRadarGrid = () => {
     if (!criteriaData?.criteria) return [];
 
-    const center = 100;
+    const center = 120;
     const radius = 70;
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
@@ -242,9 +242,9 @@ const PurchaseCriteria = ({
   const createRadarLabels = () => {
     if (!criteriaData?.criteria) return [];
 
-    const center = 100;
-    const radius = 85;
-    const labelOffset = 12; // push labels away from data polygon
+    const center = 120;
+    const radius = 70;
+    const labelOffset = 20; // push labels away from data polygon
     const criteria = criteriaData.criteria;
     const angleStep = (2 * Math.PI) / criteria.length;
 
@@ -253,18 +253,46 @@ const PurchaseCriteria = ({
       const x = center + (radius + labelOffset) * Math.cos(angle);
       const y = center + (radius + labelOffset) * Math.sin(angle);
 
+      // Determine text anchor based on angle
+      let textAnchor = "middle";
+      const cos = Math.cos(angle);
+      if (cos > 0.3) textAnchor = "start";
+      else if (cos < -0.3) textAnchor = "end";
+
+      // Split label into lines if it's too long
+      const words = criterion.name.split(' ');
+      const lines = [];
+      let currentLine = words[0];
+      for (let i = 1; i < words.length; i++) {
+        if ((currentLine + " " + words[i]).length > 12) {
+          lines.push(currentLine);
+          currentLine = words[i];
+        } else {
+          currentLine += " " + words[i];
+        }
+      }
+      lines.push(currentLine);
+
       return (
         <text
           key={`label-${index}`}
           x={x}
           y={y}
-          textAnchor="middle"
+          textAnchor={textAnchor}
           dominantBaseline="middle"
           className="radar-label"
-          fontSize="10"
+          fontSize="9"
           fill="#374151"
         >
-          {criterion.name}
+          {lines.map((line, i) => (
+            <tspan
+              key={i}
+              x={x}
+              dy={i === 0 ? `${-(lines.length - 1) * 0.5}em` : "1.1em"}
+            >
+              {line}
+            </tspan>
+          ))}
         </text>
       );
     });
@@ -300,23 +328,9 @@ const PurchaseCriteria = ({
     );
   }
 
-  if (error) {
+  if (error || (isCriteriaDataIncomplete(criteriaData) && Object.keys(userAnswers).length > 0)) {
     return (
       <div className="purchase-criteria">
-        <AnalysisError
-          error={error}
-          onRetry={handleRetry}
-          title="Purchase Criteria Analysis Error"
-        />
-      </div>
-    );
-  }
-
-  if (!criteriaData || isCriteriaDataIncomplete(criteriaData)) {
-    return (
-      <div className="purchase-criteria">
-
-        {/* Replace the entire empty-state div with the common component */}
         <AnalysisEmptyState
           analysisType="purchaseCriteria"
           analysisDisplayName="Purchase Criteria Analysis"
@@ -327,7 +341,8 @@ const PurchaseCriteria = ({
           canRegenerate={canRegenerate}
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
-          showImproveButton={!hideImproveButton}
+          showImproveButton={false}
+          showRegenerateButton={false}
         />
       </div>
     );
@@ -396,7 +411,7 @@ const PurchaseCriteria = ({
 
               {/* Data points */}
               {criteriaData.criteria?.map((criterion, index) => {
-                const center = 100;
+                const center = 120;
                 const radius = 70;
                 const angleStep = (2 * Math.PI) / criteriaData.criteria.length;
                 const angle = index * angleStep - Math.PI / 2;
