@@ -36,5 +36,4 @@ Traxxia offers two distinct tiers designed for different stages of business grow
 *Screenshot of Choosing Your Tier*
 
 > [!IMPORTANT] Traxxia uses **USD-anchored pricing** for consistency, while providing high-value features like multiple workspaces and collaboration in the Advanced tier.
-
-Next: [Creating Your Business](../02-dashboard-business/creating-your-business.md)
+ 

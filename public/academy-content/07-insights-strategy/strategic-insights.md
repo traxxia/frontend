@@ -24,5 +24,4 @@ The AI identifies recurring themes and suggests specific **Strategic Initiatives
 *Screenshot of the Strategic Dashboard with generated initiatives*
 
 > [!NOTE] All insights are dynamic. If you update your questionnaire answers or PMF data, the AI will re-analyze and refresh your strategic profile immediately.
-
-Next: [SWOT Analysis Guide](./swot-analysis.md)
+ 

@@ -21,5 +21,4 @@ PESTEL Analysis is a strategic framework used to evaluate the macro-environmenta
 - **Contextualize SWOT**: Feed external PESTEL findings into your SWOT Analysis for a complete picture.
 
 > [!TIP] Use the **"Strategic Positioning Radar"** within the Strategic Analysis page to see how these macro factors are weighted for your specific industry.
-
-Next: [Porter's Five Forces](./porters-five-forces.md)
+ 

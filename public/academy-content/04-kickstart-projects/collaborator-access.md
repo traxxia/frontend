@@ -18,5 +18,4 @@ Collaborator will have the same interface in business but the access can be diff
 - Able to create projects and rank them
 
 > [!NOTE] Only Company Admins can manage collaborator access across businesses and projects.
-
-Next: [Projects Overview](../05-project-management/project-overview.md)
+ 

@@ -21,5 +21,4 @@ To act on these priorities, navigate to the **Priorities** tab. Here, you can:
 
 > [!IMPORTANT]
 > Kickstarting transforms a strategic idea into a manageable project card in the **Projects** tab. Once kickstarted, the priority status is updated to prevent duplicates.
-
-Next: [Detailed Priorities & Kickstarting Guide](./02-priorities-kickstart.md)
+ 

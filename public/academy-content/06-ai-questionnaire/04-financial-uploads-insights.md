@@ -32,6 +32,4 @@ Depending on your phase and document status, the **Insights (6 C's)** tab organi
 
 > [!IMPORTANT]
 > To ensure the highest accuracy, use the provided templates for your financial uploads. You can download these templates directly from the Financial Templates popup.
-
-Next: [Insights & Strategy](../07-insights-strategy/strategic-insights.md)
-
+ 

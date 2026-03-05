@@ -15,6 +15,4 @@ The AI uses several fields to help calculate its recommended priority. It is imp
 ## 2. AI Assistant Integration
 At this stage, you are not alone. The **AI Assistant** is fully context-aware of the project you are editing.
 - Use the sidebar chat to ask: *"Help me write a better success metric for this project"* or *"What are some hidden risks for a project like this?"*
-- Applying AI suggestions ensures that your projects are professional and strategically sound before the team reviews them.
-
-Next: [The Ranking Workflow](./project-ranking.md)
+- Applying AI suggestions ensures that your projects are professional and strategically sound before the team reviews them. 

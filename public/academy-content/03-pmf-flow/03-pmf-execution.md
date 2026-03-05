@@ -7,9 +7,6 @@ The bridge between strategic analysis. This is where your high-level **Prioritie
 In Traxxia, we use a clear hierarchy to move from strategy to action:
 *   **Priorities**: Broad strategic workstreams (e.g., "Optimize Enterprise Sales Channel").
 *   **Projects**: Specific tactical initiatives nested under each priority (e.g., "Audit Current Sales Script").
-
-### Weekly Focus
-We encourage you to select exactly **one** priority to focus on for the week. This ensures your team is driving hard against your most critical strategic bottleneck without being overwhelmed.
  
 
 ## 2. Kickstarting Your Strategy
@@ -27,19 +24,4 @@ The "Kickstart" process automates the creation of your execution plan based on t
 > [!TIP]
 > Kickstarting is a premium feature. Users on the Advanced plans can use this to rapidly move from strategy to execution with AI-powered draft initialization.
  
-
-## 3. Advanced Deep Dive
-
-While the PMF Flow gives you immediate results, you can provide more context later to sharpen the AI's understanding of your business "soul."
-
-### Capturing More Context:
-*   **Identity**: Your core activity and the specific pain point you solve for customers.
-*   **Operations**: Your internal strengths and hidden weaknesses.
-*   **Environment**: The industry trends and competitive forces shaping your market.
-*   **Competitive Edge**: Why customers ultimately choose you over anyone else.
-
-Providing this deeper narrative allows the AI to offer even more tailored advice across all sections of the application.
-
-Back to: [Insights & Strategic Core](02-pmf-insights.md)
-
-Next: [Kickstart Process](../04-kickstart-projects/kickstart-process.md)
+ 

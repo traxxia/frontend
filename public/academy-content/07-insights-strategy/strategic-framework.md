@@ -20,6 +20,3 @@ The **S.T.R.A.T.E.G.I.C** framework is your roadmap for turning analysis into ex
 
 ![Strategic Analysis Overview](/academy-screenshots/strategic-analysis/str.png)
 *Screenshot of the Strategic Dashboard with generated initiatives*
-
-  
-Next: [Financial Analysis](./financial-analysis.md)

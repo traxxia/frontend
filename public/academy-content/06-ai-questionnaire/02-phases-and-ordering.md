@@ -47,5 +47,4 @@ Questions are displayed in a logical order that follows your strategic journey:
 
 ![Question Highlighting Placeholder](/academy-screenshots/questionnaire/ai-answer-support.png)
 *Questions highlighted to indicate they are required for generating deep insights.*
-
-Next: [Editing & Auto-save](03-editing-and-ai-generation.md)
+ 

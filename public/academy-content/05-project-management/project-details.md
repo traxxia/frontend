@@ -29,7 +29,4 @@ For advanced planning, you can document:
 
 ## 4. AI Assistant Context
 The AI sidebar is your constant companion on this page. When you are on a specific project's detail page, the AI knows exactly which project you are looking at. You can ask for help refining the **Elevator Pitch** or identifying potential **Success Metrics** based on your strategic theme.
-
-Back to: [Creating New Projects](./create-project.md)
-
-Next: [The Ranking Workflow](./project-ranking.md)
+  

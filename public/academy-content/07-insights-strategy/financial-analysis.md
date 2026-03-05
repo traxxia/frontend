@@ -33,5 +33,4 @@ Evaluates your debt levels and financial risk.
 To unlock the full potential of this analysis, you must upload your financial data using Traxxia's Excel templates.
 
 > [!IMPORTANT] Your financial data remains private and secure. It is only used to generate insights for your business and is never shared externally.
-
-Next: [The AI Assistant](../08-ai-assistant/ai-companion.md)
+ 

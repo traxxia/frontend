@@ -17,9 +17,4 @@ Clicking **Launch** triggers several changes:
 
 ## 3. View-Only Permission
 For all **Active** projects, collaborators can still see all metrics and progress but can no longer alter the core definitions (Success Criteria, Strategic Decision, etc.). This ensures accountability and prevents "goalpost shifting" during the learning phase.
-
----
-
-Back to: [Consensus Analysis](./ranking-consensus.md)
-
-Next: [AI Questionnaire Overview](../06-ai-questionnaire/01-questionnaire-overview.md)
+ 

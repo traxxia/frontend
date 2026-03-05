@@ -4,8 +4,6 @@ The **Companies** tab allows Super Admins to monitor and manage all companies re
 
 Each company represents an organization using the system.
 
----
-
 ## Viewing Companies
 
 The Companies dashboard displays a table containing important company information:
@@ -19,8 +17,7 @@ The Companies dashboard displays a table containing important company informatio
 - Created Date
 
 ![Companies Management](/academy-screenshots/admin-panel/companies.png)
-
----
+ 
 
 ## Company Status
 
@@ -30,8 +27,7 @@ Examples include:
 
 - **Active** – The company is currently using the platform.
 - **Inactive** – The company account is disabled or inactive.
-
----
+ 
 
 ## Search and Filtering
 
@@ -42,8 +38,4 @@ This allows filtering companies by:
 - Company name
 - Administrator name
 - Email address
-
-
-Back to: [Super Admin Panel Overview](./super-admin-overview.md)
-
-Next: [Businesses Management](./businesses-management.md)
+  

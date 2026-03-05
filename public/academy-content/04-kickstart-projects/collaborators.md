@@ -1,10 +1,4 @@
-# Team Collaboration
-
-Back to: [Priorities & Kickstarting](./02-priorities-kickstart.md)
-
-Strategy is a team sport. Traxxia allows you to bring your colleagues into the analysis process to build consensus and leverage diverse perspectives.
-
-## 1. Plan Requirement
+ ## 1. Plan Requirement
 Collaboration is strictly an **Advanced Plan** feature. The **Essential Tier** is designed for individual owner-CEOs and has **0 collaborator seats**.
 
 ## 2. Included Collaborator Seats
@@ -20,11 +14,7 @@ As a Company Admin on the Advanced plan:
 
 ![Add Collaborator](/academy-screenshots/collaboration/add-user-collaborator.png)
 *Screenshot of user management page with highlighted buttons*
-
-![Collaborators List](/academy-screenshots/collaboration/collaborators-list.png)
-*Screenshot of user management page with users table*
-
+ 
 ---
 **Why Collaboration?** Attempting to add a team member while on the Essential plan will trigger an upgrade modal, as this feature is the primary driver for turning "Insights" into "Execution."
-
-Next: [Collaborator Access](./collaborator-access.md)
+ 

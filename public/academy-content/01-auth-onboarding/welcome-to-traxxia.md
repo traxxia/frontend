@@ -14,4 +14,5 @@ In the following sections, we will cover:
 
 > [!TIP] Use the sidebar to navigate through the steps in order, or use the search bar to find specific topics.
 
-Ready to start? Head over to the [Registration & Plans](./registration-and-plans.md) guide.
+### Ready to Start?
+ 
