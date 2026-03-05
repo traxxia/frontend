@@ -10,7 +10,7 @@ import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/mi
 const LiquidityEfficiency = ({
   questions = [],
   userAnswers = {},
-  businessName = "Your Business",
+  businessName,
   onDataGenerated,
   onRegenerate,
   isRegenerating = false,
@@ -35,6 +35,8 @@ const LiquidityEfficiency = ({
   const fileInputRef = useRef(null);
   const { t } = useTranslation();
 
+  const activeBusinessName = businessName || t('yourBusiness');
+
   const handleRedirectToBrief = (missingQuestionsData = null) => {
     if (onRedirectToBrief) {
       onRedirectToBrief(missingQuestionsData);
@@ -43,8 +45,8 @@ const LiquidityEfficiency = ({
 
   const handleMissingQuestionsCheck = async () => {
     const analysisConfig = ANALYSIS_TYPES.liquidityEfficiency || {
-      displayName: 'Liquidity & Efficiency',
-      customMessage: 'Answer more questions to unlock detailed liquidity analysis'
+      displayName: t('Liquidity_Efficiency'),
+      customMessage: t('liquidity_efficiency_unlock_msg')
     };
 
     await checkMissingQuestionsAndRedirect(
@@ -78,7 +80,7 @@ const LiquidityEfficiency = ({
         setError(null);
         await onRegenerate();
       } catch (error) {
-        setError('Failed to regenerate analysis. Please try again.');
+        setError(t('failed_to_generate'));
       }
     }
   };
@@ -97,7 +99,7 @@ const LiquidityEfficiency = ({
     }
 
     // Cash Conversion Cycle - lower is better
-    if (metricType === 'Cash Conversion Cycle') {
+    if (metricType === 'Cash Conversion Cycle' || metricType === t('cash_conversion_cycle')) {
       if (numValue <= numThreshold * 0.9) return '#10b981'; // Green - 10% below threshold
       if (numValue <= numThreshold * 1.1) return '#f59e0b'; // Yellow - within 10% of threshold
       return '#ef4444'; // Red - above threshold
@@ -165,16 +167,16 @@ const LiquidityEfficiency = ({
     if (chartData.length === 0) return null;
 
     const maxValue = Math.max(...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)), 10);
-    const chartHeight = chartData.length * 120 + 60;
+    const chartHeight = chartData.length * 120 + 40;
     const chartWidth = containerWidth;
-    const leftMargin = 120;
+    const leftMargin = 160; // Increased to prevent overlap
     const rightMargin = 60;
     const barHeight = 25;
     const groupSpacing = 120;
 
     const formatDisplayValue = (value, type) => {
-      if (type === 'Cash Conversion Cycle') {
-        return `${value.toFixed(0)} days`;
+      if (type === 'Cash Conversion Cycle' || type === t('cash_conversion_cycle')) {
+        return `${value.toFixed(0)} ${t('days_label')}`;
       }
       return value.toFixed(2);
     };
@@ -184,50 +186,138 @@ const LiquidityEfficiency = ({
         ref={containerRef}
         style={{
           width: '100%',
-          padding: '20px',
+          padding: '24px',
           background: '#fff',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb'
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
-        <h3 style={{ marginBottom: '20px', color: '#1f2937', fontSize: '18px', fontWeight: '600' }}>
-          Liquidity & Efficiency Metrics vs Industry Benchmarks
-        </h3>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '20px',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}>
+          <h3 style={{
+            margin: 0,
+            color: '#111827',
+            fontSize: '18px',
+            fontWeight: '600',
+            letterSpacing: '-0.025em'
+          }}>
+            {t('liquidity_metrics_vs_benchmarks')}
+          </h3>
+
+          <div style={{
+            display: 'flex',
+            gap: '16px',
+            background: '#f9fafb',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            border: '1px solid #f3f4f6'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></div>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: '#4b5563' }}>{activeBusinessName}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#94a3b8' }}></div>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: '#4b5563' }}>{t('Industry_Average')}</span>
+            </div>
+          </div>
+        </div>
 
         <div style={{ overflowX: 'auto' }}>
           <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
-            <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
+            <rect width={chartWidth} height={chartHeight} fill="#ffffff" />
 
             {chartData.map((data, index) => {
-              const y = index * groupSpacing + 30;
+              const y = index * groupSpacing + 20;
               const barWidth = (chartWidth - leftMargin - rightMargin);
               const actualBarLength = (data.actualValue / maxValue) * barWidth;
               const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
 
               return (
                 <g key={data.metric}>
-                  <text x={leftMargin - 10} y={y + 15} textAnchor="end" style={{ fontSize: '14px', fontWeight: '500', fill: '#374151' }}>
+                  <text
+                    x={leftMargin - 15}
+                    y={y + 15}
+                    textAnchor="end"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      fill: '#374151',
+                      fontFamily: 'Inter, system-ui, sans-serif'
+                    }}
+                  >
                     {data.metric}
                   </text>
-                  <rect x={leftMargin} y={y} width={actualBarLength} height={barHeight} fill={data.color} opacity={0.8} />
-                  <rect x={leftMargin} y={y + barHeight + 5} width={benchmarkBarLength} height={barHeight} fill="#94a3b8" opacity={0.6} />
-                  <text x={leftMargin + actualBarLength + 5} y={y + 17} style={{ fontSize: '12px', fontWeight: '500', fill: data.color }}>
+
+                  <rect
+                    x={leftMargin}
+                    y={y}
+                    width={actualBarLength}
+                    height={barHeight}
+                    fill={data.color}
+                    rx="4"
+                    opacity={0.9}
+                  />
+
+                  <rect
+                    x={leftMargin}
+                    y={y + barHeight + 4}
+                    width={benchmarkBarLength}
+                    height={barHeight}
+                    fill="#94a3b8"
+                    rx="4"
+                    opacity={0.4}
+                  />
+
+                  <text
+                    x={leftMargin + actualBarLength + 8}
+                    y={y + 17}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      fill: data.color
+                    }}
+                  >
                     {formatDisplayValue(data.actualValue, data.type)}
                   </text>
-                  <text x={leftMargin + benchmarkBarLength + 5} y={y + barHeight + 22} style={{ fontSize: '12px', fill: '#64748b' }}>
+
+                  <text
+                    x={leftMargin + benchmarkBarLength + 8}
+                    y={y + barHeight + 23}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      fill: '#6b7280'
+                    }}
+                  >
                     {formatDisplayValue(data.benchmarkValue, data.type)}
                   </text>
-                  <CitationSource url={data.citationUrl} x={leftMargin} y={y + barHeight * 2 + 20} />
-                  <line x1={leftMargin} y1={y + barHeight * 2 + 40} x2={chartWidth - rightMargin} y2={y + barHeight * 2 + 40} stroke="#e5e7eb" strokeWidth="1" opacity={0.3} />
+
+                  <CitationSource
+                    url={data.citationUrl}
+                    x={leftMargin}
+                    y={y + barHeight * 2 + 22}
+                  />
+
+                  {index < chartData.length - 1 && (
+                    <line
+                      x1={0}
+                      y1={y + barHeight * 2 + 45}
+                      x2={chartWidth}
+                      y2={y + barHeight * 2 + 45}
+                      stroke="#f3f4f6"
+                      strokeWidth="1"
+                    />
+                  )}
                 </g>
               );
             })}
-
-            <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
-              <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
-              <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>Your Business</text>
-              <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
-              <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>Industry Average</text>
-            </g>
           </svg>
         </div>
       </div>
@@ -263,7 +353,7 @@ const LiquidityEfficiency = ({
       if (allowedTypes.includes(file.type)) {
         setError(null);
       } else {
-        setError('Please upload an Excel or CSV file.');
+        setError(t('upload_excel_csv_error') || 'Please upload an Excel or CSV file.');
       }
     }
   };
@@ -281,9 +371,9 @@ const LiquidityEfficiency = ({
     const citations = normalized.citations || {};
 
     const keyMappings = {
-      'current_ratio': 'Current Ratio',
-      'quick_ratio': 'Quick Ratio',
-      'cash_conversion_cycle': 'Cash Conversion Cycle'
+      'current_ratio': t('current_ratio'),
+      'quick_ratio': t('quick_ratio'),
+      'cash_conversion_cycle': t('cash_conversion_cycle')
     };
 
     Object.entries(normalized).forEach(([key, value]) => {
@@ -307,7 +397,7 @@ const LiquidityEfficiency = ({
       <div className="channel-heatmap channel-heatmap-container">
         <div className="loading-state">
           <Loader size={24} className="loading-spinner" />
-          <span>Generating liquidity & efficiency analysis...</span>
+          <span>{t('generating_liquidity_analysis')}</span>
         </div>
       </div>
     );
@@ -319,7 +409,7 @@ const LiquidityEfficiency = ({
         <div className="liquidity-efficiency__warning">
           <AlertCircle size={20} color="#f59e0b" />
           <div>
-            <h4 className="liquidity-efficiency__warning-title">Analysis Error</h4>
+            <h4 className="liquidity-efficiency__warning-title">{t('analysis_error')}</h4>
             <p className="liquidity-efficiency__warning-text">{error}</p>
           </div>
         </div>
@@ -330,7 +420,7 @@ const LiquidityEfficiency = ({
       return (
         <FinancialEmptyState
           analysisType="liquidityEfficiency"
-          analysisDisplayName="Liquidity & Efficiency Analysis"
+          analysisDisplayName={t('liquidity_analysis_display_name')}
           icon={Activity}
           onImproveAnswers={handleMissingQuestionsCheck}
           onRegenerate={handleRegenerate}
@@ -347,7 +437,7 @@ const LiquidityEfficiency = ({
           isMobile={isMobile}
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
-          fileUploadMessage="Upload Excel or CSV files with financial data for liquidity & efficiency analysis"
+          fileUploadMessage={t('liquidity_upload_msg')}
           acceptedFileTypes=".xlsx,.xls,.csv"
           documentInfo={documentInfo}
         />
@@ -363,8 +453,8 @@ const LiquidityEfficiency = ({
             <div className="liquidity-efficiency__warning">
               <AlertCircle size={20} color="#f59e0b" />
               <div>
-                <h4 className="liquidity-efficiency__warning-title">No Liquidity Data Available</h4>
-                <p className="liquidity-efficiency__warning-text">Upload an Excel file or ensure your spreadsheet contains required ratios.</p>
+                <h4 className="liquidity-efficiency__warning-title">{t('no_liquidity_data_available')}</h4>
+                <p className="liquidity-efficiency__warning-text">{t('upload_excel_required_ratios')}</p>
               </div>
             </div>
           )}

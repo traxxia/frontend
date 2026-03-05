@@ -285,13 +285,30 @@ const GrowthTracker = ({
         <div className="ch-heatmap-scroll">
           <div className="ch-charts-grid" style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: '24px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '16px' // Reduced from 24
           }}>
             {/* Revenue Chart */}
-            <div className="ch-chart-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h4 style={{ margin: 0 }}>Monthly Revenue Trend</h4>
+            <div className="ch-chart-section" style={{
+              background: '#fff',
+              padding: '20px', // Reduced from 24
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px' // Reduced from 20
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <h4 style={{ margin: 0, color: '#111827', fontSize: '15px', fontWeight: '600' }}>Monthly Revenue Trend</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }}></div>
+                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Revenue</span>
+                  </div>
+                </div>
                 <CitationSource url={citations.revenue} />
               </div>
               <div className="ch-chart-wrapper" style={{ height: '300px' }}>
@@ -319,9 +336,26 @@ const GrowthTracker = ({
             </div>
 
             {/* Net Income Chart */}
-            <div className="ch-chart-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h4 style={{ margin: 0 }}>Monthly Net Income Trend</h4>
+            <div className="ch-chart-section" style={{
+              background: '#fff',
+              padding: '20px', // Reduced from 24
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px' // Reduced from 20
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <h4 style={{ margin: 0, color: '#111827', fontSize: '15px', fontWeight: '600' }}>Monthly Net Income Trend</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></div>
+                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Net Income</span>
+                  </div>
+                </div>
                 <CitationSource url={citations.net_income} />
               </div>
               <div className="ch-chart-wrapper" style={{ height: '300px' }}>

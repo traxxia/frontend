@@ -199,89 +199,114 @@ const ProfitabilityAnalysis = ({
       ...chartData.map(d => Math.max(d.actualValue, d.benchmarkValue)),
       10
     );
-    const chartHeight = chartData.length * 120 + 60; // Increased height for citations
+    const chartHeight = chartData.length * 100 + 20;
     const chartWidth = containerWidth;
-    const leftMargin = 120;
+    const leftMargin = 140; // Reduced from 160
     const rightMargin = 60;
-    const barHeight = 25;
-    const groupSpacing = 120; // Increased spacing for citations
+    const barHeight = 22; // Slightly reduced from 25
+    const groupSpacing = 100; // Reduced from 120
 
     return (
       <div
         ref={containerRef}
         style={{
           width: '100%',
-          padding: '20px',
+          padding: '20px', // Reduced from 24
           background: '#fff',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb'
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
-        <h3 style={{
-          marginBottom: '20px',
-          color: '#1f2937',
-          fontSize: '18px',
-          fontWeight: '600'
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center', // Changed to center for title/legend alignment
+          marginBottom: '16px', // Reduced from 20
+          flexWrap: 'wrap',
+          gap: '12px' // Reduced from 16
         }}>
-          Profitability Metrics vs Industry Benchmarks
-        </h3>
+          <h3 style={{
+            margin: 0,
+            color: '#111827',
+            fontSize: '16px', // Slightly reduced from 18
+            fontWeight: '600',
+            letterSpacing: '-0.01em'
+          }}>
+            Profitability Metrics vs Benchmark
+          </h3>
+
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            background: '#f9fafb',
+            padding: '6px 12px',
+            borderRadius: '16px',
+            border: '1px solid #f3f4f6'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
+              <span style={{ fontSize: '11px', fontWeight: '500', color: '#4b5563' }}>Business</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94a3b8' }}></div>
+              <span style={{ fontSize: '11px', fontWeight: '500', color: '#4b5563' }}>Benchmark</span>
+            </div>
+          </div>
+        </div>
 
         <div style={{ overflowX: 'auto' }}>
           <svg width={chartWidth} height={chartHeight} style={{ minWidth: '500px', width: '100%' }}>
-            {/* Chart background */}
-            <rect width={chartWidth} height={chartHeight} fill="#fafafa" stroke="#e5e7eb" strokeWidth="1" />
+            <rect width={chartWidth} height={chartHeight} fill="#ffffff" />
 
-            {/* Y-axis labels and bars */}
             {chartData.map((data, index) => {
-              const y = index * groupSpacing + 30;
+              const y = index * groupSpacing + 10;
               const barWidth = (chartWidth - leftMargin - rightMargin);
 
-              // Calculate bar lengths as percentages of max value
               const actualBarLength = (data.actualValue / maxValue) * barWidth;
               const benchmarkBarLength = (data.benchmarkValue / maxValue) * barWidth;
 
               return (
                 <g key={data.metric}>
-                  {/* Metric label */}
                   <text
-                    x={leftMargin - 10}
-                    y={y + 15}
+                    x={leftMargin - 12}
+                    y={y + 13}
                     textAnchor="end"
                     style={{
-                      fontSize: '14px',
+                      fontSize: '12px',
                       fontWeight: '500',
-                      fill: '#374151'
+                      fill: '#374151',
+                      fontFamily: 'Inter, system-ui, sans-serif'
                     }}
                   >
                     {data.metric}
                   </text>
 
-                  {/* Actual value bar */}
                   <rect
                     x={leftMargin}
                     y={y}
                     width={actualBarLength}
                     height={barHeight}
                     fill={data.color}
-                    opacity={0.8}
+                    rx="3"
+                    opacity={0.9}
                   />
 
-                  {/* Benchmark value bar */}
                   <rect
                     x={leftMargin}
-                    y={y + barHeight + 5}
+                    y={y + barHeight + 4}
                     width={benchmarkBarLength}
                     height={barHeight}
                     fill="#94a3b8"
-                    opacity={0.6}
+                    rx="3"
+                    opacity={0.35}
                   />
 
-                  {/* Value labels */}
                   <text
-                    x={leftMargin + actualBarLength + 5}
-                    y={y + 17}
+                    x={leftMargin + actualBarLength + 6}
+                    y={y + 15}
                     style={{
-                      fontSize: '12px',
-                      fontWeight: '500',
+                      fontSize: '11px',
+                      fontWeight: '600',
                       fill: data.color
                     }}
                   >
@@ -289,49 +314,36 @@ const ProfitabilityAnalysis = ({
                   </text>
 
                   <text
-                    x={leftMargin + benchmarkBarLength + 5}
-                    y={y + barHeight + 22}
+                    x={leftMargin + benchmarkBarLength + 6}
+                    y={y + barHeight + 19}
                     style={{
-                      fontSize: '12px',
-                      fill: '#64748b'
+                      fontSize: '11px',
+                      fontWeight: '500',
+                      fill: '#6b7280'
                     }}
                   >
                     {data.benchmarkValue.toFixed(1)}%
                   </text>
 
-                  {/* Citation using CitationSource component */}
                   <CitationSource
                     url={data.citationUrl}
                     x={leftMargin}
-                    y={y + barHeight * 2 + 20}
+                    y={y + barHeight * 2 + 15}
                   />
 
-                  {/* Grid lines */}
-                  <line
-                    x1={leftMargin}
-                    y1={y + barHeight * 2 + 40}
-                    x2={chartWidth - rightMargin}
-                    y2={y + barHeight * 2 + 40}
-                    stroke="#e5e7eb"
-                    strokeWidth="1"
-                    opacity={0.3}
-                  />
+                  {index < chartData.length - 1 && (
+                    <line
+                      x1={0}
+                      y1={y + barHeight * 2 + 32}
+                      x2={chartWidth}
+                      y2={y + barHeight * 2 + 32}
+                      stroke="#f3f4f6"
+                      strokeWidth="1"
+                    />
+                  )}
                 </g>
               );
             })}
-
-            {/* Legend */}
-            <g transform={`translate(${leftMargin}, ${chartHeight - 30})`}>
-              <rect x="0" y="0" width="15" height="15" fill="#10b981" opacity={0.8} />
-              <text x="20" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-                Your Business
-              </text>
-
-              <rect x="120" y="0" width="15" height="15" fill="#94a3b8" opacity={0.6} />
-              <text x="140" y="12" style={{ fontSize: '12px', fill: '#374151' }}>
-                Industry Average
-              </text>
-            </g>
           </svg>
         </div>
       </div>
