@@ -9,6 +9,7 @@ import { useRankingOperations } from "../hooks/useRankingOperations";
 import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
+import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 import { MdArrowDownward } from "react-icons/md";
 import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
@@ -71,7 +72,24 @@ const ProjectsSection = ({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isRankingBlinking, setIsRankingBlinking] = useState(false);
+  useEffect(() => {
+    let pageContext = null;
+    if (activeView === "new") {
+      pageContext = AI_PAGE_CONTEXTS.PROJECT_CREATE;
+    } else if (activeView === "edit" || activeView === "view") {
+      pageContext = AI_PAGE_CONTEXTS.PROJECT_EDIT;
+    } else {
+      pageContext = AI_PAGE_CONTEXTS.PROJECTS;
+    }
 
+    if (pageContext) {
+      window.dispatchEvent(
+        new CustomEvent("ai_context_changed", {
+          detail: { pageContext }
+        })
+      );
+    }
+  }, [activeView, viewMode]);
   // Sync prop to internal state
   useEffect(() => {
     setApiIsArchived(isArchived);
@@ -88,10 +106,10 @@ const ProjectsSection = ({
   ];
 
   const onToggleTeamRankings = () => {
-    
-  setShowTeamRankings(true);
-  setShowRankScreen(false);
-};
+
+    setShowTeamRankings(true);
+    setShowRankScreen(false);
+  };
 
   // UPDATED: This should reflect if the CURRENT USER has locked their ranking
   const [rankingsLocked, setRankingsLocked] = useState(false);
@@ -361,13 +379,13 @@ const ProjectsSection = ({
 
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
-    
+
     // Call new consolidated access check API
     const accessData = await checkAllAccess();
-    
+
     // Fetch rankings (this also returns projects list, business status, etc.)
     const result = await fetchTeamRankings();
-    
+
     if (!result) {
       setIsLoading(false);
       return;
@@ -786,10 +804,10 @@ const ProjectsSection = ({
                 {!isViewer && !isArchived && (
                   <div className="status-tabs-container" style={{ WebkitOverflowScrolling: 'touch', overflowX: 'auto' }}>
                     <button
-                     onClick={() => {
-  setShowRankScreen(true);
-  setShowTeamRankings(false);
-}}
+                      onClick={() => {
+                        setShowRankScreen(true);
+                        setShowTeamRankings(false);
+                      }}
                       className={`status-tab ${showRankScreen ? 'active' : ''} ${isRankingBlinking ? 'blink-highlight' : ''}`}
                     >
                       <ListOrdered size={16} />
@@ -838,6 +856,7 @@ const ProjectsSection = ({
                 onLockRankings={handleLockProjectRanking}
                 onRankSaved={() => {
                   refreshTeamRankings();
+                  onToggleTeamRankings();
                 }}
                 isAdmin={isSuperAdmin}
                 isRankingLocked={isRankingLocked}

@@ -50,9 +50,9 @@ const AuditTrail = ({ onToast }) => {
     isOpen: false,
     analysisType: '',
     analysisData: null,
-    analysisName: '',
     businessName: '',
-    auditId: ''
+    auditId: '',
+    phaseAnalysisArray: []
   });
 
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -353,6 +353,7 @@ const AuditTrail = ({ onToast }) => {
           const data = await response.json();
           analysisData = data.analysis_result;
           businessName = data.business_name || businessName;
+          entry.phase_analysis_array = data.phase_analysis_array || [];
         } else {
           onToast('Failed to load analysis data', 'error');
           return;
@@ -372,7 +373,8 @@ const AuditTrail = ({ onToast }) => {
         analysisData: analysisData,
         analysisName: eventData.analysis_name || `${(eventData.analysis_type || 'analysis').toUpperCase()} Analysis`,
         businessName: businessName,
-        auditId: entry._id
+        auditId: entry._id,
+        phaseAnalysisArray: entry.phase_analysis_array || []
       });
     }
   };
@@ -490,6 +492,7 @@ const AuditTrail = ({ onToast }) => {
         analysisName={modalData.analysisName}
         businessName={modalData.businessName}
         auditId={modalData.auditId}
+        phaseAnalysisArray={modalData.phaseAnalysisArray}
       />
 
       <Modal

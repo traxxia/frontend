@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle } from 'lucide-react';
+import { Plus, HelpCircle, Edit, Save, X, ChevronDown, ChevronRight, Trash2, GripVertical, AlertCircle, FileText, CheckCircle2, ListChecks, Layers } from 'lucide-react';
 import '../styles/question-management.css';
 import { useTranslation } from '@/hooks/useTranslation';
+import AdminTable from './AdminTable';
+import MetricCard from './MetricCard';
 
 const QuestionManagement = ({ onToast }) => {
   const [questions, setQuestions] = useState([]);
@@ -16,7 +18,7 @@ const QuestionManagement = ({ onToast }) => {
   const [draggedItem, setDraggedItem] = useState(null);
   const [isReordering, setIsReordering] = useState(false);
   const { t } = useTranslation();
- 
+
 
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -43,7 +45,7 @@ const QuestionManagement = ({ onToast }) => {
       if (response.ok) {
         const data = await response.json();
         setQuestions(data.questions);
-        
+
         // Group questions by phase
         const groupedQuestions = data.questions.reduce((acc, question) => {
           const phase = question.phase || 'initial';
@@ -53,12 +55,12 @@ const QuestionManagement = ({ onToast }) => {
           acc[phase].push(question);
           return acc;
         }, {});
-        
+
         // Sort questions within each phase by order
         Object.keys(groupedQuestions).forEach(phase => {
           groupedQuestions[phase].sort((a, b) => (a.order || 0) - (b.order || 0));
         });
-        
+
         setQuestionsByPhase(groupedQuestions);
       } else {
         onToast('Failed to load questions', 'error');
@@ -172,9 +174,9 @@ const QuestionManagement = ({ onToast }) => {
       const token = getAuthToken();
 
       const questionOrders = reorderedQuestions.map((question, index) => ({
-        question_id: question._id,
+        question_id: question._id || question.id,
         order: index + 1
-      }));
+      })).filter(q => q.question_id);
 
       const response = await fetch(`${API_BASE_URL}/api/admin/questions/reorder`, {
         method: 'PUT',
@@ -219,17 +221,18 @@ const QuestionManagement = ({ onToast }) => {
 
   const handleDrop = (e, targetQuestion, targetPhase) => {
     e.preventDefault();
-    
+
     if (!draggedItem || draggedItem.phase !== targetPhase) {
       setDraggedItem(null);
       return;
     }
 
     const phaseQuestions = [...(questionsByPhase[targetPhase] || [])];
-    const draggedIndex = phaseQuestions.findIndex(q => q._id === draggedItem.question._id);
-    const targetIndex = phaseQuestions.findIndex(q => q._id === targetQuestion._id);
+    const getQuestionId = (q) => q._id || q.id;
+    const draggedIndex = phaseQuestions.findIndex(q => getQuestionId(q) === getQuestionId(draggedItem.question));
+    const targetIndex = phaseQuestions.findIndex(q => getQuestionId(q) === getQuestionId(targetQuestion));
 
-    if (draggedIndex === targetIndex) {
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
       setDraggedItem(null);
       return;
     }
@@ -263,11 +266,38 @@ const QuestionManagement = ({ onToast }) => {
 
   return (
     <div className="question-management">
+      <div className="admin-metrics-grid" style={{ marginBottom: '2rem' }}>
+        <MetricCard
+          label="Total Questions"
+          value={questions.length}
+          icon={FileText}
+          iconColor="blue"
+        />
+        <MetricCard
+          label="Initial Phase"
+          value={questionsByPhase.initial?.length || 0}
+          icon={CheckCircle2}
+          iconColor="green"
+        />
+        <MetricCard
+          label="Essential Phase"
+          value={questionsByPhase.essential?.length || 0}
+          icon={ListChecks}
+          iconColor="orange"
+        />
+        <MetricCard
+          label="Advanced Phase"
+          value={questionsByPhase.advanced?.length || 0}
+          icon={Layers}
+          iconColor="purple"
+        />
+      </div>
+
       <div className="question-management__header">
         <h2>{t('question_management')}</h2>
-        <button 
+        <button
           onClick={() => setShowCreateForm(true)}
-          className="question-management__add-btn"
+          className="admin-primary-btn"
         >
           <Plus size={16} />
           {t('add_question')}
@@ -282,9 +312,19 @@ const QuestionManagement = ({ onToast }) => {
         />
       )}
 
+      {editingQuestion && (
+        <EditQuestionModal
+          question={editingQuestion}
+          onUpdate={handleUpdateQuestion}
+          onCancel={() => setEditingQuestion(null)}
+          isUpdating={isUpdating}
+        />
+      )}
+
       {isReordering && (
         <div className="question-management__reordering-overlay">
           <div className="question-management__reordering-modal">
+            <div className="admin-spinner" style={{ marginRight: '10px', display: 'inline-block' }} />
             Reordering questions...
           </div>
         </div>
@@ -294,72 +334,105 @@ const QuestionManagement = ({ onToast }) => {
         const phaseQuestions = questionsByPhase[phase] || [];
         const isCollapsed = collapsedPhases[phase];
 
+        const columns = [
+          {
+            key: 'drag_handle',
+            label: '',
+            render: () => (
+              <div className="drag-handle">
+                <GripVertical size={16} />
+              </div>
+            )
+          },
+          {
+            key: 'order',
+            label: '#',
+            width: '80px',
+            render: (_, row, idx) => (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <span className="admin-cell-secondary">{idx + 1}</span>
+              </div>
+            )
+          },
+          {
+            key: 'question_text',
+            label: t('question_text'),
+            render: (val, row) => (
+              <div className="question-text-cell">
+                <div className="admin-cell-primary">{val}</div>
+                {(row.objective || row.required_info) && (
+                  <div className="admin-cell-secondary" style={{ fontSize: '0.75rem', marginTop: '4px' }}>
+                    {row.objective}
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
+            key: 'used_for',
+            label: t('used_for'),
+            render: (val) => <span className="admin-status-badge launched">{val || 'Not set'}</span>
+          },
+          {
+            key: 'severity',
+            label: t('severity'),
+            render: (val) => (
+              <span className={`admin-status-badge ${val === 'mandatory' ? 'active' : 'inactive'}`}>
+                {val}
+              </span>
+            )
+          },
+          {
+            key: 'actions',
+            label: t('actions'),
+            render: (_, row) => (
+              <div className="question-row__actions" style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setEditingQuestion(row)}
+                  className="question-row__action-btn question-row__action-btn--edit"
+                >
+                  <Edit size={14} />
+                </button>
+                <button
+                  onClick={() => handleDeleteQuestion(row._id || row.id)}
+                  className="question-row__action-btn question-row__action-btn--delete"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )
+          }
+        ];
+
         return (
-          <div key={phase} className="phase-section">
+          <div key={phase} className="phase-section-wrapper" style={{ marginBottom: '2rem' }}>
             <div
               onClick={() => togglePhaseCollapse(phase)}
               className="phase-section__header"
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: '#f8fafc' }}
             >
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
-              <strong>{phase.charAt(0).toUpperCase() + phase.slice(1)} Phase</strong>
-              <span className="phase-section__count">
+              <strong style={{ fontSize: '1.1rem', color: '#1e293b' }}>
+                {phase.charAt(0).toUpperCase() + phase.slice(1)} Phase
+              </strong>
+              <span className="admin-table-count-badge">
                 {phaseQuestions.length} {t('questions')}
               </span>
             </div>
 
             {!isCollapsed && (
-              <div style={{ overflowX: "auto" }}>
-              <table className="questions-table">
-                <thead>
-                  <tr className="questions-table__header">
-                    <th className="questions-table__header-cell questions-table__header-cell--number">
-                      #
-                    </th>
-                    <th className="questions-table__header-cell">
-                      {t('question_text')}
-                    </th>
-                    <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--used-for">
-                      {t('used_for')}
-                    </th>
-                    <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--severity">
-                      {t('severity')}
-                    </th>
-                    <th className="questions-table__header-cell questions-table__header-cell--center questions-table__header-cell--actions">
-                      {t('actions')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {phaseQuestions.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="questions-table__empty-row">
-                        <HelpCircle size={24} className="questions-table__empty-icon" />
-                        <div>No questions in {phase} phase</div>
-                      </td>
-                    </tr>
-                  ) : (
-                    phaseQuestions.map((question, index) => (
-                      <QuestionRow
-                        key={question._id}
-                        question={question}
-                        index={index}
-                        phase={phase}
-                        isEditing={editingQuestion?._id === question._id}
-                        onEdit={() => setEditingQuestion(question)}
-                        onUpdate={handleUpdateQuestion}
-                        onCancelEdit={() => setEditingQuestion(null)}
-                        onDelete={handleDeleteQuestion}
-                        isUpdating={isUpdating}
-                        isDeleting={deletingQuestionId === question._id}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-              </div>
+              <AdminTable
+                columns={columns}
+                data={phaseQuestions}
+                loading={isLoading}
+                getRowProps={(row) => ({
+                  draggable: true,
+                  onDragStart: (e) => handleDragStart(e, row, phase),
+                  onDragOver: handleDragOver,
+                  onDrop: (e) => handleDrop(e, row, phase),
+                  className: `question-row-draggable ${(draggedItem?.question?._id || draggedItem?.question?.id) === (row._id || row.id) ? 'dragging' : ''}`
+                })}
+              />
             )}
           </div>
         );
@@ -376,314 +449,42 @@ const QuestionManagement = ({ onToast }) => {
   );
 };
 
-const QuestionRow = ({ 
-  question, 
-  index, 
-  phase, 
-  isEditing, 
-  onEdit, 
-  onUpdate, 
-  onCancelEdit,
-  onDelete,
-  isUpdating,
-  isDeleting,
-  onDragStart,
-  onDragOver,
-  onDrop
-}) => {
-  const [editForm, setEditForm] = useState({
+const EditQuestionModal = ({ question, onUpdate, onCancel, isUpdating }) => {
+  const [formData, setFormData] = useState({
     question_text: question.question_text,
     phase: question.phase,
-    order: question.order,
     used_for: question.used_for || '',
     objective: question.objective || '',
     required_info: question.required_info || ''
   });
-
-  const [showDetails, setShowDetails] = useState(false);
-  const { t } = useTranslation();
-
-  const handleSave = () => {
-    onUpdate(question._id, {
-      question_text: editForm.question_text,
-      phase: editForm.phase,
-      order: editForm.order,
-      used_for: editForm.used_for,
-      objective: editForm.objective,
-      required_info: editForm.required_info,
-      severity: question.severity
-    });
-  };
-
-  const handleChange = (e) => {
-    setEditForm(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
-  if (isEditing) {
-    return (
-      <>
-        <tr className="question-row question-row--editing">
-          <td className="question-row__cell question-row__cell--number">
-            <div className="question-row__number question-row__number--editing">
-              <GripVertical size={14} style={{ color: '#6c757d' }} />
-              <span>
-                {index + 1}
-              </span>
-            </div>
-          </td>
-          
-          <td className="question-row__cell">
-            <textarea
-              name="question_text"
-              value={editForm.question_text}
-              onChange={handleChange}
-              className="question-row__textarea"
-            />
-          </td>
-
-          <td className="question-row__cell">
-            <input
-              type="text"
-              name="used_for"
-              value={editForm.used_for}
-              onChange={handleChange}
-              placeholder="SWOT, Customer..."
-              className="question-row__input"
-            />
-          </td>
-          
-          <td className="question-row__cell question-row__cell--center">
-            <span className={`question-row__severity-badge question-row__severity-badge--${question.severity}`}>
-              {question.severity}
-            </span>
-            <div className="question-row__severity-auto">
-              Auto-assigned
-            </div>
-          </td>
-           
-          <td className="question-row__cell question-row__cell--center">
-            <div className="question-row__actions">
-              <button
-                onClick={handleSave}
-                disabled={isUpdating}
-                className="question-row__action-btn question-row__action-btn--save"
-              >
-                <Save size={12} />
-              </button>
-              <button
-                onClick={onCancelEdit}
-                disabled={isUpdating}
-                className="question-row__action-btn question-row__action-btn--cancel"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          </td>
-        </tr>
-        
-        {/* Additional fields row when editing */}
-        <tr className="question-row--editing">
-          <td colSpan="5" className="question-row__edit-fields">
-            <div className="question-row__edit-grid">
-              <div className="question-row__edit-field">
-                <label>
-                  {t('objective')}
-                </label>
-                <textarea
-                  name="objective"
-                  value={editForm.objective}
-                  onChange={handleChange}
-                  placeholder={t('what_this_question_aims_to_understand')}
-                />
-              </div>
-              <div className="question-row__edit-field">
-                <label>
-                  {t('required_information')}
-                </label>
-                <textarea
-                  name="required_info"
-                  value={editForm.required_info}
-                  onChange={handleChange}
-                  placeholder="What information is needed for analysis..."
-                />
-              </div>
-            </div>
-          </td>
-        </tr>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <tr 
-        draggable
-        onDragStart={(e) => onDragStart(e, question, phase)}
-        onDragOver={onDragOver}
-        onDrop={(e) => onDrop(e, question, phase)}
-        className="question-row"
-      >
-        <td className="question-row__cell question-row__cell--number">
-          <div className="question-row__number">
-            <GripVertical size={14} style={{ color: '#6c757d' }} />
-            <span>
-              {index + 1}
-            </span>
-          </div>
-        </td>
-         
-        <td className="question-row__cell">
-          <div className="question-row__question-text">
-            {question.question_text}
-            {(question.objective || question.required_info) && (
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                className="question-row__details-btn"
-              >
-                <AlertCircle size={10} style={{ marginRight: '2px' }} />
-                Details
-              </button>
-            )}
-          </div>
-        </td>
-
-        <td className="question-row__cell question-row__cell--center">
-          {question.used_for ? (
-            <span className="question-row__used-for-badge">
-              {question.used_for}
-            </span>
-          ) : (
-            <span className="question-row__used-for-empty">Not set</span>
-          )}
-        </td>
-
-        <td className="question-row__cell question-row__cell--center">
-          <span className={`question-row__severity-badge question-row__severity-badge--${question.severity}`}>
-            {question.severity}
-          </span>
-        </td>
-         
-        <td className="question-row__cell question-row__cell--center">
-          <div className="question-row__actions">
-            <button
-              onClick={onEdit}
-              disabled={isDeleting}
-              className={`question-row__action-btn question-row__action-btn--edit ${isDeleting ? 'question-row__action-btn--disabled' : ''}`}
-            >
-              <Edit size={12} />
-            </button>
-            <button
-              onClick={() => onDelete(question._id)}
-              disabled={isDeleting}
-              className={`question-row__action-btn question-row__action-btn--delete ${isDeleting ? 'question-row__action-btn--disabled' : ''}`}
-            >
-              {isDeleting ? (
-                <span style={{ fontSize: '10px' }}>...</span>
-              ) : (
-                <Trash2 size={12} />
-              )}
-            </button>
-          </div>
-        </td>
-      </tr>
-
-      {/* Details row */}
-      {showDetails && (question.objective || question.required_info) && (
-        <tr>
-          <td colSpan="5" className="question-row__details">
-            <div className="question-row__details-grid">
-              {question.objective && (
-                <div>
-                  <strong className="question-row__details-label">{t('objective')}:</strong>
-                  <div className="question-row__details-content">{question.objective}</div>
-                </div>
-              )}
-              {question.required_info && (
-                <div>
-                  <strong className="question-row__details-label">{t('required_information')}:</strong>
-                  <div className="question-row__details-content">{question.required_info}</div>
-                </div>
-              )}
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-};
-
-const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
-  const [formData, setFormData] = useState({
-    question_text: '',
-    phase: 'initial',
-    order: 1,
-    used_for: '',
-    objective: '',
-    required_info: ''
-  });
-
-  
   const [errors, setErrors] = useState({});
   const { t } = useTranslation();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const getSeverityForPhase = (phase) => {
     return phase === 'initial' ? 'mandatory' : 'optional';
   };
 
- const validateForm = () => {
-  const newErrors = {};
-
-  if (!formData.question_text.trim()) {
-    newErrors.question_text = 'Question text is required';
-  } else if (formData.question_text.trim().length < 10) {
-    newErrors.question_text = 'Question must be at least 10 characters long';
-  } else if (formData.question_text.trim().length > 200) {
-    newErrors.question_text = 'Question cannot exceed 200 characters';
-  }
-
-  if (!formData.used_for.trim()) {
-    newErrors.used_for = 'Used For field is required';
-  } else if (!/^[A-Za-z,\s]+$/.test(formData.used_for.trim())) {
-    newErrors.used_for = 'Used For can only contain letters, commas, and spaces';
-  } else if (formData.used_for.trim().length >20) {
-    newErrors.used_for = 'Used For cannot exceed 20 characters';
-  }
-
-  if (!formData.objective.trim()) {
-    newErrors.objective = 'Objective is required';
-  } else if (formData.objective.trim().length < 15) {
-    newErrors.objective = 'Objective must be at least 15 characters long';
-  } else if (formData.objective.trim().length > 200) {
-    newErrors.objective = 'Objective cannot exceed 200 characters';
-  }
-
-  if (formData.required_info && formData.required_info.length > 200) {
-    newErrors.required_info = 'Required info cannot exceed 200 characters';
-  }
-
- 
-
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
-
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.question_text.trim()) newErrors.question_text = t('question_text_required');
+    if (!formData.used_for.trim()) newErrors.used_for = t('used_for_required');
+    if (!formData.objective.trim()) newErrors.objective = t('objective_required');
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-  const submitData = { ...formData, severity: getSeverityForPhase(formData.phase) };
-  onSubmit(submitData);
-};
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    e.preventDefault();
+    if (!validateForm()) return;
+    onUpdate(question._id || question.id, {
+      ...formData,
+      severity: getSeverityForPhase(formData.phase)
+    });
   };
 
   const currentSeverity = getSeverityForPhase(formData.phase);
@@ -691,45 +492,38 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
   return (
     <div className="create-form-overlay">
       <div className="create-form">
-        <h3>{t('create_new_question')}</h3>
-        
-        <form onSubmit={handleSubmit} >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ margin: 0 }}>{t('edit_question')}</h3>
+          <button onClick={onCancel} className="admin-modal-close" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
           <div className="create-form__field">
-            <label>
-              {t('question_text')} *
-            </label>
+            <label>{t('question_text')} *</label>
             <textarea
               name="question_text"
               value={formData.question_text}
               onChange={handleChange}
               required
               rows="4"
-              placeholder={t('enter_your_question_here')}
             />
             {errors.question_text && <span className="error-message">{errors.question_text}</span>}
           </div>
 
           <div className="create-form__grid">
             <div className="create-form__field">
-              <label>
-                {t('phase')} *
-              </label>
-              <select
-                name="phase"
-                value={formData.phase}
-                onChange={handleChange}
-                required
-              >
-                <option value="initial">Initial</option>
-                <option value="essential">Essential</option> 
-                <option value="advanced">Advanced</option>
+              <label>{t('phase')} *</label>
+              <select name="phase" value={formData.phase} onChange={handleChange} required>
+                <option value="initial">{t('initial')}</option>
+                <option value="essential">{t('essential')}</option>
+                <option value="advanced">{t('advanced')}</option>
               </select>
             </div>
 
             <div className="create-form__field">
-              <label>
-                {t('used_for')} *
-              </label>
+              <label>{t('used_for')} *</label>
               <input
                 type="text"
                 name="used_for"
@@ -743,24 +537,153 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
           </div>
 
           <div className="create-form__field">
-            <label>
-              {t('objective')} *
-            </label>
+            <label>{t('objective')} *</label>
             <textarea
               name="objective"
               value={formData.objective}
               onChange={handleChange}
               required
               rows="3"
-              placeholder={t('what_this_question_aims_to_understand_or_analyze')}
             />
             {errors.objective && <span className="error-message">{errors.objective}</span>}
           </div>
 
           <div className="create-form__field">
-            <label>
-              {t('required_information')}
-            </label>
+            <label>{t('required_information')}</label>
+            <textarea
+              name="required_info"
+              value={formData.required_info}
+              onChange={handleChange}
+              rows="3"
+            />
+          </div>
+
+          <div className="create-form__severity-info">
+            <div className="create-form__severity-label">{t('severity')} (Auto-assigned)</div>
+            <div className="create-form__severity-display">
+              <span className={`create-form__severity-badge create-form__severity-badge--${currentSeverity}`}>
+                {currentSeverity}
+              </span>
+              <span className="create-form__severity-text">
+                {formData.phase === 'initial' ? 'Initial phase questions are mandatory' : 'Non-initial phases are optional'}
+              </span>
+            </div>
+          </div>
+
+          <div className="create-form__actions">
+            <button type="button" onClick={onCancel} disabled={isUpdating} className="create-form__btn create-form__btn--cancel">
+              {t('cancel')}
+            </button>
+            <button type="submit" disabled={isUpdating} className="create-form__btn create-form__btn--submit">
+              {isUpdating ? t('updating') : t('save_changes')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
+  const [formData, setFormData] = useState({
+    question_text: '',
+    phase: 'initial',
+    used_for: '',
+    objective: '',
+    required_info: ''
+  });
+  const [errors, setErrors] = useState({});
+  const { t } = useTranslation();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const getSeverityForPhase = (phase) => {
+    return phase === 'initial' ? 'mandatory' : 'optional';
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.question_text.trim()) newErrors.question_text = t('question_text_required');
+    if (!formData.used_for.trim()) newErrors.used_for = t('used_for_required');
+    if (!formData.objective.trim()) newErrors.objective = t('objective_required');
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    onSubmit({ ...formData, severity: getSeverityForPhase(formData.phase) });
+  };
+
+  const currentSeverity = getSeverityForPhase(formData.phase);
+
+  return (
+    <div className="create-form-overlay">
+      <div className="create-form">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ margin: 0 }}>{t('create_new_question')}</h3>
+          <button onClick={onCancel} className="admin-modal-close" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="create-form__field">
+            <label>{t('question_text')} *</label>
+            <textarea
+              name="question_text"
+              value={formData.question_text}
+              onChange={handleChange}
+              required
+              rows="4"
+              placeholder={t('enter_your_question_here')}
+            />
+            {errors.question_text && <span className="error-message">{errors.question_text}</span>}
+          </div>
+
+          <div className="create-form__grid">
+            <div className="create-form__field">
+              <label>{t('phase')} *</label>
+              <select name="phase" value={formData.phase} onChange={handleChange} required>
+                <option value="initial">{t('initial')}</option>
+                <option value="essential">{t('essential')}</option>
+                <option value="advanced">{t('advanced')}</option>
+              </select>
+            </div>
+
+            <div className="create-form__field">
+              <label>{t('used_for')} *</label>
+              <input
+                type="text"
+                name="used_for"
+                value={formData.used_for}
+                onChange={handleChange}
+                required
+                placeholder="SWOT, Customer Segmentation..."
+              />
+              {errors.used_for && <span className="error-message">{errors.used_for}</span>}
+            </div>
+          </div>
+
+          <div className="create-form__field">
+            <label>{t('objective')} *</label>
+            <textarea
+              name="objective"
+              value={formData.objective}
+              onChange={handleChange}
+              required
+              rows="3"
+              placeholder={t('what_this_question_aims_to_understand')}
+            />
+            {errors.objective && <span className="error-message">{errors.objective}</span>}
+          </div>
+
+          <div className="create-form__field">
+            <label>{t('required_information')}</label>
             <textarea
               name="required_info"
               value={formData.required_info}
@@ -771,37 +694,23 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
           </div>
 
           <div className="create-form__severity-info">
-            <div className="create-form__severity-label">
-              {t('severity')} (Auto-assigned)
-            </div>
+            <div className="create-form__severity-label">{t('severity')} (Auto-assigned)</div>
             <div className="create-form__severity-display">
               <span className={`create-form__severity-badge create-form__severity-badge--${currentSeverity}`}>
                 {currentSeverity}
               </span>
               <span className="create-form__severity-text">
-                {formData.phase === 'initial' 
-                  ? 'Initial phase questions are always mandatory'
-                  : 'Non-initial phase questions are optional by default'
-                }
+                {formData.phase === 'initial' ? 'Initial phase questions are mandatory' : 'Non-initial phases are optional'}
               </span>
             </div>
           </div>
 
           <div className="create-form__actions">
-            <button 
-              type="button" 
-              onClick={onCancel}
-              disabled={isLoading}
-              className="create-form__btn create-form__btn--cancel"
-            >
+            <button type="button" onClick={onCancel} disabled={isLoading} className="create-form__btn create-form__btn--cancel">
               {t('cancel')}
             </button>
-            <button 
-              type="submit"
-              disabled={isLoading}
-              className="create-form__btn create-form__btn--submit"
-            >
-              {isLoading ? 'Creating...' : t('create_question')}
+            <button type="submit" disabled={isLoading} className="create-form__btn create-form__btn--submit">
+              {isLoading ? t('creating') : t('create_question')}
             </button>
           </div>
         </form>

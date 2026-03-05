@@ -447,3 +447,60 @@
   font-size: 15px;
   margin-bottom: 4px;
 }
+
+/* Tooltip Styles */
+.pmf-tooltip {
+  z-index: 10000 !important;
+}
+
+.pmf-tooltip-icon {
+  color: #6c757d;
+  cursor: pointer !important;
+  display: inline-flex;
+  transition: color 0.2s ease;
+}
+
+.pmf-tooltip-icon:hover {
+  color: #217aff;
+}
+
+
+.pmf-tooltip.tooltip {
+  opacity: 1 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  z-index: 10000 !important;
+  transition: none !important;
+  margin-left: 6px !important;
+  /* Gap from the icon */
+}
+
+.pmf-tooltip.tooltip .tooltip-inner {
+  background-color: transparent !important;
+  color: #4f556e !important;
+  /* Changed to darker blue for readability on transparent bg */
+  padding: 0px !important;
+  /* Minimal padding for single line */
+  border-radius: 0px !important;
+  font-size: 11px !important;
+  /* Slightly bigger than 10px for readability */
+  line-height: 1.2 !important;
+  /* Corrected from 0.2 */
+  box-shadow: none !important;
+  border: none !important;
+  max-width: none !important;
+  text-align: left !important;
+  /* Corrected to left for subsequent reading */
+  white-space: nowrap !important;
+  transition: none !important;
+}
+
+.pmf-tooltip.bs-tooltip-top .tooltip-arrow,
+.pmf-tooltip.bs-tooltip-bottom .tooltip-arrow,
+.pmf-tooltip.bs-tooltip-start .tooltip-arrow,
+.pmf-tooltip.bs-tooltip-end .tooltip-arrow {
+  display: none !important;
+}

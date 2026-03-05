@@ -11,7 +11,7 @@ const PDFExportButton = ({
   isCapabilityHeatmapReady = true,
   className = "",
   style = {},
-  exportType = "analysis", // "analysis" or "strategic"
+  exportType = "insights", // "insights" or "strategic"
   strategicData = null,
   // Analysis data state indicators
   unlockedFeatures = {},
@@ -264,7 +264,7 @@ const PDFExportButton = ({
 
   // Main analysis export function (enhanced with phase-by-phase content)
   const handleDownloadPhaseAnalysis = async () => {
-    const exportPhase = getExportPhase();
+    const exportPhase = exportType === "advanced-brief" ? "advanced-brief" : getExportPhase();
 
     if (!exportPhase) {
       onToastMessage?.('Unable to determine export phase', 'error');
@@ -367,6 +367,9 @@ const PDFExportButton = ({
           { selector: '[data-component="maturity"]', name: 'Business Maturity Score' },
           { selector: '[data-component="competitive-landscape"]', name: 'Competitive Landscape' },
           { selector: '[data-component="core-adjacency"]', name: 'Core' }
+        ],
+        'advanced-brief': [
+          { selector: '[data-component="advanced-brief"]', name: 'Questions & Answers' }
         ]
       };
 
@@ -439,7 +442,8 @@ const PDFExportButton = ({
       const timestamp = new Date().toISOString().split('T')[0];
       const phaseLabel = exportPhase === 'advanced' ? 'Advanced_Phase' :
         exportPhase === 'good' ? 'Good_Phase' :
-          exportPhase === 'essential' ? 'Essential_Phase' : 'Initial_Phase';
+          exportPhase === 'essential' ? 'Essential_Phase' :
+            exportPhase === 'advanced-brief' ? 'Questions_and_Answers' : 'Initial_Phase';
 
       const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_${timestamp}.pdf`;
       pdf.save(filename);
@@ -458,15 +462,16 @@ const PDFExportButton = ({
     }
   };
 
-  // Determine button text and action based on export type
+  // Main strategic export function
   const handleDownload = exportType === "strategic" ? handleDownloadStrategicAnalysis : handleDownloadPhaseAnalysis;
 
   // Get the actual export phase for display (only for analysis type)
-  const exportPhase = exportType === "analysis" ? getExportPhase() : null;
+  const exportPhase = exportType === "insights" ? getExportPhase() : null;
   const phaseLabel = exportType === "strategic" ? "Strategic" :
     exportPhase === 'initial' ? 'Initial' :
       exportPhase === 'essential' ? 'Essential' :
-        exportPhase === 'good' ? 'Good' : 'Advanced';
+        exportPhase === 'good' ? 'Good' :
+          exportPhase === 'advanced-brief' ? 'Questions' : 'Advanced';
 
   return (
     <>

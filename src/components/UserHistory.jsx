@@ -305,7 +305,8 @@ const parseAnalysisData = (userDetails, user) => {
 
     businessName: user?.name || 'Business',
     userAnswers: {},
-    questions: []
+    questions: [],
+    phaseAnalysisArray: userDetails.system || []
   };
 
   // Process conversation data
@@ -424,20 +425,16 @@ const parseAnalysisData = (userDetails, user) => {
 
         case 'competitivelandscape':
         case 'competitive landscape':
+        case 'competitive_landscape':
           analysisData.competitiveLandscapeData = analysisResult;
           break;
 
         case 'coreadjacency':
         case 'core adjacency':
+        case 'core_adjacency':
+        case 'core_adjacency_matrix':
           analysisData.coreAdjacencyData = analysisResult;
           break;
-
-        case 'profitabilityanalysis':
-        case 'profitability_analysis':
-        case 'profitability':
-          analysisData.profitabilityData = analysisResult;
-          break;
-
 
         // Financial Analysis Types - SIMPLIFIED: Just check if data exists
         case 'profitabilityanalysis':
@@ -486,7 +483,6 @@ const parseAnalysisData = (userDetails, user) => {
         default:
           // Fallback detection for financial analyses based on is_financial_analysis flag
           if (result.is_financial_analysis) {
-
             if (analysisType.includes('profitab')) {
               analysisData.profitabilityData = analysisResult;
             } else if (analysisType.includes('growth')) {
@@ -506,7 +502,35 @@ const parseAnalysisData = (userDetails, user) => {
     }
   });
 
-  return analysisData;
+  // Create a clean, normalized array for phase-based components
+  const normalizedSystemResults = (userDetails.system || []).map(result => {
+    try {
+      const parsedData = typeof result.analysis_result === 'string'
+        ? JSON.parse(result.analysis_result)
+        : result.analysis_result;
+
+      let type = (result.analysis_type || result.name || result.normalized_type || '').toLowerCase();
+      // Standardize types
+      if (['porters', 'porter_analysis', 'porters_five_forces'].includes(type)) type = 'porters';
+      if (['pestel', 'pestel_analysis'].includes(type)) type = 'pestel';
+      if (['swot'].includes(type)) type = 'swot';
+      if (['strategic', 'strategic_analysis'].includes(type)) type = 'strategic';
+
+      return {
+        ...result,
+        analysis_type: type,
+        analysis_data: parsedData,
+        analysis_result: parsedData // keep both for compatibility
+      };
+    } catch (e) {
+      return result;
+    }
+  });
+
+  return {
+    ...analysisData,
+    phaseAnalysisArray: normalizedSystemResults
+  };
 };
 
 // Check if analysis data exists
@@ -525,21 +549,34 @@ const hasAnalysisData = (analysisData) => {
     analysisData.strategicRadar || analysisData.cultureProfile ||
     analysisData.productivityMetrics || analysisData.maturityScore ||
     analysisData.costEfficiency || analysisData.financialPerformance ||
-    analysisData.financialBalance || analysisData.operationalEfficiency
+    analysisData.financialBalance || analysisData.operationalEfficiency ||
+    analysisData.competitiveLandscapeData || analysisData.coreAdjacencyData ||
+    analysisData.profitabilityData || analysisData.growthTrackerData ||
+    analysisData.liquidityEfficiencyData || analysisData.investmentPerformanceData ||
+    analysisData.leverageRiskData
   );
 };
 const createSimplePhaseManager = (analysisData, userDetails) => {
   // Simplified logic - similar to AnalysisContentManager
-  const hasFullSwot = !!analysisData?.fullSwot;
-  const hasEssentialAnalyses = !!(
+  const hasInitial = !!(
+    analysisData?.swot ||
+    analysisData?.purchaseCriteria ||
+    analysisData?.loyaltyNPS ||
+    analysisData?.porters ||
+    analysisData?.pestel
+  );
+
+  const hasEssential = !!(
+    analysisData?.fullSwot ||
     analysisData?.competitiveAdvantage ||
     analysisData?.expandedCapability ||
     analysisData?.strategicRadar ||
     analysisData?.productivityMetrics ||
-    analysisData?.maturityScore
+    analysisData?.maturityScore ||
+    analysisData?.competitiveLandscapeData ||
+    analysisData?.coreAdjacencyData
   );
 
-  // Financial analyses show if we have any financial data (similar to AnalysisContentManager)
   const hasAnyFinancialData = !!(
     analysisData?.profitabilityData ||
     analysisData?.growthTrackerData ||
@@ -548,11 +585,21 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
     analysisData?.leverageRiskData
   );
 
+  // Determine phases reached
+  const isAdvancedReached = hasAnyFinancialData;
+  const isEssentialReached = hasEssential || isAdvancedReached;
+  const isInitialReached = hasInitial || isEssentialReached;
+
   return {
     getUnlockedFeatures: () => ({
       analysis: true,
-      fullSwot: hasFullSwot && hasEssentialAnalyses,
-      goodPhase: hasAnyFinancialData // Simple: show if we have any financial data
+      initialPhase: isInitialReached,
+      essentialPhase: isEssentialReached,
+      advancedPhase: isAdvancedReached,
+      hasDocument: hasAnyFinancialData,
+      // Legacy flags
+      fullSwot: hasEssential,
+      goodPhase: hasAnyFinancialData
     })
   };
 };
@@ -804,11 +851,11 @@ const TabNavigation = ({
         <span>{t('conversation')}</span>
       </button>
       <button
-        onClick={() => onTabChange('analysis')}
-        className={`nav-tab ${activeTab === 'analysis' ? 'active' : ''}`}
+        onClick={() => onTabChange('insights')}
+        className={`nav-tab ${activeTab === 'insights' ? 'active' : ''}`}
       >
         <Target size={16} />
-        <span>{t('analysis')}</span>
+        <span>{t('insights')}</span>
       </button>
       <button
         onClick={() => onTabChange('strategic')}
@@ -866,7 +913,7 @@ const TabContent = ({
           isLoadingBusiness={isLoadingBusiness}
         />
       );
-    case 'analysis':
+    case 'insights':
       return (
         <AnalysisTab
           analysisData={analysisData}
@@ -1454,6 +1501,7 @@ const StrategicTab = ({
           userAnswers={analysisData.userAnswers}
           businessName={analysisData.businessName}
           strategicData={analysisData.strategic}
+          phaseAnalysisArray={analysisData.phaseAnalysisArray || []}
           onRegenerate={null}
           isRegenerating={false}
           canRegenerate={false}

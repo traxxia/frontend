@@ -12,12 +12,15 @@ import LanguageTranslator from "../components/LanguageTranslator";
 import { useTranslation } from "../hooks/useTranslation";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import { ThemeContext } from "../components/ThemeComponent";
+import ErrorModal from "../components/ErrorModal";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
   const { theme, toggleTheme } = useContext(ThemeContext);
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -79,7 +82,8 @@ const Login = () => {
     } catch (err) {
       console.error(err.response?.data || err.message);
       const errorMessage = err.response?.data?.error || t("login_failed");
-      alert(errorMessage);
+      setModalMessage(errorMessage);
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +191,14 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      <ErrorModal
+        show={showErrorModal}
+        handleClose={() => setShowErrorModal(false)}
+        title={t("login_failed_title")}
+        message={modalMessage}
+        buttonText={t("try_again")}
+      />
     </div>
   );
 };

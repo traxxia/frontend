@@ -3,14 +3,11 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  scroll-behavior: auto !important;
-  scroll-margin: 0 !important;
-  scroll-padding: 0 !important;
 }
 
 html,
 body {
-  scroll-behavior: auto !important;
+  height: 100%;
 }
 
 /* ========== ANIMATIONS ========== */
@@ -59,14 +56,12 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
-  scroll-behavior: auto !important;
 }
 
 .main-container {
   flex: 1;
   display: flex;
   overflow: hidden;
-  scroll-behavior: auto !important;
   position: relative;
   /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
 }
@@ -487,7 +482,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  scroll-behavior: auto !important;
 }
 
 .message {
@@ -561,13 +555,11 @@ body {
   border-radius: 24px;
   padding: 4px;
   gap: 8px;
-  scroll-behavior: auto !important;
 }
 
 .input-area .input-container:focus-within {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  scroll-behavior: auto !important;
 }
 
 .chat-input {
@@ -618,7 +610,7 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  scroll-behavior: auto !important;
+  scroll-behavior: smooth;
   position: relative;
   /* transition: all 1s cubic-bezier(0.25, 0.8, 0.25, 1); */
   width: 50%;
@@ -642,9 +634,7 @@ body {
 .info-panel-content {
   flex: 1;
   padding: 10px;
-  overflow: auto;
-  max-height: calc(100vh - 120px);
-  scroll-behavior: auto !important;
+  /* Removed redundant overflow and max-height to allow parent to handle scroll */
   position: relative;
   overscroll-behavior: contain;
 }
@@ -677,7 +667,6 @@ body {
 /* ========== BRIEF SECTION ========== */
 .brief-section {
   position: relative;
-  scroll-behavior: auto !important;
   margin-top: 0px;
 }
 
@@ -1284,6 +1273,7 @@ body {
   background: white;
   overflow: auto;
   flex: 1;
+  scroll-behavior: smooth;
 }
 
 
@@ -1291,12 +1281,10 @@ body {
 .expanded-analysis-main {
   flex: 1;
   padding: 0px 10px 10px 10px;
-  overflow-y: auto;
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
   max-height: none;
-  scroll-behavior: auto !important;
   position: relative;
   overscroll-behavior: contain;
 }
@@ -3196,7 +3184,8 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 9999;   /* 🔥 VERY IMPORTANT */
+  z-index: 9999;
+  /* 🔥 VERY IMPORTANT */
   display: flex;
 }
 
@@ -3208,3 +3197,59 @@ body {
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
+
+.mobile-action-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+
+.mobile-action-bar .dropdown-wrapper {
+  margin-left: 2rem;
+  max-width: 150px;
+}
+
+.mobile-action-bar .dropdown-button {
+  padding: 8px 12px;
+  font-size: 13px;
+  height: 40px;
+}
+
+.mobile-action-bar .pdf-export-button,
+.mobile-action-bar .regenerate-button {
+  flex-shrink: 0;
+}
+
+/* Ensure mobile dropdown options don't overflow */
+@media (max-width: 768px) {
+  .dropdown-menu-options {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 50vh;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+  }
+
+  .mobile-action-bar .dropdown-wrapper .dropdown-menu-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    bottom: auto;
+    left: 0;
+    right: auto;
+    width: 260px;
+    transform: none;
+    margin-bottom: 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+}

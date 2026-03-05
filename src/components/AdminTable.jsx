@@ -45,6 +45,7 @@ const AdminTable = ({
     loading = false,
     showFilter = false,
     showSort = false,
+    getRowProps,
     toolbarContent = null,
 }) => {
     // ---- Pagination helpers ----
@@ -132,7 +133,10 @@ const AdminTable = ({
                                 {columns.map((col) => (
                                     <th
                                         key={col.key}
-                                        style={{ textAlign: col.align || (col.key === 'actions' ? 'right' : 'left') }}
+                                        style={{
+                                            textAlign: col.align || (col.key === 'actions' ? 'right' : 'left'),
+                                            width: col.width || 'auto'
+                                        }}
                                     >
                                         <div className="th-inner" style={{ justifyContent: col.align === 'right' || (!col.align && col.key === 'actions') ? 'flex-end' : 'flex-start' }}>
                                             {col.label}
@@ -142,27 +146,33 @@ const AdminTable = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((row, rowIdx) => (
-                                <tr key={row._id || row.id || rowIdx}>
-                                    {columns.map((col) => (
-                                        <td
-                                            key={col.key}
-                                            style={{ textAlign: col.align || (col.key === 'actions' ? 'right' : 'left') }}
-                                        >
-                                            <div
-                                                className="td-inner"
+                            {data.map((row, rowIdx) => {
+                                const rowProps = getRowProps ? getRowProps(row, rowIdx) : {};
+                                return (
+                                    <tr key={row._id || row.id || rowIdx} {...rowProps}>
+                                        {columns.map((col) => (
+                                            <td
+                                                key={col.key}
                                                 style={{
-                                                    justifyContent: col.align === 'right' || (!col.align && col.key === 'actions') ? 'flex-end' : 'flex-start'
+                                                    textAlign: col.align || (col.key === 'actions' ? 'right' : 'left'),
+                                                    width: col.width || 'auto'
                                                 }}
                                             >
-                                                {col.render
-                                                    ? col.render(row[col.key], row)
-                                                    : row[col.key] ?? '-'}
-                                            </div>
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
+                                                <div
+                                                    className="td-inner"
+                                                    style={{
+                                                        justifyContent: col.align === 'right' || (!col.align && col.key === 'actions') ? 'flex-end' : 'flex-start'
+                                                    }}
+                                                >
+                                                    {col.render
+                                                        ? col.render(row[col.key], row, rowIdx)
+                                                        : row[col.key] ?? '-'}
+                                                </div>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

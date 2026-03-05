@@ -638,25 +638,21 @@ const StrategicPositioningRadar = ({
         );
     }
 
-    if (error) {
+    if (error || (!hasGenerated && !data && Object.keys(userAnswers).length > 0)) {
         return (
             <div className="strategic-radar-container">
-                <AnalysisError
-                    error={error}
-                    onRetry={handleRetry}
-                    title="Strategic Positioning Radar Analysis Error"
-                />
-            </div>
-        );
-    }
-
-    if (!hasGenerated && !data && Object.keys(userAnswers).length > 0) {
-        return (
-            <div className="strategic-radar-container">
-                <AnalysisError
-                    error="Unable to generate strategic positioning analysis. Please try regenerating or check your inputs."
-                    onRetry={handleRetry}
-                    title="Strategic Positioning Radar Analysis Error"
+                <AnalysisEmptyState
+                    analysisType="strategicRadar"
+                    analysisDisplayName="Strategic Positioning Radar Analysis"
+                    icon={Target}
+                    onImproveAnswers={handleMissingQuestionsCheck}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    canRegenerate={canRegenerate}
+                    userAnswers={userAnswers}
+                    minimumAnswersRequired={3}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
@@ -675,7 +671,8 @@ const StrategicPositioningRadar = ({
                     canRegenerate={canRegenerate}
                     userAnswers={userAnswers}
                     minimumAnswersRequired={3}
-                    showImproveButton={!hideImproveButton}
+                    showImproveButton={false}
+                    showRegenerateButton={false}
                 />
             </div>
         );
