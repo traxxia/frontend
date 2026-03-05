@@ -206,7 +206,7 @@
 
 .modern-analysis-card.error {
   background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border-color: #ef4444;
+  /* border-color: #ef4444; */
 }
 
 .modern-analysis-card.locked {
@@ -728,28 +728,29 @@
 
   .modern-analysis-card {
     background: #1e293b;
-    border-color: #334155;
+    /* border-color: #334155; */
   }
 
   .modern-phase-header,
   .modern-card-header {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+
+    background-color: white;
   }
 
   .modern-phase-header:hover,
   .modern-card-header:hover {
-    background: rgba(51, 65, 85, 0.7);
+    background: rgba(255, 255, 255, 0.993);
   }
 
   .modern-phase-info h2,
   .modern-card-text h3 {
-    color: #f1f5f9;
+    color: #000000;
   }
 
   .modern-phase-info p,
   .modern-card-text p,
   .modern-progress-text {
-    color: #94a3b8;
+    color: #494949;
   }
 
   .modern-locked-state {
@@ -1056,4 +1057,15 @@
 [data-theme="dark"] .modern-analysis-container {
   background: var(--color-bg-primary, #111827) !important;
   color: var(--color-text-dark, #e5e7eb) !important;
+}
+
+
+
+
+
+tbody{
+    border-color: inherit;
+    border-style: solid;
+    border-width: 0;
+    background-color: white !important;
 }

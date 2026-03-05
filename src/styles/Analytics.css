@@ -7477,6 +7477,7 @@
  .factors-cell {
    max-width: 350px;
  }
+ 
 
  .factor-item {
    margin-bottom: 0px;
@@ -7689,6 +7690,7 @@
 
    .data-table {
      font-size: 0.85rem;
+     background-color: #ffffff !important;
    }
 
    .data-table thead th,
@@ -7816,7 +7818,7 @@
  /* Dark mode support */
  @media (prefers-color-scheme: dark) {
    .porters-container {
-     background-color: #1a1a1a;
+     background-color: #ffffff;
      /* color: #e0e0e0; */
    }
 
@@ -7832,18 +7834,23 @@
    .data-table tbody td {
      border-bottom-color: #555;
      color: #e0e0e0;
+     color: #222634;
    }
 
    .data-table tbody tr:hover {
-     background-color: #383838;
+     background-color: #f5f5f5;
    }
+  
 
    .factor-item {
-     background: #383838;
+     background: #ffffff;
      color: #e0e0e0;
    }
  }
 
+ .factors-cell .strong-text{
+  color: black !important;
+ }
  .section-container {
    background: #ffffff;
    border-radius: 12px;
