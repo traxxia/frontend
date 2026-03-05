@@ -161,6 +161,28 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
+                    {/* Subscription Details Section - Compact Box */}
+                    <section className="mt-4 pt-2 mb-4">
+                        <div className="subscription-compact-box">
+                            <p className="text-muted small fw-bold mb-3 text-uppercase border-bottom pb-2" style={{ fontSize: '0.8rem' }}>
+                                {t("subscription_details") || "Subscription Details"}
+                            </p>
+                            <div className="compact-row">
+                                <span className="compact-label">{t("start_date") || "Start Date"}</span>
+                                <span className="compact-value">{new Date(subscription.start_date).toLocaleDateString()}</span>
+                            </div>
+
+                            <div className="compact-row">
+                                <span className="compact-label">{t("end_date") || "End Date"}</span>
+                                <span className="compact-value">{new Date(subscription.end_date).toLocaleDateString()}</span>
+                            </div>
+
+                            <div className="compact-renewal-message">
+                                {t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() })}
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Usage Metrics Section */}
                     <section className="mt-4 pt-2 mb-4">
                         <h5 className="autorenew-title mb-4">{t("usage_metrics") || "Usage Metrics"}</h5>
