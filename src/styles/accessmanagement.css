@@ -592,53 +592,47 @@
     }
 }
 
-/* Compact Subscription Box - Refined */
+/* Compact Subscription Details - Minimalist Styling */
 .subscription-compact-box {
-    background: #ffffff;
-    padding: 1.25rem;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    max-width: 280px;
+    background: transparent;
+    padding: 0.2rem 0.75rem;
+    border-left: 6px solid #3b82f6;
+    max-width: 350px;
+    margin-bottom: 1rem;
 }
+
 
 .compact-row {
     display: flex;
     justify-content: flex-start;
-    /* Aligned to left */
     align-items: baseline;
     padding: 0.1rem 0;
-    gap: 0.8rem;
-    /* Fixed space between label and value */
-}
-
-.compact-row:not(:last-child) {
-    border-bottom: 1px solid #f8fafc;
+    gap: 1rem;
 }
 
 .compact-label {
-    font-size: 0.65rem;
-    font-weight: 500;
+    font-size: 0.80rem;
+    font-weight: 630;
     text-transform: uppercase;
-    color: #64748b;
+    color: #7f8996;
+    /* Muted slate */
     letter-spacing: 0.025em;
-    min-width: 80px;
-    /* Ensure labels align */
+    min-width: 75px;
 }
 
 .compact-value {
-    font-size: 0.65rem;
-    font-weight: 500;
-    color: #1e293b;
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #475569;
+    /* Balanced slate */
 }
 
 .compact-renewal-message {
-    margin-top: 0.75rem;
-    padding: 0;
-    background: transparent;
-    border: none;
-    font-size: 0.75rem;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    color: #64748b;
+    color: #3b82f6;
+    /* Themed color */
+    font-style: italic;
     display: block;
 }
