@@ -204,7 +204,7 @@ const AcademyPage = () => {
                     <LucideIcons.Search className="main-search-icon" size={20} />
                     <input
                         type="text"
-                        placeholder="Search for guides, articles, or topics..."
+                        placeholder="Search for guides or articles..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="academy-main-search-input"

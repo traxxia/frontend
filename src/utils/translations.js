@@ -320,6 +320,8 @@ export const staticTranslations = {
     'Please_enter_a_valid_email_address': 'Please enter a valid email address',
     'Password_is_required': 'Password is required',
     "is_editing": "is editing",
+    'terms': 'Terms',
+    "business_name_cannot_contain_numbers": "Business name cannot contain numbers",
 
     // ===========================
     // BUSINESS DETAIL PAGE
@@ -2647,6 +2649,10 @@ export const staticTranslations = {
     'Loading collaborators': 'Cargando colaboradoras...',
     'Loading projects': 'Cargando proyectos...',
     'Give Access': 'Dar acceso',
+    'Name_can_only_contain_letters_and_spaces': 'El nombre solo puede contener letras y espacios',
+    'Name_must_be_at_least_2_characters_long': 'El nombre debe tener al menos 2 caracteres',
+    'terms': 'Términos y Condiciones',
+    'business_name_cannot_contain_numbers': 'El nombre de la empresa no puede contener números',
 
     // ===========================
     // PROJECT FOEM PAGE

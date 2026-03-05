@@ -312,6 +312,9 @@ const Dashboard = () => {
     else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
       errors.business_name = "Business name contains invalid characters";
     }
+    else if (/\d/.test(businessName)) {
+      errors.business_name = t('business_name_cannot_contain_numbers');
+    }
 
     // Business purpose validation
     const businessPurpose = businessFormData.business_purpose.trim();

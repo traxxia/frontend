@@ -2,7 +2,7 @@
 .App {
   text-align: left !important;
 }
- 
+
 .business-detail-container textarea,
 .business-detail-container .form-control {
   text-align: left !important;
@@ -45,12 +45,14 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
 }

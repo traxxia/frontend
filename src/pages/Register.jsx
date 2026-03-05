@@ -77,6 +77,7 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       <div className="full-width-field">
         <PaymentForm
           error={localError || error}
+          isSubmitting={isSubmitting}
           cardHolderName={cardHolderName}
           onCardHolderNameChange={(name) => {
             setCardHolderName(name);
@@ -183,7 +184,18 @@ const Register = () => {
 
   const validateTab1 = () => {
     const newErrors = {};
-    if (!form.name.trim()) newErrors.name = t('first_name_required') || 'Name is required';
+    if (!form.name.trim()) {
+      newErrors.name = t('first_name_required') || 'Name is required';
+    } else {
+      const name = form.name.trim();
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (name.length < 2) {
+        newErrors.name = t('Name_must_be_at_least_2_characters_long') || 'Name must be at least 2 characters long';
+      } else if (!nameRegex.test(name)) {
+        newErrors.name = t('Name_can_only_contain_letters_and_spaces') || 'Name can only contain letters and spaces';
+      }
+    }
+
     if (!form.email.trim()) newErrors.email = t('email_required') || 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = t('email_invalid') || 'Invalid email';
 
@@ -661,10 +673,8 @@ const Register = () => {
                 <h3>{showTermsModal ? t('terms') : t('privacy_policy')}</h3>
                 <button className="modal-close-button" onClick={() => { setShowTermsModal(false); setShowPrivacyModal(false); }}><FaTimes /></button>
               </div>
-              <div className="modal-content">
-                <p className="modal-text-break">
-                  {showTermsModal ? t('terms_content') : t('privacy_content')}
-                </p>
+              <div className="modal-content-data">
+                <p className="modal-text-break">{showTermsModal ? t('terms_content') : t('privacy_content')}</p>
               </div>
             </motion.div>
           </div>

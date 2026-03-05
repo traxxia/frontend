@@ -133,13 +133,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const activeProjects = useMemo(() => projects.filter(p =>
     (p.launch_status?.toLowerCase() === 'launched' ||
-    p.launch_status?.toLowerCase() === 'pending_launch') &&
+      p.launch_status?.toLowerCase() === 'pending_launch') &&
     p.status?.toLowerCase() !== 'killed'
   ), [projects]);
 
   const draftProjects = useMemo(() => projects.filter(p =>
-    (p.launch_status?.toLowerCase() !== 'launched' && 
-     p.launch_status?.toLowerCase() !== 'pending_launch') &&
+    (p.launch_status?.toLowerCase() !== 'launched' &&
+      p.launch_status?.toLowerCase() !== 'pending_launch') &&
     p.status?.toLowerCase() !== 'killed'
   ), [projects]);
 
@@ -151,8 +151,8 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
       // Check if ALL non-killed projects are ranked
       const allEligibleProjects = projects.filter(p => p.status?.toLowerCase() !== 'killed');
-      
-      const unrankedProjects = allEligibleProjects.filter(p => 
+
+      const unrankedProjects = allEligibleProjects.filter(p =>
         p.rank === null || p.rank === undefined
       );
 
@@ -543,21 +543,21 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       <div className="selection-list mb-4">
         {draftProjects.map(p => (
           <div
-  key={p._id}
-  className="selection-item clickable-row"
-  onClick={() => !isArchived && handleToggleDraft(p._id)}
-  style={{ cursor: isArchived ? "not-allowed" : "pointer" }}
->
-  <Form.Check
-    type="checkbox"
-    id={`draft-${p._id}`}
-    checked={selectedDraftIds.includes(p._id)}
-    onChange={() => handleToggleDraft(p._id)}
-    onClick={(e) => e.stopPropagation()}   
-    label={p.project_name}
-    disabled={isArchived}
-  />
-</div>
+            key={p._id}
+            className="selection-item clickable-row"
+            onClick={() => !isArchived && handleToggleDraft(p._id)}
+            style={{ cursor: isArchived ? "not-allowed" : "pointer" }}
+          >
+            <Form.Check
+              type="checkbox"
+              id={`draft-${p._id}`}
+              checked={selectedDraftIds.includes(p._id)}
+              onChange={() => handleToggleDraft(p._id)}
+              onClick={(e) => e.stopPropagation()}
+              label={p.project_name}
+              disabled={isArchived}
+            />
+          </div>
         ))}
         {draftProjects.length === 0 && <p className="text-muted small">{t("No draft projects found.")}</p>}
       </div>
@@ -567,12 +567,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const renderStep2 = () => (
     <>
-      <div className={`d-flex ${isAdmin && !initialAllRanked ? "justify-content-between" : "justify-content-end"} align-items-center mb-3`}>
-        {isAdmin && !initialAllRanked && (
-          <Button variant="outline-secondary" size="sm" onClick={() => setStep(1)}>
-            ← {t("Back to Selection")}
-          </Button>
-        )}
+      <div className={`d-flex ${isAdmin && !initialAllRanked ? "justify-content-end" : "justify-content-end"} align-items-center mb-3`}>
         <p className="rank-description mb-0">
           {t("Drag projects to reorder. AI suggested an initial order.")}
         </p>
@@ -749,6 +744,15 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               disabled={isGeneratingAI || isArchived}
             >
               {isGeneratingAI ? t("Fetching AI Rankings...") : t("Next: Rank Projects")}
+            </Button>
+          )}
+          {step === 2 && isAdmin && !initialAllRanked && (
+            <Button
+              variant="outline-secondary"
+              className="responsive-btn w-100-mobile"
+              onClick={() => setStep(1)}
+            >
+              ← {t("Back to Selection")}
             </Button>
           )}
           {step === 2 && (isAdmin || userHasRerankAccess) && (

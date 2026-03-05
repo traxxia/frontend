@@ -249,11 +249,12 @@
 
   .responsive-btn {
     font-size: 14px;
-    padding: 10px;
+    padding: 6px 12px;
   }
 
   .w-100-mobile {
-    width: 100% !important;
+    flex: 1;
+    min-width: 0;
   }
 
   .responsive-card {
