@@ -20,5 +20,4 @@ The "Kickstart" button is the bridge between strategy and project management. th
 
 > [!TIP]
 > Use the AI Companion within the project view to refine milestones or generate more detailed sub-tasks if the initial breakdown needs more granularity.
-
-Next: [Project Management Lifecycle](../07-project-management/project-lifecycle.md)
+ 

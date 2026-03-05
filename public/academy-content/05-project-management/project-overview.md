@@ -23,5 +23,4 @@ At the top of the page, you can filter projects by their lifecycle stage:
 - **At Risk / Paused / Killed / Scaled**: Historical or monitored states.
 
 Each filter displays a **count badge**, showing you at a glance the distribution of your portfolio.
-
-Next: [Creating New Projects](./create-project.md)
+ 

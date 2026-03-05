@@ -1,9 +1,7 @@
 # User Management
 
 The **User Management** section allows Super Admins to monitor and manage all users across the Traxxia platform.
-
----
-
+ 
 ## User Overview
 
 At the top of the page, the system displays key user metrics:
@@ -16,8 +14,7 @@ At the top of the page, the system displays key user metrics:
 These metrics provide a quick overview of user distribution across roles.
 
 ![User Management Dashboard](/academy-screenshots/admin-panel/user-management.png)
-
----
+ 
 
 ## User List
 
@@ -30,8 +27,7 @@ The user table includes the following details:
 - Join date
 
 This information helps administrators understand who is using the platform and their access level.
-
----
+ 
 
 ## Changing User Roles
 
@@ -46,16 +42,11 @@ Available roles include:
 - User
 
 ![Change Role Menu](/academy-screenshots/admin-panel/change-role.png)
-
----
+ 
 
 ## Confirming Role Changes
 
 When a role change is selected, a confirmation dialog appears to prevent accidental modifications.
 
 Administrators must confirm the action before the new role is applied.
-
-
-Back to: [Businesses Management](./businesses-management.md)
-
-Next: [User History](./user-history.md)
+  

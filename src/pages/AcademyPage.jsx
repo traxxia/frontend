@@ -4,7 +4,8 @@ import { Menu } from 'lucide-react';
 import AcademyNavigation from '../components/AcademyNavigation';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import AcademyFeedback from '../components/AcademyFeedback';
-import { findArticleById, findCategoryById, getBreadcrumbs, academyStructure } from '../utils/academyIndex';
+import { findArticleById, findCategoryById, getBreadcrumbs, academyStructure, resolveAcademyPath } from '../utils/academyIndex';
+
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
@@ -27,6 +28,9 @@ const AcademyPage = () => {
     const [currentArticle, setCurrentArticle] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
+    const [prevArticle, setPrevArticle] = useState(null);
+    const [nextArticle, setNextArticle] = useState(null);
+
 
     // Reset search when navigating
     useEffect(() => {
@@ -81,6 +85,19 @@ const AcademyPage = () => {
 
             setCurrentArticle(articleData);
 
+            // Find next and previous articles globally across all categories
+            const allArticles = academyStructure.categories.flatMap(cat =>
+                cat.articles.map(art => ({ ...art, categoryId: cat.id }))
+            );
+
+            const index = allArticles.findIndex(a => a.id === article);
+            if (index !== -1) {
+                setPrevArticle(index > 0 ? allArticles[index - 1] : null);
+                setNextArticle(index < allArticles.length - 1 ? allArticles[index + 1] : null);
+            }
+
+
+
             try {
                 // Import markdown file dynamically
                 const response = await fetch(`/academy-content/${articleData.path}`);
@@ -109,25 +126,18 @@ const AcademyPage = () => {
             if (!target) return;
 
             const href = target.getAttribute('href');
+            const isInternal = target.classList.contains('academy-internal-link') ||
+                target.classList.contains('academy-next-step-card');
 
             // Check if it's an internal academy link
-            if (href && href.startsWith('/academy/')) {
+            if (href && (href.startsWith('/academy/') || isInternal)) {
                 e.preventDefault();
 
-                // Extract category and article from href
-                const pathParts = href.replace('/academy/', '').split('/');
-
-                if (pathParts.length === 2) {
-                    // Has category: /academy/category/article
-                    navigate(href);
-                } else if (pathParts.length === 1) {
-                    // No category - need to find it using findArticleById
-                    const articleData = findArticleById(pathParts[0]);
-                    if (articleData && articleData.categoryId) {
-                        navigate(`/academy/${articleData.categoryId}/${pathParts[0]}`);
-                    }
-                }
+                // Use resolveAcademyPath to standardize the link
+                const finalPath = resolveAcademyPath(href, category);
+                navigate(finalPath);
             }
+
         };
 
         const contentDiv = document.querySelector('.academy-markdown-content');
@@ -317,7 +327,6 @@ const AcademyPage = () => {
                     <nav className="academy-breadcrumbs">
                         {breadcrumbs.map((crumb, index) => (
                             <span key={crumb.path} className="breadcrumb-item">
-                                {index > 0 && <span className="breadcrumb-separator">/</span>}
                                 {index === breadcrumbs.length - 1 ? (
                                     <span className="breadcrumb-current">{crumb.label}</span>
                                 ) : (
@@ -370,7 +379,40 @@ const AcademyPage = () => {
 
                             <MarkdownRenderer content={content} articleId={article} />
 
-                            <AcademyFeedback articleId={article} />
+                            {/* <AcademyFeedback articleId={article} /> */}
+
+                            {/* Bottom Pagination */}
+                            {(prevArticle || nextArticle) && (
+                                <div className="article-pagination-bottom">
+                                    {prevArticle ? (
+                                        <Link
+                                            to={`/academy/${prevArticle.categoryId}/${prevArticle.id}`}
+                                            className="pagination-link prev"
+                                        >
+                                            <div className="pagination-label">Previous Step</div>
+                                            <div className="pagination-title">
+                                                <LucideIcons.ChevronLeft size={16} />
+                                                {prevArticle.title}
+                                            </div>
+                                        </Link>
+                                    ) : <div className="pagination-spacer"></div>}
+
+                                    {nextArticle ? (
+                                        <Link
+                                            to={`/academy/${nextArticle.categoryId}/${nextArticle.id}`}
+                                            className="pagination-link next"
+                                        >
+                                            <div className="pagination-label">Next Step</div>
+                                            <div className="pagination-title">
+                                                {nextArticle.title}
+                                                <LucideIcons.ChevronRight size={16} />
+                                            </div>
+                                        </Link>
+                                    ) : <div className="pagination-spacer"></div>}
+                                </div>
+                            )}
+
+
 
                             {renderRelatedArticles()}
                         </>

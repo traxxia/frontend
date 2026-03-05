@@ -271,7 +271,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  font-size:1.4rem !important;
+  font-size: 1.4rem !important;
   font-weight: var(--font-weight-semibold);
 }
 
@@ -467,6 +467,7 @@
 .breadcrumb-current {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
+  margin-left: 10px;
 }
 
 /* ============================================================================
@@ -817,7 +818,6 @@
 .academy-markdown-content a {
   color: var(--color-primary);
   text-decoration: none;
-  border-bottom: 1px solid transparent;
   transition: var(--transition-normal);
 }
 
@@ -1196,4 +1196,152 @@
 .academy-navigation::-webkit-scrollbar-thumb:hover,
 .academy-content::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-dark);
+}
+
+/* Article Bottom Pagination */
+.article-pagination-bottom {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-4xl);
+  padding-top: var(--spacing-2xl);
+  border-top: 1px solid var(--color-border-light);
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-4xl);
+}
+
+.pagination-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+  background: var(--color-bg-item);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-lg);
+  text-decoration: none;
+  transition: var(--transition-normal);
+  max-width: calc(50% - var(--spacing-md));
+}
+
+.pagination-link:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.pagination-link.prev {
+  align-items: flex-start;
+}
+
+.pagination-link.next {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.pagination-link.next .pagination-title {
+  justify-content: flex-end;
+}
+
+.pagination-link .pagination-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.pagination-link .pagination-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.pagination-spacer {
+  flex: 1;
+}
+
+/* Premium Next Step Card (Manual Highlight) */
+.academy-next-step-card {
+  margin-top: var(--spacing-4xl);
+  padding: var(--spacing-2xl);
+  background: linear-gradient(135deg, rgba(33, 122, 255, 0.05) 0%, rgba(33, 122, 255, 0.12) 100%);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--border-radius-xl);
+  display: block;
+  text-decoration: none !important;
+  transition: var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(33, 122, 255, 0.1);
+}
+
+.academy-next-step-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-primary);
+}
+
+.academy-next-step-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(33, 122, 255, 0.2);
+  background: linear-gradient(135deg, rgba(33, 122, 255, 0.08) 0%, rgba(33, 122, 255, 0.18) 100%);
+  border-color: var(--color-primary);
+}
+
+.next-step-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--color-primary);
+  font-weight: 800;
+  margin-bottom: var(--spacing-sm);
+}
+
+.next-step-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.next-step-icon {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: var(--color-primary);
+  transition: var(--transition-normal);
+  line-height: 1;
+}
+
+.academy-next-step-card:hover .next-step-icon {
+  transform: translateX(8px);
+}
+
+@media (max-width: 768px) {
+  .next-step-title {
+    font-size: 1.2rem;
+  }
+
+  .next-step-icon {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .article-pagination-bottom {
+    flex-direction: column;
+  }
+
+  .pagination-link {
+    max-width: 100%;
+  }
 }

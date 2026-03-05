@@ -21,5 +21,4 @@ An interactive breakdown of your **Strengths, Weaknesses, Opportunities, and Thr
 The AI identifies recurring themes and suggests specific **Strategic Initiatives**. On the **Essential Plan**, you can generate unlimited initiatives to refine your strategy, even if you cannot yet convert them into active projects.
 
 > [!NOTE] All insights are dynamic. If you update your questionnaire answers or PMF data, the AI will re-analyze and refresh your strategic profile immediately.
-
-Next: [Team Collaboration](../05-collaboration/01-adding-collaborators.md)
+ 

@@ -5,8 +5,7 @@ The **Super Admin Panel** provides a centralized control center for managing the
 Super Admins can monitor companies, businesses, users, activity logs, and system configuration settings from a single interface.
 
 This panel is designed to give full visibility and control across all organizations using Traxxia.
-
----
+ 
 
 ## Main Navigation Tabs
 
@@ -20,9 +19,7 @@ The Super Admin Panel includes several management sections:
 - **Questions** – Manage the AI questionnaire used for strategic analysis.
 
 ![Super Admin Dashboard](/academy-screenshots/admin-panel/companies.png)
-
----
-
+ 
 ## Purpose of the Super Admin Panel
 
 The Super Admin Panel allows administrators to:
@@ -32,6 +29,4 @@ The Super Admin Panel allows administrators to:
 - Track company and business usage
 - Review security events
 - Maintain the AI questionnaire system
-
-
-Next: [Companies Management](./companies-management.md)
+ 

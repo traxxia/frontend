@@ -1,8 +1,7 @@
 # PMF Foundation & Onboarding
 
 The Product-Market Fit (PMF) Flow is the primary portal for strategic value in Traxxia. It is designed as a **High-Velocity Onboarding** experience that transforms your business context into directional clarity in minutes.
-
----
+ 
 
 ## 1. The "One Product Objective"
 
@@ -14,8 +13,7 @@ Traxxia's success is measured by how quickly you gain clarity. We focus on:
 
 > [!IMPORTANT]
 > The goal is to establish a strong "Good Enough" baseline quickly, which you can then refine over time as your strategy evolves.
-
----
+ 
 
 ## 2. The Onboarding Journey
 
@@ -65,13 +63,9 @@ Select how you win against the competition.
 Specify the context for the final output.
 *   **Options**: My Company vs. A Client.
 ![Step 9](/academy-screenshots/pmf/step-9.png)
-
----
+ 
 
 ## 3. Real-time Progress
 
 As you move through the journey, the progress bar indicates how close you are to generating your initial strategy. Once finished, the system generates your **AHA Insights** and **Executive Summary** in parallel, ready for immediate review.
-
-Back to: [Business Overview](../02-dashboard-business/creating-your-business.md)
-
-Next: [Insights & Strategic Core](02-pmf-insights.md)
+  

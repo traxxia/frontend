@@ -1,7 +1,5 @@
 # AI Questionnaire Overview
-
-Back to: [Team Consensus](../05-project-management/team-consensus.md)
-
+ 
 The **AI Questionnaire** is the strategic heart of Traxxia. It serves as your business's "Source of Truth," where raw data is converted into actionable intelligence through a series of structured conversations and automated analysis.
 
 ## 1. The Source of Truth
@@ -18,5 +16,4 @@ You don't have to start from scratch. Traxxia features **AI Answer Support** to 
 
 ## 3. Dynamic Consistency
 The questionnaire is not just a form; it's a dynamic conversation. As you provide answers, the AI Assistant (available on every page) becomes more intelligent and aware of your business context, allowing it to provide even better advice during your strategy sessions.
-
-Next: [Phases & Question Ordering](02-phases-and-ordering.md)
+ 

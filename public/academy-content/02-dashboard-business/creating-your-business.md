@@ -32,5 +32,4 @@ To delete a business, click the **"Delete"** button on the business card.
 *Screenshot of Traxxia Dashboard with delete confirmation*
 
 > [!TIP] If you have already reached your limit, consider **Archiving** your current business to preserve its data before starting a new one (if your plan allows for multiple slots).
-
-Next: [PMF Flow](../03-pmf-flow/01-pmf-foundation.md)
+ 

@@ -16,7 +16,4 @@ To dive deeper into team perspectives, the Admin can switch to the **Team View**
 - Red/Green indicators highlight where collaborators agreed or disagreed significantly with the collective view.
 
 ![Team View breakdown](/academy-screenshots/projects/team-consensus.png)
-
-Back to: [The Ranking Workflow](./project-ranking.md)
-
-Next: [Launching to Active](./project-launch.md)
+  

@@ -17,5 +17,4 @@ Based on the field you are editing or the phase you are in, the AI will suggest 
 Your conversation history is unified across the session. You can start a chat on the Questionnaire and continue it inside a Project page without losing the thread of your conversation.
 
 > [!TIP] Use the AI as a "sparring partner" to challenge your strategic assumptions and help you write more professional business descriptions.
-
-Next: [Admin Panel Control](../10-admin-panel/01-progress-monitoring.md)
+ 

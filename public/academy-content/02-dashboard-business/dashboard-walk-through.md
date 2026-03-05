@@ -29,6 +29,4 @@ On the right side you will see the list of all the businesses you have created i
 
 ![Business List](/academy-screenshots/getting-started/dashboard-with-created-business.png)
 *Screenshot of Traxxia Dashboard with created business list*
-
-Lets learn how to create a business.
-Next: [Business Overview](../02-dashboard-business/creating-your-business.md)
+  

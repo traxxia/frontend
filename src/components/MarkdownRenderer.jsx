@@ -3,6 +3,8 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import '../styles/academy.css';
 import { ACADEMY_CONFIG } from '../utils/academyConfig';
+import { resolveAcademyPath, findArticleById } from '../utils/academyIndex';
+
 
 /**
  * MarkdownRenderer Component
@@ -27,9 +29,40 @@ const replacePlaceholders = (text) => {
     });
 };
 
+// Helper to transform "Next: [Title](Path)" into a premium card
+const enhanceMarkdown = (text, currentCategoryId) => {
+    if (!text) return '';
+
+    // Match lines starting with "Next:" followed by a markdown link
+    return text.replace(/^Next:\s+\[(.*?)\]\((.*?)\)/gm, (match, title, path) => {
+        const resolvedPath = resolveAcademyPath(path, currentCategoryId);
+        return `
+<a href="${resolvedPath}" class="academy-next-step-card">
+    <span class="next-step-label">Next Step</span>
+    <div class="next-step-title">
+        <span>${title}</span>
+        <span class="next-step-icon">→</span>
+    </div>
+</a>`;
+    });
+};
+
 const MarkdownRenderer = ({ content, articleId }) => {
     const [renderedHTML, setRenderedHTML] = useState('');
     const [tableOfContents, setTableOfContents] = useState([]);
+
+    // Get current category from articleId if possible to provide context for relative links
+    const [currentCategoryId, setCurrentCategoryId] = useState(null);
+
+    useEffect(() => {
+        if (articleId) {
+            const article = findArticleById(articleId);
+            if (article) {
+                setCurrentCategoryId(article.categoryId);
+            }
+        }
+    }, [articleId]);
+
 
     useEffect(() => {
         if (!content) {
@@ -109,73 +142,21 @@ const MarkdownRenderer = ({ content, articleId }) => {
 
         // Custom renderer for links to convert .md paths to React Router paths
         renderer.link = function (href, title, text) {
+            // Skip processing for links that already have class="academy-next-step-card"
+            // (These are the ones we injected in enhanceMarkdown)
+            if (text.includes('next-step-label')) {
+                return `<a href="${href}" class="academy-next-step-card">${text}</a>`;
+            }
+
             // Check if this is a markdown file link
-            if (href && href.endsWith('.md')) {
-                // Convert relative markdown paths to React Router paths
-                // Examples:
-                // ./02-creating-an-account.md -> /academy/getting-started/creating-an-account
-                // ../03-questionnaire/01-ai-assistant-overview.md -> /academy/questionnaire/ai-assistant-overview
-
-                let routerPath = href;
-
-                // Remove .md extension
-                routerPath = routerPath.replace(/\.md$/, '');
-
-                // Handle relative paths
-                if (routerPath.startsWith('./')) {
-                    // Same directory - remove ./ and extract filename
-                    routerPath = routerPath.substring(2);
-                } else if (routerPath.startsWith('../')) {
-                    // Parent directory - keep for category extraction
-                    routerPath = routerPath.substring(3);
-                }
-
-                // Extract category and article from path
-                // Format: "category/##-article-name" -> category/article-name
-                const parts = routerPath.split('/');
-                let category, articleId;
-
-                if (parts.length === 2) {
-                    // Cross-category link: category/file
-                    category = parts[0];
-                    articleId = parts[1];
-                } else {
-                    // Same category link: just filename
-                    // We need to infer category from current URL
-                    // For now, extract from articleId which is passed to component
-                    articleId = parts[0];
-                    category = null; // Will be set dynamically
-                }
-
-                // Remove number prefix (01-, 02-, etc.) from article ID
-                articleId = articleId.replace(/^\d+-/, '');
-
-                // Map directory names to actual category IDs
-                const categoryMap = {
-                    '01-auth-onboarding': 'auth-onboarding',
-                    '02-dashboard-business': 'dashboard-business',
-                    '03-pmf-flow': 'pmf-flow',
-                    '04-kickstart-projects': 'kickstart-projects',
-                    '05-project-management': 'project-management',
-                    '06-ai-questionnaire': 'ai-questionnaire',
-                    '07-insights-strategy': 'insights-strategy',
-                    '08-ai-assistant': 'ai-assistant',
-                    '09-admin-panel': 'admin-panel'
-                };
-
-                if (category && categoryMap[category]) {
-                    category = categoryMap[category];
-                }
-
-                // If no category in link, we need to find it from the article ID
-                // This will be handled on the client side via findArticleById
-                const finalHref = category ? `/academy/${category}/${articleId}` : `/academy/${articleId}`;
-
+            if (href && (href.endsWith('.md') || !href.startsWith('http'))) {
+                const finalHref = resolveAcademyPath(href, currentCategoryId);
                 const titleAttr = title ? `title="${DOMPurify.sanitize(title)}"` : '';
                 const sanitizedText = DOMPurify.sanitize(text);
 
                 return `<a href="${finalHref}" class="academy-internal-link" ${titleAttr}>${sanitizedText}</a>`;
             }
+
 
             // External links or non-.md links
             const titleAttr = title ? `title="${DOMPurify.sanitize(title)}"` : '';
@@ -186,9 +167,10 @@ const MarkdownRenderer = ({ content, articleId }) => {
             return `<a href="${href}" ${titleAttr} ${targetAttr} class="academy-link">${sanitizedText}</a>`;
         };
 
-        // Parse markdown with placeholder replacement
-        const contentWithReplacements = replacePlaceholders(content);
-        const rawHTML = marked(contentWithReplacements, { renderer });
+        // Parse markdown with placeholder and premium link replacement
+        const enhancedContent = enhanceMarkdown(replacePlaceholders(content), currentCategoryId);
+        const rawHTML = marked(enhancedContent, { renderer });
+
 
         // Extract table of contents from headings
         const toc = [];
@@ -200,15 +182,17 @@ const MarkdownRenderer = ({ content, articleId }) => {
             }
         );
 
-        // Sanitize HTML
+        // Sanitize HTML - allow classes and titles
         const clean = DOMPurify.sanitize(htmlWithAnchors, {
-            ADD_ATTR: ['target'], // Allow target attribute for links
-            ADD_TAGS: ['iframe'] // Allow iframes for potential future video embeds
+            ADD_ATTR: ['target', 'class', 'title'],
+            ADD_TAGS: ['iframe']
         });
 
         setRenderedHTML(clean);
         setTableOfContents(toc);
-    }, [content]);
+    }, [content, currentCategoryId]);
+
+
 
     if (!content) {
         return (
