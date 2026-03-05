@@ -5,6 +5,7 @@ import '../styles/goodPhase.css';
 import { useTranslation } from "../hooks/useTranslation";
 import AnalysisEmptyState from './AnalysisEmptyState';
 import FinancialEmptyState from './FinancialEmptyState';
+import CitationSource from './CitationSource';
 import { checkMissingQuestionsAndRedirect, ANALYSIS_TYPES } from '../services/missingQuestionsService';
 
 const GrowthTracker = ({
@@ -16,6 +17,7 @@ const GrowthTracker = ({
   isRegenerating = false,
   canRegenerate = true,
   growthData = null,
+  growthTrackerData = null, // Support for naming variants
   selectedBusinessId,
   onRedirectToBrief,
   uploadedFile = null,
@@ -26,7 +28,7 @@ const GrowthTracker = ({
   readOnly = false,
   documentInfo = null,
 }) => {
-  const [analysisData, setAnalysisData] = useState(growthData);
+  const [analysisData, setAnalysisData] = useState(null);
   const [error, setError] = useState(null);
 
   const isMounted = useRef(false);
@@ -62,15 +64,14 @@ const GrowthTracker = ({
   };
 
   const isGrowthDataIncomplete = (data) => {
-    if (!data) return true;
-
-    const normalized = data.growthTracker || data.growth_tracker || data.GrowthTracker || (data.growth_trends ? data : null);
+    const normalized = getNormalizedData(data);
     if (!normalized) return true;
 
-    // Check if revenue data exists - actual API structure: growth_trends.revenue.values
-    const hasRevenueData = normalized.growth_trends?.revenue?.values && Object.keys(normalized.growth_trends.revenue.values).length > 0;
+    // Check if revenue or net_income data exists
+    const hasRevenueData = normalized.revenue?.values && Object.keys(normalized.revenue.values).length > 0;
+    const hasNetIncomeData = normalized.net_income?.values && Object.keys(normalized.net_income.values).length > 0;
 
-    return !hasRevenueData;
+    return !hasRevenueData && !hasNetIncomeData;
   };
 
   const handleRegenerate = async () => {
@@ -82,42 +83,43 @@ const GrowthTracker = ({
         console.error('Error during regeneration:', error);
         setError('Failed to regenerate analysis. Please try again.');
       }
-    } else {
-      setAnalysisData(null);
-      setError(null);
     }
   };
 
-  // Fixed useEffect pattern - same as ProfitabilityAnalysis
+  // Helper to normalize growth data structure
+  const getNormalizedData = (data) => {
+    if (!data) return null;
+
+    // 1. Direct growth_trends access
+    if (data.growth_trends) return data.growth_trends;
+
+    // 2. Handle cases where the whole object IS the growth_trends content
+    if (data.revenue && data.revenue.values) return data;
+
+    // 3. Handle various wrapper keys
+    const wrapper = data.growthTracker || data.growth_tracker || data.GrowthTracker;
+    if (wrapper) {
+      return wrapper.growth_trends || wrapper;
+    }
+
+    return null;
+  };
+
   useEffect(() => {
-    if (growthData) {
-      const normalized = growthData.growthTracker || growthData.growth_tracker || growthData.GrowthTracker || (growthData.growth_trends ? growthData : null);
+    const rawData = growthData || growthTrackerData;
 
-      if (normalized && normalized.growth_trends) {
-        setAnalysisData(normalized);
+    if (rawData) {
+      const normalized = getNormalizedData(rawData);
+
+      if (normalized) {
+        setAnalysisData({ growth_trends: normalized });
         setError(null);
-
         if (onDataGenerated) {
-          onDataGenerated(normalized);
+          onDataGenerated({ growth_trends: normalized });
         }
       }
     }
-  }, [growthData, onDataGenerated]);
-
-  useEffect(() => {
-    if (hasInitialized.current) return;
-
-    isMounted.current = true;
-    hasInitialized.current = true;
-
-    if (growthData) {
-      setAnalysisData(growthData);
-    }
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [growthData]);
+  }, [growthData, growthTrackerData, onDataGenerated]);
 
   const handleFileUpload = (file) => {
     if (file) {
@@ -141,56 +143,58 @@ const GrowthTracker = ({
     }
   };
 
-  const prepareChartData = (revenueData) => {
-    if (!revenueData || !revenueData.values) return [];
+  const prepareChartData = (dataValues) => {
+    if (!dataValues) return [];
 
     const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'];
 
-    const chartData = monthOrder.map(month => {
-      const revenue = revenueData.values[month] || 0;
+    return monthOrder.map(month => {
+      const value = dataValues[month] || 0;
       return {
         month: month.substr(0, 3),
-        revenue: revenue,
-        period: monthOrder.indexOf(month) + 1
+        value: value,
+        fullMonth: month
       };
-    }).filter(item => item.revenue > 0);
-    return chartData;
+    }).filter(item => item.value !== 0);
   };
 
   const extractGrowthMetrics = (data) => {
-    const normalized = data.growthTracker || data.growth_tracker || data.GrowthTracker || (data.growth_trends ? data : null);
+    // data is expected to be { growth_trends: ... } or just the trends object
+    const target = data?.growth_trends || data;
+    if (!target) return { revenueChartData: [], netIncomeChartData: [], metrics: {}, citations: {} };
 
-    if (!normalized || !normalized.growth_trends?.revenue?.values) {
-      return { chartData: [], metrics: {} };
-    }
+    const revenueChartData = prepareChartData(target.revenue?.values);
+    const netIncomeChartData = prepareChartData(target.net_income?.values);
+    const citations = target.citations || {};
 
-    const chartData = prepareChartData(normalized.growth_trends.revenue);
-    const revenueValues = Object.values(data.growth_trends.revenue.values);
-    const totalRevenue = revenueValues.reduce((sum, val) => sum + val, 0);
-    const avgMonthlyRevenue = totalRevenue / revenueValues.length;
+    const revValues = Object.values(target.revenue?.values || {});
+    const totalRevenue = revValues.reduce((sum, val) => sum + (val || 0), 0);
 
-    const bestMonth = Object.entries(data.growth_trends.revenue.values)
-      .reduce((max, [month, revenue]) => revenue > max.revenue ? { month, revenue } : max, { month: 'N/A', revenue: 0 });
+    const niValues = Object.values(target.net_income?.values || {});
+    const totalNetIncome = niValues.reduce((sum, val) => sum + (val || 0), 0);
+
+    const bestMonth = Object.entries(target.revenue?.values || {})
+      .reduce((max, [month, revenue]) => (revenue || 0) > max.revenue ? { month, revenue } : max, { month: 'N/A', revenue: 0 });
 
     const metrics = {
       totalRevenue,
-      avgMonthlyRevenue,
+      totalNetIncome,
+      avgMonthlyRevenue: revValues.length > 0 ? totalRevenue / revValues.length : 0,
       bestMonth,
-      dataCount: revenueValues.length
+      dataCount: Math.max(revValues.length, niValues.length)
     };
 
-    return { chartData, metrics };
+    return { revenueChartData, netIncomeChartData, metrics, citations };
   };
 
   const formatCurrency = (value) => {
-    if (Math.abs(value) >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    }
-    if (Math.abs(value) >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`;
-    }
-    return `$${value.toFixed(0)}`;
+    if (value === null || value === undefined) return '$0';
+    const absValue = Math.abs(value);
+    const sign = value < 0 ? '-' : '';
+    if (absValue >= 1000000) return `${sign}${(absValue / 1000000).toFixed(1)}M`;
+    if (absValue >= 1000) return `${sign}${(absValue / 1000).toFixed(1)}K`;
+    return `${sign}$${absValue.toFixed(0)}`;
   };
 
   const formatPercentage = (value) => {
@@ -198,23 +202,21 @@ const GrowthTracker = ({
     return `${(value * 100).toFixed(1)}%`;
   };
 
-  // Custom tooltip component
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, prefix = "Value" }) => {
     if (active && payload && payload.length) {
       return (
         <div style={{
           backgroundColor: '#fff',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          padding: '8px 12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
           fontSize: '14px',
-          zIndex: 1000,
-          position: 'relative'
+          zIndex: 1000
         }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{label}</div>
-          <div style={{ color: '#8884d8' }}>
-            Revenue: {formatCurrency(payload[0]?.value || 0)}
+          <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#1f2937' }}>{payload[0].payload.fullMonth}</div>
+          <div style={{ color: payload[0].fill, fontWeight: '600' }}>
+            {prefix}: {formatCurrency(payload[0].value)}
           </div>
         </div>
       );
@@ -222,7 +224,6 @@ const GrowthTracker = ({
     return null;
   };
 
-  // Show loading state
   if (isRegenerating) {
     return (
       <div className="channel-heatmap channel-heatmap-container">
@@ -234,9 +235,8 @@ const GrowthTracker = ({
     );
   }
 
-  // Main render function following ProfitabilityAnalysis pattern
   const renderContent = () => {
-    // Show error message within the normal structure if there's an error
+    console.log("GrowthTracker: Rendering content, analysisData:", analysisData);
     if (error) {
       return (
         <div className="profitability-warning">
@@ -249,7 +249,6 @@ const GrowthTracker = ({
       );
     }
 
-    // Show empty state if no data
     if (!analysisData || isGrowthDataIncomplete(analysisData)) {
       return (
         <FinancialEmptyState
@@ -264,95 +263,85 @@ const GrowthTracker = ({
           userAnswers={userAnswers}
           minimumAnswersRequired={3}
           showFileUpload={true}
-          onFileUpload={handleFileUpload}
+          onFileUpload={() => { }}
           uploadedFile={uploadedFile}
-          onRemoveFile={removeFile}
-          isUploading={false}
+          onRemoveFile={() => { }}
           onRedirectToChat={onRedirectToChat}
           isMobile={isMobile}
           setActiveTab={setActiveTab}
           hasUploadedDocument={hasUploadedDocument}
-          fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
+          fileUploadMessage="Upload Excel or CSV files with historical revenue and net income data"
           acceptedFileTypes=".xlsx,.xls,.csv"
           documentInfo={documentInfo}
         />
       );
     }
 
-    // Show normal analysis content
-    const { chartData, metrics } = extractGrowthMetrics(analysisData);
-
-    if (!chartData || chartData.length === 0) {
-      return (
-        <FinancialEmptyState
-          analysisType="growthTracker"
-          analysisDisplayName="Growth Tracker Analysis"
-          icon={TrendingUp}
-          onImproveAnswers={handleMissingQuestionsCheck}
-          onRegenerate={handleRegenerate}
-          isRegenerating={isRegenerating}
-          canRegenerate={canRegenerate}
-          userAnswers={userAnswers}
-          readOnly={readOnly}
-          minimumAnswersRequired={3}
-          showFileUpload={true}
-          onFileUpload={handleFileUpload}
-          uploadedFile={uploadedFile}
-          onRemoveFile={removeFile}
-          onRedirectToChat={onRedirectToChat}
-          isMobile={isMobile}
-          setActiveTab={setActiveTab}
-          hasUploadedDocument={hasUploadedDocument}
-          documentInfo={documentInfo}
-          fileUploadMessage="Upload Excel or CSV files with historical revenue data for growth tracking analysis"
-          acceptedFileTypes=".xlsx,.xls,.csv"
-        />
-      );
-    }
+    const { revenueChartData, netIncomeChartData, metrics, citations } = extractGrowthMetrics(analysisData);
+    const trends = analysisData.growth_trends || analysisData;
 
     return (
       <div className="ch-heatmap-container">
         <div className="ch-heatmap-scroll">
-
-          {chartData.length === 0 && (
-            <div className="profitability-warning">
-              <AlertCircle size={20} color="#f59e0b" />
-              <div>
-                <h4 className="profitability-warning-title">
-                  No Revenue Data Available
-                </h4>
-                <p className="profitability-warning-text">
-                  Upload an Excel file with historical revenue data or ensure your spreadsheet contains monthly/quarterly revenue information.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="ch-charts-grid">
+          <div className="ch-charts-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+            gap: '24px'
+          }}>
             {/* Revenue Chart */}
-            <div className="ch-chart-section ch-chart-section-full">
-              <h4>Monthly Revenue Trend</h4>
-              <div className="ch-chart-wrapper ch-chart-wrapper-large">
+            <div className="ch-chart-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0 }}>Monthly Revenue Trend</h4>
+                <CitationSource url={citations.revenue} />
+              </div>
+              <div className="ch-chart-wrapper" style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis tickFormatter={formatCurrency} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="revenue" fill="#8884d8" name="Revenue" />
+                  <BarChart data={revenueChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <YAxis tickFormatter={formatCurrency} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip content={<CustomTooltip prefix="Revenue" />} cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              {/* QoQ Growth Indicators */}
-              {analysisData?.growth_trends?.revenue?.qoq_growth && (
-                <div className="qoq-indicators">
-                  {Object.entries(analysisData.growth_trends.revenue.qoq_growth).map(([quarter, growth]) => (
-                    <div
-                      key={quarter}
-                      className={`qoq-badge ${growth === null ? 'neutral' : growth >= 0 ? 'positive' : 'negative'}`}
-                    >
-                      {quarter}: {growth === null ? 'N/A' : formatPercentage(growth)}
+              {/* QoQ Revenue Growth */}
+              {trends.revenue?.qoq_growth && (
+                <div className="qoq-indicators" style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {Object.entries(trends.revenue.qoq_growth).map(([quarter, growth]) => (
+                    <div key={quarter} className={`qoq-badge ${growth === null ? 'neutral' : growth >= 0 ? 'positive' : 'negative'}`}>
+                      {quarter}: {formatPercentage(growth)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Net Income Chart */}
+            <div className="ch-chart-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0 }}>Monthly Net Income Trend</h4>
+                <CitationSource url={citations.net_income} />
+              </div>
+              <div className="ch-chart-wrapper" style={{ height: '300px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={netIncomeChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <YAxis tickFormatter={formatCurrency} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <Tooltip content={<CustomTooltip prefix="Net Income" />} cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* QoQ Net Income Growth */}
+              {trends.net_income?.qoq_growth && (
+                <div className="qoq-indicators" style={{ marginTop: '16px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {Object.entries(trends.net_income.qoq_growth).map(([quarter, growth]) => (
+                    <div key={quarter} className={`qoq-badge ${growth === null ? 'neutral' : growth >= 0 ? 'positive' : 'negative'}`}>
+                      {quarter}: {formatPercentage(growth)}
                     </div>
                   ))}
                 </div>
@@ -360,28 +349,32 @@ const GrowthTracker = ({
             </div>
           </div>
 
-          {/* Simple Revenue Insights */}
-          <div className="growth-insights">
-            <h4>Revenue Insights</h4>
-
-            <div className="growth-insights-grid">
-              <div className="growth-insight-item">
-                <strong>Total Revenue:</strong>
-                <span className="growth-insight-value positive">
-                  {formatCurrency(metrics.totalRevenue)}
-                </span>
+          {/* Growth Insights */}
+          <div className="growth-insights" style={{ marginTop: '32px' }}>
+            <h4 style={{ marginBottom: '16px' }}>Growth Performance Insights</h4>
+            <div className="growth-insights-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div className="growth-insight-item" style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>Total Period Revenue</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>{formatCurrency(metrics.totalRevenue)}</div>
               </div>
-              <div className="growth-insight-item">
-                <strong>Best Month:</strong>
-                <span className="growth-insight-value positive">
-                  {metrics.bestMonth.month} ({formatCurrency(metrics.bestMonth.revenue)})
-                </span>
+              <div className="growth-insight-item" style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>Total Period Net Income</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: metrics.totalNetIncome >= 0 ? '#10b981' : '#ef4444' }}>
+                  {formatCurrency(metrics.totalNetIncome)}
+                </div>
               </div>
-              <div className="growth-insight-item">
-                <strong>Data Coverage:</strong>
-                <span className="growth-insight-value neutral">
-                  {metrics.dataCount} months tracked
-                </span>
+              <div className="growth-insight-item" style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>Best Performance Month</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>
+                  {metrics.bestMonth.month}
+                  <span style={{ fontSize: '14px', fontWeight: 'normal', color: '#64748b', marginLeft: '8px' }}>
+                    ({formatCurrency(metrics.bestMonth.revenue)})
+                  </span>
+                </div>
+              </div>
+              <div className="growth-insight-item" style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '4px' }}>Data Coverage</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>{metrics.dataCount} Months</div>
               </div>
             </div>
           </div>
@@ -391,11 +384,12 @@ const GrowthTracker = ({
   };
 
   return (
-    <div className="channel-heatmap channel-heatmap-container"
+    <div
+      className="channel-heatmap channel-heatmap-container"
       data-analysis-type="growth-tracker"
       data-analysis-name="Growth Tracker"
-      data-analysis-order="2">
-
+      data-analysis-order="2"
+    >
       {renderContent()}
     </div>
   );
