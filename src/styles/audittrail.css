@@ -685,7 +685,7 @@
 
 .details-cell {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   gap: 0.5rem;
   min-width: 150px;
@@ -1310,7 +1310,7 @@
     white-space: nowrap;
   }
 
-   .admin-modal .modal-dialog {
+  .admin-modal .modal-dialog {
     margin: 10px;
     max-width: 100%;
   }
@@ -1328,7 +1328,7 @@
     gap: 12px !important;
   }
 
-  .admin-modal .modal-title > div:last-child {
+  .admin-modal .modal-title>div:last-child {
     flex: 1;
   }
 
@@ -1377,17 +1377,18 @@
   .admin-data-table td:last-child .analysis-details button {
     width: 100%;
     display: flex;
-    justify-content: center;   
-    align-items: center;       
+    justify-content: center;
+    align-items: center;
     text-align: center;
   }
 
-   .analysis-modal-content .section-container > div {
+  .analysis-modal-content .section-container>div {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
   }
+
   .analysis-modal-content .section-container button {
     margin-left: auto;
     display: flex;
@@ -1396,4 +1397,3 @@
   }
 
 }
-

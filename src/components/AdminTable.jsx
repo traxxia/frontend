@@ -171,11 +171,11 @@ const AdminTable = ({
                                     <th
                                         key={col.key}
                                         style={{
-                                            textAlign: col.align || (col.key === 'actions' ? 'right' : 'left'),
+                                            textAlign: col.align || 'left',
                                             width: col.width || 'auto'
                                         }}
                                     >
-                                        <div className="th-inner" style={{ justifyContent: col.align === 'right' || (!col.align && col.key === 'actions') ? 'flex-end' : 'flex-start' }}>
+                                        <div className="th-inner" style={{ justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start' }}>
                                             {col.label}
                                         </div>
                                     </th>
@@ -191,14 +191,14 @@ const AdminTable = ({
                                             <td
                                                 key={col.key}
                                                 style={{
-                                                    textAlign: col.align || (col.key === 'actions' ? 'right' : 'left'),
+                                                    textAlign: col.align || 'left',
                                                     width: col.width || 'auto'
                                                 }}
                                             >
                                                 <div
                                                     className="td-inner"
                                                     style={{
-                                                        justifyContent: col.align === 'right' || (!col.align && col.key === 'actions') ? 'flex-end' : 'flex-start'
+                                                        justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start'
                                                     }}
                                                 >
                                                     {col.render
