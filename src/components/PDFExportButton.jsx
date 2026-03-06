@@ -28,7 +28,8 @@ const PDFExportButton = ({
   growthTrackerData = null,
   liquidityEfficiencyData = null,
   investmentPerformanceData = null,
-  leverageRiskData = null
+  leverageRiskData = null,
+  showText = false
 }) => {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const { t } = useTranslation();
@@ -247,7 +248,7 @@ const PDFExportButton = ({
 
       // 💾 Save the PDF
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Strategic_Analysis_${timestamp}.pdf`;
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Analysis_${timestamp}.pdf`;
       pdf.save(filename);
 
       onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
@@ -438,14 +439,9 @@ const PDFExportButton = ({
         return;
       }
 
-      // Save PDF
       const timestamp = new Date().toISOString().split('T')[0];
-      const phaseLabel = exportPhase === 'advanced' ? 'Advanced_Phase' :
-        exportPhase === 'good' ? 'Good_Phase' :
-          exportPhase === 'essential' ? 'Essential_Phase' :
-            exportPhase === 'advanced-brief' ? 'Questions_and_Answers' : 'Initial_Phase';
 
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_${phaseLabel}_${timestamp}.pdf`;
+      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Analysis_${timestamp}.pdf`;
       pdf.save(filename);
 
       onToastMessage?.(`PDF exported successfully! ${capturedCount} sections included.`, 'success');
@@ -518,14 +514,15 @@ const PDFExportButton = ({
           color: "#fff",
           border: "none",
           borderRadius: "10px",
-          padding: "10px",  // Square-ish padding for icon
-          width: "40px",    // Fixed width for icon button
-          height: "40px",   // Fixed height for icon button
+          padding: showText ? "10px 18px" : "10px",
+          width: showText ? "auto" : "40px",
+          height: "40px",
           fontSize: "14px",
           fontWeight: 600,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center", // Center the icon
+          justifyContent: "center",
+          gap: showText ? "8px" : "0",
           cursor: disabled || isExportingPDF ? "not-allowed" : "pointer",
           transition: "all 0.2s ease",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
@@ -534,9 +531,15 @@ const PDFExportButton = ({
         title={`Export ${phaseLabel} Phase PDF`}
       >
         {isExportingPDF ? (
-          <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+          <>
+            <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+            {showText && <span style={{ marginLeft: '8px' }}>Generating...</span>}
+          </>
         ) : (
-          <FileDown size={18} />
+          <>
+            <FileDown size={18} />
+            {showText && <span style={{ marginLeft: '8px' }}>{t("Export_PDF")}</span>}
+          </>
         )}
       </button>
     </>
