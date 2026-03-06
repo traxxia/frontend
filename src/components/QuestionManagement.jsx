@@ -13,6 +13,8 @@ const QuestionManagement = ({ onToast }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingQuestionId, setDeletingQuestionId] = useState(null);
   const [collapsedPhases, setCollapsedPhases] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
@@ -135,12 +137,11 @@ const QuestionManagement = ({ onToast }) => {
     }
   };
 
-  const handleDeleteQuestion = async (questionId) => {
-    if (!window.confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteQuestion = async () => {
+    if (!questionToDelete) return;
 
     try {
+      const questionId = questionToDelete._id || questionToDelete.id;
       setDeletingQuestionId(questionId);
       const token = getAuthToken();
 
@@ -165,6 +166,8 @@ const QuestionManagement = ({ onToast }) => {
       onToast('Error deleting question', 'error');
     } finally {
       setDeletingQuestionId(null);
+      setShowDeleteModal(false);
+      setQuestionToDelete(null);
     }
   };
 
@@ -321,6 +324,17 @@ const QuestionManagement = ({ onToast }) => {
         />
       )}
 
+      {showDeleteModal && (
+        <DeleteQuestionModal
+          onConfirm={handleDeleteQuestion}
+          onCancel={() => {
+            setShowDeleteModal(false);
+            setQuestionToDelete(null);
+          }}
+          isDeleting={!!deletingQuestionId}
+        />
+      )}
+
       {isReordering && (
         <div className="question-management__reordering-overlay">
           <div className="question-management__reordering-modal">
@@ -333,6 +347,15 @@ const QuestionManagement = ({ onToast }) => {
       {phases.map(phase => {
         const phaseQuestions = questionsByPhase[phase] || [];
         const isCollapsed = collapsedPhases[phase];
+
+        const phaseIcons = {
+          initial: { icon: CheckCircle2, color: '#16a34a' },
+          essential: { icon: ListChecks, color: '#ea580c' },
+          advanced: { icon: Layers, color: '#7c3aed' }
+        };
+
+        const Icon = phaseIcons[phase]?.icon;
+        const iconColor = phaseIcons[phase]?.color;
 
         const columns = [
           {
@@ -394,7 +417,10 @@ const QuestionManagement = ({ onToast }) => {
                   <Edit size={14} />
                 </button>
                 <button
-                  onClick={() => handleDeleteQuestion(row._id || row.id)}
+                  onClick={() => {
+                    setQuestionToDelete(row);
+                    setShowDeleteModal(true);
+                  }}
                   className="question-row__action-btn question-row__action-btn--delete"
                 >
                   <Trash2 size={14} />
@@ -412,6 +438,7 @@ const QuestionManagement = ({ onToast }) => {
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: '#f8fafc' }}
             >
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
+              {Icon && <Icon size={20} style={{ color: iconColor }} />}
               <strong style={{ fontSize: '1.1rem', color: '#1e293b' }}>
                 {phase.charAt(0).toUpperCase() + phase.slice(1)} Phase
               </strong>
@@ -714,6 +741,49 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+const DeleteQuestionModal = ({ onConfirm, onCancel, isDeleting }) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="create-form-overlay">
+      <div className="create-form" style={{ maxWidth: '450px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ margin: 0, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={20} />
+            {t('Delete Question')}
+          </h3>
+          <button onClick={onCancel} className="admin-modal-close" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div style={{ marginBottom: '2rem' }}>
+          <p style={{ margin: '0 0 1rem', color: '#1e293b', fontWeight: '500' }}>
+            Are you sure you want to delete this question?
+          </p>
+          <div style={{ background: '#fff1f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px', color: '#991b1b', fontSize: '0.9rem', lineHeight: '1.5' }}>
+            <strong>Warning:</strong> If you delete this question, it will be removed permanently. Additionally, any answers provided by users for this question will also be deleted.
+          </div>
+        </div>
+
+        <div className="create-form__actions">
+          <button type="button" onClick={onCancel} disabled={isDeleting} className="create-form__btn create-form__btn--cancel">
+            {t('cancel')}
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="create-form__btn create-form__btn--submit"
+            style={{ background: '#dc2626', borderColor: '#dc2626' }}
+          >
+            {isDeleting ? t('Deleting...') : t('Delete Question')}
+          </button>
+        </div>
       </div>
     </div>
   );

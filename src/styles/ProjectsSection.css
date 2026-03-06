@@ -1469,10 +1469,21 @@
     flex-wrap: nowrap !important;
   }
 
+  .ranking-toolbar {
+    flex-wrap: wrap;
+    row-gap: 12px;
+    padding: 12px 15px;
+  }
+
+  .mini-summary {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0 !important;
+  }
+
   .consensus-toggle-group {
     width: 100%;
     margin-left: 0 !important;
-    /* Override inline style */
     display: flex;
     gap: 8px;
   }

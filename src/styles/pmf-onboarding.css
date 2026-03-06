@@ -229,6 +229,7 @@
   border: none;
   color: #ffffff;
   transition: all 0.2s ease;
+  margin-left: auto;
 }
 
 .pmf-next-button:hover {

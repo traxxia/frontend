@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import {
-    Check, Users, Briefcase, LayoutGrid, FileText
+    Check, Users, Briefcase, LayoutGrid, FileText, RefreshCw, Calendar
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from './UpgradeModal';
@@ -66,14 +66,22 @@ const SubscriptionTab = ({ onToast }) => {
     const { plan, usage, expires_at, available_plans = [], billing_history = [] } = subscription;
     const currentPlanName = plan.toLowerCase();
 
-    const getDaysRemaining = (date) => {
-        if (!date) return 0;
-        const diff = new Date(date) - new Date();
-        return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    const getDaysRemaining = (end) => {
+        if (!end) return 0;
+
+        const today = new Date();
+        const endDate = new Date(end);
+
+        // Remove time part
+        today.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+
+        const diff = endDate - today;
+
+        return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
     };
 
-    const daysRemaining = getDaysRemaining(expires_at);
-
+    const daysRemaining = getDaysRemaining(subscription.end_date);
     const isHigherTier = (pName) => {
         const tiers = ['essential', 'advanced', 'professional'];
         return tiers.indexOf(pName.toLowerCase()) > tiers.indexOf(currentPlanName);
@@ -116,6 +124,33 @@ const SubscriptionTab = ({ onToast }) => {
             <Row>
                 <Col md={12}>
 
+                    {/* Subscription Info Banner */}
+                    {currentPlanName !== 'unlimited' && (
+                        <div className="subscription-info-banner mb-4">
+                            <div className="banner-item">
+                                <span className="banner-label">{t("current_plan") || "Current Plan"}</span>
+                                <span className="banner-value text-capitalize">{t(currentPlanName) || currentPlanName}</span>
+                            </div>
+                            <div className="banner-divider"></div>
+                            <div className="banner-item">
+                                <span className="banner-label">{t("expires_at") || "Renewal Date"}</span>
+                                <div className="d-flex align-items-center gap-2">
+                                    <Calendar size={14} className="text-muted" />
+                                    <span className="banner-value">{new Date(subscription.end_date).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div className="banner-divider"></div>
+                            <div className="banner-message-wrap">
+                                <div className="banner-message-icon">
+                                    <RefreshCw size={18} className="spin-slow" />
+                                </div>
+                                <div className="banner-message-text">
+                                    {t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Plan Section */}
                     <section id="subscription-plan" className="mb-4">
                         <h5 className="autorenew-title mb-4">{t("subscription_plans") || "Subscription Plans"}</h5>
@@ -126,9 +161,15 @@ const SubscriptionTab = ({ onToast }) => {
                                 return (
                                     <div key={p._id} className={`plan-card-mockup ${isCurrent ? 'premium-type' : ''}`}>
                                         {isCurrent && (
-                                            <div className="check-badge-corner">
-                                                <Check size={12} strokeWidth={4} />
-                                            </div>
+                                            <>
+                                                <div className="check-badge-corner">
+                                                    <Check size={12} strokeWidth={4} />
+                                                </div>
+                                                {/* <div className="renewal-status-badge">
+                                                    <RefreshCw size={12} />
+                                                    {t("auto_renews") || "Auto-renews"}
+                                                </div> */}
+                                            </>
                                         )}
                                         <div className="plan-header-mockup">
                                             <div>
@@ -161,6 +202,7 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
+
                     {/* Usage Metrics Section */}
                     <section className="mt-4 pt-2 mb-4">
                         <h5 className="autorenew-title mb-4">{t("usage_metrics") || "Usage Metrics"}</h5>
@@ -186,6 +228,8 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
+
+
                     {/* Billing History Section */}
                     <section className="mb-5">
                         <AdminTable
@@ -205,7 +249,7 @@ const SubscriptionTab = ({ onToast }) => {
                     </section>
 
                 </Col>
-            </Row>
+            </Row >
 
             <UpgradeModal
                 show={showUpgradeModal}
@@ -218,7 +262,7 @@ const SubscriptionTab = ({ onToast }) => {
                     if (onToast) onToast(t('plan_updated_success') || 'Plan updated successfully!', 'success');
                 }}
             />
-        </div>
+        </div >
     );
 };
 

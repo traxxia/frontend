@@ -1,4 +1,4 @@
-# Super Admin Panel Control
+## Super Admin Panel Control
 
 The **Super Admin Panel** provides a centralized control center for both Platform (Super Admins) and Organization (Company Admins) management.
 

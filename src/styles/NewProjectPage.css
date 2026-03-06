@@ -45,6 +45,10 @@
     background: #f7fafc;
 }
 
+[data-theme="dark"] .expanded-analysis-main {
+    background-color: #1a1d23 !important;
+}
+
 /* Section Title */
 .section-title {
   font-size: 18px;

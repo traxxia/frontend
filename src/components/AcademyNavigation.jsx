@@ -1,22 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { academyStructure, findCategoryById } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
 
-/**
- * AcademyNavigation Component
- * 
- * Collapsible sidebar navigation for the Academy
- * - Category sections (accordion-style)
- * - Active article highlighting
- * - Mobile-friendly
- */
 const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     const { category: activeCategory, article: activeArticle } = useParams();
     const navigate = useNavigate();
     const [userRole, setUserRole] = useState('');
     const [expandedCategories, setExpandedCategories] = useState([activeCategory || 'getting-started']);
+    const categoryRefs = useRef({});
+    const navRef = useRef(null);
 
     useEffect(() => {
         const storedRole = sessionStorage.getItem('userRole');
@@ -24,11 +18,54 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     }, []);
 
     const toggleCategory = (categoryId) => {
+        const isCurrentlyExpanded = expandedCategories.includes(categoryId);
         setExpandedCategories(prev =>
-            prev.includes(categoryId)
+            isCurrentlyExpanded
                 ? prev.filter(id => id !== categoryId)
                 : [...prev, categoryId]
         );
+        if (!isCurrentlyExpanded) {
+            setTimeout(() => {
+                const container = navRef.current;
+                const categoryEl = categoryRefs.current[categoryId];
+
+                if (container && categoryEl) {
+                    const containerRect = container.getBoundingClientRect();
+                    const elementRect = categoryEl.getBoundingClientRect();
+
+                    const stickyHeaderHeight = 90; // Approx height of the top sticky nav
+                    let currentScroll = container.scrollTop;
+                    const topOffset = elementRect.top - containerRect.top;
+
+                    // Check if the top of the category is hidden under the sticky header
+                    if (topOffset < stickyHeaderHeight) {
+                        container.scrollTo({
+                            top: currentScroll + topOffset - stickyHeaderHeight - 10,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        // Check if bottom is hidden
+                        const bottomOverflow = elementRect.bottom - containerRect.bottom + 20;
+                        if (bottomOverflow > 0) {
+                            let targetScroll = currentScroll + bottomOverflow;
+                            const maxAllowedScroll = currentScroll + topOffset - stickyHeaderHeight - 10;
+
+                            // Ensure we don't scroll so far that the top of the category becomes hidden
+                            if (targetScroll > maxAllowedScroll) {
+                                targetScroll = maxAllowedScroll;
+                            }
+
+                            if (targetScroll < 0) targetScroll = 0;
+
+                            container.scrollTo({
+                                top: targetScroll,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                }
+            }, 150);
+        }
     };
 
     const handleArticleClick = (categoryId, articleId) => {
@@ -44,7 +81,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     };
 
     return (
-        <div className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div ref={navRef} className={`academy-navigation ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <div className="academy-nav-sticky-top">
                 <div className="academy-nav-header">
                     <Link to="/academy" className="academy-home-link">
@@ -66,7 +103,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                     const isActive = activeCategory === category.id;
 
                     return (
-                        <div key={category.id} className={`category-section ${isActive ? 'active-category' : ''}`}>
+                        <div key={category.id} ref={el => categoryRefs.current[category.id] = el} className={`category-section ${isActive ? 'active-category' : ''}`}>
                             <div
                                 className="category-header"
                                 onClick={() => toggleCategory(category.id)}

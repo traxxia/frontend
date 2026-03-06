@@ -77,6 +77,7 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       <div className="full-width-field">
         <PaymentForm
           error={localError || error}
+          isSubmitting={isSubmitting}
           cardHolderName={cardHolderName}
           onCardHolderNameChange={(name) => {
             setCardHolderName(name);
@@ -129,6 +130,7 @@ const Register = () => {
   const [isError, setIsError] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -183,7 +185,18 @@ const Register = () => {
 
   const validateTab1 = () => {
     const newErrors = {};
-    if (!form.name.trim()) newErrors.name = t('first_name_required') || 'Name is required';
+    if (!form.name.trim()) {
+      newErrors.name = t('first_name_required') || 'Name is required';
+    } else {
+      const name = form.name.trim();
+      const nameRegex = /^[a-zA-Z\s]+$/;
+      if (name.length < 2) {
+        newErrors.name = t('Name_must_be_at_least_2_characters_long') || 'Name must be at least 2 characters long';
+      } else if (!nameRegex.test(name)) {
+        newErrors.name = t('Name_can_only_contain_letters_and_spaces') || 'Name can only contain letters and spaces';
+      }
+    }
+
     if (!form.email.trim()) newErrors.email = t('email_required') || 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = t('email_invalid') || 'Invalid email';
 
@@ -228,9 +241,22 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (activeTab === 1) {
-      if (validateTab1()) setActiveTab(2);
+      if (validateTab1()) {
+        try {
+          setIsCheckingEmail(true);
+          await axios.post(`${API_BASE_URL}/api/check-email`, { email: form.email.trim() });
+          setActiveTab(2);
+        } catch (err) {
+          setErrors(prev => ({
+            ...prev,
+            email: err.response?.data?.error || err.response?.data?.message || t('email_already_exists') || 'Email is already in use'
+          }));
+        } finally {
+          setIsCheckingEmail(false);
+        }
+      }
     } else if (activeTab === 2) {
       if (validateTab2()) {
         if (isNewCompany) {
@@ -445,8 +471,8 @@ const Register = () => {
                         <button type="button" className="btn-secondary" onClick={() => navigate('/login')}>
                           <FaAngleLeft /> {t('back_to_home')}
                         </button>
-                        <button type="submit" className="btn-primary">
-                          {t('next_step')} <FaAngleRight />
+                        <button type="submit" className="btn-primary" disabled={isCheckingEmail}>
+                          {isCheckingEmail ? <><FaSpinner className="spinner" /> {t('checking') || 'Checking...'}</> : <>{t('next_step')} <FaAngleRight /></>}
                         </button>
                       </div>
                     </form>
@@ -661,10 +687,8 @@ const Register = () => {
                 <h3>{showTermsModal ? t('terms') : t('privacy_policy')}</h3>
                 <button className="modal-close-button" onClick={() => { setShowTermsModal(false); setShowPrivacyModal(false); }}><FaTimes /></button>
               </div>
-              <div className="modal-content">
-                <p className="modal-text-break">
-                  {showTermsModal ? t('terms_content') : t('privacy_content')}
-                </p>
+              <div className="modal-content-data">
+                <p className="modal-text-break">{showTermsModal ? t('terms_content') : t('privacy_content')}</p>
               </div>
             </motion.div>
           </div>

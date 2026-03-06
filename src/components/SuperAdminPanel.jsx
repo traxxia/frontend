@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import {
   Building2,
   Users,
-  HelpCircle,
+  MessagesSquare,
+  Briefcase,
   Plus,
   Settings,
   ArrowLeft,
@@ -69,7 +70,7 @@ const SuperAdminPanel = () => {
 
   const allTabs = [
     { id: "companies", label: isSuperAdmin ? t('companies') : t('company'), icon: Building2 },
-    { id: "businesses", label: t('businesses') || "Businesses", icon: Building2 },
+    { id: "businesses", label: t('businesses') || "Businesses", icon: Briefcase },
     { id: "user_management", label: t('user_management'), icon: CircleUserRound },
     {
       id: "access_management",
@@ -83,7 +84,7 @@ const SuperAdminPanel = () => {
     {
       id: "questions",
       label: t('questions'),
-      icon: HelpCircle,
+      icon: MessagesSquare,
       superAdminOnly: true,
     },
     {

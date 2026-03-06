@@ -6,13 +6,21 @@ export const useTranslation = () => {
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [translations, setTranslations] = useState({});
 
-  const t = (key) => {
+  const t = (key, params = {}) => {
+    let text = key;
     // Always prioritize the global translation function if available
     if (window.getTranslation) {
-      return window.getTranslation(key);
+      text = window.getTranslation(key, params);
+    } else {
+      // Fallback to local state
+      text = translations[key] || key;
+
+      // Basic interpolation: replace {{key}} with params[key]
+      Object.keys(params).forEach(pKey => {
+        text = text.replace(new RegExp(`{{${pKey}}}`, 'g'), params[pKey]);
+      });
     }
-    // Fallback to local state
-    return translations[key] || key;
+    return text;
   };
 
   useEffect(() => {
@@ -27,9 +35,9 @@ export const useTranslation = () => {
       const sessionLang = sessionStorage.getItem('appLanguage');
       const localLang = localStorage.getItem('appLanguage');
       const windowLang = window.currentAppLanguage;
-      
+
       const currentLang = sessionLang || windowLang || localLang || 'en';
-      
+
       // Update window language if needed
       if (window.currentAppLanguage !== currentLang) {
         window.currentAppLanguage = currentLang;

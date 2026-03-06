@@ -70,6 +70,7 @@ const Dashboard = () => {
 
   // Tour modal state
   const [showHowModal, setShowHowModal] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   // Plan Limit Modal state
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
@@ -162,6 +163,41 @@ const Dashboard = () => {
     } finally {
       setIsLoadingBusinesses(false);
     }
+  };
+
+  // Sync active slide for How It Works carousel
+  useEffect(() => {
+    if (showHowModal) {
+      const carouselEl = document.getElementById('howItWorksCarousel');
+      if (carouselEl) {
+        const handleSlid = (event) => {
+          setActiveSlide(event.to);
+        };
+        carouselEl.addEventListener('slid.bs.carousel', handleSlid);
+        return () => carouselEl.removeEventListener('slid.bs.carousel', handleSlid);
+      }
+    } else {
+      setActiveSlide(0);
+    }
+  }, [showHowModal]);
+
+  const getStepKeys = (index) => {
+    const keys = [
+      'step_1_login',
+      'step_2_create_business',
+      'step_3_onboarding_pmf',
+      'step_4_aha_insights',
+      'step_5_exec_summary',
+      'step_6_kickstart_projects',
+      'step_7_project_ranking',
+      'step_8_ai_answers',
+      'step_9_insights_6cs',
+      'step_10_strategic'
+    ];
+    return {
+      title: keys[index],
+      description: `${keys[index]}_description`
+    };
   };
 
   const deleteBusiness = async (businessId) => {
@@ -311,6 +347,9 @@ const Dashboard = () => {
     }
     else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
       errors.business_name = "Business name contains invalid characters";
+    }
+    else if (/\d/.test(businessName)) {
+      errors.business_name = t('business_name_cannot_contain_numbers');
     }
 
     // Business purpose validation
@@ -689,7 +728,7 @@ const Dashboard = () => {
                         <p className="text-muted small mb-4">{t('create_business_plans')}</p>
 
                       </div>
-                      <Accordion className="px-4 mb-4" defaultActiveKey="0">
+                      <Accordion className="px-4 mb-4">
                         {/* My Businesses */}
                         {!isCollaborator && (
                           <Accordion.Item eventKey="0">
@@ -823,7 +862,7 @@ const Dashboard = () => {
 
                         {/* RIGHT SIDE - Business List */}
                         <Col md={6} className="businesses-section">
-                          <Accordion defaultActiveKey="0">
+                          <Accordion>
                             {/* My Businesses */}
                             {!isCollaborator && (
                               <Accordion.Item eventKey="0">
@@ -933,73 +972,33 @@ const Dashboard = () => {
                   <div className="carousel-inner">
                     <div className="carousel-item active">
                       <img src="/slides/slide1.jpeg" className="d-block w-100" alt={t('step_1_login_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_1_login')}</h5>
-                        <p>{t('step_1_login_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide2.jpeg" className="d-block w-100" alt={t('step_2_create_business_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_2_create_business')}</h5>
-                        <p>{t('step_2_create_business_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide3.jpeg" className="d-block w-100" alt={t('step_3_onboarding_pmf_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_3_onboarding_pmf')}</h5>
-                        <p>{t('step_3_onboarding_pmf_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide4.jpeg" className="d-block w-100" alt={t('step_4_aha_insights_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_4_aha_insights')}</h5>
-                        <p>{t('step_4_aha_insights_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide5.jpeg" className="d-block w-100" alt={t('step_5_exec_summary_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_5_exec_summary')}</h5>
-                        <p>{t('step_5_exec_summary_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide6.jpeg" className="d-block w-100" alt={t('step_6_kickstart_projects_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_6_kickstart_projects')}</h5>
-                        <p>{t('step_6_kickstart_projects_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide7.jpeg" className="d-block w-100" alt={t('step_7_project_ranking_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_7_project_ranking')}</h5>
-                        <p>{t('step_7_project_ranking_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide8.jpeg" className="d-block w-100" alt={t('step_8_ai_answers_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_8_ai_answers')}</h5>
-                        <p>{t('step_8_ai_answers_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide9.jpeg" className="d-block w-100" alt={t('step_9_insights_6cs_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_9_insights_6cs')}</h5>
-                        <p>{t('step_9_insights_6cs_description')}</p>
-                      </div>
                     </div>
                     <div className="carousel-item">
                       <img src="/slides/slide10.jpeg" className="d-block w-100" alt={t('step_10_strategic_alt')} />
-                      <div className="carousel-caption d-none d-md-block">
-                        <h5>{t('step_10_strategic')}</h5>
-                        <p>{t('step_10_strategic_description')}</p>
-                      </div>
                     </div>
                   </div>
 
@@ -1025,7 +1024,12 @@ const Dashboard = () => {
                   </button>
                 </div>
 
-                <div className="text-center mt-4">
+                <div className="carousel-external-caption text-center mt-2">
+                  <h5>{t(getStepKeys(activeSlide).title)}</h5>
+                  <p className="text-muted">{t(getStepKeys(activeSlide).description)}</p>
+                </div>
+
+                <div className="text-center mt-2">
                   <Button
                     variant="primary"
                     onClick={handleCloseModal}

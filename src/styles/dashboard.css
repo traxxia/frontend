@@ -375,6 +375,23 @@
       border-radius: 8px;
       transform: none !important;
     }
+
+    /* Mobile Carousel Captions */
+    .carousel-external-caption {
+      min-height: 30px;
+      padding: 0 15px;
+    }
+
+    .carousel-external-caption h5 {
+      font-size: 0.9rem !important;
+      font-weight: 550 !important;
+      margin-bottom: 6px !important;
+    }
+
+    .carousel-external-caption p {
+      font-size: 0.7rem !important;
+      line-height: 1.4 !important;
+    }
   }
 
   /* Desktop screens */
@@ -769,17 +786,32 @@
     color: #000
   }
 
-  .carousel-caption h5 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  }
-
   .carousel-caption p {
     font-size: 0.95rem;
     margin-bottom: 0;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  /* External Carousel Captions */
+  .carousel-external-caption {
+    padding: 0 20px;
+    min-height: 60px;
+    /* Ensure space for 2 lines */
+  }
+
+  .carousel-external-caption h5 {
+    font-size: 1.4rem;
+    font-weight: 650;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+  }
+
+  .carousel-external-caption p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    max-width: 800px;
+    margin: 0 auto;
   }
 
   /* Modal Popup Enhancements */
@@ -864,12 +896,16 @@
 
   /* Individual accordion item */
   .businesses-section .accordion-item {
-    border: 1px solid #e6e6e6;
+    /* border: 1px solid #e6e6e6; */
     border-radius: 10px;
     margin-bottom: 12px;
     overflow: hidden;
     background: #ffffff;
   }
+
+  [data-theme="dark"] .businesses-section .accordion-item {
+    background-color: #1a1d23 !important;
+}
 
   /* Remove double borders */
   .businesses-section .accordion-item:not(:first-of-type) {
@@ -914,6 +950,10 @@
     padding: 10px;
     background-color: #ffffff;
   }
+
+  [data-theme="dark"] .businesses-section .accordion-body {
+    background-color: #1a1d23 !important;
+}
 
   /* Business list spacing inside accordion */
   .businesses-section .accordion-body>*:not(:last-child) {
@@ -961,6 +1001,11 @@
     line-height: 1.2;
   }
 
+  
+  [data-theme="dark"] .businesses-section .accordion-body {
+    color: #1a1d23 !important;
+}
+
   /* Active accordion */
   .accordion-button:not(.collapsed) .accordion-count-pill {
     background-color: #e5e7eb;
@@ -968,6 +1013,9 @@
     color: #374151;
   }
 
+  [data-theme="dark"] .accordion-button:not(.collapsed) .accordion-count-pill {
+    color: #1a1d23 !important;
+}
 
   /* Active accordion color tweak */
   .accordion-button:not(.collapsed) .accordion-count {

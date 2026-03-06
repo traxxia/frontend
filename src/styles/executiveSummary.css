@@ -9,6 +9,11 @@
   min-height: 100vh;
 }
 
+
+[data-theme="dark"] .exc-executive-summary-container {
+    background-color: #1a1d23 !important;
+}
+
 /* Executive Content */
 .exc-executive-content {
   display: flex;
@@ -44,7 +49,12 @@
 }
 
 .exc-section-header:hover {
-  background-color: #fafbfc;
+  background-color: hsl(210, 25%, 98%);
+}
+
+
+[data-theme="dark"] .exc-section-header {
+    background-color: #333946 !important;
 }
 
 .exc-section-title-wrapper {
@@ -89,6 +99,11 @@
   text-transform: uppercase;
 }
 
+[data-theme="dark"] .exc-section-title {
+    color: #ffffff !important;
+}
+
+
 .exc-section-subtitle {
   font-size: 0.85rem;
   color: #6b7280;
@@ -122,6 +137,12 @@
   gap: 1rem;
 }
 
+
+[data-theme="dark"] .exc-section-body {
+    background-color: #333946 !important;
+}
+
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -150,14 +171,20 @@
   background: white;
 }
 
+[data-theme="dark"] .exc-subsection.exc-current-core, 
+.exc-subsection.exc-existing-adjacencies,
+.exc-subsection.exc-new-adjacencies {
+    background-color: #1a1d23 !important;
+}
+
 .exc-subsection.exc-existing-adjacencies {
   border-color: #fed7aa;
-  background: white;
+  background: white !important;
 }
 
 .exc-subsection.exc-new-adjacencies {
   border-color: #a7f3d0;
-  background: white;
+  background: white !important;
 }
 
 .exc-subsection-icon {
@@ -196,6 +223,11 @@
   margin: 0 0 0.75rem 0;
 }
 
+[data-theme="dark"] .exc-subsection-title {
+    color: #ffffff !important;
+}
+
+
 .exc-source-label {
   display: flex;
   align-items: center;
@@ -231,6 +263,11 @@
   margin-top: 1rem;
 }
 
+[data-theme="dark"] .exc-option-block {
+    background-color: #363b46 !important;
+    padding: 1rem;
+}
+
 .exc-option-title {
   color: #1f2937;
   margin: 0;
@@ -244,6 +281,12 @@
   padding: 15px;
 }
 
+
+[data-theme="dark"] .exc-how-compete-box {
+    background-color: #1a1d23 !important;
+}
+
+
 .exc-box-title {
   font-size: 0.95rem;
   font-weight: 600;
@@ -256,6 +299,10 @@
   border: 1px solid #dbeafe;
   border-radius: 8px;
   padding: 1.25rem;
+}
+
+[data-theme="dark"] .exc-differentiation-inner {
+    background-color: #363b46 !important;
 }
 
 .exc-differentiation-label {
@@ -300,6 +347,10 @@
   color: #6b7280;
   margin-left: 1.5rem;
   line-height: 1.5;
+}
+
+[data-theme="dark"] .exc-implication-content {
+    color: #ffffff !important;
 }
 
 /* TOP 3-5 PRIORITIES Section */
