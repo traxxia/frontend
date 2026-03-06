@@ -1,4 +1,4 @@
-# Super Admin Panel Overview
+## Super Admin Panel Overview
 
 The **Super Admin Panel** provides a centralized control center for managing the entire Traxxia platform.
 

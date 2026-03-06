@@ -43,6 +43,7 @@ const PaymentForm = ({
                 color: '#9e2146',
             },
         },
+        disabled: isSubmitting,
     };
 
     const getBrandIcon = (brand) => {
@@ -57,9 +58,11 @@ const PaymentForm = ({
         }
     };
 
-    const handleCardNumberChange = (e) => {
-        setCardBrand(e.brand || 'unknown');
-        setCardComplete(e.complete);
+    const handleStripeChange = (e) => {
+        if (e.elementType === 'cardNumber') {
+            setCardBrand(e.brand || 'unknown');
+            setCardComplete(e.complete);
+        }
         if (onCardChange) onCardChange(e);
         if (e.error) {
             setLocalError(e.error.message);
@@ -147,17 +150,19 @@ const PaymentForm = ({
                                     placeholder="Card Holder Name"
                                     value={cardHolderName}
                                     onChange={(e) => onCardHolderNameChange && onCardHolderNameChange(e.target.value)}
+                                    disabled={isSubmitting}
                                     style={{
                                         width: '100%',
                                         border: 'none',
                                         outline: 'none',
                                         background: 'transparent',
-                                        color: '#424770',
+                                        color: isSubmitting ? '#aab7c4' : '#424770',
                                         fontSize: '16px',
                                         padding: 0,
                                         margin: 0,
                                         boxShadow: 'none',
-                                        borderRadius: 0
+                                        borderRadius: 0,
+                                        cursor: isSubmitting ? 'not-allowed' : 'text'
                                     }}
                                 />
                             </div>
@@ -168,7 +173,7 @@ const PaymentForm = ({
                             <div className="stripe-input-wrapper">
                                 <CardNumberElement
                                     options={{ ...stripeElementOptions, showIcon: false }}
-                                    onChange={handleCardNumberChange}
+                                    onChange={handleStripeChange}
                                 />
                             </div>
                         </div>
@@ -177,13 +182,19 @@ const PaymentForm = ({
                             <div className="col-md-6 mb-3">
                                 <label>Expiry Date</label>
                                 <div className="stripe-input-wrapper">
-                                    <CardExpiryElement options={stripeElementOptions} />
+                                    <CardExpiryElement
+                                        options={stripeElementOptions}
+                                        onChange={handleStripeChange}
+                                    />
                                 </div>
                             </div>
                             <div className="col-md-6 mb-3">
                                 <label>CVC</label>
                                 <div className="stripe-input-wrapper">
-                                    <CardCvcElement options={stripeElementOptions} />
+                                    <CardCvcElement
+                                        options={stripeElementOptions}
+                                        onChange={handleStripeChange}
+                                    />
                                 </div>
                             </div>
                         </div>

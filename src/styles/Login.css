@@ -178,7 +178,7 @@
   margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-sm);
 }
- 
+
 .form-group label {
   display: block;
   font-size: var(--font-size-sm);
@@ -227,7 +227,7 @@
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
   box-sizing: border-box;
-  margin:10px 0px;
+  margin: 10px 0px;
   /* Ensure padding doesn't affect width */
 }
 
@@ -495,7 +495,7 @@
 .terms-modal {
   background: var(--color-bg-primary);
   border-radius: var(--border-radius-lg);
-  padding: 10px; 
+  padding: 10px;
   width: auto;
   box-shadow: var(--shadow-2xl);
   animation: fadeIn 0.2s ease-in-out;
@@ -590,7 +590,7 @@
 [data-theme="dark"] .eye-icon:hover {
   color: var(--color-text-primary);
 }
- 
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .login-container {

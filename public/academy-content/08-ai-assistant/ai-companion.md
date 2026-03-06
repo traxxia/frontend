@@ -1,4 +1,4 @@
-# The AI Assistant
+## The AI Assistant
 
 Your **AI Assistant** is more than just a chatbot—it is a continuous data companion that lives within both your business and project views to provide real-time intelligence.
 

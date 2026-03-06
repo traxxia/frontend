@@ -3250,6 +3250,33 @@ body {
     transform: none;
     margin-bottom: 0;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (max-width: 768px) {
+  .business-setup-container {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+  }
+
+  .main-container {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 100% !important;
+  }
+
+  .info-panel {
+    overflow-y: visible !important;
+    height: auto !important;
+    display: block !important;
+    min-height: 100% !important;
+  }
+
+  .info-panel-content {
+    overflow: visible !important;
+    height: auto !important;
+    padding-bottom: 80px !important;
   }
 }
