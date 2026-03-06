@@ -507,7 +507,7 @@ const PortersFiveForces = ({
                           <div className="factors-cell">
                             {forceData.key_factors?.map((factor, idx) => (
                               <div key={idx} className="factor-item">
-                                <strong>{factor.factor}</strong>
+                                <strong className='strong-text'>{factor.factor}</strong>
                                 {factor.impact && (
                                   <span className={`factor-impact ${factor.impact?.toLowerCase()}`}>
                                     Impact: {factor.impact}
