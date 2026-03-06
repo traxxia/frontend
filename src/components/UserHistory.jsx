@@ -226,6 +226,7 @@ const UserHistory = ({ onToast }) => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         searchPlaceholder={t('search_users')}
+        searchTooltip={t('search_user_history_tooltip')}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}

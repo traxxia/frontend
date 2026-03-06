@@ -183,6 +183,7 @@ const BusinessOverview = ({ onToast }) => {
                 searchTerm={searchTerm}
                 onSearchChange={handleSearch}
                 searchPlaceholder={t("search_by_business_owner") || "Search by business or owner..."}
+                searchTooltip={t("search_businesses_tooltip")}
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}

@@ -1,5 +1,6 @@
-import React from 'react';
-import { Search, SlidersHorizontal, ArrowUpDown, ArrowLeft, ArrowRight, Building2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, SlidersHorizontal, ArrowUpDown, ArrowLeft, ArrowRight, Building2, HelpCircle } from 'lucide-react';
+import { OverlayTrigger, Popover } from "react-bootstrap";
 import '../styles/AdminTableStyles.css';
 
 /**
@@ -47,7 +48,10 @@ const AdminTable = ({
     showSort = false,
     getRowProps,
     toolbarContent = null,
+    searchTooltip = '',
 }) => {
+    const [showHelp, setShowHelp] = useState(false);
+
     // ---- Pagination helpers ----
     const getPageNumbers = () => {
         if (totalPages <= 7) {
@@ -97,6 +101,37 @@ const AdminTable = ({
                                     value={searchTerm}
                                     onChange={(e) => onSearchChange(e.target.value)}
                                 />
+                                {searchTooltip && (
+                                    <OverlayTrigger
+                                        trigger="hover"
+                                        placement="top"
+                                        rootClose
+                                        popperConfig={{
+                                            modifiers: [
+                                                {
+                                                    name: "offset",
+                                                    options: {
+                                                        offset: [0, 12] // moves popover 12px away from the icon
+                                                    }
+                                                }
+                                            ]
+                                        }}
+                                        overlay={
+                                            <Popover id="admin-help-popover" className="admin-help-popover">
+                                                <Popover.Body>
+                                                    <div className="admin-help-content">
+                                                        <p>{searchTooltip}</p>
+                                                        <button className="admin-help-btn">Got it</button>
+                                                    </div>
+                                                </Popover.Body>
+                                            </Popover>
+                                        }
+                                    >
+                                        <div className="admin-search-tooltip-trigger">
+                                            <HelpCircle size={14} className="admin-search-tooltip-icon" />
+                                        </div>
+                                    </OverlayTrigger>
+                                )}
                             </div>
                         )}
                         {showFilter && (

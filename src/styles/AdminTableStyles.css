@@ -815,16 +815,80 @@
 }
 
 .compact-confirm-modal .modal-content {
-  height: auto !important;
-  min-height: unset !important;
-  display: block !important;
+    height: auto !important;
+    min-height: unset !important;
+    display: block !important;
 }
 
 .compact-confirm-modal .modal-body {
-  height: 30vh !important;
-  min-height: unset !important;
+    height: 30vh !important;
+    min-height: unset !important;
 }
 
 .compact-confirm-modal .modal-dialog {
-  max-width: 420px;
+    max-width: 420px;
+}
+
+/* ---- Help Icon Trigger ---- */
+.admin-search-tooltip-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    /* Moved little bit right */
+    cursor: pointer;
+    color: #845dc8;
+    /* Matches popover gradient start */
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.admin-search-tooltip-trigger:hover {
+    opacity: 1;
+}
+
+
+/* Help Popover */
+.admin-help-popover .popover-body {
+    padding: 14px 16px;
+}
+
+.admin-help-popover {
+    border: none !important;
+    background: linear-gradient(135deg, #845dc8, #6366f1);
+    color: white;
+    border-radius: 10px;
+    max-width: 240px;
+    box-shadow: 0 10px 25px rgba(248, 246, 246, 0.15);
+}
+
+/* remove bootstrap arrow color */
+.admin-help-popover.bs-popover-top .popover-arrow::before {
+    border-top-color: #7c3aed !important;
+}
+
+.admin-help-popover.bs-popover-bottom .popover-arrow::before {
+    border-bottom-color: #7c3aed !important;
+}
+
+.admin-help-content p {
+    font-size: 13px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    color: white !important;
+}
+
+.admin-help-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.admin-help-btn:hover {
+    text-decoration: underline;
 }

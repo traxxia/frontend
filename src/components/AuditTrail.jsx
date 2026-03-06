@@ -472,6 +472,7 @@ const AuditTrail = ({ onToast }) => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         searchPlaceholder={t('search_events')}
+        searchTooltip={t('search_audit_trail_tooltip')}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
