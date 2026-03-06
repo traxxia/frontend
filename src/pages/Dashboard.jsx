@@ -728,7 +728,7 @@ const Dashboard = () => {
                         <p className="text-muted small mb-4">{t('create_business_plans')}</p>
 
                       </div>
-                      <Accordion className="px-4 mb-4" defaultActiveKey="0">
+                      <Accordion className="px-4 mb-4">
                         {/* My Businesses */}
                         {!isCollaborator && (
                           <Accordion.Item eventKey="0">
@@ -862,7 +862,7 @@ const Dashboard = () => {
 
                         {/* RIGHT SIDE - Business List */}
                         <Col md={6} className="businesses-section">
-                          <Accordion defaultActiveKey="0">
+                          <Accordion>
                             {/* My Businesses */}
                             {!isCollaborator && (
                               <Accordion.Item eventKey="0">

@@ -1210,30 +1210,6 @@ const BusinessSetupPage = () => {
                 </>
               )}
 
-              {activeTab === "advanced" && (
-                <>
-                  <PDFExportButton
-                    className="pdf-export-button"
-                    businessName={businessData.name}
-                    onToastMessage={showToastMessage}
-                    disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                    exportType="advanced-brief"
-                  />
-                  <button
-                    onClick={handleRegenerateAllAnalysis}
-                    disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                    className={`regenerate-button ${isAnalysisRegenerating || isStrategicRegenerating ? 'disabled' : ''}`}
-                    title={t("regenerate") || "Regenerate All Analysis"}
-                  >
-                    {isAnalysisRegenerating || isStrategicRegenerating ? (
-                      <Loader size={16} className="animate-spin" />
-                    ) : (
-                      <RefreshCw size={16} />
-                    )}
-                  </button>
-                </>
-              )}
-
               {activeTab === "strategic" && (
                 <>
                   {unlockedFeatures.analysis && (
@@ -1500,29 +1476,7 @@ const BusinessSetupPage = () => {
                         </>
                       )}
 
-                      {activeTab === "advanced" && (
-                        <>
-                          <PDFExportButton
-                            className="pdf-export-button"
-                            businessName={businessData.name}
-                            onToastMessage={showToastMessage}
-                            disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                            exportType="advanced-brief"
-                          />
-                          <button
-                            onClick={handleRegenerateAllAnalysis}
-                            disabled={isAnalysisRegenerating || isStrategicRegenerating}
-                            className={`regenerate-button ${isAnalysisRegenerating || isStrategicRegenerating ? 'disabled' : ''}`}
-                            title={t("regenerate") || "Regenerate All Analysis"}
-                          >
-                            {isAnalysisRegenerating || isStrategicRegenerating ? (
-                              <Loader size={16} className="animate-spin" />
-                            ) : (
-                              <RefreshCw size={16} />
-                            )}
-                          </button>
-                        </>
-                      )}
+
                     </div>
                   </div>
 

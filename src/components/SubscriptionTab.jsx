@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import {
-    Check, Users, Briefcase, LayoutGrid, FileText
+    Check, Users, Briefcase, LayoutGrid, FileText, RefreshCw, Calendar
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from './UpgradeModal';
@@ -124,6 +124,33 @@ const SubscriptionTab = ({ onToast }) => {
             <Row>
                 <Col md={12}>
 
+                    {/* Subscription Info Banner */}
+                    {currentPlanName !== 'unlimited' && (
+                        <div className="subscription-info-banner mb-4">
+                            <div className="banner-item">
+                                <span className="banner-label">{t("current_plan") || "Current Plan"}</span>
+                                <span className="banner-value text-capitalize">{t(currentPlanName) || currentPlanName}</span>
+                            </div>
+                            <div className="banner-divider"></div>
+                            <div className="banner-item">
+                                <span className="banner-label">{t("expires_at") || "Renewal Date"}</span>
+                                <div className="d-flex align-items-center gap-2">
+                                    <Calendar size={14} className="text-muted" />
+                                    <span className="banner-value">{new Date(subscription.end_date).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div className="banner-divider"></div>
+                            <div className="banner-message-wrap">
+                                <div className="banner-message-icon">
+                                    <RefreshCw size={18} className="spin-slow" />
+                                </div>
+                                <div className="banner-message-text">
+                                    {t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Plan Section */}
                     <section id="subscription-plan" className="mb-4">
                         <h5 className="autorenew-title mb-4">{t("subscription_plans") || "Subscription Plans"}</h5>
@@ -134,9 +161,15 @@ const SubscriptionTab = ({ onToast }) => {
                                 return (
                                     <div key={p._id} className={`plan-card-mockup ${isCurrent ? 'premium-type' : ''}`}>
                                         {isCurrent && (
-                                            <div className="check-badge-corner">
-                                                <Check size={12} strokeWidth={4} />
-                                            </div>
+                                            <>
+                                                <div className="check-badge-corner">
+                                                    <Check size={12} strokeWidth={4} />
+                                                </div>
+                                                {/* <div className="renewal-status-badge">
+                                                    <RefreshCw size={12} />
+                                                    {t("auto_renews") || "Auto-renews"}
+                                                </div> */}
+                                            </>
                                         )}
                                         <div className="plan-header-mockup">
                                             <div>
@@ -169,27 +202,6 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
-                    {/* Subscription Details Section - Compact Box */}
-                    <section className=" mb-4">
-                        <div className="subscription-compact-box">
-                            <p className="autorenew-title mb-1 fw-bold" style={{ fontSize: '1.35rem' }}>
-                                {t("subscription_details") || "Subscription Details"}
-                            </p>
-                            <div className="compact-row">
-                                <span className="compact-label">{t("start_date") || "Start Date"}</span>
-                                <span className="compact-value">{new Date(subscription.start_date).toLocaleDateString()}</span>
-                            </div>
-
-                            <div className="compact-row">
-                                <span className="compact-label">{t("end_date") || "End Date"}</span>
-                                <span className="compact-value">{new Date(subscription.end_date).toLocaleDateString()}</span>
-                            </div>
-
-                            <div className="compact-renewal-message">
-                                {t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() })}
-                            </div>
-                        </div>
-                    </section>
 
                     {/* Usage Metrics Section */}
                     <section className="mt-4 pt-2 mb-4">
@@ -216,7 +228,7 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
-                    
+
 
                     {/* Billing History Section */}
                     <section className="mb-5">
