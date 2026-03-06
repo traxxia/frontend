@@ -220,12 +220,12 @@ const CompanyManagement = ({ onToast }) => {
     {
       key: 'industry',
       label: t('industry'),
-      render: (val) => <span className="admin-cell-secondary">{val || '-'}</span>,
+      render: (val) => <span className="admin-cell-primary">{val || '-'}</span>,
     },
     {
       key: 'size',
       label: t('size'),
-      render: (val) => <span className="admin-cell-secondary">{val || '-'}</span>,
+      render: (val) => <span className="admin-cell-primary">{val || '-'}</span>,
     },
     {
       key: 'status',
@@ -248,7 +248,7 @@ const CompanyManagement = ({ onToast }) => {
     {
       key: 'created_at',
       label: t('created_date'),
-      render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>,
+      render: (val) => <span className="admin-cell-primary">{formatDate(val)}</span>,
     },
   ];
 

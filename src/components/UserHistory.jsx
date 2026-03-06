@@ -23,8 +23,7 @@ import StrategicAnalysis from '../components/StrategicAnalysis';
 import AnalysisContentManager from '../components/AnalysisContentManager';
 import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
-import HistoryPDFDownload from './HistoryPDFDownload';
-import DownloadStrategicPDF from './DownloadStrategicPDF';
+import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
@@ -1113,19 +1112,21 @@ const StatsRow = ({
         {showPDFExport && analysisData && (
           <div className="pdf-export-container">
             {isStrategicTab ? (
-              <DownloadStrategicPDF
-                analysisData={analysisData}
+              <PDFExportButton
                 businessName={selectedBusiness}
                 onToastMessage={onToast}
-                modalSelector=".user-details-modal"
-                size="medium"
+                exportType="strategic"
+                strategicData={analysisData.strategic}
+                showText={true}
               />
             ) : (
-              <HistoryPDFDownload
-                analysisData={analysisData}
-                currentPhase="all"
+              <PDFExportButton
                 businessName={selectedBusiness}
-                userDetails={analysisData}
+                onToastMessage={onToast}
+                exportType="insights"
+                unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }} // Fallback for admin view context
+                showText={true}
+                {...analysisData} // Spread analysis data props
               />
             )}
           </div>
