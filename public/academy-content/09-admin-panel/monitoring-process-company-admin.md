@@ -1,4 +1,4 @@
-# Monitoring Process for Company Admin
+## Admin panel control
 
 As a Company Admin (Org Admin), you have access to tools that help you monitor the progress of your organization's strategic analysis and project implementation.
 

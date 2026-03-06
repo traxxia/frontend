@@ -130,6 +130,7 @@ const Register = () => {
   const [isError, setIsError] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -240,9 +241,22 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (activeTab === 1) {
-      if (validateTab1()) setActiveTab(2);
+      if (validateTab1()) {
+        try {
+          setIsCheckingEmail(true);
+          await axios.post(`${API_BASE_URL}/api/check-email`, { email: form.email.trim() });
+          setActiveTab(2);
+        } catch (err) {
+          setErrors(prev => ({
+            ...prev,
+            email: err.response?.data?.error || err.response?.data?.message || t('email_already_exists') || 'Email is already in use'
+          }));
+        } finally {
+          setIsCheckingEmail(false);
+        }
+      }
     } else if (activeTab === 2) {
       if (validateTab2()) {
         if (isNewCompany) {
@@ -457,8 +471,8 @@ const Register = () => {
                         <button type="button" className="btn-secondary" onClick={() => navigate('/login')}>
                           <FaAngleLeft /> {t('back_to_home')}
                         </button>
-                        <button type="submit" className="btn-primary">
-                          {t('next_step')} <FaAngleRight />
+                        <button type="submit" className="btn-primary" disabled={isCheckingEmail}>
+                          {isCheckingEmail ? <><FaSpinner className="spinner" /> {t('checking') || 'Checking...'}</> : <>{t('next_step')} <FaAngleRight /></>}
                         </button>
                       </div>
                     </form>

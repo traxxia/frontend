@@ -1,4 +1,5 @@
-# Moving from Strategy to Execution
+
+## Moving from Strategy to Execution
 
 The transition from a strategic vision to on-the-ground execution is a core part of the Traxxia experience. This guide explains how your strategic priorities are identified, where to manage them, and how to kickstart them into live projects.
 

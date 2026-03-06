@@ -31,6 +31,10 @@ const AcademyPage = () => {
     const [prevArticle, setPrevArticle] = useState(null);
     const [nextArticle, setNextArticle] = useState(null);
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [category, article]);
+
 
     // Reset search when navigating
     useEffect(() => {

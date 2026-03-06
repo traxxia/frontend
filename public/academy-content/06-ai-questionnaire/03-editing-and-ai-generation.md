@@ -1,4 +1,4 @@
-# Editing & Auto-save
+## Editing & Auto-save
 
 Strategizing is an iterative process. As your business evolves, you can easily update your answers in the **Advanced** tab.
 
