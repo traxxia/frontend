@@ -74,44 +74,46 @@ const AdminTable = ({
     return (
         <div className="admin-table-wrapper">
             {/* ---- Header Bar ---- */}
-            <div className="admin-table-header">
-                <div className="admin-table-title-group">
-                    <h2 className="admin-table-title">{title}</h2>
-                    {count !== undefined && count !== null && (
-                        <span className="admin-table-count-badge">
-                            {count} {countLabel}
-                        </span>
-                    )}
-                </div>
+            {(title || (count !== undefined && count !== null) || onSearchChange || showFilter || showSort || toolbarContent) && (
+                <div className="admin-table-header">
+                    <div className="admin-table-title-group">
+                        <h2 className="admin-table-title">{title}</h2>
+                        {count !== undefined && count !== null && (
+                            <span className="admin-table-count-badge">
+                                {count} {countLabel}
+                            </span>
+                        )}
+                    </div>
 
-                <div className="admin-table-actions">
-                    {toolbarContent}
-                    {onSearchChange && (
-                        <div className="admin-search-wrapper">
-                            <Search size={15} className="admin-search-icon" />
-                            <input
-                                type="text"
-                                className="admin-search-input"
-                                placeholder={searchPlaceholder}
-                                value={searchTerm}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                            />
-                        </div>
-                    )}
-                    {showFilter && (
-                        <button className="admin-table-btn">
-                            <SlidersHorizontal size={14} />
-                            Filter
-                        </button>
-                    )}
-                    {showSort && (
-                        <button className="admin-table-btn">
-                            <ArrowUpDown size={14} />
-                            Sort
-                        </button>
-                    )}
+                    <div className="admin-table-actions">
+                        {toolbarContent}
+                        {onSearchChange && (
+                            <div className="admin-search-wrapper">
+                                <Search size={15} className="admin-search-icon" />
+                                <input
+                                    type="text"
+                                    className="admin-search-input"
+                                    placeholder={searchPlaceholder}
+                                    value={searchTerm}
+                                    onChange={(e) => onSearchChange(e.target.value)}
+                                />
+                            </div>
+                        )}
+                        {showFilter && (
+                            <button className="admin-table-btn">
+                                <SlidersHorizontal size={14} />
+                                Filter
+                            </button>
+                        )}
+                        {showSort && (
+                            <button className="admin-table-btn">
+                                <ArrowUpDown size={14} />
+                                Sort
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* ---- Table Body ---- */}
             {loading ? (

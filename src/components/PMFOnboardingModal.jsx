@@ -39,6 +39,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     country: '',
     city: '',
     primaryIndustry: '',
+    primaryIndustryOther: '',
     geography1: '',
     geography2: '',
     geography3: '',
@@ -222,6 +223,18 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     if (!formData.primaryIndustry.trim()) {
       newErrors.primaryIndustry = t('primary_industry_required') || 'Primary Industry is required';
     }
+
+    if (formData.primaryIndustry === 'Other') {
+      if (!formData.primaryIndustryOther.trim()) {
+        newErrors.primaryIndustryOther = t('Please specify');
+      } else {
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        if (!nameRegex.test(formData.primaryIndustryOther.trim())) {
+          newErrors.primaryIndustryOther = t('industry_invalid') || 'Industry can only contain letters';
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -387,7 +400,11 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       setSubmissionStep(1); // Saving data
 
       // 1. Save onboarding data to our backend
-      await analysisService.savePMFOnboardingData(businessId, formData);
+      const dataToSave = {
+        ...formData,
+        primaryIndustry: formData.primaryIndustry === "Other" ? formData.primaryIndustryOther : formData.primaryIndustry
+      };
+      await analysisService.savePMFOnboardingData(businessId, dataToSave);
 
       setSubmissionStep(2); // Generating insights (The long part)
 
@@ -400,7 +417,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             city: formData.city || "N/A",
             country: formData.country,
           },
-          industry: formData.primaryIndustry,
+          industry: formData.primaryIndustry === "Other" ? formData.primaryIndustryOther : formData.primaryIndustry,
           geographies: [formData.geography1, formData.geography2, formData.geography3].filter(Boolean),
           profits: {
             source: {
@@ -484,6 +501,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       country: '',
       city: '',
       primaryIndustry: '',
+      primaryIndustryOther: '',
       geography1: '',
       geography2: '',
       geography3: '',
@@ -746,6 +764,29 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                 </Form.Text>
               )}
             </Form.Group>
+
+            {formData.primaryIndustry === 'Other' && (
+              <Form.Group className="mb-4">
+                <Form.Label className="pmf-form-label">
+                  {t('Please specify industry') || 'Please specify industry'}<span className="text-danger">*</span>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="primaryIndustryOther"
+                  value={formData.primaryIndustryOther}
+                  onChange={handleInputChange}
+                  placeholder={t('Enter industry name') || 'Enter industry name'}
+                  className="pmf-form-control"
+                  isInvalid={!!errors.primaryIndustryOther}
+                  autoFocus
+                />
+                {errors.primaryIndustryOther && (
+                  <Form.Text className="text-danger d-block mt-1">
+                    {errors.primaryIndustryOther}
+                  </Form.Text>
+                )}
+              </Form.Group>
+            )}
           </div>
         );
       case 4:
@@ -1024,6 +1065,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
               >
                 <Form.Check
                   type="radio"
+                  id={`strategic-objective-${option.replace(/\s+/g, '-').toLowerCase()}`}
                   name="strategicObjective"
                   checked={formData.strategicObjective === option}
                   onChange={() => handleRadioSelect(option)}
@@ -1081,6 +1123,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
               >
                 <Form.Check
                   type="radio"
+                  id={`key-challenge-${option.replace(/\s+/g, '-').toLowerCase()}`}
                   name="keyChallenge"
                   label={
                     <span className="pmf-radio-label">{t(option)} </span>
@@ -1137,12 +1180,14 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                 key={option}
                 className={`pmf-checkbox-card ${formData.differentiation.includes(option) ? 'selected' : ''
                   }`}
+                onClick={() => handleDifferentiationChange(option)}
               >
                 <Form.Check
                   type="checkbox"
+                  id={`differentiation-${option.replace(/\s+/g, '-').toLowerCase()}`}
                   label={t(option)}
                   checked={formData.differentiation.includes(option)}
-                  onChange={() => handleDifferentiationChange(option)}
+                  onChange={() => { }} // Controlled by card onClick
                   className="pmf-checkbox-input"
                 />
 
@@ -1152,6 +1197,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
                       type="text"
                       placeholder={t("Please specify")}
                       value={formData.differentiationOther}
+                      onClick={(e) => e.stopPropagation()} // Prevent card deselect
                       onChange={(e) => {
                         const val = e.target.value;
                         setFormData(prev => ({
@@ -1203,6 +1249,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
               >
                 <Form.Check
                   type="radio"
+                  id={`usage-context-${option.replace(/\s+/g, '-').toLowerCase()}`}
                   name="usageContext"
                   label={t(option)}
                   checked={formData.usageContext === option}

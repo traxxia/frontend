@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Table, Badge, Spinner, Form, Button, Modal } from "react-bootstrap";
-import { Shield, Lock, Pencil, Users, AlertCircle, Trash2, Activity, Key } from "lucide-react";
+import { Shield, Lock, Pencil, Users, AlertCircle, Trash2, Activity, Key, ListOrdered, FileEdit, ShieldOff, FolderX, UserMinus } from "lucide-react";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import AdminTable from "./AdminTable";
@@ -141,13 +141,13 @@ const AccessManagement = ({ onToast }) => {
             render: (_, row) => (
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {row.has_rerank_access && (
-                        <span className="admin-status-badge prioritized" style={{ fontSize: '0.7rem' }}>
-                            <Lock size={12} className="me-1" /> {t("Rerank")}
+                        <span className="admin-status-badge prioritized" style={{ fontSize: '0.9rem' }}>
+                            <ListOrdered size={12} className="me-1" /> {t("Rerank")}
                         </span>
                     )}
                     {row.has_project_edit_access && (
-                        <span className="admin-status-badge active" style={{ fontSize: '0.7rem' }}>
-                            <Pencil size={12} className="me-1" /> {t("Edit")}
+                        <span className="admin-status-badge active" style={{ fontSize: '0.9rem' }}>
+                            <FileEdit size={12} className="me-1" /> {t("Edit")}
                         </span>
                     )}
                     {!row.has_rerank_access && !row.has_project_edit_access && (
@@ -165,7 +165,7 @@ const AccessManagement = ({ onToast }) => {
                 return (
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxWidth: '300px' }}>
                         {projects.slice(0, 2).map((p, idx) => (
-                            <span key={idx} className="admin-status-badge archived" style={{ fontSize: '0.65rem', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <span key={idx} title={p.project_name} className="admin-status-badge archived" style={{ fontSize: '0.9rem', maxWidth: 'auto', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {p.project_name}
                             </span>
                         ))}
@@ -191,7 +191,7 @@ const AccessManagement = ({ onToast }) => {
                             onClick={() => handleOpenRevokeModal(row, "rerank")}
                             disabled={revoking}
                         >
-                            <Lock size={14} />
+                            <ShieldOff size={14} />
                         </Button>
                     )}
                     {row.has_project_edit_access && (
@@ -202,18 +202,19 @@ const AccessManagement = ({ onToast }) => {
                             onClick={() => handleOpenRevokeModal(row, "project_edit")}
                             disabled={revoking}
                         >
-                            <Trash2 size={14} />
+                            <FolderX size={14} />
                         </Button>
                     )}
                     {(row.has_rerank_access || row.has_project_edit_access) && (
                         <Button
                             variant="outline-secondary"
                             size="sm"
+                            className="d-flex align-items-center gap-1"
                             title="Revoke All Access"
                             onClick={() => handleOpenRevokeModal(row, "all")}
                             disabled={revoking}
                         >
-                            {t("Revoke All")}
+                            <UserMinus size={14} /> {t("Revoke All")}
                         </Button>
                     )}
                 </>
@@ -238,13 +239,13 @@ const AccessManagement = ({ onToast }) => {
                 <MetricCard
                     label={t("Reranking Access") || "Reranking Access"}
                     value={rerankCount}
-                    icon={Lock}
+                    icon={ListOrdered}
                     iconColor="orange"
                 />
                 <MetricCard
                     label={t("Project Edit Access") || "Project Edit Access"}
                     value={editCount}
-                    icon={Pencil}
+                    icon={FileEdit}
                     iconColor="green"
                 />
                 <MetricCard
