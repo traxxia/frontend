@@ -22,7 +22,4 @@ Super Admin can drill down into any project state to read **Mandatory Justificat
 *Screenshot of the Super Admin Panel with highlighted Audit Trail*
 
 > [!NOTE] Access to the Admin Panel is restricted based on user role. Collaborators do not have access to these management functions.
-
-Back to: [Question Management](./question-management.md)
-
-Next: [Monitoring Process for Company admin](monitoring-process-company-admin.md)
+  

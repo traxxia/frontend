@@ -679,6 +679,11 @@ const AnalysisContentManager = (props) => {
 
     const activeAnalyses = new Set();
 
+    // Financial analyses are always additive if a document is present
+    if (unlockedFeatures.hasDocument) {
+      sets.financial.forEach(a => activeAnalyses.add(a));
+    }
+
     // Determine the highest phase reached for brief-based analyses (Exclusive logic)
     if (unlockedFeatures.advancedPhase) {
       sets.advanced.forEach(a => activeAnalyses.add(a));
@@ -686,11 +691,6 @@ const AnalysisContentManager = (props) => {
       sets.essential.forEach(a => activeAnalyses.add(a));
     } else if (unlockedFeatures.initialPhase) {
       sets.initial.forEach(a => activeAnalyses.add(a));
-    }
-
-    // Financial analyses are always additive if a document is present
-    if (unlockedFeatures.hasDocument) {
-      sets.financial.forEach(a => activeAnalyses.add(a));
     }
 
     return Array.from(activeAnalyses);

@@ -28,5 +28,4 @@ When you click the **Kickstart Projects** button, Traxxia's AI engine performs s
 
 > [!TIP]
 > Use the **Priorities** tab to manage your execution roadmap. You can kickstart priorities one by one or in bulk, and the system will keep track of your progress.
-
-Next: [Priorities & Kickstarting Detailed Guide](./02-priorities-kickstart.md)
+ 

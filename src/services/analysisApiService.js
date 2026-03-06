@@ -6,7 +6,7 @@ export const PHASE_API_CONFIG = {
     'loyaltyNPS',
     'porters',
     'pestel',
-    'strategic' 
+    'strategic'
   ],
 
   essential: [
@@ -421,13 +421,32 @@ export class AnalysisApiService {
       if (isExcelAnalysis) {
         const formData = new FormData();
 
-        if (uploadedFile) {
-          formData.append('file', uploadedFile);
+        let fileToUpload = uploadedFile;
+        let documentInfo = null;
+
+        // Try backend-saved financial document if not uploaded
+        if (!fileToUpload && selectedBusinessId) {
+          documentInfo = await this.fetchFinancialDocument(selectedBusinessId);
+          if (documentInfo) {
+            const documentBlob = await this.downloadFinancialDocument(selectedBusinessId);
+            if (documentBlob) {
+              fileToUpload = await this.createFileFromDocument(documentBlob, documentInfo);
+            }
+          }
+        }
+
+        if (fileToUpload) {
+          formData.append('file', fileToUpload);
         } else {
           // Create a text fallback with business Q&A data when no file is available
           const businessInfo = `Business Information:\n${questionsArray.map((q, i) => `${q}: ${answersArray[i]}`).join('\n')}`;
           const dummyFile = new Blob([businessInfo], { type: 'text/plain' });
           formData.append('file', dummyFile, 'business_data.txt');
+        }
+
+        // Include template metadata
+        if (documentInfo?.template_type) {
+          formData.append('source', documentInfo.template_type);
         }
 
         // Build URL with metric_type query parameter
@@ -444,7 +463,7 @@ export class AnalysisApiService {
           method: 'POST',
           headers: {
             'accept': 'application/json',
-            'source': 'simple'
+            'source': documentInfo?.template_type || 'simple'
           },
           body: formData
         });

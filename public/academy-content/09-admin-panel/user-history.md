@@ -3,9 +3,7 @@
 The **User History** section allows Super Admins to review activity records for individual users.
 
 This feature helps administrators understand how users interact with the Traxxia platform.
-
----
-
+ 
 ## User History Table
 
 The User History page lists:
@@ -18,8 +16,7 @@ The User History page lists:
 Each row includes a **View History** button.
 
 ![User History Table](/academy-screenshots/admin-panel/user-history-list.png)
-
----
+ 
 
 ## Viewing Detailed User History
 
@@ -33,8 +30,4 @@ The modal contains multiple sections such as:
 - Strategic Framework data
 
 ![User History Modal](/academy-screenshots/admin-panel/user-history-modal.png)
-
-
-Back to: [User Management](./user-management.md)
-
-Next: [Question Management](./question-management.md)
+  

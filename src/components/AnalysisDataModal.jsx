@@ -1,5 +1,8 @@
 import React from 'react';
 import { X, Download } from 'lucide-react';
+import '../styles/AnalysisEmptyState.css';
+
+
 import SwotAnalysis from './SwotAnalysis';
 import CustomerSegmentation from './CustomerSegmentation';
 import PurchaseCriteria from './PurchaseCriteria';
@@ -352,11 +355,60 @@ const AnalysisDataModal = ({
         {/* Modal Body */}
         <div className="analysis-modal-body">
           <div className="analysis-modal-content-wrapper">
-            {/* Missing Metrics Display - Show for financial analyses */}
-            {isFinancialAnalysis && effectiveDocumentInfo && (
-              <h5>You answered the required questions, but the responses need more detail to generate meaningful analysis.</h5>
-            )}
-            {renderAnalysisComponent()}
+            {(() => {
+              // Helper to check if data is actually valid/useful
+              const hasValidData = (data) => {
+                if (!data) return false;
+                if (typeof data === 'string') return data.trim().length > 0;
+                if (typeof data !== 'object') return false;
+
+                // For financial analyses, check for actual numeric metrics
+                if (isFinancialAnalysis) {
+                  // Check for error properties
+                  if (data.error || data.message === "Analysis failed") return false;
+
+                  // Recursively check for at least one numeric value or non-empty strings that aren't metadata
+                  const checkDeep = (obj) => {
+                    return Object.entries(obj).some(([key, value]) => {
+                      if (key === 'citations' || key === 'analysis_metadata' || key.includes('threshold')) return false;
+                      if (value === null || value === undefined) return false;
+                      if (typeof value === 'number') return !isNaN(value);
+                      if (typeof value === 'object') return checkDeep(value);
+                      if (typeof value === 'string') return value.trim().length > 0 && !value.toLowerCase().includes('error');
+                      return false;
+                    });
+                  };
+                  return checkDeep(data);
+                }
+
+                // For non-financial, standard check
+                return Object.keys(data).length > 0;
+              };
+
+              const validData = hasValidData(analysisData);
+
+              if (isFinancialAnalysis && !hasDocumentUploaded && !validData) {
+                return (
+                  <div className="loyalty-nps">
+                    <div className="empty-state-container">
+                      <h3 className="empty-state-title">{analysisName || "Financial Analysis Limited"}</h3>
+                      <p className="empty-state-message">
+                        Since there may be no proper values in the financial document, we didn't get the analysis.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  {effectiveDocumentInfo && !isFinancialAnalysis && (
+                    <h5>You answered the required questions, but the responses need more detail to generate meaningful analysis.</h5>
+                  )}
+                  {renderAnalysisComponent()}
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>

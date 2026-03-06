@@ -27,15 +27,7 @@ export const academyStructure = {
                     path: "01-auth-onboarding/registration-and-plans.md",
                     phase: 1,
                     roles: ["all"],
-                    tags: ["setup", "onboarding"]
-                },
-                {
-                    id: "roles-and-plans",
-                    title: "Roles and Plan Lifecycle",
-                    path: "11-account-management/roles-and-plans.md",
-                    phase: 3,
-                    roles: ["orgadmin"],
-                    tags: ["plans", "roles", "billing"]
+                    tags: ["setup", "registration"]
                 }
             ]
         },
@@ -189,7 +181,24 @@ export const academyStructure = {
                     phase: 3,
                     roles: ["orgadmin"],
                     tags: ["launch", "active", "permissions"]
+                },
+                {
+                    id: "assign-project-access",
+                    title: "Assigning Project Access",
+                    path: "05-project-management/assign-project-access.md",
+                    phase: 3,
+                    roles: ["orgadmin"],
+                    tags: ["access", "assignment", "permissions"]
+                },
+                {
+                    id: "manage-project-access",
+                    title: "Access Management",
+                    path: "05-project-management/manage-project-access.md",
+                    phase: 3,
+                    roles: ["orgadmin"],
+                    tags: ["access", "revocation", "admin"]
                 }
+
             ]
         },
         {
@@ -311,14 +320,6 @@ export const academyStructure = {
             description: "Monitoring progress and managing organization-wide settings.",
             articles: [
                 {
-                    id: "super-admin-overview",
-                    title: "Super Admin Panel Overview",
-                    path: "09-admin-panel/super-admin-overview.md",
-                    phase: 3,
-                    roles: ["superadmin"],
-                    tags: ["admin", "superadmin", "overview"]
-                },
-                {
                     id: "companies-management",
                     title: "Companies Management",
                     path: "09-admin-panel/companies-management.md",
@@ -436,4 +437,84 @@ export const getBreadcrumbs = (categoryId, articleId) => {
     }
 
     return breadcrumbs;
+};
+/**
+ * Resolves a relative or absolute Academy path to a standardized router path
+ * @param {string} href - The link href (e.g. "./article.md", "../category/article.md", "/academy/cat/art")
+ * @param {string} currentCategoryId - (Optional) Current category context for relative links
+ * @returns {string} The resolved /academy/category/article path
+ */
+export const resolveAcademyPath = (href, currentCategoryId = null) => {
+    if (!href) return '/academy';
+    if (href.startsWith('/academy/')) return href;
+    if (href === '/academy' || href === 'index.md' || href === './index.md') return '/academy';
+
+    // Remove .md extension and clean up ./ prefix
+    let routerPath = href.replace(/\.md$/, '');
+    if (routerPath.startsWith('./')) {
+        routerPath = routerPath.substring(2);
+    }
+
+    // Map directory names to actual category IDs
+    const categoryMap = {
+        '01-auth-onboarding': 'auth-onboarding',
+        '02-dashboard-business': 'dashboard-business',
+        '03-pmf-flow': 'pmf-flow',
+        '04-kickstart-projects': 'kickstart-projects',
+        '05-project-management': 'project-management',
+        '06-ai-questionnaire': 'ai-questionnaire',
+        '07-insights-strategy': 'insights-strategy',
+        '08-ai-assistant': 'ai-assistant',
+        '09-admin-panel': 'admin-panel'
+    };
+
+    const parts = routerPath.split('/');
+    let categoryId = null;
+    let articleId = null;
+
+    if (routerPath.startsWith('../')) {
+        // Parent directory navigation (e.g. ../03-pmf-flow/pmf-foundation)
+        // parts will be ['', '03-pmf-flow', 'pmf-foundation']
+        categoryId = parts[1];
+        articleId = parts[2];
+    } else if (parts.length === 2) {
+        // Cross-category or directory-prefixed link (e.g. 05-project-management/article)
+        categoryId = parts[0];
+        articleId = parts[1];
+    } else {
+        // Same category link (e.g. registration-and-plans)
+        articleId = parts[0];
+        categoryId = currentCategoryId;
+    }
+
+    // Apply category mapping
+    if (categoryId && categoryMap[categoryId]) {
+        categoryId = categoryMap[categoryId];
+    }
+
+    // Clean up article ID (remove number prefix if present)
+    if (articleId) {
+        articleId = articleId.replace(/^\d+-/, '');
+    }
+
+    // If we have an articleId but no categoryId, try to find it
+    if (!categoryId && articleId) {
+        const article = findArticleById(articleId);
+        if (article) {
+            categoryId = article.categoryId;
+            articleId = article.id;
+        }
+    }
+
+    if (categoryId && articleId) {
+        return `/academy/${categoryId}/${articleId}`;
+    } else if (categoryId) {
+        return `/academy/${categoryId}`;
+    } else if (articleId) {
+        // Last-ditch search
+        const article = findArticleById(articleId);
+        return article ? `/academy/${article.categoryId}/${article.id}` : `/academy/${articleId}`;
+    }
+
+    return '/academy';
 };

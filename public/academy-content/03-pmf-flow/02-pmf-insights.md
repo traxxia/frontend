@@ -1,8 +1,7 @@
 # PMF Insights & Strategic Core
 
 Once onboarding is completed, the system generates directional insights designed to provide immediate "AHA" moments before you explore your detailed strategic dashboard.
-
----
+ 
 
 ## 1. AHA Insights (Directional Clarity)
 
@@ -18,8 +17,7 @@ The AHA Insights section provides four critical directional cards. These give yo
 
 ### Confidence Badges
 Each insight includes a confidence rating (High, Medium, Low). High confidence indicates that your data strongly matches recognized market patterns, while lower ratings may suggest that your inputs need more specific detail.
-
----
+ 
 
 ## 2. The Executive Summary
 
@@ -40,5 +38,4 @@ This layer defines your unique competitive edge.
 
 ### Layer C: Top 3–5 Priorities
 Your strategy is distilled into **3–5 high-level workstreams**. These are the most impactful levers you can pull to resolve your constraints and achieve your objectives.
-
-Next: [Execution & Priorities](03-pmf-execution.md)
+ 

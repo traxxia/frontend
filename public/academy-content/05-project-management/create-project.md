@@ -18,7 +18,4 @@ Once saved, the project immediately appears in the dashboard in the **Draft** st
 
 > [!TIP]
 > Projects created manually follow the same collaborative rules as kickstarted projects—they require ranking and team input before they can be officially launched.
-
-Back to: [Projects Overview & States](./project-overview.md)
-
-Next: [Project Details & Viewing](./project-details.md)
+  

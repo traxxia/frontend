@@ -22,5 +22,4 @@ The most efficient way to build your profile is to use the **Generate AI Answers
 
 > [!NOTE]
 > Manual edits and individual saves do not automatically regenerate all analysis records. Global regeneration is reserved for when you apply a full set of AI-suggested answers to maintain system efficiency and data consistency.
-
-Next: [Financial Uploads & Insights](04-financial-uploads-insights.md)
+ 

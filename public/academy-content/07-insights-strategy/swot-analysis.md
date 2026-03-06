@@ -37,5 +37,4 @@ Once generated, use the following strategies to turn insights into action:
 - **WT Strategies (Weakness-Threat)**: Minimize weaknesses to avoid external threats.
 
 > [!TIP] On the **Essential Plan**, you can generate unlimited initiatives based on your SWOT findings to iterate on your strategy.
-
-Next: [PESTEL Analysis](./pestel-analysis.md)
+ 

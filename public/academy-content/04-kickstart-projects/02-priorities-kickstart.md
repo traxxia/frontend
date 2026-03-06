@@ -49,5 +49,4 @@ Once a priority is kickstarted:
 
 > [!IMPORTANT]
 > Kickstarting is a one-way transition. Once an initiative becomes a project, it moves into a collaborative execution lifecycle where you can assign owners, set budgets, and track progress.
-
-Next: [Adding Collaborators](./collaborators.md)
+ 

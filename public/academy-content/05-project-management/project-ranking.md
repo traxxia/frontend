@@ -20,7 +20,4 @@ Once the Admin saves their initial rank:
 While the team is ranking, the Admin can monitor progress in real-time. A **Collaborator Progress Bar** in the Admin view updates as each team member hits "Save."
 
 ![Ranking Progress Bar](/academy-screenshots/projects/rank-project-selection.png)
-
-Back to: [Project Details & Viewing](./project-details.md)
-
-Next: [Consensus Analysis](./ranking-consensus.md)
+  

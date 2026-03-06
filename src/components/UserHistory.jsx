@@ -23,8 +23,7 @@ import StrategicAnalysis from '../components/StrategicAnalysis';
 import AnalysisContentManager from '../components/AnalysisContentManager';
 import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
-import HistoryPDFDownload from './HistoryPDFDownload';
-import DownloadStrategicPDF from './DownloadStrategicPDF';
+import PDFExportButton from './PDFExportButton';
 import '../styles/UserHistory.css';
 import '../styles/AdminTableStyles.css';
 import { useTranslation } from '../hooks/useTranslation';
@@ -585,8 +584,16 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
     analysisData?.leverageRiskData
   );
 
+  // Determine if a document is present from userDetails or data
+  const hasDocumentInSystemResults = userDetails?.system?.some(result =>
+    result.business_context?.has_document === true ||
+    result.business_context?.document_exists === true
+  );
+
+  const hasDocument = hasAnyFinancialData || !!userDetails?.document_info?.has_document || hasDocumentInSystemResults;
+
   // Determine phases reached
-  const isAdvancedReached = hasAnyFinancialData;
+  const isAdvancedReached = hasAnyFinancialData || hasDocument;
   const isEssentialReached = hasEssential || isAdvancedReached;
   const isInitialReached = hasInitial || isEssentialReached;
 
@@ -596,10 +603,10 @@ const createSimplePhaseManager = (analysisData, userDetails) => {
       initialPhase: isInitialReached,
       essentialPhase: isEssentialReached,
       advancedPhase: isAdvancedReached,
-      hasDocument: hasAnyFinancialData,
+      hasDocument: hasDocument,
       // Legacy flags
       fullSwot: hasEssential,
-      goodPhase: hasAnyFinancialData
+      goodPhase: isAdvancedReached
     })
   };
 };
@@ -746,7 +753,7 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 
   const currentUserDetails = getCurrentUserDetails();
   const analysisData = parseAnalysisData(currentUserDetails, user);
-  const phaseManager = createSimplePhaseManager(analysisData);
+  const phaseManager = createSimplePhaseManager(analysisData, currentUserDetails);
 
   if (businesses.length === 0 && !isLoading) {
     return <EmptyBusinessState user={user} onClose={onClose} />;
@@ -1105,19 +1112,21 @@ const StatsRow = ({
         {showPDFExport && analysisData && (
           <div className="pdf-export-container">
             {isStrategicTab ? (
-              <DownloadStrategicPDF
-                analysisData={analysisData}
+              <PDFExportButton
                 businessName={selectedBusiness}
                 onToastMessage={onToast}
-                modalSelector=".user-details-modal"
-                size="medium"
+                exportType="strategic"
+                strategicData={analysisData.strategic}
+                showText={true}
               />
             ) : (
-              <HistoryPDFDownload
-                analysisData={analysisData}
-                currentPhase="all"
+              <PDFExportButton
                 businessName={selectedBusiness}
-                userDetails={analysisData}
+                onToastMessage={onToast}
+                exportType="insights"
+                unlockedFeatures={analysisData.unlockedFeatures || { analysis: true, advancedPhase: true }} // Fallback for admin view context
+                showText={true}
+                {...analysisData} // Spread analysis data props
               />
             )}
           </div>
@@ -1247,7 +1256,7 @@ const AnalysisTab = ({
   const { t } = useTranslation();
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [collapsedCategories, setCollapsedCategories] = useState(new Set());
-  const totalCompletedQuestions = analysisData?.conversation?.reduce((sum, phase) => sum + phase.questions.length, 0) || completedQuestions;
+  const totalCompletedQuestions = userDetails?.conversation?.reduce((sum, phase) => sum + (phase.questions?.length || 0), 0) || completedQuestions;
 
   const stats = {
     completed: totalCompletedQuestions,
@@ -1423,7 +1432,8 @@ const AnalysisTab = ({
           onRedirectToChat={() => { }}
           isMobile={false}
           setActiveTab={() => { }}
-          hasUploadedDocument={false}
+          hasUploadedDocument={safePhaseManager.getUnlockedFeatures().hasDocument}
+          documentInfo={userDetails?.document_info}
           hideRegenerateButtons={true}
           readOnly={true}
           hideImproveButton={true}
