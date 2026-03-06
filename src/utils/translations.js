@@ -810,6 +810,8 @@ export const staticTranslations = {
     'auto_save_info': 'Changes will be automatically saved in 10 seconds',
     'all_changes_saved': 'All changes saved',
     'changes_detected': 'Changes detected',
+    'subscription_renewal_notice': 'Your subscription will renew on {{date}}',
+    'subscription_details': 'Subscription Details',
     'saving_automatically': 'Saving automatically...',
     'last_saved': 'Last saved',
     'save_in_progress': 'Save in progress',
@@ -2800,7 +2802,9 @@ export const staticTranslations = {
     'Status_is_required': 'Se requiere estado',
     'what_are_the_main_requirements_or_constraints': '¿Cuáles son los principales requisitos o limitaciones?',
     'define_what_is_not_included_in_this_project': 'Define lo que no está incluido en este proyecto',
-    'what_is_the_end_result_use_outcome_based_wording': '¿Cuál es el resultado final? Utilice una redacción basada en resultados.'
+    'what_is_the_end_result_use_outcome_based_wording': '¿Cuál es el resultado final? Utilice una redacción basada en resultados.',
+    'subscription_renewal_notice': 'Su suscripción se renovará el {{date}}',
+    'subscription_details': 'Detalles de suscripción'
   }
 };
 
@@ -2814,9 +2818,16 @@ export const initializeTranslations = () => {
   window.currentAppLanguage = sessionLang || localLang || 'en';
 
   // Static translation function - ONLY FOR UI ELEMENTS
-  window.getTranslation = function (key) {
-    const result = window.appTranslations[window.currentAppLanguage][key] || key;
-    return typeof result === 'string' ? result : String(key);
+  window.getTranslation = function (key, params = {}) {
+    let result = window.appTranslations[window.currentAppLanguage][key] || key;
+    if (typeof result !== 'string') result = String(key);
+
+    // Basic interpolation: replace {{key}} with params[key]
+    Object.keys(params).forEach(pKey => {
+      result = result.replace(new RegExp(`{{${pKey}}}`, 'g'), params[pKey]);
+    });
+
+    return result;
   };
 
   // Enhanced language change function - now saves to session storage

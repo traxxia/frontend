@@ -66,14 +66,22 @@ const SubscriptionTab = ({ onToast }) => {
     const { plan, usage, expires_at, available_plans = [], billing_history = [] } = subscription;
     const currentPlanName = plan.toLowerCase();
 
-    const getDaysRemaining = (date) => {
-        if (!date) return 0;
-        const diff = new Date(date) - new Date();
-        return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    const getDaysRemaining = (end) => {
+        if (!end) return 0;
+
+        const today = new Date();
+        const endDate = new Date(end);
+
+        // Remove time part
+        today.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+
+        const diff = endDate - today;
+
+        return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
     };
 
-    const daysRemaining = getDaysRemaining(expires_at);
-
+    const daysRemaining = getDaysRemaining(subscription.end_date);
     const isHigherTier = (pName) => {
         const tiers = ['essential', 'advanced', 'professional'];
         return tiers.indexOf(pName.toLowerCase()) > tiers.indexOf(currentPlanName);
@@ -161,6 +169,28 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
+                    {/* Subscription Details Section - Compact Box */}
+                    <section className=" mb-4">
+                        <div className="subscription-compact-box">
+                            <p className="autorenew-title mb-1 fw-bold" style={{ fontSize: '1.35rem' }}>
+                                {t("subscription_details") || "Subscription Details"}
+                            </p>
+                            <div className="compact-row">
+                                <span className="compact-label">{t("start_date") || "Start Date"}</span>
+                                <span className="compact-value">{new Date(subscription.start_date).toLocaleDateString()}</span>
+                            </div>
+
+                            <div className="compact-row">
+                                <span className="compact-label">{t("end_date") || "End Date"}</span>
+                                <span className="compact-value">{new Date(subscription.end_date).toLocaleDateString()}</span>
+                            </div>
+
+                            <div className="compact-renewal-message">
+                                {t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() })}
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Usage Metrics Section */}
                     <section className="mt-4 pt-2 mb-4">
                         <h5 className="autorenew-title mb-4">{t("usage_metrics") || "Usage Metrics"}</h5>
@@ -186,6 +216,8 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                     </section>
 
+                    
+
                     {/* Billing History Section */}
                     <section className="mb-5">
                         <AdminTable
@@ -205,7 +237,7 @@ const SubscriptionTab = ({ onToast }) => {
                     </section>
 
                 </Col>
-            </Row>
+            </Row >
 
             <UpgradeModal
                 show={showUpgradeModal}
@@ -218,7 +250,7 @@ const SubscriptionTab = ({ onToast }) => {
                     if (onToast) onToast(t('plan_updated_success') || 'Plan updated successfully!', 'success');
                 }}
             />
-        </div>
+        </div >
     );
 };
 
