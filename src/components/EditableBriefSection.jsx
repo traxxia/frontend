@@ -1258,7 +1258,7 @@ const EditableBriefSection = ({
               isSaving ? 'Saving changes...' :
                 isEssentialPhaseGenerating ? 'Generating essential phase analysis...' :
                   isFinancialRegenerating ? 'Regenerating financial insights like profitability, growth tracker, liquidity, investment performance, leverage and risk insight...' :
-                    (isAnalysisRegenerating || isStrategicRegenerating) ? 'Regenerating Insight & STRATEGIC...' : ''}
+                    (isAnalysisRegenerating || isStrategicRegenerating) ? 'Regenerating Insights & STRATEGIC...' : ''}
           </span>
         </div>
       )}

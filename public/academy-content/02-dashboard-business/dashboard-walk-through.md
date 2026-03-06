@@ -18,10 +18,10 @@ On the left side you will see the the welcome message along with create business
 ![Create Business](/academy-screenshots/business-management/business-creation-form.png)
 *Screenshot of Traxxia Dashboard with business creation form*
 
-![How it's works](/academy-screenshots/getting-started/how-to-use.png)
-*Screenshot of Traxxia Dashboard with How it's works section*
+![How it works](/academy-screenshots/getting-started/how-to-use.png)
+*Screenshot of Traxxia Dashboard with How it works section*
 
-> [!TIP] How it's works is the short version of the Traxxia Academy.
+> [!TIP] How it works is the short version of the Traxxia Academy.
 
 ## Section 2:
 

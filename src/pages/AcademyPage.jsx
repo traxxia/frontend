@@ -31,6 +31,10 @@ const AcademyPage = () => {
     const [prevArticle, setPrevArticle] = useState(null);
     const [nextArticle, setNextArticle] = useState(null);
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [category, article]);
+
 
     // Reset search when navigating
     useEffect(() => {
@@ -204,7 +208,7 @@ const AcademyPage = () => {
                     <LucideIcons.Search className="main-search-icon" size={20} />
                     <input
                         type="text"
-                        placeholder="Search for guides, articles, or topics..."
+                        placeholder="Search for guides or articles..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="academy-main-search-input"

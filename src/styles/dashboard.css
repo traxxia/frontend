@@ -896,12 +896,16 @@
 
   /* Individual accordion item */
   .businesses-section .accordion-item {
-    border: 1px solid #e6e6e6;
+    /* border: 1px solid #e6e6e6; */
     border-radius: 10px;
     margin-bottom: 12px;
     overflow: hidden;
     background: #ffffff;
   }
+
+  [data-theme="dark"] .businesses-section .accordion-item {
+    background-color: #1a1d23 !important;
+}
 
   /* Remove double borders */
   .businesses-section .accordion-item:not(:first-of-type) {
@@ -946,6 +950,10 @@
     padding: 10px;
     background-color: #ffffff;
   }
+
+  [data-theme="dark"] .businesses-section .accordion-body {
+    background-color: #1a1d23 !important;
+}
 
   /* Business list spacing inside accordion */
   .businesses-section .accordion-body>*:not(:last-child) {
@@ -993,6 +1001,11 @@
     line-height: 1.2;
   }
 
+  
+  [data-theme="dark"] .businesses-section .accordion-body {
+    color: #1a1d23 !important;
+}
+
   /* Active accordion */
   .accordion-button:not(.collapsed) .accordion-count-pill {
     background-color: #e5e7eb;
@@ -1000,6 +1013,9 @@
     color: #374151;
   }
 
+  [data-theme="dark"] .accordion-button:not(.collapsed) .accordion-count-pill {
+    color: #1a1d23 !important;
+}
 
   /* Active accordion color tweak */
   .accordion-button:not(.collapsed) .accordion-count {

@@ -729,7 +729,7 @@ const AnalysisContentManager = (props) => {
       {(isAnalysisRegenerating || isStrategicRegenerating) && (
         <div className="analysis-regenerating-banner" style={{ margin: '10px 0' }}>
           <Loader size={16} className="spinner" />
-          <span>Regenerating insights...</span>
+          <span>Regenerating Insights...</span>
         </div>
       )}
       <div className="modern-analysis-content">

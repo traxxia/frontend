@@ -530,7 +530,7 @@ const UserManagement = ({ onToast }) => {
                 <Plus size={16} /> {t("Add_User")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => (userPlan === 'essential' ? setShowUpgradeModal(true) : handleOpenAssignModal())}>
-                <User size={16} /> {t("Assign_Collaborator")}
+                <UserCog size={16} /> {t("Assign_Collaborator")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
                 <ShieldCheck size={16} /> {t("Project_Access")}
@@ -743,7 +743,7 @@ const UserManagement = ({ onToast }) => {
             <Form.Group className="mb-3"><Form.Label className="fw-bold">{t("Access_Type")}</Form.Label><div className="mt-2 ms-3"><Form.Check type="radio" label={t("Enable_Reranking_Project")} checked={accessType === "reRanking"} onChange={() => setAccessType("reRanking")} /><Form.Check type="radio" label={t("Edit_the_Project")} checked={accessType === "projectEdit"} onChange={() => setAccessType("projectEdit")} /></div></Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={accessBusinessId} onChange={(e) => setAccessBusinessId(e.target.value)} isInvalid={!!accessErrors.business}><option value="">{t("Select_Business")}</option>{launchedBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.business}</Form.Control.Feedback></Form.Group>
             {accessType === "projectEdit" && (<Form.Group className="mb-3"><Form.Label>{t("Project")}</Form.Label><Form.Select value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} isInvalid={!!accessErrors.project} disabled={!accessBusinessId}><option value="">{loadingProjects ? t("Loading_projects") : t("Select_Project")}</option>{projects.map(p => <option key={p._id} value={p._id}>{p.project_name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{accessErrors.project}</Form.Control.Feedback></Form.Group>)}
-            <Form.Group className="mb-3"><Form.Label>{t("Collaborators")}</Form.Label><div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "10px" }}>{collaborators.map(c => <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />)}</div></Form.Group>
+            <Form.Group className="mb-3"><Form.Label>{t("Collaborators")}</Form.Label><div className="collaborator-checkbox-list" style={{ maxHeight: "350px", overflowY: "auto", border: "1px solid #dee2e6", borderRadius: "4px", padding: "17px" }}>{collaborators.map(c => <Form.Check key={c._id} label={c.name} checked={selectedCollaboratorIds.includes(c._id)} onChange={() => handleCollaboratorToggle(c._id)} />)}</div></Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={() => setShowGiveAccessModal(false)}>{t("cancel")}</Button><Button variant="primary" onClick={handleProceedToConfirmation}>{t("Continue")}</Button></div>
           </Form>
         </Modal.Body>
