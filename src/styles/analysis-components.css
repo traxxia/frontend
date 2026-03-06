@@ -1003,6 +1003,15 @@ body {
   padding: 10px 1rem !important
 }
 
+[data-theme="dark"] .p-3 {
+    background-color: #1a1d23 !important;
+}
+
+[data-theme="dark"] .text-dark {
+    color: #ffffff !important;
+}
+
+
 /* .card-body{
   padding: 0px !important
 } */
@@ -1014,6 +1023,14 @@ body {
   font-weight: bold;
 }
 
+[data-theme="dark"] .row h6, .insight-list {
+    color: #ffffff !important;
+}
+
+
+[data-theme="dark"] .badge {
+    color: #0072ff !important;
+}
 
 /* Quill rich text editor */
 

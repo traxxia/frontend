@@ -6,6 +6,10 @@
     min-height: 100vh;
 }
 
+[data-theme="dark"] .project-details-container {
+    background-color: #1a1d23 !important;
+}
+
 .no-project-message {
     text-align: center;
     padding: 60px 20px;
@@ -100,6 +104,10 @@
     transition: box-shadow 0.3s ease;
 }
 
+[data-theme="dark"] .details-card {
+    background-color: #1a1d23 !important;
+}
+
 .details-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -115,6 +123,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+[data-theme="dark"] .card-title {
+    background: #1a1d23 !important;
+    color: white !important;
 }
 
 /* Grid Layout for Details - Side by Side */
@@ -276,6 +289,16 @@
 .projects-breadcrumb .breadcrumb-item.active {
     color: #0f172a;
     font-weight: 600;
+}
+
+[data-theme="dark"] .projects-breadcrumb .breadcrumb-item.active{
+    color: #ffffff !important;
+}
+
+
+
+[data-theme="dark"] .breadcrumb-item+.breadcrumb-item::before {
+    color: #ffffff !important;
 }
 
 .projects-breadcrumb .breadcrumb-item:hover:not(.active) {

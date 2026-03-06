@@ -514,7 +514,7 @@ const StrategicAnalysis = ({
     if (!diagnostic || diagnostic === 'N/A') return null;
 
     return (
-      <div style={{
+      <div className="DiagnosticBox" style={{
         padding: '12px 16px',
         backgroundColor: '#f0f9ff',
         marginBottom: '5px',
@@ -524,7 +524,7 @@ const StrategicAnalysis = ({
         gap: '10px'
       }}>
         <Info size={16} style={{ color: '#3b82f6', marginTop: '2px', flexShrink: 0 }} /> {t("diagnostic")}:
-        <div style={{
+        <div className="DiagnosticBox-right" style={{
           fontSize: '14px',
           fontStyle: 'italic',
           color: '#1e40af',
@@ -1637,7 +1637,7 @@ const StrategicAnalysis = ({
                       key={idx}
                     >
                       <td className="table-value">
-                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>
+                        <div className="table-value-text" style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>
                           {link.strategic_objective}
                         </div>
                       </td>
@@ -1763,7 +1763,7 @@ const StrategicAnalysis = ({
                         </div>
                       </td>
                       <td className="table-value">
-                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                        <div className="table-value-text" style={{ fontSize: '13px', color: '#374151' }}>
                           {action.rationale}
                         </div>
                       </td>
@@ -1897,7 +1897,7 @@ const StrategicAnalysis = ({
                         </div>
                       </td>
                       <td className="table-value">
-                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                        <div className="table-value-text" style={{ fontSize: '13px', color: '#374151' }}>
                           {initiative.expected_outcome}
                         </div>
                       </td>
@@ -1956,7 +1956,7 @@ const StrategicAnalysis = ({
                         </div>
                       </td>
                       <td className="table-value">
-                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                        <div className="table-value-text" style={{ fontSize: '13px', color: '#374151' }}>
                           {shift.transformation_required}
                         </div>
                       </td>
@@ -1973,7 +1973,7 @@ const StrategicAnalysis = ({
                         </div>
                       </td>
                       <td className="table-value">
-                        <div style={{ fontSize: '13px', color: '#374151' }}>
+                        <div className="table-value-text" style={{ fontSize: '13px', color: '#374151' }}>
                           {shift.sustainability}
                         </div>
                       </td>

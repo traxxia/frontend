@@ -428,11 +428,11 @@ const StrategicPositioningRadar = ({
                 <div className="radar-legend">
                     <div className="legend-item">
                         <span className="legend-color current"></span>
-                        <span>Current Score</span>
+                        <span className="legend-text">Current Score</span>
                     </div>
                     <div className="legend-item">
                         <span className="legend-color target"></span>
-                        <span>Target Score</span>
+                        <span className="legend-text">Target Score</span>
                     </div>
                 </div>
             </div>
@@ -607,15 +607,15 @@ const StrategicPositioningRadar = ({
                 <div className="positioning-legend">
                     <div className="legend-item">
                         <span className="legend-dot current"></span>
-                        <span>Current Position</span>
+                        <span className='legend-text'>Current Position</span>
                     </div>
                     <div className="legend-item">
                         <span className="legend-dot target"></span>
-                        <span>Target Position</span>
+                        <span className='legend-text'>Target Position</span>
                     </div>
                     <div className="legend-item">
                         <span className="legend-dot industry"></span>
-                        <span>Industry Average</span>
+                        <span className='legend-text'>Industry Average</span>
                     </div>
                 </div>
             </div>

@@ -185,6 +185,11 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+[data-theme="dark"] .pillar-card {
+    background-color: #1a1d23 !important;
+}
+
+
 .pillar-header {
   display: flex;
   align-items: center;
@@ -198,6 +203,18 @@
   font-size: 16px;
   color: #1f2937;
 }
+
+[data-theme="dark"] .pillar-title {
+    color: #ffffff !important;
+}
+[data-theme="dark"] .DiagnosticBox {
+    background-color: #212432 !important;
+}
+
+[data-theme="dark"] .DiagnosticBox-right {
+    color: #ffffff !important;
+}
+
 
 /* Strategy Pillar */
 .strategy-card {
@@ -454,6 +471,11 @@
   border: 1px solid #e9d5ff;
 }
 
+[data-theme="dark"] .info-box.resources {
+    background-color: #1a1d23 !important;
+}
+
+
 .info-box.governance {
   background-color: #eef2ff;
   border: 1px solid #c7d2fe;
@@ -467,6 +489,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+[data-theme="dark"] .info-box.execution {
+    background-color: #1a1d23 !important;
 }
 
 .info-box-title {
@@ -614,6 +640,11 @@
   padding: 12px 16px;
 }
 
+[data-theme="dark"] .cultural-shift-card {
+    background-color: #1a1d23 !important;
+}
+
+
 .cultural-shift-content {
   display: flex;
   align-items: center;
@@ -717,6 +748,17 @@
   margin-bottom: 5px;
   background: #fff;
 }
+
+[data-theme="dark"] .section-headers {
+    background-color: #272d3e !important;
+}
+
+[data-theme="dark"] .table-value-text {
+    color: #ffffff !important;
+}
+
+
+
 
 .section-headers h4 {
   margin-top: 5px;

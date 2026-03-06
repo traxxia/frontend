@@ -513,6 +513,10 @@
   fill: #6b7280;
 }
 
+[data-theme="dark"] .recharts-cartesian-axis-tick-value {
+    fill: #ffffff;
+}
+
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   stroke: #e5e7eb;

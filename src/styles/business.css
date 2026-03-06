@@ -441,6 +441,10 @@
   transition: all 0.3s ease;
 }
 
+[data-theme="dark"] .modern-expand-btn {
+    color: #ffffff !important;
+}
+
 .modern-expand-btn:hover {
   transform: scale(1.05);
 }
@@ -836,6 +840,11 @@
   color: #000000;
   transition: transform 0.2s ease;
 }
+
+[data-theme="dark"] .category-toggle {
+    color: #ffffff !important;
+}
+
 
 .category-content {
   transition: all 0.3s ease;

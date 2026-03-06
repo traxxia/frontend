@@ -130,6 +130,14 @@
   white-space: nowrap;
 }
 
+[data-theme="dark"] .status-badge {
+  color: #1a1d23 !important;
+}
+
+[data-theme="dark"] .porters-container .forces-tags .forces-tag {
+  color: #1a1d23 !important;
+}
+
 /* Not started state */
 .not-started {
   background-color: #f1f3f5;
@@ -273,6 +281,10 @@
   color: #0f172a;
 }
 
+[data-theme="dark"] .priority-title {
+    color: #ffffff !important;
+}
+
 .priority-status {
   display: flex;
   align-items: center;
@@ -289,6 +301,10 @@
 .priority-description {
   font-size: 13px;
   color: #64748b;
+}
+
+[data-theme="dark"] .priority-description {
+    color: #d3d3d3 !important;
 }
 
 .priority-bottom {

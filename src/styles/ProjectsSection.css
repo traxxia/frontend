@@ -214,6 +214,11 @@
   overflow-x: auto;
 }
 
+[data-theme="dark"] .status-tabs-container {
+    background-color: #1a1d23 !important;
+    border: 1px solid #e5e7eb;
+}
+
 .status-tab {
   background: transparent;
   border: none;
@@ -240,6 +245,10 @@
   color: #4f46e5;
 }
 
+[data-theme="dark"] .status-tab.active {
+    background-color: #2a2f3a !important;
+}
+
 .status-count {
   font-size: 11px;
   color: #ffffff;
@@ -263,6 +272,10 @@
 .status-tab:not(.active) .status-count {
   background: #cbd5e1;
   color: #64748b;
+}
+
+[data-theme="dark"] .status-tab:not(.active) .status-count {
+    color: #1a1d23 !important;
 }
 
 @keyframes slideIn {
@@ -335,6 +348,11 @@
   align-items: center;
   justify-content: center;
 }
+
+[data-theme="dark"] .menu-button {
+    color: #ffffff;
+}
+
 
 .menu-button:hover {
   color: #374151;
@@ -1496,7 +1514,7 @@
 /* ========================================= */
 
 [data-theme="dark"] .projects-wrapper {
-  background-color: #121317 !important;
+  background-color: #1a1d23 !important;
 }
 
 /* -------- OPEN COLLAB CARD -------- */
@@ -2234,4 +2252,10 @@
   padding: 4px 10px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+}
+
+
+
+[data-theme="dark"] .collaborator-progress-compact {
+    background-color: #1a1d23 !important;
 }
