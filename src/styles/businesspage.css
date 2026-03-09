@@ -375,6 +375,7 @@ body {
   color: #6b7280;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  outline: none;
 }
 
 .desktop-tab.active {
@@ -1575,6 +1576,7 @@ body {
     border-bottom: 2px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
+    outline: none;
   }
 
   .mobile-tab.active {
@@ -2476,6 +2478,7 @@ body {
   white-space: nowrap;
   min-width: 120px;
   text-align: center;
+  outline: none;
 }
 
 .phase-tab:hover {
