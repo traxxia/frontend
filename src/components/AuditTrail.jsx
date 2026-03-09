@@ -442,7 +442,7 @@ const AuditTrail = ({ onToast }) => {
     {
       label: t('details'),
       key: 'actions',
-      align: 'right',
+      align: 'left',
       render: (_, row) => (
         <div className="details-cell">
           {row.event_data && Object.keys(row.event_data).length > 0 && row.event_type !== 'analysis_generated' && (
@@ -491,6 +491,7 @@ const AuditTrail = ({ onToast }) => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         searchPlaceholder={t('search_events')}
+        searchTooltip={t('search_audit_trail_tooltip')}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}

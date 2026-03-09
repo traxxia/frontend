@@ -85,7 +85,7 @@ const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
               <div className="stat-card">
                 <span className="stat-number">{company.total_users || 0}</span>
                 <span className="stat-label">Total Users</span>
-              </div> 
+              </div>
             </div>
           </div>
         </div>
@@ -240,8 +240,8 @@ const CompanyManagement = ({ onToast }) => {
       render: (_, row) => (
         <div style={{ minWidth: '80px' }}>
           <div className="admin-cell-primary" style={{ fontSize: '0.8rem' }}>
-            {row.total_users ?? 0} 
-          </div> 
+            {row.total_users ?? 0}
+          </div>
         </div>
       ),
     },
@@ -263,6 +263,7 @@ const CompanyManagement = ({ onToast }) => {
         searchTerm={(isSuperAdmin || companies.length > 1) ? searchTerm : undefined}
         onSearchChange={(isSuperAdmin || companies.length > 1) ? handleSearchChange : undefined}
         searchPlaceholder={t('search_companies')}
+        searchTooltip={t('search_companies_tooltip')}
         currentPage={currentPage}
         totalPages={isSuperAdmin ? totalPages : 1}
         onPageChange={setCurrentPage}

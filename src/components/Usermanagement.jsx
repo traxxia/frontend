@@ -549,6 +549,7 @@ const UserManagement = ({ onToast }) => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         searchPlaceholder={t("Search_by_name_or_email")}
+        searchTooltip={t("search_users_tooltip")}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}

@@ -7,7 +7,7 @@
   justify-content: center !important;
 }
 
-.user-history-modal .modal-dialog {  
+.user-history-modal .modal-dialog {
   margin: auto !important;
   /* Ensure it is centered within the flex container */
   display: flex;
@@ -3716,6 +3716,7 @@
   background: white;
   border-radius: 8px;
   overflow-y: scroll;
+  padding: 0 20px 20px 20px;
 }
 
 /* Responsive Design */
@@ -4298,8 +4299,8 @@
 
 /* User History Stats Container */
 .user-history-stats-container {
-  margin: 0px;
-  padding: 10px;
+  margin: 10px 0;
+  padding: 16px;
   background: #fff;
   border-radius: 8px;
   border: 1px solid #e1e5e9;
@@ -4330,7 +4331,7 @@
 }
 
 .business-filter-select {
-  padding: 8px 12px;
+  padding: 8px 36px 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #fff;
@@ -4338,6 +4339,11 @@
   color: #374151;
   min-width: 150px;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 4px center;
+  background-repeat: no-repeat;
+  background-size: 18px;
 }
 
 .business-filter-select:focus {
@@ -4628,7 +4634,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: white;
+  background: #f8fafc;
+  padding: 0 20px 20px 20px;
 }
 
 .panel-content-layout {
@@ -4719,7 +4726,7 @@
   }
 
   .admin-data-table {
-    min-width: 600px; 
+    min-width: 600px;
   }
 
   .admin-data-table th,
@@ -4739,6 +4746,7 @@
     color: #6b7280;
     word-break: break-word;
   }
+
   .admin-status-badge {
     font-size: 11px !important;
     padding: 4px 8px;
@@ -4796,11 +4804,11 @@
     overflow-y: hidden;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; 
+    scrollbar-width: none;
   }
 
   .admin-nav::-webkit-scrollbar {
-    display: none; 
+    display: none;
   }
 
   .admin-nav .nav-tab {
