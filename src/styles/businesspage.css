@@ -227,7 +227,7 @@ body {
 }
 
 [data-theme="dark"] .desktop-tabs {
-  background-color: var(--color-bg-primary);
+  background-color: #333946  !important;
 }
 
 [data-theme="dark"] .desktop-tab {
@@ -375,6 +375,7 @@ body {
   color: #6b7280;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  outline: none;
 }
 
 .desktop-tab.active {
@@ -809,6 +810,11 @@ body {
   scroll-behavior: auto !important;
   touch-action: manipulation;
 }
+
+[data-theme="dark"] .edit-container {
+    background-color: #1a1d23 !important;
+}
+
 
 .edit-input,
 .edit-textarea {
@@ -1504,9 +1510,9 @@ body {
 
   .edit-textarea,
   .edit-input {
-    background-color: #374151;
+    background-color: #ffffff;
     border-color: #4b5563;
-    color: #f9fafb;
+    color: #374151;
   }
 
   .edit-textarea:focus,
@@ -1570,6 +1576,7 @@ body {
     border-bottom: 2px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
+    outline: none;
   }
 
   .mobile-tab.active {
@@ -2471,6 +2478,7 @@ body {
   white-space: nowrap;
   min-width: 120px;
   text-align: center;
+  outline: none;
 }
 
 .phase-tab:hover {
@@ -2598,6 +2606,11 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
+
+[data-theme="dark"] .strategic-page-section {
+    background-color: #272d3e !important;
+}
+
 
 
 

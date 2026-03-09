@@ -3359,6 +3359,10 @@
   color: #6b7280;
 }
 
+[data-theme="dark"] .legend-text {
+    color: #1a1d23 !important;
+}
+
 .legend-color {
   width: 12px;
   height: 12px;
@@ -5179,3 +5183,15 @@
   box-shadow: 0 4px 20px rgba(16, 22, 42, 0.24);
   color: #e5e7eb !important;
 }
+
+[data-theme="dark"] .radar-content .text {
+    color: #ffffff !important;
+}
+
+
+
+
+
+[data-theme="dark"]  .coreBusinessDefinition {
+   background-color: #1a1d23 !important;
+ }

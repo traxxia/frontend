@@ -123,6 +123,10 @@
   flex-shrink: 0;
 }
 
+[data-theme="dark"] .exc-section-toggle {
+    color: #ffffff !important;
+}
+
 .exc-section-toggle:hover {
   color: #2563eb;
 }
@@ -182,9 +186,18 @@
   background: white !important;
 }
 
+[data-theme="dark"] .exc-subsection.exc-existing-adjacencies {
+    background-color: #1a1d23 !important;
+}
+
+
 .exc-subsection.exc-new-adjacencies {
   border-color: #a7f3d0;
   background: white !important;
+}
+
+[data-theme="dark"] .exc-subsection.exc-new-adjacencies {
+    background-color: #1a1d23 !important;
 }
 
 .exc-subsection-icon {

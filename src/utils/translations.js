@@ -2212,7 +2212,7 @@ export const staticTranslations = {
     'objective_required': 'Se requiere un objetivo',
     'updating': 'Actualizando...',
     'creating': 'Creando...',
-    'search_events': 'Buscar eventos...',
+    'search_events': 'Buscar eventos, usuarios y descripción...',
     'event_type': 'Tipo de Evento',
     'all_events': 'Todos los Eventos',
     'start_date': 'Fecha de Inicio',

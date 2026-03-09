@@ -225,6 +225,10 @@
   /* compress the inside area */
 }
 
+[data-theme="dark"] .rank-project-card .card-body {
+    background-color: #333946 ;
+}
+
 
 
 /* ------- MOBILE RESPONSIVE ------- */
@@ -323,8 +327,8 @@
 /* ----------------------------- */
 
 [data-theme="dark"] .rank-panel-container {
-  background-color: #1f1f1f !important;
-  border-color: #444 !important;
+  background-color: #1a1d23 !important;
+  border-color: #ffffff !important;
 }
 
 [data-theme="dark"] .rank-title {

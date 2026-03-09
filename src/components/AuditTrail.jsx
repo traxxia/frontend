@@ -178,31 +178,7 @@ const AuditTrail = ({ onToast }) => {
     setSearchTerm(value);
   };
 
-  const filteredEntries = auditEntries.filter((entry) => {
-    const term = searchTerm.toLowerCase();
-    const dataString = JSON.stringify(entry.event_data || {}).toLowerCase();
-    const summaryString = JSON.stringify(entry.event_data_summary || {}).toLowerCase();
-    const infoString = JSON.stringify(entry.additional_info || {}).toLowerCase();
 
-    return (
-      entry.user_name?.toLowerCase().includes(term) ||
-      entry.user_email?.toLowerCase().includes(term) ||
-      entry.event_type?.toLowerCase().includes(term) ||
-      entry.event_type?.replace(/_/g, ' ').toLowerCase().includes(term) ||
-      entry.company_name?.toLowerCase().includes(term) ||
-      entry.business_name?.toLowerCase().includes(term) ||
-      dataString.includes(term) ||
-      summaryString.includes(term) ||
-      infoString.includes(term)
-    );
-  });
-
-  const totalItems = filteredEntries.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedEntries = filteredEntries.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   const getEventIcon = (eventType) => {
     const iconMap = {
@@ -236,22 +212,60 @@ const AuditTrail = ({ onToast }) => {
 
   const formatEventData = (eventType, eventData, eventDataSummary, row) => {
     // Use summary for analysis_generated if available
-    const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : eventData;
+    const data = eventType === 'analysis_generated' && eventDataSummary ? eventDataSummary : (eventData || {});
 
     const formatMap = {
-      login_success: `Successful login as ${data.role}${data.company ? ` at ${data.company}` : ''}`,
-      login_failed: `Failed login attempt for ${data.email}`,
+      login_success: `Successful login as ${data.role || ''}${data.company ? ` at ${data.company}` : ''}`,
+      login_failed: `Failed login attempt for ${data.email || ''}`,
       logout: 'User logged out',
       question_answered: `Answered Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
       question_skipped: `Skipped Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
       question_edited: `Edited Question ${row.business_name ? ` for business: ${row.business_name}` : ''}`,
-      analysis_generated: `Generated ${data.analysis_type || 'analysis'}: ${data.analysis_name} `,
-      business_created: `Created business: ${data.business_name}`,
-      business_deleted: `Deleted business: ${data.business_name}${data.conversations_deleted ? ` (${data.conversations_deleted} conversations removed)` : ''}`,
+      analysis_generated: `Generated ${data.analysis_type || 'analysis'}: ${data.analysis_name || ''} `,
+      business_created: `Created business: ${data.business_name || ''}`,
+      business_deleted: `Deleted business: ${data.business_name || ''}${data.conversations_deleted ? ` (${data.conversations_deleted} conversations removed)` : ''}`,
       collaborator_assigned: `Assigned collaborator to business: ${row.business_name || 'Business'}`
     };
-    return formatMap[eventType] || eventType.replace('_', ' ');
+    return formatMap[eventType] || (eventType ? eventType.replace('_', ' ') : '');
   };
+
+  const filteredEntries = auditEntries.filter((entry) => {
+    if (!searchTerm) return true;
+
+    // Split the search term into separate words
+    const searchTerms = searchTerm.toLowerCase().split(' ').filter(word => word.length > 0);
+
+    // Evaluate description explicitly to support searching by visible description
+    const descriptionText = formatEventData(entry.event_type, entry.event_data, entry.event_data_summary, entry).toLowerCase();
+
+    const dataString = JSON.stringify(entry.event_data || {}).toLowerCase();
+    const summaryString = JSON.stringify(entry.event_data_summary || {}).toLowerCase();
+    const infoString = JSON.stringify(entry.additional_info || {}).toLowerCase();
+
+    // Combine all relevant strings
+    const combinableString = [
+      entry.user_name || '',
+      entry.user_email || '',
+      entry.event_type || '',
+      entry.event_type ? entry.event_type.replace(/_/g, ' ') : '',
+      entry.company_name || '',
+      entry.business_name || '',
+      descriptionText,
+      dataString,
+      summaryString,
+      infoString
+    ].join(' ').toLowerCase();
+
+    // Ensure every word in the search term is found somewhere in the combined string
+    return searchTerms.every(word => combinableString.includes(word));
+  });
+
+  const totalItems = filteredEntries.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedEntries = filteredEntries.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getEventStatusInfo = (eventType) => {
     if (eventType.includes('success') || eventType.includes('created') || eventType === 'analysis_generated') {
@@ -304,9 +318,14 @@ const AuditTrail = ({ onToast }) => {
               .join(' | ') || '-';
           }
         }
-        else if (key.includes('at') || key.includes('timestamp')) {
+        else if (key.endsWith('_at') || key.endsWith('At') || key.includes('timestamp')) {
           try {
-            displayValue = new Date(value).toLocaleString();
+            const parsedDate = new Date(value);
+            if (!isNaN(parsedDate.getTime()) && (typeof value === 'string' || typeof value === 'number')) {
+              displayValue = parsedDate.toLocaleString();
+            } else {
+              displayValue = value;
+            }
           } catch (e) {
             displayValue = value;
           }
