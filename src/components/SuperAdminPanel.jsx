@@ -27,6 +27,7 @@ import Usermanagement from "./Usermanagement";
 import AccessManagement from "./AccessManagement";
 import BusinessOverview from "./BusinessOverview";
 import SubscriptionTab from "./SubscriptionTab";
+import AcademyFeedbackAdmin from "./AcademyFeedbackAdmin";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -88,6 +89,12 @@ const SuperAdminPanel = () => {
       superAdminOnly: true,
     },
     {
+      id: "academy_feedback",
+      label: "Academy Feedback",
+      icon: MessagesSquare,
+      superAdminOnly: true,
+    },
+    {
       id: "subscription",
       label: t('subscription') || "Subscription",
       icon: CreditCard,
@@ -130,6 +137,8 @@ const SuperAdminPanel = () => {
         return <BusinessOverview onToast={showToastMessage} />;
       case "subscription":
         return <SubscriptionTab onToast={showToastMessage} />;
+      case "academy_feedback":
+        return <AcademyFeedbackAdmin onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }

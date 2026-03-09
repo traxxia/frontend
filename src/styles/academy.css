@@ -1345,3 +1345,238 @@
     max-width: 100%;
   }
 }
+
+/* ============================================================================
+   FEEDBACK COMPONENT
+   ============================================================================ */
+
+.academy-feedback {
+  margin-top: var(--spacing-4xl);
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-item);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-xl);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.feedback-question {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.feedback-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.feedback-btn {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: 1px solid var(--color-border-medium);
+  background: var(--color-bg-secondary);
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-base);
+}
+
+.feedback-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(33, 122, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.feedback-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(33, 122, 255, 0.2);
+}
+
+.feedback-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Textarea Wrapper - Responsive and Aligned */
+.feedback-textarea-wrapper {
+  margin: var(--spacing-lg) auto 0;
+  max-width: 600px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feedback-textarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  resize: vertical;
+  min-height: 100px;
+  transition: var(--transition-normal);
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(33, 122, 255, 0.1);
+}
+
+.feedback-submit-btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  align-self: flex-end;
+  /* Align to the right side on larger screens */
+}
+
+.feedback-submit-btn:hover {
+  background: #1a63cc;
+  box-shadow: 0 4px 12px rgba(33, 122, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.academy-feedback-submitted {
+  background: rgba(40, 167, 69, 0.05);
+  border-color: rgba(40, 167, 69, 0.3);
+}
+
+.feedback-thank-you {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: #28a745;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+}
+
+.feedback-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #28a745;
+  color: white;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+/* Responsiveness for Feedback */
+@media (max-width: 600px) {
+  .feedback-textarea-wrapper {
+    max-width: 100%;
+  }
+
+  .feedback-submit-btn {
+    align-self: stretch;
+    /* Make full width on mobile devices */
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Academy Feedback Admin Table Utilities
+   ========================================================================== */
+
+.admin-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.admin-text-mono {
+  font-family: monospace;
+}
+
+.admin-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-feedback-text {
+  white-space: normal;
+  max-width: 400px;
+  line-height: 1.4;
+}
+
+.admin-text-italic {
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.admin-text-sm {
+  font-size: 0.85rem;
+}
+
+.admin-text-xs {
+  font-size: 0.75rem;
+}
+
+.admin-font-medium {
+  font-weight: 500;
+}
+
+.admin-filter-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-right: 16px;
+  align-items: center;
+}
+
+.admin-filter-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.admin-filter-select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.admin-filter-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
