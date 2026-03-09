@@ -3073,6 +3073,11 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+[data-theme="dark"] .history-business-card {
+    background-color: #1a1d23 !important;
+}
+
+
 .history-business-header {
   display: flex;
   justify-content: space-between;
@@ -3099,6 +3104,10 @@
   color: #374151;
   font-size: 0.9375rem;
   line-height: 1.5;
+}
+
+[data-theme="dark"] .history-business-purpose {
+    color: #ededed !important;
 }
 
 .history-business-stats {
@@ -3677,6 +3686,11 @@
   color: #1f2937;
   margin: 0 0 8px 0;
 }
+
+[data-theme="dark"] .user-header-info h3 {
+    color: #ffffff !important;
+}
+
 
 /* Activity Summary Enhancement */
 .activity-summary {

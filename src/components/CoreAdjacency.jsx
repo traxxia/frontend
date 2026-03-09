@@ -544,7 +544,7 @@ const CoreAdjacency = ({
                     {expandedSections.coreBusinessDefinition && (
                         <div className="table-container">
                             {data.coreBusinessDefinition.description && (
-                                <div style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
+                                <div className="coreBusinessDefinition" style={{ padding: '1rem', background: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
                                     <p style={{ margin: 0, lineHeight: '1.6' }}>{data.coreBusinessDefinition.description}</p>
                                 </div>
                             )}

@@ -427,19 +427,19 @@ const CompetitiveAdvantageMatrix = ({
                     <div className="plot-legend">
                         <div className="legend-item">
                             <div className="legend-dot sweet-spot"></div>
-                            <span>Sweet Spot (High Value + High Uniqueness)</span>
+                            <span className="legend-text">Sweet Spot (High Value + High Uniqueness)</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-dot niche"></div>
-                            <span>Niche Advantage</span>
+                            <span className="legend-text">Niche Advantage</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-dot high-value"></div>
-                            <span>High Value</span>
+                            <span className="legend-text">High Value</span>
                         </div>
                         <div className="legend-item">
                             <div className="legend-dot improve"></div>
-                            <span>Needs Improvement</span>
+                            <span className="legend-text">Needs Improvement</span>
                         </div>
                     </div>
                 </div>

@@ -113,6 +113,11 @@
     min-height: 80vh;
 }
 
+[data-theme="dark"] .subscription-redesign-wrapper {
+    background-color: #1a1d23 !important;
+}
+
+
 .plan-cards-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -132,6 +137,10 @@
     justify-content: space-between;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .plan-card-mockup {
+    background-color: #1a1d23 !important;
 }
 
 .plan-card-mockup.active {
