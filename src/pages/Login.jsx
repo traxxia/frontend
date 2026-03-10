@@ -59,6 +59,7 @@ const Login = () => {
       sessionStorage.setItem("userPlan", res.data.user.plan_name || "essential");
       sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
       if (res.data.user.company) {
+        sessionStorage.setItem("companyId", res.data.user.company.id || "");
         sessionStorage.setItem("companyName", res.data.user.company.name || "");
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
         sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");

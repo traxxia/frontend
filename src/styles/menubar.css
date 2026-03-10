@@ -3,17 +3,19 @@
 /* @import 'path/to/css-variables.css'; */
 /* Add these styles to your menubar.css file */
 
-.traxia-navbar .container-fluid > div {
+.traxia-navbar .container-fluid>div {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   position: relative;
 }
+
 [data-theme="dark"] .traxia-navbar {
   background: var(--color-bg-dark);
   border-bottom: 1px solid var(--color-border-dark);
 }
+
 [data-theme="dark"] {
   --color-text-white: #ffffff;
 }
@@ -23,21 +25,30 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  min-width: 120px; /* Reserve space for company logo */
+  margin-right: 20px;
 }
 
-.company-logo {
+.company-logo-container {
   display: flex;
   align-items: center;
-  transition: opacity 0.2s ease;
+  justify-content: flex-start;
+  height: 44px;
+  /* Slightly larger height for better visibility */
+  max-width: 140px;
 }
 
-.company-logo:hover {
+.header-company-logo {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.company-logo-container:hover {
   opacity: 0.8;
-}
-
-.company-logo img {
-  border-radius: 4px; /* Optional: slight rounding for company logos */
+  cursor: pointer;
 }
 
 /* Center section - Traxxia Logo */
@@ -68,7 +79,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  min-width: 120px; /* Reserve space for user menu */
+  min-width: 120px;
+  /* Reserve space for user menu */
 }
 
 /* Responsive adjustments */
@@ -76,16 +88,16 @@
   .navbar-left {
     min-width: 80px;
   }
-  
+
   .navbar-right {
     min-width: 80px;
   }
-  
-  .company-logo img {
-    max-width: 80px;
-    height: 28px;
+
+  .company-logo-container {
+    height: 32px;
+    max-width: 100px;
   }
-  
+
   .traxia-logo img {
     height: 20px;
   }
@@ -95,20 +107,21 @@
   .navbar-left {
     min-width: 60px;
   }
-  
+
   .navbar-right {
     min-width: 60px;
   }
-  
-  .company-logo img {
-    max-width: 60px;
-    height: 24px;
+
+  .company-logo-container {
+    height: 28px;
+    max-width: 80px;
   }
-  
+
   .traxia-logo img {
     height: 18px;
   }
 }
+
 .traxia-navbar {
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border-light);
@@ -262,6 +275,7 @@
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
 }
+
 [data-theme="dark"] .traxia-dropdown {
 
   border: 1px solid var(--color-border-dark);
@@ -283,11 +297,11 @@
     font-size: var(--font-size-md) !important;
     letter-spacing: var(--letter-spacing-wide);
   }
-  
+
   .traxia-dropdown {
     min-width: 160px;
   }
-  
+
   .dropdown-item-traxia {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-sm);
@@ -304,6 +318,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

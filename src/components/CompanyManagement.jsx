@@ -1,94 +1,200 @@
-import React, { useState, useEffect } from 'react';
-import { Building2, Image, Edit } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Building2, Image, Edit, Upload } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
 import '../styles/CompanyManagement.css';
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 
-// ------------------ CompanyDetails Modal ------------------
-const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
+
+// ------------------ CompanyEdit Modal ------------------
+const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
+  const [formData, setFormData] = useState({
+    company_name: company.company_name,
+    industry: company.industry || '',
+    size: company.size || '',
+  });
+  const [logoPreview, setLogoPreview] = useState(company.logo);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const token = sessionStorage.getItem('token');
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate image type
+    if (!file.type.startsWith('image/')) {
+      onToast('Please upload an image file.', 'error');
+      return;
+    }
+
+    // Set local preview
+    const previewUrl = URL.createObjectURL(file);
+    setLogoPreview(previewUrl);
+    setSelectedFile(file);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      let finalLogoUrl = company.logo;
+
+      // 1. Upload logo if a new one was selected
+      if (selectedFile) {
+        const logoFormData = new FormData();
+        logoFormData.append('logo', selectedFile);
+
+        const logoRes = await fetch(`${API_BASE_URL}/api/admin/companies/${company._id}/logo`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: logoFormData,
+        });
+
+        if (!logoRes.ok) {
+          const error = await logoRes.json().catch(() => ({}));
+          throw new Error(error.error || 'Failed to upload logo');
+        }
+
+        const logoData = await logoRes.json();
+        finalLogoUrl = logoData.logo_url;
+      }
+
+      // 2. Update company details
+      const detailRes = await fetch(`${API_BASE_URL}/api/admin/companies/${company._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (detailRes.ok) {
+        onToast('Company updated successfully', 'success');
+        onSave({ ...company, ...formData, logo: finalLogoUrl });
+
+        // Update sessionStorage if this is the user's company
+        if (sessionStorage.getItem('userRole') === 'company_admin') {
+          sessionStorage.setItem('companyName', formData.company_name);
+          sessionStorage.setItem('companyLogo', finalLogoUrl);
+          sessionStorage.setItem('companyIndustry', formData.industry);
+        }
+
+        onClose();
+      } else {
+        const error = await detailRes.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to update company details');
+      }
+    } catch (error) {
+      console.error('Error saving company:', error);
+      onToast(error.message, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="modal-overlay">
-      <div className="modal-content centered large">
+      <div className="modal-content centered medium">
         <div className="modal-header">
-          <h3>Company Details</h3>
-          <div className="modal-header-actions">
-            {canEdit && (
-              <button className="secondary-btn" onClick={() => onEdit(company)}>
-                <Edit size={16} />
-                Edit Logo
-              </button>
-            )}
-            <button className="close-btn" onClick={onClose}>×</button>
-          </div>
+          <h3>Edit Company Information</h3>
+          <button className="close-btn" onClick={onClose}>×</button>
         </div>
+        <form onSubmit={handleSave} className="edit-company-form">
+          <div className="logo-upload-card">
+            <div className="logo-upload-header">
+              <div className="logo-icon-wrapper">
+                <Image size={24} />
+              </div>
+              <div className="logo-text-wrapper">
+                <h4>Company Branding</h4>
+                <p>Upload your official company logo</p>
+              </div>
+            </div>
 
-        <div className="company-details">
-          {company.logo && (
-            <div className="logo-section">
-              <h4>Company Logo</h4>
-              <div className="company-logo-display-container">
-                <img
-                  src={company.logo}
-                  alt={`${company.company_name} logo`}
-                  className="company-logo-display"
+            <div className="logo-upload-content">
+              <div className="logo-preview-container-refined">
+                {logoPreview ? (
+                  <img src={logoPreview && (logoPreview.startsWith('/') || logoPreview.startsWith('blob:')) ? (logoPreview.startsWith('blob:') ? logoPreview : `${API_BASE_URL}${logoPreview}`) : logoPreview} alt="Company logo preview" className="logo-preview-refined" />
+                ) : (
+                  <div className="logo-placeholder-refined">
+                    <Building2 size={32} />
+                  </div>
+                )}
+              </div>
+
+              <div className="logo-actions-refined">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  hidden
                 />
-              </div>
-            </div>
-          )}
-
-          <div className="details-grid">
-            <div className="detail-item">
-              <label>Company Name</label>
-              <span>{company.company_name}</span>
-            </div>
-            <div className="detail-item">
-              <label>Industry</label>
-              <span>{company.industry || 'Not specified'}</span>
-            </div>
-            <div className="detail-item">
-              <label>Size</label>
-              <span>{company.size || 'Not specified'}</span>
-            </div>
-            <div className="detail-item">
-              <label>Status</label>
-              <span className={`status-badge ${company.status}`}>
-                {company.status}
-              </span>
-            </div>
-            <div className="detail-item">
-              <label>Created</label>
-              <span>{formatDate(company.created_at)}</span>
-            </div>
-            {company.logo_updated_at && (
-              <div className="detail-item">
-                <label>Logo Updated</label>
-                <span>{formatDate(company.logo_updated_at)}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="admin-section">
-            <h4>Company Administrator</h4>
-            <div className="admin-info">
-              <p><strong>Name:</strong> {company.admin_name}</p>
-              <p><strong>Email:</strong> {company.admin_email}</p>
-              {company.admin_created_at && (
-                <p><strong>Admin Since:</strong> {formatDate(company.admin_created_at)}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="stats-section">
-            <h4>User Statistics</h4>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <span className="stat-number">{company.total_users || 0}</span>
-                <span className="stat-label">Total Users</span>
+                <button
+                  type="button"
+                  className="upload-trigger-btn"
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={isSaving}
+                >
+                  <Upload size={16} />
+                  {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                </button>
               </div>
             </div>
           </div>
-        </div>
+
+          <div className="form-group">
+            <label>Company Name</label>
+            <input
+              type="text"
+              value={formData.company_name}
+              onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Industry</label>
+            <input
+              type="text"
+              value={formData.industry}
+              onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Size</label>
+            <select
+              value={formData.size}
+              onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+            >
+              <option value="">Select Size</option>
+              <option value="1-10">1-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="51-200">51-200 employees</option>
+              <option value="201-500">201-500 employees</option>
+              <option value="501-1000">501-1000 employees</option>
+              <option value="1000+">1000+ employees</option>
+            </select>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="secondary-btn" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </button>
+            <button type="submit" className="primary-btn" disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -98,7 +204,7 @@ const CompanyDetails = ({ company, onClose, canEdit = false, onEdit }) => {
 const CompanyManagement = ({ onToast }) => {
   const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [editingCompany, setEditingCompany] = useState(null);
   const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(1);
   const [userRole, setUserRole] = useState('');
   const { t } = useTranslation();
@@ -153,8 +259,12 @@ const CompanyManagement = ({ onToast }) => {
     }
   };
 
-  const handleEditCompany = () => {
-    onToast('Logo editing functionality coming soon', 'info');
+  const handleEditCompany = (company) => {
+    setEditingCompany(company);
+  };
+
+  const handleUpdateCompany = (updatedCompany) => {
+    setCompanies(prev => prev.map(c => c._id === updatedCompany._id ? updatedCompany : c));
   };
 
   // Search
@@ -188,7 +298,7 @@ const CompanyManagement = ({ onToast }) => {
       render: (_, row) =>
         row.logo ? (
           <img
-            src={row.logo}
+            src={row.logo && row.logo.startsWith('/') ? `${API_BASE_URL}${row.logo}` : row.logo}
             alt={`${row.company_name} logo`}
             className="admin-table-logo"
           />
@@ -250,6 +360,26 @@ const CompanyManagement = ({ onToast }) => {
       label: t('created_date'),
       render: (val) => <span className="admin-cell-primary">{formatDate(val)}</span>,
     },
+    ...(isCompanyAdmin ? [
+      {
+        key: 'actions',
+        label: t('actions') || 'Actions',
+        render: (_, row) => (
+          <div className="admin-table-actions">
+            <button
+              className="action-icon-btn edit-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditCompany(row);
+              }}
+              title={t('edit_company') || "Edit Company"}
+            >
+              <Edit size={16} />
+            </button>
+          </div>
+        ),
+      },
+    ] : []),
   ];
 
   return (
@@ -280,12 +410,12 @@ const CompanyManagement = ({ onToast }) => {
         loading={isLoading}
       />
 
-      {selectedCompany && (
-        <CompanyDetails
-          company={selectedCompany}
-          onClose={() => setSelectedCompany(null)}
-          canEdit={isCompanyAdmin}
-          onEdit={handleEditCompany}
+      {editingCompany && (
+        <CompanyEditModal
+          company={editingCompany}
+          onClose={() => setEditingCompany(null)}
+          onSave={handleUpdateCompany}
+          onToast={onToast}
         />
       )}
     </div>
