@@ -8,6 +8,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from "./AdminTable";
 import MetricCard from "./MetricCard";
 import "../styles/AdminTableStyles.css";
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -338,14 +339,18 @@ const UserManagement = ({ onToast }) => {
   };
 
   const filteredUsers = users.filter((user) => {
-    const matchSearch = (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const search = searchTerm.toLowerCase();
 
-    const uiRole = formatRole(user.role_name || user.role);
-    const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
+  const matchSearch =
+    user.name?.toLowerCase().includes(search) ||
+    user.email?.toLowerCase().includes(search) ||
+    user.company_name?.toLowerCase().includes(search); 
 
-    return matchSearch && matchRole;
-  });
+  const uiRole = formatRole(user.role_name || user.role);
+  const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
+
+  return matchSearch && matchRole;
+});
 
   useEffect(() => {
     if (!searchTerm && selectedRole === "All Roles") return;

@@ -49,6 +49,7 @@ const transformUser = (user) => ({
 // Main Component
 const UserHistory = ({ onToast }) => {
   const { t } = useTranslation();
+  const [selectedRole, setSelectedRole] = useState("All Roles");
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -61,6 +62,14 @@ const UserHistory = ({ onToast }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [userDetails, setUserDetails] = useState({});
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  const handleRoleChange = (e) => {
+  const value = e.target.value;
+  setSelectedRole(value);
+  setCurrentPage(1);
+  applyFilters(searchTerm, value);
+};
+
 
   // Load Initial Data
   useEffect(() => {
@@ -116,14 +125,36 @@ const UserHistory = ({ onToast }) => {
     if (isInitialized) loadUsers(selectedCompany);
   }, [selectedCompany, isInitialized]);
 
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-    const filtered = users.filter(u =>
-      u.name.toLowerCase().includes(value.toLowerCase()) ||
-      u.email.toLowerCase().includes(value.toLowerCase())
+  const applyFilters = (searchValue, roleValue) => {
+  const search = searchValue.toLowerCase();
+
+  let filtered = users.filter(u =>
+    u.name?.toLowerCase().includes(search) ||
+    u.email?.toLowerCase().includes(search) ||
+    u.company_name?.toLowerCase().includes(search)
+  );
+
+  if (roleValue !== "All Roles") {
+    filtered = filtered.filter(
+      u => formatRoleName(u.role_name) === roleValue
     );
-    setFilteredUsers(filtered);
-  };
+  }
+
+  setFilteredUsers(filtered);
+};
+
+  const handleSearch = (value) => {
+  setSearchTerm(value);
+
+  const search = value.toLowerCase();
+
+  const filtered = users.filter(u =>
+    u.name?.toLowerCase().includes(search) ||
+    u.email?.toLowerCase().includes(search) ||
+    u.company_name?.toLowerCase().includes(search)  
+  );
+  setFilteredUsers(filtered);
+};
 
   const loadUserHistory = async (userId, businessId = null) => {
     const cacheKey = businessId ? `${userId}_${businessId}` : userId;
@@ -225,7 +256,7 @@ const UserHistory = ({ onToast }) => {
         data={paginatedUsers}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
-        searchPlaceholder={t('search_users')}
+        searchPlaceholder={t('search_by_name_email_company')}
         searchTooltip={t('search_user_history_tooltip')}
         currentPage={currentPage}
         totalPages={totalPages}
@@ -233,21 +264,35 @@ const UserHistory = ({ onToast }) => {
         totalItems={filteredUsers.length}
         itemsPerPage={ITEMS_PER_PAGE}
         loading={isLoading}
+        // toolbarContent={
+        //   companies.length > 0 && userRole === 'super_admin' && (
+        //     <Form.Select
+        //       className="role-select"
+        //       style={{ width: '220px' }}
+        //       value={selectedCompany}
+        //       onChange={(e) => setSelectedCompany(e.target.value)}
+        //     >
+        //       <option value="">{t('all_companies')}</option>
+        //       {companies.map(c => (
+        //         <option key={c._id} value={c._id}>{c.company_name}</option>
+        //       ))}
+        //     </Form.Select>
+        //   )
+        // }
         toolbarContent={
-          companies.length > 0 && userRole === 'super_admin' && (
-            <Form.Select
-              className="role-select"
-              style={{ width: '220px' }}
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-            >
-              <option value="">{t('all_companies')}</option>
-              {companies.map(c => (
-                <option key={c._id} value={c._id}>{c.company_name}</option>
-              ))}
-            </Form.Select>
-          )
-        }
+                  <Form.Select
+                    className="role-select"
+                    style={{ width: '210px' }}
+                    value={selectedRole}
+                    onChange={handleRoleChange}
+                  >
+                    <option value="All Roles">{t("All_Roles")}</option>
+                    <option value="Org Admin">{t("Org_Admin")}</option>
+                    <option value="Collaborator">{t("Collaborator")}</option>
+                    <option value="User">{t("User")}</option>
+                    <option value="Viewer">{t("Viewer")}</option>
+                  </Form.Select>
+                }
       />
 
       {selectedUser && (
@@ -1011,15 +1056,15 @@ const BusinessStats = ({ stats }) => {
   return (
     <div className="history-business-stats">
       <div className="history-stat-item">
-        <span className="history-stat-label">{t('progress')}:</span>
+        <span className="history-stat-label">{t('progress')}</span>
         <span className="history-stat-value">{stats.progress_percentage}%</span>
       </div>
       <div className="history-stat-item">
-        <span className="history-stat-label">{t('completed')}:</span>
+        <span className="history-stat-label">{t('completed')}</span>
         <span className="history-stat-value">{stats.completed_questions}</span>
       </div>
       <div className="history-stat-item">
-        <span className="history-stat-label">{t('total')}:</span>
+        <span className="history-stat-label">{t('total')}</span>
         <span className="history-stat-value">{stats.total_questions}</span>
       </div>
     </div>
@@ -1180,7 +1225,9 @@ const ConversationTab = ({
         <div className="empty-state">
           <FileText size={48} />
           <p className="empty-title">{t('no_chat_records')}</p>
-          <p className="empty-subtitle">{t('no_completed_questions_found') || `No completed questions found for ${selectedBusiness}`}</p>
+          <p className="empty-subtitle">
+            {t('no_completed_questions_found', { business: selectedBusiness })}
+         </p>
         </div>
       </div>
     );
@@ -1281,7 +1328,7 @@ const AnalysisTab = ({
         />
         <div className="empty-state">
           <Target size={48} />
-          <p className="empty-title">{t('no_analysis_available')}</p>
+          <p className="empty-title">{t('no_analysis_available', { business: selectedBusiness })}</p>
         </div>
       </div>
     );

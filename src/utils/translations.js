@@ -796,7 +796,7 @@ export const staticTranslations = {
     'generating_analysis_text': 'Generating',
     'analysis_text': 'analysis',
     'no_analysis_data': 'No Analysis Data',
-    'no_analysis_available': 'No analysis data available for',
+    'no_analysis_available': 'No analysis data available for {{business}}',
     'analysis_results_text': 'analysis results',
     'analysis_complete_text': 'Analysis complete',
     'analysis_error_occurred': 'An error occurred while generating the analysis',
@@ -1097,7 +1097,7 @@ export const staticTranslations = {
     // ===========================
     'User_Management': 'User Management',
     'Add_and_manage_organization_collaborators_and_viewers': 'Add and manage organization collaborators and viewers',
-    'Search_by_name_or_email': 'Search by name or email...',
+    'Search_by_name_or_email': 'Search by name, email address, or company.',
     'All_Roles': 'All Roles',
     'business_overview': 'Business Overview',
     'business_overview_subtitle': 'View and manage all businesses, their owners, collaborators, and current stages.',
@@ -1418,9 +1418,10 @@ export const staticTranslations = {
     'Status_is_required': 'Status is required',
     'what_are_the_main_requirements_or_constraints': 'What are the main requirements or constraints',
     'define_what_is_not_included_in_this_project': 'Define what is not included in this project',
-    'what_is_the_end_result_use_outcome_based_wording': 'What is the end result use outcome based wording'
-
-
+    'what_is_the_end_result_use_outcome_based_wording': 'What is the end result use outcome based wording',
+    'no_completed_questions_found': 'No completed questions found for {{business}}',
+    'Completed_Questions': 'Completed Questions',
+    "search_by_name_email_company": "Search by name, email, or company"
   },
 
 
@@ -1894,7 +1895,7 @@ export const staticTranslations = {
     'generating_analysis_text': 'Generando',
     'analysis_text': 'análisis',
     'no_analysis_data': 'No Hay Datos de Análisis',
-    'no_analysis_available': 'No hay datos de análisis disponibles para',
+    'no_analysis_available': 'No hay datos de análisis disponibles para {{business}}',
     'analysis_results_text': 'resultados del análisis',
     'analysis_complete_text': 'Análisis completo',
     'analysis_error_occurred': 'Ocurrió un error al generar el análisis',
@@ -2608,7 +2609,7 @@ export const staticTranslations = {
     'Active_Users': 'Usuarios activos',
     'Collaborators': 'Colaboradores',
     'Pending_Invites': 'Invitaciones pendientes',
-    'Search_by_name_or_email': 'Buscar por nombre o correo o compañía...',
+    'Search_by_name_or_email': 'Busque por nombre, dirección de correo electrónico o empresa.',
     'All_Roles': 'Todos los roles',
     'Add_User': 'Agregar usuario',
     'Assign_User': 'Asignar usuario',
@@ -2815,7 +2816,10 @@ export const staticTranslations = {
     'define_what_is_not_included_in_this_project': 'Define lo que no está incluido en este proyecto',
     'what_is_the_end_result_use_outcome_based_wording': '¿Cuál es el resultado final? Utilice una redacción basada en resultados.',
     'subscription_renewal_notice': 'Su suscripción se renovará el {{date}}',
-    'subscription_details': 'Detalles de suscripción'
+    'subscription_details': 'Detalles de suscripción',
+    'no_completed_questions_found': 'No se encontraron preguntas completadas para {{business}}',
+    'Completed_Questions': 'Completadas preguntas',
+    "search_by_name_email_company": "Busque por nombre, dirección de correo electrónico o empresa."
   }
 };
 

@@ -52,18 +52,35 @@ const BusinessOverview = ({ onToast }) => {
     };
 
     useEffect(() => {
-        const filtered = businesses.filter(
-            (biz) =>
-                biz.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                biz.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                biz.owner_email?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const filtered = businesses.filter((biz) => {
+    const search = searchTerm.toLowerCase();
+
+    const collaboratorText = (biz.collaborators || [])
+        .map(c => `${c.name} ${c.email}`)
+        .join(" ")
+        .toLowerCase();
+
+    return (
+        biz.business_name?.toLowerCase().includes(search) ||
+        biz.owner_name?.toLowerCase().includes(search) ||
+        biz.owner_email?.toLowerCase().includes(search) ||
+        collaboratorText.includes(search) ||
+        new Date(biz.created_at).toLocaleDateString().toLowerCase().includes(search)
+    );
+});
         setFilteredBusinesses(filtered);
         if (searchTerm) {
             const newTotalPages = Math.ceil(filtered.length / itemsPerPage);
             if (currentPage > newTotalPages && newTotalPages > 0) setCurrentPage(1);
         }
     }, [searchTerm, businesses]);
+
+    useEffect(() => {
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}, [currentPage]);
 
     const totalItems = filteredBusinesses.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
