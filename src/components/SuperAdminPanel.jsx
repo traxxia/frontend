@@ -17,6 +17,8 @@ import {
   CircleUserRound,
   Key,
   CreditCard,
+  ClipboardList,
+  MessageSquareText,
 } from "lucide-react";
 import CompanyManagement from "./CompanyManagement";
 import QuestionManagement from "./QuestionManagement";
@@ -28,6 +30,7 @@ import AccessManagement from "./AccessManagement";
 import BusinessOverview from "./BusinessOverview";
 import SubscriptionTab from "./SubscriptionTab";
 import AcademyFeedbackAdmin from "./AcademyFeedbackAdmin";
+import PlanManagement from "./PlanManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import "../styles/superadmin.css";
 
@@ -91,7 +94,7 @@ const SuperAdminPanel = () => {
     {
       id: "academy_feedback",
       label: "Academy Feedback",
-      icon: MessagesSquare,
+      icon: MessageSquareText,
       superAdminOnly: true,
     },
     {
@@ -99,6 +102,12 @@ const SuperAdminPanel = () => {
       label: t('subscription') || "Subscription",
       icon: CreditCard,
       superAdminHidden: true  // Hide for super admin
+    },
+    {
+      id: "plans",
+      label: t('plan management') || "Plan Management",
+      icon: ClipboardList,
+      superAdminOnly: true,
     }
   ];
 
@@ -139,6 +148,8 @@ const SuperAdminPanel = () => {
         return <SubscriptionTab onToast={showToastMessage} />;
       case "academy_feedback":
         return <AcademyFeedbackAdmin onToast={showToastMessage} />;
+      case "plans":
+        return <PlanManagement onToast={showToastMessage} />;
       default:
         return <CompanyManagement onToast={showToastMessage} />;
     }

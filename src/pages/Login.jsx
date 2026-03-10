@@ -63,7 +63,8 @@ const Login = () => {
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
         sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
       }
-
+      sessionStorage.setItem("insight", res.data.user.limits?.insight ? "true" : "false");
+      sessionStorage.setItem("strategic", res.data.user.limits?.strategic ? "true" : "false");
       sessionStorage.setItem(
         "isAdmin",
         ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"

@@ -139,6 +139,9 @@ const BusinessSetupPage = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
 
+  const hasInsightAccess = sessionStorage.getItem('insight') !== 'false';
+  const hasStrategicAccess = sessionStorage.getItem('strategic') !== 'false';
+
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
   };
@@ -1193,10 +1196,10 @@ const BusinessSetupPage = () => {
                     />
                   )}
 
-                  {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                  {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                     <button
                       onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                       className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                       title={t('RegenerateAll') || 'Regenerate All'}
                     >
@@ -1222,10 +1225,10 @@ const BusinessSetupPage = () => {
                       strategicData={strategicData}
                     />
                   )}
-                  {unlockedFeatures.analysis && (
+                  {unlockedFeatures.analysis && hasStrategicAccess && (
                     <button
                       onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
                       className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
                       title={t("regenerate") || "Regenerate Strategic Analysis"}
                     >
@@ -1430,10 +1433,10 @@ const BusinessSetupPage = () => {
                             />
                           )}
 
-                          {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                          {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                             <button
                               onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                               className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                               title={t('RegenerateAll') || 'Regenerate All'}
                             >
@@ -1459,10 +1462,10 @@ const BusinessSetupPage = () => {
                               strategicData={strategicData}
                             />
                           )}
-                          {unlockedFeatures.analysis && (
+                          {unlockedFeatures.analysis && hasStrategicAccess && (
                             <button
                               onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
                               className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
                               title={t("regenerate") || "Regenerate Strategic Analysis"}
                             >
@@ -1526,7 +1529,8 @@ const BusinessSetupPage = () => {
                       {activeTab === "insights" &&
                         <AnalysisContentManager
                           {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons} />}
+                          canRegenerate={canShowRegenerateButtons}
+                          hasInsightAccess={hasInsightAccess} />}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -1548,6 +1552,7 @@ const BusinessSetupPage = () => {
                             onKickstartProjects={() => setActiveTab("projects")}
                             hasProjectsTab={showProjectsTab}
                             onToastMessage={showToastMessage}
+                            hasStrategicAccess={hasStrategicAccess}
                           />
                         </div>
                       )}
