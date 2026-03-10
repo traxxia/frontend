@@ -21,6 +21,7 @@ import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
 import ProjectDetails from "../components/ProjectDetails";
 import ToastNotifications from "../components/ToastNotifications";
+import StateChangeModal from "../components/StateChangeModal";
 import "../styles/ProjectsSection.css";
 
 const ProjectsSection = ({
@@ -60,6 +61,8 @@ const ProjectsSection = ({
   const [showRankScreen, setShowRankScreen] = useState(false);
   const [showTeamRankings, setShowTeamRankings] = useState(false); // New state for Team Rankings Panel
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
+  const [showStateChangeModal, setShowStateChangeModal] = useState(false);
+  const [pendingSavePayload, setPendingSavePayload] = useState(null);
 
   const [projects, setProjects] = useState([]);
   const [teamRankings, setTeamRankings] = useState([]);
@@ -636,10 +639,34 @@ const ProjectsSection = ({
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const userId = sessionStorage.getItem("userId");
       const payload = getPayload(userId, selectedBusinessId);
+
+      // Check if status changed
+      const oldStatus = (currentProject.status || "Draft").toLowerCase();
+      const newStatus = (payload.status || "Draft").toLowerCase();
+
+      if (oldStatus !== newStatus) {
+        setPendingSavePayload(payload);
+        setShowStateChangeModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await executeSave(payload);
+    } catch (err) {
+      console.error("Error in prepare save:", err);
+      setIsSubmitting(false);
+    }
+  };
+
+  const executeSave = async (payload, justification = null) => {
+    setIsSubmitting(true);
+    try {
+      if (justification) {
+        payload.justification = justification;
+      }
 
       const { success, error } = await updateProject(currentProject._id, payload);
       if (success) {
@@ -998,6 +1025,22 @@ const ProjectsSection = ({
         validationMessageType={validationMessageType}
         showAIRankingToast={showAIRankingToast}
         setShowAIRankingToast={setShowAIRankingToast}
+      />
+
+      <StateChangeModal
+        show={showStateChangeModal}
+        onHide={() => {
+          setShowStateChangeModal(false);
+          setPendingSavePayload(null);
+        }}
+        onConfirm={(justification) => {
+          setShowStateChangeModal(false);
+          if (pendingSavePayload) {
+            executeSave(pendingSavePayload, justification);
+          }
+        }}
+        oldState={currentProject?.status || t("Draft")}
+        newState={pendingSavePayload?.status || t("Unknown")}
       />
 
       {isGeneratingAIRankings && (

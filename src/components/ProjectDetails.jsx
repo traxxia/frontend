@@ -347,6 +347,37 @@ const ProjectDetails = ({
                     </div>
                 </div>
             </div>
+
+            {/* Decision Log */}
+            {project.decision_log && project.decision_log.length > 0 && (
+                <div className="details-card mt-4">
+                    <h3 className="card-title">📜 {t("Decision_Log") || "Decision Log"}</h3>
+                    <div className="table-responsive">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>{t("Date") || "Date"}</th>
+                                    <th>{t("Transition") || "Transition"}</th>
+                                    <th>{t("Justification") || "Justification"}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {project.decision_log.map((log, index) => (
+                                    <tr key={index}>
+                                        <td>{new Date(log.changed_at).toLocaleDateString()}</td>
+                                        <td>
+                                            <span className="badge bg-secondary">{log.from_status}</span>
+                                            {" ➔ "}
+                                            <span className="badge bg-primary">{log.to_status}</span>
+                                        </td>
+                                        <td>{log.justification}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
