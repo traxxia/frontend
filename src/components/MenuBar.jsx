@@ -12,6 +12,8 @@ const MenuBar = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [userName, setUserName] = useState('User');
   const [userRole, setUserRole] = useState('');
+  const [companyLogo, setCompanyLogo] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   const { t } = useTranslation();
@@ -25,6 +27,19 @@ const MenuBar = () => {
     setUserName(userNameStored || 'User');
     setUserRole(userRoleStored || '');
     setIsSuperAdmin(userRoleStored === 'super_admin');
+
+    // Get company info
+    const logo = sessionStorage.getItem('companyLogo');
+    const name = sessionStorage.getItem('companyName');
+    const companyId = sessionStorage.getItem('companyId');
+
+    let displayLogo = logo || '';
+    if (displayLogo && displayLogo.includes('blob.core.windows.net') && companyId) {
+      displayLogo = `/api/admin/companies/${companyId}/logo/display`;
+    }
+
+    setCompanyLogo(displayLogo);
+    setCompanyName(name || '');
   }, []);
 
   const logout = async () => {
@@ -69,27 +84,21 @@ const MenuBar = () => {
 
           {/* Left side - Company Logo */}
           <div className="navbar-left">
-            {/* {companyLogo && (
+            {companyLogo && (
               <div
-                className="company-logo"
+                className="company-logo-container"
                 onClick={() => navigate('/dashboard')}
-                style={{ cursor: 'pointer' }}
               >
                 <img
-                  src={companyLogo}
+                  src={companyLogo && companyLogo.startsWith('/') ? `${REACT_APP_BACKEND_URL}${companyLogo}` : companyLogo}
                   alt={companyName ? `${companyName} Logo` : t('company_logo_alt') || "Company Logo"}
-                  style={{
-                    height: '50px',
-                    maxWidth: '100px',
-                    marginLeft: '20px',
-                    objectFit: 'contain'
-                  }}
+                  className="header-company-logo"
                   onError={(e) => {
                     e.target.style.display = 'none';
                   }}
                 />
               </div>
-            )} */}
+            )}
           </div>
 
           {/* Center - Traxxia Logo */}
@@ -125,11 +134,11 @@ const MenuBar = () => {
                       {t('role')}: {userRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </div>
                   )}
-                  {/* {companyName && (
+                  {companyName && (
                     <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                      Company: {companyName}
+                      {t('company') || 'Company'}: {companyName}
                     </div>
-                  )} */}
+                  )}
                 </Dropdown.Header>
                 <Dropdown.Divider />
 
