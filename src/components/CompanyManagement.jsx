@@ -158,9 +158,18 @@ const CompanyManagement = ({ onToast }) => {
   };
 
   // Search
-  const filteredCompanies = companies.filter((company) =>
-    company.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCompanies = companies.filter((company) => {
+  const search = searchTerm.toLowerCase();
+
+  return (
+    company.company_name?.toLowerCase().includes(search) ||
+    company.admin_name?.toLowerCase().includes(search) ||
+    company.admin_email?.toLowerCase().includes(search) ||
+    company.industry?.toLowerCase().includes(search) ||
+    company.size?.toLowerCase().includes(search) ||
+    company.status?.toLowerCase().includes(search)
   );
+});
 
   useEffect(() => {
     if (!searchTerm) return;

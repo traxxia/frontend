@@ -124,6 +124,15 @@
     overflow: hidden;
 }
 
+.dropdown-menu {
+  z-index: 9999 !important;
+}
+
+.dropdown {
+  position: static !important;
+}
+
+
 /* ---- Table Header Bar ---- */
 .admin-table-header {
     display: flex;
