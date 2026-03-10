@@ -312,6 +312,8 @@ const ProjectForm = ({
   setStrategicDecision,
   accountableOwner,
   setAccountableOwner,
+  accountableOwnerId,
+  setAccountableOwnerId,
   keyAssumptions,
   setKeyAssumptions,
   successCriteria,
@@ -333,6 +335,42 @@ const ProjectForm = ({
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [showErrors, setShowErrors] = useState(false);
+  const [eligibleOwners, setEligibleOwners] = useState([]);
+
+  useEffect(() => {
+    if (selectedBusinessId) {
+      const fetchOwners = async () => {
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+            headers: {
+              "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+            }
+          });
+          const data = await response.json();
+          if (data.eligible_owners) {
+            setEligibleOwners(data.eligible_owners);
+          }
+        } catch (err) {
+          console.error("Failed to fetch eligible owners:", err);
+        }
+      };
+      fetchOwners();
+    }
+  }, [selectedBusinessId]);
+
+  useEffect(() => {
+    // DEFAULT: Set business owner as default if currently empty
+    // This applies to new projects AND existing projects with no owner assigned yet.
+    if (!accountableOwnerId && eligibleOwners.length > 0) {
+      const admin =
+        eligibleOwners.find(o => o.is_company_admin) ||
+        eligibleOwners.find(o => o.is_business_owner);
+      if (admin) {
+        setAccountableOwnerId(String(admin._id));
+        setAccountableOwner(admin.name || admin.email);
+      }
+    }
+  }, [accountableOwnerId, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
 
   // Refs for error fields
   const projectNameRef = useRef(null);
@@ -415,34 +453,34 @@ const ProjectForm = ({
   };
 
   const handleProjectNameChange = (e) => {
-  let value = e.target.value;
-  value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
+    let value = e.target.value;
+    value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
 
-  setProjectName(value);
+    setProjectName(value);
 
-  let customError = null;
-  if (/^[0-9]+$/.test(value.trim())) {
-    customError = "Project name cannot contain only numbers.";
-  }
+    let customError = null;
+    if (/^[0-9]+$/.test(value.trim())) {
+      customError = "Project name cannot contain only numbers.";
+    }
 
-  if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
-    customError = "Cannot use more than 5 consecutive special characters.";
-  }
+    if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
+      customError = "Cannot use more than 5 consecutive special characters.";
+    }
 
-  if (showErrors || customError) {
-    const validation = validateField('Project Name', value, {
-      required: true,
-      minLength: 3,
-      maxLength: 100,
-      requiresText: true
-    });
-    setFieldErrors(prev => ({
-      ...prev,
-      projectName: customError || (validation.isValid ? null : validation.message)
-    }));
-  }
-  handleFieldEdit("project_name");
-};
+    if (showErrors || customError) {
+      const validation = validateField('Project Name', value, {
+        required: true,
+        minLength: 3,
+        maxLength: 100,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        projectName: customError || (validation.isValid ? null : validation.message)
+      }));
+    }
+    handleFieldEdit("project_name");
+  };
 
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
@@ -501,34 +539,34 @@ const ProjectForm = ({
   };
 
   const handleAccountableOwnerChange = (e) => {
-  let value = e.target.value;
+    let value = e.target.value;
 
-  // Allow letters, numbers, spaces, dot, hyphen, @
-  value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
+    // Allow letters, numbers, spaces, dot, hyphen, @
+    value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
 
-  setAccountableOwner(value);
+    setAccountableOwner(value);
 
-  let customError = null;
+    let customError = null;
 
-  // Required
-  if (!value.trim()) {
-    customError = "Accountable Owner is required.";
-  }
+    // Required
+    if (!value.trim()) {
+      customError = "Accountable Owner is required.";
+    }
 
-  // Must contain at least one alphabet
-  else if (!/[A-Za-z]/.test(value)) {
-    customError = "Accountable Owner must contain at least one alphabet.";
-  }
+    // Must contain at least one alphabet
+    else if (!/[A-Za-z]/.test(value)) {
+      customError = "Accountable Owner must contain at least one alphabet.";
+    }
 
-  if (showErrors || customError) {
-    setFieldErrors(prev => ({
-      ...prev,
-      accountableOwner: customError
-    }));
-  }
+    if (showErrors || customError) {
+      setFieldErrors(prev => ({
+        ...prev,
+        accountableOwner: customError
+      }));
+    }
 
-  handleFieldEdit("accountable_owner");
-};
+    handleFieldEdit("accountable_owner");
+  };
 
   const handleSuccessCriteriaChange = (e) => {
     const value = e.target.value;
@@ -620,7 +658,7 @@ const ProjectForm = ({
 
     // Strategic Core Validation
     const decisionValidation = validateField('Strategic Decision', strategicDecision || '', { required: true, minLength: 10, requiresText: true });
-    const ownerValidation = validateField('Accountable Owner', accountableOwner || '', { required: true, requiresText: true });
+    const ownerValidation = validateField('Accountable Owner', accountableOwnerId || '', { required: true });
     const successValidation = validateField('Success Criteria', successCriteria || '', { required: true, requiresText: true });
     const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true, requiresText: true });
 
@@ -635,7 +673,7 @@ const ProjectForm = ({
       description: descValidation.isValid ? null : descValidation.message,
       importance: impValidation.isValid ? null : impValidation.message,
       strategicDecision: decisionValidation.isValid ? null : decisionValidation.message,
-      accountableOwner: ownerValidation.isValid ? null : ownerValidation.message,
+      accountableOwnerId: ownerValidation.isValid ? null : ownerValidation.message,
       successCriteria: successValidation.isValid ? null : successValidation.message,
       killCriteria: killValidation.isValid ? null : killValidation.message,
       budget: budgetValidation.isValid ? null : budgetValidation.message,
@@ -652,7 +690,7 @@ const ProjectForm = ({
       else if (errors.description) scrollToError(descriptionRef);
       else if (errors.importance) scrollToError(importanceRef);
       else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
-      else if (errors.accountableOwner) scrollToError(accountableOwnerRef);
+      else if (errors.accountableOwnerId) scrollToError(accountableOwnerRef);
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
       else if (errors.status) scrollToError(statusRef);
@@ -805,17 +843,31 @@ const ProjectForm = ({
             />
 
             {/* Accountable Owner */}
-            <InputField
+            {/* Accountable Owner Selection */}
+            <SelectField
               ref={accountableOwnerRef}
               label={t("Accountable_Owner")}
-              value={accountableOwner}
-              onChange={handleAccountableOwnerChange}
-              placeholder={t("Owner_Placeholder")}
-              error={showErrors && fieldErrors.accountableOwner}
-              readOnly={isFieldDisabled("accountable_owner")}
-              onFocus={handleFieldFocus}
+              icon={<Zap size={14} />}
+              options={eligibleOwners.map(o => ({
+                value: o._id,
+                label: o.name,
+                icon: <Circle size={14} color={o.role === 'company_admin' ? 'blue' : 'gray'} />
+              }))}
+              value={accountableOwnerId}
+              onChange={(val) => {
+                setAccountableOwnerId(val);
+                const obj = eligibleOwners.find(o => o._id === val);
+                if (obj) setAccountableOwner(obj.name);
+                handleFieldEdit("accountable_owner");
+              }}
+              open={openDropdown === "accountable_owner"}
+              setOpen={() => setOpenDropdown(openDropdown === "accountable_owner" ? null : "accountable_owner")}
               fieldName="accountable_owner"
+              onFieldFocus={handleFieldFocus}
+              onFieldEdit={handleFieldEdit}
               required
+              error={showErrors && fieldErrors.accountableOwnerId}
+              disabled={isFieldDisabled("accountable_owner")}
             />
 
             {/* Key Assumptions */}

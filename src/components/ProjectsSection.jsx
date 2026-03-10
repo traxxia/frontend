@@ -744,6 +744,8 @@ const ProjectsSection = ({
         }
         {...formState}
         {...formSetters}
+        accountableOwnerId={formState.accountableOwnerId}
+        setAccountableOwnerId={formSetters.setAccountableOwnerId}
         onBack={handleBackToList}
         onSubmit={activeView === "new" ? handleCreate : handleSave}
         isLockedByOther={isLockedByOther}
