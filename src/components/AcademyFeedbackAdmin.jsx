@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
 import { ThumbsUp, ThumbsDown, MessageSquareMore } from 'lucide-react';
+import { formatDate } from '../utils/dateUtils';
 
 const AcademyFeedbackAdmin = ({ onToast }) => {
     const { t } = useTranslation();
@@ -102,15 +103,14 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         {
             key: 'date',
             label: 'Date',
-            width: '120px',
+            width: '150px',
             render: (val, row) => {
                 // Read from created_at first since that's what the API returns 
                 const dateVal = row.created_at || row.createdAt || row.date;
                 if (!dateVal) return '-';
-                const dateObj = new Date(dateVal);
                 return (
                     <div className="admin-cell-secondary">
-                        {dateObj.toLocaleDateString()}
+                        {formatDate(dateVal)}
                     </div>
                 );
             }

@@ -67,8 +67,6 @@ const CARD_ID_MAP = {
   "Core": "core-adjacency",
 };
 
-const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
-
 // Helper: turn a business name into a URL-safe slug
 const toSlug = (name = '') =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -78,6 +76,7 @@ const BusinessSetupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
+  const ENABLE_PMF = sessionStorage.getItem('pmf') === 'true';
 
   // State management for business context
   const [currentBusiness, setCurrentBusiness] = useState(location.state?.business || null);
@@ -1286,14 +1285,12 @@ const BusinessSetupPage = () => {
                       {t("Projects")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
-                      onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {t("Questions and Answers")}
-                    </button>
-                  )}
+                  <button
+                    className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
+                    onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
+                  >
+                    {t("Questions and Answers")}
+                  </button>
                   <button
                     className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
                     onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
@@ -1362,14 +1359,12 @@ const BusinessSetupPage = () => {
                           {t("Projects")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
-                        <button
-                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                          onClick={handleBriefTabClick}
-                        >
-                          {t("Questions and Answers")}
-                        </button>
-                      )}
+                      <button
+                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                        onClick={handleBriefTabClick}
+                      >
+                        {t("Questions and Answers")}
+                      </button>
 
                       <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
                         {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
@@ -1498,7 +1493,7 @@ const BusinessSetupPage = () => {
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "advanced" && (
+                      {activeTab === "advanced" && (
                         <div className="brief-section">
                           <EditableBriefSection
                             selectedBusinessId={selectedBusinessId}
@@ -1612,14 +1607,12 @@ const BusinessSetupPage = () => {
                         {t("Projects")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
-                      <button
-                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                        onClick={handleBriefTabClick}
-                      >
-                        {t("Questions and Answers")}
-                      </button>
-                    )}
+                    <button
+                      className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                      onClick={handleBriefTabClick}
+                    >
+                      {t("Questions and Answers")}
+                    </button>
                     <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                       {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                     </button>

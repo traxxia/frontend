@@ -25,11 +25,10 @@ import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from '../components/UpgradeModal';
 import PlanLimitModal from '../components/PlanLimitModal';
 
-const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const ENABLE_PMF = sessionStorage.getItem('pmf') === 'true';
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);

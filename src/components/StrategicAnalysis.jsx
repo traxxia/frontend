@@ -69,7 +69,7 @@ const StrategicAnalysis = ({
   const { t } = useTranslation();
   const isExpanded = true;
 
-  const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+  const ENABLE_PMF = sessionStorage.getItem('pmf') === 'true';
 
   const [localStrategicData, setLocalStrategicData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);

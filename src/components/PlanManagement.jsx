@@ -22,7 +22,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
         limit_viewers: '',
         limit_users: '',
         insight: false,
-        strategic: false
+        strategic: false,
+        pmf: false
     });
 
     useEffect(() => {
@@ -33,17 +34,25 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                 price: plan.price !== undefined ? plan.price : '',
                 period: plan.period || 'month',
                 features: plan.features ? (Array.isArray(plan.features) ? plan.features.join(', ') : plan.features) : '',
-                // Single source of truth in the form; we sync it to both fields on submit
                 workspace_limit:
                     plan.workspace_limit !== undefined
                         ? plan.workspace_limit
-                        : (plan.limits?.workspaces !== undefined ? plan.limits.workspaces : ''),
-                limit_projects: plan.limits?.projects !== undefined ? plan.limits.projects : '',
-                limit_collaborators: plan.limits?.collaborators !== undefined ? plan.limits.collaborators : '',
-                limit_viewers: plan.limits?.viewers !== undefined ? plan.limits.viewers : '',
-                limit_users: plan.limits?.users !== undefined ? plan.limits.users : '',
-                insight: plan.limits?.insight !== undefined ? plan.limits.insight : false,
-                strategic: plan.limits?.strategic !== undefined ? plan.limits.strategic : false
+                        : (plan.max_workspaces !== undefined ? plan.max_workspaces
+                            : (plan.limits?.workspaces !== undefined ? plan.limits.workspaces : '')),
+                limit_projects: plan.max_projects !== undefined ? plan.max_projects
+                    : (plan.limits?.projects !== undefined ? plan.limits.projects : ''),
+                limit_collaborators: plan.max_collaborators !== undefined ? plan.max_collaborators
+                    : (plan.limits?.collaborators !== undefined ? plan.limits.collaborators : ''),
+                limit_viewers: plan.max_viewers !== undefined ? plan.max_viewers
+                    : (plan.limits?.viewers !== undefined ? plan.limits.viewers : ''),
+                limit_users: plan.max_users !== undefined ? plan.max_users
+                    : (plan.limits?.users !== undefined ? plan.limits.users : ''),
+                insight: plan.insight !== undefined ? plan.insight
+                    : (plan.limits?.insight !== undefined ? plan.limits.insight : false),
+                strategic: plan.strategic !== undefined ? plan.strategic
+                    : (plan.limits?.strategic !== undefined ? plan.limits.strategic : false),
+                pmf: plan.pmf !== undefined ? plan.pmf
+                    : (plan.limits?.pmf !== undefined ? plan.limits.pmf : false)
             });
         } else {
             setFormData({
@@ -58,7 +67,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                 limit_viewers: '',
                 limit_users: '',
                 insight: false,
-                strategic: false
+                strategic: false,
+                pmf: false
             });
         }
     }, [plan, show]);
@@ -73,30 +83,40 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const workspaceLimitValue = formData.workspace_limit !== '' ? Number(formData.workspace_limit) : undefined;
+        const maxProjects = formData.limit_projects !== '' ? Number(formData.limit_projects) : undefined;
+        const maxCollaborators = formData.limit_collaborators !== '' ? Number(formData.limit_collaborators) : undefined;
+        const maxViewers = formData.limit_viewers !== '' ? Number(formData.limit_viewers) : undefined;
+        const maxUsers = formData.limit_users !== '' ? Number(formData.limit_users) : undefined;
+
         const submitData = {
-            ...formData,
+            name: formData.name,
+            description: formData.description,
             currency: 'USD',
             price: Number(formData.price),
+            period: formData.period,
             features: formData.features.split(',').map(f => f.trim()).filter(f => f !== ''),
-            // Keep both legacy/top-level and nested limits in sync
+            // Backend reads these flat keys in tierService.js
             workspace_limit: workspaceLimitValue,
+            max_workspaces: workspaceLimitValue,
+            max_projects: maxProjects,
+            max_collaborators: maxCollaborators,
+            max_viewers: maxViewers,
+            max_users: maxUsers,
+            insight: formData.insight,
+            strategic: formData.strategic,
+            pmf: formData.pmf,
+            // Keep nested limits for backward compatibility
             limits: {
                 workspaces: workspaceLimitValue,
-                projects: formData.limit_projects !== '' ? Number(formData.limit_projects) : undefined,
-                collaborators: formData.limit_collaborators !== '' ? Number(formData.limit_collaborators) : undefined,
-                viewers: formData.limit_viewers !== '' ? Number(formData.limit_viewers) : undefined,
-                users: formData.limit_users !== '' ? Number(formData.limit_users) : undefined,
+                projects: maxProjects,
+                collaborators: maxCollaborators,
+                viewers: maxViewers,
+                users: maxUsers,
                 insight: formData.insight,
-                strategic: formData.strategic
+                strategic: formData.strategic,
+                pmf: formData.pmf
             }
         };
-
-        delete submitData.limit_projects;
-        delete submitData.limit_collaborators;
-        delete submitData.limit_viewers;
-        delete submitData.limit_users;
-        delete submitData.insight;
-        delete submitData.strategic;
 
         onSave(submitData);
     };
@@ -131,6 +151,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                                 required
                                 min="0"
                                 step="0.01"
+                                readOnly={!!plan}
+                                style={plan ? { backgroundColor: '#e9ecef', cursor: 'not-allowed' } : {}}
                             />
                         </div>
                     </div>
@@ -238,7 +260,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                     </div>
 
                     <div className="row mt-3">
-                        <div className="col-md-6 plan-form-group d-flex align-items-center gap-2">
+                        <div className="col-md-4 plan-form-group d-flex align-items-center gap-2">
                             <input
                                 type="checkbox"
                                 name="insight"
@@ -249,7 +271,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                             />
                             <label htmlFor="insight-check" className="mb-0" style={{ cursor: 'pointer' }}>Insight Access</label>
                         </div>
-                        <div className="col-md-6 plan-form-group d-flex align-items-center gap-2">
+                        <div className="col-md-4 plan-form-group d-flex align-items-center gap-2">
                             <input
                                 type="checkbox"
                                 name="strategic"
@@ -259,6 +281,17 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                                 id="strategic-check"
                             />
                             <label htmlFor="strategic-check" className="mb-0" style={{ cursor: 'pointer' }}>Strategic Access</label>
+                        </div>
+                        <div className="col-md-4 plan-form-group d-flex align-items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="pmf"
+                                className="form-check-input m-0"
+                                checked={formData.pmf}
+                                onChange={handleChange}
+                                id="pmf-check"
+                            />
+                            <label htmlFor="pmf-check" className="mb-0" style={{ cursor: 'pointer' }}>PMF Access</label>
                         </div>
                     </div>
                 </Modal.Body>
