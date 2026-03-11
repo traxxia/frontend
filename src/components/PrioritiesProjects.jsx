@@ -250,28 +250,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
                     return (
                       <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
                         <div className="d-flex align-items-center justify-content-between w-100">
-                          <div className="d-flex flex-column gap-1">
-                            <div className="d-flex align-items-start gap-2">
-                              <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
-                              <span>{actionText}</span>
-                            </div>
-                            <div className="d-flex gap-2 ms-4">
-                              {action.impact && (
-                                <span className={`property-badge impact-${action.impact.toLowerCase()}`}>
-                                  {action.impact}
-                                </span>
-                              )}
-                              {action.effort && (
-                                <span className={`property-badge effort-${action.effort.toLowerCase()}`}>
-                                  {action.effort}
-                                </span>
-                              )}
-                              {action.risk && (
-                                <span className={`property-badge risk-${action.risk.toLowerCase()}`}>
-                                  {action.risk}
-                                </span>
-                              )}
-                            </div>
+                          <div className="d-flex align-items-start gap-2">
+                            <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
+                            <span>{actionText}</span>
                           </div>
                           {isActionKickstarted && (
                             <Badge bg="success" className="ms-2">

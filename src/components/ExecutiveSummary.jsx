@@ -322,24 +322,6 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                     <div className="exc-priority-header">
                       <span className="exc-priority-number">{idx + 1}.</span>
                       <h4 className="exc-priority-title">{item.title || item.action || item.Action || item.Title}</h4>
-                      <div className="exc-priority-meta d-flex gap-2 mt-2">
-                        {item.impact && (
-                          <span className={`property-badge impact-${item.impact.toLowerCase()}`}>
-                            {item.impact}
-                          </span>
-                        )}
-                        {item.effort && (
-                          <span className={`property-badge effort-${item.effort.toLowerCase()}`}>
-                            {item.effort}
-                          </span>
-                        )}
-                        {item.risk && (
-                          <span className={`property-badge risk-${item.risk.toLowerCase()}`}>
-                            {item.risk}
-                          </span>
-                        )}
-                      </div>
-                      <p className="exc-priority-desc">{item.description}</p>
                     </div>
 
                     {actions.length > 0 && (
