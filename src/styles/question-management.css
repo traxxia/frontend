@@ -1021,6 +1021,11 @@ button:focus {
   overflow: auto;
 }
 
+[data-theme="dark"] .create-form  {
+    background-color: #1a1d23 !important;
+    border: 1px solid #ffffff;
+}
+
 .create-form h3 {
   margin-top: 0;
   margin-bottom: 20px;
@@ -1052,6 +1057,11 @@ button:focus {
   border-radius: 4px;
 }
 
+[data-theme="dark"] .create-form__field input  {
+    background-color: #1a1d23 !important;
+    color: #ffffff;
+}
+
 .create-form__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1065,6 +1075,11 @@ button:focus {
   background-color: #f8f9fa;
   border-radius: 4px;
   border: 1px solid #e9ecef;
+}
+
+[data-theme="dark"] .create-form__severity-info {
+    background-color: #1a1d23 !important;
+    color: #ffffff;
 }
 
 .create-form__severity-label {

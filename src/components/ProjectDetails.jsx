@@ -283,7 +283,7 @@ const ProjectDetails = ({
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
                                 {getEffortIcon(project.effort)}
-                                <span>{project.effort ? t(project.effort) : t("Not_Available")}</span>
+                                <span>{project.effort ? t(project.effort) : "N/A"}</span>
                             </div>
                         </div>
                     </div>
@@ -291,7 +291,7 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Risk")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.risk ? t(project.risk) : t("Not_Available")}</span>
+                                <span>{project.risk ? t(project.risk) : "N/A"}</span>
                             </div>
                         </div>
                     </div>

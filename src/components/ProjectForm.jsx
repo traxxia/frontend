@@ -765,7 +765,7 @@ const ProjectForm = ({
                       <small className="error-text">{fieldErrors.projectName}</small>
                     )}
                     <small className="text-muted" style={{ marginLeft: 'auto' }}>
-                      {(projectName || '').length}/100 characters
+                      {(projectName || '').length}/100 {t("characters")}
                     </small>
                   </div>
                 </>
@@ -801,7 +801,7 @@ const ProjectForm = ({
                   <small className="error-text">{fieldErrors.description}</small>
                 )}
                 <small className="text-muted" style={{ marginLeft: 'auto' }}>
-                  {(description || '').length}/500 characters
+                  {(description || '').length}/500 {t("characters")}
                 </small>
               </div>
             </div>

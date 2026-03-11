@@ -285,13 +285,13 @@
  .channel-heatmap .ch-metric-blue,
  .customer-segmentation .cs-metric-blue,
  .purchase-criteria .pc-metric-blue {
-   background-color: #dbeafe;
+   background: #dbeafe;
  }
 
  [data-theme="dark"] .channel-heatmap .ch-metric-blue,
- .customer-segmentation .cs-metric-blue,
- .purchase-criteria .pc-metric-blue {
-    background: #1a1d23 !important;
+[data-theme="dark"] .customer-segmentation .cs-metric-blue,
+[data-theme="dark"] .purchase-criteria .pc-metric-blue {
+  background: #1a1d23 !important;
 }
 
  .channel-heatmap .ch-metric-green,
@@ -300,10 +300,10 @@
    background-color: #d1fae5;
  }
 
- [data-theme="dark"] .channel-heatmap .ch-metric-green,
- .customer-segmentation .cs-metric-green,
- .purchase-criteria .pc-metric-green {
-    background: #1a1d23 !important;
+[data-theme="dark"] .channel-heatmap .ch-metric-green,
+[data-theme="dark"] .customer-segmentation .cs-metric-green,
+[data-theme="dark"] .purchase-criteria .pc-metric-green {
+  background: #1a1d23 !important;
 }
 
  .channel-heatmap .ch-metric-purple,
@@ -313,9 +313,9 @@
  }
 
  [data-theme="dark"] .channel-heatmap .ch-metric-purple,
- .customer-segmentation .cs-metric-purple,
- .purchase-criteria .pc-metric-purple {
-    background: #1a1d23 !important;
+[data-theme="dark"] .customer-segmentation .cs-metric-purple,
+[data-theme="dark"] .purchase-criteria .pc-metric-purple {
+  background: #1a1d23 !important;
 }
 
  /* Loyalty NPS specific */
@@ -1173,10 +1173,10 @@
  }
 
 
-  [data-theme="dark"]  .cs-chart-container,
- .pc-chart-container,
- .ln-chart-container {
-    background: #1a1d23 !important;
+  [data-theme="dark"] .cs-chart-container,
+[data-theme="dark"] .pc-chart-container,
+[data-theme="dark"] .ln-chart-container {
+  background: #1a1d23 !important;
 }
 
  .ln-chart-container {
@@ -9500,4 +9500,12 @@
 
  svg.radar-chart {
    overflow: visible !important;
+ }
+
+ .insight-list {
+    color: black !important;
+}
+
+ [data-theme="dark"]  .insight-list {
+   color: #ffffff !important;
  }

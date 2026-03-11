@@ -187,7 +187,7 @@ const Login = () => {
             </p>
             <hr className="divider" />
             <p>
-              <a href="/academy">📚 Explore Traxxia Academy</a>
+              <a href="/academy">📚 {t("explore_traxxia_academy")}</a>
             </p>
           </div>
         </div>

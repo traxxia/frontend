@@ -345,7 +345,7 @@ const Dashboard = () => {
     else if (!/^[A-Za-z0-9]/.test(businessName)) {
       errors.business_name = t('business_name_invalid_start');
     }
-    else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
+    else if (!/^[A-Za-z0-9&.,'()\-!?;:\s]+$/.test(businessName)) {
       errors.business_name = "Business name contains invalid characters";
     }
     else if (/\d/.test(businessName)) {
@@ -366,13 +366,13 @@ const Dashboard = () => {
         t('business_purpose_must_contain_alphabetic_characters') ||
         "Business purpose must contain alphabetic characters";
     }
-    else if (!/^[A-Za-z0-9&.,()\- ]+$/.test(businessPurpose)) {
+    else if (!/^[A-Za-z0-9\s.,#&()\-:/!?;'"→]+$/.test(businessPurpose)) {
       errors.business_purpose = "Business purpose contains invalid characters";
     }
 
     // City validation (optional but if provided, must be valid)
     const cityTrimmed = businessFormData.city.trim();
-    const cityHasSpecialChars = /[^a-zA-Z\s]/.test(cityTrimmed);
+    const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
 
     if (businessFormData.city && cityTrimmed.length === 0) {
       errors.city = t('city_cannot_contain_only_spaces');
@@ -386,7 +386,7 @@ const Dashboard = () => {
 
     // Country validation (optional but if provided, must be valid)
     const countryTrimmed = businessFormData.country.trim();
-    const countryHasSpecialChars = /[^a-zA-Z\s]/.test(countryTrimmed);
+    const countryHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(countryTrimmed);
 
     if (businessFormData.country && countryTrimmed.length === 0) {
       errors.country = t('country_cannot_contain_only_spaces');

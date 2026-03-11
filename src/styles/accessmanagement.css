@@ -539,6 +539,12 @@
     width: 100%;
 }
 
+[data-theme="dark"] .subscription-info-banner  {
+    background-color: #1a1d23 !important;
+    border: 1px solid #ffffff;
+}
+
+
 .banner-item {
     display: flex !important;
     flex-direction: column !important;
