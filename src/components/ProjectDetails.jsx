@@ -50,7 +50,8 @@ const ProjectDetails = ({
     }
 
     const getImpactIcon = (impact) => {
-        switch (impact) {
+        const normalizedImpact = !impact ? "" : impact.charAt(0).toUpperCase() + impact.slice(1).toLowerCase();
+        switch (normalizedImpact) {
             case "High":
                 return <Circle size={14} color="green" fill="green" />;
             case "Medium":
@@ -63,7 +64,8 @@ const ProjectDetails = ({
     };
 
     const getEffortIcon = (effort) => {
-        switch (effort) {
+        const normalizedEffort = !effort ? "" : effort.charAt(0).toUpperCase() + effort.slice(1).toLowerCase();
+        switch (normalizedEffort) {
             case "Small":
                 return <Diamond size={14} fill="black" color="black" />;
             case "Medium":
@@ -87,7 +89,8 @@ const ProjectDetails = ({
     };
 
     const getRiskIcon = (risk) => {
-        switch (risk) {
+        const normalizedRisk = !risk ? "" : risk.charAt(0).toUpperCase() + risk.slice(1).toLowerCase();
+        switch (normalizedRisk) {
             case "Low":
                 return <Circle size={14} color="green" fill="green" />;
             case "Medium":
@@ -189,7 +192,8 @@ const ProjectDetails = ({
                             <label className="detail-label">{t("Impact")}</label>
                             <div className="detail-value">
                                 <div className="detail-value-with-icon">
-                                    <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
+                                    {getImpactIcon(project.impact)}
+                                    <span>{project.impact ? t(project.impact.charAt(0).toUpperCase() + project.impact.slice(1).toLowerCase()) : t("Not_Available")}</span>
                                 </div>
                             </div>
                         </div>
@@ -336,7 +340,8 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Impact")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.impact ? t(project.impact) : t("Not_Available")}</span>
+                                {getImpactIcon(project.impact)}
+                                <span>{project.impact ? t(project.impact.charAt(0).toUpperCase() + project.impact.slice(1).toLowerCase()) : t("Not_Available")}</span>
                             </div>
                         </div>
                     </div>
@@ -345,7 +350,7 @@ const ProjectDetails = ({
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
                                 {getEffortIcon(project.effort)}
-                                <span>{project.effort ? t(project.effort) : "N/A"}</span>
+                                <span>{project.effort ? t(project.effort.charAt(0).toUpperCase() + project.effort.slice(1).toLowerCase()) : "N/A"}</span>
                             </div>
                         </div>
                     </div>
@@ -353,7 +358,8 @@ const ProjectDetails = ({
                         <label className="detail-label">{t("Risk")}</label>
                         <div className="detail-value">
                             <div className="detail-value-with-icon">
-                                <span>{project.risk ? t(project.risk) : "N/A"}</span>
+                                {getRiskIcon(project.risk)}
+                                <span>{project.risk ? t(project.risk.charAt(0).toUpperCase() + project.risk.slice(1).toLowerCase()) : "N/A"}</span>
                             </div>
                         </div>
                     </div>
