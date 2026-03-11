@@ -1421,7 +1421,12 @@ export const staticTranslations = {
     'what_is_the_end_result_use_outcome_based_wording': 'What is the end result use outcome based wording',
     'no_completed_questions_found': 'No completed questions found for {{business}}',
     'Completed_Questions': 'Completed Questions',
-    "search_by_name_email_company": "Search by name, email, or company"
+    "search_by_name_email_company": "Search by name, email, or company",
+    "explore_traxxia_academy": "Explore Traxxia Academy",
+    "traxxia_academy": "Traxxia Academy",
+    "Ranking": "Ranking",
+    "characters": "characters",
+    "Select_option": "Select option",
   },
 
 
@@ -2819,7 +2824,12 @@ export const staticTranslations = {
     'subscription_details': 'Detalles de suscripción',
     'no_completed_questions_found': 'No se encontraron preguntas completadas para {{business}}',
     'Completed_Questions': 'Completadas preguntas',
-    "search_by_name_email_company": "Busque por nombre, dirección de correo electrónico o empresa."
+    "search_by_name_email_company": "Busque por nombre, dirección de correo electrónico o empresa.",
+    "explore_traxxia_academy": "Explora Traxxia Academia",
+    "traxxia_academy": "Traxxia Academia",
+    "Ranking": "Ranking",
+    "characters": "personajes",
+    "Select_option": "Seleccionar opción"
   }
 };
 

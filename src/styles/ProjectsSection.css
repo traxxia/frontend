@@ -296,6 +296,10 @@
   background: #f9fafb;
 }
 
+[data-theme="dark"] .empty-category-message {
+    background-color: #333946 !important;
+}
+
 /* Buttons */
 .btn-new-project {
   display: flex;
@@ -931,6 +935,10 @@
   overflow: hidden;
 }
 
+[data-theme="dark"] .ranking-panel-container.expanded-view  {
+    background-color: #1a1d23 !important;
+}
+
 /* Trigger Button */
 .ranking-trigger-btn {
   border-radius: 8px;
@@ -1033,6 +1041,14 @@
   padding: 0;
 }
 
+[data-theme="dark"] .ranking-content-body {
+    background-color: #1a1d23 !important;
+}
+
+[data-theme="dark"] .ranking-toolbar {
+    background-color: #1a1d23 !important;
+}
+
 .ranking-toolbar {
   padding: 12px 20px;
   border-bottom: 1px solid #f3f4f6;
@@ -1048,6 +1064,11 @@
   padding: 0px;
   border-radius: 8px;
   gap: 4px;
+}
+
+[data-theme="dark"] .consensus-toggle-group  {
+    background-color: #1a1d23 !important;
+    border: 1px solid #ffffff;
 }
 
 .toggle-btn {
@@ -1121,6 +1142,11 @@
   text-transform: uppercase;
   border-top: none;
   border-bottom: 1px solid #e5e7eb;
+}
+
+[data-theme="dark"] .ranking-table th {
+    background-color: #1a1d23 !important;
+    color: #ffffff;
 }
 
 .ranking-table td,

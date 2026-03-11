@@ -308,9 +308,6 @@
   border: 1px solid #2a2f38 !important;
 }
 
-[data-theme="dark"] .dropdown-item {
-  color: #e5e7eb !important;
-}
 
 [data-theme="dark"] .dropdown-item:hover {
   background-color: #2a2f38 !important;
