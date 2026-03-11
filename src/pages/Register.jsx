@@ -498,7 +498,7 @@ const Register = () => {
                         >
                           <div className="form-group-custom full-width-field">
                             <div className="selection-header">
-                              <label>Action Type  <span className="required">*</span></label>
+                              <label>{t("action_type")} <span className="required">*</span></label>
                               <div className="action-selection-group">
                                 <div
                                   className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
@@ -518,7 +518,7 @@ const Register = () => {
                                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
                                   )}
-                                  <span className="pill-text"><FaUser /> Join Existing</span>
+                                  <span className="pill-text"><FaUser /> {t("join_existing")}</span>
                                 </div>
                                 <div
                                   className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
@@ -538,7 +538,7 @@ const Register = () => {
                                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
                                   )}
-                                  <span className="pill-text"><FaBuilding /> Create New</span>
+                                  <span className="pill-text"><FaBuilding /> {t("create_new")}</span>
                                 </div>
                               </div>
                             </div>
@@ -568,7 +568,7 @@ const Register = () => {
                                     layout
                                     className="form-group-custom"
                                   >
-                                    <label>Select Company  <span className="required">*</span></label>
+                                    <label>{t("select_company")} <span className="required">*</span></label>
                                     <div className="select-wrapper">
                                       {loadingCompanies ? (
                                         <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
@@ -613,8 +613,16 @@ const Register = () => {
                             <div className="checkbox-wrapper">
                               <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
                               <label htmlFor="terms-checkbox" className="checkbox-label-text">
-                                I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>Terms</a> and <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>Privacy Policy</a>
-                              </label> <span className="required">*</span>
+  {t("i_agree_to_the")}{" "}
+  <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>
+    {t("terms")}
+  </a>{" "}
+  {t("and")}{" "}
+  <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
+    {t("privacy_policy")}
+  </a>
+</label> 
+<span className="required">*</span>
                             </div>
                             {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
                           </div>

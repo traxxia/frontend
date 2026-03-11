@@ -83,28 +83,31 @@ const EditableField = ({
           </span>
 
           {field.phase && (
-            <span className='edit-batch' style={{
-              fontSize: '10px',
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              borderRadius: '4px',
-              backgroundColor:
-                field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
-                  field.phase.toLowerCase() === 'essential' ? '#dcfce7' :
-                    field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
-              color:
-                field.phase.toLowerCase() === 'initial' ? '#1e40af' :
+              <span
+                className='edit-batch'
+                 style={{
+                   fontSize: '10px',
+                   fontWeight: '600',
+                   textTransform: 'uppercase',
+                   borderRadius: '4px',
+                   backgroundColor:
+                   field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
+                   field.phase.toLowerCase() === 'essential' ? '#dcfce7' :
+                   field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
+                  color:
+                  field.phase.toLowerCase() === 'initial' ? '#1e40af' :
                   field.phase.toLowerCase() === 'essential' ? '#166534' :
-                    field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
-              letterSpacing: '0.025em',
-              flexShrink: 0,
-              padding: '2px 8px',
-              whiteSpace: 'nowrap',
-              marginLeft: 'auto'
-            }}>
-              {field.phase}
+                  field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
+                  letterSpacing: '0.025em',
+                  flexShrink: 0,
+                  padding: '2px 8px',
+                  whiteSpace: 'nowrap',
+                  marginLeft: 'auto'
+                }}
+               >
+             {t(field.phase)}
             </span>
-          )}
+           )}
 
           {isHighlighted && (
             <span style={{
@@ -380,8 +383,8 @@ const FinancialUploadBlock = ({
           <Database size={24} />
         </div>
         <div>
-          <h3 style={styles.title}>Financial Data</h3>
-          <p style={styles.subtitle}>Report templates & statements</p>
+          <h3 style={styles.title}>{t("financial_data")}</h3>
+          <p style={styles.subtitle}>{t("report_templates_statements")}</p>
         </div>
       </div>
 
@@ -430,7 +433,7 @@ const FinancialUploadBlock = ({
               }}
             >
               <Upload size={16} />
-              Get Started
+              {t("get_started")}
             </button>
           )}
         </div>
@@ -448,6 +451,7 @@ const AIAnswerSupportBlock = ({
   isSaving,
   canEnrich
 }) => {
+  const { t } = useTranslation();
   const styles = {
     container: {
       flex: 1,
@@ -518,9 +522,9 @@ const AIAnswerSupportBlock = ({
         </div>
         <div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h3 style={styles.title}>AI Answer Support</h3>
+            <h3 style={styles.title}>{t("ai_answer_support")}</h3>
             <p style={styles.subtitle}>
-              Professional answers based on your onboarding
+             {t("professional_answers_based_on_onboarding")}
             </p>
           </div>
         </div>
@@ -544,7 +548,7 @@ const AIAnswerSupportBlock = ({
         }}
       >
         {isEnriching ? <Loader size={18} className="spinner" /> : <Wand2 size={18} />}
-        {isEnriching ? 'Generating Suggestions...' : 'Generate AI Answers'}
+       {isEnriching ? t("generating_suggestions") : t("generate_ai_answers")}
       </button>
     </div>
   );

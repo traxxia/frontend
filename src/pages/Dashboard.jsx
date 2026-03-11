@@ -562,9 +562,9 @@ const Dashboard = () => {
     const remainingQuestions = stats.pending_questions || 0;
 
     const getStatusInfo = () => {
-      if (business.status === 'deleted') return { label: 'Deleted', className: 'status-deleted' };
-      if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
-      return { label: 'Active', className: 'status-active' };
+      if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
+      if (business.access_mode === t('archived') || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
+      return { label: t('active'), className: 'status-active' };
     };
 
     const statusInfo = getStatusInfo();

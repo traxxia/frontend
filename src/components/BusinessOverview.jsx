@@ -194,7 +194,11 @@ const BusinessOverview = ({ onToast }) => {
             <AdminTable
                 title={t("business_overview") || "Business Overview"}
                 count={filteredBusinesses.length}
-                countLabel={filteredBusinesses.length === 1 ? "Business" : "Businesses"}
+                countLabel={
+                  filteredBusinesses.length === 1
+                  ? t("business") || "Business"
+                  : t("businesses") || "Businesses"
+                }
                 columns={columns}
                 data={paginatedBusinesses}
                 searchTerm={searchTerm}

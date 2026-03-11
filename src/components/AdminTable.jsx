@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal, ArrowUpDown, ArrowLeft, ArrowRight, Building
 import { OverlayTrigger, Popover } from "react-bootstrap";
 import { Tooltip } from "react-bootstrap";
 import '../styles/AdminTableStyles.css';
+import { useTranslation } from "../hooks/useTranslation";
 
 /**
  * AdminTable — reusable premium table for admin panels.
@@ -42,7 +43,7 @@ const AdminTable = ({
     onPageChange,
     totalItems = 0,
     itemsPerPage = 10,
-    emptyMessage = 'No records found',
+    emptyMessage = "no_records_found",
     emptySubMessage = '',
     loading = false,
     showFilter = false,
@@ -51,6 +52,7 @@ const AdminTable = ({
     toolbarContent = null,
     searchTooltip = '',
 }) => {
+    const { t } = useTranslation();
     const [showHelp, setShowHelp] = useState(false);
 
     // ---- Pagination helpers ----
@@ -85,7 +87,7 @@ const AdminTable = ({
                         <h2 className="admin-table-title">{title}</h2>
                         {count !== undefined && count !== null && (
                             <span className="admin-table-count-badge">
-                                {count} {countLabel}
+                                {count} {t(countLabel)}
                             </span>
                         )}
                     </div>
@@ -160,7 +162,7 @@ const AdminTable = ({
             ) : data.length === 0 ? (
                 <div className="admin-table-empty">
                     <Building2 size={40} strokeWidth={1.5} />
-                    <h3>{emptyMessage}</h3>
+                    <h3>{t(emptyMessage)}</h3>
                     {emptySubMessage && <p>{emptySubMessage}</p>}
                 </div>
             ) : (
@@ -177,7 +179,7 @@ const AdminTable = ({
                                         }}
                                     >
                                         <div className="th-inner" style={{ justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start' }}>
-                                            {col.label}
+                                            {t(col.label)}
                                         </div>
                                     </th>
                                 ))}
@@ -229,7 +231,7 @@ const AdminTable = ({
                             disabled={currentPage === 1}
                         >
                             <ArrowLeft size={13} />
-                            Previous
+                            {t("previous")}
                         </button>
 
                         {getPageNumbers().map((page, idx) =>
@@ -253,7 +255,7 @@ const AdminTable = ({
                             onClick={() => onPageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
                         >
-                            Next
+                            {t("next")}
                             <ArrowRight size={13} />
                         </button>
                     </div>
