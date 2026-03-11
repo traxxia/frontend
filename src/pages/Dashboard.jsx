@@ -345,7 +345,7 @@ const Dashboard = () => {
     else if (!/^[A-Za-z0-9]/.test(businessName)) {
       errors.business_name = t('business_name_invalid_start');
     }
-    else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
+    else if (!/^[A-Za-z0-9&.,'()\-!?;:\s]+$/.test(businessName)) {
       errors.business_name = "Business name contains invalid characters";
     }
     else if (/\d/.test(businessName)) {
@@ -366,7 +366,7 @@ const Dashboard = () => {
         t('business_purpose_must_contain_alphabetic_characters') ||
         "Business purpose must contain alphabetic characters";
     }
-    else if (!/^[A-Za-z0-9\s.,#&()\-:/]+$/.test(businessPurpose)) {
+    else if (!/^[A-Za-z0-9\s.,#&()\-:/!?;'"→]+$/.test(businessPurpose)) {
       errors.business_purpose = "Business purpose contains invalid characters";
     }
 
