@@ -261,7 +261,7 @@ const CoreAdjacency = ({
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < go.withinCore.length) {
                             const item = go.withinCore[index];
-                            typeText(item.opportunity || item, currentRow, 'opportunity', 0);
+                            typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
                             if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
                             currentRow++;
                             return;
@@ -273,7 +273,7 @@ const CoreAdjacency = ({
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < go.adjacent.length) {
                             const item = go.adjacent[index];
-                            typeText(item.opportunity || item, currentRow, 'opportunity', 0);
+                            typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
                             if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
                             currentRow++;
                             return;
@@ -285,7 +285,7 @@ const CoreAdjacency = ({
                         const index = currentRow - rowsProcessed;
                         if (index >= 0 && index < go.nonAdjacent.length) {
                             const item = go.nonAdjacent[index];
-                            typeText(item.opportunity || item, currentRow, 'opportunity', 0);
+                            typeText(item.opportunity || item.description || item, currentRow, 'opportunity', 0);
                             if (item.rationale) typeText(item.rationale, currentRow, 'rationale', 200);
                             currentRow++;
                             return;
@@ -663,7 +663,7 @@ const CoreAdjacency = ({
                                                 const rowIndex = withinCoreIndices[idx];
                                                 const isVisible = rowIndex < visibleRows;
                                                 const isLast = rowIndex === visibleRows - 1;
-                                                const opportunity = typeof item === 'string' ? item : item.opportunity || '';
+                                                const opportunity = typeof item === 'string' ? item : (item.opportunity || item.description || '');
                                                 const rationale = typeof item === 'object' ? item.rationale : '';
 
                                                 return (
@@ -700,7 +700,7 @@ const CoreAdjacency = ({
                                                 const rowIndex = adjacentIndices[idx];
                                                 const isVisible = rowIndex < visibleRows;
                                                 const isLast = rowIndex === visibleRows - 1;
-                                                const opportunity = typeof item === 'string' ? item : item.opportunity || '';
+                                                const opportunity = typeof item === 'string' ? item : (item.opportunity || item.description || '');
                                                 const rationale = typeof item === 'object' ? item.rationale : '';
 
                                                 return (
@@ -736,7 +736,7 @@ const CoreAdjacency = ({
                                                 const rowIndex = nonAdjacentIndices[idx];
                                                 const isVisible = rowIndex < visibleRows;
                                                 const isLast = rowIndex === visibleRows - 1;
-                                                const opportunity = typeof item === 'string' ? item : item.opportunity || '';
+                                                const opportunity = typeof item === 'string' ? item : (item.opportunity || item.description || '');
                                                 const rationale = typeof item === 'object' ? item.rationale : '';
 
                                                 return (
