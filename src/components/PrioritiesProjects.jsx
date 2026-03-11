@@ -182,61 +182,61 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
           <Card key={idx} className={`priority-card mb-3 ${isAlreadyKickstarted ? 'kickstarted' : ''}`}>
             <Card.Body>
               <div className="priority-card-inner">
-  {/* TOP SECTION */}
-  <div className="priority-top">
+                {/* TOP SECTION */}
+                <div className="priority-top">
 
-    {isAdmin && (
-      <Form.Check
-        type="checkbox"
-        disabled={isAlreadyKickstarted}
-        checked={selected.includes(idx)}
-        onChange={() => toggleSelection(idx)}
-      />
-    )}
+                  {isAdmin && (
+                    <Form.Check
+                      type="checkbox"
+                      disabled={isAlreadyKickstarted}
+                      checked={selected.includes(idx)}
+                      onChange={() => toggleSelection(idx)}
+                    />
+                  )}
 
-    <div
-      className="priority-title-area expand-trigger"
-      onClick={() => toggleExpand(idx)}
-    >
-      <h6 className="priority-title mb-0">{item.title}</h6>
-      {isAlreadyKickstarted && (
-        <span className="priority-status">
-          <CheckCircle size={14} />
-          {t("Kickstarted")}
-        </span>
-      )}
-    </div>
-  </div>
+                  <div
+                    className="priority-title-area expand-trigger"
+                    onClick={() => toggleExpand(idx)}
+                  >
+                    <h6 className="priority-title mb-0">{item.title}</h6>
+                    {isAlreadyKickstarted && (
+                      <span className="priority-status">
+                        <CheckCircle size={14} />
+                        {t("Kickstarted")}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-  {/* DESCRIPTION */}
-  <div
-    className="priority-description expand-trigger"
-    onClick={() => toggleExpand(idx)}
-  >
-    {actions.length > 0
-      ? (typeof actions[0].action === 'string' ? actions[0].action :t("View Projects")):
-      t("View Projects")}
-  </div>
+                {/* DESCRIPTION */}
+                <div
+                  className="priority-description expand-trigger"
+                  onClick={() => toggleExpand(idx)}
+                >
+                  {actions.length > 0
+                    ? (typeof actions[0].action === 'string' ? actions[0].action : t("View Projects")) :
+                    t("View Projects")}
+                </div>
 
-  {/* BOTTOM SECTION */}
-  <div
-    className="priority-bottom expand-trigger"
-    onClick={() => toggleExpand(idx)}
-  >
-    <div className="priority-project-count">
-      <Folder size={14} />
-      <span>
-        {actions.length} {t("Projects")}
-      </span>
-    </div>
+                {/* BOTTOM SECTION */}
+                <div
+                  className="priority-bottom expand-trigger"
+                  onClick={() => toggleExpand(idx)}
+                >
+                  <div className="priority-project-count">
+                    <Folder size={14} />
+                    <span>
+                      {actions.length} {t("Projects")}
+                    </span>
+                  </div>
 
-    <ChevronRight
-      size={18}
-      className={`priority-chevron ${isExpanded ? "rotate" : ""}`}
-    />
-  </div>
+                  <ChevronRight
+                    size={18}
+                    className={`priority-chevron ${isExpanded ? "rotate" : ""}`}
+                  />
+                </div>
 
-</div>
+              </div>
 
               {isExpanded && actions.length > 0 && (
                 <div className="projects-section mt-3">
@@ -250,9 +250,28 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
                     return (
                       <div key={actionIdx} className={`project-row ${isActionKickstarted ? 'kickstarted' : ''}`}>
                         <div className="d-flex align-items-center justify-content-between w-100">
-                          <div className="d-flex align-items-start gap-2">
-                            <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
-                            <span>{actionText}</span>
+                          <div className="d-flex flex-column gap-1">
+                            <div className="d-flex align-items-start gap-2">
+                              <CheckCircle size={16} className={`${isActionKickstarted ? 'text-success' : 'text-muted'} mt-1 flex-shrink-0`} />
+                              <span>{actionText}</span>
+                            </div>
+                            <div className="d-flex gap-2 ms-4">
+                              {action.impact && (
+                                <span className={`property-badge impact-${action.impact.toLowerCase()}`}>
+                                  {action.impact}
+                                </span>
+                              )}
+                              {action.effort && (
+                                <span className={`property-badge effort-${action.effort.toLowerCase()}`}>
+                                  {action.effort}
+                                </span>
+                              )}
+                              {action.risk && (
+                                <span className={`property-badge risk-${action.risk.toLowerCase()}`}>
+                                  {action.risk}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           {isActionKickstarted && (
                             <Badge bg="success" className="ms-2">

@@ -23,6 +23,8 @@ const ProjectsList = ({
   onToggleSelection,
   onPerformReview,
   onAdhocUpdate,
+  canReviewProject,
+  myUserId,
 }) => {
   const [showMenuId, setShowMenuId] = useState(null);
 
@@ -110,6 +112,8 @@ const ProjectsList = ({
               onToggleSelection={onToggleSelection}
               onPerformReview={onPerformReview}
               onAdhocUpdate={onAdhocUpdate}
+              canReviewProject={canReviewProject}
+              myUserId={myUserId}
               isCheckboxDisabled={isArchived || sessionStorage.getItem("userPlan") === 'essential'}
             />
           </Col>

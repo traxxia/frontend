@@ -31,7 +31,8 @@ const ProjectDetails = ({
     onEdit,
     onPerformReview,
     onAdhocUpdate,
-    canEdit = false
+    canEdit = false,
+    canReview = false
 }) => {
     const { t } = useTranslation();
 
@@ -144,6 +145,18 @@ const ProjectDetails = ({
                     </Breadcrumb.Item>
                     <Breadcrumb.Item active>{project.project_name}</Breadcrumb.Item>
                 </Breadcrumb>
+            </div>
+
+            {/* Header with Title and Actions */}
+            <div className="details-header mb-4">
+                <h1 className="details-title">{project.project_name}</h1>
+                <div className="details-actions">
+                    {canEdit && (
+                        <button className="btn-edit" onClick={() => onEdit(project)}>
+                            <Edit2 size={16} /> {t("Edit")}
+                        </button>
+                    )}
+                </div>
             </div>
 
 
@@ -296,6 +309,11 @@ const ProjectDetails = ({
                         </div>
                         <div className="detail-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
                             {canEdit && (
+                                <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '6px 12px', fontSize: '13px' }}>
+                                    <Edit2 size={14} /> {t("Edit")}
+                                </button>
+                            )}
+                            {canReview && (
                                 <>
                                     <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <CheckCircle size={14} /> {t("Perform_Review")}

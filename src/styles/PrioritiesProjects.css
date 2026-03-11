@@ -251,7 +251,7 @@
 }
 
 .priority-card:hover {
-  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 }
 
 .priority-card-inner {
@@ -282,7 +282,7 @@
 }
 
 [data-theme="dark"] .priority-title {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .priority-status {
@@ -295,7 +295,7 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  
+
 }
 
 .priority-description {
@@ -304,7 +304,7 @@
 }
 
 [data-theme="dark"] .priority-description {
-    color: #d3d3d3 !important;
+  color: #d3d3d3 !important;
 }
 
 .priority-bottom {

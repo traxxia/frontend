@@ -160,7 +160,8 @@ const ProjectsSection = ({
     checkBusinessAccess,
     checkProjectsAccess,
     checkAllAccess,
-    canEditProject
+    canEditProject,
+    canReviewProject
   } = useAccessControl(selectedBusinessId);
   const {
     formState,
@@ -785,6 +786,7 @@ const ProjectsSection = ({
           onPerformReview={handlePerformReview}
           onAdhocUpdate={handleAdhocUpdate}
           canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)}
+          canReview={currentProject && canReviewProject(currentProject, isSuperAdmin, myUserId, apiIsArchived)}
         />
       );
     }
@@ -1056,6 +1058,8 @@ const ProjectsSection = ({
               onDelete={handleDelete}
               onPerformReview={handlePerformReview}
               onAdhocUpdate={handleAdhocUpdate}
+              canReviewProject={canReviewProject}
+              myUserId={myUserId}
               selectedCategory={selectedCategory}
               isArchived={apiIsArchived}
               selectedProjectIds={selectedProjectIds}
