@@ -147,19 +147,19 @@ const ProjectCard = ({
         <div>
           <span className="details-label">{t("Impact")}</span>
           <span className={`property-badge impact-${project.impact?.toLowerCase() || 'low'}`}>
-            <Zap size={10} /> {project.impact || 'None'}
+            <Zap size={10} /> {project.impact ? project.impact.charAt(0).toUpperCase() + project.impact.slice(1).toLowerCase() : 'None'}
           </span>
         </div>
         <div>
           <span className="details-label">{t("Effort")}</span>
           <span className={`property-badge ${project.effort ? `effort-${project.effort.toLowerCase()}` : 'property-badge-none'}`}>
-            <Clock size={10} /> {project.effort || 'N/A'}
+            <Clock size={10} /> {project.effort ? project.effort.charAt(0).toUpperCase() + project.effort.slice(1).toLowerCase() : 'N/A'}
           </span>
         </div>
         <div>
           <span className="details-label">{t("Risk")}</span>
           <span className={`property-badge ${project.risk ? `risk-${project.risk.toLowerCase()}` : 'property-badge-none'}`}>
-            <AlertTriangle size={10} /> {project.risk || 'N/A'}
+            <AlertTriangle size={10} /> {project.risk ? project.risk.charAt(0).toUpperCase() + project.risk.slice(1).toLowerCase() : 'N/A'}
           </span>
         </div>
         <div>
