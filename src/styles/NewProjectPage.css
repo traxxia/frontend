@@ -141,6 +141,8 @@
 .field-textarea {
   resize: vertical;
   min-height: 80px;
+  background-color: #f7fafc !important;
+  color: black !important;
 }
 
 .field-textarea.transparent {

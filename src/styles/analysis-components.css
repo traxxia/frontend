@@ -556,6 +556,16 @@ body {
   overflow: hidden;
 }
 
+[data-theme="dark"] .category-section {
+    background: #1a1d23 !important;
+   padding: 10px 15px 20px;
+}
+
+
+[data-theme="dark"] .category-articles {
+    background: #1a1d23 !important;
+}
+
 .category-section::before {
   content: '';
   position: absolute;
@@ -1028,8 +1038,9 @@ body {
 }
 
 
+
 [data-theme="dark"] .badge {
-    color: #0072ff !important;
+    color: #ffffff !important;
 }
 
 /* Quill rich text editor */

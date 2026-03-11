@@ -159,7 +159,7 @@ const MenuBar = () => {
                   className={`dropdown-item-traxia ${isCurrentPage('/academy') || location.pathname.startsWith('/academy/') ? 'active' : ''}`}
                 >
                   <BookOpen size={16} className="me-2" />
-                  Traxxia Academy
+                  {t("traxxia_academy")}
                 </Dropdown.Item>
 
                 {/* NEW: Super Admin Panel (only for super admin) */}
