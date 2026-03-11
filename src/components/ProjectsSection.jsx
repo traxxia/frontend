@@ -20,9 +20,11 @@ import TeamRankingsView from "../components/TeamRankingsView";
 import ProjectsList from "../components/ProjectsList";
 import ProjectForm from "../components/ProjectForm";
 import ProjectDetails from "../components/ProjectDetails";
+import ProjectReviewModal from "../components/ProjectReviewModal";
 import ToastNotifications from "../components/ToastNotifications";
 import StateChangeModal from "../components/StateChangeModal";
 import "../styles/ProjectsSection.css";
+import "../styles/ProjectReviewModal.css";
 
 const ProjectsSection = ({
   selectedBusinessId,
@@ -63,6 +65,10 @@ const ProjectsSection = ({
   const [activeAccordionKey, setActiveAccordionKey] = useState(null);
   const [showStateChangeModal, setShowStateChangeModal] = useState(false);
   const [pendingSavePayload, setPendingSavePayload] = useState(null);
+
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewType, setReviewType] = useState("review");
+  const [selectedReviewProject, setSelectedReviewProject] = useState(null);
 
   const [projects, setProjects] = useState([]);
   const [teamRankings, setTeamRankings] = useState([]);
@@ -694,6 +700,53 @@ const ProjectsSection = ({
     }
   };
 
+  const handlePerformReview = (project) => {
+    setSelectedReviewProject(project);
+    setReviewType("review");
+    setShowReviewModal(true);
+  };
+
+  const handleAdhocUpdate = (project) => {
+    setSelectedReviewProject(project);
+    setReviewType("adhoc");
+    setShowReviewModal(true);
+  };
+
+  const submitReview = async (data) => {
+    if (!selectedReviewProject?._id) return;
+
+    try {
+      const token = getToken();
+      const endpoint = reviewType === "review" ? "review" : "adhoc-update";
+      const method = reviewType === "review" ? "post" : "patch";
+
+      const response = await axios({
+        method,
+        url: `${process.env.REACT_APP_BACKEND_URL}/api/projects/${selectedReviewProject._id}/${endpoint}`,
+        data,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      handleShowToast(reviewType === "review" ? "Review submitted successfully!" : "Update submitted successfully!", "success");
+      await loadProjects();
+
+      // If we are in view mode, update the current project to reflect changes
+      if (activeView === "view" && currentProject?._id === selectedReviewProject._id) {
+        // We can either fetch single project or just update from list
+        // Let's just find it in the newly fetched projects
+        // Wait, loadProjects is async but doesn't return projects directly to local state yet
+      }
+
+    } catch (err) {
+      console.error("Review submit error:", err);
+      const errorMsg = err.response?.data?.error || "Failed to process update";
+      handleShowToast(errorMsg, "error");
+    }
+  };
+
   const handleLockProjectRanking = async () => {
     // This used to lock, now it just refreshes as saving is enough
     await refreshTeamRankings();
@@ -729,6 +782,8 @@ const ProjectsSection = ({
           project={currentProject}
           onBack={handleBackToList}
           onEdit={(project) => handleEditProject(project, "edit")}
+          onPerformReview={handlePerformReview}
+          onAdhocUpdate={handleAdhocUpdate}
           canEdit={currentProject && canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived)}
         />
       );
@@ -999,6 +1054,8 @@ const ProjectsSection = ({
               onEdit={(project) => handleEditProject(project, "edit")}
               onView={(project) => handleEditProject(project, "view")}
               onDelete={handleDelete}
+              onPerformReview={handlePerformReview}
+              onAdhocUpdate={handleAdhocUpdate}
               selectedCategory={selectedCategory}
               isArchived={apiIsArchived}
               selectedProjectIds={selectedProjectIds}
@@ -1077,6 +1134,14 @@ const ProjectsSection = ({
       <Container fluid className="projects-wrapper" ref={containerRef}>
         {activeView === "list" ? renderProjectList() : renderProjectForm()}
       </Container>
+
+      <ProjectReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        project={selectedReviewProject}
+        type={reviewType}
+        onSubmit={submitReview}
+      />
     </>
   );
 };

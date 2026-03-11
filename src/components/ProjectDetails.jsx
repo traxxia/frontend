@@ -29,6 +29,8 @@ const ProjectDetails = ({
     project,
     onBack,
     onEdit,
+    onPerformReview,
+    onAdhocUpdate,
     canEdit = false
 }) => {
     const { t } = useTranslation();
@@ -259,9 +261,51 @@ const ProjectDetails = ({
                         </div>
                     </div>
 
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Review_Cadence")}</label>
-                        <p className="detail-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</p>
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Review_Cadence")}</label>
+                            <p className="detail-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</p>
+                        </div>
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Next_Review_Date")}</label>
+                            <div className="detail-value" style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{
+                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
+                                    fontWeight: '600'
+                                }}>
+                                    {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
+                                </span>
+                                {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) && (
+                                    <span className="review-badge stale">
+                                        <AlertTriangle size={12} /> {t("Stale")}
+                                    </span>
+                                )}
+                                {!project.is_stale && !(project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) && project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() && (
+                                    <span className="review-badge due">
+                                        <Clock size={12} /> {t("Review_Due")}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Last_Reviewed")}</label>
+                            <p className="detail-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</p>
+                        </div>
+                        <div className="detail-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                            {canEdit && (
+                                <>
+                                    <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <CheckCircle size={14} /> {t("Perform_Review")}
+                                    </button>
+                                    <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Edit3 size={14} /> {t("Ad_Hoc_Update")}
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

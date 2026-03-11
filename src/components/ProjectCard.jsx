@@ -51,7 +51,9 @@ const ProjectCard = ({
   isArchived,
   isAdmin,
   isSelected,
-  onToggleSelection
+  onToggleSelection,
+  onPerformReview,
+  onAdhocUpdate,
 }) => {
   const { t } = useTranslation();
 
@@ -111,6 +113,35 @@ const ProjectCard = ({
 
           <h3 className="project-title" style={{ marginBottom: 0 }}>
             {project.project_name}
+            {(project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
+              <span
+                className="review-badge stale"
+                onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
+              >
+                <AlertTriangle size={12} /> {t("Stale")}
+              </span>
+            ) : (
+              project.next_review_date && (
+                (() => {
+                  const nextDate = new Date(project.next_review_date);
+                  nextDate.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+
+                  if (nextDate.getTime() === today.getTime()) {
+                    return (
+                      <span
+                        className="review-badge due"
+                        onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
+                      >
+                        <Clock size={12} /> {t("Review_Due")}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()
+              )
+            )}
           </h3>
         </div>
         <div className="project-menu-container">
@@ -132,6 +163,12 @@ const ProjectCard = ({
               )}
               {!isViewer && !isArchived && isAdmin && (!projectCreationLocked || project.status?.toLowerCase() === "draft" || !project.status) && (
                 <div onClick={() => onDelete(project._id)} className="menu-item delete"><Trash2 size={14} /> {t("delete")}</div>
+              )}
+              {userCanEdit && !isArchived && (
+                <>
+                  <div onClick={() => onPerformReview(project)} className="menu-item"><CheckCircle size={14} /> {t("Perform_Review")}</div>
+                  <div onClick={() => onAdhocUpdate(project)} className="menu-item"><Edit2 size={14} /> {t("Ad_Hoc_Update")}</div>
+                </>
               )}
             </div>
           )}

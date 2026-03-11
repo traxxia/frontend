@@ -21,6 +21,8 @@ const ProjectsList = ({
   isAdmin,
   selectedProjectIds = [],
   onToggleSelection,
+  onPerformReview,
+  onAdhocUpdate,
 }) => {
   const [showMenuId, setShowMenuId] = useState(null);
 
@@ -106,6 +108,8 @@ const ProjectsList = ({
               isAdmin={isAdmin}
               isSelected={selectedProjectIds.includes(project._id)}
               onToggleSelection={onToggleSelection}
+              onPerformReview={onPerformReview}
+              onAdhocUpdate={onAdhocUpdate}
               isCheckboxDisabled={isArchived || sessionStorage.getItem("userPlan") === 'essential'}
             />
           </Col>
