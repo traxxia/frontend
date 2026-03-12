@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from '../hooks/useTranslation';
 
 export const useProjectForm = () => {
+  const { t } = useTranslation();
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState("");
@@ -170,32 +172,32 @@ export const useProjectForm = () => {
     const isEmpty = (val) => !val || val.trim().length === 0;
 
     if (isEmpty(projectName)) {
-      newErrors.projectName = "Project name is required";
-    }
+  newErrors.projectName = t("Project name is required");
+}
 
-    if (isEmpty(description)) {
-      newErrors.description = "Description is required";
-    }
+if (isEmpty(description)) {
+  newErrors.description = t("Description is required");
+}
 
-    if (isEmpty(importance)) {
-      newErrors.importance = "Why This Matters is required";
-    }
+if (isEmpty(importance)) {
+  newErrors.importance = t("Why This Matters is required");
+}
 
-    if (isEmpty(strategicDecision)) {
-      newErrors.strategicDecision = "Strategic Decision is mandatory";
-    }
+if (isEmpty(strategicDecision)) {
+  newErrors.strategicDecision = t("Strategic Decision is mandatory");
+}
 
-    if (isEmpty(accountableOwner)) {
-      newErrors.accountableOwner = "Accountable Owner is mandatory";
-    }
+if (isEmpty(accountableOwner)) {
+  newErrors.accountableOwner = t("Accountable Owner is mandatory");
+}
 
-    if (isEmpty(successCriteria)) {
-      newErrors.successCriteria = "Success criteria is required";
-    }
+if (isEmpty(successCriteria)) {
+  newErrors.successCriteria = t("Success criteria is required");
+}
 
-    if (isEmpty(killCriteria)) {
-      newErrors.killCriteria = "Kill criteria is required";
-    }
+if (isEmpty(killCriteria)) {
+  newErrors.killCriteria = t("Kill criteria is required");
+}
 
     setErrors(newErrors);
 

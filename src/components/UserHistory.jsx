@@ -873,11 +873,13 @@ const EmptyBusinessState = ({ user, onClose }) => {
   );
 };
 
-const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
+const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => {
+  const { t } = useTranslation();
+  return(
   <div className="panel-header">
     <div className="header-row">
       <div className="header-left">
-        <h3 className="user-name-header">User Name: {user?.name}</h3>
+        <h3 className="user-name-header">{t("User Name")}: {user?.name}</h3>
       </div>
       <div className="header-right">
         <button onClick={onClose} className="close-button">
@@ -887,6 +889,7 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
     </div>
   </div>
 );
+};
 
 const TabNavigation = ({
   activeTab,

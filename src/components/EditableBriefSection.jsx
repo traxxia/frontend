@@ -215,7 +215,7 @@ const EditableField = ({
                 }}
               >
                 <X size={14} />
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 onClick={() => handleSave(field)}
@@ -250,7 +250,7 @@ const EditableField = ({
                 }}
               >
                 {isSaving ? <Loader size={14} className="spinner" /> : <Check size={14} />}
-                Save
+                {t("Save")}
               </button>
             </div>
           </div>

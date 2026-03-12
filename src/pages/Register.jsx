@@ -91,10 +91,10 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
 
       <div className="tab-navigation full-width-field">
         <button type="button" onClick={onBack} className="btn-vibrant btn-secondary-vibrant">
-          <FaAngleLeft /> Previous
+          <FaAngleLeft />{t("Previous")}
         </button>
         <button type="button" onClick={handlePayClick} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-          {isSubmitting ? <><FaSpinner className="spinner" /> Processing...</> : <><FaCheck /> Pay & Register</>}
+          {isSubmitting ? <><FaSpinner className="spinner" /> {t("Processing...")}</> : <><FaCheck /> {t("Pay & Register")}</>}
         </button>
       </div>
     </motion.div>
@@ -367,7 +367,7 @@ const Register = () => {
                     <div className={`step-line ${activeTab > 2 ? 'completed' : ''}`}></div>
                     <div className={`step-item ${activeTab === 3 ? 'active' : ''}`}>
                       <div className="step-circle">3</div>
-                      <span className="step-label">Payment</span>
+                      <span className="step-label">{t("Payment")}</span>
                     </div>
                   </>
                 )}
@@ -555,8 +555,8 @@ const Register = () => {
                                     layout
                                     className="form-group-custom"
                                   >
-                                    <label>Company Name  <span className="required">*</span></label>
-                                    <input type="text" name="company_name" placeholder="Your brand name" value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
+                                    <label>{t("companyName")}  <span className="required">*</span></label>
+                                    <input type="text" name="company_name" placeholder={t("brandNamePlaceholder")} value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
                                   </motion.div>
                                 ) : (
                                   <motion.div
@@ -598,7 +598,7 @@ const Register = () => {
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 className="pricing-section full-width-field"
                               >
-                                <label className="section-label">Choose Strategy Plan  <span className="required">*</span></label>
+                                <label className="section-label">{t("chooseStrategyPlan")} <span className="required">*</span></label>
                                 <div className="plans-grid">
                                   {plans.map((p) => (
                                     <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
@@ -629,16 +629,16 @@ const Register = () => {
 
                           <div className="tab-navigation full-width-field">
                             <button type="button" onClick={handleBack} className="btn-vibrant btn-secondary-vibrant">
-                              <FaAngleLeft /> Previous
+                              <FaAngleLeft /> {t("Previous")}
                             </button>
 
                             {isNewCompany ? (
                               <button type="button" onClick={handleNext} className="btn-vibrant btn-primary-vibrant">
-                                Proceed to Payment <FaAngleRight />
+                                {t("Proceed to Payment")} <FaAngleRight />
                               </button>
                             ) : (
                               <button type="button" onClick={() => handleNext()} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-                                {isSubmitting ? <><FaSpinner className="spinner" /> Saving...</> : <><FaSave /> Create Account</>}
+                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("createAccount")}</>}
                               </button>
                             )}
                           </div>

@@ -2089,7 +2089,7 @@ const StrategicAnalysis = ({
       <div className="strategic-analysis-container">
         <div className="loading-state">
           <Loader className="loading-spinner animate-spin" size={24} />
-          <span>Generating Strategic Analysis...</span>
+          <span>{t("Generating Strategic Analysis...")}</span>
         </div>
       </div>
     );

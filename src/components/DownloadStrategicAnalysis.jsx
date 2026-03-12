@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Loader } from 'lucide-react';
+import { useTranslation } from "../hooks/useTranslation";
 
 // Usage in StrategicAnalysis component:
 // Import: import DownloadStrategicAnalysis from './DownloadStrategicAnalysis';
@@ -12,6 +13,7 @@ const DownloadStrategicAnalysis = ({
     size = 'medium',
     onToastMessage // Optional toast message callback
 }) => {
+    const { t } = useTranslation();
     const [isGenerating, setIsGenerating] = useState(false);
 
     // Helper function to find component by text content
@@ -74,7 +76,7 @@ const DownloadStrategicAnalysis = ({
     const handleDownload = async () => {
         if (!strategicData || isDisabled) {
             if (onToastMessage) {
-                onToastMessage("No strategic analysis data available", "warning");
+                onToastMessage(t("No strategic analysis data available"), "warning");
             }
             return;
         }
@@ -82,7 +84,7 @@ const DownloadStrategicAnalysis = ({
         try {
             setIsGenerating(true);
             if (onToastMessage) {
-                onToastMessage("Generating Strategic Analysis PDF...", "info");
+                onToastMessage(t("Generating Strategic Analysis PDF..."), "info");
             }
 
             // Dynamic imports to reduce bundle size
@@ -212,7 +214,7 @@ const DownloadStrategicAnalysis = ({
 
             if (capturedCount === 0) {
                 if (onToastMessage) {
-                    onToastMessage("No strategic analysis components found to capture", "warning");
+                    onToastMessage(t("No strategic analysis components found to capture"), "warning");
                 }
                 return;
             }
@@ -224,13 +226,16 @@ const DownloadStrategicAnalysis = ({
             pdf.save(fileName);
 
             if (onToastMessage) {
-                onToastMessage(`Strategic Analysis PDF generated successfully! (${capturedCount} sections captured)`, "success");
+                onToastMessage(
+  t("Strategic Analysis PDF generated successfully! ({{count}} sections captured)", { count: capturedCount }),
+  "success"
+);
             }
 
         } catch (error) {
             console.error('Error generating PDF:', error);
             if (onToastMessage) {
-                onToastMessage("Failed to generate PDF. Please try again.", "error");
+                onToastMessage(t("Failed to generate PDF. Please try again."), "error");
             } else {
                 alert('Error generating PDF. Please try again.');
             }
@@ -296,7 +301,7 @@ const DownloadStrategicAnalysis = ({
                                 color: '#1f2937'
                             }}
                         >
-                            Generating PDF
+                            {t("Generating PDF")}
                         </h3>
                         <p
                             style={{
@@ -305,7 +310,7 @@ const DownloadStrategicAnalysis = ({
                                 color: '#6b7280'
                             }}
                         >
-                            Creating Strategic Analysis for {businessName}...
+                            {t("Creating Strategic Analysis for")} {businessName}...
                         </p>
                     </div>
                 </div>
@@ -343,12 +348,12 @@ const DownloadStrategicAnalysis = ({
                 {isGenerating ? (
                     <>
                         <Loader size={iconSizes[size]} className="animate-spin" />
-                        Generating PDF...
+                        {t("Generating PDF...")}
                     </>
                 ) : (
                     <>
                         <Download size={iconSizes[size]} />
-                        Download PDF
+                        {t("Download PDF")}
                     </>
                 )}
             </button>

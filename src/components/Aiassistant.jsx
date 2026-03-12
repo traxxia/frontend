@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Send, X, Bot, Zap, Trash2, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import "../styles/Ai.css";
+import { useTranslation } from "../hooks/useTranslation";
 
 const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([
@@ -276,7 +278,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
               <Sparkles size={16} color="#fff" />
             </div>
             <div className="ai-header__content">
-              <div className="ai-header__title">AI Assistant</div>
+              <div className="ai-header__title">{t("AI Assistant")}</div>
               <div className="ai-header__usage-circle-container">
                 {(() => {
                   const used = quotaStatus.usedTokens || 0;

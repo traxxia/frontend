@@ -1,8 +1,10 @@
 import React from 'react';
 import { FaCheckCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useTranslation } from "../hooks/useTranslation";
 
 const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
+    const { t } = useTranslation();
     const features = plan.name === 'Essential'
         ? ['Full Strategic Insights', 'PMF Validation Flow', 'Unlimited Initiatives', '1 Workspace Limit (Single Business)']
         : ['Everything in Essential', 'Up to 3 Workspaces', 'Convert Initiatives to Projects', '3 Collaborator Seats included', 'Execution Monitoring & Health Tracking'];
@@ -15,23 +17,23 @@ const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
             whileTap={{ scale: 0.98 }}
         >
             <div className="plan-header">
-                <span className="plan-name">{plan.name}</span>
+                <span className="plan-name">{t(plan.name)}</span>
                 <div className="plan-price">
                     <span className="currency">$</span>
                     <span className="amount">{plan.price || plan.price_usd}</span>
                     <span className="period">/mo</span>
                 </div>
             </div>
-            <p className="plan-desc">{plan.description}</p>
+            <p className="plan-desc">{t(plan.description)}</p>
             <ul className="plan-features">
                 {features.map((feature, idx) => (
                     <li key={idx}>
                         <FaCheckCircle className="check-icon" />
-                        {feature}
+                        {t(feature)}
                     </li>
                 ))}
             </ul>
-            {isSelected && <div className="selected-indicator">Selected</div>}
+            {isSelected && <div className="selected-indicator">{t("Selected")}</div>}
         </motion.div>
     );
 };

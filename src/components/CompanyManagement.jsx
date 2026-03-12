@@ -177,13 +177,13 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
               value={formData.size}
               onChange={(e) => setFormData({ ...formData, size: e.target.value })}
             >
-              <option value="">Select Size</option>
-              <option value="1-10">1-10 employees</option>
-              <option value="11-50">11-50 employees</option>
-              <option value="51-200">51-200 employees</option>
-              <option value="201-500">201-500 employees</option>
-              <option value="501-1000">501-1000 employees</option>
-              <option value="1000+">1000+ employees</option>
+              <option value="">{t("Select Size")}</option>
+              <option value="1-10">{t("1-10 employees")}</option>
+              <option value="11-50">{t("11-50 employees")}</option>
+              <option value="51-200">{t("51-200 employees")}</option>
+              <option value="201-500">{t("201-500 employees")}</option>
+              <option value="501-1000">{t("501-1000 employees")}</option>
+              <option value="1000+">{t("1000+ employees")}</option>
             </select>
           </div>
 

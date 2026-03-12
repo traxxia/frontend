@@ -157,7 +157,7 @@ const AdminTable = ({
             {loading ? (
                 <div className="admin-table-loading">
                     <div className="admin-spinner" />
-                    <span>Loading...</span>
+                    <span>{t("Loading...")}</span>
                 </div>
             ) : data.length === 0 ? (
                 <div className="admin-table-empty">
@@ -222,7 +222,7 @@ const AdminTable = ({
             {!loading && totalPages > 1 && (
                 <div className="admin-pagination">
                     <span className="admin-pagination-info">
-                        Showing {startItem}–{endItem} of {totalItems}
+                        {t("Showing")} {startItem}–{endItem} {t("of")} {totalItems}
                     </span>
                     <div className="admin-pagination-controls">
                         <button
