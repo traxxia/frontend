@@ -23,6 +23,7 @@ import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 const CARD_TO_CATEGORY_MAP = {
@@ -138,6 +139,7 @@ const BusinessSetupPage = () => {
   const [showProjectsTab, setShowProjectsTab] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
+  const [answerIds, setAnswerIds] = useState({}); // Mapping of question_id to answer document _id
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
@@ -378,6 +380,28 @@ const BusinessSetupPage = () => {
               setUserAnswers(prev => ({ ...prev, ...answersMap }));
               setCompletedQuestions(prev => new Set([...prev, ...completedSet]));
             }
+          }
+
+          // Fetch answers from the new Answers API to get answer IDs and ensure accurate data in the Advanced tab
+          try {
+            const answersResponse = await answerService.getAnswersByBusiness(selectedBusinessId);
+            if (answersResponse && Array.isArray(answersResponse.data)) {
+              const newAnswersMap = {};
+              const newAnswerIdsMap = {};
+              answersResponse.data.forEach(ans => {
+                if (ans.question_id && ans.answer) {
+                  const qIdStr = String(ans.question_id);
+                  newAnswersMap[qIdStr] = ans.answer;
+                  newAnswerIdsMap[qIdStr] = ans._id;
+                }
+              });
+              if (Object.keys(newAnswersMap).length > 0) {
+                setUserAnswers(prev => ({ ...prev, ...newAnswersMap }));
+                setAnswerIds(newAnswerIdsMap);
+              }
+            }
+          } catch (ansError) {
+            console.error('Error loading answers from answerService:', ansError);
           }
         }
         setQuestionsLoaded(true);
@@ -1005,7 +1029,7 @@ const BusinessSetupPage = () => {
   const currentPhase = getCurrentPhase();
 
   const analysisProps = {
-    phaseManager, apiLoadingStates, businessData, questions, userAnswers, selectedBusinessId,
+    phaseManager, apiLoadingStates, businessData, questions, userAnswers, answerIds, setAnswerIds, selectedBusinessId,
     swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, portersData, pestelData,
     fullSwotData, competitiveAdvantageData, expandedCapabilityData, strategicRadarData,
     productivityData, maturityData, profitabilityData, growthTrackerData,
@@ -1520,6 +1544,8 @@ const BusinessSetupPage = () => {
                             onClearHighlight={() => setHighlightedMissingQuestions(null)}
                             isLaunchedStatus={isLaunchedStatus}
                             documentInfo={documentInfo}
+                            answerIds={answerIds}
+                            setAnswerIds={setAnswerIds}
                           />
                         </div>
                       )}
@@ -1677,6 +1703,8 @@ const BusinessSetupPage = () => {
                         onClearHighlight={() => setHighlightedMissingQuestions(null)}
                         isLaunchedStatus={isLaunchedStatus}
                         documentInfo={documentInfo}
+                        answerIds={answerIds}
+                        setAnswerIds={setAnswerIds}
                       />
                     </div>
                   )}
@@ -1782,6 +1810,8 @@ const BusinessSetupPage = () => {
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}
                       isLaunchedStatus={isLaunchedStatus}
                       documentInfo={documentInfo}
+                      answerIds={answerIds}
+                      setAnswerIds={setAnswerIds}
                     />
                   </div>
                 )}
