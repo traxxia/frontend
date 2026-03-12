@@ -824,8 +824,8 @@ const EditableBriefSection = ({
         }
       }
 
-      // Keep legacy conversation update for backward compatibility if needed, 
-      // but the primary focus is now the answers collection
+      /* 
+      // Sync with legacy conversation collection for backward compatibility
       try {
         await fetch(`${API_BASE_URL}/api/conversations`, {
           method: 'POST',
@@ -849,6 +849,7 @@ const EditableBriefSection = ({
       } catch (convError) {
         console.warn('Legacy conversation update failed, but answer was saved:', convError);
       }
+      */
 
       return response;
     } catch (error) {
@@ -1184,7 +1185,7 @@ const EditableBriefSection = ({
       }
 
       // 2. Legacy bulk update for conversations and side effects
-      await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
+      // await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
 
       // Update local state for immediate UI feedback
       const newlyEdited = new Set(editedFields);
