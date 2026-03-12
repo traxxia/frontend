@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Check, X, Loader, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw } from 'lucide-react';
 import { AnalysisApiService } from '../services/analysisApiService';
+import { answerService } from '../services/answerService';
 import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate } from '../utils/templateValidator';
@@ -569,7 +570,9 @@ const EditableBriefSection = ({
   onClearHighlight,
   isLaunchedStatus = false,
   documentInfo = null,
-  isFinancialRegeneratingProp = false
+  isFinancialRegeneratingProp = false,
+  answerIds = {},
+  setAnswerIds
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
@@ -806,32 +809,52 @@ const EditableBriefSection = ({
 
       if (!question) throw new Error('Question not found');
 
-      const response = await fetch(`${API_BASE_URL}/api/conversations`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          question_id: question._id || question.question_id,
-          answer_text: newAnswer.trim(),
-          is_followup: false,
-          business_id: selectedBusinessId || null,
-          is_complete: true,
-          metadata: {
-            from_editable_brief: true,
-            timestamp: new Date().toISOString(),
-            is_edit: true
-          }
-        })
-      });
+      const questionId = String(question._id || question.question_id);
+      const existingAnswerId = answerIds[questionId];
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || 'Failed to update answer');
+      let response;
+      if (existingAnswerId) {
+        // Update existing answer
+        console.log(`Updating existing answer ${existingAnswerId} for question ${questionId}`);
+        response = await answerService.updateAnswer(existingAnswerId, newAnswer);
+      } else {
+        // Create new answer
+        console.log(`Creating new answer for question ${questionId}`);
+        response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer);
+        if (response && response.data && response.data._id) {
+          if (setAnswerIds) {
+            setAnswerIds(prev => ({ ...prev, [questionId]: response.data._id }));
+          }
+        }
       }
 
-      return await response.json();
+      // Keep legacy conversation update for backward compatibility if needed, 
+      // but the primary focus is now the answers collection
+      try {
+        await fetch(`${API_BASE_URL}/api/conversations`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            question_id: questionId,
+            answer_text: newAnswer.trim(),
+            is_followup: false,
+            business_id: selectedBusinessId || null,
+            is_complete: true,
+            metadata: {
+              from_editable_brief: true,
+              timestamp: new Date().toISOString(),
+              is_edit: true
+            }
+          })
+        });
+      } catch (convError) {
+        console.warn('Legacy conversation update failed, but answer was saved:', convError);
+      }
+
+      return response;
     } catch (error) {
       throw error;
     } finally {
@@ -1153,6 +1176,35 @@ const EditableBriefSection = ({
         return;
       }
 
+      // 1. Save to the new answers collection (individual calls since no bulk endpoint)
+      const newAnswerIds = { ...answerIds };
+      let idsUpdated = false;
+
+      await Promise.all(answersToSave.map(async (item) => {
+        const qIdStr = String(item.question_id);
+        const existingId = answerIds[qIdStr];
+        try {
+          if (existingId) {
+            console.log(`[AI] Updating existing answer ${existingId} for question ${qIdStr}`);
+            await answerService.updateAnswer(existingId, item.answer_text);
+          } else {
+            console.log(`[AI] Creating new answer for question ${qIdStr}`);
+            const res = await answerService.createAnswer(selectedBusinessId, qIdStr, item.answer_text);
+            if (res && res.data && res.data._id) {
+              newAnswerIds[qIdStr] = res.data._id;
+              idsUpdated = true;
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to save answer for question ${qIdStr}:`, err);
+        }
+      }));
+
+      if (idsUpdated && setAnswerIds) {
+        setAnswerIds(newAnswerIds);
+      }
+
+      // 2. Legacy bulk update for conversations and side effects
       await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
 
       // Update local state for immediate UI feedback
