@@ -39,6 +39,9 @@ stages:
               rm -f .env
               echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
               echo 'REACT_APP_ML_BACKEND_URL=$(REACT_APP_ML_BACKEND_URL)' >> .env
+              echo 'REACT_APP_ENABLE_PMF=$(REACT_APP_ENABLE_PMF)' >> .env
+              echo 'REACT_APP_AI_CHAT_URL=$(REACT_APP_AI_CHAT_URL)' >> .env
+              echo 'REACT_APP_STRIPE_PUBLISHABLE_KEY=$(REACT_APP_STRIPE_PUBLISHABLE_KEY)' >> .env
               echo "Contents of .env file:"
               cat .env
             displayName: 'Generate .env file'
