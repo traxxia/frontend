@@ -187,16 +187,16 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
 
     {isAdmin && (
       <Form.Check
-        type="checkbox"
-        disabled={isAlreadyKickstarted}
-        checked={selected.includes(idx)}
-        onChange={() => toggleSelection(idx)}
-      />
+  type="checkbox"
+  disabled={isAlreadyKickstarted || kickstarting}
+  checked={selected.includes(idx)}
+  onChange={() => toggleSelection(idx)}
+/>
     )}
 
     <div
       className="priority-title-area expand-trigger"
-      onClick={() => toggleExpand(idx)}
+      onClick={() => !kickstarting && toggleExpand(idx)}
     >
       <h6 className="priority-title mb-0">{item.title}</h6>
       {isAlreadyKickstarted && (
@@ -211,7 +211,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   {/* DESCRIPTION */}
   <div
     className="priority-description expand-trigger"
-    onClick={() => toggleExpand(idx)}
+    onClick={() => {
+    if (!kickstarting) toggleExpand(idx);
+  }}
   >
     {actions.length > 0
       ? (typeof actions[0].action === 'string' ? actions[0].action :t("View Projects")):
@@ -221,7 +223,9 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   {/* BOTTOM SECTION */}
   <div
     className="priority-bottom expand-trigger"
-    onClick={() => toggleExpand(idx)}
+    onClick={() => {
+    if (!kickstarting) toggleExpand(idx);
+  }}
   >
     <div className="priority-project-count">
       <Folder size={14} />

@@ -336,39 +336,42 @@ const Dashboard = () => {
     // Business Name validation
     const businessName = businessFormData.business_name.trim();
 
-    if (!businessName) {
-      errors.business_name = t('business_name_cannot_be_empty');
-    }
-    else if (businessName.length > 50) {
-      errors.business_name = t('business_name_max_length');
-    }
-    else if (!/^[A-Za-z0-9]/.test(businessName)) {
-      errors.business_name = t('business_name_invalid_start');
-    }
-    else if (!/^[A-Za-z0-9&.,'()\- ]+$/.test(businessName)) {
-      errors.business_name = "Business name contains invalid characters";
-    }
-    else if (/\d/.test(businessName)) {
-      errors.business_name = t('business_name_cannot_contain_numbers');
-    }
+if (!businessName) {
+  errors.business_name = t('business_name_cannot_be_empty');
+}
+else if (businessName.length < 3) {
+  errors.business_name = "Business name must be at least 3 characters";
+}
+else if (!/[A-Za-z]/.test(businessName)) {
+  errors.business_name = "Business name must contain at least one letter";
+}
+else if (/[0-9]{5,}/.test(businessName)) {
+  errors.business_name = "Too many consecutive numbers are not allowed";
+}
+else if (/[^A-Za-z0-9\s]{5,}/.test(businessName)) {
+  errors.business_name = "Too many consecutive special characters are not allowed";
+}
 
     // Business purpose validation
-    const businessPurpose = businessFormData.business_purpose.trim();
+const businessPurpose = businessFormData.business_purpose.trim();
 
-    if (!businessPurpose) {
-      errors.business_purpose = t('business_purpose_required');
-    }
-    else if (businessPurpose.length < 10) {
-      errors.business_purpose = "Business purpose must be at least 10 characters long";
-    }
-    else if (!/[A-Za-z]/.test(businessPurpose)) {
-      errors.business_purpose =
-        t('business_purpose_must_contain_alphabetic_characters') ||
-        "Business purpose must contain alphabetic characters";
-    }
-    else if (!/^[A-Za-z0-9\s.,#&()\-:/]+$/.test(businessPurpose)) {
-      errors.business_purpose = "Business purpose contains invalid characters";
-    }
+if (!businessPurpose) {
+  errors.business_purpose = t('business_purpose_required');
+}
+else if (businessPurpose.length < 10) {
+  errors.business_purpose = "Business purpose must be at least 10 characters long";
+}
+else if (!/[A-Za-z]/.test(businessPurpose)) {
+  errors.business_purpose =
+    t('business_purpose_must_contain_alphabetic_characters') ||
+    "Business purpose must contain alphabetic characters";
+}
+else if (/[0-9]{5,}/.test(businessPurpose)) {
+  errors.business_purpose = "Too many consecutive numbers are not allowed";
+}
+else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
+  errors.business_purpose = "Too many consecutive special characters are not allowed";
+}
 
     // City validation (optional but if provided, must be valid)
     const cityTrimmed = businessFormData.city.trim();

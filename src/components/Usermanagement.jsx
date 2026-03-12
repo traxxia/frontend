@@ -328,7 +328,7 @@ const UserManagement = ({ onToast }) => {
   const handleSearch = (value) => {
     if (searchTerm === "" && value !== "") setLastPageBeforeSearch(currentPage);
     if (searchTerm !== "" && value === "") setCurrentPage(lastPageBeforeSearch);
-    if (value !== searchTerm) setCurrentPage(1);
+    // if (value !== searchTerm) setCurrentPage(1);
     setSearchTerm(value);
   };
 

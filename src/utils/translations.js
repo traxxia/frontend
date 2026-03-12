@@ -1689,7 +1689,8 @@ export const staticTranslations = {
   "Capturing analysis...": "Capturing analysis...",
   "Regenerating Insights...": "Regenerating Insights...",
   "Generating Strategic Analysis...": "Generating Strategic Analysis...",
-   "AI Assistant": "AI Assistant"
+   "AI Assistant": "AI Assistant",
+    "no_specific_data_available": "No specific data available"
 
 
   },
@@ -3390,7 +3391,8 @@ export const staticTranslations = {
 
   "step_10_strategic": "Paso 10: Recomendaciones Estratégicas",
   "step_10_strategic_description": "Accede a recomendaciones estratégicas personalizadas adaptadas a los objetivos de tu negocio y oportunidades de crecimiento.",
-  "step_10_strategic_alt": "Paso 10: Recomendaciones Estratégicas"
+  "step_10_strategic_alt": "Paso 10: Recomendaciones Estratégicas",
+  "no_specific_data_available": "No hay datos específicos disponibles"
   }
 };
 

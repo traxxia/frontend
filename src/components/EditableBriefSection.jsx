@@ -266,7 +266,7 @@ const EditableField = ({
             fontStyle: !field.value ? 'italic' : 'normal'
           }}
         >
-          {field.value || t('Not Answered') || 'Not Answered'}
+          {field.value || t('No specific data available') || 'No specific data available'}
         </div>
       )}
     </div>
@@ -861,15 +861,32 @@ const EditableBriefSection = ({
   };
 
   const handleEdit = (field) => {
-    setEditingField(field.key);
-    setTimeout(() => {
-      const input = inputRefs.current[field.key];
-      if (input) {
-        input.focus();
-        input.setSelectionRange(input.value.length, input.value.length);
-      }
-    }, 50);
-  };
+  setEditingField(field.key);
+
+  setTimeout(() => {
+    const fieldElement = fieldRefs.current[field.key];
+
+    if (fieldElement) {
+      const yOffset = -250; // adjust how high it scrolls
+      const y =
+        fieldElement.getBoundingClientRect().top +
+        window.pageYOffset +
+        yOffset;
+
+      window.scrollTo({
+        top: y,
+        behavior: "smooth"
+      });
+    }
+
+    const input = inputRefs.current[field.key];
+
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, 120);
+};
 
   const handleSave = async (field) => {
     const input = inputRefs.current[field.key];
