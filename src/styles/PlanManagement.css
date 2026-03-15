@@ -206,3 +206,28 @@ textarea.plan-form-input {
         margin-bottom: 16px;
     }
 }
+
+/* Plan Status Toggle */
+.plan-status-switch {
+    cursor: pointer;
+    width: 2.5em !important;
+    height: 1.25em !important;
+}
+
+.plan-status-label {
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.plan-status-label.active {
+    color: #10b981;
+}
+
+.plan-status-label.inactive {
+    color: #6b7280;
+}
+
+.toggle-status {
+    margin-left: 50px;
+}

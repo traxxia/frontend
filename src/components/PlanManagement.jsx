@@ -17,13 +17,14 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
         features: '',
         period: 'month',
         workspace_limit: '',
-        limit_projects: '',
+        limit_projects: false,
         limit_collaborators: '',
         limit_viewers: '',
         limit_users: '',
         insight: false,
         strategic: false,
-        pmf: false
+        pmf: false,
+        isActive: true
     });
 
     useEffect(() => {
@@ -39,8 +40,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                         ? plan.workspace_limit
                         : (plan.max_workspaces !== undefined ? plan.max_workspaces
                             : (plan.limits?.workspaces !== undefined ? plan.limits.workspaces : '')),
-                limit_projects: plan.max_projects !== undefined ? plan.max_projects
-                    : (plan.limits?.projects !== undefined ? plan.limits.projects : ''),
+                limit_projects: plan.limits?.projects !== undefined ? Boolean(plan.limits?.projects)
+                    : (plan.max_projects !== undefined ? Boolean(plan.max_projects) : false),
                 limit_collaborators: plan.max_collaborators !== undefined ? plan.max_collaborators
                     : (plan.limits?.collaborators !== undefined ? plan.limits.collaborators : ''),
                 limit_viewers: plan.max_viewers !== undefined ? plan.max_viewers
@@ -52,7 +53,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                 strategic: plan.strategic !== undefined ? plan.strategic
                     : (plan.limits?.strategic !== undefined ? plan.limits.strategic : false),
                 pmf: plan.pmf !== undefined ? plan.pmf
-                    : (plan.limits?.pmf !== undefined ? plan.limits.pmf : false)
+                    : (plan.limits?.pmf !== undefined ? plan.limits.pmf : false),
+                isActive: plan.status !== 'inactive'
             });
         } else {
             setFormData({
@@ -62,13 +64,14 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                 period: 'month',
                 features: '',
                 workspace_limit: '',
-                limit_projects: '',
+                limit_projects: false,
                 limit_collaborators: '',
                 limit_viewers: '',
                 limit_users: '',
                 insight: false,
                 strategic: false,
-                pmf: false
+                pmf: false,
+                isActive: true
             });
         }
     }, [plan, show]);
@@ -83,7 +86,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const workspaceLimitValue = formData.workspace_limit !== '' ? Number(formData.workspace_limit) : undefined;
-        const maxProjects = formData.limit_projects !== '' ? Number(formData.limit_projects) : undefined;
         const maxCollaborators = formData.limit_collaborators !== '' ? Number(formData.limit_collaborators) : undefined;
         const maxViewers = formData.limit_viewers !== '' ? Number(formData.limit_viewers) : undefined;
         const maxUsers = formData.limit_users !== '' ? Number(formData.limit_users) : undefined;
@@ -95,27 +97,26 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
             price: Number(formData.price),
             period: formData.period,
             features: formData.features.split(',').map(f => f.trim()).filter(f => f !== ''),
-            // Backend reads these flat keys in tierService.js
             workspace_limit: workspaceLimitValue,
             max_workspaces: workspaceLimitValue,
-            max_projects: maxProjects,
+            max_projects: formData.limit_projects,
             max_collaborators: maxCollaborators,
             max_viewers: maxViewers,
             max_users: maxUsers,
             insight: formData.insight,
             strategic: formData.strategic,
             pmf: formData.pmf,
-            // Keep nested limits for backward compatibility
             limits: {
                 workspaces: workspaceLimitValue,
-                projects: maxProjects,
+                projects: formData.limit_projects,
                 collaborators: maxCollaborators,
                 viewers: maxViewers,
                 users: maxUsers,
                 insight: formData.insight,
                 strategic: formData.strategic,
                 pmf: formData.pmf
-            }
+            },
+            status: formData.isActive ? 'active' : 'inactive'
         };
 
         onSave(submitData);
@@ -176,6 +177,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                                 onChange={handleChange}
                             />
                         </div>
+                    </div>
+                    <div className="row">
                         <div className="col-md-6 plan-form-group">
                             <label>Period</label>
                             <select
@@ -187,6 +190,25 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                                 <option value="month">Month</option>
                                 <option value="year">Year</option>
                             </select>
+                        </div>
+                        <div className="col-md-6 plan-form-group d-flex align-items-end pb-2">
+                            <div className="toggle-status form-check form-switch w-100 d-flex align-items-center mb-1">
+                                <input
+                                    className="form-check-input plan-status-switch mb-0 mt-0"
+                                    type="checkbox"
+                                    role="switch"
+                                    id="planStatusSwitch"
+                                    name="isActive"
+                                    checked={formData.isActive}
+                                    onChange={handleChange}
+                                />
+                                <label
+                                    className={`form-check-label ms-3 mb-0 plan-status-label ${formData.isActive ? 'active' : 'inactive'}`}
+                                    htmlFor="planStatusSwitch"
+                                >
+                                    {formData.isActive ? 'Status: Active' : 'Status: Inactive'}
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -204,48 +226,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                                 placeholder="e.g. 1"
                             />
                         </div>
-                    </div>
-
-                    <div className="row">
-                        <div className="col-md-6 plan-form-group">
-                            <label>Projects</label>
-                            <input
-                                type="number"
-                                name="limit_projects"
-                                className="plan-form-input"
-                                value={formData.limit_projects}
-                                onChange={handleChange}
-                                placeholder="e.g. 0"
-                            />
-                        </div>
-                        <div className="col-md-6 plan-form-group">
-                            <label>Collaborators</label>
-                            <input
-                                type="number"
-                                name="limit_collaborators"
-                                className="plan-form-input"
-                                value={formData.limit_collaborators}
-                                onChange={handleChange}
-                                placeholder="e.g. 0"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="row">
-                        <div className="col-md-6 plan-form-group">
-                            <label>Viewers</label>
-                            <input
-                                type="number"
-                                name="limit_viewers"
-                                className="plan-form-input"
-                                value={formData.limit_viewers}
-                                onChange={handleChange}
-                                placeholder="e.g. 0"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="row">
                         <div className="col-md-6 plan-form-group">
                             <label>Users</label>
                             <input
@@ -260,7 +240,43 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                     </div>
 
                     <div className="row mt-3">
-                        <div className="col-md-4 plan-form-group d-flex align-items-center gap-2">
+                        <div className="col-md-6 plan-form-group">
+                            <label>Collaborators</label>
+                            <input
+                                type="number"
+                                name="limit_collaborators"
+                                className="plan-form-input"
+                                value={formData.limit_collaborators}
+                                onChange={handleChange}
+                                placeholder="e.g. 0"
+                            />
+                        </div>
+                        <div className="col-md-6 plan-form-group">
+                            <label>Viewers</label>
+                            <input
+                                type="number"
+                                name="limit_viewers"
+                                className="plan-form-input"
+                                value={formData.limit_viewers}
+                                onChange={handleChange}
+                                placeholder="e.g. 0"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="row mt-3">
+                        {formData.pmf && (<div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="limit_projects"
+                                className="form-check-input m-0"
+                                checked={formData.limit_projects}
+                                onChange={handleChange}
+                                id="projects-check"
+                            />
+                            <label htmlFor="projects-check" className="mb-0" style={{ cursor: 'pointer' }}>Projects Access</label>
+                        </div>)}
+                        <div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
                             <input
                                 type="checkbox"
                                 name="insight"
@@ -271,7 +287,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                             />
                             <label htmlFor="insight-check" className="mb-0" style={{ cursor: 'pointer' }}>Insight Access</label>
                         </div>
-                        <div className="col-md-4 plan-form-group d-flex align-items-center gap-2">
+                        <div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
                             <input
                                 type="checkbox"
                                 name="strategic"
@@ -282,7 +298,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                             />
                             <label htmlFor="strategic-check" className="mb-0" style={{ cursor: 'pointer' }}>Strategic Access</label>
                         </div>
-                        <div className="col-md-4 plan-form-group d-flex align-items-center gap-2">
+                        <div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
                             <input
                                 type="checkbox"
                                 name="pmf"

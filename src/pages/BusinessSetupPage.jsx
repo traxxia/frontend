@@ -24,6 +24,7 @@ import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
+import { getUserLimits } from '../utils/authUtils';
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -76,7 +77,7 @@ const BusinessSetupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
-  const ENABLE_PMF = sessionStorage.getItem('pmf') === 'true';
+  const { pmf: ENABLE_PMF, insight: hasInsightAccess, strategic: hasStrategicAccess } = getUserLimits();
 
   // State management for business context
   const [currentBusiness, setCurrentBusiness] = useState(location.state?.business || null);
@@ -138,8 +139,7 @@ const BusinessSetupPage = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
 
-  const hasInsightAccess = sessionStorage.getItem('insight') !== 'false';
-  const hasStrategicAccess = sessionStorage.getItem('strategic') !== 'false';
+  // hasInsightAccess and hasStrategicAccess are now derived from getUserLimits() above (line 79)
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));

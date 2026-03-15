@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
+import { getUserLimits } from '../utils/authUtils';
 import {
   Loader,
   Target,
@@ -69,7 +70,7 @@ const StrategicAnalysis = ({
   const { t } = useTranslation();
   const isExpanded = true;
 
-  const ENABLE_PMF = sessionStorage.getItem('pmf') === 'true';
+  const ENABLE_PMF = getUserLimits().pmf;
 
   const [localStrategicData, setLocalStrategicData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);

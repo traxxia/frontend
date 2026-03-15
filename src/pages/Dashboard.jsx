@@ -24,11 +24,12 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from '../components/UpgradeModal';
 import PlanLimitModal from '../components/PlanLimitModal';
+import { getUserLimits } from '../utils/authUtils';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const ENABLE_PMF = sessionStorage.getItem('pmf') === 'true';
+  const ENABLE_PMF = getUserLimits().pmf;
   const [businesses, setBusinesses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPMFOnboarding, setShowPMFOnboarding] = useState(false);
