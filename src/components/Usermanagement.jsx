@@ -3,6 +3,7 @@ import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert } from "react-boot
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
 import UpgradeModal from "./UpgradeModal";
+import PlanLimitModal from "./PlanLimitModal";
 import axios from "axios";
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from "./AdminTable";
@@ -43,6 +44,11 @@ const UserManagement = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const { t } = useTranslation();
+
+  // Plan Limit Modal state
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [planLimitConfig, setPlanLimitConfig] = useState({ title: '', message: '', subMessage: '' });
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -339,18 +345,18 @@ const UserManagement = ({ onToast }) => {
   };
 
   const filteredUsers = users.filter((user) => {
-  const search = searchTerm.toLowerCase();
+    const search = searchTerm.toLowerCase();
 
-  const matchSearch =
-    user.name?.toLowerCase().includes(search) ||
-    user.email?.toLowerCase().includes(search) ||
-    user.company_name?.toLowerCase().includes(search); 
+    const matchSearch =
+      user.name?.toLowerCase().includes(search) ||
+      user.email?.toLowerCase().includes(search) ||
+      user.company_name?.toLowerCase().includes(search);
 
-  const uiRole = formatRole(user.role_name || user.role);
-  const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
+    const uiRole = formatRole(user.role_name || user.role);
+    const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
 
-  return matchSearch && matchRole;
-});
+    return matchSearch && matchRole;
+  });
 
   useEffect(() => {
     if (!searchTerm && selectedRole === "All Roles") return;
@@ -531,10 +537,32 @@ const UserManagement = ({ onToast }) => {
         <div className="d-flex gap-2 ms-auto">
           {!isSuperAdmin && (
             <>
-              <Button className="admin-primary-btn" onClick={() => (userPlan === "essential" ? setShowUpgradeModal(true) : handleOpenModal())}>
+              <Button className="admin-primary-btn" onClick={() => {
+                if (userPlan === "essential") {
+                  setPlanLimitConfig({
+                    title: t("plan_limit_reached") || "Plan Limit Reached",
+                    message: t("upgrade_to_add_users") || "Upgrade to Add Users",
+                    subMessage: t("essential_plan_add_user_msg") || "The Essential plan does not support adding users. Please upgrade your plan to add users."
+                  });
+                  setShowPlanLimitModal(true);
+                } else {
+                  handleOpenModal();
+                }
+              }}>
                 <Plus size={16} /> {t("Add_User")}
               </Button>
-              <Button className="admin-secondary-btn" onClick={() => (userPlan === 'essential' ? setShowUpgradeModal(true) : handleOpenAssignModal())}>
+              <Button className="admin-secondary-btn" onClick={() => {
+                if (userPlan === 'essential') {
+                  setPlanLimitConfig({
+                    title: t("plan_limit_reached") || "Plan Limit Reached",
+                    message: t("upgrade_to_assign_collaborators") || "Upgrade to Assign Collaborators",
+                    subMessage: t("essential_plan_assign_collab_msg") || "The Essential plan does not support assigning collaborators. Please upgrade your plan to assign collaborators."
+                  });
+                  setShowPlanLimitModal(true);
+                } else {
+                  handleOpenAssignModal();
+                }
+              }}>
                 <UserCog size={16} /> {t("Assign_Collaborator")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
@@ -764,7 +792,13 @@ const UserManagement = ({ onToast }) => {
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered dialogClassName="compact-confirm-modal"><Modal.Header closeButton><Modal.Title>{t("Confirm_Role_Change")}</Modal.Title></Modal.Header><Modal.Body><p>{t("Change_role_to")} <strong>{t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1))}</strong>?</p></Modal.Body><Modal.Footer><Button variant="light" onClick={() => setShowConfirm(false)}>{t("cancel")}</Button><Button variant="primary" onClick={() => { handleRoleUpdate(pendingUserId, pendingRole); setShowConfirm(false); }}>{t("Yes_Change_Role")}</Button></Modal.Footer></Modal>
 
       <UpgradeModal show={showUpgradeModal} onHide={() => setShowUpgradeModal(false)} onUpgradeSuccess={() => fetchUsers()} />
-
+      <PlanLimitModal
+        show={showPlanLimitModal}
+        onHide={() => setShowPlanLimitModal(false)}
+        title={planLimitConfig.title}
+        message={planLimitConfig.message}
+        subMessage={planLimitConfig.subMessage}
+      />
     </div>
   );
 };
