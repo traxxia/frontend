@@ -35,19 +35,31 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
 
   const historyFetchedRef = useRef(false);
 
+  // Reset fetching flag when project changes to allow fresh fetch for new context
+  useEffect(() => {
+    historyFetchedRef.current = false;
+  }, [projectId]);
+
   // Check quota status and fetch history when panel is opened (lazy — not on mount)
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset fetch ref when closed so it refetches next time it's opened if needed,
+      // or we can keep it here. But definitely reset on projectId change.
+      return;
+    }
 
-    // Fetch history only on the first open
+    // If projectId changes while open, we should typically refetch.
+    // The dependency array handles the trigger.
+
     if (!historyFetchedRef.current) {
       historyFetchedRef.current = true;
       const fetchHistory = async () => {
         const token = getToken();
         if (!token) return;
         try {
+          const resolvedProjectId = projectId || 'global';
           const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/all`,
+            `${process.env.REACT_APP_BACKEND_URL}/ai-chat/history/${resolvedProjectId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (response.data.history && response.data.history.length > 0) {
@@ -64,7 +76,7 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
     }
 
     checkQuota();
-  }, [open]);
+  }, [open, projectId]);
 
   const checkQuota = async () => {
     const businessId = getBusinessId();

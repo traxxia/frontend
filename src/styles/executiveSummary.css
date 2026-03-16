@@ -11,7 +11,7 @@
 
 
 [data-theme="dark"] .exc-executive-summary-container {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 /* Executive Content */
@@ -54,7 +54,7 @@
 
 
 [data-theme="dark"] .exc-section-header {
-    background-color: #333946 !important;
+  background-color: #333946 !important;
 }
 
 .exc-section-title-wrapper {
@@ -100,7 +100,7 @@
 }
 
 [data-theme="dark"] .exc-section-title {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 
@@ -124,7 +124,7 @@
 }
 
 [data-theme="dark"] .exc-section-toggle {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .exc-section-toggle:hover {
@@ -143,7 +143,7 @@
 
 
 [data-theme="dark"] .exc-section-body {
-    background-color: #333946 !important;
+  background-color: #333946 !important;
 }
 
 
@@ -175,10 +175,10 @@
   background: white;
 }
 
-[data-theme="dark"] .exc-subsection.exc-current-core, 
+[data-theme="dark"] .exc-subsection.exc-current-core,
 .exc-subsection.exc-existing-adjacencies,
 .exc-subsection.exc-new-adjacencies {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .exc-subsection.exc-existing-adjacencies {
@@ -187,7 +187,7 @@
 }
 
 [data-theme="dark"] .exc-subsection.exc-existing-adjacencies {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 
@@ -197,7 +197,7 @@
 }
 
 [data-theme="dark"] .exc-subsection.exc-new-adjacencies {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .exc-subsection-icon {
@@ -237,7 +237,7 @@
 }
 
 [data-theme="dark"] .exc-subsection-title {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 
@@ -277,8 +277,8 @@
 }
 
 [data-theme="dark"] .exc-option-block {
-    background-color: #363b46 !important;
-    padding: 1rem;
+  background-color: #363b46 !important;
+  padding: 1rem;
 }
 
 .exc-option-title {
@@ -296,7 +296,7 @@
 
 
 [data-theme="dark"] .exc-how-compete-box {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 
@@ -315,7 +315,48 @@
 }
 
 [data-theme="dark"] .exc-differentiation-inner {
-    background-color: #363b46 !important;
+  background-color: #363b46 !important;
+}
+
+.exc-alternative-levers {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+[data-theme="dark"] .exc-alternative-levers {
+  background-color: #3d3a33 !important;
+  border-color: #4d4639 !important;
+}
+
+.exc-alternative-list {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 0 0;
+  list-style-type: disc;
+}
+
+.exc-alternative-item {
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .exc-alternative-item {
+  color: #ffffff !important;
+}
+
+.exc-alternative-reason {
+  font-size: 0.825rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .exc-alternative-reason {
+  color: #9ca3af !important;
 }
 
 .exc-differentiation-label {
@@ -363,7 +404,7 @@
 }
 
 [data-theme="dark"] .exc-implication-content {
-    color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 /* TOP 3-5 PRIORITIES Section */
