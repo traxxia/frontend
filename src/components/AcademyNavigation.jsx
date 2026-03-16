@@ -3,8 +3,10 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { academyStructure, findCategoryById } from '../utils/academyIndex';
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
+import { useTranslation } from '../hooks/useTranslation';
 
 const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
+    const { t } = useTranslation();
     const { category: activeCategory, article: activeArticle } = useParams();
     const navigate = useNavigate();
     const [userRole, setUserRole] = useState('');
@@ -86,7 +88,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                 <div className="academy-nav-header">
                     <Link to="/academy" className="academy-home-link">
                         <LucideIcons.BookOpen size={24} />
-                        <span>Traxxia Academy</span>
+                        <span>{t('academy_title')}</span>
                     </Link>
                     {onCloseMobileMenu && (
                         <button aria-label="Close navigation menu" className="mobile-close-btn" onClick={onCloseMobileMenu}>
@@ -118,7 +120,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                             >
                                 <div className="category-title">
                                     {renderCategoryIcon(category.icon)}
-                                    <span>{category.title}</span>
+                                    <span>{t(category.title)}</span>
                                 </div>
                                 <div className="category-header-right">
                                     <span className="article-count-badge">
@@ -142,7 +144,7 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                                                     className="article-link"
                                                     onClick={() => handleArticleClick(category.id, article.id)}
                                                 >
-                                                    {article.title}
+                                                    {t(article.title)}
                                                     {isArticleActive && (
                                                         <LucideIcons.ChevronRight size={14} className="active-indicator" />
                                                     )}
@@ -161,15 +163,15 @@ const AcademyNavigation = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                 <div className="nav-footer-links">
                     <Link to={userRole === 'super_admin' ? '/super-admin' : '/dashboard'} className="footer-link" style={{ marginBottom: '8px' }}>
                         <LucideIcons.LayoutDashboard size={16} />
-                        <span>Back to Main</span>
+                        <span>{t('academy_back_to_main')}</span>
                     </Link>
                     <Link to="/academy" className="footer-link">
                         <LucideIcons.Home size={16} />
-                        <span>Academy Home</span>
+                        <span>{t('academy_home')}</span>
                     </Link>
                 </div>
                 <div className="nav-footer-info">
-                    <small>Version 1.0 • Phase 3</small>
+                   <small>{t('academy_version_phase')}</small>
                 </div>
             </div>
         </div>

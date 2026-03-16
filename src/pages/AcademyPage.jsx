@@ -8,6 +8,7 @@ import { findArticleById, findCategoryById, getBreadcrumbs, academyStructure, re
 
 import * as LucideIcons from 'lucide-react';
 import '../styles/academy.css';
+import { useTranslation } from '../hooks/useTranslation';
 
 /**
  * AcademyPage Component
@@ -21,6 +22,7 @@ import '../styles/academy.css';
 const AcademyPage = () => {
     const { category, article } = useParams();
     const navigate = useNavigate(); // Hook for navigation
+    const { t } = useTranslation();
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -30,6 +32,7 @@ const AcademyPage = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [prevArticle, setPrevArticle] = useState(null);
     const [nextArticle, setNextArticle] = useState(null);
+    const { currentLanguage } = useTranslation();
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -104,11 +107,17 @@ const AcademyPage = () => {
 
             try {
                 // Import markdown file dynamically
-                const response = await fetch(`/academy-content/${articleData.path}`);
+                let response;
 
-                if (!response.ok) {
-                    throw new Error(`Failed to load article: ${response.statusText}`);
-                }
+if (currentLanguage === "es") {
+  response = await fetch(`/academy-content/es/${articleData.path}`);
+
+  if (!response.ok) {
+    response = await fetch(`/academy-content/${articleData.path}`);
+  }
+} else {
+  response = await fetch(`/academy-content/${articleData.path}`);
+}
 
                 const text = await response.text();
                 setContent(text);
@@ -173,9 +182,9 @@ const AcademyPage = () => {
 
         return (
             <div className="search-results-overlay">
-                <h3>Search Results for "{searchQuery}"</h3>
+                <h3>{t('academy_search_results')} "{searchQuery}"</h3>
                 {searchResults.length === 0 ? (
-                    <p>No articles found matching your query.</p>
+                    <p>{t('academy_no_results')}</p>
                 ) : (
                     <div className="search-results-grid">
                         {searchResults.map(result => (
@@ -200,15 +209,15 @@ const AcademyPage = () => {
         // Search Interface for Home Page
         const renderSearchHeader = () => (
             <div className="welcome-header">
-                <h1>Welcome to Traxxia Academy</h1>
+                <h1>{t('academy_welcome_title')}</h1>
                 <p className="welcome-subtitle">
-                    Your comprehensive guide to utilizing Traxxia for strategic success.
+                    {t('academy_welcome_subtitle')}
                 </p>
                 <div className="academy-main-search">
                     <LucideIcons.Search className="main-search-icon" size={20} />
                     <input
                         type="text"
-                        placeholder="Search for guides or articles..."
+                        placeholder={t('academy_search_placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="academy-main-search-input"
@@ -230,10 +239,10 @@ const AcademyPage = () => {
                             {academyStructure.categories.map((cat) => (
                                 <div key={cat.id} className="feature-card">
                                     <div className="feature-icon">{renderCategoryIcon(cat.icon)}</div>
-                                    <h3>{cat.title}</h3>
-                                    <p>{cat.description}</p>
+                                    <h3>{t(cat.title)}</h3>
+                                    <p>{t(cat.description)}</p>
                                     <Link to={`/academy/${cat.id}`} className="feature-link">
-                                        View Guides →
+                                        {t("View Guides")} →
                                     </Link>
                                 </div>
                             ))}
@@ -248,10 +257,10 @@ const AcademyPage = () => {
             return (
                 <div className="academy-category-page">
                     <button onClick={handleBack} className="academy-back-btn mb-4">
-                        <LucideIcons.ArrowLeft size={16} /> Back to Academy
+                        <LucideIcons.ArrowLeft size={16} /> {t("Back to Academy")}
                     </button>
-                    <h1>{categoryData.title}</h1>
-                    <p className="category-description">{categoryData.description}</p>
+                    <h1>{t(categoryData.title)}</h1>
+                    <p className="category-description">{t(categoryData.description)}</p>
 
                     <div className="category-articles-grid">
                         {categoryData.articles.map((art) => (
@@ -260,10 +269,10 @@ const AcademyPage = () => {
                                 to={`/academy/${category}/${art.id}`}
                                 className="category-article-card"
                             >
-                                <h3>{art.title}</h3>
+                                <h3>{t(art.title)}</h3>
                                 <div className="article-meta">
                                     {art.roles.includes('all') ? (
-                                        <span className="role-badge">All Users</span>
+                                        <span className="role-badge">{t("All Users")}</span>
                                     ) : (
                                         art.roles.map((role) => (
                                             <span key={role} className="role-badge">{role}</span>
@@ -287,7 +296,7 @@ const AcademyPage = () => {
 
         return (
             <div className="related-articles">
-                <h3>Related Articles</h3>
+                <h3>{t('academy_related_articles')}</h3>
                 <div className="related-articles-grid">
                     {currentArticle.relatedArticles.map((relatedId) => {
                         const related = findArticleById(relatedId);
@@ -299,7 +308,7 @@ const AcademyPage = () => {
                                 to={`/academy/${related.categoryId}/${related.id}`}
                                 className="related-article-card"
                             >
-                                <span>{related.title}</span>
+                                <span>{t(related.title)}</span>
                                 <span className="related-category">{related.categoryTitle}</span>
                             </Link>
                         );
@@ -332,10 +341,10 @@ const AcademyPage = () => {
                         {breadcrumbs.map((crumb, index) => (
                             <span key={crumb.path} className="breadcrumb-item">
                                 {index === breadcrumbs.length - 1 ? (
-                                    <span className="breadcrumb-current">{crumb.label}</span>
+                                    <span className="breadcrumb-current">{t(crumb.label)}</span>
                                 ) : (
                                     <Link to={crumb.path} className="breadcrumb-link">
-                                        {crumb.label}
+                                        {t(crumb.label)}
                                     </Link>
                                 )}
                             </span>
@@ -349,20 +358,20 @@ const AcademyPage = () => {
                     ) : loading ? (
                         <div className="academy-loading">
                             <div className="loading-spinner"></div>
-                            <p>Loading article...</p>
+                            <p>{t('academy_loading_article')}</p>
                         </div>
                     ) : error ? (
                         <div className="academy-error">
-                            <h2>Error Loading Article</h2>
+                            <h2>{t('academy_error_loading')}</h2>
                             <p>{error}</p>
                             <Link to="/academy" className="error-home-link">
-                                Return to Academy Home
+                                {t('academy_return_home')}
                             </Link>
                         </div>
                     ) : (
                         <>
                             <button onClick={handleBack} className="academy-back-btn mb-4">
-                                <LucideIcons.ArrowLeft size={16} /> Back to {findCategoryById(category)?.title || 'Category'}
+                                <LucideIcons.ArrowLeft size={16} />{t('academy_back_to_academy')}  {t(findCategoryById(category)?.title) || t('academy_category')}
                             </button>
 
                             {currentArticle && (
@@ -371,7 +380,7 @@ const AcademyPage = () => {
                                     {!content.trim().startsWith('# ') && <h1>{currentArticle.title}</h1>}
                                     <div className="article-meta">
                                         {currentArticle.roles.includes('all') ? (
-                                            <span className="role-badge">All Users</span>
+                                            <span className="role-badge">{t("All Users")}</span>
                                         ) : (
                                             currentArticle.roles.map((role) => (
                                                 <span key={role} className="role-badge">{role}</span>
@@ -393,10 +402,10 @@ const AcademyPage = () => {
                                             to={`/academy/${prevArticle.categoryId}/${prevArticle.id}`}
                                             className="pagination-link prev"
                                         >
-                                            <div className="pagination-label">Previous Step</div>
+                                            <div className="pagination-label">{t('academy_previous_step')}</div>
                                             <div className="pagination-title">
                                                 <LucideIcons.ChevronLeft size={16} />
-                                                {prevArticle.title}
+                                                {t(prevArticle.title)}
                                             </div>
                                         </Link>
                                     ) : <div className="pagination-spacer"></div>}
@@ -406,9 +415,9 @@ const AcademyPage = () => {
                                             to={`/academy/${nextArticle.categoryId}/${nextArticle.id}`}
                                             className="pagination-link next"
                                         >
-                                            <div className="pagination-label">Next Step</div>
+                                            <div className="pagination-label">{t('academy_next_step')}</div>
                                             <div className="pagination-title">
-                                                {nextArticle.title}
+                                                {t(nextArticle.title)}
                                                 <LucideIcons.ChevronRight size={16} />
                                             </div>
                                         </Link>

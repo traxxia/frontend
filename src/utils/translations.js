@@ -1690,8 +1690,78 @@ export const staticTranslations = {
   "Regenerating Insights...": "Regenerating Insights...",
   "Generating Strategic Analysis...": "Generating Strategic Analysis...",
    "AI Assistant": "AI Assistant",
-    "no_specific_data_available": "No specific data available"
+    "no_specific_data_available": "No specific data available",
 
+    "1. Account Setup & Onboarding": "1. Account Setup & Onboarding",
+"2. Dashboard & Business Setup": "2. Dashboard & Business Setup",
+"3. PMF Flow": "3. PMF Flow",
+"4. Kickstarting Projects": "4. Kickstarting Projects",
+"5. Project Management": "5. Project Management",
+"6. The AI Questionnaire": "6. The AI Questionnaire",
+"7. Insights & Strategic Analysis": "7. Insights & Strategic Analysis",
+"8. The AI Assistant": "8. The AI Assistant",
+"9. Admin Panel Control": "9. Admin Panel Control",
+
+"Welcome to Traxxia": "Welcome to Traxxia",
+"Registration & Plans": "Registration & Plans",
+"Dashboard Walkthrough": "Dashboard Walkthrough",
+"Business Overview": "Business Overview",
+
+"Foundation & Onboarding": "Foundation & Onboarding",
+"Insights & Strategic Core": "Insights & Strategic Core",
+"Execution & Priorities": "Execution & Priorities",
+
+"Kickstart Process": "Kickstart Process",
+"Priorities & Kickstarting": "Priorities & Kickstarting",
+"Adding Collaborators": "Adding Collaborators",
+"Collaborator Access": "Collaborator Access",
+
+"Projects Overview & States": "Projects Overview & States",
+"Creating New Projects": "Creating New Projects",
+"Project Details & Viewing": "Project Details & Viewing",
+"The Ranking Workflow": "The Ranking Workflow",
+"Consensus Analysis": "Consensus Analysis",
+"Launching to Active": "Launching to Active",
+"Assigning Project Access": "Assigning Project Access",
+"Access Management": "Access Management",
+
+"AI Questionnaire Overview": "AI Questionnaire Overview",
+"Phases & Question Ordering": "Phases & Question Ordering",
+"Editing & AI Generation": "Editing & AI Generation",
+"Financial Uploads & Insights": "Financial Uploads & Insights",
+
+"Strategic Insights Overview": "Strategic Insights Overview",
+"SWOT Analysis Guide": "SWOT Analysis Guide",
+"PESTEL Analysis": "PESTEL Analysis",
+"Porter's Five Forces": "Porter's Five Forces",
+"S.T.R.A.T.E.G.I.C Framework": "S.T.R.A.T.E.G.I.C Framework",
+"Financial Analysis Overview": "Financial Analysis Overview",
+
+"Your AI Companion": "Your AI Companion",
+
+"Companies Management": "Companies Management",
+"Businesses Management": "Businesses Management",
+"User Management": "User Management",
+"User History": "User History",
+"Question Management": "Question Management",
+"Monitoring Process For Super Admin": "Monitoring Process For Super Admin",
+"Monitoring Process for Company admin": "Monitoring Process for Company admin",
+
+"Academy": "Academy",
+"Back to Academy": "Back to Academy",
+"All Users": "All Users",
+
+  "Learn how to create your account, select a plan, and get started.": "Learn how to create your account, select a plan, and get started.",
+  "Navigate your dashboard and set up your business profiles.": "Navigate your dashboard and set up your business profiles.",
+  "Master the core strategic value engine for clear priorities and execution.": "Master the core strategic value engine for clear priorities and execution.",
+  "Moving from strategic analysis to actionable projects and bringing your team into the execution process.": "Moving from strategic analysis to actionable projects and bringing your team into the execution process.",
+  "Managing your initiatives throughout their lifecycle and prioritizing for impact.": "Managing your initiatives throughout their lifecycle and prioritizing for impact.",
+  "Answering the core questions to define your business strategy.": "Answering the core questions to define your business strategy.",
+  "Understand your business through deep insights and strategic components.": "Understand your business through deep insights and strategic components.",
+  "Your continuous companion for business and project intelligence.": "Your continuous companion for business and project intelligence.",
+  "Monitoring progress and managing organization-wide settings.": "Monitoring progress and managing organization-wide settings.",
+  "View Guides": "View Guides",
+  "Registration & Plans": "Registration & Plans"
 
   },
 
@@ -3392,7 +3462,80 @@ export const staticTranslations = {
   "step_10_strategic": "Paso 10: Recomendaciones Estratégicas",
   "step_10_strategic_description": "Accede a recomendaciones estratégicas personalizadas adaptadas a los objetivos de tu negocio y oportunidades de crecimiento.",
   "step_10_strategic_alt": "Paso 10: Recomendaciones Estratégicas",
-  "no_specific_data_available": "No hay datos específicos disponibles"
+  "no_specific_data_available": "No hay datos específicos disponibles",
+  
+   "1. Account Setup & Onboarding": "1. Configuración de Cuenta y Onboarding",
+"2. Dashboard & Business Setup": "Panel de Control y Configuración del Negocio",
+"3. PMF Flow": "Flujo PMF",
+"4. Kickstarting Projects": "Inicio de Proyectos",
+"5. Project Management": "Gestión de Proyectos",
+"6. The AI Questionnaire": "El Cuestionario de IA",
+"7. Insights & Strategic Analysis": "Insights y Análisis Estratégico",
+"8. The AI Assistant": "El Asistente de IA",
+"9. Admin Panel Control": "Control del Panel de Administración",
+
+"Welcome to Traxxia": "Bienvenido a Traxxia",
+"Registration & Plans": "Registro y Planes",
+"Dashboard Walkthrough": "Recorrido del Panel",
+"Business Overview": "Resumen del Negocio",
+
+"Foundation & Onboarding": "Fundamentos y Onboarding",
+"Insights & Strategic Core": "Insights y Núcleo Estratégico",
+"Execution & Priorities": "Ejecución y Prioridades",
+
+"Kickstart Process": "Proceso Kickstart",
+"Priorities & Kickstarting": "Prioridades e Inicio",
+"Adding Collaborators": "Agregar Colaboradores",
+"Collaborator Access": "Acceso de Colaboradores",
+
+"Projects Overview & States": "Resumen y Estados de Proyectos",
+"Creating New Projects": "Crear Nuevos Proyectos",
+"Project Details & Viewing": "Detalles del Proyecto",
+"The Ranking Workflow": "Flujo de Clasificación",
+"Consensus Analysis": "Análisis de Consenso",
+"Launching to Active": "Lanzar Proyecto",
+"Assigning Project Access": "Asignar Acceso al Proyecto",
+"Access Management": "Gestión de Accesos",
+
+"AI Questionnaire Overview": "Resumen del Cuestionario de IA",
+"Phases & Question Ordering": "Fases y Orden de Preguntas",
+"Editing & AI Generation": "Edición y Generación con IA",
+"Financial Uploads & Insights": "Carga de Datos Financieros",
+
+"Strategic Insights Overview": "Resumen de Insights Estratégicos",
+"SWOT Analysis Guide": "Guía de Análisis SWOT",
+"PESTEL Analysis": "Análisis PESTEL",
+"Porter's Five Forces": "Las Cinco Fuerzas de Porter",
+"S.T.R.A.T.E.G.I.C Framework": "Marco S.T.R.A.T.E.G.I.C",
+"Financial Analysis Overview": "Resumen del Análisis Financiero",
+
+"Your AI Companion": "Tu Asistente de IA",
+
+"Companies Management": "Gestión de Empresas",
+"Businesses Management": "Gestión de Negocios",
+"User Management": "Gestión de Usuarios",
+"User History": "Historial de Usuarios",
+"Question Management": "Gestión de Preguntas",
+"Monitoring Process For Super Admin": "Monitoreo para Super Admin",
+"Monitoring Process for Company admin": "Monitoreo para Admin de Empresa",
+
+"Academy": "Academia",
+"Back to Academy": "Atrás a Academia",
+"All Users": "Todos los usuarios",
+
+
+  "Learn how to create your account, select a plan, and get started.": "Aprende cómo crear tu cuenta, seleccionar un plan y comenzar.",
+  "Navigate your dashboard and set up your business profiles.": "Navega por tu panel de control y configura los perfiles de tu negocio.",
+  "Master the core strategic value engine for clear priorities and execution.": "Domina el motor estratégico central para establecer prioridades claras y ejecutar acciones.",
+  "Moving from strategic analysis to actionable projects and bringing your team into the execution process.": "Pasa del análisis estratégico a proyectos accionables e integra a tu equipo en el proceso de ejecución.",
+  "Managing your initiatives throughout their lifecycle and prioritizing for impact.": "Gestiona tus iniciativas a lo largo de todo su ciclo de vida y priorízalas para maximizar su impacto.",
+  "Answering the core questions to define your business strategy.": "Responder las preguntas clave para definir la estrategia de tu negocio.",
+  "Understand your business through deep insights and strategic components.": "Comprende tu negocio a través de insights profundos y componentes estratégicos.",
+  "Your continuous companion for business and project intelligence.": "Tu acompañante continuo para inteligencia empresarial y de proyectos.",
+  "Monitoring progress and managing organization-wide settings.": "Supervisar el progreso y gestionar la configuración a nivel de toda la organización.",
+  "View Guides": "Ver Guías",
+  "Registration & Plans": "Registro y planes"
+
   }
 };
 
