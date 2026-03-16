@@ -231,3 +231,37 @@ textarea.plan-form-input {
 .toggle-status {
     margin-left: 50px;
 }
+
+/* Status Confirm Modal */
+.status-confirm-modal-container {
+    z-index: 1060 !important;
+}
+
+.status-confirm-modal .modal-content {
+    height: auto !important;
+    min-height: auto !important;
+}
+
+.status-confirm-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.status-confirm-text-primary {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.status-confirm-text-secondary {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.status-confirm-btn {
+    font-weight: 500;
+}

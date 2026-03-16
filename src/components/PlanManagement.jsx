@@ -10,6 +10,7 @@ const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
     const { t } = useTranslation();
+    const [showStatusConfirm, setShowStatusConfirm] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -80,7 +81,34 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        if (name === 'isActive' && !checked) {
+            setShowStatusConfirm(true);
+            return;
+        }
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    };
+
+    const confirmStatusChange = () => {
+        setFormData(prev => ({ ...prev, isActive: false }));
+        setShowStatusConfirm(false);
+    };
+
+    const cancelStatusChange = () => {
+        setShowStatusConfirm(false);
+    };
+
+    const handleAutoFillFeatures = () => {
+        const featuresList = [];
+        if (formData.workspace_limit) featuresList.push(`Up to ${formData.workspace_limit} Workspaces`);
+        if (formData.limit_users) featuresList.push(`Up to ${formData.limit_users} Users`);
+        if (formData.limit_collaborators) featuresList.push(`Up to ${formData.limit_collaborators} Collaborators`);
+        if (formData.limit_viewers) featuresList.push(`Up to ${formData.limit_viewers} Viewers`);
+        if (formData.insight) featuresList.push('Insight Access');
+        if (formData.strategic) featuresList.push('Strategic Access');
+        if (formData.pmf) featuresList.push('PMF Access');
+        if (formData.pmf && formData.limit_projects) featuresList.push('Projects Access');
+        
+        setFormData(prev => ({ ...prev, features: featuresList.join(', ') }));
     };
 
     const handleSubmit = (e) => {
@@ -97,15 +125,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
             price: Number(formData.price),
             period: formData.period,
             features: formData.features.split(',').map(f => f.trim()).filter(f => f !== ''),
-            workspace_limit: workspaceLimitValue,
-            max_workspaces: workspaceLimitValue,
-            max_projects: formData.limit_projects,
-            max_collaborators: maxCollaborators,
-            max_viewers: maxViewers,
-            max_users: maxUsers,
-            insight: formData.insight,
-            strategic: formData.strategic,
-            pmf: formData.pmf,
             limits: {
                 workspaces: workspaceLimitValue,
                 projects: formData.limit_projects,
@@ -169,7 +188,17 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                             />
                         </div>
                         <div className="col-md-6 plan-form-group">
-                            <label>{t('features') || 'Features'} <small>(comma separated)</small></label>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <label className="mb-0">{t('features') || 'Features'} <small>(comma separated)</small></label>
+                                <button 
+                                    type="button" 
+                                    onClick={handleAutoFillFeatures} 
+                                    className="btn btn-link p-0 text-decoration-none" 
+                                    style={{ fontSize: '0.75rem', color: '#4f46e5' }}
+                                >
+                                    Auto-fill from limits
+                                </button>
+                            </div>
                             <textarea
                                 name="features"
                                 className="plan-form-input"
@@ -265,17 +294,6 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                     </div>
 
                     <div className="row mt-3">
-                        {formData.pmf && (<div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
-                            <input
-                                type="checkbox"
-                                name="limit_projects"
-                                className="form-check-input m-0"
-                                checked={formData.limit_projects}
-                                onChange={handleChange}
-                                id="projects-check"
-                            />
-                            <label htmlFor="projects-check" className="mb-0" style={{ cursor: 'pointer' }}>Projects Access</label>
-                        </div>)}
                         <div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
                             <input
                                 type="checkbox"
@@ -309,6 +327,17 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                             />
                             <label htmlFor="pmf-check" className="mb-0" style={{ cursor: 'pointer' }}>PMF Access</label>
                         </div>
+                        {formData.pmf && (<div className="col-md-3 plan-form-group d-flex align-items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="limit_projects"
+                                className="form-check-input m-0"
+                                checked={formData.limit_projects}
+                                onChange={handleChange}
+                                id="projects-check"
+                            />
+                            <label htmlFor="projects-check" className="mb-0" style={{ cursor: 'pointer' }}>Projects Access</label>
+                        </div>)}
                     </div>
                 </Modal.Body>
                 <Modal.Footer>
@@ -321,6 +350,36 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting }) => {
                     </Button>
                 </Modal.Footer>
             </form>
+
+            <Modal 
+                show={showStatusConfirm} 
+                onHide={cancelStatusChange} 
+                centered 
+                backdrop="static" 
+                dialogClassName="status-confirm-modal" 
+                className="status-confirm-modal-container"
+                size="md"
+            >
+                <Modal.Header closeButton className="border-0 pb-0">
+                    <Modal.Title className="status-confirm-title">Confirm Status Change</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="pt-3 pb-4">
+                    <p className="status-confirm-text-primary">
+                        Are you sure you want to change this plan's status to Inactive?
+                    </p>
+                    <p className="status-confirm-text-secondary">
+                        Existing subscribers will continue their current period without interruption, but new users won't be able to select this plan.
+                    </p>
+                </Modal.Body>
+                <Modal.Footer className="border-0 pt-0">
+                    <Button variant="light" onClick={cancelStatusChange} className="status-confirm-btn">
+                        {t('cancel') || 'Cancel'}
+                    </Button>
+                    <Button variant="danger" onClick={confirmStatusChange} className="status-confirm-btn">
+                        {t('proceed') || 'Proceed'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Modal>
     );
 };
@@ -348,7 +407,8 @@ const PlanManagement = ({ onToast }) => {
 
             const response = await axios.get(`${API_BASE_URL}/api/plans`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'x-include-inactive': 'true'
                 }
             });
 
@@ -420,6 +480,15 @@ const PlanManagement = ({ onToast }) => {
             key: 'description',
             label: t('description') || 'Description',
             render: (val) => <span className="admin-cell-secondary" style={{ maxWidth: '300px', display: 'inline-block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{val}</span>,
+        },
+        {
+            key: 'status',
+            label: t('status') || 'Status',
+            render: (_, row) => (
+                <span className={`admin-status-badge ${row.status === 'inactive' ? 'inactive' : 'active'}`}>
+                    {row.status === 'inactive' ? 'Inactive' : 'Active'}
+                </span>
+            ),
         },
         {
             key: 'actions',
