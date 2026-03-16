@@ -316,7 +316,8 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          setShowUpgradeModal(true);
+          handleShowCreateModal();
+          //setShowUpgradeModal(true);
         } else {
           setBusinessError(data.error || t('failed_to_create_business'));
         }
@@ -1082,7 +1083,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
                       onChange={handleFormChange}
                       placeholder={t('enter_your_business_name')}
                       isInvalid={!!formErrors.business_name}
-                      maxLength={20}
+                      maxLength={100}
                     />
                     <div className="d-flex justify-content-between align-items-center mt-1">
                       <div>
@@ -1329,7 +1330,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
             </Modal.Footer>
           </Modal>
 
-          <UpgradeModal
+          {/* <UpgradeModal
             show={showUpgradeModal}
             onHide={() => setShowUpgradeModal(false)}
             onUpgradeSuccess={(updatedSub) => {
@@ -1338,7 +1339,7 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
               setShowSuccessPopup(true);
               setTimeout(() => setShowSuccessPopup(false), 3000);
             }}
-          />
+          /> */}
         </>
       )}
     </div>
