@@ -83,28 +83,31 @@ const EditableField = ({
           </span>
 
           {field.phase && (
-            <span className='edit-batch' style={{
-              fontSize: '10px',
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              borderRadius: '4px',
-              backgroundColor:
-                field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
-                  field.phase.toLowerCase() === 'essential' ? '#dcfce7' :
-                    field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
-              color:
-                field.phase.toLowerCase() === 'initial' ? '#1e40af' :
+              <span
+                className='edit-batch'
+                 style={{
+                   fontSize: '10px',
+                   fontWeight: '600',
+                   textTransform: 'uppercase',
+                   borderRadius: '4px',
+                   backgroundColor:
+                   field.phase.toLowerCase() === 'initial' ? '#dbeafe' :
+                   field.phase.toLowerCase() === 'essential' ? '#dcfce7' :
+                   field.phase.toLowerCase() === 'advanced' ? '#f3e8ff' : '#f3f4f6',
+                  color:
+                  field.phase.toLowerCase() === 'initial' ? '#1e40af' :
                   field.phase.toLowerCase() === 'essential' ? '#166534' :
-                    field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
-              letterSpacing: '0.025em',
-              flexShrink: 0,
-              padding: '2px 8px',
-              whiteSpace: 'nowrap',
-              marginLeft: 'auto'
-            }}>
-              {field.phase}
+                  field.phase.toLowerCase() === 'advanced' ? '#6b21a8' : '#374151',
+                  letterSpacing: '0.025em',
+                  flexShrink: 0,
+                  padding: '2px 8px',
+                  whiteSpace: 'nowrap',
+                  marginLeft: 'auto'
+                }}
+               >
+             {t(field.phase)}
             </span>
-          )}
+           )}
 
           {isHighlighted && (
             <span style={{
@@ -212,7 +215,7 @@ const EditableField = ({
                 }}
               >
                 <X size={14} />
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 onClick={() => handleSave(field)}
@@ -247,7 +250,7 @@ const EditableField = ({
                 }}
               >
                 {isSaving ? <Loader size={14} className="spinner" /> : <Check size={14} />}
-                Save
+                {t("Save")}
               </button>
             </div>
           </div>
@@ -263,7 +266,7 @@ const EditableField = ({
             fontStyle: !field.value ? 'italic' : 'normal'
           }}
         >
-          {field.value || t('Not Answered') || 'Not Answered'}
+          {field.value || t('No specific data available') || 'No specific data available'}
         </div>
       )}
     </div>
@@ -380,8 +383,8 @@ const FinancialUploadBlock = ({
           <Database size={24} />
         </div>
         <div>
-          <h3 style={styles.title}>Financial Data</h3>
-          <p style={styles.subtitle}>Report templates & statements</p>
+          <h3 style={styles.title}>{t("financial_data")}</h3>
+          <p style={styles.subtitle}>{t("report_templates_statements")}</p>
         </div>
       </div>
 
@@ -430,7 +433,7 @@ const FinancialUploadBlock = ({
               }}
             >
               <Upload size={16} />
-              Get Started
+              {t("get_started")}
             </button>
           )}
         </div>
@@ -448,6 +451,7 @@ const AIAnswerSupportBlock = ({
   isSaving,
   canEnrich
 }) => {
+  const { t } = useTranslation();
   const styles = {
     container: {
       flex: 1,
@@ -518,9 +522,9 @@ const AIAnswerSupportBlock = ({
         </div>
         <div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h3 style={styles.title}>AI Answer Support</h3>
+            <h3 style={styles.title}>{t("ai_answer_support")}</h3>
             <p style={styles.subtitle}>
-              Professional answers based on your onboarding
+             {t("professional_answers_based_on_onboarding")}
             </p>
           </div>
         </div>
@@ -544,7 +548,7 @@ const AIAnswerSupportBlock = ({
         }}
       >
         {isEnriching ? <Loader size={18} className="spinner" /> : <Wand2 size={18} />}
-        {isEnriching ? 'Generating Suggestions...' : 'Generate AI Answers'}
+       {isEnriching ? t("generating_suggestions") : t("generate_ai_answers")}
       </button>
     </div>
   );
@@ -857,15 +861,32 @@ const EditableBriefSection = ({
   };
 
   const handleEdit = (field) => {
-    setEditingField(field.key);
-    setTimeout(() => {
-      const input = inputRefs.current[field.key];
-      if (input) {
-        input.focus();
-        input.setSelectionRange(input.value.length, input.value.length);
-      }
-    }, 50);
-  };
+  setEditingField(field.key);
+
+  setTimeout(() => {
+    const fieldElement = fieldRefs.current[field.key];
+
+    if (fieldElement) {
+      const yOffset = -250; // adjust how high it scrolls
+      const y =
+        fieldElement.getBoundingClientRect().top +
+        window.pageYOffset +
+        yOffset;
+
+      window.scrollTo({
+        top: y,
+        behavior: "smooth"
+      });
+    }
+
+    const input = inputRefs.current[field.key];
+
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, 120);
+};
 
   const handleSave = async (field) => {
     const input = inputRefs.current[field.key];

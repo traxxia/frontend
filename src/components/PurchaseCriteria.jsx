@@ -361,7 +361,7 @@ const PurchaseCriteria = ({
         <div className="pc-metric-card pc-metric-blue">
           <div className="pc-metric-header">
             <BarChart3 size={20} />
-            <span>Total Criteria</span>
+            <span>{t("total_criteria")}</span>
           </div>
           <p className="pc-metric-value">{criteriaData.criteria?.length || 0}</p>
         </div>
@@ -370,7 +370,7 @@ const PurchaseCriteria = ({
           <div className="pc-metric-card pc-metric-green">
             <div className="pc-metric-header">
               <Star size={20} />
-              <span>Overall Alignment</span>
+              <span>{t("overall_alignment")}</span>
             </div>
             <p className="pc-metric-value">{criteriaData.overallAlignment.toFixed(1)}</p>
           </div>
@@ -379,7 +379,7 @@ const PurchaseCriteria = ({
         <div className="pc-metric-card pc-metric-purple">
           <div className="pc-metric-header">
             <Zap size={20} />
-            <span>Top Performer</span>
+            <span>{t("top_performer")}</span>
           </div>
           <p className="pc-metric-value">
             {criteriaData.criteria?.reduce((max, criterion) =>
@@ -394,7 +394,7 @@ const PurchaseCriteria = ({
       <div className="pc-charts">
         {/* Radar Chart */}
         <div className="pc-chart-container">
-          <h3 className="pc-chart-title">Performance Radar</h3>
+          <h3 className="pc-chart-title">{t("criteria_performance")}</h3>
           <div className="radar-chart-wrapper">
             <svg className="radar-chart" viewBox={radarData.viewBox}>
               {/* Grid */}
@@ -441,7 +441,7 @@ const PurchaseCriteria = ({
 
         {/* Bar Chart */}
         <div className="pc-chart-container">
-          <h3 className="pc-chart-title">Criteria Performance</h3>
+          <h3 className="pc-chart-title">{t("criteria_performance")}</h3>
           <div className="criteria-bars">
             {criteriaData.criteria?.map((criterion, index) => (
               <div key={index} className="criteria-bar-item">

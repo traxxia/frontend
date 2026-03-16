@@ -106,6 +106,7 @@ const SelectField = forwardRef(({
   required = false,
   error = null,
 }, ref) => {
+  const { t } = useTranslation();
   const dropdownRef = useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -148,7 +149,7 @@ const SelectField = forwardRef(({
         >
           <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {selectedOption?.icon}
-            {selectedOption?.label || "Select option"}
+            {selectedOption?.label || t("Select_option")}
           </span>
           <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
         </div>
@@ -420,14 +421,15 @@ const ProjectForm = ({
 
   setProjectName(value);
 
-  let customError = null;
-  if (/^[0-9]+$/.test(value.trim())) {
-    customError = "Project name cannot contain only numbers.";
-  }
+ let customError = null;
 
-  if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
-    customError = "Cannot use more than 5 consecutive special characters.";
-  }
+if (/^[0-9]+$/.test(value.trim())) {
+  customError = t("Project name cannot contain only numbers.");
+}
+
+if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
+  customError = t("Cannot use more than 5 consecutive special characters.");
+}
 
   if (showErrors || customError) {
     const validation = validateField('Project Name', value, {
@@ -512,7 +514,7 @@ const ProjectForm = ({
 
   // Required
   if (!value.trim()) {
-    customError = "Accountable Owner is required.";
+    customError = t("Accountable Owner is required.");
   }
 
   // Must contain at least one alphabet
@@ -631,16 +633,16 @@ const ProjectForm = ({
     });
 
     const errors = {
-      projectName: projectNameValidation.isValid ? null : projectNameValidation.message,
-      description: descValidation.isValid ? null : descValidation.message,
-      importance: impValidation.isValid ? null : impValidation.message,
-      strategicDecision: decisionValidation.isValid ? null : decisionValidation.message,
-      accountableOwner: ownerValidation.isValid ? null : ownerValidation.message,
-      successCriteria: successValidation.isValid ? null : successValidation.message,
-      killCriteria: killValidation.isValid ? null : killValidation.message,
-      budget: budgetValidation.isValid ? null : budgetValidation.message,
-      status: (status && status.trim()) ? null : t("Status_is_required"),
-    };
+  projectName: projectNameValidation.isValid ? null : t(projectNameValidation.message),
+  description: descValidation.isValid ? null : t(descValidation.message),
+  importance: impValidation.isValid ? null : t(impValidation.message),
+  strategicDecision: decisionValidation.isValid ? null : t(decisionValidation.message),
+  accountableOwner: ownerValidation.isValid ? null : t(ownerValidation.message),
+  successCriteria: successValidation.isValid ? null : t(successValidation.message),
+  killCriteria: killValidation.isValid ? null : t(killValidation.message),
+  budget: budgetValidation.isValid ? null : t(budgetValidation.message),
+  status: (status && status.trim()) ? null : t("Status_is_required"),
+};
     setFieldErrors(errors);
     setShowErrors(true);
 
@@ -1140,7 +1142,7 @@ const ProjectForm = ({
                 {renderLockBadge("success_metrics")}
               </div>
               <textarea
-                placeholder="How will you measure success? (one metric per line)"
+                placeholder={t("success_metrics_placeholder")}
                 rows={3}
                 className="field-textarea"
                 value={successMetrics || ""}

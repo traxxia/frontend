@@ -496,11 +496,12 @@ const PDFExportButton = ({
               marginBottom: '12px'
             }} />
             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#1f2937' }}>
-              Generating PDF
-            </h3>
-            <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-              Capturing analysis...
-            </p>
+  {t("Generating PDF")}
+</h3>
+
+<p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+  {t("Capturing analysis...")}
+</p>
           </div>
         </div>
       )}

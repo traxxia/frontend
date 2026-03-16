@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { FaCreditCard, FaPaypal, FaUniversity, FaCheck, FaLock, FaMicrochip, FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover, FaCcDinersClub, FaCcJcb } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from "../hooks/useTranslation";
 import '../styles/Register.css'; // Reusing Register styles for consistency
 
 const PaymentForm = ({
@@ -17,6 +18,7 @@ const PaymentForm = ({
     onCardHolderNameChange = () => { },
     onCardChange = () => { }
 }) => {
+    const { t } = useTranslation();
     const stripe = useStripe();
     const elements = useElements();
     const [localError, setLocalError] = useState(null);
@@ -74,7 +76,7 @@ const PaymentForm = ({
     return (
         <div className="payment-form-container">
             <div className="full-width-field payment-section" style={{ border: 'none', padding: 0 }}>
-                {!hideHeader && <h3 className="mb-4">Select Payment Method</h3>}
+                {!hideHeader && <h3 className="mb-4">{t("Select Payment Method")}</h3>}
 
                 <div className="payment-methods-grid">
                     <div
@@ -82,20 +84,20 @@ const PaymentForm = ({
                         onClick={() => handleMethodSelect('card')}
                     >
                         <div className="pm-icon"><FaCreditCard /></div>
-                        <span className="pm-name">Card</span>
+                        <span className="pm-name">{t("Card")}</span>
                         {isActive && paymentMethodType === 'card' && <div className="pm-check"><FaCheck /></div>}
                     </div>
 
                     <div className="payment-method-card disabled">
                         <div className="pm-icon"><FaPaypal /></div>
                         <span className="pm-name">PayPal</span>
-                        <span className="pm-badge">Soon</span>
+                        <span className="pm-badge">{t("Soon")}</span>
                     </div>
 
                     <div className="payment-method-card disabled">
                         <div className="pm-icon"><FaUniversity /></div>
-                        <span className="pm-name">Bank Transfer</span>
-                        <span className="pm-badge">Soon</span>
+                        <span className="pm-name">{t("Bank Transfer")}</span>
+                        <span className="pm-badge">{t("Soon")}</span>
                     </div>
                 </div>
 
@@ -124,14 +126,15 @@ const PaymentForm = ({
                                             **** **** **** {cardComplete ? <span className="valid-check"><FaCheck /></span> : '****'}
                                         </div>
                                         <div className="card-meta">
-                                            <div className="card-holder">
-                                                <span className="meta-label">Card Holder</span>
-                                                <span className="meta-value">{(cardHolderName || 'YOUR NAME').toUpperCase()}</span>
-                                            </div>
-                                            <div className="card-expiry">
-                                                <span className="meta-label">Expires</span>
-                                                <span className="meta-value">MM/YY</span>
-                                            </div>
+                                           <div className="card-holder">
+  <span className="meta-label">{t("Card Holder")}</span>
+  <span className="meta-value">{(cardHolderName || t("YOUR NAME")).toUpperCase()}</span>
+</div>
+
+<div className="card-expiry">
+  <span className="meta-label">{t("Expires")}</span>
+  <span className="meta-value">MM/YY</span>
+</div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -139,15 +142,15 @@ const PaymentForm = ({
                         </AnimatePresence>
 
                         <div className="payment-header-row mb-3">
-                            <h4 className="m-0">Payment Details</h4>
+                            <h4 className="m-0">{t("Payment Details")}</h4>
                         </div>
 
                         <div className="form-group mb-3">
-                            <label>Full Name</label>
+                            <label>{t("Full Name")}</label>
                             <div className="stripe-input-wrapper">
                                 <input
                                     type="text"
-                                    placeholder="Card Holder Name"
+                                    placeholder={t("Card Holder Name")}
                                     value={cardHolderName}
                                     onChange={(e) => onCardHolderNameChange && onCardHolderNameChange(e.target.value)}
                                     disabled={isSubmitting}
@@ -169,7 +172,7 @@ const PaymentForm = ({
                         </div>
 
                         <div className="form-group mb-3">
-                            <label>Card Number</label>
+                            <label>{t("Card Number")}</label>
                             <div className="stripe-input-wrapper">
                                 <CardNumberElement
                                     options={{ ...stripeElementOptions, showIcon: false }}
@@ -180,7 +183,7 @@ const PaymentForm = ({
 
                         <div className="row">
                             <div className="col-md-6 mb-3">
-                                <label>Expiry Date</label>
+                                <label>{t("Expiry Date")}</label>
                                 <div className="stripe-input-wrapper">
                                     <CardExpiryElement
                                         options={stripeElementOptions}

@@ -8,6 +8,7 @@ import DowngradeSelectionModal from './DowngradeSelectionModal';
 import UpgradeReactivationModal from './UpgradeReactivationModal';
 import PaymentForm from './PaymentForm';
 import '../styles/UpgradeModal.css';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Stripe initialization will be handled inside the component for lazy loading
 
@@ -25,6 +26,7 @@ const UpgradeModalContent = ({
     onProcessUpgrade,
     selectedPlan
 }) => {
+    const { t } = useTranslation();
     const stripe = useStripe();
     const elements = useElements();
 
@@ -53,7 +55,7 @@ const UpgradeModalContent = ({
             if (!stripe || !elements) return;
 
             if (!cardHolderName.trim()) {
-                setLocalError("Please enter card holder name.");
+                setLocalError(t("Please enter card holder name."));
                 return;
             }
 
@@ -94,14 +96,14 @@ const UpgradeModalContent = ({
             <Modal.Header closeButton className="border-0 pb-0">
                 <Modal.Title className="fw-bold">
                     <Zap className="text-warning me-2" />
-                    Plan Management
+                    {t("Plan Management")}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body className="pt-2">
                 {loading ? (
                     <div className="text-center py-5">
                         <Spinner animation="border" variant="primary" />
-                        <p className="mt-2 text-muted">Loading your options...</p>
+                        <p className="mt-2 text-muted">{t("Loading your options...")}</p>
                     </div>
                 ) : (
                     <>
@@ -112,16 +114,17 @@ const UpgradeModalContent = ({
                                 <div className="d-flex align-items-start">
                                     <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
                                     <div className="small">
-                                        <h6 className="mb-2 fw-bold">⚠️ Downgrade Warning</h6>
+                                        <h6 className="mb-2 fw-bold">⚠️ {t("Downgrade Warning")}</h6>
                                         <p className="mb-2">
-                                            Downgrading to <strong>Essential</strong> will impact your current setup:
+                                            {t("Downgrading to")} <strong>{t("Essential")}</strong> {t("will impact your current setup")}:
                                         </p>
                                         <ul className="mb-0 ps-3">
                                             {subscription.usage.workspaces.current > 1 && (
                                                 <li className="mb-1">
-                                                    <strong>Workspaces:</strong> You currently have <strong>{subscription.usage.workspaces.current}</strong> active workspace(s).
-                                                    Only <strong>1</strong> will remain active.
-                                                </li>
+                                                <strong>{t("Workspaces")}:</strong> {t("You currently have")}{" "}
+                                                <strong>{subscription.usage.workspaces.current}</strong> {t("active workspace(s)")}.
+                                                {t("Only")} <strong>1</strong> {t("will remain active")}.
+                                            </li>
                                             )}
                                         </ul>
                                     </div>
@@ -144,7 +147,7 @@ const UpgradeModalContent = ({
                         <div className="payment-section border-top pt-3">
                             {paymentMethods.length > 0 && (
                                 <>
-                                    <h6 className="fw-bold mb-3">Preferred Payment Methods</h6>
+                                    <h6 className="fw-bold mb-3">{t("Preferred Payment Methods")}</h6>
                                     {/* Saved Cards */}
                                     {paymentMethods.map(pm => (
                                         <div
@@ -168,7 +171,7 @@ const UpgradeModalContent = ({
                                                 <div className="pe-4">
                                                     <div className="fw-bold text-dark fs-6">•••• •••• •••• {pm.last4}</div>
                                                     <div className="small text-muted text-uppercase mt-1" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
-                                                        {pm.brand} | Expires {pm.exp_month}/{pm.exp_year}
+                                                        {pm.brand} | {t("Expires")} {pm.exp_month}/{pm.exp_year}
                                                     </div>
                                                 </div>
                                             </div>
@@ -182,13 +185,13 @@ const UpgradeModalContent = ({
 
                                     <div className="my-4 d-flex align-items-center">
                                         <hr className="flex-grow-1 border-secondary-subtle" />
-                                        <span className="px-3 text-muted small fw-bold text-uppercase">Or pay with</span>
+                                        <span className="px-3 text-muted small fw-bold text-uppercase">{t("Or pay with")}</span>
                                         <hr className="flex-grow-1 border-secondary-subtle" />
                                     </div>
                                 </>
                             )}
 
-                            <h6 className="fw-bold mb-3">Other Payment Methods</h6>
+                            <h6 className="fw-bold mb-3">{t("Other Payment Methods")}</h6>
 
                             <PaymentForm
                                 error={localError}
@@ -210,7 +213,7 @@ const UpgradeModalContent = ({
             </Modal.Body>
             <Modal.Footer className="border-0 pt-0 d-flex justify-content-end align-items-center">
                 <Button variant="link" onClick={onHide} className="text-decoration-none text-muted me-2">
-                    Cancel
+                    {t("Cancel")}
                 </Button>
                 <Button
                     variant="primary"
@@ -219,7 +222,7 @@ const UpgradeModalContent = ({
                     className="px-4 py-2 fw-bold"
                 >
                     {submitting ? <Spinner animation="border" size="sm" /> :
-                        (selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
+                        t(selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
                     {!submitting && <ArrowRight size={18} className="ms-2" />}
                 </Button>
             </Modal.Footer>

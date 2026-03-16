@@ -545,7 +545,7 @@ const StrategicAnalysis = ({
           <div className="pillar-header strategy-header">
             <Target size={22} className="strategy-icon" />
             <h3 className="pillar-title">
-              S – Strategy: Where to Compete & How to Compete
+              {t("strategy_where_to_compete")}
             </h3>
           </div>
 
@@ -583,7 +583,7 @@ const StrategicAnalysis = ({
               <div className="subsection">
                 <h4 className="subsection-title">
                   <ArrowRight size={16} className="strategy-icon" />
-                  How to Compete
+                  {t("how_to_compete")}
                 </h4>
                 <div className="table-container">
                   <table className="data-table">
@@ -652,7 +652,7 @@ const StrategicAnalysis = ({
             <div className="info-box resources">
               <h4 className="info-box-title resources">
                 <DollarSign size={14} />
-                Capital Allocation
+                {t("capital_allocation")}
               </h4>
               <p className="info-box-text resources">
                 {resources.capital_allocation}
@@ -1169,7 +1169,7 @@ const StrategicAnalysis = ({
                 <div className="info-box execution">
                   <Clock size={16} className="execution-icon" />
                   <span className="info-box-text execution">
-                    Review Cadence: {execution.kpi_dashboard.review_cadence}
+                    {t("review_cadence")}: {execution.kpi_dashboard.review_cadence}
                   </span>
                 </div>
               )}
@@ -2089,7 +2089,7 @@ const StrategicAnalysis = ({
       <div className="strategic-analysis-container">
         <div className="loading-state">
           <Loader className="loading-spinner animate-spin" size={24} />
-          <span>Generating Strategic Analysis...</span>
+          <span>{t("Generating Strategic Analysis...")}</span>
         </div>
       </div>
     );

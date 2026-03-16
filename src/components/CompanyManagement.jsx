@@ -8,6 +8,7 @@ import AdminTable from './AdminTable';
 
 // ------------------ CompanyEdit Modal ------------------
 const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
+   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     company_name: company.company_name,
     industry: company.industry || '',
@@ -104,7 +105,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
     <div className="modal-overlay">
       <div className="modal-content centered medium">
         <div className="modal-header">
-          <h3>Edit Company Information</h3>
+          <h3>{t("edit_company_information")}</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         <form onSubmit={handleSave} className="edit-company-form">
@@ -114,8 +115,8 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
                 <Image size={24} />
               </div>
               <div className="logo-text-wrapper">
-                <h4>Company Branding</h4>
-                <p>Upload your official company logo</p>
+                <h4>{t("company_branding")}</h4>
+                <p>{t("upload_company_logo")}</p>
               </div>
             </div>
 
@@ -145,14 +146,14 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
                   disabled={isSaving}
                 >
                   <Upload size={16} />
-                  {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                  {logoPreview ? t("change_logo") : t("upload_logo")}
                 </button>
               </div>
             </div>
           </div>
 
           <div className="form-group">
-            <label>Company Name</label>
+            <label>{t("company_name")}</label>
             <input
               type="text"
               value={formData.company_name}
@@ -162,7 +163,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
           </div>
 
           <div className="form-group">
-            <label>Industry</label>
+            <label>{t("industry")}</label>
             <input
               type="text"
               value={formData.industry}
@@ -171,27 +172,27 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
           </div>
 
           <div className="form-group">
-            <label>Size</label>
+            <label>{t("size")}</label>
             <select
               value={formData.size}
               onChange={(e) => setFormData({ ...formData, size: e.target.value })}
             >
-              <option value="">Select Size</option>
-              <option value="1-10">1-10 employees</option>
-              <option value="11-50">11-50 employees</option>
-              <option value="51-200">51-200 employees</option>
-              <option value="201-500">201-500 employees</option>
-              <option value="501-1000">501-1000 employees</option>
-              <option value="1000+">1000+ employees</option>
+              <option value="">{t("Select Size")}</option>
+              <option value="1-10">{t("1-10 employees")}</option>
+              <option value="11-50">{t("11-50 employees")}</option>
+              <option value="51-200">{t("51-200 employees")}</option>
+              <option value="201-500">{t("201-500 employees")}</option>
+              <option value="501-1000">{t("501-1000 employees")}</option>
+              <option value="1000+">{t("1000+ employees")}</option>
             </select>
           </div>
 
           <div className="modal-footer">
             <button type="button" className="secondary-btn" onClick={onClose} disabled={isSaving}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="submit" className="primary-btn" disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? t("saving") : t("save_changes")}
             </button>
           </div>
         </form>
@@ -396,7 +397,7 @@ const CompanyManagement = ({ onToast }) => {
       <AdminTable
         title={isSuperAdmin ? t('company_management') : t('my_company')}
         count={isSuperAdmin ? filteredCompanies.length : undefined}
-        countLabel={filteredCompanies.length === 1 ? 'Company' : 'Companies'}
+        countLabel={filteredCompanies.length === 1 ? t('Company') : t('Companies')}
         columns={columns}
         data={paginatedCompanies}
         searchTerm={(isSuperAdmin || companies.length > 1) ? searchTerm : undefined}

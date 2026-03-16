@@ -842,7 +842,9 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
   );
 };
 
-const EmptyBusinessState = ({ user, onClose }) => (
+const EmptyBusinessState = ({ user, onClose }) => {
+  const { t } = useTranslation();
+  return (
   <div className="user-details-panel">
     <div className="panel-header">
       <div className="user-header-info">
@@ -859,17 +861,25 @@ const EmptyBusinessState = ({ user, onClose }) => (
     </div>
     <div className="empty-state">
       <Building2 size={48} />
-      <p className="empty-title">No businesses found</p>
-      <p className="empty-subtitle">This user hasn't created any businesses yet</p>
+      <p className="empty-title">
+  {t("no_businesses_found") || "No businesses found"}
+</p>
+
+<p className="empty-subtitle">
+  {t("user_hasnt_created_businesses") || "This user hasn't created any businesses yet"}
+</p>
     </div>
   </div>
-);
+  );
+};
 
-const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
+const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => {
+  const { t } = useTranslation();
+  return(
   <div className="panel-header">
     <div className="header-row">
       <div className="header-left">
-        <h3 className="user-name-header">User Name: {user?.name}</h3>
+        <h3 className="user-name-header">{t("User Name")}: {user?.name}</h3>
       </div>
       <div className="header-right">
         <button onClick={onClose} className="close-button">
@@ -879,6 +889,7 @@ const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => (
     </div>
   </div>
 );
+};
 
 const TabNavigation = ({
   activeTab,

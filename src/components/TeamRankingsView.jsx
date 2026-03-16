@@ -139,13 +139,13 @@ const TeamRankingsView = ({
                 className={`toggle-btn ${consensusMode === "ai" ? "active" : ""}`}
                 onClick={() => setConsensusMode("ai")}
               >
-                <Sparkles size={14} /> AI Consensus
+                <Sparkles size={14} /> {t("ai_consensus")}
               </button>
               <button
                 className={`toggle-btn ${consensusMode === "collaborator" ? "active" : ""}`}
                 onClick={() => setConsensusMode("collaborator")}
               >
-                <Users size={14} /> Team Consensus
+                <Users size={14} /> {t("team_consensus")}
               </button>
             </div>
 
@@ -177,13 +177,13 @@ const TeamRankingsView = ({
               <thead>
                 <tr>
                   {consensusMode === "collaborator" && isSuperAdmin ? (
-                    <th colSpan={2} style={{ paddingLeft: '8px' }}>Project Name</th>
+                    <th colSpan={2} style={{ paddingLeft: '8px' }}>{t("project_name")}</th>
                   ) : (
-                    <th>Project Name</th>
+                    <th>{t("project_name")}</th>
                   )}
-                  {!isSuperAdmin && <th className="text-center">My Rank</th>}
-                  {consensusMode === "ai" && <th className="text-center">AI Rank</th>}
-                  {isSuperAdmin && consensusMode === "ai" && <th className="text-center">Consensus</th>}
+                  {!isSuperAdmin && <th className="text-center">{t("my_rank")}</th>}
+                  {consensusMode === "ai" && <th className="text-center">{t("ai_rank")}</th>}
+                  {isSuperAdmin && consensusMode === "ai" && <th className="text-center">{t("consensus")}</th>}
                 </tr>
               </thead>
               <tbody>

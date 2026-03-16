@@ -179,7 +179,7 @@ const SubscriptionTab = ({ onToast }) => {
                                                 </div>
                                             </div>
                                             <div className="plan-price-mockup">
-                                                ${p.price}<span className="plan-price-period">/month</span>
+                                                ${p.price}<span className="plan-price-period">/{t("month")}</span>
                                             </div>
                                         </div>
                                         <div className="plan-card-actions">

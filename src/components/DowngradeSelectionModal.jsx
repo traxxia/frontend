@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Card, Row, Col, Badge, Alert } from 'react-bootstrap';
 import { Briefcase, Users, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const DowngradeSelectionModal = ({
     show,
@@ -10,6 +11,7 @@ const DowngradeSelectionModal = ({
     submitting,
     externalError
 }) => {
+    const { t } = useTranslation();
     const [selectedBusinessId, setSelectedBusinessId] = useState(null);
     const [error, setError] = useState(null);
 
@@ -38,7 +40,7 @@ const DowngradeSelectionModal = ({
             <Modal.Header closeButton className="border-0 pb-0">
                 <Modal.Title className="fw-bold d-flex align-items-center">
                     <AlertTriangle className="text-warning me-2" size={24} />
-                    Downgrade Configuration
+                    {t("Downgrade Configuration")}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body className="pt-3">
@@ -46,28 +48,39 @@ const DowngradeSelectionModal = ({
                     <div className="d-flex align-items-start">
                         <AlertTriangle className="me-2 flex-shrink-0 mt-1" size={20} />
                         <div>
-                            <h6 className="mb-2 fw-bold">Downgrade Impact</h6>
-                            <p className="mb-2 small">
-                                You are downgrading to the <strong>{new_plan}</strong> plan.
-                                Based on your current usage, the following changes will occur:
-                            </p>
-                            <div className="downgrade-impact-details small">
-                                <div className="mb-2">
-                                    <strong>📊 Current Usage:</strong>
-                                    <ul className="mb-1 mt-1 ps-3">
-                                        <li>Workspaces: <strong>{businesses.length}</strong> active</li>
-                                        <li>Collaborators: <strong>{businesses.reduce((sum, b) => sum + (b.collaborator_count || 0), 0)}</strong> total</li>
-                                    </ul>
-                                </div>
-                                <div className="mb-2">
-                                    <strong>⚠️ What will happen:</strong>
-                                    <ul className="mb-0 mt-1 ps-3">
-                                        <li><strong>Workspaces:</strong> Only 1 workspace will remain active. {businesses.length > 1 ? `${businesses.length - 1} workspace(s) will be archived (read-only mode).` : ''}</li>
-                                        <li><strong>Collaborators:</strong> All collaborators will be archived and lose access to all workspaces.</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+  <h6 className="mb-2 fw-bold">{t("Downgrade Impact")}</h6>
+
+  <p className="mb-2 small">
+    {t("You are downgrading to the")} <strong>{new_plan}</strong> {t("plan")}.
+    {t("Based on your current usage, the following changes will occur")}:
+  </p>
+
+  <div className="downgrade-impact-details small">
+    <div className="mb-2">
+      <strong>📊 {t("Current Usage")}:</strong>
+      <ul className="mb-1 mt-1 ps-3">
+        <li>{t("Workspaces")}: <strong>{businesses.length}</strong> {t("active")}</li>
+        <li>{t("Collaborators")}: <strong>{businesses.reduce((sum, b) => sum + (b.collaborator_count || 0), 0)}</strong> {t("total")}</li>
+      </ul>
+    </div>
+
+    <div className="mb-2">
+      <strong>⚠️ {t("What will happen")}:</strong>
+      <ul className="mb-0 mt-1 ps-3">
+        <li>
+          <strong>{t("Workspaces")}:</strong> {t("Only 1 workspace will remain active")}.
+          {businesses.length > 1
+            ? ` ${businesses.length - 1} ${t("workspace(s) will be archived (read-only mode)")}.`
+            : ''}
+        </li>
+
+        <li>
+          <strong>{t("Collaborators")}:</strong> {t("All collaborators will be archived and lose access to all workspaces")}.
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
                     </div>
                 </Alert>
 
@@ -75,7 +88,7 @@ const DowngradeSelectionModal = ({
 
                 <h6 className="mb-3 text-uppercase small fw-bold text-muted d-flex align-items-center">
                     <Briefcase size={16} className="me-1" />
-                    Select Workspace to Keep Active
+                    {t("Select Workspace to Keep Active")}
                 </h6>
 
                 <div className="business-list mb-4">
@@ -113,7 +126,7 @@ const DowngradeSelectionModal = ({
             </Modal.Body>
             <Modal.Footer className="border-0 pt-0">
                 <Button variant="link" onClick={onHide} className="text-decoration-none text-muted">
-                    Back to Plans
+                    {t("Back to Plans")}
                 </Button>
                 <Button
                     variant="warning"
@@ -121,7 +134,7 @@ const DowngradeSelectionModal = ({
                     disabled={submitting || !selectedBusinessId}
                     className="px-4 py-2 fw-bold"
                 >
-                    {submitting ? 'Processing...' : 'Downgrade & Archive Others'}
+                    {t(submitting ? "Processing..." : "Downgrade & Archive Others")}
                 </Button>
             </Modal.Footer>
 
