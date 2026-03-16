@@ -56,7 +56,10 @@ const AnalysisEmptyState = ({
       return customMessage;
     }
 
-    return `You've provided some great initial information, but we need more strategic depth to generate a high-quality ${analysisDisplayName.toLowerCase()}. Kindly regenerate the insights.`;
+    return t("insufficient_analysis_depth", {
+    analysis: analysisDisplayName.toLowerCase()
+    });
+
   };
 
   const shouldShowButtons = (hasEnoughAnswers && (effectiveShowImproveButton || effectiveShowRegenerateButton)) || (customMessage && (onRegenerate || onImproveAnswers));

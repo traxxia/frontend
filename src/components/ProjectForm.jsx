@@ -106,6 +106,7 @@ const SelectField = forwardRef(({
   required = false,
   error = null,
 }, ref) => {
+  const { t } = useTranslation();
   const dropdownRef = useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -148,7 +149,7 @@ const SelectField = forwardRef(({
         >
           <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {selectedOption?.icon}
-            {selectedOption?.label || "Select option"}
+            {selectedOption?.label || t("Select_option")}
           </span>
           <span className={`sf-arrow ${open ? "open" : ""}`}>▼</span>
         </div>
@@ -1231,7 +1232,7 @@ const ProjectForm = ({
                 {renderLockBadge("success_metrics")}
               </div>
               <textarea
-                placeholder="How will you measure success? (one metric per line)"
+                placeholder={t("success_metrics_placeholder")}
                 rows={3}
                 className="field-textarea"
                 value={successMetrics || ""}

@@ -789,22 +789,22 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           <Modal.Title>
             <div className="d-flex align-items-center gap-2">
               <AlertTriangle size={20} color="rgb(26, 115, 232)" />
-              Rationale Required
+             {t("rationale_required")}
             </div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p className="mb-3">
-            You're moving <strong>{movedProjectName}</strong> to a new position.
-          </p>
-          <p className="mb-3 text-muted">
-            Please explain why you're ranking this project at this position:
-          </p>
+  {t("moving_project_position", { project: movedProjectName })}
+</p>
+<p className="mb-3 text-muted">
+  {t("explain_project_ranking")}
+</p>
           <Form.Group>
             <Form.Control
               as="textarea"
               rows={4}
-              placeholder="e.g., This project has higher business impact and should be prioritized..."
+              placeholder={t("project_rationale_placeholder")}
               value={tempRationale}
               onChange={(e) => setTempRationale(e.target.value)}
               autoFocus
@@ -813,21 +813,21 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           {pendingDragResult && (
             <div className="mt-3">
               <small className="text-info">
-                ℹ️ This rationale will be automatically applied to all other projects affected by this change.
-              </small>
+  ℹ️ {t("rationale_auto_applied")}
+</small>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleRationaleCancel}>
-            Cancel
+           {t("cancel")}
           </Button>
           <Button
             variant="primary"
             onClick={handleRationaleSubmit}
             disabled={!tempRationale || tempRationale.trim() === ""}
           >
-            Confirm Ranking
+            {t("confirm_ranking")}
           </Button>
         </Modal.Footer>
       </Modal>

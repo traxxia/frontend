@@ -23,6 +23,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   const { t } = useTranslation();
 
   const modalBodyRef = useRef(null);
+  const errorRef = useRef(null);
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -178,18 +179,19 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
     if (!companyName) {
       newErrors.companyName =
-        t('company_name_required') || 'Company name is required';
+         t('company_name_required') || 'Company name is required';
     }
-    // Must start with letter OR number (not special character)
-    else if (!/^[A-Za-z0-9]/.test(companyName)) {
-      newErrors.companyName =
-        'Company name cannot start with a special character';
+     else if (!/^[A-Za-z]/.test(companyName)) {
+     newErrors.companyName =
+    'Company name must start with a letter';
     }
-    // Allow letters, numbers, spaces and selected special characters
-    else if (!/^[A-Za-z0-9][A-Za-z0-9&.,()\- ]*$/.test(companyName)) {
-      newErrors.companyName =
-        t('company_name_invalid') ||
-        'Company name contains invalid characters';
+     else if (!/[A-Za-z]{2,}/.test(companyName)) {
+     newErrors.companyName =
+    'Company name must contain meaningful letters';
+     }
+     else if (!/^[A-Za-z][A-Za-z0-9&.,()'’\- ]{1,100}$/.test(companyName)) {
+     newErrors.companyName =
+    'Company name contains invalid characters';
     }
 
     if (formData.website.trim()) {
@@ -369,12 +371,36 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return;
       }
     } else if (currentStep === 6) {
-      if (!validateStep6()) return;
-    } else if (currentStep === 7) {
-      if (!validateStep7()) return;
-    } else if (currentStep === 8) {
-      if (!validateStep8()) return;
-    } else if (currentStep === 9) {
+  if (!validateStep6()) {
+    setTimeout(() => {
+      errorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }, 100);
+    return;
+  }
+} else if (currentStep === 7) {
+  if (!validateStep7()) {
+    setTimeout(() => {
+      errorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }, 100);
+    return;
+  }
+} else if (currentStep === 8) {
+  if (!validateStep8()) {
+    setTimeout(() => {
+      errorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }, 100);
+    return;
+  }
+} else if (currentStep === 9) {
       if (!validateStep9()) return;
     }
 
@@ -1102,8 +1128,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             )}
 
             {errors.strategicObjective && (
-              <div className="text-danger mt-2">{errors.strategicObjective}</div>
-            )}
+  <div ref={errorRef} className="text-danger mt-2">
+    {errors.strategicObjective}
+  </div>
+)}
           </div>
         );
       case 7:
@@ -1159,8 +1187,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             )}
 
             {errors.keyChallenge && (
-              <div className="text-danger mt-2">{errors.keyChallenge}</div>
-            )}
+  <div ref={errorRef} className="text-danger mt-2">
+    {errors.keyChallenge}
+  </div>
+)}
           </div>
         );
       case 8:
@@ -1216,10 +1246,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             ))}
 
             {errors.differentiation && (
-              <div className="text-danger mt-2">
-                {errors.differentiation}
-              </div>
-            )}
+  <div ref={errorRef} className="text-danger mt-2">
+    {errors.differentiation}
+  </div>
+)}
           </div>
         );
 

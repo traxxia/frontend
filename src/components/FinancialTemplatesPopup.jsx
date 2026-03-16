@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { X, Download, Upload, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { Accordion } from 'react-bootstrap';
+import { useTranslation } from "../hooks/useTranslation";
 
 const FinancialTemplatesPopup = ({
   isOpen,
@@ -9,6 +10,7 @@ const FinancialTemplatesPopup = ({
   isFileUploading = false,
   readOnly = false // Add this prop to control upload functionality
 }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const [selectedTemplateType, setSelectedTemplateType] = useState(null);
   const [showComparison, setShowComparison] = useState(false);
@@ -173,13 +175,13 @@ const FinancialTemplatesPopup = ({
               className="text-xl font-bold text-gray-900"
               style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}
             >
-              {readOnly ? 'Financial Data Templates' : 'Financial Data Upload'}
+              {readOnly ? t("financial_data_templates") : t("financial_data_upload")}
             </h2>
             <p
               className="text-gray-600 text-sm mt-1"
               style={{ color: '#4b5563', fontSize: '14px', marginTop: '4px', margin: 0 }}
             >
-              {readOnly ? 'Download sample templates' : 'Download templates or upload your data'}
+              {readOnly ? t("download_sample_templates") : t("download_templates_upload_data")}
             </p>
           </div>
           <button
@@ -222,7 +224,7 @@ const FinancialTemplatesPopup = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Download size={20} />
                     <span style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>
-              Download Sample Templates
+              {t("download_sample_templates")}
                     </span>
                   </div>
             </Accordion.Header>
@@ -315,7 +317,7 @@ const FinancialTemplatesPopup = ({
                   gap: '8px'
                 }}
               >
-                📋 All Template Comparison
+                📋 {t("all_template_comparison")}
               </h3>
               <button
                 onClick={() => setShowComparison(!showComparison)}
@@ -341,7 +343,7 @@ const FinancialTemplatesPopup = ({
                   </>
                 ) : (
                   <>
-                    <span>View Comparison</span>
+                    <span>{t("view_comparison")}</span>
                     <ChevronDown size={16} />
                   </>
                 )}
@@ -459,7 +461,7 @@ const FinancialTemplatesPopup = ({
                   }}
                 >
                   <Upload size={20} />
-                  Upload Any Template File
+                  {t("upload_any_template_file")}
                 </h3>
 
                 <div
@@ -482,10 +484,10 @@ const FinancialTemplatesPopup = ({
                     }}
                   />
                   <h4 style={{ fontSize: '18px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>
-                    Auto-Detect Template Type
+                    {t("auto_detect_template_type")}
                   </h4>
                   <p style={{ color: '#4b5563', marginBottom: '24px' }}>
-                    Upload any template and we'll detect the type automatically
+                    {t("upload_any_template_auto_detect")}
                   </p>
 
                   <button
@@ -530,13 +532,13 @@ const FinancialTemplatesPopup = ({
                     ) : (
                       <>
                         <Upload size={20} />
-                        <span>Choose File to Upload</span>
+                        <span>{t("choose_file_to_upload")}</span>
                       </>
                     )}
                   </button>
 
                   <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '12px' }}>
-                    Supported formats: Excel (.xlsx, .xls) and CSV files
+                    {t("supported_formats_excel_csv")}
                   </p>
                 </div>
               </div>
@@ -552,24 +554,25 @@ const FinancialTemplatesPopup = ({
               padding: '16px'
             }}
           >
-            <h4 style={{ fontWeight: '500', color: '#1e3a8a', marginBottom: '8px' }}>
-              {readOnly ? 'Template Information:' : 'How it works:'}
-            </h4>
-            {readOnly ? (
-              <ul style={{ fontSize: '14px', color: '#1e40af', margin: 0, paddingLeft: '16px' }}>
-                <li style={{ marginBottom: '4px' }}>These templates were used for the financial analysis</li>
-                <li style={{ marginBottom: '4px' }}>Download to see the structure and format requirements</li>
-                <li style={{ marginBottom: '4px' }}>Use as reference for future financial data uploads</li>
-                <li>Contact support if you need help understanding the template format</li>
-              </ul>
-            ) : (
-              <ol style={{ fontSize: '14px', color: '#1e40af', margin: 0, paddingLeft: '16px' }}>
-                <li style={{ marginBottom: '4px' }}>Download a template that fits your needs</li>
-                <li style={{ marginBottom: '4px' }}>Fill out the template with your financial data</li>
-                <li style={{ marginBottom: '4px' }}>Upload using "Upload This" for exact validation or general upload for auto-detection</li>
-                <li>Get AI-powered insights with validated data</li>
-              </ol>
-            )}
+           <h4 style={{ fontWeight: '500', color: '#1e3a8a', marginBottom: '8px' }}>
+  {readOnly ? t("template_information") : t("how_it_works")}
+</h4>
+
+{readOnly ? (
+  <ul style={{ fontSize: '14px', color: '#1e40af', margin: 0, paddingLeft: '16px' }}>
+    <li style={{ marginBottom: '4px' }}>{t("templates_used_financial_analysis")}</li>
+    <li style={{ marginBottom: '4px' }}>{t("download_structure_format_requirements")}</li>
+    <li style={{ marginBottom: '4px' }}>{t("use_reference_future_uploads")}</li>
+    <li>{t("contact_support_template_help")}</li>
+  </ul>
+) : (
+  <ol style={{ fontSize: '14px', color: '#1e40af', margin: 0, paddingLeft: '16px' }}>
+    <li style={{ marginBottom: '4px' }}>{t("download_template_that_fits")}</li>
+    <li style={{ marginBottom: '4px' }}>{t("fill_template_financial_data")}</li>
+    <li style={{ marginBottom: '4px' }}>{t("upload_this_exact_validation")}</li>
+    <li>{t("get_ai_powered_insights")}</li>
+  </ol>
+)}
           </div>
         </div>
       </div>

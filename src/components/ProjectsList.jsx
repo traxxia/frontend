@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Row, Col } from "react-bootstrap";
 import ProjectCard from "./ProjectCard";
+import { useTranslation } from '../hooks/useTranslation';
 
 const ProjectsList = ({
   sortedProjects,
@@ -26,6 +27,7 @@ const ProjectsList = ({
   canReviewProject,
   myUserId,
 }) => {
+  const { t } = useTranslation();
   const [showMenuId, setShowMenuId] = useState(null);
 
   // Close menu when clicking outside
@@ -133,7 +135,7 @@ const ProjectsList = ({
     if (projects.length === 0) {
       return (
         <div className="empty-category-message text-center py-5">
-          <p className="text-muted">No projects found in "{selectedCategory}" category.</p>
+          <p className="text-muted">{t("No projects found in")} "{selectedCategory}" {t("category")}.</p>
         </div>
       );
     }

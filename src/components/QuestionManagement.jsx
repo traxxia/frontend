@@ -271,25 +271,25 @@ const QuestionManagement = ({ onToast }) => {
     <div className="question-management">
       <div className="admin-metrics-grid" style={{ marginBottom: '2rem' }}>
         <MetricCard
-          label="Total Questions"
+          label={t("total_questions") || "Total Questions"}
           value={questions.length}
           icon={FileText}
           iconColor="blue"
         />
         <MetricCard
-          label="Initial Phase"
+          label={t("total_questions") || "Total Questions"}
           value={questionsByPhase.initial?.length || 0}
           icon={CheckCircle2}
           iconColor="green"
         />
         <MetricCard
-          label="Essential Phase"
+          label={t("essential_phase") || "Essential Phase"}
           value={questionsByPhase.essential?.length || 0}
           icon={ListChecks}
           iconColor="orange"
         />
         <MetricCard
-          label="Advanced Phase"
+          label={t("advanced_phase") || "Advanced Phase"}
           value={questionsByPhase.advanced?.length || 0}
           icon={Layers}
           iconColor="purple"
@@ -401,8 +401,12 @@ const QuestionManagement = ({ onToast }) => {
             label: t('severity'),
             render: (val) => (
               <span className={`admin-status-badge ${val === 'mandatory' ? 'active' : 'inactive'}`}>
-                {val}
-              </span>
+  {val === "mandatory"
+    ? t("mandatory")
+    : val === "optional"
+    ? t("optional")
+    : val}
+</span>
             )
           },
           {
@@ -440,7 +444,7 @@ const QuestionManagement = ({ onToast }) => {
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
               {Icon && <Icon size={20} style={{ color: iconColor }} />}
               <strong style={{ fontSize: '1.1rem', color: '#1e293b' }}>
-                {phase.charAt(0).toUpperCase() + phase.slice(1)} Phase
+                {t(`${phase}_phase`) || `${phase.charAt(0).toUpperCase() + phase.slice(1)} Phase`}
               </strong>
               <span className="admin-table-count-badge">
                 {phaseQuestions.length} {t('questions')}
@@ -586,13 +590,15 @@ const EditQuestionModal = ({ question, onUpdate, onCancel, isUpdating }) => {
           </div>
 
           <div className="create-form__severity-info">
-            <div className="create-form__severity-label">{t('severity')} (Auto-assigned)</div>
+            <div className="create-form__severity-label">{t('severity')} ({t('auto_assigned')})</div>
             <div className="create-form__severity-display">
               <span className={`create-form__severity-badge create-form__severity-badge--${currentSeverity}`}>
                 {currentSeverity}
               </span>
               <span className="create-form__severity-text">
-                {formData.phase === 'initial' ? 'Initial phase questions are mandatory' : 'Non-initial phases are optional'}
+                {formData.phase === 'initial'
+  ? t('initial_questions_mandatory')
+  : t('non_initial_optional')}
               </span>
             </div>
           </div>
@@ -721,13 +727,15 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
           </div>
 
           <div className="create-form__severity-info">
-            <div className="create-form__severity-label">{t('severity')} (Auto-assigned)</div>
+            <div className="create-form__severity-label">{t('severity')} ({t('auto_assigned')})</div>
             <div className="create-form__severity-display">
               <span className={`create-form__severity-badge create-form__severity-badge--${currentSeverity}`}>
                 {currentSeverity}
               </span>
               <span className="create-form__severity-text">
-                {formData.phase === 'initial' ? 'Initial phase questions are mandatory' : 'Non-initial phases are optional'}
+                {formData.phase === 'initial'
+  ? t('initial_questions_mandatory')
+  : t('non_initial_optional')}
               </span>
             </div>
           </div>

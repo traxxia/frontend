@@ -91,10 +91,10 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
 
       <div className="tab-navigation full-width-field">
         <button type="button" onClick={onBack} className="btn-vibrant btn-secondary-vibrant">
-          <FaAngleLeft /> Previous
+          <FaAngleLeft />{t("Previous")}
         </button>
         <button type="button" onClick={handlePayClick} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-          {isSubmitting ? <><FaSpinner className="spinner" /> Processing...</> : <><FaCheck /> Pay & Register</>}
+          {isSubmitting ? <><FaSpinner className="spinner" /> {t("Processing...")}</> : <><FaCheck /> {t("Pay & Register")}</>}
         </button>
       </div>
     </motion.div>
@@ -367,7 +367,7 @@ const Register = () => {
                     <div className={`step-line ${activeTab > 2 ? 'completed' : ''}`}></div>
                     <div className={`step-item ${activeTab === 3 ? 'active' : ''}`}>
                       <div className="step-circle">3</div>
-                      <span className="step-label">Payment</span>
+                      <span className="step-label">{t("Payment")}</span>
                     </div>
                   </>
                 )}
@@ -498,7 +498,7 @@ const Register = () => {
                         >
                           <div className="form-group-custom full-width-field">
                             <div className="selection-header">
-                              <label>Action Type  <span className="required">*</span></label>
+                              <label>{t("action_type")} <span className="required">*</span></label>
                               <div className="action-selection-group">
                                 <div
                                   className={`selection-pill-option ${!isNewCompany ? 'active' : ''}`}
@@ -518,7 +518,7 @@ const Register = () => {
                                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
                                   )}
-                                  <span className="pill-text"><FaUser /> Join Existing</span>
+                                  <span className="pill-text"><FaUser /> {t("join_existing")}</span>
                                 </div>
                                 <div
                                   className={`selection-pill-option ${isNewCompany ? 'active' : ''}`}
@@ -538,7 +538,7 @@ const Register = () => {
                                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
                                   )}
-                                  <span className="pill-text"><FaBuilding /> Create New</span>
+                                  <span className="pill-text"><FaBuilding /> {t("create_new")}</span>
                                 </div>
                               </div>
                             </div>
@@ -555,8 +555,8 @@ const Register = () => {
                                     layout
                                     className="form-group-custom"
                                   >
-                                    <label>Company Name  <span className="required">*</span></label>
-                                    <input type="text" name="company_name" placeholder="Your brand name" value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
+                                    <label>{t("companyName")}  <span className="required">*</span></label>
+                                    <input type="text" name="company_name" placeholder={t("brandNamePlaceholder")} value={form.company_name} onChange={handleChange} className={errors.company_name ? 'error' : ''} required />
                                   </motion.div>
                                 ) : (
                                   <motion.div
@@ -568,7 +568,7 @@ const Register = () => {
                                     layout
                                     className="form-group-custom"
                                   >
-                                    <label>Select Company  <span className="required">*</span></label>
+                                    <label>{t("select_company")} <span className="required">*</span></label>
                                     <div className="select-wrapper">
                                       {loadingCompanies ? (
                                         <div className="loading-select"><FaSpinner className="spinner" /> Loading...</div>
@@ -598,7 +598,7 @@ const Register = () => {
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 className="pricing-section full-width-field"
                               >
-                                <label className="section-label">Choose Strategy Plan  <span className="required">*</span></label>
+                                <label className="section-label">{t("chooseStrategyPlan")} <span className="required">*</span></label>
                                 <div className="plans-grid">
                                   {plans.map((p) => (
                                     <PricingPlanCard key={p._id} plan={p} isSelected={selectedPlanId === p._id} onSelect={setSelectedPlanId} />
@@ -613,24 +613,32 @@ const Register = () => {
                             <div className="checkbox-wrapper">
                               <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
                               <label htmlFor="terms-checkbox" className="checkbox-label-text">
-                                I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>Terms</a> and <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>Privacy Policy</a>
-                              </label> <span className="required">*</span>
+  {t("i_agree_to_the")}{" "}
+  <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>
+    {t("terms")}
+  </a>{" "}
+  {t("and")}{" "}
+  <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
+    {t("privacy_policy")}
+  </a>
+</label> 
+<span className="required">*</span>
                             </div>
                             {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
                           </div>
 
                           <div className="tab-navigation full-width-field">
                             <button type="button" onClick={handleBack} className="btn-vibrant btn-secondary-vibrant">
-                              <FaAngleLeft /> Previous
+                              <FaAngleLeft /> {t("Previous")}
                             </button>
 
                             {isNewCompany ? (
                               <button type="button" onClick={handleNext} className="btn-vibrant btn-primary-vibrant">
-                                Proceed to Payment <FaAngleRight />
+                                {t("Proceed to Payment")} <FaAngleRight />
                               </button>
                             ) : (
                               <button type="button" onClick={() => handleNext()} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
-                                {isSubmitting ? <><FaSpinner className="spinner" /> Saving...</> : <><FaSave /> Create Account</>}
+                                {isSubmitting ? <><FaSpinner className="spinner" />{t("saving")}</> : <><FaSave />{t("createAccount")}</>}
                               </button>
                             )}
                           </div>

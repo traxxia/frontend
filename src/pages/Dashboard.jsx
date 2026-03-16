@@ -316,7 +316,8 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          setShowUpgradeModal(true);
+          handleShowCreateModal();
+          //setShowUpgradeModal(true);
         } else {
           setBusinessError(data.error || t('failed_to_create_business'));
         }
@@ -336,39 +337,42 @@ const Dashboard = () => {
     // Business Name validation
     const businessName = businessFormData.business_name.trim();
 
-    if (!businessName) {
-      errors.business_name = t('business_name_cannot_be_empty');
-    }
-    else if (businessName.length > 50) {
-      errors.business_name = t('business_name_max_length');
-    }
-    else if (!/^[A-Za-z0-9]/.test(businessName)) {
-      errors.business_name = t('business_name_invalid_start');
-    }
-    else if (!/^[A-Za-z0-9&.,'()\-!?;:\s]+$/.test(businessName)) {
-      errors.business_name = "Business name contains invalid characters";
-    }
-    else if (/\d/.test(businessName)) {
-      errors.business_name = t('business_name_cannot_contain_numbers');
-    }
+if (!businessName) {
+  errors.business_name = t('business_name_cannot_be_empty');
+}
+else if (businessName.length < 3) {
+  errors.business_name = "Business name must be at least 3 characters";
+}
+else if (!/[A-Za-z]/.test(businessName)) {
+  errors.business_name = "Business name must contain at least one letter";
+}
+else if (/[0-9]{5,}/.test(businessName)) {
+  errors.business_name = "Too many consecutive numbers are not allowed";
+}
+else if (/[^A-Za-z0-9\s]{5,}/.test(businessName)) {
+  errors.business_name = "Too many consecutive special characters are not allowed";
+}
 
     // Business purpose validation
-    const businessPurpose = businessFormData.business_purpose.trim();
+const businessPurpose = businessFormData.business_purpose.trim();
 
-    if (!businessPurpose) {
-      errors.business_purpose = t('business_purpose_required');
-    }
-    else if (businessPurpose.length < 10) {
-      errors.business_purpose = "Business purpose must be at least 10 characters long";
-    }
-    else if (!/[A-Za-z]/.test(businessPurpose)) {
-      errors.business_purpose =
-        t('business_purpose_must_contain_alphabetic_characters') ||
-        "Business purpose must contain alphabetic characters";
-    }
-    else if (!/^[A-Za-z0-9\s.,#&()\-:/!?;'"→]+$/.test(businessPurpose)) {
-      errors.business_purpose = "Business purpose contains invalid characters";
-    }
+if (!businessPurpose) {
+  errors.business_purpose = t('business_purpose_required');
+}
+else if (businessPurpose.length < 10) {
+  errors.business_purpose = "Business purpose must be at least 10 characters long";
+}
+else if (!/[A-Za-z]/.test(businessPurpose)) {
+  errors.business_purpose =
+    t('business_purpose_must_contain_alphabetic_characters') ||
+    "Business purpose must contain alphabetic characters";
+}
+else if (/[0-9]{5,}/.test(businessPurpose)) {
+  errors.business_purpose = "Too many consecutive numbers are not allowed";
+}
+else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
+  errors.business_purpose = "Too many consecutive special characters are not allowed";
+}
 
     // City validation (optional but if provided, must be valid)
     const cityTrimmed = businessFormData.city.trim();
@@ -562,9 +566,9 @@ const Dashboard = () => {
     const remainingQuestions = stats.pending_questions || 0;
 
     const getStatusInfo = () => {
-      if (business.status === 'deleted') return { label: 'Deleted', className: 'status-deleted' };
-      if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
-      return { label: 'Active', className: 'status-active' };
+      if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
+      if (business.access_mode === t('archived') || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
+      return { label: t('active'), className: 'status-active' };
     };
 
     const statusInfo = getStatusInfo();
@@ -1079,7 +1083,7 @@ const Dashboard = () => {
                       onChange={handleFormChange}
                       placeholder={t('enter_your_business_name')}
                       isInvalid={!!formErrors.business_name}
-                      maxLength={20}
+                      maxLength={100}
                     />
                     <div className="d-flex justify-content-between align-items-center mt-1">
                       <div>
@@ -1326,7 +1330,7 @@ const Dashboard = () => {
             </Modal.Footer>
           </Modal>
 
-          <UpgradeModal
+          {/* <UpgradeModal
             show={showUpgradeModal}
             onHide={() => setShowUpgradeModal(false)}
             onUpgradeSuccess={(updatedSub) => {
@@ -1335,7 +1339,7 @@ const Dashboard = () => {
               setShowSuccessPopup(true);
               setTimeout(() => setShowSuccessPopup(false), 3000);
             }}
-          />
+          /> */}
         </>
       )}
     </div>

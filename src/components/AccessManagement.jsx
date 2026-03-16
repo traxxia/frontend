@@ -249,7 +249,7 @@ const AccessManagement = ({ onToast }) => {
                     iconColor="green"
                 />
                 <MetricCard
-                    label={t("Active Permissions") || "Active Permissions"}
+                    label={t("active_permissions") || "Active Permissions"}
                     value={rerankCount + editCount}
                     icon={Key}
                     iconColor="purple"
@@ -287,7 +287,11 @@ const AccessManagement = ({ onToast }) => {
                 columns={columns}
                 data={accessData?.access_list || []}
                 loading={isLoading}
-                emptyMessage={businesses.length === 0 ? t("No Launched Businesses Found") : t("No users have been granted access yet for this business.")}
+                emptyMessage={
+                   businesses.length === 0
+                   ? t("no_launched_businesses_found") || "No Launched Businesses Found"
+                   : t("no_users_granted_access") || "No users have been granted access yet for this business."
+                }
                 emptySubMessage={businesses.length === 0 ? t("Access management is only available for launched businesses.") : ""}
                 searchPlaceholder={t("Search users...")}
             />
