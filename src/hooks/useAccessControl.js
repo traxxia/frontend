@@ -74,12 +74,17 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const canEditProject = useCallback(
-    (project, isEditor, myUserId, businessStatus, isArchived) => {
+    (project, isEditor, myUserId, businessStatus, isArchived, isAdmin) => {
       // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
       const userPlan = sessionStorage.getItem("userPlan");
       if (userPlan === 'essential' || isArchived) return false;
 
       if (!project) return false;
+
+      // Terminal states are locked for EVERYONE (except Killed for Admins)
+      const status = (project.status || "").toLowerCase();
+      if (status === 'completed' || status === 'scaled') return false;
+      if (status === 'killed' && !isAdmin) return false;
 
       // Explicit check: if project is active or launched, only allow if backend says true (which is only for admins)
       const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';

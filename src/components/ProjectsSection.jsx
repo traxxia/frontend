@@ -12,7 +12,7 @@ import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
 
 import { MdArrowDownward } from "react-icons/md";
-import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
+import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase, Edit2 } from "lucide-react";
 import CollaborationCard from "../components/CollaborationCard";
 import PortfolioOverview from "../components/PortfolioOverview";
 import RankProjectsPanel from "../components/RankProjectsPanel";
@@ -797,7 +797,7 @@ const ProjectsSection = ({
         mode={activeView}
         readOnly={
           activeView === "view" ||
-          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived))
+          (currentProject && !canEditProject(currentProject, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin))
         }
         {...formState}
         {...formSetters}
@@ -812,6 +812,8 @@ const ProjectsSection = ({
         isSubmitting={isSubmitting}
         selectedBusinessId={selectedBusinessId}
         projectId={currentProject?._id}
+        launchStatus={currentProject?.launch_status}
+        isAdmin={isSuperAdmin}
       />
     );
   };
@@ -1051,7 +1053,7 @@ const ProjectsSection = ({
               projectCreationLocked={projectCreationLocked}
               isFinalizedView={isFinalizedView}
               canEditProject={(project) =>
-                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived)
+                canEditProject(project, isEditor, myUserId, businessStatus, apiIsArchived, isSuperAdmin)
               }
               onEdit={(project) => handleEditProject(project, "edit")}
               onView={(project) => handleEditProject(project, "view")}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -324,11 +324,13 @@ const ProjectForm = ({
   setReviewCadence,
   status,
   setStatus,
+  launchStatus, // Added launchStatus
   learningState,
   setLearningState,
   isSubmitting = false,
   selectedBusinessId,
   projectId,
+  isAdmin = false,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
@@ -341,7 +343,7 @@ const ProjectForm = ({
     if (selectedBusinessId) {
       const fetchOwners = async () => {
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
             headers: {
               "Authorization": `Bearer ${sessionStorage.getItem("token")}`
             }
@@ -396,7 +398,7 @@ const ProjectForm = ({
     }
   };
 
-  const isFieldDisabled = (field) => isReadOnly || isSubmitting || isLockedByOther?.(field);
+  const isFieldDisabled = (field) => isReadOnly || isSubmitting || isLockedByOther?.(field) || isTerminal;
 
   const handleFieldFocus = (field) => {
     if (isFieldDisabled(field)) return;
@@ -418,6 +420,9 @@ const ProjectForm = ({
       </span>
     );
   };
+
+  const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes((status || "").toLowerCase());
+  const isTerminal = (status || "").toLowerCase() === "completed" || (status || "").toLowerCase() === "scaled" || ((status || "").toLowerCase() === "killed" && !isAdmin);
 
   const getSubmitButtonText = () => {
     if (isSubmitting) {
@@ -678,6 +683,7 @@ const ProjectForm = ({
       killCriteria: killValidation.isValid ? null : killValidation.message,
       budget: budgetValidation.isValid ? null : budgetValidation.message,
       status: (status && status.trim()) ? null : t("Status_is_required"),
+      reviewCadence: (reviewCadence && reviewCadence.trim()) ? null : t("Review_cadence_is_required"),
     };
     setFieldErrors(errors);
     setShowErrors(true);
@@ -694,6 +700,10 @@ const ProjectForm = ({
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
       else if (errors.status) scrollToError(statusRef);
+      else if (errors.reviewCadence) {
+        // We don't have a ref for cadence, but let's scroll to the status area which is nearby
+        scrollToError(statusRef);
+      }
       else if (errors.budget) scrollToError(budgetRef);
       return;
     }
@@ -725,7 +735,7 @@ const ProjectForm = ({
                 className="btn-create"
                 onClick={handleSubmit}
                 style={{ padding: "8px 16px" }}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isTerminal}
               >
                 {getSubmitButtonText()}
               </button>
@@ -851,7 +861,11 @@ const ProjectForm = ({
               options={eligibleOwners.map(o => ({
                 value: o._id,
                 label: o.name,
-                icon: <Circle size={14} color={o.role === 'company_admin' ? 'blue' : 'gray'} />
+                icon: (o.role === 'company_admin' || o.role === 'super_admin')
+                  ? <ShieldCheck size={14} color="#2563eb" />
+                  : o.role === 'collaborator'
+                    ? <Users size={14} color="#64748b" />
+                    : <Circle size={14} color="gray" />
               }))}
               value={accountableOwnerId}
               onChange={(val) => {
@@ -949,47 +963,73 @@ const ProjectForm = ({
                 fieldName="review_cadence"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
+                required
+                error={showErrors && fieldErrors.reviewCadence}
               />
 
               <SelectField
                 ref={statusRef}
                 label={t("Status")}
                 icon={<TrendingUp size={16} />}
-                options={[
-                  { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" />, disabled: false },
-                  { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" />, disabled: false },
-                  {
-                    value: "At Risk",
-                    label: (
+                options={(() => {
+                  const currentStatus = (status || "").toLowerCase();
+                  const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes(currentStatus);
+
+                  const createOption = (val, label, icon, isDisabled) => ({
+                    value: val,
+                    label: isDisabled && val.toLowerCase() !== currentStatus ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("At Risk")} <Lock size={12} color="#94a3b8" />
+                        {label} <Lock size={12} color="#94a3b8" />
                       </span>
-                    ),
-                    icon: <Circle size={14} color="red" fill="red" />,
-                    disabled: true
-                  },
-                  {
-                    value: "Paused",
-                    label: (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Paused")} <Lock size={12} color="#94a3b8" />
-                      </span>
-                    ),
-                    icon: <Circle size={14} color="orange" fill="orange" />,
-                    disabled: true
-                  },
-                  { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" />, disabled: false },
-                  {
-                    value: "Scaled",
-                    label: (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Scaled")} <Lock size={12} color="#94a3b8" />
-                      </span>
-                    ),
-                    icon: <Circle size={14} color="purple" fill="purple" />,
-                    disabled: true
-                  },
-                ]}
+                    ) : label,
+                    icon,
+                    disabled: isDisabled && val.toLowerCase() !== currentStatus
+                  });
+
+                  const baseOptions = [
+                    { key: 'draft', value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
+                    { key: 'active', value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
+                    { key: 'at risk', value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
+                    { key: 'paused', value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
+                    { key: 'killed', value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
+                    { key: 'completed', value: "Completed", label: t("Completed"), icon: <CheckCircle size={14} color="blue" /> },
+                    { key: 'scaled', value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
+                  ];
+
+                  if (isTerminal) {
+                    return baseOptions.map(opt => createOption(opt.value, opt.label, opt.icon, true));
+                  }
+
+                  return baseOptions.map(opt => {
+                    let isDisabled = true;
+                    const target = opt.key;
+
+                    if (target === currentStatus) {
+                      isDisabled = false;
+                    } else if (!isLaunched) {
+                      // Unlaunched: Draft -> Killed is allowed. Active is handled via Launch mechanism.
+                      if (currentStatus === 'draft') {
+                        if (target === 'killed') isDisabled = false;
+                      }
+                    } else {
+                      // Launched
+                      if (currentStatus === 'active' || currentStatus === 'at risk') {
+                        if (['active', 'at risk', 'paused', 'completed', 'killed', 'scaled'].includes(target)) isDisabled = false;
+                      } else if (currentStatus === 'paused') {
+                        if (['active', 'killed'].includes(target)) isDisabled = false;
+                      } else if (currentStatus === 'killed' && isAdmin) {
+                        // Admins can move back to Active or Draft (if unlaunched)
+                        if (isLaunched) {
+                          if (['active', 'at risk', 'paused'].includes(target)) isDisabled = false;
+                        } else {
+                          if (['draft', 'active'].includes(target)) isDisabled = false;
+                        }
+                      }
+                    }
+
+                    return createOption(opt.value, opt.label, opt.icon, isDisabled);
+                  });
+                })()}
                 value={status}
                 onChange={(val) => {
                   setStatus(val);
@@ -1003,7 +1043,7 @@ const ProjectForm = ({
                 }}
                 open={openDropdown === "status"}
                 setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
-                disabled={isReadOnly}
+                disabled={isReadOnly || isTerminal}
                 fieldName="status"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
@@ -1014,29 +1054,28 @@ const ProjectForm = ({
               <SelectField
                 label={t("Learning_State")}
                 icon={<Zap size={16} />}
-                options={[
-                  { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" />, disabled: false },
-                  {
-                    value: "Validated",
-                    label: (
+                options={(() => {
+                  const isLaunched = launchStatus === "launched";
+                  const currentLearningState = (learningState || "").toLowerCase();
+
+                  const createOption = (val, label, icon, isDisabled) => ({
+                    value: val,
+                    label: isDisabled && val.toLowerCase() !== currentLearningState ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Validated")} <Lock size={12} color="#94a3b8" />
+                        {label} <Lock size={12} color="#94a3b8" />
                       </span>
-                    ),
-                    icon: <CheckCircle size={14} color="green" />,
-                    disabled: true
-                  },
-                  {
-                    value: "Invalidated",
-                    label: (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Invalidated")} <Lock size={12} color="#94a3b8" />
-                      </span>
-                    ),
-                    icon: <XCircle size={14} color="red" />,
-                    disabled: true
-                  },
-                ]}
+                    ) : label,
+                    icon,
+                    disabled: isDisabled && val.toLowerCase() !== currentLearningState
+                  });
+
+                  // Validated and Invalidated are only available after launch
+                  return [
+                    createOption("Testing", t("Testing"), <Clock size={14} color="blue" />, false),
+                    createOption("Validated", t("Validated"), <CheckCircle size={14} color="green" />, !isLaunched || isTerminal),
+                    createOption("Invalidated", t("Invalidated"), <XCircle size={14} color="red" />, !isLaunched || isTerminal),
+                  ];
+                })()}
                 value={learningState}
                 onChange={(val) => {
                   setLearningState(val);
@@ -1044,7 +1083,7 @@ const ProjectForm = ({
                 }}
                 open={openDropdown === "learning_state"}
                 setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
-                disabled={isFieldDisabled("learning_state") || isSubmitting}
+                disabled={isFieldDisabled("learning_state") || isSubmitting || isTerminal}
                 fieldName="learning_state"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}

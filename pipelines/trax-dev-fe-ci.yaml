@@ -1,11 +1,11 @@
 name: TRAXXIA-$(Date:yyyyMMdd)-$(Rev:r)
-
+ 
 trigger:
   branches:
     include:
       - master
       - develop
-
+ 
 variables:
   - group: traxxia-frontend-dev
   - name: MAJOR
@@ -20,7 +20,7 @@ variables:
     value: $(SEMVER)
   - name: IMAGE_NAME
     value: trax_dev_frontend
-
+ 
 stages:
   - stage: BuildAndPush
     displayName: Build and Push Docker Image for frontend
@@ -29,25 +29,28 @@ stages:
         displayName: Build Docker Image and Push to ACR
         pool:
           vmImage: 'ubuntu-latest'
-
+ 
         steps:
           - checkout: self
             clean: true
             fetchDepth: 1
-
+ 
           - script: |
               rm -f .env
               echo 'REACT_APP_BACKEND_URL=$(REACT_APP_BACKEND_URL)' >> .env
               echo 'REACT_APP_ML_BACKEND_URL=$(REACT_APP_ML_BACKEND_URL)' >> .env
+              echo 'REACT_APP_ENABLE_PMF=$(REACT_APP_ENABLE_PMF)' >> .env
+              echo 'REACT_APP_AI_CHAT_URL=$(REACT_APP_AI_CHAT_URL)' >> .env
+              echo 'REACT_APP_STRIPE_PUBLISHABLE_KEY=$(REACT_APP_STRIPE_PUBLISHABLE_KEY)' >> .env
               echo "Contents of .env file:"
               cat .env
             displayName: 'Generate .env file'
-
+ 
           # - task: npmAuthenticate@0
           #   inputs:
           #     workingFile: '$(System.DefaultWorkingDirectory)/docker/services/product-client/.npmrc'
           #   displayName: 'Authenticate npm'
-
+ 
           - task: Docker@2
             displayName: 'Build and Push Traxxia FE Docker Image to ACR'
             inputs:
@@ -59,6 +62,6 @@ stages:
               tags: |
                 latest
                 $(IMAGE_VERSION)
-
+ 
           - script: echo "Docker Image tagged as $(IMAGE_NAME):$(IMAGE_VERSION)"
             displayName: 'Output Docker Tag'

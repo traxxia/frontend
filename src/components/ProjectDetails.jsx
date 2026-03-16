@@ -250,6 +250,7 @@ const ProjectDetails = ({
                                             "at risk": "At Risk",
                                             "paused": "Paused",
                                             "killed": "Killed",
+                                            "completed": "Completed",
                                             "scaled": "Scaled"
                                         };
 
