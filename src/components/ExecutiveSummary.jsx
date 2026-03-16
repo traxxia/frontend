@@ -25,7 +25,15 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
     try {
       setLoading(true);
       const summaryResult = await analysisService.getPMFExecutiveSummary(businessId);
-      const summaryContent = summaryResult?.summary || summaryResult;
+
+      // Extract content from 'summary' field if it exists, otherwise use whole result
+      let summaryContent = summaryResult?.summary || summaryResult;
+
+      // Ensure onboarding_data is included if it was at the root
+      if (summaryResult?.onboarding_data && !summaryContent.onboarding_data) {
+        summaryContent = { ...summaryContent, onboarding_data: summaryResult.onboarding_data };
+      }
+
       setData(summaryContent);
     } catch (error) {
       console.error("Error fetching executive summary:", error);
@@ -99,6 +107,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const differentiationLevers = howToCompete?.recommended_differentiation?.primary_lever || howToCompete?.differentiation_levers || howToCompete?.["Differentiation Levers"] || "N/A";
   const implications = howToCompete?.what_this_implies || howToCompete?.implies || howToCompete?.implications || howToCompete?.Implies;
   const excludes = howToCompete?.what_this_excludes || howToCompete?.excludes || howToCompete?.Excludes;
+  const alternativeLevers = howToCompete?.alternative_levers || howToCompete?.["Alternative Levers"] || [];
   const newAdjacencies = whereToCompete?.new_adjacencies_to_explore || whereToCompete?.new_adjacencies || whereToCompete?.["New Adjacencies"];
 
   return (
@@ -136,9 +145,16 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                     <Info size={14} /> {t("Profit arenas inferred from your data")}
                   </p>
                   <p className="exc-content-text">
-                    <strong>{t("Segments")}:</strong> {[data?.onboarding_data?.customerSegment1, data?.onboarding_data?.customerSegment2, data?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") || "N/A"}<br />
-                    <strong>{t("Products")}:</strong> {[data?.onboarding_data?.productService1, data?.onboarding_data?.productService2, data?.onboarding_data?.productService3].filter(Boolean).join(", ") || "N/A"}<br />
-                    <strong>{t("Channels")}:</strong> {[data?.onboarding_data?.channel1, data?.onboarding_data?.channel2, data?.onboarding_data?.channel3].filter(Boolean).join(", ") || "N/A"}
+                    <strong>{t("Segments")}:</strong> {data?.onboarding_data?.customerSegment1 || data?.onboarding_data?.customerSegment2 || data?.onboarding_data?.customerSegment3 ? [data?.onboarding_data?.customerSegment1, data?.onboarding_data?.customerSegment2, data?.onboarding_data?.customerSegment3].filter(Boolean).join(", ") : "N/A"}
+                  </p>
+                  <p className="exc-content-text">
+                    <strong>{t("Products")}:</strong> {data?.onboarding_data?.productService1 || data?.onboarding_data?.productService2 || data?.onboarding_data?.productService3 ? [data?.onboarding_data?.productService1, data?.onboarding_data?.productService2, data?.onboarding_data?.productService3].filter(Boolean).join(", ") : "N/A"}
+                  </p>
+                  <p className="exc-content-text">
+                    <strong>{t("Channels")}:</strong> {data?.onboarding_data?.channel1 || data?.onboarding_data?.channel2 || data?.onboarding_data?.channel3 ? [data?.onboarding_data?.channel1, data?.onboarding_data?.channel2, data?.onboarding_data?.channel3].filter(Boolean).join(", ") : "N/A"}
+                  </p>
+                  <p className="exc-content-text">
+                    <strong>{t("Geographies")}:</strong> {data?.onboarding_data?.geography1 || data?.onboarding_data?.geography2 || data?.onboarding_data?.geography3 ? [data?.onboarding_data?.geography1, data?.onboarding_data?.geography2, data?.onboarding_data?.geography3].filter(Boolean).join(", ") : "N/A"}
                   </p>
                 </div>
               </div>
@@ -249,6 +265,28 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                     </div>
                   </div>
                 </div>
+
+                {alternativeLevers.length > 0 && (
+                  <div className="exc-alternative-levers">
+                    <p className="exc-differentiation-label" style={{ color: '#92400e' }}>{t("Alternative differentiation levers")}</p>
+                    <ul className="exc-alternative-list">
+                      {Array.isArray(alternativeLevers) ? alternativeLevers.map((item, idx) => (
+                        <li key={idx} className="exc-alternative-item">
+                          {typeof item === 'object' ? (
+                            <>
+                              <strong>{item.lever}</strong> (Score: {item.suitability_score}/10)
+                              <p className="exc-alternative-reason">{item.reason}</p>
+                            </>
+                          ) : (
+                            item
+                          )}
+                        </li>
+                      )) : (
+                        <li className="exc-alternative-item">{alternativeLevers}</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}

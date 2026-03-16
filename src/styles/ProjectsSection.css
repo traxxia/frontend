@@ -215,8 +215,8 @@
 }
 
 [data-theme="dark"] .status-tabs-container {
-    background-color: #1a1d23 !important;
-    border: 1px solid #e5e7eb;
+  background-color: #1a1d23 !important;
+  border: 1px solid #e5e7eb;
 }
 
 .status-tab {
@@ -246,7 +246,7 @@
 }
 
 [data-theme="dark"] .status-tab.active {
-    background-color: #2a2f3a !important;
+  background-color: #2a2f3a !important;
 }
 
 .status-count {
@@ -275,7 +275,7 @@
 }
 
 [data-theme="dark"] .status-tab:not(.active) .status-count {
-    color: #1a1d23 !important;
+  color: #1a1d23 !important;
 }
 
 @keyframes slideIn {
@@ -297,7 +297,7 @@
 }
 
 [data-theme="dark"] .empty-category-message {
-    background-color: #333946 !important;
+  background-color: #333946 !important;
 }
 
 /* Buttons */
@@ -354,7 +354,7 @@
 }
 
 [data-theme="dark"] .menu-button {
-    color: #ffffff;
+  color: #ffffff;
 }
 
 
@@ -489,6 +489,12 @@
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.property-badge-none {
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
 }
 
 /* Impact Colors */
@@ -935,8 +941,8 @@
   overflow: hidden;
 }
 
-[data-theme="dark"] .ranking-panel-container.expanded-view  {
-    background-color: #1a1d23 !important;
+[data-theme="dark"] .ranking-panel-container.expanded-view {
+  background-color: #1a1d23 !important;
 }
 
 /* Trigger Button */
@@ -1042,11 +1048,11 @@
 }
 
 [data-theme="dark"] .ranking-content-body {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 [data-theme="dark"] .ranking-toolbar {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }
 
 .ranking-toolbar {
@@ -1066,9 +1072,9 @@
   gap: 4px;
 }
 
-[data-theme="dark"] .consensus-toggle-group  {
-    background-color: #1a1d23 !important;
-    border: 1px solid #ffffff;
+[data-theme="dark"] .consensus-toggle-group {
+  background-color: #1a1d23 !important;
+  border: 1px solid #ffffff;
 }
 
 .toggle-btn {
@@ -1145,8 +1151,8 @@
 }
 
 [data-theme="dark"] .ranking-table th {
-    background-color: #1a1d23 !important;
-    color: #ffffff;
+  background-color: #1a1d23 !important;
+  color: #ffffff;
 }
 
 .ranking-table td,
@@ -2294,5 +2300,5 @@
 
 
 [data-theme="dark"] .collaborator-progress-compact {
-    background-color: #1a1d23 !important;
+  background-color: #1a1d23 !important;
 }

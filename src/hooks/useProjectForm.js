@@ -63,12 +63,17 @@ export const useProjectForm = () => {
   }, []);
 
   const loadProjectData = useCallback((project) => {
+    const toTitleCase = (str) => {
+      if (!str) return "";
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     setProjectName(project.project_name || "");
     setDescription(project.description || "");
     setImportance(project.why_this_matters || "");
-    setSelectedImpact(project.impact || "");
-    setSelectedEffort(project.effort || "");
-    setSelectedRisk(project.risk || "");
+    setSelectedImpact(toTitleCase(project.impact));
+    setSelectedEffort(toTitleCase(project.effort));
+    setSelectedRisk(toTitleCase(project.risk));
     setSelectedTheme(project.strategic_theme || "");
     setDependencies(project.dependencies || "");
     setHighLevelReq(project.high_level_requirements || "");
