@@ -132,49 +132,67 @@ const PDFExportButton = ({
 
   // Optimized single-page capture for each component
   const captureComponent = async (selector, name) => {
-    const component = document.querySelector(selector);
-    if (!component || component.offsetHeight === 0) {
-      return null;
-    }
+  const component = document.querySelector(selector);
+  if (!component || component.offsetHeight === 0) {
+    return null;
+  }
 
-    try {
-      // Dynamic import for better performance
-      const html2canvas = (await import('html2canvas')).default;
+  try {
+    const html2canvas = (await import('html2canvas')).default;
 
-      const canvas = await html2canvas(component, {
-        scale: 1.5, // ⚡ Faster, still sharp
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        removeContainer: true,
-        imageTimeout: 2000,
-        windowWidth: component.scrollWidth,
-        windowHeight: component.scrollHeight,
-        onclone: (clonedDoc) => {
-          const style = clonedDoc.createElement('style');
-          style.textContent = `
-      * { 
-        animation: none !important; 
-        transition: none !important; 
-        opacity: 1 !important;
+    const canvas = await html2canvas(component, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      removeContainer: true,
+      imageTimeout: 2000,
+      windowWidth: component.scrollWidth,
+      windowHeight: component.scrollHeight,
+
+      // ✅ CORRECT PLACE
+      onclone: (clonedDoc) => {
+        const style = clonedDoc.createElement('style');
+        style.textContent = `
+          * { 
+            animation: none !important; 
+            transition: none !important; 
+            opacity: 1 !important;
+          }
+
+          /* 🔥 FIX ALIGNMENT */
+          [data-component="maturity"],
+          [data-component="competitive-landscape"],
+          [data-component="core-adjacency"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* 🔥 FORCE INNER ELEMENTS FULL WIDTH */
+          [data-component="maturity"] *,
+          [data-component="competitive-landscape"] *,
+          [data-component="core-adjacency"] * {
+            max-width: 100% !important;
+          }
+        `;
+        clonedDoc.head.appendChild(style);
       }
-    `;
-          clonedDoc.head.appendChild(style);
-        }
-      });
+    });
 
+    return {
+      canvas,
+      name,
+      imgData: canvas.toDataURL('image/png', 0.7)
+    };
 
-      return {
-        canvas,
-        name,
-        imgData: canvas.toDataURL('image/png', 0.7)
-      };
-    } catch (error) {
-      console.error(`Failed to capture ${name}:`, error);
-      return null;
-    }
-  };
+  } catch (error) {
+    console.error(`Failed to capture ${name}:`, error);
+    return null;
+  }
+};
 
   // Main strategic export function
   const handleDownloadStrategicAnalysis = async () => {
@@ -216,30 +234,45 @@ const PDFExportButton = ({
         { selector: '[data-component="strategic-sustainability"]', name: 'Sustainability & Long-Term Reinforcement' },
       ];
 
-      let capturedCount = 0;
+     let capturedCount = 0;
 
-      for (const { selector, name } of strategicBlocks) {
-        const result = await captureComponent(selector, name);
-        if (result) {
-          pdf.addPage();
-          const marginX = 20;
-          const marginTop = 20;
+for (const { selector, name } of strategicBlocks) {
 
-          pdf.setFontSize(18);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246);
-          pdf.text(name, marginX, marginTop);
+  const result = await captureComponent(selector, name); // ✅ FIX
 
-          const canvas = result.canvas;
-          const imgWidth = pageWidth - marginX * 2;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          const maxHeight = pageHeight - 40;
-          const finalHeight = Math.min(imgHeight, maxHeight);
+  if (!result?.imgData || !result?.canvas) {
+    console.warn("Skipping invalid capture:", name);
+    continue;
+  }
 
-          pdf.addImage(result.imgData, 'PNG', marginX, marginTop + 10, imgWidth, finalHeight);
-          capturedCount++;
-        }
-      }
+  pdf.addPage();
+
+  const marginX = 20;
+  const marginTop = 20;
+
+  pdf.setFontSize(18);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(59, 130, 246);
+  pdf.text(name, marginX, marginTop);
+
+  const canvas = result.canvas;
+  const imgWidth = pageWidth - marginX * 2;
+
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const maxHeight = pageHeight - 40;
+  const finalHeight = Math.min(imgHeight, maxHeight);
+
+  pdf.addImage(
+    result.imgData,
+    'PNG',
+    marginX,
+    marginTop + 10,
+    imgWidth,
+    finalHeight
+  );
+
+  capturedCount++;
+}
 
       if (capturedCount === 0) {
         onToastMessage?.('No strategic blocks could be captured.', 'error');
@@ -247,9 +280,15 @@ const PDFExportButton = ({
       }
 
       // 💾 Save the PDF
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Analysis_${timestamp}.pdf`;
-      pdf.save(filename);
+      const safeName = (businessName || "report")
+  .toString()
+  .trim()
+  .replace(/[^a-z0-9]/gi, '_');
+
+const timestamp = new Date().toISOString().split('T')[0];
+const filename = `${safeName}_Analysis_${timestamp}.pdf`;
+
+pdf.save(filename);
 
       onToastMessage?.(`Strategic Analysis PDF exported successfully! ${capturedCount} sections included.`, 'success');
 
@@ -398,51 +437,64 @@ const PDFExportButton = ({
       }
 
       // Capture components sequentially with minimal delay
-      let capturedCount = 0;
+      // 🔥 ONLY SHOWING THE FIXED PART (inside handleDownloadPhaseAnalysis)
 
-      for (const { selector, name } of visibleComponents) {
-        const result = await captureComponent(selector, name);
+let capturedCount = 0;
 
-        if (result) {
-          pdf.addPage();
+for (const { selector, name } of visibleComponents) {
 
-          // Add section title
-          pdf.setFontSize(16);
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(59, 130, 246);
-          pdf.text(result.name, 20, 25);
+  const result = await captureComponent(selector, name); // ✅ FIX
 
-          // Calculate image dimensions to fit page
-          const imgWidth = pageWidth - 40;
-          const canvas = result.canvas;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          const maxHeight = pageHeight - 60;
+  if (!result?.imgData || !result?.canvas) {
+    console.warn("Skipping invalid capture:", name);
+    continue;
+  }
 
-          if (imgHeight > maxHeight) {
-            const scale = maxHeight / imgHeight;
-            pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth * scale, maxHeight);
-          } else {
-            pdf.addImage(result.imgData, 'PNG', 20, 35, imgWidth, imgHeight);
-          }
+  pdf.addPage();
 
-          capturedCount++;
-        }
+  // Section title
+  pdf.setFontSize(16);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(59, 130, 246);
+  pdf.text(name, 20, 25);
 
-        // Small delay between captures to prevent memory issues
-        if (visibleComponents.length > 3) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
+  const imgWidth = pageWidth - 40;
+  const canvas = result.canvas;
+
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const maxHeight = pageHeight - 60;
+  const finalHeight = Math.min(imgHeight, maxHeight);
+
+  pdf.addImage(
+    result.imgData,
+    'PNG',
+    20,
+    35,
+    imgWidth,
+    finalHeight
+  );
+
+  capturedCount++;
+
+  if (visibleComponents.length > 3) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
 
       if (capturedCount === 0) {
         onToastMessage?.('No components could be captured', 'error');
         return;
       }
 
-      const timestamp = new Date().toISOString().split('T')[0];
+     const safeName = (businessName || "report")
+  .toString()
+  .trim()
+  .replace(/[^a-z0-9]/gi, '_');
 
-      const filename = `${businessName.replace(/[^a-z0-9]/gi, '_')}_Analysis_${timestamp}.pdf`;
-      pdf.save(filename);
+const timestamp = new Date().toISOString().split('T')[0];
+const filename = `${safeName}_Analysis_${timestamp}.pdf`;
+
+pdf.save(filename);
 
       onToastMessage?.(`PDF exported successfully! ${capturedCount} sections included.`, 'success');
 

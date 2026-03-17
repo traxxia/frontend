@@ -112,6 +112,17 @@
   --radius: 12px;
 }
 
+.error-input {
+  border-color: var(--error-color) !important;
+}
+
+.error-text {
+  color: var(--error-color);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
 body {
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }

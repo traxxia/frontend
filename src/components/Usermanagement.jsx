@@ -512,12 +512,14 @@ const UserManagement = ({ onToast }) => {
           icon={Users}
           iconColor="blue"
         />
-        <MetricCard
-          label={t("org_admins")}
-          value={orgAdminsCount}
-          icon={Crown}
-          iconColor="purple"
-        />
+        {currentRole !== "company_admin" && (
+          <MetricCard
+            label={t("org_admins")}
+            value={orgAdminsCount}
+            icon={Crown}
+            iconColor="purple"
+          />
+        )}
         <MetricCard
           label={t("Collaborators")}
           value={collaboratorsCount}
@@ -603,7 +605,9 @@ const UserManagement = ({ onToast }) => {
             onChange={handleRoleChange}
           >
             <option value="All Roles">{t("All_Roles")}</option>
-            <option value="Org Admin">{t("Org_Admin")}</option>
+            {currentRole !== "company_admin" && (
+              <option value="Org Admin">{t("Org_Admin")}</option>
+            )}
             <option value="Collaborator">{t("Collaborator")}</option>
             <option value="User">{t("User")}</option>
             <option value="Viewer">{t("Viewer")}</option>
@@ -633,7 +637,10 @@ const UserManagement = ({ onToast }) => {
                     value={newEmail}
                     onChange={(e) => {
                       setNewEmail(e.target.value);
-                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      const newErrors = { ...errors };
+                      if (newErrors.email) delete newErrors.email;
+                      if (newErrors.apiError) delete newErrors.apiError;
+                      setErrors(newErrors);
                     }}
                     isInvalid={!!errors.email}
                   />
@@ -649,7 +656,10 @@ const UserManagement = ({ onToast }) => {
                     value={newName}
                     onChange={(e) => {
                       setNewName(e.target.value);
-                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      const newErrors = { ...errors };
+                      if (newErrors.name) delete newErrors.name;
+                      if (newErrors.apiError) delete newErrors.apiError;
+                      setErrors(newErrors);
                     }}
                     isInvalid={!!errors.name}
                   />
@@ -666,7 +676,10 @@ const UserManagement = ({ onToast }) => {
                       value={newPassword}
                       onChange={(e) => {
                         setNewPassword(e.target.value);
-                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                        const newErrors = { ...errors };
+                        if (newErrors.password) delete newErrors.password;
+                        if (newErrors.apiError) delete newErrors.apiError;
+                        setErrors(newErrors);
                       }}
                       isInvalid={!!errors.password}
                     />
@@ -687,7 +700,10 @@ const UserManagement = ({ onToast }) => {
                       value={confirmPassword}
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
-                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                        const newErrors = { ...errors };
+                        if (newErrors.confirmPassword) delete newErrors.confirmPassword;
+                        if (newErrors.apiError) delete newErrors.apiError;
+                        setErrors(newErrors);
                       }}
                       isInvalid={!!errors.confirmPassword}
                     />
@@ -706,7 +722,10 @@ const UserManagement = ({ onToast }) => {
                     value={newRole}
                     onChange={(e) => {
                       setNewRole(e.target.value);
-                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      const newErrors = { ...errors };
+                      if (newErrors.role) delete newErrors.role;
+                      if (newErrors.apiError) delete newErrors.apiError;
+                      setErrors(newErrors);
                     }}
                     isInvalid={!!errors.role}
                   >
@@ -731,7 +750,10 @@ const UserManagement = ({ onToast }) => {
                       value={selectedCompanyId}
                       onChange={(e) => {
                         setSelectedCompanyId(e.target.value);
-                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                        const newErrors = { ...errors };
+                        if (newErrors.company) delete newErrors.company;
+                        if (newErrors.apiError) delete newErrors.apiError;
+                        setErrors(newErrors);
                       }}
                       isInvalid={!!errors.company}
                     >
