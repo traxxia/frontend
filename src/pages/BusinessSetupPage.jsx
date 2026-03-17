@@ -47,7 +47,7 @@ const CARD_TO_CATEGORY_MAP = {
 };
 
 const CARD_ID_MAP = {
-  "SWOT": "swot",
+  "SWOT Analysis": "swot",
   "Purchase Criteria": "purchase-criteria",
   "Loyalty/NPS": "loyalty-nps",
   "Porter's Five Forces": "porters",
@@ -812,31 +812,66 @@ const BusinessSetupPage = () => {
 
   const handleBack = () => navigate("/dashboard");
 
-  const handleOptionClick = (option) => {
-    setShowDropdown(false);
-    const cardId = CARD_ID_MAP[option];
+  const handleScrollToSection = (cardId) => {
+    if (!cardId) return;
 
-    if (cardId) {
-      const categoryId = CARD_TO_CATEGORY_MAP[cardId];
-      if (categoryId) {
-        setCollapsedCategories(prev => {
-          const newSet = new Set(prev);
+    const categoryId = CARD_TO_CATEGORY_MAP[cardId];
+    if (categoryId) {
+      setCollapsedCategories(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(categoryId)) {
           newSet.delete(categoryId);
           return newSet;
-        });
-      }
-
-      setHighlightedCard(cardId);
-      setExpandedCards(prev => new Set([...prev, cardId]));
-      setTimeout(() => setHighlightedCard(null), 3000);
+        }
+        return prev;
+      });
     }
 
-    setTimeout(() => {
+    setHighlightedCard(cardId);
+    setExpandedCards(prev => {
+      if (prev.has(cardId)) return prev;
+      return new Set([...prev, cardId]);
+    });
+
+    const performScroll = () => {
       const cardElement = document.getElementById(cardId);
-      if (!cardElement) return;
-      cardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 800);
+      if (cardElement) {
+        cardElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return true;
+      }
+      return false;
+    };
+
+    // Try to scroll immediately if possible
+    performScroll();
+
+    // Multiple attempts to account for category expansion / rendering delays
+    [300, 600, 900, 1200].forEach(delay => {
+      setTimeout(performScroll, delay);
+    });
+
+    setTimeout(() => setHighlightedCard(null), 3000);
   };
+
+  const handleOptionClick = (option) => {
+    setShowDropdown(false);
+    setSelectedDropdownValue(option);
+    const cardId = CARD_ID_MAP[option];
+    if (cardId) {
+      handleScrollToSection(cardId);
+    }
+  };
+
+  // Auto-scroll back to selected section when returning to insights tab
+  useEffect(() => {
+    if (activeTab === 'insights' && selectedDropdownValue && selectedDropdownValue !== t("Go_to_Section") && selectedDropdownValue !== "Go to Section") {
+      const cardId = CARD_ID_MAP[selectedDropdownValue];
+      if (cardId) {
+        // Delay slightly to ensure component is switched and rendered
+        setTimeout(() => handleScrollToSection(cardId), 100);
+      }
+    }
+  }, [activeTab]); // Only run when tab changes to avoid fighting with immediate clicks
 
   const createSimpleRegenerationHandler = (analysisType) => {
     return apiService.createSimpleRegenerationHandler(
@@ -1156,8 +1191,6 @@ const BusinessSetupPage = () => {
                                 {items.map((item) => (
                                   <div key={item} onClick={() => {
                                     handleOptionClick(item);
-                                    setSelectedDropdownValue(item);
-                                    setShowDropdown(false);
                                   }} className="dropdown-option dropdown-sub-option">
                                     <span className="bullet"></span>
                                     {item}
@@ -1394,7 +1427,6 @@ const BusinessSetupPage = () => {
                                       {items.map((item) => (
                                         <div key={item} onClick={() => {
                                           handleOptionClick(item);
-                                          setSelectedDropdownValue(item);
                                         }} className="dropdown-option dropdown-sub-option">
                                           <span className="bullet"></span>
                                           {item}

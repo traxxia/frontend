@@ -90,7 +90,7 @@ const PaymentStep = ({ onBack, onSubmit, isSubmitting, error, selectedPlanPrice 
       </div>
 
       <div className="tab-navigation full-width-field">
-        <button type="button" onClick={onBack} className="btn-vibrant btn-secondary-vibrant">
+        <button type="button" onClick={onBack} disabled={isSubmitting} className="btn-vibrant btn-secondary-vibrant">
           <FaAngleLeft />{t("Previous")}
         </button>
         <button type="button" onClick={handlePayClick} disabled={isSubmitting} className="btn-vibrant btn-primary-vibrant create-account-btn">
@@ -200,10 +200,25 @@ const Register = () => {
     if (!form.email.trim()) newErrors.email = t('email_required') || 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = t('email_invalid') || 'Invalid email';
 
-    if (!form.password) newErrors.password = t('password_required') || 'Password is required';
-    else if (form.password.length < 8) newErrors.password = t('password_min_length_8') || 'Min 8 characters';
+    if (!form.password) {
+      newErrors.password = t('password_required') || 'Password is required';
+    } else if (form.password.length < 8) {
+      newErrors.password = t('password_min_length_8') || 'Min 8 characters';
+    } else if (!/(?=.*[a-z])/.test(form.password)) {
+      newErrors.password = t("Password_must_contain_lowercase_letter") || "Password must contain lowercase letter";
+    } else if (!/(?=.*[A-Z])/.test(form.password)) {
+      newErrors.password = t("Password_must_contain_uppercase_letter") || "Password must contain uppercase letter";
+    } else if (!/(?=.*\d)/.test(form.password)) {
+      newErrors.password = t("Password_must_contain_number") || "Password must contain number";
+    } else if (!/(?=.*[^A-Za-z0-9])/.test(form.password)) {
+      newErrors.password = t("Password_must_contain_special_character") || "Password must contain special character";
+    }
 
-    if (form.password !== form.confirmPassword) newErrors.confirmPassword = t('passwords_do_not_match') || 'Passwords do not match';
+    if (!form.confirmPassword) {
+      newErrors.confirmPassword = t('confirm_password_required') || 'Please confirm your password';
+    } else if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = t('passwords_do_not_match') || 'Passwords do not match';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -613,22 +628,22 @@ const Register = () => {
                             <div className="checkbox-wrapper">
                               <input type="checkbox" id="terms-checkbox" name="terms" checked={form.terms} onChange={handleChange} required />
                               <label htmlFor="terms-checkbox" className="checkbox-label-text">
-  {t("i_agree_to_the")}{" "}
-  <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>
-    {t("terms")}
-  </a>{" "}
-  {t("and")}{" "}
-  <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
-    {t("privacy_policy")}
-  </a>
-</label> 
-<span className="required">*</span>
+                                {t("i_agree_to_the")}{" "}
+                                <a href="#terms" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}>
+                                  {t("terms")}
+                                </a>{" "}
+                                {t("and")}{" "}
+                                <a href="#privacy" onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}>
+                                  {t("privacy_policy")}
+                                </a>
+                              </label>
+                              <span className="required">*</span>
                             </div>
                             {errors.terms && <div className="error-message centered-error">{errors.terms}</div>}
                           </div>
 
                           <div className="tab-navigation full-width-field">
-                            <button type="button" onClick={handleBack} className="btn-vibrant btn-secondary-vibrant">
+                            <button type="button" onClick={handleBack} disabled={isSubmitting} className="btn-vibrant btn-secondary-vibrant">
                               <FaAngleLeft /> {t("Previous")}
                             </button>
 
