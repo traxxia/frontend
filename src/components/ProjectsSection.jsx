@@ -596,7 +596,7 @@ const ProjectsSection = ({
   const handleCreate = async () => {
     const validation = validateForm();
     if (!validation.isValid) {
-      handleShowToast(validation.firstError, "error", 5000);
+      // Inline errors in ProjectForm handle the UI
       return;
     }
 
@@ -632,7 +632,7 @@ const ProjectsSection = ({
 
     const validation = validateForm();
     if (!validation.isValid) {
-      handleShowToast(validation.firstError, "error", 5000);
+      // Inline errors in ProjectForm handle the UI
       return;
     }
 

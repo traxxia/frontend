@@ -176,33 +176,49 @@ export const useProjectForm = () => {
 
     const isEmpty = (val) => !val || val.trim().length === 0;
 
-    if (isEmpty(projectName)) {
-  newErrors.projectName = t("Project name is required");
-}
+    // Stricter validators matching Dashboard.jsx
+    const hasLetter = (val) => /[a-zA-Z]/.test(val);
+    const hasTooManyConsecutiveNumbers = (val) => /[0-9]{5,}/.test(val);
+    const hasTooManyConsecutiveSpecial = (val) => /[^A-Za-z0-9\s]{5,}/.test(val);
 
-if (isEmpty(description)) {
-  newErrors.description = t("Description is required");
-}
+    const validateField = (val, fieldKey, options = {}) => {
+      const { minLength = 3, label = "Field" } = options;
+      const trimmed = (val || "").trim();
 
-if (isEmpty(importance)) {
-  newErrors.importance = t("Why This Matters is required");
-}
+      if (isEmpty(trimmed)) {
+        newErrors[fieldKey] = t(`${label} is required`);
+      } else if (trimmed.length < minLength) {
+        newErrors[fieldKey] = t(`${label} must be at least ${minLength} characters`);
+      } else if (!hasLetter(trimmed)) {
+        newErrors[fieldKey] = t(`${label} must contain at least one letter`);
+      } else if (hasTooManyConsecutiveNumbers(trimmed)) {
+        newErrors[fieldKey] = t("Too many consecutive numbers are not allowed");
+      } else if (hasTooManyConsecutiveSpecial(trimmed)) {
+        newErrors[fieldKey] = t("Too many consecutive special characters are not allowed");
+      }
+    };
 
-if (isEmpty(strategicDecision)) {
-  newErrors.strategicDecision = t("Strategic Decision is mandatory");
-}
+    validateField(projectName, "projectName", { label: "Project name", minLength: 3 });
+    validateField(description, "description", { label: "Description", minLength: 10 });
+    validateField(importance, "importance", { label: "Why This Matters", minLength: 10 });
+    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 3 });
+    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2 });
+    validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10 });
+    validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10 });
 
-if (isEmpty(accountableOwner)) {
-  newErrors.accountableOwner = t("Accountable Owner is mandatory");
-}
+    // Additional fields requested by user
+    validateField(dependencies, "dependencies", { label: "Dependencies", minLength: 10 });
+    validateField(highLevelReq, "highLevelReq", { label: "Constraints / Non-Negotiables", minLength: 10 });
+    validateField(scope, "scope", { label: "Explicitly Out of Scope", minLength: 10 });
+    validateField(outcome, "outcome", { label: "Expected Outcome", minLength: 10 });
+    validateField(successMetrics, "successMetrics", { label: "Success Metrics (KPIs)", minLength: 10 });
 
-if (isEmpty(successCriteria)) {
-  newErrors.successCriteria = t("Success criteria is required");
-}
-
-if (isEmpty(killCriteria)) {
-  newErrors.killCriteria = t("Kill criteria is required");
-}
+    // Key Assumptions (Array)
+    keyAssumptions.forEach((assumption, index) => {
+      if (assumption && assumption.trim().length > 0) {
+        validateField(assumption, `keyAssumptions_${index}`, { label: `${t("Assumption")} ${index + 1}`, minLength: 10 });
+      }
+    });
 
     setErrors(newErrors);
 
@@ -210,7 +226,11 @@ if (isEmpty(killCriteria)) {
       isValid: Object.keys(newErrors).length === 0,
       firstError: Object.values(newErrors)[0] || null,
     };
-  }, [projectName, description, importance, strategicDecision, accountableOwner, successCriteria, killCriteria]);
+  }, [
+    projectName, description, importance, strategicDecision, accountableOwner,
+    successCriteria, killCriteria, dependencies, highLevelReq, scope,
+    outcome, successMetrics, keyAssumptions, t
+  ]);
 
   return {
     formState: {
