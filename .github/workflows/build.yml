@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  IMAGE_NAME: traxxia_frontend
+  IMAGE_NAME: traxxia_prod_frontend
   REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
 
 jobs:
