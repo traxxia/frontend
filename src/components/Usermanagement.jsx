@@ -485,15 +485,21 @@ const UserManagement = ({ onToast }) => {
             <Dropdown>
               <Dropdown.Toggle as={CustomToggle} disabled={disabled} />
               <Dropdown.Menu align="end">
-                <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
-                  <UserCog size={16} className="me-2" /> {t("Collaborator")}
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
-                  <User size={16} className="me-2" /> {t("Viewer")}
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
-                  <ShieldCheck size={16} className="me-2" /> {t("User")}
-                </Dropdown.Item>
+                {row.role_name?.toLowerCase() !== "collaborator" && (
+                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
+                    <UserCog size={16} className="me-2" /> {t("Collaborator")}
+                  </Dropdown.Item>
+                )}
+                {row.role_name?.toLowerCase() !== "viewer" && (
+                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
+                    <User size={16} className="me-2" /> {t("Viewer")}
+                  </Dropdown.Item>
+                )}
+                {row.role_name?.toLowerCase() !== "user" && (
+                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
+                    <ShieldCheck size={16} className="me-2" /> {t("User")}
+                  </Dropdown.Item>
+                )}
               </Dropdown.Menu>
             </Dropdown>
           </>

@@ -974,6 +974,7 @@ const ProjectsSection = ({
               isArchived={apiIsArchived}
               selectedProjectIds={selectedProjectIds}
               onToggleSelection={toggleProjectSelection}
+              selectionDisabled={isGeneratingAIRankings || businessStatus !== "draft"}
             />
           </>
         )}

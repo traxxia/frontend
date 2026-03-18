@@ -240,6 +240,22 @@ export class AnalysisApiService {
     }
   }
 
+  async getEligibleOwners(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/eligible-owners`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) return { eligible_owners: [] };
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching eligible owners:', error);
+      return { eligible_owners: [] };
+    }
+  }
+
   isExcelAnalysisType(analysisType) {
     return ['profitabilityAnalysis', 'growthTracker', 'liquidityEfficiency', 'investmentPerformance', 'leverageRisk'].includes(analysisType);
   }
