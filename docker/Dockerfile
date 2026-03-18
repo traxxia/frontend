@@ -24,8 +24,8 @@ RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder /app/build /usr/share/nginx/html
 
 # Copy custom NGINX config
-COPY nginx/nginx.conf /etc/nginx/
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+# COPY nginx/nginx.conf /etc/nginx/
+# COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Check if nginx user/group already exists, if not, create them
 RUN set -eux; \
