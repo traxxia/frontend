@@ -60,12 +60,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     if (!isAdmin) {
       console.log(projects)
       // For collaborators, we show projects that have an AI rank OR are targeted for launch (launched/pending)
-      // and are not killed.
+      // OR are Active/At Risk/Paused, and are not in terminal states.
       const mandatoryProjects = projects.filter(p =>
         ((p.ai_rank !== null && p.ai_rank !== undefined) ||
           p.launch_status?.toLowerCase() === 'launched' ||
-          p.launch_status?.toLowerCase() === 'pending_launch') &&
-        p.status?.toLowerCase() !== 'killed'
+          p.launch_status?.toLowerCase() === 'pending_launch' ||
+          ["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
+        !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
       );
 
       const sortedMandatory = [...mandatoryProjects].sort((a, b) => {
@@ -93,8 +94,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     // Filter projects by launch_status: launched/pending_launch = mandatory, unlaunched/draft = optional
     const active = projects.filter(p =>
       (p.launch_status?.toLowerCase() === 'launched' ||
-        p.launch_status?.toLowerCase() === 'pending_launch') &&
-      p.status?.toLowerCase() === 'active' // Only show Active status projects
+        p.launch_status?.toLowerCase() === 'pending_launch' ||
+        ["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
+      !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
     );
     const draft = projects.filter(p =>
       !p.launch_status ||
@@ -106,8 +108,9 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       const selectedProjects = projects.filter(p =>
         (p.launch_status?.toLowerCase() === 'launched' ||
           p.launch_status?.toLowerCase() === 'pending_launch' ||
+          ["active", "at risk", "paused"].includes(p.status?.toLowerCase()) ||
           selectedDraftIds.includes(p._id)) &&
-        p.status?.toLowerCase() !== 'killed' // Exclude killed projects
+        !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
       );
 
       const sorted = [...selectedProjects].sort((a, b) => {
@@ -133,14 +136,16 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const activeProjects = useMemo(() => projects.filter(p =>
     (p.launch_status?.toLowerCase() === 'launched' ||
-      p.launch_status?.toLowerCase() === 'pending_launch') &&
-    p.status?.toLowerCase() !== 'killed'
+      p.launch_status?.toLowerCase() === 'pending_launch' ||
+      ["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
+    !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
   ), [projects]);
 
   const draftProjects = useMemo(() => projects.filter(p =>
     (p.launch_status?.toLowerCase() !== 'launched' &&
-      p.launch_status?.toLowerCase() !== 'pending_launch') &&
-    p.status?.toLowerCase() !== 'killed'
+      p.launch_status?.toLowerCase() !== 'pending_launch' &&
+      !["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
+    !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
   ), [projects]);
 
   useEffect(() => {

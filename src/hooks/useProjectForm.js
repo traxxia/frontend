@@ -23,6 +23,7 @@ export const useProjectForm = () => {
   // Strategic Core Fields (v2)
   const [strategicDecision, setStrategicDecision] = useState("");
   const [accountableOwner, setAccountableOwner] = useState("");
+  const [accountableOwnerId, setAccountableOwnerId] = useState("");
   const [keyAssumptions, setKeyAssumptions] = useState(["", "", ""]); // Max 3
   const [successCriteria, setSuccessCriteria] = useState("");
   const [killCriteria, setKillCriteria] = useState("");
@@ -50,6 +51,7 @@ export const useProjectForm = () => {
     // Reset Strategic Core
     setStrategicDecision("");
     setAccountableOwner("");
+    setAccountableOwnerId("");
     setKeyAssumptions(["", "", ""]);
     setSuccessCriteria("");
     setKillCriteria("");
@@ -87,6 +89,7 @@ export const useProjectForm = () => {
     // Ensure strategic decision field shows the project name for consistency in v2
     setStrategicDecision(project.strategic_decision || project.project_name || "");
     setAccountableOwner(project.accountable_owner || project.created_by || "");
+    setAccountableOwnerId(project.accountable_owner_id || "");
     setKeyAssumptions(project.key_assumptions && project.key_assumptions.length > 0 ? project.key_assumptions : ["", "", ""]);
     setSuccessCriteria(project.success_criteria || "");
     setKillCriteria(project.kill_criteria || "");
@@ -136,6 +139,7 @@ export const useProjectForm = () => {
       // Strategic Core Payload
       strategic_decision: strategicDecision,
       accountable_owner: accountableOwner,
+      accountable_owner_id: accountableOwnerId || null,
       key_assumptions: keyAssumptions.filter(a => a.trim() !== ""),
       success_criteria: successCriteria,
       kill_criteria: killCriteria,
@@ -161,6 +165,7 @@ export const useProjectForm = () => {
       budget,
       strategicDecision,
       accountableOwner,
+      accountableOwnerId,
       keyAssumptions,
       successCriteria,
       killCriteria,
@@ -196,9 +201,13 @@ if (isEmpty(accountableOwner)) {
   newErrors.accountableOwner = t("Accountable Owner is mandatory");
 }
 
-if (isEmpty(successCriteria)) {
-  newErrors.successCriteria = t("Success criteria is required");
-}
+    if (isEmpty(accountableOwnerId)) {
+      newErrors.accountableOwnerId = "Owner selection is required";
+    }
+
+    if (isEmpty(successCriteria)) {
+      newErrors.successCriteria = "Success criteria is required";
+    }
 
 if (isEmpty(killCriteria)) {
   newErrors.killCriteria = t("Kill criteria is required");
@@ -210,7 +219,7 @@ if (isEmpty(killCriteria)) {
       isValid: Object.keys(newErrors).length === 0,
       firstError: Object.values(newErrors)[0] || null,
     };
-  }, [projectName, description, importance, strategicDecision, accountableOwner, successCriteria, killCriteria]);
+  }, [projectName, description, importance, strategicDecision, accountableOwner, accountableOwnerId, successCriteria, killCriteria]);
 
   return {
     formState: {
@@ -233,6 +242,7 @@ if (isEmpty(killCriteria)) {
       // Strategic Core
       strategicDecision,
       accountableOwner,
+      accountableOwnerId,
       keyAssumptions,
       successCriteria,
       killCriteria,
@@ -260,6 +270,7 @@ if (isEmpty(killCriteria)) {
       // Strategic Core
       setStrategicDecision,
       setAccountableOwner,
+      setAccountableOwnerId,
       setKeyAssumptions,
       setSuccessCriteria,
       setKillCriteria,

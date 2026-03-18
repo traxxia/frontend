@@ -74,19 +74,24 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const canEditProject = useCallback(
-    (project, isEditor, myUserId, businessStatus, isArchived) => {
+    (project, isEditor, myUserId, businessStatus, isArchived, isAdmin) => {
       // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
       const userPlan = sessionStorage.getItem("userPlan");
       if (userPlan === 'essential' || isArchived) return false;
 
       if (!project) return false;
 
+      // Terminal states are locked for EVERYONE (except Killed for Admins)
+      const status = (project.status || "").toLowerCase();
+      if (status === 'completed' || status === 'scaled') return false;
+      if (status === 'killed' && !isAdmin) return false;
+
       // Explicit check: if project is active or launched, only allow if backend says true (which is only for admins)
       const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
       const isProjectActive = project.status?.toLowerCase() === 'active';
 
       if (isProjectActive || isProjectLaunched) {
-         return userHasProjectEditAccess[project._id] === true;
+        return userHasProjectEditAccess[project._id] === true;
       }
 
       // Admins and Collaborators can always edit if project is Draft or business is not launched
@@ -143,6 +148,22 @@ export const useAccessControl = (selectedBusinessId) => {
     }
   }, [selectedBusinessId]);
 
+  const canReviewProject = useCallback(
+    (project, isAdmin, myUserId, isArchived) => {
+      if (isArchived) return false;
+      if (!project) return false;
+
+      const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
+      if (!isProjectLaunched) return false;
+
+      if (isAdmin) return true;
+
+      const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
+      return isOwner === true;
+    },
+    []
+  );
+
   return {
     userHasRerankAccess,
     userHasProjectEditAccess,
@@ -150,6 +171,7 @@ export const useAccessControl = (selectedBusinessId) => {
     checkProjectsAccess,
     checkAllAccess,
     canEditProject,
+    canReviewProject,
     isReadOnlyMode,
   };
 };

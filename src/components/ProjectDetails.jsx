@@ -29,7 +29,10 @@ const ProjectDetails = ({
     project,
     onBack,
     onEdit,
-    canEdit = false
+    onPerformReview,
+    onAdhocUpdate,
+    canEdit = false,
+    canReview = false
 }) => {
     const { t } = useTranslation();
 
@@ -147,6 +150,18 @@ const ProjectDetails = ({
                 </Breadcrumb>
             </div>
 
+            {/* Header with Title and Actions */}
+            <div className="details-header mb-4">
+                <h1 className="details-title">{project.project_name}</h1>
+                <div className="details-actions">
+                    {canEdit && (
+                        <button className="btn-edit" onClick={() => onEdit(project)}>
+                            <Edit2 size={16} /> {t("Edit")}
+                        </button>
+                    )}
+                </div>
+            </div>
+
 
             {/* Strategic Core */}
             <div className="details-card">
@@ -235,6 +250,7 @@ const ProjectDetails = ({
                                             "at risk": "At Risk",
                                             "paused": "Paused",
                                             "killed": "Killed",
+                                            "completed": "Completed",
                                             "scaled": "Scaled"
                                         };
 
@@ -263,9 +279,56 @@ const ProjectDetails = ({
                         </div>
                     </div>
 
-                    <div className="detail-item">
-                        <label className="detail-label">{t("Review_Cadence")}</label>
-                        <p className="detail-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</p>
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Review_Cadence")}</label>
+                            <p className="detail-value">{project.review_cadence ? t(project.review_cadence) : t("Not_Available")}</p>
+                        </div>
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Next_Review_Date")}</label>
+                            <div className="detail-value" style={{ display: 'flex', alignItems: 'center' }}>
+                                <span style={{
+                                    color: (project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) ? '#ef4444' : (project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() ? '#d97706' : 'inherit'),
+                                    fontWeight: '600'
+                                }}>
+                                    {project.next_review_date ? new Date(project.next_review_date).toLocaleDateString() : t("Not_Available")}
+                                </span>
+                                {(project.is_stale || (project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0))) && (
+                                    <span className="review-badge stale">
+                                        <AlertTriangle size={12} /> {t("Stale")}
+                                    </span>
+                                )}
+                                {!project.is_stale && !(project.next_review_date && new Date(project.next_review_date).getTime() < new Date().setHours(0, 0, 0, 0)) && project.next_review_date && new Date(project.next_review_date).toDateString() === new Date().toDateString() && (
+                                    <span className="review-badge due">
+                                        <Clock size={12} /> {t("Review_Due")}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid-2">
+                        <div className="detail-item">
+                            <label className="detail-label">{t("Last_Reviewed")}</label>
+                            <p className="detail-value">{project.last_reviewed ? new Date(project.last_reviewed).toLocaleDateString() : t("Never")}</p>
+                        </div>
+                        <div className="detail-item" style={{ display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
+                            {canEdit && (
+                                <button className="btn-edit" onClick={() => onEdit(project)} style={{ padding: '6px 12px', fontSize: '13px' }}>
+                                    <Edit2 size={14} /> {t("Edit")}
+                                </button>
+                            )}
+                            {canReview && (
+                                <>
+                                    <button className="btn-review" onClick={() => onPerformReview(project)} style={{ background: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <CheckCircle size={14} /> {t("Perform_Review")}
+                                    </button>
+                                    <button className="btn-adhoc" onClick={() => onAdhocUpdate(project)} style={{ background: '#4b5563', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Edit3 size={14} /> {t("Ad_Hoc_Update")}
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,6 +416,37 @@ const ProjectDetails = ({
                     </div>
                 </div>
             </div>
+
+            {/* Decision Log */}
+            {project.decision_log && project.decision_log.length > 0 && (
+                <div className="details-card mt-4">
+                    <h3 className="card-title">📜 {t("Decision_Log") || "Decision Log"}</h3>
+                    <div className="table-responsive">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>{t("Date") || "Date"}</th>
+                                    <th>{t("Transition") || "Transition"}</th>
+                                    <th>{t("Justification") || "Justification"}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {project.decision_log.map((log, index) => (
+                                    <tr key={index}>
+                                        <td>{new Date(log.changed_at).toLocaleDateString()}</td>
+                                        <td>
+                                            <span className="badge bg-secondary">{log.from_status}</span>
+                                            {" ➔ "}
+                                            <span className="badge bg-primary">{log.to_status}</span>
+                                        </td>
+                                        <td>{log.justification}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

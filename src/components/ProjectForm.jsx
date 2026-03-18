@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { Breadcrumb } from "react-bootstrap";
-import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle } from "lucide-react";
+import { TrendingUp, Zap, AlertTriangle, Circle, Diamond, Rocket, Bolt, Lightbulb, Heart, Shield, Boxes, Clock, DollarSign, Lock, CheckCircle, XCircle, Edit2, ShieldCheck, Users } from "lucide-react";
 import { validateField } from "../utils/validation";
 import "../styles/NewProjectPage.css";
 
@@ -313,6 +313,8 @@ const ProjectForm = ({
   setStrategicDecision,
   accountableOwner,
   setAccountableOwner,
+  accountableOwnerId,
+  setAccountableOwnerId,
   keyAssumptions,
   setKeyAssumptions,
   successCriteria,
@@ -323,17 +325,55 @@ const ProjectForm = ({
   setReviewCadence,
   status,
   setStatus,
+  launchStatus, // Added launchStatus
   learningState,
   setLearningState,
   isSubmitting = false,
   selectedBusinessId,
   projectId,
+  isAdmin = false,
 }) => {
   const { t } = useTranslation();
   const isReadOnly = mode === "view" || readOnly;
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [showErrors, setShowErrors] = useState(false);
+  const [eligibleOwners, setEligibleOwners] = useState([]);
+
+  useEffect(() => {
+    if (selectedBusinessId) {
+      const fetchOwners = async () => {
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/api/businesses/${selectedBusinessId}/eligible-owners`, {
+            headers: {
+              "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+            }
+          });
+          const data = await response.json();
+          if (data.eligible_owners) {
+            setEligibleOwners(data.eligible_owners);
+          }
+        } catch (err) {
+          console.error("Failed to fetch eligible owners:", err);
+        }
+      };
+      fetchOwners();
+    }
+  }, [selectedBusinessId]);
+
+  useEffect(() => {
+    // DEFAULT: Set business owner as default if currently empty
+    // This applies to new projects AND existing projects with no owner assigned yet.
+    if (!accountableOwnerId && eligibleOwners.length > 0) {
+      const admin =
+        eligibleOwners.find(o => o.is_company_admin) ||
+        eligibleOwners.find(o => o.is_business_owner);
+      if (admin) {
+        setAccountableOwnerId(String(admin._id));
+        setAccountableOwner(admin.name || admin.email);
+      }
+    }
+  }, [accountableOwnerId, eligibleOwners, setAccountableOwnerId, setAccountableOwner]);
 
   // Refs for error fields
   const projectNameRef = useRef(null);
@@ -359,7 +399,7 @@ const ProjectForm = ({
     }
   };
 
-  const isFieldDisabled = (field) => isReadOnly || isSubmitting || isLockedByOther?.(field);
+  const isFieldDisabled = (field) => isReadOnly || isSubmitting || isLockedByOther?.(field) || isTerminal;
 
   const handleFieldFocus = (field) => {
     if (isFieldDisabled(field)) return;
@@ -381,6 +421,9 @@ const ProjectForm = ({
       </span>
     );
   };
+
+  const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes((status || "").toLowerCase());
+  const isTerminal = (status || "").toLowerCase() === "completed" || (status || "").toLowerCase() === "scaled" || ((status || "").toLowerCase() === "killed" && !isAdmin);
 
   const getSubmitButtonText = () => {
     if (isSubmitting) {
@@ -416,35 +459,34 @@ const ProjectForm = ({
   };
 
   const handleProjectNameChange = (e) => {
-  let value = e.target.value;
-  value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
+    let value = e.target.value;
+    value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
 
-  setProjectName(value);
+    setProjectName(value);
 
- let customError = null;
+    let customError = null;
+    if (/^[0-9]+$/.test(value.trim())) {
+      customError = "Project name cannot contain only numbers.";
+    }
 
-if (/^[0-9]+$/.test(value.trim())) {
-  customError = t("Project name cannot contain only numbers.");
-}
+    if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
+      customError = "Cannot use more than 5 consecutive special characters.";
+    }
 
-if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
-  customError = t("Cannot use more than 5 consecutive special characters.");
-}
-
-  if (showErrors || customError) {
-    const validation = validateField('Project Name', value, {
-      required: true,
-      minLength: 3,
-      maxLength: 100,
-      requiresText: true
-    });
-    setFieldErrors(prev => ({
-      ...prev,
-      projectName: customError || (validation.isValid ? null : validation.message)
-    }));
-  }
-  handleFieldEdit("project_name");
-};
+    if (showErrors || customError) {
+      const validation = validateField('Project Name', value, {
+        required: true,
+        minLength: 3,
+        maxLength: 100,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        projectName: customError || (validation.isValid ? null : validation.message)
+      }));
+    }
+    handleFieldEdit("project_name");
+  };
 
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
@@ -503,34 +545,34 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
   };
 
   const handleAccountableOwnerChange = (e) => {
-  let value = e.target.value;
+    let value = e.target.value;
 
-  // Allow letters, numbers, spaces, dot, hyphen, @
-  value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
+    // Allow letters, numbers, spaces, dot, hyphen, @
+    value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
 
-  setAccountableOwner(value);
+    setAccountableOwner(value);
 
-  let customError = null;
+    let customError = null;
 
-  // Required
-  if (!value.trim()) {
-    customError = t("Accountable Owner is required.");
-  }
+    // Required
+    if (!value.trim()) {
+      customError = "Accountable Owner is required.";
+    }
 
-  // Must contain at least one alphabet
-  else if (!/[A-Za-z]/.test(value)) {
-    customError = "Accountable Owner must contain at least one alphabet.";
-  }
+    // Must contain at least one alphabet
+    else if (!/[A-Za-z]/.test(value)) {
+      customError = "Accountable Owner must contain at least one alphabet.";
+    }
 
-  if (showErrors || customError) {
-    setFieldErrors(prev => ({
-      ...prev,
-      accountableOwner: customError
-    }));
-  }
+    if (showErrors || customError) {
+      setFieldErrors(prev => ({
+        ...prev,
+        accountableOwner: customError
+      }));
+    }
 
-  handleFieldEdit("accountable_owner");
-};
+    handleFieldEdit("accountable_owner");
+  };
 
   const handleSuccessCriteriaChange = (e) => {
     const value = e.target.value;
@@ -622,7 +664,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
 
     // Strategic Core Validation
     const decisionValidation = validateField('Strategic Decision', strategicDecision || '', { required: true, minLength: 10, requiresText: true });
-    const ownerValidation = validateField('Accountable Owner', accountableOwner || '', { required: true, requiresText: true });
+    const ownerValidation = validateField('Accountable Owner', accountableOwnerId || '', { required: true });
     const successValidation = validateField('Success Criteria', successCriteria || '', { required: true, requiresText: true });
     const killValidation = validateField('Kill Criteria', killCriteria || '', { required: true, requiresText: true });
 
@@ -633,16 +675,17 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
     });
 
     const errors = {
-  projectName: projectNameValidation.isValid ? null : t(projectNameValidation.message),
-  description: descValidation.isValid ? null : t(descValidation.message),
-  importance: impValidation.isValid ? null : t(impValidation.message),
-  strategicDecision: decisionValidation.isValid ? null : t(decisionValidation.message),
-  accountableOwner: ownerValidation.isValid ? null : t(ownerValidation.message),
-  successCriteria: successValidation.isValid ? null : t(successValidation.message),
-  killCriteria: killValidation.isValid ? null : t(killValidation.message),
-  budget: budgetValidation.isValid ? null : t(budgetValidation.message),
-  status: (status && status.trim()) ? null : t("Status_is_required"),
-};
+      projectName: projectNameValidation.isValid ? null : projectNameValidation.message,
+      description: descValidation.isValid ? null : descValidation.message,
+      importance: impValidation.isValid ? null : impValidation.message,
+      strategicDecision: decisionValidation.isValid ? null : decisionValidation.message,
+      accountableOwnerId: ownerValidation.isValid ? null : ownerValidation.message,
+      successCriteria: successValidation.isValid ? null : successValidation.message,
+      killCriteria: killValidation.isValid ? null : killValidation.message,
+      budget: budgetValidation.isValid ? null : budgetValidation.message,
+      status: (status && status.trim()) ? null : t("Status_is_required"),
+      reviewCadence: (reviewCadence && reviewCadence.trim()) ? null : t("Review_cadence_is_required"),
+    };
     setFieldErrors(errors);
     setShowErrors(true);
 
@@ -654,10 +697,14 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
       else if (errors.description) scrollToError(descriptionRef);
       else if (errors.importance) scrollToError(importanceRef);
       else if (errors.strategicDecision) scrollToError(strategicDecisionRef);
-      else if (errors.accountableOwner) scrollToError(accountableOwnerRef);
+      else if (errors.accountableOwnerId) scrollToError(accountableOwnerRef);
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
       else if (errors.status) scrollToError(statusRef);
+      else if (errors.reviewCadence) {
+        // We don't have a ref for cadence, but let's scroll to the status area which is nearby
+        scrollToError(statusRef);
+      }
       else if (errors.budget) scrollToError(budgetRef);
       return;
     }
@@ -689,7 +736,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 className="btn-create"
                 onClick={handleSubmit}
                 style={{ padding: "8px 16px" }}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isTerminal}
               >
                 {getSubmitButtonText()}
               </button>
@@ -807,17 +854,35 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
             />
 
             {/* Accountable Owner */}
-            <InputField
+            {/* Accountable Owner Selection */}
+            <SelectField
               ref={accountableOwnerRef}
               label={t("Accountable_Owner")}
-              value={accountableOwner}
-              onChange={handleAccountableOwnerChange}
-              placeholder={t("Owner_Placeholder")}
-              error={showErrors && fieldErrors.accountableOwner}
-              readOnly={isFieldDisabled("accountable_owner")}
-              onFocus={handleFieldFocus}
+              icon={<Zap size={14} />}
+              options={eligibleOwners.map(o => ({
+                value: o._id,
+                label: o.name,
+                icon: (o.role === 'company_admin' || o.role === 'super_admin')
+                  ? <ShieldCheck size={14} color="#2563eb" />
+                  : o.role === 'collaborator'
+                    ? <Users size={14} color="#64748b" />
+                    : <Circle size={14} color="gray" />
+              }))}
+              value={accountableOwnerId}
+              onChange={(val) => {
+                setAccountableOwnerId(val);
+                const obj = eligibleOwners.find(o => o._id === val);
+                if (obj) setAccountableOwner(obj.name);
+                handleFieldEdit("accountable_owner");
+              }}
+              open={openDropdown === "accountable_owner"}
+              setOpen={() => setOpenDropdown(openDropdown === "accountable_owner" ? null : "accountable_owner")}
               fieldName="accountable_owner"
+              onFieldFocus={handleFieldFocus}
+              onFieldEdit={handleFieldEdit}
               required
+              error={showErrors && fieldErrors.accountableOwnerId}
+              disabled={isFieldDisabled("accountable_owner")}
             />
 
             {/* Key Assumptions */}
@@ -899,47 +964,73 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 fieldName="review_cadence"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
+                required
+                error={showErrors && fieldErrors.reviewCadence}
               />
 
               <SelectField
                 ref={statusRef}
                 label={t("Status")}
                 icon={<TrendingUp size={16} />}
-                options={[
-                  { value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" />, disabled: false },
-                  { value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" />, disabled: false },
-                  {
-                    value: "At Risk",
-                    label: (
+                options={(() => {
+                  const currentStatus = (status || "").toLowerCase();
+                  const isLaunched = (launchStatus || "").toLowerCase() === "launched" || ["active", "at risk", "paused", "completed", "scaled"].includes(currentStatus);
+
+                  const createOption = (val, label, icon, isDisabled) => ({
+                    value: val,
+                    label: isDisabled && val.toLowerCase() !== currentStatus ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("At Risk")} <Lock size={12} color="#94a3b8" />
+                        {label} <Lock size={12} color="#94a3b8" />
                       </span>
-                    ),
-                    icon: <Circle size={14} color="red" fill="red" />,
-                    disabled: true
-                  },
-                  {
-                    value: "Paused",
-                    label: (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Paused")} <Lock size={12} color="#94a3b8" />
-                      </span>
-                    ),
-                    icon: <Circle size={14} color="orange" fill="orange" />,
-                    disabled: true
-                  },
-                  { value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" />, disabled: false },
-                  {
-                    value: "Scaled",
-                    label: (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Scaled")} <Lock size={12} color="#94a3b8" />
-                      </span>
-                    ),
-                    icon: <Circle size={14} color="purple" fill="purple" />,
-                    disabled: true
-                  },
-                ]}
+                    ) : label,
+                    icon,
+                    disabled: isDisabled && val.toLowerCase() !== currentStatus
+                  });
+
+                  const baseOptions = [
+                    { key: 'draft', value: "Draft", label: t("Draft"), icon: <Circle size={14} color="gray" fill="gray" /> },
+                    { key: 'active', value: "Active", label: t("Active"), icon: <Circle size={14} color="green" fill="green" /> },
+                    { key: 'at risk', value: "At Risk", label: t("At Risk"), icon: <Circle size={14} color="red" fill="red" /> },
+                    { key: 'paused', value: "Paused", label: t("Paused"), icon: <Circle size={14} color="orange" fill="orange" /> },
+                    { key: 'killed', value: "Killed", label: t("Killed"), icon: <Circle size={14} color="black" fill="black" /> },
+                    { key: 'completed', value: "Completed", label: t("Completed"), icon: <CheckCircle size={14} color="blue" /> },
+                    { key: 'scaled', value: "Scaled", label: t("Scaled"), icon: <Circle size={14} color="purple" fill="purple" /> },
+                  ];
+
+                  if (isTerminal) {
+                    return baseOptions.map(opt => createOption(opt.value, opt.label, opt.icon, true));
+                  }
+
+                  return baseOptions.map(opt => {
+                    let isDisabled = true;
+                    const target = opt.key;
+
+                    if (target === currentStatus) {
+                      isDisabled = false;
+                    } else if (!isLaunched) {
+                      // Unlaunched: Draft -> Killed is allowed. Active is handled via Launch mechanism.
+                      if (currentStatus === 'draft') {
+                        if (target === 'killed') isDisabled = false;
+                      }
+                    } else {
+                      // Launched
+                      if (currentStatus === 'active' || currentStatus === 'at risk') {
+                        if (['active', 'at risk', 'paused', 'completed', 'killed', 'scaled'].includes(target)) isDisabled = false;
+                      } else if (currentStatus === 'paused') {
+                        if (['active', 'killed'].includes(target)) isDisabled = false;
+                      } else if (currentStatus === 'killed' && isAdmin) {
+                        // Admins can move back to Active or Draft (if unlaunched)
+                        if (isLaunched) {
+                          if (['active', 'at risk', 'paused'].includes(target)) isDisabled = false;
+                        } else {
+                          if (['draft', 'active'].includes(target)) isDisabled = false;
+                        }
+                      }
+                    }
+
+                    return createOption(opt.value, opt.label, opt.icon, isDisabled);
+                  });
+                })()}
                 value={status}
                 onChange={(val) => {
                   setStatus(val);
@@ -953,7 +1044,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 }}
                 open={openDropdown === "status"}
                 setOpen={() => setOpenDropdown(openDropdown === "status" ? null : "status")}
-                disabled={isReadOnly}
+                disabled={isReadOnly || isTerminal}
                 fieldName="status"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
@@ -964,29 +1055,28 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
               <SelectField
                 label={t("Learning_State")}
                 icon={<Zap size={16} />}
-                options={[
-                  { value: "Testing", label: t("Testing"), icon: <Clock size={14} color="blue" />, disabled: false },
-                  {
-                    value: "Validated",
-                    label: (
+                options={(() => {
+                  const isLaunched = launchStatus === "launched";
+                  const currentLearningState = (learningState || "").toLowerCase();
+
+                  const createOption = (val, label, icon, isDisabled) => ({
+                    value: val,
+                    label: isDisabled && val.toLowerCase() !== currentLearningState ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Validated")} <Lock size={12} color="#94a3b8" />
+                        {label} <Lock size={12} color="#94a3b8" />
                       </span>
-                    ),
-                    icon: <CheckCircle size={14} color="green" />,
-                    disabled: true
-                  },
-                  {
-                    value: "Invalidated",
-                    label: (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                        {t("Invalidated")} <Lock size={12} color="#94a3b8" />
-                      </span>
-                    ),
-                    icon: <XCircle size={14} color="red" />,
-                    disabled: true
-                  },
-                ]}
+                    ) : label,
+                    icon,
+                    disabled: isDisabled && val.toLowerCase() !== currentLearningState
+                  });
+
+                  // Validated and Invalidated are only available after launch
+                  return [
+                    createOption("Testing", t("Testing"), <Clock size={14} color="blue" />, false),
+                    createOption("Validated", t("Validated"), <CheckCircle size={14} color="green" />, !isLaunched || isTerminal),
+                    createOption("Invalidated", t("Invalidated"), <XCircle size={14} color="red" />, !isLaunched || isTerminal),
+                  ];
+                })()}
                 value={learningState}
                 onChange={(val) => {
                   setLearningState(val);
@@ -994,7 +1084,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 }}
                 open={openDropdown === "learning_state"}
                 setOpen={() => setOpenDropdown(openDropdown === "learning_state" ? null : "learning_state")}
-                disabled={isFieldDisabled("learning_state") || isSubmitting}
+                disabled={isFieldDisabled("learning_state") || isSubmitting || isTerminal}
                 fieldName="learning_state"
                 onFieldFocus={handleFieldFocus}
                 onFieldEdit={handleFieldEdit}
