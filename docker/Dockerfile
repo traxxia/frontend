@@ -10,35 +10,24 @@ RUN npm install
 # Copy all frontend files
 COPY . .
 
-# 🔥 Inject env variables from build args
-ARG REACT_APP_BACKEND_URL
-ARG REACT_APP_ML_BACKEND_URL
-ARG REACT_APP_ENABLE_PMF
-ARG REACT_APP_AI_CHAT_URL
-
-# ✅ Create .env file dynamically
-RUN echo "REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL" > .env && \
-    echo "REACT_APP_ML_BACKEND_URL=$REACT_APP_ML_BACKEND_URL" >> .env && \
-    echo "REACT_APP_ENABLE_PMF=$REACT_APP_ENABLE_PMF" >> .env && \
-    echo "REACT_APP_AI_CHAT_URL=$REACT_APP_AI_CHAT_URL" >> .env
-
-# Optional debug (remove later)
-RUN cat .env
-
-# Build React app
+# Build the production React app
 RUN npm run build
 
 
 # ------------ Stage 2: Serve with NGINX ------------
 FROM nginx:alpine
 
+# Remove default nginx page
 RUN rm -rf /usr/share/nginx/html/*
 
+# Copy React build output
 COPY --from=builder /app/build /usr/share/nginx/html
 
-COPY ../nginx/nginx.conf /etc/nginx/
-COPY ../nginx/default.conf /etc/nginx/conf.d/default.conf
+# Copy custom NGINX config
+COPY nginx/nginx.conf /etc/nginx/
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
+# Check if nginx user/group already exists, if not, create them
 RUN set -eux; \
     if ! getent group nginx > /dev/null 2>&1; then \
         addgroup -g 1001 -S nginx; \
@@ -47,6 +36,7 @@ RUN set -eux; \
         adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx nginx; \
     fi
 
+# Set Permission for non-root user with ownership
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
@@ -54,6 +44,7 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/run/nginx.pid && \
     chown -R nginx:nginx /etc/nginx/conf.d
 
+# Set user context
 USER nginx
 
 CMD ["nginx", "-g", "daemon off;"]
