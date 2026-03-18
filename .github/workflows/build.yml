@@ -13,64 +13,38 @@ env:
   REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
 
 jobs:
-  # ─────────────────────────────────────────────
-  # Job 1: Install & Build
-  # ─────────────────────────────────────────────
-  build:
-    name: Install & Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build React app
-        run: npm run build
-        env:
-          CI: false   # Prevents treating warnings as errors
-          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
-          REACT_APP_ML_BACKEND_URL: ${{ vars.REACT_APP_ML_BACKEND_URL }}
-          REACT_APP_ENABLE_PMF: ${{ vars.REACT_APP_ENABLE_PMF }}
-          REACT_APP_AI_CHAT_URL: ${{ vars.REACT_APP_AI_CHAT_URL }}
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: react-build
-          path: build/
-          retention-days: 1
-
-  # ─────────────────────────────────────────────
-  # Job 2: Docker Build & Push (master only)
-  # ─────────────────────────────────────────────
   docker:
-    name: Docker Build & Push
+    name: Build & Push Frontend
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
+      # ─────────────────────────────
+      # 1. Checkout
+      # ─────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
+      # ─────────────────────────────
+      # 2. Set version
+      # ─────────────────────────────
       - name: Set image version
         id: version
         run: echo "IMAGE_VERSION=1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
+      # ─────────────────────────────
+      # 3. Debug variables (optional but useful)
+      # ─────────────────────────────
+      - name: Debug ENV
+        run: |
+          echo "BACKEND=$REACT_APP_BACKEND_URL"
+          echo "ML=$REACT_APP_ML_BACKEND_URL"
+        env:
+          REACT_APP_BACKEND_URL: ${{ vars.REACT_APP_BACKEND_URL }}
+          REACT_APP_ML_BACKEND_URL: ${{ vars.REACT_APP_ML_BACKEND_URL }}
 
-
+      # ─────────────────────────────
+      # 4. Login to ACR
+      # ─────────────────────────────
       - name: Log in to ACR
         uses: docker/login-action@v3
         with:
@@ -78,25 +52,39 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
+      # ─────────────────────────────
+      # 5. Setup Docker
+      # ─────────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # ─────────────────────────────
+      # 6. Build & Push (IMPORTANT FIXES HERE)
+      # ─────────────────────────────
       - name: Build & push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile
-          push: true  # ← Set to true once you uncomment a login step above
+          push: true
+
+          # 🔥 IMPORTANT: disable cache (fix localhost issue)
+          no-cache: true
+
+          # 🔥 Pass GitHub variables directly
           build-args: |
             REACT_APP_BACKEND_URL=${{ vars.REACT_APP_BACKEND_URL }}
             REACT_APP_ML_BACKEND_URL=${{ vars.REACT_APP_ML_BACKEND_URL }}
             REACT_APP_ENABLE_PMF=${{ vars.REACT_APP_ENABLE_PMF }}
             REACT_APP_AI_CHAT_URL=${{ vars.REACT_APP_AI_CHAT_URL }}
+
+          # Image tags
           tags: |
             ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
+      # ─────────────────────────────
+      # 7. Output
+      # ─────────────────────────────
       - name: Output image tag
-        run: echo "Image tagged as ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}"
+        run: echo "Image pushed: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}"
