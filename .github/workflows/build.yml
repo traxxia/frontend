@@ -2,11 +2,9 @@ name: TRAXXIA Frontend CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 env:
   IMAGE_NAME: traxxia_frontend
@@ -14,7 +12,6 @@ env:
 
 jobs:
   docker:
-    name: Build & Push Frontend
     runs-on: ubuntu-latest
 
     steps:
@@ -46,14 +43,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           push: true
-          no-cache: true   # ✅ correct placement
-
-          build-args: |
-            REACT_APP_BACKEND_URL=${{ vars.REACT_APP_BACKEND_URL }}
-            REACT_APP_ML_BACKEND_URL=${{ vars.REACT_APP_ML_BACKEND_URL }}
-            REACT_APP_ENABLE_PMF=${{ vars.REACT_APP_ENABLE_PMF }}
-            REACT_APP_AI_CHAT_URL=${{ vars.REACT_APP_AI_CHAT_URL }}
-
+          no-cache: true
+          build-args: REACT_APP_BACKEND_URL=${{ vars.REACT_APP_BACKEND_URL }},REACT_APP_ML_BACKEND_URL=${{ vars.REACT_APP_ML_BACKEND_URL }},REACT_APP_ENABLE_PMF=${{ vars.REACT_APP_ENABLE_PMF }},REACT_APP_AI_CHAT_URL=${{ vars.REACT_APP_AI_CHAT_URL }}
           tags: |
             ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}
