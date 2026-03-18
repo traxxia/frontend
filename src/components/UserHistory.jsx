@@ -30,7 +30,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 // Constants
 const ITEMS_PER_PAGE = 10;
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Utility functions
 const getAuthToken = () => sessionStorage.getItem('token');
@@ -64,11 +64,11 @@ const UserHistory = ({ onToast }) => {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   const handleRoleChange = (e) => {
-  const value = e.target.value;
-  setSelectedRole(value);
-  setCurrentPage(1);
-  applyFilters(searchTerm, value);
-};
+    const value = e.target.value;
+    setSelectedRole(value);
+    setCurrentPage(1);
+    applyFilters(searchTerm, value);
+  };
 
 
   // Load Initial Data
@@ -126,35 +126,35 @@ const UserHistory = ({ onToast }) => {
   }, [selectedCompany, isInitialized]);
 
   const applyFilters = (searchValue, roleValue) => {
-  const search = searchValue.toLowerCase();
+    const search = searchValue.toLowerCase();
 
-  let filtered = users.filter(u =>
-    u.name?.toLowerCase().includes(search) ||
-    u.email?.toLowerCase().includes(search) ||
-    u.company_name?.toLowerCase().includes(search)
-  );
-
-  if (roleValue !== "All Roles") {
-    filtered = filtered.filter(
-      u => formatRoleName(u.role_name) === roleValue
+    let filtered = users.filter(u =>
+      u.name?.toLowerCase().includes(search) ||
+      u.email?.toLowerCase().includes(search) ||
+      u.company_name?.toLowerCase().includes(search)
     );
-  }
 
-  setFilteredUsers(filtered);
-};
+    if (roleValue !== "All Roles") {
+      filtered = filtered.filter(
+        u => formatRoleName(u.role_name) === roleValue
+      );
+    }
+
+    setFilteredUsers(filtered);
+  };
 
   const handleSearch = (value) => {
-  setSearchTerm(value);
+    setSearchTerm(value);
 
-  const search = value.toLowerCase();
+    const search = value.toLowerCase();
 
-  const filtered = users.filter(u =>
-    u.name?.toLowerCase().includes(search) ||
-    u.email?.toLowerCase().includes(search) ||
-    u.company_name?.toLowerCase().includes(search)  
-  );
-  setFilteredUsers(filtered);
-};
+    const filtered = users.filter(u =>
+      u.name?.toLowerCase().includes(search) ||
+      u.email?.toLowerCase().includes(search) ||
+      u.company_name?.toLowerCase().includes(search)
+    );
+    setFilteredUsers(filtered);
+  };
 
   const loadUserHistory = async (userId, businessId = null) => {
     const cacheKey = businessId ? `${userId}_${businessId}` : userId;
@@ -280,19 +280,19 @@ const UserHistory = ({ onToast }) => {
         //   )
         // }
         toolbarContent={
-                  <Form.Select
-                    className="role-select"
-                    style={{ width: '210px' }}
-                    value={selectedRole}
-                    onChange={handleRoleChange}
-                  >
-                    <option value="All Roles">{t("All_Roles")}</option>
-                    <option value="Org Admin">{t("Org_Admin")}</option>
-                    <option value="Collaborator">{t("Collaborator")}</option>
-                    <option value="User">{t("User")}</option>
-                    <option value="Viewer">{t("Viewer")}</option>
-                  </Form.Select>
-                }
+          <Form.Select
+            className="role-select"
+            style={{ width: '210px' }}
+            value={selectedRole}
+            onChange={handleRoleChange}
+          >
+            <option value="All Roles">{t("All_Roles")}</option>
+            <option value="Org Admin">{t("Org_Admin")}</option>
+            <option value="Collaborator">{t("Collaborator")}</option>
+            <option value="User">{t("User")}</option>
+            <option value="Viewer">{t("Viewer")}</option>
+          </Form.Select>
+        }
       />
 
       {selectedUser && (
@@ -845,50 +845,50 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
 const EmptyBusinessState = ({ user, onClose }) => {
   const { t } = useTranslation();
   return (
-  <div className="user-details-panel">
-    <div className="panel-header">
-      <div className="user-header-info">
-        <div>
-          <h3>{user?.name}</h3>
-          <p>{user?.email}</p>
+    <div className="user-details-panel">
+      <div className="panel-header">
+        <div className="user-header-info">
+          <div>
+            <h3>{user?.name}</h3>
+            <p>{user?.email}</p>
+          </div>
+        </div>
+        <div className="panel-actions">
+          <button onClick={onClose} className="close-button">
+            <X size={20} />
+          </button>
         </div>
       </div>
-      <div className="panel-actions">
-        <button onClick={onClose} className="close-button">
-          <X size={20} />
-        </button>
+      <div className="empty-state">
+        <Building2 size={48} />
+        <p className="empty-title">
+          {t("no_businesses_found") || "No businesses found"}
+        </p>
+
+        <p className="empty-subtitle">
+          {t("user_hasnt_created_businesses") || "This user hasn't created any businesses yet"}
+        </p>
       </div>
     </div>
-    <div className="empty-state">
-      <Building2 size={48} />
-      <p className="empty-title">
-  {t("no_businesses_found") || "No businesses found"}
-</p>
-
-<p className="empty-subtitle">
-  {t("user_hasnt_created_businesses") || "This user hasn't created any businesses yet"}
-</p>
-    </div>
-  </div>
   );
 };
 
 const PanelHeader = ({ user, currentUserDetails, onClose, onExport }) => {
   const { t } = useTranslation();
-  return(
-  <div className="panel-header">
-    <div className="header-row">
-      <div className="header-left">
-        <h3 className="user-name-header">{t("User Name")}: {user?.name}</h3>
-      </div>
-      <div className="header-right">
-        <button onClick={onClose} className="close-button">
-          <X size={20} />
-        </button>
+  return (
+    <div className="panel-header">
+      <div className="header-row">
+        <div className="header-left">
+          <h3 className="user-name-header">{t("User Name")}: {user?.name}</h3>
+        </div>
+        <div className="header-right">
+          <button onClick={onClose} className="close-button">
+            <X size={20} />
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 const TabNavigation = ({
@@ -1238,7 +1238,7 @@ const ConversationTab = ({
           <p className="empty-title">{t('no_chat_records')}</p>
           <p className="empty-subtitle">
             {t('no_completed_questions_found', { business: selectedBusiness })}
-         </p>
+          </p>
         </div>
       </div>
     );

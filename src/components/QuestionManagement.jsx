@@ -23,7 +23,7 @@ const QuestionManagement = ({ onToast }) => {
 
 
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   const phases = ['initial', 'essential', 'advanced'];
@@ -401,12 +401,12 @@ const QuestionManagement = ({ onToast }) => {
             label: t('severity'),
             render: (val) => (
               <span className={`admin-status-badge ${val === 'mandatory' ? 'active' : 'inactive'}`}>
-  {val === "mandatory"
-    ? t("mandatory")
-    : val === "optional"
-    ? t("optional")
-    : val}
-</span>
+                {val === "mandatory"
+                  ? t("mandatory")
+                  : val === "optional"
+                    ? t("optional")
+                    : val}
+              </span>
             )
           },
           {
@@ -597,8 +597,8 @@ const EditQuestionModal = ({ question, onUpdate, onCancel, isUpdating }) => {
               </span>
               <span className="create-form__severity-text">
                 {formData.phase === 'initial'
-  ? t('initial_questions_mandatory')
-  : t('non_initial_optional')}
+                  ? t('initial_questions_mandatory')
+                  : t('non_initial_optional')}
               </span>
             </div>
           </div>
@@ -734,8 +734,8 @@ const CreateQuestionForm = ({ onSubmit, onCancel, isLoading }) => {
               </span>
               <span className="create-form__severity-text">
                 {formData.phase === 'initial'
-  ? t('initial_questions_mandatory')
-  : t('non_initial_optional')}
+                  ? t('initial_questions_mandatory')
+                  : t('non_initial_optional')}
               </span>
             </div>
           </div>

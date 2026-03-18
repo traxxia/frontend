@@ -57,7 +57,7 @@ const AuditTrail = ({ onToast }) => {
 
   const [selectedEntry, setSelectedEntry] = useState(null);
 
-  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 
   // Get current user role from session/token

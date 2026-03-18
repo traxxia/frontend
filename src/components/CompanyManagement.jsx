@@ -8,7 +8,7 @@ import AdminTable from './AdminTable';
 
 // ------------------ CompanyEdit Modal ------------------
 const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
-   const { t } = useTranslation();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     company_name: company.company_name,
     industry: company.industry || '',
@@ -19,7 +19,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const token = sessionStorage.getItem('token');
 
   const handleFileChange = (e) => {
@@ -214,7 +214,7 @@ const CompanyManagement = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   useEffect(() => {
@@ -270,17 +270,17 @@ const CompanyManagement = ({ onToast }) => {
 
   // Search
   const filteredCompanies = companies.filter((company) => {
-  const search = searchTerm.toLowerCase();
+    const search = searchTerm.toLowerCase();
 
-  return (
-    company.company_name?.toLowerCase().includes(search) ||
-    company.admin_name?.toLowerCase().includes(search) ||
-    company.admin_email?.toLowerCase().includes(search) ||
-    company.industry?.toLowerCase().includes(search) ||
-    company.size?.toLowerCase().includes(search) ||
-    company.status?.toLowerCase().includes(search)
-  );
-});
+    return (
+      company.company_name?.toLowerCase().includes(search) ||
+      company.admin_name?.toLowerCase().includes(search) ||
+      company.admin_email?.toLowerCase().includes(search) ||
+      company.industry?.toLowerCase().includes(search) ||
+      company.size?.toLowerCase().includes(search) ||
+      company.status?.toLowerCase().includes(search)
+    );
+  });
 
   useEffect(() => {
     if (!searchTerm) return;
