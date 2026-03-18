@@ -4,11 +4,22 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package.json and lock file
-COPY ../package*.json ./
+COPY package*.json ./
 RUN npm install
 
 # Copy all frontend files
-COPY .. .
+COPY . .
+
+# Pass build arguments to invalidate cache and inject variables
+ARG REACT_APP_BACKEND_URL
+ARG REACT_APP_ML_BACKEND_URL
+ARG REACT_APP_ENABLE_PMF
+ARG REACT_APP_AI_CHAT_URL
+
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+ENV REACT_APP_ML_BACKEND_URL=$REACT_APP_ML_BACKEND_URL
+ENV REACT_APP_ENABLE_PMF=$REACT_APP_ENABLE_PMF
+ENV REACT_APP_AI_CHAT_URL=$REACT_APP_AI_CHAT_URL
 
 # Build the production React app
 RUN npm run build
