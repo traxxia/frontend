@@ -30,7 +30,7 @@ const UserOverview = ({ onToast }) => {
   });
   const [currentPage, setCurrentPage] = useState(1);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   // Validation function for individual fields

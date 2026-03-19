@@ -30,7 +30,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 // Constants
 const ITEMS_PER_PAGE = 10;
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Utility functions
 const getAuthToken = () => sessionStorage.getItem('token');

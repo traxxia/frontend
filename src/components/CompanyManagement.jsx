@@ -20,7 +20,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const token = sessionStorage.getItem('token');
 
   const handleFileChange = (e) => {
@@ -274,7 +274,7 @@ const CompanyManagement = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem('token');
 
   useEffect(() => {
