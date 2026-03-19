@@ -563,7 +563,7 @@ export class AnalysisApiService {
     this.clearPhaseData(phase, stateSetters);
 
     try {
-      const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+      const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
 
       const payload = {
         questions,
@@ -900,7 +900,7 @@ export class AnalysisApiService {
           this.excelAnalysisCache = null;
         }
 
-        const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+        const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
 
         const payload = {
           questions,
@@ -1008,9 +1008,9 @@ export class AnalysisApiService {
   async generateStrategicAnalysis(questions, answers, selectedBusinessId) {
     const performGeneration = async (isRetry = false) => {
       try {
-        // Fetch fresh conversation data to ensure we have the absolute latest answers
+        // Fetch fresh answers data to ensure we have the absolute latest answers
         // especially when called immediately after bulk updates
-        const { freshAnswers } = await this.getFreshConversationData(selectedBusinessId);
+        const { freshAnswers } = await this.getFreshAnswersData(selectedBusinessId);
         const combinedAnswers = { ...answers, ...freshAnswers };
 
         const { questionsArray, answersArray } = this.prepareQuestionsAndAnswers(questions, combinedAnswers);
@@ -1057,7 +1057,43 @@ export class AnalysisApiService {
     }
   }
 
-  // Fetch fresh conversation data
+  // Fetch fresh answers data from the new collection
+  async getFreshAnswersData(selectedBusinessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/answers/business/${selectedBusinessId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch fresh answers data');
+      }
+
+      const { data } = await response.json();
+      const freshAnswers = {};
+      const freshCompletedSet = new Set();
+
+      data?.forEach(answerDoc => {
+        const questionId = String(answerDoc.question_id);
+        const answerText = answerDoc.answer;
+
+        if (answerText && answerText.trim()) {
+          freshCompletedSet.add(questionId);
+          freshAnswers[questionId] = answerText.trim();
+        }
+      });
+
+      return { freshAnswers, freshCompletedSet };
+    } catch (error) {
+      console.error('Error fetching fresh answers data:', error);
+      return { freshAnswers: {}, freshCompletedSet: new Set() };
+    }
+  }
+
+  // Fetch fresh conversation data (Legacy - kept for compatibility if needed elsewhere, but not used for analysis)
   async getFreshConversationData(selectedBusinessId) {
     try {
       const token = this.getAuthToken();
