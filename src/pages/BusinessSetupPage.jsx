@@ -383,25 +383,27 @@ const BusinessSetupPage = () => {
           }
 
           // Fetch answers from the new Answers API to get answer IDs and ensure accurate data in the Advanced tab
-          try {
-            const answersResponse = await answerService.getAnswersByBusiness(selectedBusinessId);
-            if (answersResponse && Array.isArray(answersResponse.data)) {
-              const newAnswersMap = {};
-              const newAnswerIdsMap = {};
-              answersResponse.data.forEach(ans => {
-                if (ans.question_id && ans.answer) {
-                  const qIdStr = String(ans.question_id);
-                  newAnswersMap[qIdStr] = ans.answer;
-                  newAnswerIdsMap[qIdStr] = ans._id;
+          if (activeTab === 'advanced') {
+            try {
+              const answersResponse = await answerService.getAnswersByBusiness(selectedBusinessId);
+              if (answersResponse && Array.isArray(answersResponse.data)) {
+                const newAnswersMap = {};
+                const newAnswerIdsMap = {};
+                answersResponse.data.forEach(ans => {
+                  if (ans.question_id && ans.answer) {
+                    const qIdStr = String(ans.question_id);
+                    newAnswersMap[qIdStr] = ans.answer;
+                    newAnswerIdsMap[qIdStr] = ans._id;
+                  }
+                });
+                if (Object.keys(newAnswersMap).length > 0) {
+                  setUserAnswers(prev => ({ ...prev, ...newAnswersMap }));
+                  setAnswerIds(newAnswerIdsMap);
                 }
-              });
-              if (Object.keys(newAnswersMap).length > 0) {
-                setUserAnswers(prev => ({ ...prev, ...newAnswersMap }));
-                setAnswerIds(newAnswerIdsMap);
               }
+            } catch (ansError) {
+              console.error('Error loading answers from answerService:', ansError);
             }
-          } catch (ansError) {
-            console.error('Error loading answers from answerService:', ansError);
           }
         }
         setQuestionsLoaded(true);
