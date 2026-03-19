@@ -254,6 +254,7 @@ export const staticTranslations = {
     "country_cannot_contain_only_spaces": "empty spaces not allowed",
     "city_cannot_contain_only_spaces": "empty spaces not allowed",
     "Action Restricted": "Action Restricted",
+    "Numeric_values_not_allowed":"Numeric values not allowed.",
     "For security and policy reasons, you can only delete one business every 30 days.": "For security and policy reasons, you can only delete one business every 30 days.",
     "You cannot delete by 30 days. Please wait 30 more day(s).": "You cannot delete by 30 days. Please wait 30 more day(s).",
     'create_new_company': 'Create New Company',
@@ -2023,6 +2024,7 @@ export const staticTranslations = {
     "description_no_continuous_spaces": "La descripción no puede contener espacios continuos.",
     "city_cannot_contain_only_spaces": "No se permiten espacios vacíos.",
     "country_cannot_contain_only_spaces": "No se permiten espacios vacíos.",
+    "Numeric_values_not_allowed":"No se permiten valores numéricos.",
     // ===========================
     // PÁGINA DE DETALLE DEL NEGOCIO
     // ===========================

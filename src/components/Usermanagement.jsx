@@ -140,7 +140,7 @@ const UserManagement = ({ onToast }) => {
     } else if (newName.trim().length < 3) {
       newErrors.name = t("Name_must_be_atleast3_characters_long");
     }
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z]+\.[a-zA-Z]{3,}$/;
     if (!newEmail.trim()) {
       newErrors.email = t("Email_is_required");
     } else if (!emailPattern.test(newEmail)) {

@@ -384,7 +384,10 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
       errors.city = t('city_min_length');
     } else if (cityTrimmed.length > 20) {
       errors.city = t('city_max_length');
-    } else if (cityHasSpecialChars) {
+    } 
+    else if (/\d/.test(cityTrimmed)) {  
+      errors.city = "Numeric values not allowed.";
+    }else if (cityHasSpecialChars) {
       errors.city = t('city_cannot_contain_special_characters');
     }
 
@@ -398,7 +401,10 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
       errors.country = t('country_min_length');
     } else if (countryTrimmed.length > 20) {
       errors.country = t('country_max_length');
-    } else if (countryHasSpecialChars) {
+    } else if (/\d/.test(countryTrimmed)) {  
+      errors.country = t('Numeric_values_not_allowed');
+    
+    }else if (countryHasSpecialChars) {
       errors.country = t('country_cannot_contain_special_characters');
     }
 
