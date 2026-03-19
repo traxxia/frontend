@@ -2,9 +2,9 @@ name: TRAXXIA Frontend CI
 
 on:
   push:
-    branches: [main]
+    branches: [deployment]
   pull_request:
-    branches: [main]
+    branches: [deployment]
 
 env:
   IMAGE_NAME: traxxia_prod_frontend
