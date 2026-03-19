@@ -19,6 +19,35 @@ import { validateRationale } from "../utils/validation";
 import { callMLRankingAPI } from "../services/aiRankingService";
 import { Checkbox } from "lucide-react"; // Import Checkbox icon if needed or use native
 
+/* ---------- PROJECT FILTERING HELPERS ---------- */
+const isLaunched = (p) => {
+  const ls = p?.launch_status?.toLowerCase();
+  return ls === 'launched' || ls === 'pending_launch';
+};
+
+const isActiveStatus = (p) => {
+  const s = p?.status?.toLowerCase();
+  return ["active", "at risk", "paused"].includes(s);
+};
+
+const isTerminalStatus = (p) => {
+  const s = p?.status?.toLowerCase();
+  return ["killed", "completed", "scaled"].includes(s);
+};
+
+const isKilled = (p) => p?.status?.toLowerCase() === 'killed';
+
+// Projects that are "live" or in active development (Active, Launched, etc.)
+const isMandatoryOrActive = (p) => (isLaunched(p) || isActiveStatus(p)) && !isTerminalStatus(p);
+
+// Projects that MUST be ranked (Collaborators see AI ranked ones too)
+const isMandatoryForCollaborator = (p) =>
+  ((p.ai_rank !== null && p.ai_rank !== undefined) || isLaunched(p) || isActiveStatus(p)) &&
+  !isTerminalStatus(p);
+
+// Projects that are considered "Draft" or "Unlaunched"
+const isDraftProject = (p) => !isLaunched(p) && !isActiveStatus(p) && !isTerminalStatus(p);
+
 /* ---------- RATIONALE TOGGLE (UI ONLY) ---------- */
 function RationaleToggle({ eventKey, children }) {
   const decoratedOnClick = useAccordionButton(eventKey);
@@ -61,13 +90,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
       console.log(projects)
       // For collaborators, we show projects that have an AI rank OR are targeted for launch (launched/pending)
       // OR are Active/At Risk/Paused, and are not in terminal states.
-      const mandatoryProjects = projects.filter(p =>
-        ((p.ai_rank !== null && p.ai_rank !== undefined) ||
-          p.launch_status?.toLowerCase() === 'launched' ||
-          p.launch_status?.toLowerCase() === 'pending_launch' ||
-          ["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
-        !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
-      );
+      const mandatoryProjects = projects.filter(isMandatoryForCollaborator);
 
       const sortedMandatory = [...mandatoryProjects].sort((a, b) => {
         // Primary: use 'rank' (manual ranking)
@@ -92,25 +115,12 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     }
 
     // Filter projects by launch_status: launched/pending_launch = mandatory, unlaunched/draft = optional
-    const active = projects.filter(p =>
-      (p.launch_status?.toLowerCase() === 'launched' ||
-        p.launch_status?.toLowerCase() === 'pending_launch' ||
-        ["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
-      !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
-    );
-    const draft = projects.filter(p =>
-      !p.launch_status ||
-      (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch')
-    );
 
     // For step 2, we use whatever is selected (excluding killed projects)
     if (step === 2) {
       const selectedProjects = projects.filter(p =>
-        (p.launch_status?.toLowerCase() === 'launched' ||
-          p.launch_status?.toLowerCase() === 'pending_launch' ||
-          ["active", "at risk", "paused"].includes(p.status?.toLowerCase()) ||
-          selectedDraftIds.includes(p._id)) &&
-        !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
+        (isMandatoryOrActive(p) || selectedDraftIds.includes(p._id)) &&
+        !isTerminalStatus(p)
       );
 
       const sorted = [...selectedProjects].sort((a, b) => {
@@ -134,28 +144,18 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
     }
   }, [projects, step, selectedDraftIds, isAdmin]);
 
-  const activeProjects = useMemo(() => projects.filter(p =>
-    (p.launch_status?.toLowerCase() === 'launched' ||
-      p.launch_status?.toLowerCase() === 'pending_launch' ||
-      ["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
-    !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
-  ), [projects]);
+  const activeProjects = useMemo(() => projects.filter(isMandatoryOrActive), [projects]);
 
-  const draftProjects = useMemo(() => projects.filter(p =>
-    (p.launch_status?.toLowerCase() !== 'launched' &&
-      p.launch_status?.toLowerCase() !== 'pending_launch' &&
-      !["active", "at risk", "paused"].includes(p.status?.toLowerCase())) &&
-    !["killed", "completed", "scaled"].includes(p.status?.toLowerCase())
-  ), [projects]);
+  const draftProjects = useMemo(() => projects.filter(isDraftProject), [projects]);
 
   useEffect(() => {
     if (projects && projects.length > 0 && step === 1) {
       const rankedDraftIds = projects
-        .filter(p => (p.launch_status?.toLowerCase() !== 'launched' && p.launch_status?.toLowerCase() !== 'pending_launch') && p.rank !== null && p.rank !== undefined)
+        .filter(p => !isLaunched(p) && p.rank !== null && p.rank !== undefined)
         .map(p => p._id);
 
       // Check if ALL non-killed projects are ranked
-      const allEligibleProjects = projects.filter(p => p.status?.toLowerCase() !== 'killed');
+      const allEligibleProjects = projects.filter(p => !isKilled(p));
 
       const unrankedProjects = allEligibleProjects.filter(p =>
         p.rank === null || p.rank === undefined
