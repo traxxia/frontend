@@ -2,13 +2,13 @@ name: TRAXXIA Frontend CI
 
 on:
   push:
-    branches: [deployment]
+    branches: [QA]
   pull_request:
-    branches: [deployment]
+    branches: [QA]
 
 env:
-  IMAGE_NAME: traxxia_prod_frontend
-  REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_NAME: traxxia_QA_frontend
+  REGISTRY: ${{ secrets.QA_ACR_LOGIN_SERVER }}
 
 jobs:
   docker:
@@ -24,27 +24,27 @@ jobs:
 
       - name: Debug ENV
         run: |
-          echo "BACKEND=${{ vars.REACT_APP_BACKEND_URL }}"
-          echo "ML=${{ vars.REACT_APP_ML_BACKEND_URL }}"
-          echo "STRIPE=${{ vars.REACT_APP_STRIPE_PUBLISHABLE_KEY }}"
+          echo "BACKEND=${{ vars.QA_APP_BACKEND_URL }}"
+          echo "ML=${{ vars.QA_APP_ML_BACKEND_URL }}"
+          echo "STRIPE=${{ vars.QA_APP_STRIPE_PUBLISHABLE_KEY }}"
 
       - name: Log in to ACR
         uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          registry: ${{ secrets.QA_ACR_LOGIN_SERVER }}
+          username: ${{ secrets.QA_ACR_USERNAME }}
+          password: ${{ secrets.QA_ACR_PASSWORD }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Generate .env for Docker Build
         run: |
-          echo "REACT_APP_BACKEND_URL=${{ vars.REACT_APP_BACKEND_URL }}" >> .env
-          echo "REACT_APP_ML_BACKEND_URL=${{ vars.REACT_APP_ML_BACKEND_URL }}" >> .env
-          echo "REACT_APP_ENABLE_PMF=${{ vars.REACT_APP_ENABLE_PMF }}" >> .env
-          echo "REACT_APP_AI_CHAT_URL=${{ vars.REACT_APP_AI_CHAT_URL }}" >> .env
-          echo "REACT_APP_STRIPE_PUBLISHABLE_KEY=${{ vars.REACT_APP_STRIPE_PUBLISHABLE_KEY }}" >> .env
+          echo "REACT_APP_BACKEND_URL=${{ vars.QA_APP_BACKEND_URL }}" >> .env
+          echo "REACT_APP_ML_BACKEND_URL=${{ vars.QA_APP_ML_BACKEND_URL }}" >> .env
+          echo "REACT_APP_ENABLE_PMF=${{ vars.QA_APP_ENABLE_PMF }}" >> .env
+          echo "REACT_APP_AI_CHAT_URL=${{ vars.QA_APP_AI_CHAT_URL }}" >> .env
+          echo "REACT_APP_STRIPE_PUBLISHABLE_KEY=${{ vars.QA_APP_STRIPE_PUBLISHABLE_KEY }}" >> .env
 
       - name: Build & push Docker image
         uses: docker/build-push-action@v5
@@ -54,9 +54,9 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
-            ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}
+            ${{ secrets.QA_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.QA_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}
 
       - name: Output image tag
         run: |
-          echo "Image pushed: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}"
+          echo "Image pushed: ${{ secrets.QA_ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.IMAGE_VERSION }}"
