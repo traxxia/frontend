@@ -4,6 +4,7 @@ import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Act
 import "../styles/usermanagement.css";
 import UpgradeModal from "./UpgradeModal";
 import PlanLimitModal from "./PlanLimitModal";
+import ErrorModal from "./ErrorModal";
 import axios from "axios";
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from "./AdminTable";
@@ -48,6 +49,9 @@ const UserManagement = ({ onToast }) => {
   // Plan Limit Modal state
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [planLimitConfig, setPlanLimitConfig] = useState({ title: '', message: '', subMessage: '' });
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalConfig, setErrorModalConfig] = useState({ title: '', message: '' });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -553,6 +557,12 @@ const UserManagement = ({ onToast }) => {
                     subMessage: t("essential_plan_add_user_msg") || "The Essential plan does not support adding users. Please upgrade your plan to add users."
                   });
                   setShowPlanLimitModal(true);
+                } else if (userPlan === "advanced" && collaboratorsCount >= 3) {
+                  setErrorModalConfig({
+                    title: t("Alert") || "Alert",
+                    message: t("exhausted_plan_collaborators_msg") || "You have exhausted the plan by adding three collaborators"
+                  });
+                  setShowErrorModal(true);
                 } else {
                   handleOpenModal();
                 }
@@ -611,9 +621,7 @@ const UserManagement = ({ onToast }) => {
             onChange={handleRoleChange}
           >
             <option value="All Roles">{t("All_Roles")}</option>
-            {currentRole !== "company_admin" && (
-              <option value="Org Admin">{t("Org_Admin")}</option>
-            )}
+            <option value="Org Admin">{t("Org_Admin")}</option>
             <option value="Collaborator">{t("Collaborator")}</option>
             <option value="User">{t("User")}</option>
             <option value="Viewer">{t("Viewer")}</option>
@@ -826,6 +834,13 @@ const UserManagement = ({ onToast }) => {
         title={planLimitConfig.title}
         message={planLimitConfig.message}
         subMessage={planLimitConfig.subMessage}
+      />
+      <ErrorModal
+        show={showErrorModal}
+        handleClose={() => setShowErrorModal(false)}
+        title={errorModalConfig.title}
+        message={errorModalConfig.message}
+        buttonText="OK"
       />
     </div>
   );

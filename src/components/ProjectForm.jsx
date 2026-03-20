@@ -682,6 +682,10 @@ const ProjectForm = ({
       allowSpecialChars: ['.', ',', '-', '$', 'K', 'M']
     });
 
+    const depValidation = validateField('Dependencies', dependencies || '', { minLength: 10 });
+    const hlValidation = validateField('Constraints / Non-Negotiables', highLevelReq || '', { minLength: 10 });
+    const scopeValidation = validateField('Explicitly Out of Scope', scope || '', { minLength: 10 });
+    const outcomeValidation = validateField('Expected Outcome', outcome || '', { minLength: 10 });
     const smValidation = validateField('Success Metrics (KPIs)', successMetrics || '', { minLength: 10 });
 
     const errors = {
@@ -694,10 +698,10 @@ const ProjectForm = ({
       killCriteria: killValidation.isValid ? null : t(killValidation.message),
       budget: budgetValidation.isValid ? null : t(budgetValidation.message),
       status: (status && status.trim()) ? null : t("Status_is_required"),
-      dependencies: validateField('Dependencies', dependencies || '', { minLength: 10 }).isValid ? null : t(validateField('Dependencies', dependencies || '', { minLength: 10 }).message),
-      highLevelReq: validateField('Constraints / Non-Negotiables', highLevelReq || '', { minLength: 10 }).isValid ? null : t(validateField('Constraints / Non-Negotiables', highLevelReq || '', { minLength: 10 }).message),
-      scope: validateField('Explicitly Out of Scope', scope || '', { minLength: 10 }).isValid ? null : t(validateField('Explicitly Out of Scope', scope || '', { minLength: 10 }).message),
-      outcome: validateField('Expected Outcome', outcome || '', { minLength: 10 }).isValid ? null : t(validateField('Expected Outcome', outcome || '', { minLength: 10 }).message),
+      dependencies: depValidation.isValid ? null : t(depValidation.message),
+      highLevelReq: hlValidation.isValid ? null : t(hlValidation.message),
+      scope: scopeValidation.isValid ? null : t(scopeValidation.message),
+      outcome: outcomeValidation.isValid ? null : t(outcomeValidation.message),
       successMetrics: smValidation.isValid ? null : t(smValidation.message),
     };
 

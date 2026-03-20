@@ -182,36 +182,38 @@ export const useProjectForm = () => {
     const hasTooManyConsecutiveSpecial = (val) => /[^A-Za-z0-9\s]{5,}/.test(val);
 
     const validateField = (val, fieldKey, options = {}) => {
-      const { minLength = 3, label = "Field" } = options;
+      const { minLength = 3, label = "Field", required = false } = options;
       const trimmed = (val || "").trim();
 
-      if (isEmpty(trimmed)) {
+      if (required && isEmpty(trimmed)) {
         newErrors[fieldKey] = t(`${label} is required`);
-      } else if (trimmed.length < minLength) {
-        newErrors[fieldKey] = t(`${label} must be at least ${minLength} characters`);
-      } else if (!hasLetter(trimmed)) {
-        newErrors[fieldKey] = t(`${label} must contain at least one letter`);
-      } else if (hasTooManyConsecutiveNumbers(trimmed)) {
-        newErrors[fieldKey] = t("Too many consecutive numbers are not allowed");
-      } else if (hasTooManyConsecutiveSpecial(trimmed)) {
-        newErrors[fieldKey] = t("Too many consecutive special characters are not allowed");
+      } else if (!isEmpty(trimmed)) {
+        if (trimmed.length < minLength) {
+          newErrors[fieldKey] = t(`${label} must be at least ${minLength} characters`);
+        } else if (!hasLetter(trimmed)) {
+          newErrors[fieldKey] = t(`${label} must contain at least one letter`);
+        } else if (hasTooManyConsecutiveNumbers(trimmed)) {
+          newErrors[fieldKey] = t("Too many consecutive numbers are not allowed");
+        } else if (hasTooManyConsecutiveSpecial(trimmed)) {
+          newErrors[fieldKey] = t("Too many consecutive special characters are not allowed");
+        }
       }
     };
 
-    validateField(projectName, "projectName", { label: "Project name", minLength: 3 });
-    validateField(description, "description", { label: "Description", minLength: 10 });
-    validateField(importance, "importance", { label: "Why This Matters", minLength: 10 });
-    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 3 });
-    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2 });
-    validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10 });
-    validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10 });
+    validateField(projectName, "projectName", { label: "Project name", minLength: 3, required: true });
+    validateField(description, "description", { label: "Description", minLength: 10, required: true });
+    validateField(importance, "importance", { label: "Why This Matters", minLength: 10, required: true });
+    validateField(strategicDecision, "strategicDecision", { label: "Strategic Decision", minLength: 3, required: true });
+    validateField(accountableOwner, "accountableOwner", { label: "Accountable Owner", minLength: 2, required: true });
+    validateField(successCriteria, "successCriteria", { label: "Success criteria", minLength: 10, required: true });
+    validateField(killCriteria, "killCriteria", { label: "Kill criteria", minLength: 10, required: true });
 
-    // Additional fields requested by user
-    validateField(dependencies, "dependencies", { label: "Dependencies", minLength: 10 });
-    validateField(highLevelReq, "highLevelReq", { label: "Constraints / Non-Negotiables", minLength: 10 });
-    validateField(scope, "scope", { label: "Explicitly Out of Scope", minLength: 10 });
-    validateField(outcome, "outcome", { label: "Expected Outcome", minLength: 10 });
-    validateField(successMetrics, "successMetrics", { label: "Success Metrics (KPIs)", minLength: 10 });
+    // Additional fields requested by user (Now optional)
+    validateField(dependencies, "dependencies", { label: "Dependencies", minLength: 10, required: false });
+    validateField(highLevelReq, "highLevelReq", { label: "Constraints / Non-Negotiables", minLength: 10, required: false });
+    validateField(scope, "scope", { label: "Explicitly Out of Scope", minLength: 10, required: false });
+    validateField(outcome, "outcome", { label: "Expected Outcome", minLength: 10, required: false });
+    validateField(successMetrics, "successMetrics", { label: "Success Metrics (KPIs)", minLength: 10, required: false });
 
     // Key Assumptions (Array)
     keyAssumptions.forEach((assumption, index) => {

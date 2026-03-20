@@ -30,6 +30,7 @@ export const staticTranslations = {
     'upgrade_to_assign_collaborators': 'Upgrade to Assign Collaborators',
     'essential_plan_add_user_msg': 'The Essential plan does not support adding users. Please upgrade your plan to add users.',
     'upgrade_to_add_users': 'Upgrade to Add Users',
+    'exhausted_plan_collaborators_msg': 'You have exhausted the plan by adding three collaborators',
     'upgrade_plan': 'Upgrade Plan',
     'execution_upgrade_title': 'Execution Engine Locked',
     'execution_upgrade_msg': 'Upgrade to Execute Strategy',
@@ -1104,11 +1105,11 @@ export const staticTranslations = {
     // ===========================
     'User_Management': 'User Management',
     'Add_and_manage_organization_collaborators_and_viewers': 'Add and manage organization collaborators and viewers',
-    'Search_by_name_or_email': 'Search by name, email address, or company.',
+    'Search_by_name_or_email': 'Search by name, email, or company.',
     'All_Roles': 'All Roles',
     'business_overview': 'Business Overview',
     'business_overview_subtitle': 'View and manage all businesses, their owners, collaborators, and current stages.',
-    'search_by_business_owner': 'Search by business, owner name or email...',
+    'search_by_business_owner': 'Search by business,name or email.',
     'owner': 'Owner',
     'stage': 'Stage',
     'created': 'Created',
@@ -1910,6 +1911,7 @@ export const staticTranslations = {
     'redirecting_login': 'Redirigiendo al inicio de sesión...',
     'creating': 'Creando...',
     'oops': '¡Ups!',
+    'exhausted_plan_collaborators_msg': 'Has agotado el plan al añadir tres colaboradores.',
     'You_must_agree_to_the_Terms_&_Conditions_and_Privacy_Policy_to_proceed': 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para continuar',
 
     // Validación de Registro
