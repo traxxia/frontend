@@ -55,31 +55,32 @@ const PhaseTabsComponent = ({
   const getPhaseSpecificOptions = (phase) => {
     const baseOptions = {
       initial: [
-        "SWOT",
-        "Purchase Criteria",
-        "Channel Heatmap",
-        "Loyalty/NPS",
-        "Capability Heatmap",
-        "Porter's Five Forces",
-        "PESTEL Analysis"
+        "swot_analysis",
+        "Porters_Five_Forces",
+        "PESTEL_Analysis",
+        "Purchase_Criteria",
+        "Loyalty_&_NPS"
       ],
       essential: [
-        "Full SWOT Portfolio",
-        "Customer Segmentation",
-        "Competitive Advantage",
-        "Channel Effectiveness",
-        "Capability Heatmap",
-        "Strategic Goals",
-        "Strategic Positioning Radar",
-        "Organizational Culture Profile",
-        "Productivity Metrics",
-        "Maturity Score"
+        "Productivity_Metrics",
+        "Porters_Five_Forces",
+        "PESTEL_Analysis",
+        "Full_SWOT_Portfolio",
+        "Strategic_Positioning_Radar",
+        "Purchase_Criteria",
+        "Loyalty_&_NPS",
+        "Competitive_Advantage_Matrix",
+        "Capability_Heatmap",
+        "Maturity_Score",
+        "Competitive_Landscape",
+        "Core"
       ],
       good: [
-        "Cost Efficiency Insight",
-        "Financial Performance & Growth Trajectory",
-        "Financial Health Insight",
-        "Operational Efficiency Insight"
+        "Profitability_Analysis",
+        "Growth_Tracker",
+        "Liquidity_Efficiency",
+        "Investment_Performance",
+        "Leverage_Risk"
       ]
     };
 
@@ -232,7 +233,7 @@ const PhaseTabsComponent = ({
                             selectedPhase === 'essential' ? "#f59e0b" : "#3b82f6",
                         flexShrink: 0
                       }}></span>
-                      {item}
+                      {t(item)}
                     </div>
                   ))}
 

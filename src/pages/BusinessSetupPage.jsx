@@ -47,23 +47,23 @@ const CARD_TO_CATEGORY_MAP = {
 };
 
 const CARD_ID_MAP = {
-  "SWOT Analysis": "swot",
-  "Purchase Criteria": "purchase-criteria",
-  "Loyalty/NPS": "loyalty-nps",
-  "Porter's Five Forces": "porters",
-  "PESTEL Analysis": "pestel",
-  "Full SWOT Portfolio": "full-swot",
-  "Competitive Advantage": "competitive-advantage",
-  "Capability Heatmap": "expanded-capability",
-  "Strategic Positioning Radar": "strategic-radar",
-  "Productivity Metrics": "productivity",
-  "Maturity Score": "maturity",
-  "Profitability Analysis": "profitability-analysis",
-  "Growth Tracker": "growth-tracker",
-  "Liquidity & Efficiency": "liquidity-efficiency",
-  "Investment Performance": "investment-performance",
-  "Leverage & Risk": "leverage-risk",
-  "Competitive Landscape": "competitive-landscape",
+  "swot_analysis": "swot",
+  "Purchase_Criteria": "purchase-criteria",
+  "Loyalty_&_NPS": "loyalty-nps",
+  "Porters_Five_Forces": "porters",
+  "PESTEL_Analysis": "pestel",
+  "Full_SWOT_Portfolio": "full-swot",
+  "Competitive_Advantage_Matrix": "competitive-advantage",
+  "Capability_Heatmap": "expanded-capability",
+  "Strategic_Positioning_Radar": "strategic-radar",
+  "Productivity_Metrics": "productivity",
+  "Maturity_Score": "maturity",
+  "Profitability_Analysis": "profitability-analysis",
+  "Growth_Tracker": "growth-tracker",
+  "Liquidity_Efficiency": "liquidity-efficiency",
+  "Investment_Performance": "investment-performance",
+  "Leverage_Risk": "leverage-risk",
+  "Competitive_Landscape": "competitive-landscape",
   "Core": "core-adjacency",
 };
 
@@ -132,7 +132,7 @@ const BusinessSetupPage = () => {
   const [highlightedCard, setHighlightedCard] = useState(null);
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [shouldScrollToUpload, setShouldScrollToUpload] = useState(false);
-  const [selectedDropdownValue, setSelectedDropdownValue] = useState("Go to Section");
+  const [selectedDropdownValue, setSelectedDropdownValue] = useState(t("Go_to_Section"));
   const hasLoadedAnalysis = useRef(false);
   const streamingManager = useStreamingManager();
   const [showProjectsTab, setShowProjectsTab] = useState(false);
@@ -855,7 +855,7 @@ const BusinessSetupPage = () => {
 
   const handleOptionClick = (option) => {
     setShowDropdown(false);
-    setSelectedDropdownValue(option);
+    setSelectedDropdownValue(t(option));
     const cardId = CARD_ID_MAP[option];
     if (cardId) {
       handleScrollToSection(cardId);
@@ -951,23 +951,23 @@ const BusinessSetupPage = () => {
 
     const categoryOptions = {
       initial: {
-        "Context/Industry": ["SWOT Analysis", "Porter's Five Forces", "PESTEL Analysis"],
-        "Customer": ["Purchase Criteria", "Loyalty/NPS"]
+        "Context/Industry": ["swot_analysis", "Porters_Five_Forces", "PESTEL_Analysis"],
+        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS"]
       },
       essential: {
-        "Costs/Financial": ["Productivity Metrics"],
-        "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
-        "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
-        "Capabilities": ["Capability Heatmap", "Maturity Score"],
-        "Competition": ["Competitive Landscape"],
+        "Costs/Financial": ["Productivity_Metrics"],
+        "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
+        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
+        "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
+        "Competition": ["Competitive_Landscape"],
         "Current Strategy": ["Core"]
       },
       advanced: {
-        "Costs/Financial": ["Productivity Metrics"],
-        "Context/Industry": ["Full SWOT Portfolio", "Strategic Positioning Radar", "Porter's Five Forces", "PESTEL Analysis"],
-        "Customer": ["Competitive Advantage", "Purchase Criteria", "Loyalty/NPS"],
-        "Capabilities": ["Capability Heatmap", "Maturity Score"],
-        "Competition": ["Competitive Landscape"],
+        "Costs/Financial": ["Productivity_Metrics"],
+        "Context/Industry": ["Porters_Five_Forces", "PESTEL_Analysis", "Full_SWOT_Portfolio", "Strategic_Positioning_Radar"],
+        "Customer": ["Purchase_Criteria", "Loyalty_&_NPS", "Competitive_Advantage_Matrix"],
+        "Capabilities": ["Capability_Heatmap", "Maturity_Score"],
+        "Competition": ["Competitive_Landscape"],
         "Current Strategy": ["Core"]
       }
     };
@@ -975,8 +975,8 @@ const BusinessSetupPage = () => {
     // If a document is uploaded, always add financial options regardless of phase
     if (unlockedFeatures.hasDocument) {
       const financialOptions = [
-        "Profitability Analysis", "Growth Tracker", "Liquidity & Efficiency",
-        "Investment Performance", "Leverage & Risk"
+        "Profitability_Analysis", "Growth_Tracker", "Liquidity_Efficiency",
+        "Investment_Performance", "Leverage_Risk"
       ];
 
       // Add to current phase
@@ -1193,7 +1193,7 @@ const BusinessSetupPage = () => {
                                     handleOptionClick(item);
                                   }} className="dropdown-option dropdown-sub-option">
                                     <span className="bullet"></span>
-                                    {item}
+                                    {t(item)}
                                   </div>
                                 ))}
                               </div>
@@ -1429,7 +1429,7 @@ const BusinessSetupPage = () => {
                                           handleOptionClick(item);
                                         }} className="dropdown-option dropdown-sub-option">
                                           <span className="bullet"></span>
-                                          {item}
+                                          {t(item)}
                                         </div>
                                       ))}
                                     </div>
