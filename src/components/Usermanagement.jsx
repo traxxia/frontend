@@ -166,7 +166,7 @@ const UserManagement = ({ onToast }) => {
     if (!confirmPassword) {
       newErrors.confirmPassword = t("confirm_password_required");
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = t("Passwords_do_not_match");
+      newErrors.confirmPassword = t("Passwords do not match");
     }
     if (isSuperAdmin && !selectedCompanyId) {
       newErrors.company = t("Company_is_required");
@@ -631,7 +631,7 @@ const UserManagement = ({ onToast }) => {
 
       {/* --- Modals Stay Same --- */}
       {/* --- Add New User Modal --- */}
-      <Modal show={showModal} onHide={handleCloseModal} centered size="lg" className="new-user-modal">
+      <Modal show={showModal} onHide={handleCloseModal} centered scrollable size="lg" className="new-user-modal">
         <Modal.Header closeButton>
           <Modal.Title>{t("New_user")}</Modal.Title>
         </Modal.Header>

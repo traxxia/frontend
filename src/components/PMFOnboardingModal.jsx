@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Modal, Form, Button, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight, Clock, HelpCircle } from 'lucide-react';
 import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
@@ -62,6 +62,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     usageContext: ''
   });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState(null);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   const loadingMessages = [
@@ -422,6 +423,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const handleSubmit = async () => {
     try {
+      setApiError(null);
       setIsSubmitting(true);
       setSubmissionStep(1); // Saving data
 
@@ -514,12 +516,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       handleClose();
     } catch (error) {
       console.error("Error during PMF onboarding submission:", error);
-      const errorMsg = t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
-      if (onToastMessage) {
-        onToastMessage(errorMsg, "error");
-      } else {
-        alert(errorMsg);
+      let backendError = error.response?.data?.error;
+      if (!backendError && error.message && error.message.includes("already started pmf")) {
+        backendError = error.message;
       }
+      const errorMsg = backendError || t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
+      setApiError(errorMsg);
     } finally {
       setIsSubmitting(false);
       setSubmissionStep(0);
@@ -531,6 +533,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   const handleClose = () => {
     if (isSubmitting) return;
 
+    setApiError(null);
     setCurrentStep(1);
     setFormData({
       companyName: '',
@@ -1361,6 +1364,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             />
           </div>
         </div>
+
+        {apiError && (
+            <Alert variant="danger" onClose={() => setApiError(null)} dismissible className="mt-3 mb-4">
+                {apiError}
+            </Alert>
+        )}
 
         {renderStepContent()}
         {isSubmitting && (

@@ -108,7 +108,13 @@ export class AnalysisApiService {
         },
         body: JSON.stringify({ businessId, onboardingData })
       });
-      return await response.json();
+      const data = await response.json();
+      if (!response.ok) {
+        const err = new Error(data.error || 'Failed to save PMF onboarding data');
+        err.response = { data };
+        throw err;
+      }
+      return data;
     } catch (error) {
       console.error('Error saving PMF onboarding data:', error);
       throw error;
