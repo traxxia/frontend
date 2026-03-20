@@ -209,7 +209,7 @@ const AnalysisContentManager = (props) => {
     swot: {
       slug: "swot",
       component: SwotAnalysis,
-      title: "SWOT Analysis",
+      title: t("swot_analysis"),
       description: "Comprehensive strengths, weaknesses, opportunities, and threats analysis",
       category: "context-industry",
       dataKey: "swotAnalysisResult",

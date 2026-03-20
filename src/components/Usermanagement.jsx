@@ -3,6 +3,8 @@ import { Row, Col, Card, Form, Button, Dropdown, Modal, Alert } from "react-boot
 import { Crown, UserCog, User, ShieldCheck, MoreVertical, Plus, Eye, EyeOff, Activity, Users, Shield, History } from "lucide-react";
 import "../styles/usermanagement.css";
 import UpgradeModal from "./UpgradeModal";
+import PlanLimitModal from "./PlanLimitModal";
+import ErrorModal from "./ErrorModal";
 import axios from "axios";
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from "./AdminTable";
@@ -43,6 +45,14 @@ const UserManagement = ({ onToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const { t } = useTranslation();
+
+  // Plan Limit Modal state
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [planLimitConfig, setPlanLimitConfig] = useState({ title: '', message: '', subMessage: '' });
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalConfig, setErrorModalConfig] = useState({ title: '', message: '' });
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -134,7 +144,7 @@ const UserManagement = ({ onToast }) => {
     } else if (newName.trim().length < 3) {
       newErrors.name = t("Name_must_be_atleast3_characters_long");
     }
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z]+\.[a-zA-Z]{3,}$/;
     if (!newEmail.trim()) {
       newErrors.email = t("Email_is_required");
     } else if (!emailPattern.test(newEmail)) {
@@ -156,7 +166,7 @@ const UserManagement = ({ onToast }) => {
     if (!confirmPassword) {
       newErrors.confirmPassword = t("confirm_password_required");
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = t("Passwords_do_not_match");
+      newErrors.confirmPassword = t("Passwords do not match");
     }
     if (isSuperAdmin && !selectedCompanyId) {
       newErrors.company = t("Company_is_required");
@@ -339,18 +349,18 @@ const UserManagement = ({ onToast }) => {
   };
 
   const filteredUsers = users.filter((user) => {
-  const search = searchTerm.toLowerCase();
+    const search = searchTerm.toLowerCase();
 
-  const matchSearch =
-    user.name?.toLowerCase().includes(search) ||
-    user.email?.toLowerCase().includes(search) ||
-    user.company_name?.toLowerCase().includes(search); 
+    const matchSearch =
+      user.name?.toLowerCase().includes(search) ||
+      user.email?.toLowerCase().includes(search) ||
+      user.company_name?.toLowerCase().includes(search);
 
-  const uiRole = formatRole(user.role_name || user.role);
-  const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
+    const uiRole = formatRole(user.role_name || user.role);
+    const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
 
-  return matchSearch && matchRole;
-});
+    return matchSearch && matchRole;
+  });
 
   useEffect(() => {
     if (!searchTerm && selectedRole === "All Roles") return;
@@ -479,15 +489,21 @@ const UserManagement = ({ onToast }) => {
             <Dropdown>
               <Dropdown.Toggle as={CustomToggle} disabled={disabled} />
               <Dropdown.Menu align="end">
-                <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
-                  <UserCog size={16} className="me-2" /> {t("Collaborator")}
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
-                  <User size={16} className="me-2" /> {t("Viewer")}
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
-                  <ShieldCheck size={16} className="me-2" /> {t("User")}
-                </Dropdown.Item>
+                {row.role_name?.toLowerCase() !== "collaborator" && (
+                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("collaborator"); setShowConfirm(true); }}>
+                    <UserCog size={16} className="me-2" /> {t("Collaborator")}
+                  </Dropdown.Item>
+                )}
+                {row.role_name?.toLowerCase() !== "viewer" && (
+                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("viewer"); setShowConfirm(true); }}>
+                    <User size={16} className="me-2" /> {t("Viewer")}
+                  </Dropdown.Item>
+                )}
+                {row.role_name?.toLowerCase() !== "user" && (
+                  <Dropdown.Item onClick={() => { setPendingUserId(row._id); setPendingRole("user"); setShowConfirm(true); }}>
+                    <ShieldCheck size={16} className="me-2" /> {t("User")}
+                  </Dropdown.Item>
+                )}
               </Dropdown.Menu>
             </Dropdown>
           </>
@@ -506,12 +522,14 @@ const UserManagement = ({ onToast }) => {
           icon={Users}
           iconColor="blue"
         />
-        <MetricCard
-          label={t("org_admins")}
-          value={orgAdminsCount}
-          icon={Crown}
-          iconColor="purple"
-        />
+        {currentRole !== "company_admin" && (
+          <MetricCard
+            label={t("org_admins")}
+            value={orgAdminsCount}
+            icon={Crown}
+            iconColor="purple"
+          />
+        )}
         <MetricCard
           label={t("Collaborators")}
           value={collaboratorsCount}
@@ -531,10 +549,38 @@ const UserManagement = ({ onToast }) => {
         <div className="d-flex gap-2 ms-auto">
           {!isSuperAdmin && (
             <>
-              <Button className="admin-primary-btn" onClick={() => (userPlan === "essential" ? setShowUpgradeModal(true) : handleOpenModal())}>
+              <Button className="admin-primary-btn" onClick={() => {
+                if (userPlan === "essential") {
+                  setPlanLimitConfig({
+                    title: t("plan_limit_reached") || "Plan Limit Reached",
+                    message: t("upgrade_to_add_users") || "Upgrade to Add Users",
+                    subMessage: t("essential_plan_add_user_msg") || "The Essential plan does not support adding users. Please upgrade your plan to add users."
+                  });
+                  setShowPlanLimitModal(true);
+                } else if (userPlan === "advanced" && collaboratorsCount >= 3) {
+                  setErrorModalConfig({
+                    title: t("Alert") || "Alert",
+                    message: t("exhausted_plan_collaborators_msg") || "You have exhausted the plan by adding three collaborators"
+                  });
+                  setShowErrorModal(true);
+                } else {
+                  handleOpenModal();
+                }
+              }}>
                 <Plus size={16} /> {t("Add_User")}
               </Button>
-              <Button className="admin-secondary-btn" onClick={() => (userPlan === 'essential' ? setShowUpgradeModal(true) : handleOpenAssignModal())}>
+              <Button className="admin-secondary-btn" onClick={() => {
+                if (userPlan === 'essential') {
+                  setPlanLimitConfig({
+                    title: t("plan_limit_reached") || "Plan Limit Reached",
+                    message: t("upgrade_to_assign_collaborators") || "Upgrade to Assign Collaborators",
+                    subMessage: t("essential_plan_assign_collab_msg") || "The Essential plan does not support assigning collaborators. Please upgrade your plan to assign collaborators."
+                  });
+                  setShowPlanLimitModal(true);
+                } else {
+                  handleOpenAssignModal();
+                }
+              }}>
                 <UserCog size={16} /> {t("Assign_Collaborator")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
@@ -585,7 +631,7 @@ const UserManagement = ({ onToast }) => {
 
       {/* --- Modals Stay Same --- */}
       {/* --- Add New User Modal --- */}
-      <Modal show={showModal} onHide={handleCloseModal} centered size="lg" className="new-user-modal">
+      <Modal show={showModal} onHide={handleCloseModal} centered scrollable size="lg" className="new-user-modal">
         <Modal.Header closeButton>
           <Modal.Title>{t("New_user")}</Modal.Title>
         </Modal.Header>
@@ -605,7 +651,10 @@ const UserManagement = ({ onToast }) => {
                     value={newEmail}
                     onChange={(e) => {
                       setNewEmail(e.target.value);
-                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      const newErrors = { ...errors };
+                      if (newErrors.email) delete newErrors.email;
+                      if (newErrors.apiError) delete newErrors.apiError;
+                      setErrors(newErrors);
                     }}
                     isInvalid={!!errors.email}
                   />
@@ -621,7 +670,10 @@ const UserManagement = ({ onToast }) => {
                     value={newName}
                     onChange={(e) => {
                       setNewName(e.target.value);
-                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      const newErrors = { ...errors };
+                      if (newErrors.name) delete newErrors.name;
+                      if (newErrors.apiError) delete newErrors.apiError;
+                      setErrors(newErrors);
                     }}
                     isInvalid={!!errors.name}
                   />
@@ -638,7 +690,10 @@ const UserManagement = ({ onToast }) => {
                       value={newPassword}
                       onChange={(e) => {
                         setNewPassword(e.target.value);
-                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                        const newErrors = { ...errors };
+                        if (newErrors.password) delete newErrors.password;
+                        if (newErrors.apiError) delete newErrors.apiError;
+                        setErrors(newErrors);
                       }}
                       isInvalid={!!errors.password}
                     />
@@ -659,7 +714,10 @@ const UserManagement = ({ onToast }) => {
                       value={confirmPassword}
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
-                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                        const newErrors = { ...errors };
+                        if (newErrors.confirmPassword) delete newErrors.confirmPassword;
+                        if (newErrors.apiError) delete newErrors.apiError;
+                        setErrors(newErrors);
                       }}
                       isInvalid={!!errors.confirmPassword}
                     />
@@ -678,7 +736,10 @@ const UserManagement = ({ onToast }) => {
                     value={newRole}
                     onChange={(e) => {
                       setNewRole(e.target.value);
-                      if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                      const newErrors = { ...errors };
+                      if (newErrors.role) delete newErrors.role;
+                      if (newErrors.apiError) delete newErrors.apiError;
+                      setErrors(newErrors);
                     }}
                     isInvalid={!!errors.role}
                   >
@@ -703,7 +764,10 @@ const UserManagement = ({ onToast }) => {
                       value={selectedCompanyId}
                       onChange={(e) => {
                         setSelectedCompanyId(e.target.value);
-                        if (errors.apiError) setErrors(prev => ({ ...prev, apiError: "" }));
+                        const newErrors = { ...errors };
+                        if (newErrors.company) delete newErrors.company;
+                        if (newErrors.apiError) delete newErrors.apiError;
+                        setErrors(newErrors);
                       }}
                       isInvalid={!!errors.company}
                     >
@@ -764,7 +828,20 @@ const UserManagement = ({ onToast }) => {
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered dialogClassName="compact-confirm-modal"><Modal.Header closeButton><Modal.Title>{t("Confirm_Role_Change")}</Modal.Title></Modal.Header><Modal.Body><p>{t("Change_role_to")} <strong>{t(pendingRole?.charAt(0).toUpperCase() + pendingRole?.slice(1))}</strong>?</p></Modal.Body><Modal.Footer><Button variant="light" onClick={() => setShowConfirm(false)}>{t("cancel")}</Button><Button variant="primary" onClick={() => { handleRoleUpdate(pendingUserId, pendingRole); setShowConfirm(false); }}>{t("Yes_Change_Role")}</Button></Modal.Footer></Modal>
 
       <UpgradeModal show={showUpgradeModal} onHide={() => setShowUpgradeModal(false)} onUpgradeSuccess={() => fetchUsers()} />
-
+      <PlanLimitModal
+        show={showPlanLimitModal}
+        onHide={() => setShowPlanLimitModal(false)}
+        title={planLimitConfig.title}
+        message={planLimitConfig.message}
+        subMessage={planLimitConfig.subMessage}
+      />
+      <ErrorModal
+        show={showErrorModal}
+        handleClose={() => setShowErrorModal(false)}
+        title={errorModalConfig.title}
+        message={errorModalConfig.message}
+        buttonText="OK"
+      />
     </div>
   );
 };

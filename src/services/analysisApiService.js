@@ -108,7 +108,13 @@ export class AnalysisApiService {
         },
         body: JSON.stringify({ businessId, onboardingData })
       });
-      return await response.json();
+      const data = await response.json();
+      if (!response.ok) {
+        const err = new Error(data.error || 'Failed to save PMF onboarding data');
+        err.response = { data };
+        throw err;
+      }
+      return data;
     } catch (error) {
       console.error('Error saving PMF onboarding data:', error);
       throw error;
@@ -237,6 +243,22 @@ export class AnalysisApiService {
     } catch (error) {
       console.error('Error fetching business:', error);
       throw error;
+    }
+  }
+
+  async getEligibleOwners(businessId) {
+    try {
+      const token = this.getAuthToken();
+      const response = await fetch(`${this.API_BASE_URL}/api/businesses/${businessId}/eligible-owners`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) return { eligible_owners: [] };
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching eligible owners:', error);
+      return { eligible_owners: [] };
     }
   }
 

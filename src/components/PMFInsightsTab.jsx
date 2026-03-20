@@ -9,12 +9,15 @@ import {
 } from "lucide-react";
 import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
+import { Modal } from "react-bootstrap";
 
 
 const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger }) => {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [overwrittenBy, setOverwrittenBy] = useState("");
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -37,9 +40,48 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
       }
 
       try {
-        setLoading(true);
+        setLoading(prev => (data ? false : true)); // Only show spinner on first load
         const result = await analysisService.getPMFAnalysis(businessId);
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+
+          // --- OVERWRITE DETECTION (AHA Page) ---
+          if (result && result.user_id) {
+            const currentUserId = sessionStorage.getItem("userId");
+            const bId = String(businessId);
+            const expectedUserId = localStorage.getItem(`pmf_expecting_my_data_${bId}`);
+
+            if (expectedUserId) {
+              const getStrId = (val) => {
+                if (!val) return "";
+                if (typeof val === 'string') return val.toLowerCase().trim();
+                if (val.$oid) return val.$oid.toLowerCase().trim();
+                return String(val).toLowerCase().trim();
+              };
+
+              const dbUserId = getStrId(result.user_id);
+              const expUserId = getStrId(expectedUserId);
+              const currentUser = getStrId(currentUserId);
+
+              // Condition for overwrite:
+              // 1. We expected our own data (flag matches us)
+              // 2. Data in DB belongs to someone else
+              if (dbUserId && expUserId === currentUser && dbUserId !== currentUser) {
+                console.info("PMF Overwrite TRIGGERED", { dbUserId, currentUser });
+                try {
+                  const eligibleRes = await analysisService.getEligibleOwners(bId);
+                  const users = eligibleRes.eligible_owners || [];
+                  const updater = users.find(u => getStrId(u._id || u.id) === dbUserId);
+                  setOverwrittenBy(updater ? (updater.name || updater.email) : t("another user"));
+                } catch (e) {
+                  setOverwrittenBy(t("another user"));
+                }
+                setShowOverwriteModal(true);
+              }
+            }
+          }
+          // --- END OVERWRITE DETECTION ---
+        }
       } catch (error) {
         console.error("PMFInsightsTab: Error fetching insights:", error);
       } finally {
@@ -49,7 +91,17 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
 
     fetchInsights();
 
-    return () => { cancelled = true; };
+    // Background check every 30 seconds for concurrent overwrites
+    const interval = setInterval(() => {
+      if (!showOverwriteModal) {
+        fetchInsights();
+      }
+    }, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBusinessId, refreshTrigger]);
 
@@ -215,6 +267,48 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
           )}
         </Row>
       </Container>
+
+      {/* Overwrite Notification Modal */}
+      <Modal
+        show={showOverwriteModal}
+        onHide={() => setShowOverwriteModal(false)}
+        centered
+        size="sm"
+        className="pmf-overwrite-modal"
+      >
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold fs-6 text-dark">
+            {t("Update Notification")}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-2 pb-3 px-3">
+          <div className="d-flex align-items-center gap-3 mb-3">
+            <div className="icon-box bg-warning-subtle rounded-circle p-2 flex-shrink-0">
+              <AlertCircle size={20} color="#92400e" />
+            </div>
+            <p className="mb-0 fs-6 text-dark" style={{ lineHeight: '1.4' }}>
+              {t("Your PMF onboarding was updated by")} <strong>{overwrittenBy}</strong>
+            </p>
+          </div>
+          <div className="text-center">
+            <Button
+              variant="primary"
+              size="sm"
+              className="px-4 rounded-3 fw-semibold"
+              onClick={() => {
+                setShowOverwriteModal(false);
+                const bId = String(selectedBusinessId || sessionStorage.getItem('activeBusinessId'));
+                if (bId) {
+                  localStorage.removeItem(`pmf_expecting_my_data_${bId}`);
+                  localStorage.removeItem(`pmf_last_submission_${bId}`);
+                }
+              }}
+            >
+              {t("OK")}
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
@@ -261,6 +355,46 @@ const StyleSheet = () => (
     .text-warning { color: #92400e !important; }
     .text-danger { color: #991b1b !important; }
     .text-primary { color: #1e40af !important; }
+
+    /* Compact Overwrite Modal Styles */
+    .pmf-overwrite-modal .modal-content {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    @media (min-width: 576px) {
+      .pmf-overwrite-modal .modal-dialog {
+        max-width: 380px;
+      }
+    }
+
+    /* Compact Overwrite Modal Styles */
+.pmf-overwrite-modal .modal-dialog {
+  max-width: 380px;
+}
+
+.pmf-overwrite-modal .modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.pmf-overwrite-modal .modal-body {
+  height: auto !important;
+  min-height: unset !important;
+}
+
+.pmf-overwrite-modal .modal-header {
+  padding-bottom: 0.5rem;
+}
+
+.pmf-overwrite-modal .modal-body p {
+  margin-bottom: 0;
+}
   `}</style>
 );
 

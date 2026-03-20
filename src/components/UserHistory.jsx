@@ -66,7 +66,6 @@ const UserHistory = ({ onToast }) => {
   const handleRoleChange = (e) => {
     const value = e.target.value;
     setSelectedRole(value);
-    setCurrentPage(1);
     applyFilters(searchTerm, value);
   };
 
@@ -125,7 +124,7 @@ const UserHistory = ({ onToast }) => {
     if (isInitialized) loadUsers(selectedCompany);
   }, [selectedCompany, isInitialized]);
 
-  const applyFilters = (searchValue, roleValue) => {
+  const applyFilters = useCallback((searchValue, roleValue) => {
     const search = searchValue.toLowerCase();
 
     let filtered = users.filter(u =>
@@ -141,19 +140,11 @@ const UserHistory = ({ onToast }) => {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [users]);
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-
-    const search = value.toLowerCase();
-
-    const filtered = users.filter(u =>
-      u.name?.toLowerCase().includes(search) ||
-      u.email?.toLowerCase().includes(search) ||
-      u.company_name?.toLowerCase().includes(search)
-    );
-    setFilteredUsers(filtered);
+    applyFilters(value, selectedRole);
   };
 
   const loadUserHistory = async (userId, businessId = null) => {
@@ -242,7 +233,10 @@ const UserHistory = ({ onToast }) => {
   ];
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  // Visual clamping: if current page is out of bounds due to filters, show the last page
+  // but keep the state variable high so it restores when filter is cleared.
+  const displayPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+  const paginatedUsers = filteredUsers.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
   return (
     <div className="user-history-redesign">
@@ -258,7 +252,7 @@ const UserHistory = ({ onToast }) => {
         onSearchChange={handleSearch}
         searchPlaceholder={t('search_by_name_email_company')}
         searchTooltip={t('search_user_history_tooltip')}
-        currentPage={currentPage}
+        currentPage={displayPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
         totalItems={filteredUsers.length}

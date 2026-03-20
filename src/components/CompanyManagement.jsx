@@ -17,6 +17,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
   const [logoPreview, setLogoPreview] = useState(company.logo);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
@@ -40,6 +41,49 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    // Validation
+    const newErrors = {};
+    const name = formData.company_name.trim();
+    const industry = formData.industry.trim();
+    const size = formData.size;
+
+    if (!name) {
+      newErrors.company_name = t('company_name_cannot_be_empty');
+    } else if (name.length < 3) {
+      newErrors.company_name = "Company name must be at least 3 characters";
+    } else if (!/[A-Za-z]/.test(name)) {
+      newErrors.company_name = "Company name must contain at least one letter";
+    } else if (/[0-9]{5,}/.test(name)) {
+      newErrors.company_name = "Too many consecutive numbers are not allowed";
+    } else if (/[^A-Za-z0-9\s]{5,}/.test(name)) {
+      newErrors.company_name = "Too many consecutive special characters are not allowed";
+    } else if (name.length > 100) {
+      newErrors.company_name = "Company name cannot exceed 100 characters";
+    }
+
+    if (industry) {
+      if (!/[A-Za-z]/.test(industry)) {
+        newErrors.industry = "Industry must contain at least one letter";
+      } else if (/[0-9]{5,}/.test(industry)) {
+        newErrors.industry = "Too many consecutive numbers are not allowed";
+      } else if (/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{5,}/.test(industry)) {
+        newErrors.industry = "Too many consecutive special characters are not allowed";
+      } else if (industry.length > 100) {
+        newErrors.industry = "Industry cannot exceed 100 characters";
+      }
+    }
+
+    if (!size) {
+      newErrors.size = t("please_select_company_size");
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setIsSaving(true);
 
     try {
@@ -153,13 +197,18 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
           </div>
 
           <div className="form-group">
-            <label>{t("company_name")}</label>
+            <label>{t("company_name")} *</label>
             <input
               type="text"
               value={formData.company_name}
-              onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, company_name: e.target.value });
+                if (errors.company_name) setErrors({ ...errors, company_name: null });
+              }}
+              className={errors.company_name ? 'error-input' : ''}
               required
             />
+            {errors.company_name && <span className="error-text">{errors.company_name}</span>}
           </div>
 
           <div className="form-group">
@@ -167,17 +216,27 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
             <input
               type="text"
               value={formData.industry}
-              onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, industry: e.target.value });
+                if (errors.industry) setErrors({ ...errors, industry: null });
+              }}
+              className={errors.industry ? 'error-input' : ''}
             />
+            {errors.industry && <span className="error-text">{errors.industry}</span>}
           </div>
 
           <div className="form-group">
-            <label>{t("size")}</label>
+            <label>{t("size")} *</label>
             <select
               value={formData.size}
-              onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, size: e.target.value });
+                if (errors.size) setErrors({ ...errors, size: null });
+              }}
+              className={errors.size ? 'error-input' : ''}
+              required
             >
-              <option value="">{t("Select Size")}</option>
+              <option value="" disabled>{t("Select Size")}</option>
               <option value="1-10">{t("1-10 employees")}</option>
               <option value="11-50">{t("11-50 employees")}</option>
               <option value="51-200">{t("51-200 employees")}</option>
@@ -185,6 +244,7 @@ const CompanyEditModal = ({ company, onClose, onSave, onToast }) => {
               <option value="501-1000">{t("501-1000 employees")}</option>
               <option value="1000+">{t("1000+ employees")}</option>
             </select>
+            {errors.size && <span className="error-text">{errors.size}</span>}
           </div>
 
           <div className="modal-footer">
