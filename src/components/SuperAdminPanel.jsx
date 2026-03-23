@@ -105,7 +105,7 @@ const SuperAdminPanel = () => {
     },
     {
       id: "plans",
-      label: t('plan management') || "Plan Management",
+      label: t('Plan management') || "Plan Management",
       icon: ClipboardList,
       superAdminOnly: true,
     }

@@ -107,7 +107,7 @@ const SubscriptionTab = ({ onToast }) => {
             key: 'details',
             label: t('details') || 'Details',
             render: (_, row) => (
-                <span className="text-capitalize fw-medium">{row.plan_name} plan</span>
+                <span className="text-capitalize fw-medium">{row.plan_name} {t('plan') || 'plan'}</span>
             )
         },
         {
@@ -125,31 +125,30 @@ const SubscriptionTab = ({ onToast }) => {
                 <Col md={12}>
 
                     {/* Subscription Info Banner */}
-                    {currentPlanName !== 'unlimited' && (
-                        <div className="subscription-info-banner mb-4">
-                            <div className="banner-item">
-                                <span className="banner-label">{t("current_plan") || "Current Plan"}</span>
-                                <span className="banner-value text-capitalize">{t(currentPlanName) || currentPlanName}</span>
-                            </div>
-                            <div className="banner-divider"></div>
-                            <div className="banner-item">
-                                <span className="banner-label">{t("expires_at") || "Renewal Date"}</span>
-                                <div className="d-flex align-items-center gap-2">
-                                    <Calendar size={14} className="text-muted" />
-                                    <span className="banner-value">{new Date(subscription.end_date).toLocaleDateString()}</span>
-                                </div>
-                            </div>
-                            <div className="banner-divider"></div>
-                            <div className="banner-message-wrap">
-                                <div className="banner-message-icon">
-                                    <RefreshCw size={18} className="spin-slow" />
-                                </div>
-                                <div className="banner-message-text">
-                                    {t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() })}
-                                </div>
+                    {/* Subscription Info Banner */}
+                    <div className="subscription-info-banner mb-4">
+                        <div className="banner-item">
+                            <span className="banner-label">{t("current_plan") || "Current Plan"}</span>
+                            <span className="banner-value text-capitalize">{t(currentPlanName) || currentPlanName}</span>
+                        </div>
+                        <div className="banner-divider"></div>
+                        <div className="banner-item">
+                            <span className="banner-label">{t("expires_at") || "Renewal Date"}</span>
+                            <div className="d-flex align-items-center gap-2">
+                                <Calendar size={14} className="text-muted" />
+                                <span className="banner-value">{subscription.end_date ? new Date(subscription.end_date).toLocaleDateString() : 'N/A'}</span>
                             </div>
                         </div>
-                    )}
+                        <div className="banner-divider"></div>
+                        <div className="banner-message-wrap">
+                            <div className="banner-message-icon">
+                                <RefreshCw size={18} className="spin-slow" />
+                            </div>
+                            <div className="banner-message-text">
+                                {subscription.end_date ? t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() }) : t("subscription_active")}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Plan Section */}
                     <section id="subscription-plan" className="mb-4">
@@ -221,7 +220,7 @@ const SubscriptionTab = ({ onToast }) => {
                             />
                             <MetricCard
                                 label={t("projects") || "Projects"}
-                                value={`${usage.projects.current} / ${usage.projects.limit === 'unlimited' ? '∞' : usage.projects.limit}`}
+                                value={`${usage.projects.current} / ${usage.projects.limit ? '∞' : (usage.projects.max || 0)}`}
                                 icon={LayoutGrid}
                                 iconColor="orange"
                             />

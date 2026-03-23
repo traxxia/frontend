@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
 
 const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
+    const { t } = useTranslation();
     const features = plan.features && Array.isArray(plan.features) ? plan.features : [];
 
     return (
