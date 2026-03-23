@@ -5,6 +5,7 @@ import { useTranslation } from "../hooks/useTranslation";
 
 const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
     const features = plan.features && Array.isArray(plan.features) ? plan.features : [];
+    const { t } = useTranslation();
 
     return (
         <motion.div
