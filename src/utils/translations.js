@@ -1747,7 +1747,10 @@ export const staticTranslations = {
     "usd": "USD",
     "create_plan": "Create Plan",
     "edit_plan": "Edit Plan",
-    "plan_name": "Plan Name"
+    "plan_name": "Plan Name",
+    "plan_name_required": "Plan name is required",
+    "price_negative": "Price cannot be negative",
+    "limits_negative": "Limits cannot be negative"
 
 
   },
@@ -3498,7 +3501,10 @@ export const staticTranslations = {
     "usd": "USD",
     "create_plan": "Crear Plan",
     "edit_plan": "Editar Plan",
-    "plan_name": "Nombre del Plan"
+    "plan_name": "Nombre del Plan",
+    "plan_name_required": "El nombre del plan es obligatorio",
+    "price_negative": "El precio no puede ser negativo",
+    "limits_negative": "Los límites no pueden ser negativos"
   }
 };
 

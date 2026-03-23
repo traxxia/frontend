@@ -87,16 +87,16 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
         if (formData.strategic) featuresList.push('Strategic Access');
         if (formData.pmf) featuresList.push('PMF Access');
         if (formData.pmf && formData.limit_projects) featuresList.push('Projects Access');
-        
+
         setFormData(prev => ({ ...prev, features: featuresList }));
     }, [
-        formData.workspace_limit, 
-        formData.limit_users, 
-        formData.limit_collaborators, 
-        formData.limit_viewers, 
-        formData.insight, 
-        formData.strategic, 
-        formData.pmf, 
+        formData.workspace_limit,
+        formData.limit_users,
+        formData.limit_collaborators,
+        formData.limit_viewers,
+        formData.insight,
+        formData.strategic,
+        formData.pmf,
         formData.limit_projects
     ]);
 
@@ -122,15 +122,15 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         // Basic validation
         if (!formData.name.trim()) {
-            onToast('Plan name is required', 'error');
+            onToast(t('plan_name_required') || 'Plan name is required', 'error');
             return;
         }
 
         if (Number(formData.price) < 0) {
-            onToast('Price cannot be negative', 'error');
+            onToast(t('price_negative') || 'Price cannot be negative', 'error');
             return;
         }
 
@@ -143,7 +143,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             (maxCollaborators !== undefined && maxCollaborators < 0) ||
             (maxViewers !== undefined && maxViewers < 0) ||
             (maxUsers !== undefined && maxUsers < 0)) {
-            onToast('Limits cannot be negative', 'error');
+            onToast(t('limits_negative') || 'Limits cannot be negative', 'error');
             return;
         }
 
@@ -190,7 +190,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                             />
                         </div>
                         <div className="col-md-6 plan-form-group">
-                            <label>{t('price') || 'Price'} ({t('usd') || 'USD'})</label>
+                            <label>{t('Price') || 'Price'} ({t('usd') || 'USD'})</label>
                             <input
                                 type="number"
                                 name="price"
@@ -218,11 +218,11 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                         </div>
                         <div className="col-md-6 plan-form-group">
                             <label className="mb-2">{t('features_preview') || 'Generated Features Preview'}</label>
-                            <div className="features-preview-list" style={{ 
-                                maxHeight: '150px', 
-                                overflowY: 'auto', 
-                                border: '1px solid #ddd', 
-                                borderRadius: '4px', 
+                            <div className="features-preview-list" style={{
+                                maxHeight: '150px',
+                                overflowY: 'auto',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
                                 padding: '12px',
                                 backgroundColor: '#f8f9fa'
                             }}>
@@ -250,8 +250,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 value={formData.period}
                                 onChange={handleChange}
                             >
-                                <option value="month">{t('month') || 'Month'}</option>
-                                <option value="year">{t('year') || 'Year'}</option>
+                                <option value="month">{t('Month') || 'Month'}</option>
+                                <option value="year">{t('Year') || 'Year'}</option>
                             </select>
                         </div>
                         <div className="col-md-6 plan-form-group d-flex align-items-end pb-2">
@@ -287,6 +287,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 value={formData.workspace_limit}
                                 onChange={handleChange}
                                 placeholder={`${t('eg') || 'e.g.'} 1`}
+                                min="0"
                             />
                         </div>
                         <div className="col-md-6 plan-form-group">
@@ -298,6 +299,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 value={formData.limit_users}
                                 onChange={handleChange}
                                 placeholder={`${t('eg') || 'e.g.'} 0`}
+                                min="0"
                             />
                         </div>
                     </div>
@@ -312,6 +314,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 value={formData.limit_collaborators}
                                 onChange={handleChange}
                                 placeholder={`${t('eg') || 'e.g.'} 0`}
+                                min="0"
                             />
                         </div>
                         <div className="col-md-6 plan-form-group">
@@ -323,6 +326,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 value={formData.limit_viewers}
                                 onChange={handleChange}
                                 placeholder={`${t('eg') || 'e.g.'} 0`}
+                                min="0"
                             />
                         </div>
                     </div>
@@ -385,12 +389,12 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                 </Modal.Footer>
             </form>
 
-            <Modal 
-                show={showStatusConfirm} 
-                onHide={cancelStatusChange} 
-                centered 
-                backdrop="static" 
-                dialogClassName="status-confirm-modal" 
+            <Modal
+                show={showStatusConfirm}
+                onHide={cancelStatusChange}
+                centered
+                backdrop="static"
+                dialogClassName="status-confirm-modal"
                 className="status-confirm-modal-container"
                 size="md"
             >
