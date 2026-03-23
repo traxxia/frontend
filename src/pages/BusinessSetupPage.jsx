@@ -25,6 +25,7 @@ import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
 import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
+import { getUserLimits } from '../utils/authUtils';
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -68,8 +69,6 @@ const CARD_ID_MAP = {
   "Core": "core-adjacency",
 };
 
-const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
-
 // Helper: turn a business name into a URL-safe slug
 const toSlug = (name = '') =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -79,6 +78,7 @@ const BusinessSetupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
+  const { pmf: ENABLE_PMF, insight: hasInsightAccess, strategic: hasStrategicAccess } = getUserLimits();
 
   // State management for business context
   const [currentBusiness, setCurrentBusiness] = useState(location.state?.business || null);
@@ -140,6 +140,8 @@ const BusinessSetupPage = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
   const [answerIds, setAnswerIds] = useState({}); // Mapping of question_id to answer document _id
+
+  // hasInsightAccess and hasStrategicAccess are now derived from getUserLimits() above (line 79)
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
@@ -1252,10 +1254,10 @@ const BusinessSetupPage = () => {
                     />
                   )}
 
-                  {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                  {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                     <button
                       onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                       className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                       title={t('RegenerateAll') || 'Regenerate All'}
                     >
@@ -1281,10 +1283,10 @@ const BusinessSetupPage = () => {
                       strategicData={strategicData}
                     />
                   )}
-                  {unlockedFeatures.analysis && (
+                  {unlockedFeatures.analysis && hasStrategicAccess && (
                     <button
                       onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
                       className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
                       title={t("regenerate") || "Regenerate Strategic Analysis"}
                     >
@@ -1342,14 +1344,12 @@ const BusinessSetupPage = () => {
                       {t("Projects")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
-                    <button
-                      className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
-                      onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
-                    >
-                      {t("Questions and Answers")}
-                    </button>
-                  )}
+                  <button
+                    className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
+                    onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
+                  >
+                    {t("Questions and Answers")}
+                  </button>
                   <button
                     className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
                     onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
@@ -1418,14 +1418,12 @@ const BusinessSetupPage = () => {
                           {t("Projects")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
-                        <button
-                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                          onClick={handleBriefTabClick}
-                        >
-                          {t("Questions and Answers")}
-                        </button>
-                      )}
+                      <button
+                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                        onClick={handleBriefTabClick}
+                      >
+                        {t("Questions and Answers")}
+                      </button>
 
                       <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
                         {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
@@ -1488,10 +1486,10 @@ const BusinessSetupPage = () => {
                             />
                           )}
 
-                          {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                          {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                             <button
                               onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                               className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                               title={t('RegenerateAll') || 'Regenerate All'}
                             >
@@ -1517,10 +1515,10 @@ const BusinessSetupPage = () => {
                               strategicData={strategicData}
                             />
                           )}
-                          {unlockedFeatures.analysis && (
+                          {unlockedFeatures.analysis && hasStrategicAccess && (
                             <button
                               onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
                               className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
                               title={t("regenerate") || "Regenerate Strategic Analysis"}
                             >
@@ -1553,7 +1551,7 @@ const BusinessSetupPage = () => {
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "advanced" && (
+                      {activeTab === "advanced" && (
                         <div className="brief-section">
                           <EditableBriefSection
                             selectedBusinessId={selectedBusinessId}
@@ -1586,7 +1584,8 @@ const BusinessSetupPage = () => {
                       {activeTab === "insights" &&
                         <AnalysisContentManager
                           {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons} />}
+                          canRegenerate={canShowRegenerateButtons}
+                          hasInsightAccess={hasInsightAccess} />}
                       {activeTab === "strategic" && (
                         <div className="strategic-section">
                           <StrategicAnalysis
@@ -1608,6 +1607,7 @@ const BusinessSetupPage = () => {
                             onKickstartProjects={() => setActiveTab("projects")}
                             hasProjectsTab={showProjectsTab}
                             onToastMessage={showToastMessage}
+                            hasStrategicAccess={hasStrategicAccess}
                           />
                         </div>
                       )}
@@ -1667,14 +1667,12 @@ const BusinessSetupPage = () => {
                         {t("Projects")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
-                      <button
-                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                        onClick={handleBriefTabClick}
-                      >
-                        {t("Questions and Answers")}
-                      </button>
-                    )}
+                    <button
+                      className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                      onClick={handleBriefTabClick}
+                    >
+                      {t("Questions and Answers")}
+                    </button>
                     <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
                       {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                     </button>

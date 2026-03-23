@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
+import { getUserLimits } from '../utils/authUtils';
 import {
   Loader,
   Target,
@@ -54,6 +55,7 @@ const StrategicAnalysis = ({
   hasProjectsTab = false,
   onToastMessage,
   hideKickstart = false,
+  hasStrategicAccess = true,
 }) => {
   const [userRole, setUserRole] = useState("");
 
@@ -68,7 +70,7 @@ const StrategicAnalysis = ({
   const { t } = useTranslation();
   const isExpanded = true;
 
-  const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
+  const ENABLE_PMF = getUserLimits().pmf;
 
   const [localStrategicData, setLocalStrategicData] = useState(null);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -2044,9 +2046,19 @@ const StrategicAnalysis = ({
               icon={Target}
               description={t("strategy_desc")}
             >
-              {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
-              {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
-              {renderResourcesPillar(recommendations.strategy_block.R_resources)}
+              {!hasStrategicAccess ? (
+                <div className="locked-analysis-placeholder" style={{ padding: '40px', textAlign: 'center', color: '#64748b', width: '100%', gridColumn: '1 / -1' }}>
+                  <Lock size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <p style={{ margin: 0, fontWeight: 500 }}>Access Restricted</p>
+                  <p style={{ fontSize: '12px', marginTop: '4px' }}>You do not have permission to view or regenerate this analysis. please upgrade your plan.</p>
+                </div>
+              ) : (
+                <>
+                  {renderStrategyPillar(recommendations.strategy_block.S_strategy)}
+                  {renderTacticsPillar(recommendations.strategy_block.T_tactics)}
+                  {renderResourcesPillar(recommendations.strategy_block.R_resources)}
+                </>
+              )}
             </CategorySection>
           </div>
         )}
@@ -2059,9 +2071,19 @@ const StrategicAnalysis = ({
               icon={CheckCircle}
               description={t("execution_desc")}
             >
-              {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
-              {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
-              {renderExecutionPillar(recommendations.execution_block.E_execution)}
+              {!hasStrategicAccess ? (
+                <div className="locked-analysis-placeholder" style={{ padding: '40px', textAlign: 'center', color: '#64748b', width: '100%', gridColumn: '1 / -1' }}>
+                  <Lock size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <p style={{ margin: 0, fontWeight: 500 }}>Access Restricted</p>
+                  <p style={{ fontSize: '12px', marginTop: '4px' }}>You do not have permission to view or regenerate this analysis. please upgrade your plan.</p>
+                </div>
+              ) : (
+                <>
+                  {renderAnalysisDataPillar(recommendations.execution_block.A_analysis_data)}
+                  {renderTechnologyPillar(recommendations.execution_block.T_technology_digitalization)}
+                  {renderExecutionPillar(recommendations.execution_block.E_execution)}
+                </>
+              )}
             </CategorySection>
           </div>
         )}
@@ -2074,9 +2096,19 @@ const StrategicAnalysis = ({
               icon={Shield}
               description={t("sustainability_desc")}
             >
-              {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
-              {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
-              {renderCulturePillar(recommendations.sustainability_block.C_culture)}
+              {!hasStrategicAccess ? (
+                <div className="locked-analysis-placeholder" style={{ padding: '40px', textAlign: 'center', color: '#64748b', width: '100%', gridColumn: '1 / -1' }}>
+                  <Lock size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <p style={{ margin: 0, fontWeight: 500 }}>Access Restricted</p>
+                  <p style={{ fontSize: '12px', marginTop: '4px' }}>You do not have permission to view or regenerate this analysis. please upgrade your plan .</p>
+                </div>
+              ) : (
+                <>
+                  {renderGovernancePillar(recommendations.sustainability_block.G_governance)}
+                  {renderInnovationPillar(recommendations.sustainability_block.I_innovation)}
+                  {renderCulturePillar(recommendations.sustainability_block.C_culture)}
+                </>
+              )}
             </CategorySection>
           </div>
         )}

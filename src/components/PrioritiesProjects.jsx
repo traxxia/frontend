@@ -7,6 +7,7 @@ import { AnalysisApiService } from "../services/analysisApiService";
 import { useTranslation } from "../hooks/useTranslation";
 import PlanLimitModal from "./PlanLimitModal";
 import "../styles/PrioritiesProjects.css";
+import { getUserLimits } from "../utils/authUtils";
 
 const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, onToastMessage, onStartOnboarding }) => {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     ""
   ).toLowerCase();
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+  const hasProjectsAccess = getUserLimits().can_create_projects === true;
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -141,7 +143,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   return (
     <div className="container my-4 priorities-container">
 
-      {isAdmin && (
+      {isAdmin && hasProjectsAccess && (
         <Card className="kickstart-card mb-4">
           <Card.Body className="d-flex justify-content-between align-items-center">
             <div>
@@ -185,7 +187,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   {/* TOP SECTION */}
   <div className="priority-top">
 
-    {isAdmin && (
+    {isAdmin && hasProjectsAccess && (
       <Form.Check
   type="checkbox"
   disabled={isAlreadyKickstarted || kickstarting}

@@ -4,10 +4,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from "../hooks/useTranslation";
 
 const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
-    const { t } = useTranslation();
-    const features = plan.name === 'Essential'
-        ? ['Full Strategic Insights', 'PMF Validation Flow', 'Unlimited Initiatives', '1 Workspace Limit (Single Business)']
-        : ['Everything in Essential', 'Up to 3 Workspaces', 'Convert Initiatives to Projects', '3 Collaborator Seats included', 'Execution Monitoring & Health Tracking'];
+    const features = plan.features && Array.isArray(plan.features) ? plan.features : [];
 
     return (
         <motion.div
@@ -21,7 +18,7 @@ const PricingPlanCard = ({ plan, isSelected, onSelect }) => {
                 <div className="plan-price">
                     <span className="currency">$</span>
                     <span className="amount">{plan.price || plan.price_usd}</span>
-                    <span className="period">/mo</span>
+                    <span className="period">/{plan.period === 'year' ? 'yr' : 'mo'}</span>
                 </div>
             </div>
             <p className="plan-desc">{t(plan.description)}</p>
