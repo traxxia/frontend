@@ -1463,10 +1463,7 @@ export const staticTranslations = {
     'Draft': 'Draft',
     'Testing': 'Testing',
     'Validated': 'Validated',
-    'Invalidated': 'Invalidated'
-  },
-
-
+    'Invalidated': 'Invalidated',
     "Rankings_View": "Rankings View",
     "Collaborator Progress": "Collaborator Progress",
     "Drag projects to reorder. AI suggested an initial order.": 'Drag projects to reorder. AI suggested an initial order.',
@@ -3169,9 +3166,7 @@ export const staticTranslations = {
     'Draft': 'Borrador',
     'Testing': 'Probando',
     'Validated': 'Validado',
-    'Invalidated': 'Invalidado'
-
-
+    'Invalidated': 'Invalidado',
     "Select_option": "Seleccionar opción",
     "Collaborator Progress": "Colaborador Progreso",
     "Drag projects to reorder. AI suggested an initial order.": 'Arrastre proyectos a reordenar. IA sugirió un orden inicial.',
