@@ -375,21 +375,27 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
 }
 
     // City validation (optional but if provided, must be valid)
-    const cityTrimmed = businessFormData.city.trim();
-    const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
+const cityTrimmed = businessFormData.city.trim();
+const cityHasSpecialChars = /[^a-zA-ZÀ-ÿ\s.-]/.test(cityTrimmed);
 
-    if (businessFormData.city && cityTrimmed.length === 0) {
-      errors.city = t('city_cannot_contain_only_spaces');
-    } else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
-      errors.city = t('city_min_length');
-    } else if (cityTrimmed.length > 20) {
-      errors.city = t('city_max_length');
-    } 
-    else if (/\d/.test(cityTrimmed)) {  
-      errors.city = "Numeric values not allowed.";
-    }else if (cityHasSpecialChars) {
-      errors.city = t('city_cannot_contain_special_characters');
-    }
+if (businessFormData.city && cityTrimmed.length === 0) {
+  errors.city = t('city_cannot_contain_only_spaces');
+} else if (cityTrimmed.length > 0 && cityTrimmed.length < 2) {
+  errors.city = t('city_min_length');
+} else if (cityTrimmed.length > 20) {
+  errors.city = t('city_max_length');
+} else {
+  const hasNumber = /\d/.test(cityTrimmed);  
+  const hasSpecial = cityHasSpecialChars;    
+
+  if (hasNumber && hasSpecial) {
+    errors.city = "Numeric and special characters are not allowed"; 
+  } else if (hasNumber) {
+    errors.city = "Numeric values not allowed.";
+  } else if (hasSpecial) {
+    errors.city = t('city_cannot_contain_special_characters');
+  }
+}
 
     // Country validation (optional but if provided, must be valid)
     const countryTrimmed = businessFormData.country.trim();
@@ -401,17 +407,36 @@ else if (/[^A-Za-z0-9\s]{5,}/.test(businessPurpose)) {
       errors.country = t('country_min_length');
     } else if (countryTrimmed.length > 20) {
       errors.country = t('country_max_length');
-    } else if (/\d/.test(countryTrimmed)) {  
-      errors.country = t('Numeric_values_not_allowed');
-    
-    }else if (countryHasSpecialChars) {
-      errors.country = t('country_cannot_contain_special_characters');
-    }
+    } else {
+  const hasNumber = /\d/.test(countryTrimmed);
+  const hasSpecial = countryHasSpecialChars;
 
+  if (hasNumber && hasSpecial) {
+    errors.country = "Numeric and special characters are not allowed";
+  } else if (hasNumber) {
+    errors.country = t('Numeric_values_not_allowed');
+  } else if (hasSpecial) {
+    errors.country = t('country_cannot_contain_special_characters');
+  }
+}
 
-    if (businessFormData.description && /\s{3,}/.test(businessFormData.description)) {
-      errors.description = t('description_no_continuous_spaces');
-    }
+    const description = businessFormData.description?.trim() || "";
+
+if (description.length < 10) {
+  errors.description = t('description_min_length');
+}
+else if (!/[A-Za-z]/.test(description)) {
+  errors.description = t('description_alphabetic_required');
+}
+else if (/[0-9]{5,}/.test(description)) {
+  errors.description = t('description_consecutive_numbers');
+}
+else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
+  errors.description = t('description_consecutive_special');
+}
+else if (/\s{3,}/.test(description)) {
+  errors.description = t('description_consecutive_spaces');
+}
 
 
     setFormErrors(errors);

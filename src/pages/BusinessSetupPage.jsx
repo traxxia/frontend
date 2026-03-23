@@ -1010,8 +1010,8 @@ const BusinessSetupPage = () => {
       // Add to current phase
       if (categoryOptions[phase]) {
         categoryOptions[phase]["Costs/Financial"] = [
-          ...(categoryOptions[phase]["Costs/Financial"] || []),
-          ...financialOptions
+          ...financialOptions,
+          ...(categoryOptions[phase]["Costs/Financial"] || [])
         ];
       }
     }
@@ -1215,7 +1215,7 @@ const BusinessSetupPage = () => {
                           {Object.entries(categoryOptions).map(([category, items]) =>
                             items.length > 0 && (
                               <div key={category}>
-                                <div className="dropdown-category-header">{category}</div>
+                                <div className="dropdown-category-header">{t(category)}</div>
                                 {items.map((item) => (
                                   <div key={item} onClick={() => {
                                     handleOptionClick(item);
@@ -1447,7 +1447,7 @@ const BusinessSetupPage = () => {
                                 {Object.entries(categoryOptions).map(([category, items]) =>
                                   items.length > 0 && (
                                     <div key={category}>
-                                      <div className="dropdown-category-header">{category}</div>
+                                      <div className="dropdown-category-header">{t(category)}</div>
                                       {items.map((item) => (
                                         <div key={item} onClick={() => {
                                           handleOptionClick(item);
