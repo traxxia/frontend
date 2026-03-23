@@ -82,5 +82,25 @@ export const answerService = {
             console.error('Error updating answer:', error);
             throw error;
         }
+    },
+
+    /**
+     * Batch creates multiple answers.
+     * @param {string} business_id 
+     * @param {Array} answers - Array of { question_id, answer }
+     */
+    async bulkCreateAnswers(business_id, answers) {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/api/answers/bulk`, {
+                business_id,
+                answers
+            }, {
+                headers: getAuthHeaders()
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error bulk creating answers:', error);
+            throw error;
+        }
     }
 };

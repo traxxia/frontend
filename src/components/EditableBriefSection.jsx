@@ -1177,29 +1177,57 @@ const EditableBriefSection = ({
         return;
       }
 
-      // 1. Save to the new answers collection (individual calls since no bulk endpoint)
+      // 1. Save to the new answers collection (using bulk create for new answers)
       const newAnswerIds = { ...answerIds };
       let idsUpdated = false;
 
-      await Promise.all(answersToSave.map(async (item) => {
+      const toCreate = [];
+      const toUpdate = [];
+
+      answersToSave.forEach(item => {
         const qIdStr = String(item.question_id);
         const existingId = answerIds[qIdStr];
+        if (existingId) {
+          toUpdate.push({ id: existingId, ...item });
+        } else {
+          toCreate.push(item);
+        }
+      });
+
+      // Handle bulk create for new answers
+      if (toCreate.length > 0) {
         try {
-          if (existingId) {
-            console.log(`[AI] Updating existing answer ${existingId} for question ${qIdStr}`);
-            await answerService.updateAnswer(existingId, item.answer_text);
-          } else {
-            console.log(`[AI] Creating new answer for question ${qIdStr}`);
-            const res = await answerService.createAnswer(selectedBusinessId, qIdStr, item.answer_text);
-            if (res && res.data && res.data._id) {
-              newAnswerIds[qIdStr] = res.data._id;
-              idsUpdated = true;
-            }
+          console.log(`[AI] Bulk creating ${toCreate.length} new answers`);
+          const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
+            question_id: item.question_id,
+            answer: item.answer_text
+          })));
+
+          if (bulkRes && bulkRes.data && bulkRes.data.insertedIds) {
+            toCreate.forEach((item, index) => {
+              const newId = bulkRes.data.insertedIds[index];
+              if (newId) {
+                newAnswerIds[String(item.question_id)] = newId;
+                idsUpdated = true;
+              }
+            });
           }
         } catch (err) {
-          console.error(`Failed to save answer for question ${qIdStr}:`, err);
+          console.error('Failed to bulk create answers:', err);
         }
-      }));
+      }
+
+      // Handle individual updates for existing answers
+      if (toUpdate.length > 0) {
+        await Promise.all(toUpdate.map(async (item) => {
+          try {
+            console.log(`[AI] Updating existing answer ${item.id} for question ${item.question_id}`);
+            await answerService.updateAnswer(item.id, item.answer_text);
+          } catch (err) {
+            console.error(`Failed to update answer for question ${item.question_id}:`, err);
+          }
+        }));
+      }
 
       if (idsUpdated && setAnswerIds) {
         setAnswerIds(newAnswerIds);
