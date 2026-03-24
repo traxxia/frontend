@@ -422,20 +422,22 @@ if (businessFormData.city && cityTrimmed.length === 0) {
 
     const description = businessFormData.description?.trim() || "";
 
-if (description.length < 10) {
-  errors.description = t('description_min_length');
-}
-else if (!/[A-Za-z]/.test(description)) {
-  errors.description = t('description_alphabetic_required');
-}
-else if (/[0-9]{5,}/.test(description)) {
-  errors.description = t('description_consecutive_numbers');
-}
-else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
-  errors.description = t('description_consecutive_special');
-}
-else if (/\s{3,}/.test(description)) {
-  errors.description = t('description_consecutive_spaces');
+if (description) {
+  if (description.length < 10) {
+    errors.description = t('description_min_length');
+  }
+  else if (!/[A-Za-z]/.test(description)) {
+    errors.description = t('description_alphabetic_required');
+  }
+  else if (/[0-9]{5,}/.test(description)) {
+    errors.description = t('description_consecutive_numbers');
+  }
+  else if (/[^A-Za-z0-9\s]{5,}/.test(description)) {
+    errors.description = t('description_consecutive_special');
+  }
+  else if (/\s{3,}/.test(description)) {
+    errors.description = t('description_consecutive_spaces');
+  }
 }
 
 
