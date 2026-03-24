@@ -1217,16 +1217,17 @@ const EditableBriefSection = ({
         }
       }
 
-      // Handle individual updates for existing answers
+      // Handle bulk updates for existing answers
       if (toUpdate.length > 0) {
-        await Promise.all(toUpdate.map(async (item) => {
-          try {
-            console.log(`[AI] Updating existing answer ${item.id} for question ${item.question_id}`);
-            await answerService.updateAnswer(item.id, item.answer_text);
-          } catch (err) {
-            console.error(`Failed to update answer for question ${item.question_id}:`, err);
-          }
-        }));
+        try {
+          console.log(`[AI] Bulk updating ${toUpdate.length} existing answers`);
+          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
+            answer_id: item.id,
+            answer: item.answer_text
+          })));
+        } catch (err) {
+          console.error('Failed to bulk update answers:', err);
+        }
       }
 
       if (idsUpdated && setAnswerIds) {
