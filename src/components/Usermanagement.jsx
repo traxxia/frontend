@@ -91,12 +91,22 @@ const UserManagement = ({ onToast }) => {
 
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const currentRole = sessionStorage.getItem("userRole");
+  const isAdmin = ["super_admin", "company_admin"].includes(currentRole?.toLowerCase());
   const userPlan = sessionStorage.getItem("userPlan");
   const isSuperAdmin = currentRole === "super_admin";
-  const hasPlan = userPlan === 'essential' || userPlan === 'advanced';
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [usage, setUsage] = useState(null);
+
+  const fetchPlanDetails = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_URL}/api/subscription/plan-details`);
+      setUsage(res.data.usage);
+    } catch (err) {
+      console.error("Failed to fetch plan details", err);
+    }
+  };
 
   const handleOpenModal = () => {
     setNewName("");
@@ -181,6 +191,26 @@ const UserManagement = ({ onToast }) => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // Dynamic Limit Check
+    if (usage) {
+      const roleKey = newRole.toLowerCase() === 'collaborator' ? 'collaborators' : 
+                      (newRole.toLowerCase() === 'viewer' ? 'viewers' : 'users');
+      
+      const current = usage[roleKey]?.current || 0;
+      const limit = usage[roleKey]?.limit || 0;
+
+      if (current >= limit) {
+        setPlanLimitConfig({
+          title: t("plan_limit_reached") || "Plan Limit Reached",
+          message: `${t("Upgrade to add more")} ${t(newRole)}s`,
+          subMessage: `${t("Your plan allows for")} ${limit} ${t(newRole)}${limit !== 1 ? 's' : ''}. ${t("Please upgrade to add more.")}`
+        });
+        setShowPlanLimitModal(true);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     const payload = {
       name: newName.trim(),
@@ -193,12 +223,11 @@ const UserManagement = ({ onToast }) => {
       await axios.post(`${BACKEND_URL}/api/admin/users`, payload);
       onToast(t("User_added_successfully"), "success");
       await fetchUsers();
+      await fetchPlanDetails(); // Refresh usage after adding user
       handleCloseModal();
     } catch (error) {
       const message = error.response?.data?.message || error.response?.data?.error || t("Failed_to_add_user");
       setErrors(prev => ({ ...prev, apiError: message }));
-      // Optional: still show toast as backup, or remove it as requested
-      // onToast(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -219,15 +248,30 @@ const UserManagement = ({ onToast }) => {
   }, [isSuperAdmin]);
 
   const handleRoleUpdate = async (userId, role) => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    if (userPlan === 'essential' && role.toLowerCase() === 'collaborator') {
-      onToast(t("Your_plan_doesnt_support_collaborators"), "error");
-      return;
+    // Dynamic Limit Check for role update
+    if (usage) {
+      const roleKey = role.toLowerCase() === 'collaborator' ? 'collaborators' : 
+                      (role.toLowerCase() === 'viewer' ? 'viewers' : 'users');
+      
+      const current = usage[roleKey]?.current || 0;
+      const limit = usage[roleKey]?.limit || 0;
+
+      if (current >= limit) {
+        setPlanLimitConfig({
+          title: t("plan_limit_reached") || "Plan Limit Reached",
+          message: `${t("Upgrade to add more")} ${t(role)}s`,
+          subMessage: `${t("Your plan allows for")} ${limit} ${t(role)}${limit !== 1 ? 's' : ''}. ${t("Please upgrade to add more.")}`
+        });
+        setShowPlanLimitModal(true);
+        return;
+      }
     }
+
     try {
       await axios.put(`${BACKEND_URL}/api/admin/users/${userId}/role`, { role });
       onToast(t("User_role_updated_successfully"), "success");
       fetchUsers();
+      fetchPlanDetails();
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.error || t("Failed_to_update_role"), "error");
@@ -288,10 +332,15 @@ const UserManagement = ({ onToast }) => {
       setAssignErrors(newErrors);
       return;
     }
+
+    // Assigning usually means they are already a user/collaborator.
+    // The total seat limit is checked when adding a user or changing their role.
+
     try {
       await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
       onToast(t("Collaborator_assigned_successfully"), "success");
       handleCloseAssignModal();
+      fetchPlanDetails();
     } catch (error) {
       console.error(error);
       onToast(error.response?.data?.message || t("Failed_to_assign_collaborator"), "error");
@@ -310,6 +359,7 @@ const UserManagement = ({ onToast }) => {
   useEffect(() => {
     fetchUsers();
     fetchBusinesses();
+    fetchPlanDetails();
   }, []);
 
   const fetchUsers = async () => {
@@ -478,7 +528,7 @@ const UserManagement = ({ onToast }) => {
       label: t("joined"),
       render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>
     },
-    ...((!hasPlan || isSuperAdmin) ? [{
+    ...((currentRole === "company_admin" || isSuperAdmin) ? [{
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
@@ -550,19 +600,19 @@ const UserManagement = ({ onToast }) => {
           {!isSuperAdmin && (
             <>
               <Button className="admin-primary-btn" onClick={() => {
-                if (userPlan === "essential") {
+                // If usage has loaded, we check if they can add ANY role.
+                // If they have 0 limit for ALL roles (which shouldn't happen), then show modal.
+                // Otherwise, let them open the modal and check specifically on submit.
+                if (usage && 
+                    usage.users.current >= usage.users.limit && 
+                    usage.collaborators.current >= usage.collaborators.limit && 
+                    usage.viewers.current >= usage.viewers.limit) {
                   setPlanLimitConfig({
-                    title: t("plan_limit_reached") || "Plan Limit Reached",
-                    message: t("upgrade_to_add_users") || "Upgrade to Add Users",
-                    subMessage: t("essential_plan_add_user_msg") || "The Essential plan does not support adding users. Please upgrade your plan to add users."
+                    title: t("plan_limit_reached"),
+                    message: t("upgrade_to_add_users"),
+                    subMessage: t("plan_user_limit_reached", { plan: usage.plan })
                   });
                   setShowPlanLimitModal(true);
-                } else if (userPlan === "advanced" && collaboratorsCount >= 3) {
-                  setErrorModalConfig({
-                    title: t("Alert") || "Alert",
-                    message: t("exhausted_plan_collaborators_msg") || "You have exhausted the plan by adding three collaborators"
-                  });
-                  setShowErrorModal(true);
                 } else {
                   handleOpenModal();
                 }
@@ -570,16 +620,7 @@ const UserManagement = ({ onToast }) => {
                 <Plus size={16} /> {t("Add_User")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => {
-                if (userPlan === 'essential') {
-                  setPlanLimitConfig({
-                    title: t("plan_limit_reached") || "Plan Limit Reached",
-                    message: t("upgrade_to_assign_collaborators") || "Upgrade to Assign Collaborators",
-                    subMessage: t("essential_plan_assign_collab_msg") || "The Essential plan does not support assigning collaborators. Please upgrade your plan to assign collaborators."
-                  });
-                  setShowPlanLimitModal(true);
-                } else {
-                  handleOpenAssignModal();
-                }
+                handleOpenAssignModal();
               }}>
                 <UserCog size={16} /> {t("Assign_Collaborator")}
               </Button>
@@ -745,12 +786,8 @@ const UserManagement = ({ onToast }) => {
                   >
                     <option value="">{t("Select_Role")}</option>
                     <option value="collaborator">{t("Collaborator")}</option>
-                    {!hasPlan && (
-                      <>
-                        <option value="user">{t("User")}</option>
-                        <option value="viewer">{t("Viewer")}</option>
-                      </>
-                    )}
+                    <option value="user">{t("User")}</option>
+                    <option value="viewer">{t("Viewer")}</option>
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">{errors.role}</Form.Control.Feedback>
                 </Col>
@@ -799,7 +836,7 @@ const UserManagement = ({ onToast }) => {
         <Modal.Header closeButton><Modal.Title>{t("Assign_Collaborator")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAssign} noValidate>
-            <Form.Group className="mb-3"><Form.Label>{t("Collaborator")}</Form.Label><Form.Select value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)} isInvalid={!!assignErrors.collaborator}><option value="">{t("Select_collaborator")}</option>{users.filter(u => formatRole(u.role_name) === "Collaborator").map(u => <option key={u._id} value={u._id}>{u.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback></Form.Group>
+            <Form.Group className="mb-3"><Form.Label>{t("Collaborator")}</Form.Label><Form.Select value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)} isInvalid={!!assignErrors.collaborator}><option value="">{t("Select_collaborator")}</option>{users.filter(u => ["Collaborator", "User", "Viewer"].includes(formatRole(u.role_name))).map(u => <option key={u._id} value={u._id}>{u.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback></Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={assignBusinessId} onChange={(e) => setAssignBusinessId(e.target.value)} isInvalid={!!assignErrors.business}><option value="">{t("Select_Business")}</option>{allBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback></Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>{t("cancel")}</Button><Button variant="primary" type="submit">{t("save")}</Button></div>
           </Form>
@@ -834,6 +871,8 @@ const UserManagement = ({ onToast }) => {
         title={planLimitConfig.title}
         message={planLimitConfig.message}
         subMessage={planLimitConfig.subMessage}
+        plan={usage?.plan}
+        isAdmin={isAdmin}
       />
       <ErrorModal
         show={showErrorModal}

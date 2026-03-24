@@ -48,6 +48,7 @@ const Dashboard = () => {
   const userRole = sessionStorage.getItem("userRole");
   const isViewer = userRole?.toLowerCase() === "viewer";
   const isCollaborator = userRole?.toLowerCase() === "collaborator";
+  const isAdmin = ["super_admin", "company_admin"].includes(userRole?.toLowerCase());
 
 
   // Delete business state
@@ -74,6 +75,7 @@ const Dashboard = () => {
 
   // Plan Limit Modal state
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [usage, setUsage] = useState(null);
 
   // Custom menu state for alternatives
   const [showCustomMenu, setShowCustomMenu] = useState({});
@@ -92,8 +94,30 @@ const Dashboard = () => {
   // Fetch businesses on component mount
   useEffect(() => {
     fetchBusinesses();
+    fetchPlanDetails();
     //fetchSubscriptionDetails();
   }, []);
+
+  const fetchPlanDetails = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsage(data.usage);
+      }
+    } catch (error) {
+      console.error('Error fetching plan details:', error);
+    }
+  };
 
   const fetchSubscriptionDetails = async () => {
     try {
@@ -465,30 +489,12 @@ if (description) {
 
   // Business Modal Functions
   const handleShowCreateModal = () => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    const activeBusinessesCount = businesses.filter(b => b.status !== 'deleted').length;
+    if (usage) {
+      const current = usage.workspaces?.current || 0;
+      const limit = usage.workspaces?.limit || 0;
 
-    if (userPlan === 'essential' && activeBusinessesCount >= 1) {
-      setShowPlanLimitModal(true); // Show limit modal instead of upgrade modal directly
-      return;
-    }
-
-    if (userPlan === 'advanced' && activeBusinessesCount >= 3) { // Assuming 3 is the limit for advanced.
-      const features = [
-        "Up to 3 Workspaces",
-        "Initiative to Project Conversion",
-
-      ];
-
-      if (userPlan === 'advanced' && activeBusinessesCount >= 3) {
-        const exhaustedFeatures = features.map((f, i) => `• ${f}`).join('\n');
-
-        setBusinessError(`You have exhausted the plan:\n${exhaustedFeatures}`);
-        setShowSuccessPopup(true); // Using common popup but now it will show as error
-        setTimeout(() => {
-          setShowSuccessPopup(false);
-          setBusinessError('');
-        }, 5000);
+      if (current >= limit) {
+        setShowPlanLimitModal(true);
         return;
       }
     }
@@ -730,6 +736,9 @@ if (description) {
       <PlanLimitModal
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
+        plan={usage?.plan}
+        limit={usage?.workspaces?.limit}
+        isAdmin={isAdmin}
       />
 
 

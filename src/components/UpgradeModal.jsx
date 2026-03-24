@@ -12,6 +12,9 @@ import { useTranslation } from '../hooks/useTranslation';
 
 // Stripe initialization will be handled inside the component for lazy loading
 
+const TIER_ORDER = ['essential', 'advanced', 'team', 'professional'];
+const tierIndex = (name = '') => TIER_ORDER.indexOf(name.toLowerCase());
+
 const UpgradeModalContent = ({
     onHide,
     loading,
@@ -109,22 +112,22 @@ const UpgradeModalContent = ({
                     <>
                         {error && <Alert variant="danger">{error}</Alert>}
 
-                        {selectedPlan?.name?.toLowerCase() === 'essential' && subscription?.plan?.toLowerCase() !== 'essential' && (
+                        {selectedPlan && subscription?.plan && tierIndex(selectedPlan.name) < tierIndex(subscription.plan) && (
                             <Alert variant="warning" className="mb-3 border-0 shadow-sm">
                                 <div className="d-flex align-items-start">
                                     <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
                                     <div className="small">
                                         <h6 className="mb-2 fw-bold">⚠️ {t("Downgrade Warning")}</h6>
                                         <p className="mb-2">
-                                            {t("Downgrading to")} <strong>{t("Essential")}</strong> {t("will impact your current setup")}:
+                                            {t("Downgrading to")} <strong>{t(selectedPlan.name)}</strong> {t("will impact your current setup")}:
                                         </p>
                                         <ul className="mb-0 ps-3">
-                                            {subscription.usage.workspaces.current > 1 && (
+                                            {subscription.usage.workspaces.current > (selectedPlan.limits?.workspaces || 0) && (
                                                 <li className="mb-1">
-                                                <strong>{t("Workspaces")}:</strong> {t("You currently have")}{" "}
-                                                <strong>{subscription.usage.workspaces.current}</strong> {t("active workspace(s)")}.
-                                                {t("Only")} <strong>1</strong> {t("will remain active")}.
-                                            </li>
+                                                    <strong>{t("Workspaces")}:</strong> {t("You currently have")}{" "}
+                                                    <strong>{subscription.usage.workspaces.current}</strong> {t("active workspace(s)")}.
+                                                    {t("Only")} <strong>{selectedPlan.limits?.workspaces || 0}</strong> {t("will remain active")}.
+                                                </li>
                                             )}
                                         </ul>
                                     </div>
@@ -218,11 +221,12 @@ const UpgradeModalContent = ({
                 <Button
                     variant="primary"
                     onClick={handleConfirm}
-                    disabled={submitting || !selectedPlanId || (subscription?.plan?.toLowerCase() === selectedPlan?.name?.toLowerCase()) || (selectedMethodId === 'new' && !stripe)}
+                    disabled={submitting || !selectedPlanId || (selectedMethodId === 'new' && !stripe)}
                     className="px-4 py-2 fw-bold"
                 >
                     {submitting ? <Spinner animation="border" size="sm" /> :
-                        t(selectedPlan?.name?.toLowerCase() === 'essential' ? 'Process Downgrade' : 'Confirm Upgrade')}
+                        (selectedPlan?.name?.toLowerCase() === subscription?.plan?.toLowerCase() ? t('Renew Plan') : 
+                         (tierIndex(selectedPlan?.name) < tierIndex(subscription?.plan) ? t('Process Downgrade') : t('Confirm Upgrade')))}
                     {!submitting && <ArrowRight size={18} className="ms-2" />}
                 </Button>
             </Modal.Footer>
