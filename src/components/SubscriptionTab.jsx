@@ -1,42 +1,344 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import {
-    Check, Users, Briefcase, LayoutGrid, FileText, RefreshCw, Calendar
+    Check, CreditCard, Plus, Trash2, Star,
+    TrendingUp, Layers, Target, Zap,
+    Users, Briefcase, Eye, FolderOpen, ChevronRight, Lock, AlertCircle, X, Trash
 } from 'lucide-react';
+import { Modal, Button, Spinner, Alert } from 'react-bootstrap';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, useStripe, useElements, CardNumberElement } from '@stripe/react-stripe-js';
+import PaymentForm from './PaymentForm';
 import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from './UpgradeModal';
 import AdminTable from './AdminTable';
-import MetricCard from './MetricCard';
-import '../styles/accessmanagement.css';
-import '../styles/AdminTableStyles.css';
+import '../styles/SubscriptionTab.css';
 
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
+
+/* ─── helpers ─── */
+const TIER_ORDER = ['essential', 'advanced', 'team', 'professional'];
+const tierIndex = (name = '') => TIER_ORDER.indexOf(name.toLowerCase());
+
+const getDaysRemaining = (end) => {
+    if (!end) return 0;
+    const a = new Date(); a.setHours(0, 0, 0, 0);
+    const b = new Date(end); b.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.floor((b - a) / 86400000));
+};
+
+const fmtDate = (iso, opts = { year: 'numeric', month: 'short', day: 'numeric' }) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, opts) : 'N/A';
+
+const fmtTime = (iso) =>
+    iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+const buildFeatureRows = (limits = {}) => [
+    { label: `${limits.workspaces || 0} Workspace${limits.workspaces !== 1 ? 's' : ''}`, active: !!limits.workspaces },
+    { label: `${limits.collaborators || 0} Collaborator${limits.collaborators !== 1 ? 's' : ''}`, active: !!limits.collaborators },
+    { label: limits.viewers ? `${limits.viewers} Viewer${limits.viewers !== 1 ? 's' : ''}` : 'Viewers', active: !!limits.viewers },
+    { label: limits.users ? `${limits.users} User${limits.users !== 1 ? 's' : ''}` : 'Users', active: !!limits.users },
+    { label: 'Projects', active: !!limits.project },
+    { label: 'Insight Access', active: !!limits.insight },
+    { label: 'Strategic Access', active: !!limits.strategic },
+    { label: 'PMF Access', active: !!limits.pmf },
+];
+
+/* ─── sub-components ─── */
+const UsageBar = ({ label, current, limit, color, icon: Icon }) => {
+    const unlimited = limit === true;
+    const pct = unlimited || !limit ? 0 : Math.min(100, (current / limit) * 100);
+    const isHigh = pct >= 80;
+    return (
+        <div className="st-u-row">
+            <div className="st-u-top">
+                <span className="st-u-label">
+                    {Icon && <Icon size={13} className={`st-u-icon st-icon-${color}`} />}
+                    {label}
+                </span>
+                <span className={`st-u-count ${isHigh ? 'st-count-warn' : ''}`}>
+                    {current}<span className="st-u-limit"> / {unlimited ? '∞' : (limit || 0)}</span>
+                </span>
+            </div>
+            <div className="st-u-track">
+                <div
+                    className={`st-u-fill st-fill-${color}`}
+                    style={{ width: `${pct}%`, ...(isHigh ? { background: '#ef4444' } : {}) }}
+                />
+            </div>
+        </div>
+    );
+};
+
+const FeatureRow = ({ label, active }) => (
+    <li className={`st-feat-row ${active ? 'st-feat-on' : 'st-feat-off'}`}>
+        <span className={`st-feat-check ${active ? 'st-feat-check-on' : 'st-feat-check-off'}`}>
+            {active ? <Check size={10} strokeWidth={3} /> : <span>–</span>}
+        </span>
+        {label}
+    </li>
+);
+
+/* ─── Payment Methods Section ─── */
+/* ─── Add Card Modal Content (using Stripe hooks) ─── */
+const AddCardModalContent = ({ onHide, onAddSuccess, apiBase, token, onToast }) => {
+    const { t } = useTranslation();
+    const stripe = useStripe();
+    const elements = useElements();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [cardHolderName, setCardHolderName] = useState('');
+    const [error, setError] = useState(null);
+
+    const handleLocalSubmit = async () => {
+        if (!stripe || !elements) return;
+
+        if (!cardHolderName.trim()) {
+            setError(t("Please enter card holder name."));
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            const cardElement = elements.getElement(CardNumberElement);
+            const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+                billing_details: { name: cardHolderName }
+            });
+
+            if (stripeError) {
+                setError(stripeError.message);
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Attach to customer on backend
+            const res = await fetch(`${apiBase}/api/subscription/payment-methods/add`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ paymentMethodId: paymentMethod.id, setAsDefault: true })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to add card');
+
+            if (onToast) onToast(t('card_added_success') || 'Card added successfully', 'success');
+            onAddSuccess(data);
+            onHide();
+        } catch (err) {
+            setError(err.message);
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="add-card-modal-inner">
+            <Modal.Header closeButton className="border-0 pb-0">
+                <Modal.Title className="fw-bold">{t('Add New Card')}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="pt-2">
+                <PaymentForm
+                    cardHolderName={cardHolderName}
+                    onCardHolderNameChange={setCardHolderName}
+                    isSubmitting={isSubmitting}
+                    error={error}
+                    hideHeader={true}
+                />
+            </Modal.Body>
+            <Modal.Footer className="border-0 pt-0 d-flex justify-content-end align-items-center">
+                <Button variant="link" onClick={onHide} className="text-decoration-none text-muted me-2">
+                    {t("Cancel")}
+                </Button>
+                <Button
+                    variant="primary"
+                    onClick={handleLocalSubmit}
+                    disabled={isSubmitting || !stripe}
+                    className="px-4 py-2 fw-bold"
+                >
+                    {isSubmitting ? <Spinner animation="border" size="sm" /> : t('Save Card')}
+                </Button>
+            </Modal.Footer>
+        </div>
+    );
+};
+
+const AddCardModal = ({ show, onHide, onAddSuccess, apiBase, token, onToast }) => {
+    if (!show) return null;
+    return (
+        <Modal show={show} onHide={onHide} centered backdrop="static" size="lg">
+            <Elements stripe={stripePromise}>
+                <AddCardModalContent 
+                    onHide={onHide}
+                    onAddSuccess={onAddSuccess}
+                    apiBase={apiBase}
+                    token={token}
+                    onToast={onToast}
+                />
+            </Elements>
+        </Modal>
+    );
+};
+
+
+const PaymentMethodsSection = ({ paymentMethods, defaultId, apiBase, token, onUpdate, onToast }) => {
+    const { t } = useTranslation();
+    const [isRemoving, setIsRemoving] = useState(null);
+    const [isSettingDefault, setIsSettingDefault] = useState(null);
+    const [isAdding, setIsAdding] = useState(false);
+
+    const handleSetDefault = async (pmId) => {
+        if (pmId === defaultId) return;
+        setIsSettingDefault(pmId);
+        try {
+            const res = await fetch(`${apiBase}/api/subscription/payment-methods/set-default`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ paymentMethodId: pmId })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to set default card');
+
+            onToast?.(t('default_card_updated') || 'Default payment method updated', 'success');
+            onUpdate(data);
+        } catch (err) {
+            onToast?.(err.message, 'error');
+        } finally {
+            setIsSettingDefault(null);
+        }
+    };
+
+    const handleRemove = async (e, pmId) => {
+        e.stopPropagation();
+        if (!window.confirm(t('confirm_remove_card') || 'Remove this card?')) return;
+        setIsRemoving(pmId);
+        try {
+            const res = await fetch(`${apiBase}/api/subscription/payment-methods/${pmId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to remove card');
+            onUpdate(data);
+            onToast?.(t('card_removed_success') || 'Card removed successfully!', 'success');
+        } catch (err) {
+            onToast?.(err.message, 'error');
+        } finally {
+            setIsRemoving(null);
+        }
+    };
+
+    return (
+        <div className="st-card st-payments-wrapper">
+            <div className="st-card-header st-payments-header-row">
+                <div>
+                    <div className="st-card-title">Payment Methods</div>
+                    <div className="st-card-subtitle">Manage your subscription billing</div>
+                </div>
+                <button className="st-add-card-btn" onClick={() => setIsAdding(true)}>
+                    <Plus size={14} /> Add New Card
+                </button>
+            </div>
+
+            <div className="st-pm-grid">
+                {paymentMethods.map(m => {
+                    const isDefault = m.id === defaultId;
+                    const isLoading = isRemoving === m.id || isSettingDefault === m.id;
+
+                    return (
+                        <div
+                            key={m.id}
+                            className={`st-pm-item ${isDefault ? 'st-pm-active' : ''} ${isLoading ? 'st-pm-busy' : ''}`}
+                            onClick={() => handleSetDefault(m.id)}
+                        >
+                            <div className="st-pm-content">
+                                <div className="st-pm-icon">
+                                    <CreditCard size={18} />
+                                </div>
+                                <div className="st-pm-info">
+                                    <div className="st-pm-number">•••• •••• •••• {m.last4}</div>
+                                    <div className="st-pm-meta">
+                                        <span className="st-pm-brand" style={{ textTransform: 'capitalize' }}>{m.brand}</span>
+                                        <span className="st-pm-sep">•</span>
+                                        <span className="st-pm-exp">{t('Expires')} {m.exp_month}/{m.exp_year}</span>
+                                    </div>
+                                </div>
+                                {isDefault && (
+                                    <div className="st-pm-check">
+                                        <Check size={14} strokeWidth={3} />
+                                    </div>
+                                )}
+                            </div>
+
+                            {!isDefault && (
+                                <button
+                                    className="st-pm-remove-btn"
+                                    onClick={(e) => handleRemove(e, m.id)}
+                                    disabled={isLoading}
+                                >
+                                    {isRemoving === m.id ? <Spinner animation="border" size="sm" /> : <Trash2 size={13} />}
+                                </button>
+                            )}
+
+                            {isLoading && (
+                                <div className="st-pm-busy-overlay">
+                                    <Spinner animation="border" size="sm" variant="primary" />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+
+                {paymentMethods.length === 0 && (
+                    <div className="st-pm-empty">
+                        <CreditCard size={32} />
+                        <p>{t('no_payment_methods') || 'No payment methods added yet'}</p>
+                    </div>
+                )}
+            </div>
+
+            <AddCardModal
+                show={isAdding}
+                onHide={() => setIsAdding(false)}
+                onAddSuccess={onUpdate}
+                apiBase={apiBase}
+                token={token}
+                onToast={onToast}
+            />
+        </div>
+    );
+};
+
+
+/* ─── main ─── */
 const SubscriptionTab = ({ onToast }) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [subscription, setSubscription] = useState(null);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-
-    // Pagination state for Billing History
+    const [selectedPlanId, setSelectedPlanId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
+    const token = sessionStorage.getItem('token');
 
     const fetchSubDetails = async () => {
         try {
             setLoading(true);
-            const token = sessionStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const res = await fetch(`${API_BASE_URL}/api/subscription/plan-details`, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
             });
-
-            if (!response.ok) throw new Error('Failed to fetch subscription details');
-            const data = await response.json();
-            setSubscription(data);
+            if (!res.ok) throw new Error('Failed to fetch subscription details');
+            setSubscription(await res.json());
         } catch (err) {
             setError(err.message);
         } finally {
@@ -44,50 +346,45 @@ const SubscriptionTab = ({ onToast }) => {
         }
     };
 
-    useEffect(() => {
-        fetchSubDetails();
-    }, []);
+    useEffect(() => { fetchSubDetails(); }, []);
 
-    if (loading) {
-        return (
-            <div className="text-center py-5">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">{t('loading_subscription_details') || 'Loading subscription details...'}</p>
-            </div>
-        );
-    }
+    const handlePaymentMethodsUpdate = (data) => {
+        setSubscription(prev => ({
+            ...prev,
+            payment_methods: data.payment_methods,
+            default_payment_method_id: data.default_payment_method_id
+        }));
+    };
 
-    if (error) {
-        return <Alert variant="danger">{error}</Alert>;
-    }
+    const handleSelectPlan = (id) => {
+        setSelectedPlanId(id);
+        setShowUpgradeModal(true);
+    };
 
+    if (loading) return (
+        <div className="st-loader">
+            <Spinner animation="border" size="sm" style={{ color: '#6366f1' }} />
+            <span>{t('loading_subscription_details') || 'Loading subscription details…'}</span>
+        </div>
+    );
+    if (error) return <Alert variant="danger">{error}</Alert>;
     if (!subscription) return null;
 
-    const { plan, usage, expires_at, available_plans = [], billing_history = [] } = subscription;
+    const {
+        plan, usage, available_plans = [],
+        billing_history = [], payment_methods = [],
+        default_payment_method_id, company_name,
+        start_date, end_date
+    } = subscription;
+
     const currentPlanName = plan.toLowerCase();
+    const currentPlanData = available_plans.find(p => p.name.toLowerCase() === currentPlanName);
 
-    const getDaysRemaining = (end) => {
-        if (!end) return 0;
+    const daysRemaining = getDaysRemaining(end_date);
+    const totalDays = 31;
+    const usedDays = Math.max(0, totalDays - daysRemaining);
+    const renewalPct = Math.min(100, Math.max(0, (usedDays / totalDays) * 100));
 
-        const today = new Date();
-        const endDate = new Date(end);
-
-        // Remove time part
-        today.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
-
-        const diff = endDate - today;
-
-        return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
-    };
-
-    const daysRemaining = getDaysRemaining(subscription.end_date);
-    const isHigherTier = (pName) => {
-        const tiers = ['essential', 'advanced', 'professional'];
-        return tiers.indexOf(pName.toLowerCase()) > tiers.indexOf(currentPlanName);
-    };
-
-    // Client-side pagination for billing history
     const totalItems = billing_history.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const paginatedHistory = billing_history.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -98,170 +395,217 @@ const SubscriptionTab = ({ onToast }) => {
             label: t('date') || 'Date',
             render: (_, row) => (
                 <div>
-                    <div className="admin-cell-primary">{new Date(row.date).toLocaleDateString()}</div>
-                    <div className="admin-cell-secondary">{new Date(row.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className="admin-cell-primary">{fmtDate(row.date)}</div>
+                    <div className="admin-cell-secondary">{fmtTime(row.date)}</div>
                 </div>
             )
         },
         {
-            key: 'details',
-            label: t('details') || 'Details',
+            key: 'plan',
+            label: t('plan') || 'Plan',
             render: (_, row) => (
-                <span className="text-capitalize fw-medium">{row.plan_name} {t('plan') || 'plan'}</span>
+                <span className="admin-cell-primary" style={{ textTransform: 'capitalize' }}>
+                    {row.plan_name} plan
+                </span>
             )
         },
         {
             key: 'amount',
             label: t('amount') || 'Amount',
             render: (_, row) => (
-                <span className="fw-bold">${row.amount}</span>
+                <span className="admin-cell-primary">${row.amount}.00</span>
             )
         }
     ];
 
-    return (
-        <div className="subscription-redesign-wrapper">
-            <Row>
-                <Col md={12}>
+    const accessFeatures = [
+        { icon: TrendingUp, label: 'Insight Access', desc: 'Data-driven business insights', active: usage.insight },
+        { icon: Layers, label: 'Strategic Access', desc: 'Strategic planning tools', active: usage.strategic },
+        { icon: Target, label: 'PMF Access', desc: 'Product-market fit analysis', active: usage.pmf },
+    ];
 
-                    {/* Subscription Info Banner */}
-                    {/* Subscription Info Banner */}
-                    <div className="subscription-info-banner mb-4">
-                        <div className="banner-item">
-                            <span className="banner-label">{t("current_plan") || "Current Plan"}</span>
-                            <span className="banner-value text-capitalize">{t(currentPlanName) || currentPlanName}</span>
+    const defaultPM = payment_methods.find(m => m.id === default_payment_method_id);
+
+    return (
+        <div className="st-root">
+
+            {/* ══ HEADER ══ */}
+            <div className="st-header-clean">
+                <div className="st-header-main">
+                    <div className="st-header-info">
+                        <div className="st-header-badge">
+                            <span className="st-dot-active" />
+                            Active Subscription
                         </div>
-                        <div className="banner-divider"></div>
-                        <div className="banner-item">
-                            <span className="banner-label">{t("expires_at") || "Renewal Date"}</span>
-                            <div className="d-flex align-items-center gap-2">
-                                <Calendar size={14} className="text-muted" />
-                                <span className="banner-value">{subscription.end_date ? new Date(subscription.end_date).toLocaleDateString() : 'N/A'}</span>
-                            </div>
-                        </div>
-                        <div className="banner-divider"></div>
-                        <div className="banner-message-wrap">
-                            <div className="banner-message-icon">
-                                <RefreshCw size={18} className="spin-slow" />
-                            </div>
-                            <div className="banner-message-text">
-                                {subscription.end_date ? t("subscription_renewal_notice", { date: new Date(subscription.end_date).toLocaleDateString() }) : t("subscription_active")}
-                            </div>
-                        </div>
+                        <h2 className="st-header-title">
+                            {currentPlanName.charAt(0).toUpperCase() + currentPlanName.slice(1)} Plan
+                        </h2>
+                        <p className="st-header-sub">{company_name} • Billed monthly</p>
                     </div>
 
-                    {/* Plan Section */}
-                    <section id="subscription-plan" className="mb-4">
-                        <h5 className="autorenew-title mb-4">{t("subscription_plans") || "Subscription Plans"}</h5>
-                        <div className="plan-cards-row">
-                            {available_plans.map((p) => {
-                                const isCurrent = p.name.toLowerCase() === currentPlanName;
+                    <div className="st-header-stats">
+                        <div className="st-h-stat">
+                            <span className="st-h-label">Monthly Billing</span>
+                            <span className="st-h-value">${currentPlanData?.price || 0}</span>
+                        </div>
+                        <div className="st-h-stat">
+                            <span className="st-h-label">Renews On</span>
+                            <span className="st-h-value">{fmtDate(end_date)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                return (
-                                    <div key={p._id} className={`plan-card-mockup ${isCurrent ? 'premium-type' : ''}`}>
-                                        {isCurrent && (
-                                            <>
-                                                <div className="check-badge-corner">
-                                                    <Check size={12} strokeWidth={4} />
-                                                </div>
-                                                {/* <div className="renewal-status-badge">
-                                                    <RefreshCw size={12} />
-                                                    {t("auto_renews") || "Auto-renews"}
-                                                </div> */}
-                                            </>
-                                        )}
-                                        <div className="plan-header-mockup">
-                                            <div>
-                                                <div className="plan-name-mockup text-capitalize">{t(p.name.toLowerCase()) || p.name}</div>
-                                                <div className="plan-subtitle-mockup">
-                                                    {isCurrent ? `${daysRemaining} ${t("days_remaining") || "days remaining"}` : `${t("full_access") || "Full access"}`}
-                                                </div>
-                                            </div>
-                                            <div className="plan-price-mockup">
-                                                ${p.price}<span className="plan-price-period">/{t("month")}</span>
-                                            </div>
-                                        </div>
-                                        <div className="plan-card-actions">
-                                            {isCurrent ? (
-                                                <button className="btn-plan-white" disabled style={{ cursor: 'default' }}>
-                                                    {t("current_plan") || "Current Plan"}
-                                                </button>
-                                            ) : (
-                                                <Button
-                                                    className="btn-plan-primary"
-                                                    onClick={() => setShowUpgradeModal(true)}
-                                                >
-                                                    {isHigherTier(p.name) ? (t("upgrade") || "Upgrade") : (t("downgrade") || "Downgrade")}
-                                                </Button>
-                                            )}
+
+            {/* ══ BODY GRID ══ */}
+            <div className="st-body-grid">
+
+                {/* ── Usage Metrics ── */}
+                <div className="st-card st-usage-card">
+                    <div className="st-card-header">
+                        <div className="st-card-title">Usage Metrics</div>
+                        <div className="st-card-subtitle">Current billing period</div>
+                    </div>
+                    <div className="st-usage-list">
+                        <UsageBar icon={Briefcase} label="Workspaces"    current={usage.workspaces?.current ?? 0}    limit={usage.workspaces?.limit}    color="primary" />
+                        <UsageBar icon={Users}     label="Collaborators" current={usage.collaborators?.current ?? 0}  limit={usage.collaborators?.limit}  color="primary" />
+                        <UsageBar icon={Users}     label="Users"         current={usage.users?.current ?? 0}          limit={usage.users?.limit}          color="primary" />
+                        <UsageBar icon={Eye}       label="Viewers"       current={usage.viewers?.current ?? 0}        limit={usage.viewers?.limit}        color="primary" />
+                        <UsageBar icon={FolderOpen} label="Projects"     current={usage.projects?.current ?? 0}       limit={usage.projects?.limit}       color="primary" />
+                    </div>
+                </div>
+
+                {/* ── Feature Access ── */}
+                <div className="st-card st-access-card">
+                    <div className="st-card-header">
+                        <div className="st-card-title">Feature Access</div>
+                        <div className="st-card-subtitle">Included in your plan</div>
+                    </div>
+                    <div className="st-access-list">
+                        {accessFeatures.map(({ icon: Icon, label, desc, active }) => (
+                            <div key={label} className={`st-access-item ${active ? 'st-ai-on' : 'st-ai-off'}`}>
+                                <div className={`st-ai-icon-wrap ${active ? 'st-ai-icon-on' : 'st-ai-icon-off'}`}>
+                                    <Icon size={16} />
+                                </div>
+                                <div className="st-ai-text">
+                                    <div className="st-ai-label">{label}</div>
+                                    <div className="st-ai-desc">{desc}</div>
+                                </div>
+                                <div className={`st-ai-status ${active ? 'st-ais-on' : 'st-ais-off'}`}>
+                                    {active ? <><Check size={10} strokeWidth={3} /> Enabled</> : <><Lock size={10} /> Locked</>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── Plan Summary ── */}
+                {currentPlanData && (
+                    <div className="st-card st-plan-summary-card">
+                        <div className="st-card-header">
+                            <div className="st-card-title">Plan Details</div>
+                            <div className="st-card-subtitle" style={{ textTransform: 'capitalize' }}>{currentPlanData.name} tier</div>
+                        </div>
+                        <div className="st-ps-price-row">
+                            <span className="st-ps-amount">${currentPlanData.price}</span>
+                            <span className="st-ps-mo">/month</span>
+                        </div>
+                        <p className="st-ps-desc">{currentPlanData.description}</p>
+                        <div className="st-ps-limits">
+                            {[
+                                { icon: Briefcase, label: 'Workspaces', val: currentPlanData.limits?.workspaces },
+                                { icon: Users,     label: 'Collaborators', val: currentPlanData.limits?.collaborators },
+                                { icon: Eye,       label: 'Viewers', val: currentPlanData.limits?.viewers },
+                                { icon: Users,     label: 'Users',   val: currentPlanData.limits?.users },
+                            ].map(({ icon: Icon, label, val }) => (
+                                <div key={label} className="st-ps-limit-item">
+                                    <div className="st-ps-limit-val">{val ?? 0}</div>
+                                    <div className="st-ps-limit-label"><Icon size={11} /> {label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ══ PAYMENT METHODS ══ */}
+            <PaymentMethodsSection
+                paymentMethods={payment_methods}
+                defaultId={default_payment_method_id}
+                apiBase={API_BASE_URL}
+                token={token}
+                onUpdate={handlePaymentMethodsUpdate}
+                onToast={onToast}
+            />
+
+            {/* ══ AVAILABLE PLANS ══ */}
+            <div className="st-card st-plans-wrapper">
+                <div className="st-card-header st-plans-header-row">
+                    <div>
+                        <div className="st-card-title">Available Plans</div>
+                        <div className="st-card-subtitle">Choose the right plan for your business</div>
+                    </div>
+                </div>
+                <div className="st-plans-grid">
+                    {available_plans.map((p) => {
+                            return (
+                                <div key={p._id} className="st-plan-card" onClick={() => handleSelectPlan(p._id)}>
+
+                                    <div className="st-pc-header">
+                                        <div className="st-pc-name" style={{ textTransform: 'capitalize' }}>{p.name}</div>
+                                        <div className="st-pc-price">
+                                            <span className="st-pc-amt">${p.price}</span>
+                                            <span className="st-pc-mo">/mo</span>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </section>
+                                    <p className="st-pc-desc">{p.description}</p>
+                                    <div className="st-pc-divider" />
+                                    <ul className="st-pc-feats">
+                                        {buildFeatureRows(p.limits).map((f, i) => (
+                                            <FeatureRow key={i} label={f.label} active={f.active} />
+                                        ))}
+                                    </ul>
+                                    <div className="st-pc-action">
+                                        <button className="st-pc-btn-select">
+                                            Select Plan
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                </div>
 
+            </div>
 
-                    {/* Usage Metrics Section */}
-                    <section className="mt-4 pt-2 mb-4">
-                        <h5 className="autorenew-title mb-4">{t("usage_metrics") || "Usage Metrics"}</h5>
-                        <div className="admin-metrics-grid">
-                            <MetricCard
-                                label={t("workspaces") || "Workspaces"}
-                                value={`${usage.workspaces.current} / ${usage.workspaces.limit}`}
-                                icon={Briefcase}
-                                iconColor="blue"
-                            />
-                            <MetricCard
-                                label={t("collaborators") || "Collaborators"}
-                                value={`${usage.collaborators.current} / ${usage.collaborators.limit}`}
-                                icon={Users}
-                                iconColor="purple"
-                            />
-                            <MetricCard
-                                label={t("projects") || "Projects"}
-                                value={`${usage.projects.current} / ${usage.projects.limit ? '∞' : (usage.projects.max || 0)}`}
-                                icon={LayoutGrid}
-                                iconColor="orange"
-                            />
-                        </div>
-                    </section>
-
-
-
-                    {/* Billing History Section */}
-                    <section className="mb-5">
-                        <AdminTable
-                            title={t("billing_history") || "Billing History"}
-                            count={totalItems}
-                            countLabel={t("Records") || "Records"}
-                            columns={billingColumns}
-                            data={paginatedHistory}
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={setCurrentPage}
-                            totalItems={totalItems}
-                            itemsPerPage={itemsPerPage}
-                            loading={loading}
-                            emptyMessage={t("no_billing_history") || "No billing history found"}
-                        />
-                    </section>
-
-                </Col>
-            </Row >
+            {/* ══ BILLING HISTORY ══ */}
+            <AdminTable
+                title={t('billing_history') || 'Billing History'}
+                count={totalItems}
+                countLabel={t('Records') || 'Records'}
+                columns={billingColumns}
+                data={paginatedHistory}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                loading={loading}
+                emptyMessage={t('no_billing_history') || 'No billing history found'}
+            />
 
             <UpgradeModal
                 show={showUpgradeModal}
                 onHide={() => setShowUpgradeModal(false)}
                 availablePlans={available_plans}
                 currentPlanName={currentPlanName}
-                paymentMethod={subscription?.payment_method}
+                paymentMethod={payment_methods}
+                initialPlanId={selectedPlanId}
                 onUpgradeSuccess={(updatedSub) => {
                     setSubscription(updatedSub);
                     if (onToast) onToast(t('plan_updated_success') || 'Plan updated successfully!', 'success');
                 }}
             />
-        </div >
+        </div>
     );
 };
 

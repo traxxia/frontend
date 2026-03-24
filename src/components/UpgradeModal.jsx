@@ -230,7 +230,7 @@ const UpgradeModalContent = ({
     );
 };
 
-const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
+const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPlanId }) => {
     // Lazy load Stripe only when the modal is active
     const stripePromise = React.useMemo(() => {
         if (!show) return null;
@@ -281,7 +281,9 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod }) => {
             setPlans(plansData.plans || []);
             setSubscription(subData);
 
-            if (isDowngradeMode) {
+            if (initialPlanId) {
+                setSelectedPlanId(initialPlanId);
+            } else if (isDowngradeMode) {
                 const essentialPlan = plansData.plans.find(p => p.name.toLowerCase() === 'essential');
                 if (essentialPlan) {
                     setSelectedPlanId(essentialPlan._id);

@@ -1750,16 +1750,52 @@ export const staticTranslations = {
     "plan_name": "Plan Name",
     "plan_name_required": "Plan name is required",
     "price_negative": "Price cannot be negative",
-    "limits_negative": "Limits cannot be negative"
+    "limits_negative": "Limits cannot be negative",
+    
+    // ===========================
+    // SUBSCRIPTION & BILLING
+    // ===========================
+    'add_new_card': 'Add New Card',
+    'save_card': 'Save Card',
+    'card_added_success': 'Card added successfully',
+    'please_enter_card_holder': 'Please enter card holder name',
+    'active_subscription': 'Active Subscription',
+    'billed_monthly': 'Billed monthly',
+    'monthly_billing': 'Monthly Billing',
+    'renews_on': 'Renews On',
+    'select_plan': 'Select Plan',
+    'loading_subscription_details': 'Loading subscription details…',
+    'no_payment_methods': 'No payment methods added yet',
+    'default_card_updated': 'Default payment method updated successfully',
+
+
 
 
   },
 
   es: {
 
-    // ========================
+    // ==========================
+    // SUBSCRIPTION & BILLING
+    // ==========================
+    'add_new_card': 'Agregar nueva tarjeta',
+    'save_card': 'Guardar tarjeta',
+    'card_added_success': 'Tarjeta agregada exitosamente',
+    'please_enter_card_holder': 'Por favor ingrese el nombre del titular',
+    'active_subscription': 'Suscripción Activa',
+    'billed_monthly': 'Facturado mensualmente',
+    'monthly_billing': 'Facturación Mensual',
+    'renews_on': 'Se renueva el',
+    'select_plan': 'Seleccionar Plan',
+    'loading_subscription_details': 'Cargando detalles de la suscripción…',
+    'no_payment_methods': 'Aún no se han agregado métodos de pago',
+    'default_card_updated': 'Método de pago predeterminado actualizado exitosamente',
+
+
+    // ==========================
     // PMF
     // ==========================
+
     'aha': 'Ajá',
     'AHA Insights': 'Perspectivas de la AHA',
     'Heres what we discovered': 'Esto es lo que descubrimos',
