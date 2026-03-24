@@ -1,8 +1,8 @@
 const DEFAULT_LIMITS = {
-  insight: false,
-  strategic: false,
-  pmf: false,
-  project: false,
+  insight: true,
+  strategic: true,
+  pmf: true,
+  can_create_projects: true,
 };
 
 /**
