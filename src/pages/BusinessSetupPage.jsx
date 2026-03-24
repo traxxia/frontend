@@ -1001,14 +1001,18 @@ const BusinessSetupPage = () => {
     setSearchParams(params, { replace: true });
   }, [activeTab, selectedBusinessName, selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Only load stored analysis data when user first visits the insights or strategic tab
+  const fetchedAnalysisKeys = useRef(new Set());
+
+  // Only load stored analysis data when user visits the insights or strategic tab
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
-    if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
-      hasLoadedAnalysis.current = true;
+    
+    const fetchKey = `${selectedBusinessId}-${activeTab}`;
+    if (selectedBusinessId && questionsLoaded && !fetchedAnalysisKeys.current.has(fetchKey)) {
+      fetchedAnalysisKeys.current.add(fetchKey);
       setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
     }
-  }, [selectedBusinessId, questionsLoaded, questions.length, phaseManager, activeTab]);
+  }, [selectedBusinessId, questionsLoaded, activeTab]); // Intentionally not including phaseManager to avoid infinite loops
 
   useEffect(() => {
     const handleResize = () => {
