@@ -317,22 +317,19 @@ const BusinessSetupPage = () => {
         const token = sessionStorage.getItem('token');
         if (!token) return;
 
-        // Load conversation data for answers and document info
-        const conversationUrl = `${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`;
-        const conversationsResponse = await fetch(conversationUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        // Use the enhanced Answers API universally for all tabs to get questions and answers
+        const responseData = await answerService.getAnswersByBusiness(selectedBusinessId);
 
-        if (conversationsResponse.ok) {
-          const conversationsData = await conversationsResponse.json();
-          const documentExists = conversationsData.document_info?.has_document === true;
+        if (responseData) {
+          // 1. Handle Document Info
+          const documentExists = responseData.document_info?.has_document === true;
           setHasUploadedDocument(documentExists);
-
-          // If on the 'advanced' tab (Advanced), specifically call the financial-document API as well
-          if (activeTab === 'advanced') {
+          
+          if (responseData.document_info && responseData.document_info.has_document) {
+            // Enhanced API returns document info directly
+            setDocumentInfo(responseData.document_info);
+          } else {
+            // Retain legacy financial-document fetch as a fallback, as requested
             try {
               const docResponse = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
                 headers: {
@@ -342,14 +339,8 @@ const BusinessSetupPage = () => {
               });
               if (docResponse.ok) {
                 const docData = await docResponse.json();
-                // Extract the nested document object to ensure filename and file_size are at the top level
-                if (docData.has_document && docData.document) {
-                  setDocumentInfo(docData.document);
-                } else {
-                  setDocumentInfo({ has_document: false });
-                }
+                setDocumentInfo(docData.has_document && docData.document ? docData.document : { has_document: false });
               } else {
-                // If 404 or other error, signal no document to child components
                 setDocumentInfo({ has_document: false });
               }
             } catch (docError) {
@@ -358,53 +349,28 @@ const BusinessSetupPage = () => {
             }
           }
 
-          // Populate questions from conversation data to keep UI functional
-          if (conversationsData.conversations?.length > 0) {
-            const mappedQuestions = conversationsData.conversations.map(conv => ({
-              _id: conv.question_id,
-              question_text: conv.question_text,
-              phase: conv.phase,
-              order: conv.order
-            }));
-            setQuestions(mappedQuestions);
-
+          // 2. Handle Questions and Answers mapping universally
+          if (responseData.questions?.length > 0) {
+            setQuestions(responseData.questions);
+            
             const answersMap = {};
+            const answerIdsMap = {};
             const completedSet = new Set();
-            conversationsData.conversations.forEach(conv => {
-              if (conv.question_id && conv.latest_answer) {
-                answersMap[conv.question_id] = conv.latest_answer;
-                if (conv.completion_status === 'complete') {
-                  completedSet.add(conv.question_id);
-                }
+            
+            // New API returns answers in 'data' array
+            responseData.data?.forEach(ans => {
+              if (ans.question_id && ans.answer) {
+                const qIdStr = String(ans.question_id);
+                answersMap[qIdStr] = ans.answer;
+                answerIdsMap[qIdStr] = ans._id;
+                completedSet.add(qIdStr);
               }
             });
+            
             if (Object.keys(answersMap).length > 0) {
               setUserAnswers(prev => ({ ...prev, ...answersMap }));
+              setAnswerIds(answerIdsMap);
               setCompletedQuestions(prev => new Set([...prev, ...completedSet]));
-            }
-          }
-
-          // Fetch answers from the new Answers API to get answer IDs and ensure accurate data in the Advanced tab
-          if (activeTab === 'advanced') {
-            try {
-              const answersResponse = await answerService.getAnswersByBusiness(selectedBusinessId);
-              if (answersResponse && Array.isArray(answersResponse.data)) {
-                const newAnswersMap = {};
-                const newAnswerIdsMap = {};
-                answersResponse.data.forEach(ans => {
-                  if (ans.question_id && ans.answer) {
-                    const qIdStr = String(ans.question_id);
-                    newAnswersMap[qIdStr] = ans.answer;
-                    newAnswerIdsMap[qIdStr] = ans._id;
-                  }
-                });
-                if (Object.keys(newAnswersMap).length > 0) {
-                  setUserAnswers(prev => ({ ...prev, ...newAnswersMap }));
-                  setAnswerIds(newAnswerIdsMap);
-                }
-              }
-            } catch (ansError) {
-              console.error('Error loading answers from answerService:', ansError);
             }
           }
         }
@@ -1035,14 +1001,18 @@ const BusinessSetupPage = () => {
     setSearchParams(params, { replace: true });
   }, [activeTab, selectedBusinessName, selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Only load stored analysis data when user first visits the insights or strategic tab
+  const fetchedAnalysisKeys = useRef(new Set());
+
+  // Only load stored analysis data when user visits the insights or strategic tab
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
-    if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
-      hasLoadedAnalysis.current = true;
+    
+    const fetchKey = `${selectedBusinessId}-${activeTab}`;
+    if (selectedBusinessId && questionsLoaded && !fetchedAnalysisKeys.current.has(fetchKey)) {
+      fetchedAnalysisKeys.current.add(fetchKey);
       setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
     }
-  }, [selectedBusinessId, questionsLoaded, questions.length, phaseManager, activeTab]);
+  }, [selectedBusinessId, questionsLoaded, activeTab]); // Intentionally not including phaseManager to avoid infinite loops
 
   useEffect(() => {
     const handleResize = () => {
