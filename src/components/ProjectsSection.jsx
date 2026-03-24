@@ -731,8 +731,7 @@ const ProjectsSection = ({
   };
 
   const renderProjectList = () => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    const isReadOnly = apiIsArchived || userPlan === 'essential';
+    // isReadOnly is now defined at the top level of the component
 
     return (
       <>

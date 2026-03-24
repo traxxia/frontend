@@ -1737,7 +1737,7 @@ export const staticTranslations = {
     "workspace_limit": "Workspace Limit",
     "user_limit": "User Limit",
     "viewer_limit": "Viewer Limit",
-    "no_features_generated": "No features generated. Adjust limits above.",
+    "no_features_generated": "No features generated. Adjust limits.",
     "plan_limits": "Plan Limits",
     "status": "Status",
     "collaborators": "Collaborators",

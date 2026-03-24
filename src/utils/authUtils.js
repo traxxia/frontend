@@ -1,26 +1,23 @@
-import jwtDecode from 'jwt-decode';
-
 const DEFAULT_LIMITS = {
   insight: false,
   strategic: false,
   pmf: false,
-  can_create_projects: false,
+  project: false,
 };
 
 /**
- * Reads the plan feature-flags from the signed JWT stored in sessionStorage.
- * Because the JWT is cryptographically signed by the backend, these values
- * cannot be tampered with from the browser – any edit to the payload will
- * invalidate the signature and the backend will reject the token.
+ * Reads the plan feature-flags from the `userLimits` key stored in
+ * sessionStorage at login time.  The value is the raw `limits` object
+ * from the login API response (e.g. { insight, strategic, pmf, project, … }).
  *
- * @returns {{ insight: boolean, strategic: boolean, pmf: boolean, can_create_projects: boolean }}
+ * @returns {{ insight: boolean, strategic: boolean, pmf: boolean, project: boolean }}
  */
 export function getUserLimits() {
-  const token = sessionStorage.getItem('token');
-  if (!token) return { ...DEFAULT_LIMITS };
   try {
-    const decoded = jwtDecode(token);
-    return { ...DEFAULT_LIMITS, ...(decoded.limits ?? {}) };
+    const raw = sessionStorage.getItem('userLimits');
+    if (!raw) return { ...DEFAULT_LIMITS };
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_LIMITS, ...parsed };
   } catch {
     return { ...DEFAULT_LIMITS };
   }

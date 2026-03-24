@@ -78,7 +78,7 @@ const BusinessSetupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
-  const { pmf: ENABLE_PMF, insight: hasInsightAccess, strategic: hasStrategicAccess } = getUserLimits();
+  const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
 
   // State management for business context
   const [currentBusiness, setCurrentBusiness] = useState(location.state?.business || null);
@@ -209,9 +209,9 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     const urlTab = searchParams.get('tab');
     const initialTab = urlTab || location.state?.initialTab;
-    if (ENABLE_PMF && initialTab) {
+    if (hasPmfAccess && initialTab) {
       setActiveTab(initialTab);
-    } else if (ENABLE_PMF) {
+    } else if (hasPmfAccess) {
       setActiveTab("aha");
     }
     // Clean up the temporary window flag used by useBusinessSetup's initializer
@@ -439,17 +439,18 @@ const BusinessSetupPage = () => {
     if (!selectedBusinessId) return;
     try {
       const stored = sessionStorage.getItem(`showProjectsTab_${selectedBusinessId}`);
-      if (stored === 'true') {
+      // Only restore the tab if the user has project access on their current plan
+      if (stored === 'true' && hasProjectAccess) {
         setShowProjectsTab(true);
       }
       // Set active business ID for AI Assistant fallback
       sessionStorage.setItem("activeBusinessId", selectedBusinessId);
     } catch { }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, hasProjectAccess]);
 
-  // Ensure Projects tab button appears once projects is active
+  // Ensure Projects tab button appears once projects is active (only if user has project access)
   useEffect(() => {
-    if (activeTab === 'projects' && !showProjectsTab) {
+    if (activeTab === 'projects' && !showProjectsTab && hasProjectAccess) {
       setShowProjectsTab(true);
       try {
         if (selectedBusinessId) {
@@ -457,7 +458,7 @@ const BusinessSetupPage = () => {
         }
       } catch { }
     }
-  }, [activeTab, showProjectsTab, selectedBusinessId]);
+  }, [activeTab, showProjectsTab, selectedBusinessId, hasProjectAccess]);
 
   // Automatically show Projects tab if this business already has projects
   // Skip this check when on tabs that never show the projects button (aha / executive)
@@ -485,7 +486,8 @@ const BusinessSetupPage = () => {
 
         const projects = res.data?.projects || [];
         const hasProjects = projects.length > 0;
-        setShowProjectsTab(hasProjects);
+        // Only show Projects tab if the plan allows it
+        setShowProjectsTab(hasProjects && hasProjectAccess);
         try {
           if (selectedBusinessId) {
             const key = `showProjectsTab_${selectedBusinessId}`;
@@ -1195,8 +1197,8 @@ const BusinessSetupPage = () => {
               {activeTab === "executive" && t("Executive Summary")}
               {activeTab === "priorities" && t("Priorities & Projects")}
               {activeTab === "advanced" && t("Questions and Answers")}
-              {activeTab === "insights" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
-              {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+              {activeTab === "insights" && (hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+              {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
               {activeTab === "projects" && t("Projects")}
             </div>
 
@@ -1312,7 +1314,7 @@ const BusinessSetupPage = () => {
                   </button>
                 </div>
                 <div className="mobile-menu-items">
-                  {ENABLE_PMF && (
+                  {hasPmfAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "aha" ? "active" : ""}`}
                       onClick={() => { handleAhaTabClick(); setShowMobileMenu(false); }}
@@ -1320,7 +1322,7 @@ const BusinessSetupPage = () => {
                       {t("aha")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
+                  {hasPmfAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "executive" ? "active" : ""}`}
                       onClick={() => { handleExecutiveTabClick(); setShowMobileMenu(false); }}
@@ -1328,7 +1330,7 @@ const BusinessSetupPage = () => {
                       {t("Executive Summary")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
+                  {hasPmfAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
                       onClick={() => { setActiveTab("priorities"); setShowMobileMenu(false); }}
@@ -1336,7 +1338,7 @@ const BusinessSetupPage = () => {
                       {t("Priorities & Projects")}
                     </button>
                   )}
-                  {showProjectsTab && (
+                  {showProjectsTab && hasProjectAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
                       onClick={() => { setActiveTab("projects"); setShowMobileMenu(false); }}
@@ -1350,18 +1352,22 @@ const BusinessSetupPage = () => {
                   >
                     {t("Questions and Answers")}
                   </button>
-                  <button
-                    className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
-                    onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
-                  >
-                    {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                  </button>
-                  <button
-                    className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
-                    onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
-                  >
-                    {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                  </button>
+                  {hasInsightAccess && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
+                      onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                    </button>
+                  )}
+                  {hasStrategicAccess && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
+                      onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1389,7 +1395,7 @@ const BusinessSetupPage = () => {
                           </div>
                         )}
                       </div>
-                      {ENABLE_PMF && (
+                      {hasPmfAccess && (
                         <button
                           className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
                           onClick={handleAhaTabClick}
@@ -1397,7 +1403,7 @@ const BusinessSetupPage = () => {
                           {t("aha")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
+                      {hasPmfAccess && (
                         <button
                           className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                           onClick={handleExecutiveTabClick}
@@ -1405,7 +1411,7 @@ const BusinessSetupPage = () => {
                           {t("Executive Summary")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
+                      {hasPmfAccess && (
                         <button
                           className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                           onClick={handlePrioritiesTabClick}
@@ -1413,7 +1419,7 @@ const BusinessSetupPage = () => {
                           {t("Priorities & Projects")}
                         </button>
                       )}
-                      {showProjectsTab && (
+                      {showProjectsTab && hasProjectAccess && (
                         <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                           {t("Projects")}
                         </button>
@@ -1425,12 +1431,16 @@ const BusinessSetupPage = () => {
                         {t("Questions and Answers")}
                       </button>
 
-                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
-                        {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                      </button>
-                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
-                        {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                      </button>
+                      {hasInsightAccess && (
+                        <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
+                          {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                        </button>
+                      )}
+                      {hasStrategicAccess && (
+                        <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
+                          {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                        </button>
+                      )}
                     </div>
 
                     <div className="desktop-tabs-buttons">
@@ -1538,14 +1548,14 @@ const BusinessSetupPage = () => {
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
-                      {ENABLE_PMF && activeTab === "aha" && (
+                      {hasPmfAccess && activeTab === "aha" && (
                         <PMFInsightsTab
                           selectedBusinessId={selectedBusinessId}
                           refreshTrigger={pmfRefreshTrigger}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "executive" && (
+                      {hasPmfAccess && activeTab === "executive" && (
                         <ExecutiveSummary
                           businessId={selectedBusinessId}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
@@ -1581,12 +1591,12 @@ const BusinessSetupPage = () => {
                           />
                         </div>
                       )}
-                      {activeTab === "insights" &&
+                      {activeTab === "insights" && hasInsightAccess &&
                         <AnalysisContentManager
                           {...analysisProps}
                           canRegenerate={canShowRegenerateButtons}
                           hasInsightAccess={hasInsightAccess} />}
-                      {activeTab === "strategic" && (
+                      {activeTab === "strategic" && hasStrategicAccess && (
                         <div className="strategic-section">
                           <StrategicAnalysis
                             questions={questions}
@@ -1611,7 +1621,7 @@ const BusinessSetupPage = () => {
                           />
                         </div>
                       )}
-                      {activeTab === "projects" && (
+                      {activeTab === "projects" && hasProjectAccess && (
                         <ProjectsSection
                           selectedBusinessId={selectedBusinessId}
                           onProjectCountChange={handleProjectCountChange}
@@ -1619,7 +1629,7 @@ const BusinessSetupPage = () => {
                           companyAdminIds={companyAdminIds}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "priorities" && (
+                      {hasPmfAccess && activeTab === "priorities" && (
                         <PrioritiesProjects
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
@@ -1638,7 +1648,7 @@ const BusinessSetupPage = () => {
               <>
                 <div className="desktop-tabs">
                   <div className="desktop-tabs-controls">
-                    {ENABLE_PMF && (
+                    {hasPmfAccess && (
                       <button
                         className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
                         onClick={handleAhaTabClick}
@@ -1646,7 +1656,7 @@ const BusinessSetupPage = () => {
                         {t("aha")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
+                    {hasPmfAccess && (
                       <button
                         className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                         onClick={handleExecutiveTabClick}
@@ -1654,7 +1664,7 @@ const BusinessSetupPage = () => {
                         {t("Executive Summary")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
+                    {hasPmfAccess && (
                       <button
                         className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                         onClick={handlePrioritiesTabClick}
@@ -1662,7 +1672,7 @@ const BusinessSetupPage = () => {
                         {t("Priorities & Projects")}
                       </button>
                     )}
-                    {showProjectsTab && (
+                    {showProjectsTab && hasProjectAccess && (
                       <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                         {t("Projects")}
                       </button>
@@ -1673,12 +1683,16 @@ const BusinessSetupPage = () => {
                     >
                       {t("Questions and Answers")}
                     </button>
-                    <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                      {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                    </button>
-                    <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                      {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                    </button>
+                    {hasInsightAccess && (
+                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                        {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
+                      </button>
+                    )}
+                    {hasStrategicAccess && (
+                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+                        {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                      </button>
+                    )}
                   </div>
 
                   {activeTab === "insights" && unlockedFeatures.analysis && (
@@ -1747,13 +1761,13 @@ const BusinessSetupPage = () => {
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
-                  {ENABLE_PMF && activeTab === "executive" && (
+                  {hasPmfAccess && activeTab === "executive" && (
                     <ExecutiveSummary
                       businessId={selectedBusinessId}
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
-                  {activeTab === "insights" && (
+                  {activeTab === "insights" && hasInsightAccess && (
                     <div className="analysis-section">
                       <div className="analysis-content">
                         <AnalysisContentManager
@@ -1762,7 +1776,7 @@ const BusinessSetupPage = () => {
                       </div>
                     </div>
                   )}
-                  {activeTab === "strategic" && (
+                  {activeTab === "strategic" && hasStrategicAccess && (
                     <div className="strategic-section">
                       <StrategicAnalysis
                         questions={questions}
@@ -1784,7 +1798,7 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {activeTab === "projects" && (
+                  {activeTab === "projects" && hasProjectAccess && (
                     <div className="projects-container">
                       <ProjectsSection
                         selectedBusinessId={selectedBusinessId}
@@ -1795,7 +1809,7 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {ENABLE_PMF && activeTab === "priorities" && (
+                  {hasPmfAccess && activeTab === "priorities" && (
                     <PrioritiesProjects
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
@@ -1847,20 +1861,20 @@ const BusinessSetupPage = () => {
                     />
                   </div>
                 )}
-                {ENABLE_PMF && activeTab === "aha" && (
+                {hasPmfAccess && activeTab === "aha" && (
                   <PMFInsightsTab
                     selectedBusinessId={selectedBusinessId}
                     refreshTrigger={pmfRefreshTrigger}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}
-                {ENABLE_PMF && activeTab === "executive" && (
+                {hasPmfAccess && activeTab === "executive" && (
                   <ExecutiveSummary
                     businessId={selectedBusinessId}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}
-                {activeTab === "insights" && (
+                {activeTab === "insights" && hasInsightAccess && (
                   <div className="analysis-section">
                     <div className="analysis-content">
                       <AnalysisContentManager
@@ -1869,7 +1883,7 @@ const BusinessSetupPage = () => {
                     </div>
                   </div>
                 )}
-                {activeTab === "strategic" && (
+                {activeTab === "strategic" && hasStrategicAccess && (
                   <div className="strategic-section">
                     <StrategicAnalysis
                       questions={questions}
@@ -1892,7 +1906,7 @@ const BusinessSetupPage = () => {
                     />
                   </div>
                 )}
-                {activeTab === "projects" && (
+                {activeTab === "projects" && hasProjectAccess && (
                   <ProjectsSection
                     selectedBusinessId={selectedBusinessId}
                     onProjectCountChange={handleProjectCountChange}
@@ -1901,7 +1915,7 @@ const BusinessSetupPage = () => {
                     isArchived={isArchived}
                   />
                 )}
-                {ENABLE_PMF && activeTab === "priorities" && (
+                {hasPmfAccess && activeTab === "priorities" && (
                   <PrioritiesProjects
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
@@ -1921,7 +1935,7 @@ const BusinessSetupPage = () => {
         onUpgradeSuccess={() => window.location.reload()}
       />
 
-      {ENABLE_PMF && (
+      {hasPmfAccess && (
         <PMFOnboardingModal
           show={showPMFOnboarding}
           onHide={() => setShowPMFOnboarding(false)}

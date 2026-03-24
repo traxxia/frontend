@@ -64,8 +64,8 @@ const Login = () => {
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
         sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
       }
-      // Limits (insight/strategic/pmf/can_create_projects) are now read directly
-      // from the signed JWT via getUserLimits() – no raw sessionStorage keys needed.
+      // Store feature-access limits from the login response directly
+      sessionStorage.setItem("userLimits", JSON.stringify(res.data.user.limits || {}));
       sessionStorage.setItem(
         "isAdmin",
         ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"
