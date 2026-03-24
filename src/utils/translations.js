@@ -1724,7 +1724,11 @@ export const staticTranslations = {
   "Regenerating Insights...": "Regenerating Insights...",
   "Generating Strategic Analysis...": "Generating Strategic Analysis...",
    "AI Assistant": "AI Assistant",
-    "no_specific_data_available": "No specific data available"
+    "no_specific_data_available": "No specific data available",
+    "Confirm_Submission": "Confirm Submission",
+    "Confirm_Review_Message": "You are about to log this Strategic Review. This action will be permanently recorded in the project's Decision Log. Are you sure you want to proceed?",
+    "Confirm_AdHoc_Message": "You are about to log an Ad-Hoc Update. This will be recorded in the project's Decision Log. Are you sure you want to proceed?",
+    "Confirm": "Confirm"
 
 
   },
@@ -1973,6 +1977,10 @@ export const staticTranslations = {
     "dashboard": "Panel de Control",
     "welcome_dashboard": "¡Bienvenido!",
     "Project Phase": "Fase del Proyecto",
+    "Confirm_Submission": "Confirmar Envío",
+    "Confirm_Review_Message": "Está a punto de registrar esta Revisión Estratégica. Esta acción quedará registrada permanentemente en el Registro de Decisiones del proyecto. ¿Está seguro de que desea continuar?",
+    "Confirm_AdHoc_Message": "Está a punto de registrar una Actualización Ad-Hoc. Esto quedará registrado en el Registro de Decisiones del proyecto. ¿Está seguro de que desea continuar?",
+    "Confirm": "Confirmar",
     "create_business_plans": "Crea planes de negocio paso a paso con el marco S.T.R.A.T.E.G.I.C. Activa las capacidades de IA para análisis, predicción y toma de decisiones.",
     "my_businesses": "Mis Negocios",
     "create_business": "Crear Negocio",

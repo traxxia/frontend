@@ -116,7 +116,7 @@ const ProjectCard = ({
 
           <h3 className="project-title" style={{ marginBottom: 0 }}>
             {project.project_name}
-            {userCanReview && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
+            {userCanReview && project.launch_status === 'launched' && ((project.is_stale || (project.next_review_date && (new Date(project.next_review_date).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)))) ? (
               <span
                 className="review-badge stale"
                 onClick={(e) => { e.stopPropagation(); onPerformReview(project); }}
