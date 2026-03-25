@@ -155,7 +155,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             features: formData.features.map(f => f.trim()).filter(f => f !== ''),
             limits: {
                 workspaces: workspaceLimitValue,
-                projects: formData.limit_projects,
+                project: formData.limit_projects,
                 collaborators: maxCollaborators,
                 viewers: maxViewers,
                 users: maxUsers,

@@ -2250,7 +2250,7 @@ const StrategicAnalysis = ({
         onHide={() => setShowPlanLimitModal(false)}
         title={t('execution_upgrade_title') || "Execution Engine Locked"}
         message={t('execution_upgrade_msg') || "Upgrade to Execute Strategy"}
-        subMessage={t('execution_upgrade_submsg') || "The execution engine and project kickstart features are available on the Advanced plan."}
+        subMessage={t('execution_upgrade_submsg') || "The execution engine and project kickstart features are available for upgraded plans."}
       />
     </div>
   );

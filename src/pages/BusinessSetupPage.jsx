@@ -244,11 +244,11 @@ const BusinessSetupPage = () => {
     if (pageContext) {
       window.dispatchEvent(
         new CustomEvent("ai_context_changed", {
-          detail: { pageContext: contextPayload }
+          detail: { pageContext: contextPayload, isArchived }
         })
       );
     }
-  }, [activeTab, questions, userAnswers]);
+  }, [activeTab, questions, userAnswers, isArchived]);
 
   // Effect to handle business context recovery on refresh
   useEffect(() => {
@@ -1080,7 +1080,7 @@ const BusinessSetupPage = () => {
   };
 
   return (
-    <div className="business-setup-container">
+    <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
       <MenuBar />
 
       {/* Read-Only Banner for Archived Workspaces */}
@@ -1088,8 +1088,8 @@ const BusinessSetupPage = () => {
         <div className="alert alert-warning mb-0 border-0 rounded-0 text-center py-2 d-flex align-items-center justify-content-center shadow-sm" style={{ zIndex: 1000, position: 'relative' }}>
           <AlertTriangle size={18} className="me-2 text-warning" />
           <span>
-            This workspace is in <strong>Read-Only</strong> mode.
-            Upgrade to the Advanced plan to restore editing capabilities.
+            This workspace has been moved to an <strong>Archived</strong> state and is currently view-only. 
+            Please upgrade your plan to reactivate this workspace.
           </span>
           <div className="ms-3 d-flex gap-2">
             {userPlan?.toLowerCase() === 'essential' && (
@@ -1511,10 +1511,10 @@ const BusinessSetupPage = () => {
                           )}
                         </>
                       )}
-
-
                     </div>
                   </div>
+
+                  {isArchived && <div className="archived-overlay" />}
 
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">

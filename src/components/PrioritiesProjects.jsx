@@ -25,7 +25,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     ""
   ).toLowerCase();
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";
-  const hasProjectsAccess = getUserLimits().can_create_projects === true;
+  const hasProjectsAccess = getUserLimits().project === true;
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -171,7 +171,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
         title={t("upgrade_required") || "Upgrade Required"}
-        message={t("kickstart_limit_msg") || "Project kickstarting is only available on Advanced plans."}
+        message={t("kickstart_limit_msg") || "Project kickstarting is only available on upgraded plans."}
         subMessage={t("upgrade_to_execute") || "Upgrade to Advanced to execute your strategy with AI-powered kickstart."}
       />
 
