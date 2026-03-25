@@ -77,7 +77,11 @@ const DowngradeSelectionModal = ({
     };
 
     const handleBusinessSelect = (businessId) => {
-        setSelectedBusinessId(businessId);
+        if (selectedBusinessId === businessId) {
+            setSelectedBusinessId(null);
+        } else {
+            setSelectedBusinessId(businessId);
+        }
     };
 
     const handleUserToggle = (userId, role) => {
@@ -214,40 +218,31 @@ const DowngradeSelectionModal = ({
 
                 <h6 className="mb-3 text-uppercase small fw-bold text-muted d-flex align-items-center">
                     <Briefcase size={16} className="me-1" />
-                    {t("Select Workspace to Keep Active")}
+                    {t("Select Workspace to Keep Active")} ({selectedBusinessId ? '1' : '0'}/1 {t("Selected")})
                 </h6>
 
-                <div className="business-list mb-4">
-                    <Row xs={1} md={2} className="g-3">
-                        {businesses.map(business => (
-                            <Col key={business._id}>
-                                <Card
-                                    className={`h-100 cursor-pointer selection-card ${selectedBusinessId === business._id ? 'selected' : ''}`}
-                                    onClick={() => handleBusinessSelect(business._id)}
-                                >
-                                    <Card.Body className="p-3 d-flex align-items-center">
-                                        <div className="form-check me-0 pe-0">
-                                            <input
-                                                type="radio"
-                                                className="form-check-input"
-                                                checked={selectedBusinessId === business._id}
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div className="ms-3 overflow-hidden">
-                                            <div className="fw-bold text-truncate">{business.business_name}</div>
-                                            <div className="small text-muted">
-                                                Active Workspace
-                                            </div>
-                                        </div>
-                                        {selectedBusinessId === business._id && (
-                                            <CheckCircle className="ms-auto text-primary" size={20} />
-                                        )}
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
+                <div className="business-selection-list ps-4 mb-4">
+                    {businesses.map(business => {
+                        const isChecked = selectedBusinessId === business._id;
+                        const isDisabled = !isChecked && selectedBusinessId !== null;
+                        return (
+                            <Form.Check 
+                                key={business._id}
+                                type="checkbox"
+                                id={`business-${business._id}`}
+                                label={
+                                    <div className="ms-1">
+                                        <div className="fw-medium text-dark">{business.business_name}</div>
+                                        <div className="small text-muted">{t("Active Workspace")}</div>
+                                    </div>
+                                }
+                                checked={isChecked}
+                                onChange={() => handleBusinessSelect(business._id)}
+                                className="mb-2 custom-check"
+                                disabled={isDisabled}
+                            />
+                        );
+                    })}
                 </div>
 
                 {/* Users Selection Area (Always visible to ensure clarity) */}

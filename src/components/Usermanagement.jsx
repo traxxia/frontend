@@ -194,9 +194,9 @@ const UserManagement = ({ onToast }) => {
 
     // Dynamic Limit Check
     if (usage) {
-      const roleKey = newRole.toLowerCase() === 'collaborator' ? 'collaborators' : 
-                      (newRole.toLowerCase() === 'viewer' ? 'viewers' : 'users');
-      
+      const roleKey = newRole.toLowerCase() === 'collaborator' ? 'collaborators' :
+        (newRole.toLowerCase() === 'viewer' ? 'viewers' : 'users');
+
       const current = usage[roleKey]?.current || 0;
       const limit = usage[roleKey]?.limit || 0;
 
@@ -250,9 +250,9 @@ const UserManagement = ({ onToast }) => {
   const handleRoleUpdate = async (userId, role) => {
     // Dynamic Limit Check for role update
     if (usage) {
-      const roleKey = role.toLowerCase() === 'collaborator' ? 'collaborators' : 
-                      (role.toLowerCase() === 'viewer' ? 'viewers' : 'users');
-      
+      const roleKey = role.toLowerCase() === 'collaborator' ? 'collaborators' :
+        (role.toLowerCase() === 'viewer' ? 'viewers' : 'users');
+
       const current = usage[roleKey]?.current || 0;
       const limit = usage[roleKey]?.limit || 0;
 
@@ -528,12 +528,38 @@ const UserManagement = ({ onToast }) => {
       label: t("joined"),
       render: (val) => <span className="admin-cell-secondary">{formatDate(val)}</span>
     },
+    {
+      key: "status",
+      label: t("Status"),
+      render: (_, row) => {
+        const statusValue = row.status === 'inactive' ? 'Inactive' : 'Active';
+        let statusColor = "#16a34a";
+        let statusBg = "#dcfce7";
+        if (statusValue === "Inactive") {
+          statusColor = "#ecaa1cff";
+          statusBg = "#FCF9C3";
+        }
+        return (
+          <span style={{
+            padding: "4px 8px",
+            borderRadius: "12px",
+            fontSize: "12px",
+            fontWeight: 500,
+            color: statusColor,
+            backgroundColor: statusBg,
+            display: "inline-block"
+          }}>
+            {t(statusValue)}
+          </span>
+        );
+      }
+    },
     ...((currentRole === "company_admin" || isSuperAdmin) ? [{
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
-        const statusValue = row.access_mode === 'archived' ? 'Archived' : (row.status === 'inactive' ? 'Inactive' : 'Active');
-        const disabled = statusValue === "Archived" || statusValue === "Inactive";
+        const statusValue = row.status === 'inactive' ? 'Inactive' : 'Active';
+        const disabled = statusValue === "Inactive";
         return (
           <>
             <Dropdown>
@@ -603,10 +629,10 @@ const UserManagement = ({ onToast }) => {
                 // If usage has loaded, we check if they can add ANY role.
                 // If they have 0 limit for ALL roles (which shouldn't happen), then show modal.
                 // Otherwise, let them open the modal and check specifically on submit.
-                if (usage && 
-                    usage.users.current >= usage.users.limit && 
-                    usage.collaborators.current >= usage.collaborators.limit && 
-                    usage.viewers.current >= usage.viewers.limit) {
+                if (usage &&
+                  usage.users.current >= usage.users.limit &&
+                  usage.collaborators.current >= usage.collaborators.limit &&
+                  usage.viewers.current >= usage.viewers.limit) {
                   setPlanLimitConfig({
                     title: t("plan_limit_reached"),
                     message: t("upgrade_to_add_users"),
