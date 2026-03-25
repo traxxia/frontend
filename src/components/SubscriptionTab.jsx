@@ -374,7 +374,7 @@ const SubscriptionTab = ({ onToast }) => {
         plan, usage, available_plans = [],
         billing_history = [], payment_methods = [],
         default_payment_method_id, company_name,
-        start_date, end_date
+        start_date, end_date, is_unlimited
     } = subscription;
 
     const currentPlanName = plan.toLowerCase();
@@ -435,7 +435,7 @@ const SubscriptionTab = ({ onToast }) => {
                     <div className="st-header-info">
                         <div className="st-header-badge">
                             <span className="st-dot-active" />
-                            Active Subscription
+                            {is_unlimited ? 'Unlimited Plan' : t('active_subscription') || 'Active Subscription'}
                         </div>
                         <h2 className="st-header-title">
                             {currentPlanName.charAt(0).toUpperCase() + currentPlanName.slice(1)} Plan
@@ -448,10 +448,12 @@ const SubscriptionTab = ({ onToast }) => {
                             <span className="st-h-label">Monthly Billing</span>
                             <span className="st-h-value">${currentPlanData?.price || 0}</span>
                         </div>
-                        <div className="st-h-stat">
-                            <span className="st-h-label">Renews On</span>
-                            <span className="st-h-value">{fmtDate(end_date)}</span>
-                        </div>
+                        {!is_unlimited && end_date && (
+                            <div className="st-h-stat">
+                                <span className="st-h-label">Renews On</span>
+                                <span className="st-h-value">{fmtDate(end_date)}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
