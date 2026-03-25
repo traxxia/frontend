@@ -401,7 +401,9 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 body: JSON.stringify({
                     plan_id: selectionData.plan_id,
                     active_business_id: selection.active_business_id,
-                    active_collaborator_ids: selection.active_collaborator_ids
+                    active_collaborator_ids: selection.active_collaborator_ids,
+                    active_user_ids: selection.active_user_ids,
+                    active_viewer_ids: selection.active_viewer_ids
                 })
             });
 
@@ -449,6 +451,7 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
                 show={showSelectionModal}
                 onHide={() => setShowSelectionModal(false)}
                 data={selectionData}
+                newPlanDetails={selectedPlan}
                 onConfirm={handleProcessDowngrade}
                 submitting={submitting}
                 externalError={error}

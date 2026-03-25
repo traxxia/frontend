@@ -12,6 +12,8 @@ const UpgradeReactivationModal = ({
 }) => {
     const [selectedBusinessIds, setSelectedBusinessIds] = useState([]);
     const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
+    const [selectedUserIds, setSelectedUserIds] = useState([]);
+    const [selectedViewerIds, setSelectedViewerIds] = useState([]);
     const [error, setError] = useState(null);
 
     const errorMessage = externalError || error;
@@ -19,21 +21,23 @@ const UpgradeReactivationModal = ({
     const {
         archived_businesses = [],
         inactive_collaborators = [],
+        inactive_users = [],
+        inactive_viewers = [],
         limits = {},
         plan_id
     } = data || {};
 
     const maxWorkspaces = limits.max_workspaces || 3;
-    const maxCollaborators = limits.max_collaborators || 3;
+    const maxCollaborators = limits.max_collaborators || 0;
+    const maxUsers = limits.max_users || 0;
+    const maxViewers = limits.max_viewers || 0;
 
     const handleBusinessToggle = (id) => {
         if (selectedBusinessIds.includes(id)) {
             setSelectedBusinessIds(selectedBusinessIds.filter(bid => bid !== id));
         } else {
-            // Count already active businesses (this information isn't perfect here, but we can guess)
-            // Backend will validate anyway. For UX, let's just limit selection.
-            if (selectedBusinessIds.length >= maxWorkspaces - 1) {
-                setError(`You can only reactivate up to ${maxWorkspaces - 1} additional workspaces.`);
+            if (selectedBusinessIds.length >= Math.max(0, maxWorkspaces - 1)) {
+                setError(`You can only reactivate up to ${Math.max(0, maxWorkspaces - 1)} additional workspaces.`);
                 return;
             }
             setSelectedBusinessIds([...selectedBusinessIds, id]);
@@ -41,15 +45,20 @@ const UpgradeReactivationModal = ({
         }
     };
 
-    const handleCollaboratorToggle = (id) => {
-        if (selectedCollaboratorIds.includes(id)) {
-            setSelectedCollaboratorIds(selectedCollaboratorIds.filter(cid => cid !== id));
+    const handleUserToggle = (id, roleType) => {
+        let currentList, setList, limit, roleName;
+        if (roleType === 'collaborator') { currentList = selectedCollaboratorIds; setList = setSelectedCollaboratorIds; limit = maxCollaborators; roleName = 'collaborators'; }
+        else if (roleType === 'user') { currentList = selectedUserIds; setList = setSelectedUserIds; limit = maxUsers; roleName = 'standard users'; }
+        else if (roleType === 'viewer') { currentList = selectedViewerIds; setList = setSelectedViewerIds; limit = maxViewers; roleName = 'viewers'; }
+
+        if (currentList.includes(id)) {
+            setList(currentList.filter(uid => uid !== id));
         } else {
-            if (selectedCollaboratorIds.length >= maxCollaborators) {
-                setError(`You can only reactivate up to ${maxCollaborators} collaborators.`);
+            if (currentList.length >= limit) {
+                setError(`You can only reactivate up to ${limit} ${roleName}.`);
                 return;
             }
-            setSelectedCollaboratorIds([...selectedCollaboratorIds, id]);
+            setList([...currentList, id]);
             setError(null);
         }
     };
@@ -58,7 +67,9 @@ const UpgradeReactivationModal = ({
         onConfirm({
             plan_id,
             reactivate_business_ids: selectedBusinessIds,
-            reactivate_collaborator_ids: selectedCollaboratorIds
+            reactivate_collaborator_ids: selectedCollaboratorIds,
+            reactivate_user_ids: selectedUserIds,
+            reactivate_viewer_ids: selectedViewerIds
         });
     };
 
@@ -119,70 +130,77 @@ const UpgradeReactivationModal = ({
                     </div>
                 )}
 
-                {/* INACTIVE COLLABORATORS SECTION */}
-                {inactive_collaborators.length > 0 && (
-                    <div className="mb-4">
-                        <h6 className="mb-3 text-uppercase small fw-bold text-muted d-flex align-items-center">
-                            <Users size={16} className="me-1" />
-                            Restore Collaborators ({selectedCollaboratorIds.length}/{maxCollaborators} allowed)
-                        </h6>
-                        <div className="collaborator-list">
-                            {inactive_collaborators.map(user => (
-                                <Card
-                                    key={user._id}
-                                    className={`mb-3 collaborator-card ${selectedCollaboratorIds.includes(user._id) ? 'selected' : ''}`}
-                                >
-                                    <Card.Body className="p-3">
-                                        <div className="d-flex align-items-center mb-2">
-                                            <Form.Check
-                                                type="checkbox"
-                                                checked={selectedCollaboratorIds.includes(user._id)}
-                                                onChange={() => handleCollaboratorToggle(user._id)}
-                                                className="me-2"
-                                            />
-                                            <div className="ms-2 overflow-hidden flex-grow-1">
-                                                <div className="fw-bold text-truncate">{user.name || user.email}</div>
-                                                <div className="small text-muted">{user.email}</div>
-                                            </div>
-                                            {selectedCollaboratorIds.includes(user._id) && (
-                                                <Badge bg="primary" pill>Selected</Badge>
-                                            )}
-                                        </div>
-
-                                        {/* Show associated businesses as badges */}
-                                        {user.associated_business_ids?.length > 0 && (
-                                            <div className="ms-4 ps-2 border-start mt-2">
-                                                <div className="x-small text-muted mb-1">Associated Workspaces:</div>
-                                                <div className="d-flex flex-wrap gap-1">
-                                                    {user.associated_business_ids.map(bid => {
-                                                        const business = archived_businesses.find(b => b._id === bid);
-                                                        if (!business) return null;
-                                                        const isSelected = selectedBusinessIds.includes(bid);
-                                                        return (
-                                                            <Badge
-                                                                key={bid}
-                                                                bg={isSelected ? "success" : "light"}
-                                                                text={isSelected ? "white" : "dark"}
-                                                                className="border cursor-pointer fw-normal"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleBusinessToggle(bid);
-                                                                }}
-                                                            >
-                                                                {business.business_name}
-                                                                {isSelected && <CheckCircle size={10} className="ms-1 font-weight-bold" />}
-                                                            </Badge>
-                                                        );
-                                                    })}
+                {/* INACTIVE USERS SECTIONS */}
+                {[
+                    { title: 'Collaborators', data: inactive_collaborators, limit: maxCollaborators, roleType: 'collaborator', selectedList: selectedCollaboratorIds },
+                    { title: 'Standard Users', data: inactive_users, limit: maxUsers, roleType: 'user', selectedList: selectedUserIds },
+                    { title: 'Viewers', data: inactive_viewers, limit: maxViewers, roleType: 'viewer', selectedList: selectedViewerIds }
+                ].map((section, idx) => {
+                    if (section.data.length === 0) return null;
+                    return (
+                        <div className="mb-4" key={idx}>
+                            <h6 className="mb-3 text-uppercase small fw-bold text-muted d-flex align-items-center">
+                                <Users size={16} className="me-1" />
+                                Restore {section.title} ({section.selectedList.length}/{section.limit} allowed)
+                            </h6>
+                            <div className="collaborator-list">
+                                {section.data.map(user => (
+                                    <Card
+                                        key={user._id}
+                                        className={`mb-3 collaborator-card ${section.selectedList.includes(user._id) ? 'selected' : ''}`}
+                                    >
+                                        <Card.Body className="p-3">
+                                            <div className="d-flex align-items-center mb-2">
+                                                <Form.Check
+                                                    type="checkbox"
+                                                    checked={section.selectedList.includes(user._id)}
+                                                    onChange={() => handleUserToggle(user._id, section.roleType)}
+                                                    className="me-2"
+                                                />
+                                                <div className="ms-2 overflow-hidden flex-grow-1">
+                                                    <div className="fw-bold text-truncate">{user.name || user.email}</div>
+                                                    <div className="small text-muted">{user.email}</div>
                                                 </div>
+                                                {section.selectedList.includes(user._id) && (
+                                                    <Badge bg="primary" pill>Selected</Badge>
+                                                )}
                                             </div>
-                                        )}
-                                    </Card.Body>
-                                </Card>
-                            ))}
+
+                                            {/* Show associated businesses as badges for collaborators */}
+                                            {user.associated_business_ids?.length > 0 && (
+                                                <div className="ms-4 ps-2 border-start mt-2">
+                                                    <div className="x-small text-muted mb-1">Associated Workspaces:</div>
+                                                    <div className="d-flex flex-wrap gap-1">
+                                                        {user.associated_business_ids.map(bid => {
+                                                            const business = archived_businesses.find(b => b._id === bid);
+                                                            if (!business) return null;
+                                                            const isSelected = selectedBusinessIds.includes(bid);
+                                                            return (
+                                                                <Badge
+                                                                    key={bid}
+                                                                    bg={isSelected ? "success" : "light"}
+                                                                    text={isSelected ? "white" : "dark"}
+                                                                    className="border cursor-pointer fw-normal"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleBusinessToggle(bid);
+                                                                    }}
+                                                                >
+                                                                    {business.business_name}
+                                                                    {isSelected && <CheckCircle size={10} className="ms-1 font-weight-bold" />}
+                                                                </Badge>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Card.Body>
+                                    </Card>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })}
             </Modal.Body>
             <Modal.Footer className="border-0 pt-0">
                 <Button variant="link" onClick={onHide} className="text-decoration-none text-muted">
