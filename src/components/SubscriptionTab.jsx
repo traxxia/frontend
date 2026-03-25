@@ -428,8 +428,15 @@ const SubscriptionTab = ({ onToast }) => {
 
     return (
         <div className="st-root">
-
-            {/* ══ HEADER ══ */}
+            <div className="st-disclaimer-banner">
+                <Alert variant="info" className="d-flex align-items-center py-2 px-3 border-0 shadow-sm" style={{ background: '#eff6ff', color: '#1e40af', borderRadius: '12px' }}>
+                    <AlertCircle size={18} className="me-2 flex-shrink-0" />
+                    <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                        {t('super_admin_modify_note') || "Note: The Super Admin may modify plan limits independently, so they may not always match the limits of your current existing plan."}
+                    </div>
+                </Alert>
+            </div>
+                    {/* ══ HEADER ══ */}
             <div className="st-header-clean">
                 <div className="st-header-main">
                     <div className="st-header-info">
