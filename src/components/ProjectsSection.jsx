@@ -775,7 +775,13 @@ const ProjectsSection = ({
           <button
             onClick={() => {
               setViewMode("ranking");
-              setShowRankScreen(true);
+              if (userRole === 'viewer') {
+                setShowRankScreen(false);
+                setShowTeamRankings(true);
+              } else {
+                setShowRankScreen(true);
+                setShowTeamRankings(false);
+              }
             }}
             className={`view-mode-tab ${viewMode === "ranking" ? "active" : ""}`}
             style={{
@@ -874,7 +880,7 @@ const ProjectsSection = ({
                   />
                 )}
 
-                {showTeamRankings && !isViewer && (
+                {showTeamRankings && (
                   <TeamRankingsView
                     activeAccordionKey={activeAccordionKey}
                     onAccordionSelect={handleAccordionSelect}

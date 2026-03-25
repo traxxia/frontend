@@ -776,7 +776,7 @@ if (description) {
                       </div>
                       <Accordion className="px-4 mb-4">
                         {/* My Businesses */}
-                        {!isCollaborator && (
+                        {!isCollaborator && !isViewer && (
                           <Accordion.Item eventKey="0">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -799,7 +799,7 @@ if (description) {
                         )}
 
                         {/* Project Phase */}
-                        {!isCollaborator && projectPhaseBusinesses.length > 0 && (
+                        {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
                           <Accordion.Item eventKey="1">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -910,7 +910,7 @@ if (description) {
                         <Col md={6} className="businesses-section">
                           <Accordion>
                             {/* My Businesses */}
-                            {!isCollaborator && (
+                            {!isCollaborator && !isViewer && (
                               <Accordion.Item eventKey="0">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">
@@ -932,7 +932,7 @@ if (description) {
                             )}
 
                             {/* Project Phase */}
-                            {!isCollaborator && projectPhaseBusinesses.length > 0 && (
+                            {!isCollaborator && !isViewer && projectPhaseBusinesses.length > 0 && (
                               <Accordion.Item eventKey="1">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">

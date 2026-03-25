@@ -103,7 +103,7 @@ const ProjectCard = ({
             />
           )}
 
-          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && (
+          {rankMap && rankMap[String(project._id)] !== null && rankMap[String(project._id)] !== undefined && !isViewer && (
             <div className="project-rank-badge">
               Rank {rankMap[String(project._id)]}
             </div>
