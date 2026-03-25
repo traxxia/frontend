@@ -379,6 +379,9 @@ const SubscriptionTab = ({ onToast }) => {
 
     const currentPlanName = plan.toLowerCase();
     const currentPlanData = available_plans.find(p => p.name.toLowerCase() === currentPlanName);
+    const displayLimits = currentPlanData?.limits || subscription.original_plan_limits || {};
+    const displayPrice = currentPlanData?.price || subscription.original_plan_price || subscription.plan_price || 0;
+
 
     const daysRemaining = getDaysRemaining(end_date);
     const totalDays = 31;
@@ -453,7 +456,7 @@ const SubscriptionTab = ({ onToast }) => {
                     <div className="st-header-stats">
                         <div className="st-h-stat">
                             <span className="st-h-label">Monthly Billing</span>
-                            <span className="st-h-value">${currentPlanData?.price || 0}</span>
+                            <span className="st-h-value">${displayPrice}</span>
                         </div>
                         {!is_unlimited && end_date && (
                             <div className="st-h-stat">
@@ -516,16 +519,16 @@ const SubscriptionTab = ({ onToast }) => {
                             <div className="st-card-subtitle" style={{ textTransform: 'capitalize' }}>{currentPlanData.name} tier</div>
                         </div>
                         <div className="st-ps-price-row">
-                            <span className="st-ps-amount">${currentPlanData.price}</span>
+                            <span className="st-ps-amount">${displayPrice}</span>
                             <span className="st-ps-mo">/month</span>
                         </div>
-                        <p className="st-ps-desc">{currentPlanData.description}</p>
+                        <p className="st-ps-desc">{currentPlanData?.description || ''}</p>
                         <div className="st-ps-limits">
                             {[
-                                { icon: Briefcase, label: 'Workspaces', val: currentPlanData.limits?.workspaces },
-                                { icon: Users,     label: 'Collaborators', val: currentPlanData.limits?.collaborators },
-                                { icon: Eye,       label: 'Viewers', val: currentPlanData.limits?.viewers },
-                                { icon: Users,     label: 'Users',   val: currentPlanData.limits?.users },
+                                { icon: Briefcase, label: 'Workspaces', val: displayLimits.workspaces },
+                                { icon: Users,     label: 'Collaborators', val: displayLimits.collaborators },
+                                { icon: Eye,       label: 'Viewers', val: displayLimits.viewers },
+                                { icon: Users,     label: 'Users',   val: displayLimits.users },
                             ].map(({ icon: Icon, label, val }) => (
                                 <div key={label} className="st-ps-limit-item">
                                     <div className="st-ps-limit-val">{val ?? 0}</div>
