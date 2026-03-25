@@ -823,7 +823,7 @@ if (description) {
                         )}
 
                         {/* Collaborating Businesses */}
-                        {collaboratingBusinesses.length > 0 && (
+                        {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
                           <Accordion.Item eventKey="2">
                             <Accordion.Header>
                               <div className="accordion-header-content">
@@ -955,7 +955,7 @@ if (description) {
                             )}
 
                             {/* Collaborating Businesses */}
-                            {collaboratingBusinesses.length > 0 && (
+                            {(isCollaborator || isViewer || collaboratingBusinesses.length > 0) && (
                               <Accordion.Item eventKey="2">
                                 <Accordion.Header>
                                   <div className="accordion-header-content">
