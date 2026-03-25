@@ -12,8 +12,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 // Stripe initialization will be handled inside the component for lazy loading
 
-const TIER_ORDER = ['essential', 'advanced', 'team', 'professional'];
-const tierIndex = (name = '') => TIER_ORDER.indexOf(name.toLowerCase());
+// Removed hardcoded TIER_ORDER. Plans are now compared via price and limits for dynamism.
 
 const UpgradeModalContent = ({
     onHide,
@@ -112,7 +111,7 @@ const UpgradeModalContent = ({
                     <>
                         {error && <Alert variant="danger">{error}</Alert>}
 
-                        {selectedPlan && subscription?.plan && tierIndex(selectedPlan.name) < tierIndex(subscription.plan) && (
+                        {selectedPlan && subscription?.plan && selectedPlan.price < (subscription.plan_price || 0) && (
                             <Alert variant="warning" className="mb-3 border-0 shadow-sm">
                                 <div className="d-flex align-items-start">
                                     <ArrowRight className="me-2 flex-shrink-0 mt-1" size={18} />
@@ -127,6 +126,20 @@ const UpgradeModalContent = ({
                                                     <strong>{t("Workspaces")}:</strong> {t("You currently have")}{" "}
                                                     <strong>{subscription.usage.workspaces.current}</strong> {t("active workspace(s)")}.
                                                     {t("Only")} <strong>{selectedPlan.limits?.workspaces || 0}</strong> {t("will remain active")}.
+                                                </li>
+                                            )}
+                                            {subscription.usage.collaborators.current > (selectedPlan.limits?.collaborators || 0) && (
+                                                <li className="mb-1">
+                                                    <strong>{t("Collaborators")}:</strong> {t("You have")}{" "}
+                                                    <strong>{subscription.usage.collaborators.current}</strong>.
+                                                    {t("The new plan only allows")} <strong>{selectedPlan.limits?.collaborators || 0}</strong>.
+                                                </li>
+                                            )}
+                                            {subscription.usage.users.current > (selectedPlan.limits?.users || 0) && (
+                                                <li className="mb-1">
+                                                    <strong>{t("Users")}:</strong> {t("You have")}{" "}
+                                                    <strong>{subscription.usage.users.current}</strong>.
+                                                    {t("The new plan only allows")} <strong>{selectedPlan.limits?.users || 0}</strong>.
                                                 </li>
                                             )}
                                         </ul>
@@ -226,7 +239,7 @@ const UpgradeModalContent = ({
                 >
                     {submitting ? <Spinner animation="border" size="sm" /> :
                         (selectedPlan?.name?.toLowerCase() === subscription?.plan?.toLowerCase() ? t('Renew Plan') : 
-                         (tierIndex(selectedPlan?.name) < tierIndex(subscription?.plan) ? t('Process Downgrade') : t('Confirm Upgrade')))}
+                         (selectedPlan?.price < (subscription?.plan_price || 0) ? t('Process Downgrade') : t('Confirm Upgrade')))}
                     {!submitting && <ArrowRight size={18} className="ms-2" />}
                 </Button>
             </Modal.Footer>

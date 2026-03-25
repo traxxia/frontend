@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Card, Row, Col, Badge, Alert } from 'react-bootstrap';
 import { Briefcase, Users, CheckCircle, Zap, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const UpgradeReactivationModal = ({
     show,
@@ -10,6 +11,7 @@ const UpgradeReactivationModal = ({
     submitting,
     externalError
 }) => {
+    const { t } = useTranslation();
     const [selectedBusinessIds, setSelectedBusinessIds] = useState([]);
     const [selectedCollaboratorIds, setSelectedCollaboratorIds] = useState([]);
     const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -24,7 +26,8 @@ const UpgradeReactivationModal = ({
         inactive_users = [],
         inactive_viewers = [],
         limits = {},
-        plan_id
+        plan_id,
+        new_plan_name
     } = data || {};
 
     const maxWorkspaces = limits.max_workspaces || 3;
@@ -86,8 +89,8 @@ const UpgradeReactivationModal = ({
                     <div className="d-flex">
                         <ArrowRight className="me-2 flex-shrink-0" size={16} />
                         <div>
-                            Welcome to the <strong>Advanced</strong> plan!
-                            Select collaborators to restore their access, and reactivate the workspaces they need.
+                            {t("Welcome to the")} <strong>{new_plan_name || 'new'}</strong> {t("plan")}!
+                            {t("Select collaborators to restore their access, and reactivate the workspaces they need.")}
                         </div>
                     </div>
                 </Alert>

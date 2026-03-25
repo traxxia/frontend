@@ -532,10 +532,11 @@ const UserManagement = ({ onToast }) => {
       key: "status",
       label: t("Status"),
       render: (_, row) => {
-        const statusValue = row.status === 'inactive' ? 'Inactive' : 'Active';
+        const isArchived = row.status === 'inactive' || row.access_mode === 'archived';
+        const label = isArchived ? t('archived') : t('active');
         let statusColor = "#16a34a";
         let statusBg = "#dcfce7";
-        if (statusValue === "Inactive") {
+        if (isArchived) {
           statusColor = "#ecaa1cff";
           statusBg = "#FCF9C3";
         }
@@ -549,7 +550,7 @@ const UserManagement = ({ onToast }) => {
             backgroundColor: statusBg,
             display: "inline-block"
           }}>
-            {t(statusValue)}
+            {label}
           </span>
         );
       }
@@ -558,8 +559,8 @@ const UserManagement = ({ onToast }) => {
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
-        const statusValue = row.status === 'inactive' ? 'Inactive' : 'Active';
-        const disabled = statusValue === "Inactive";
+        const isArchived = row.status === 'inactive' || row.access_mode === 'archived';
+        const disabled = isArchived;
         return (
           <>
             <Dropdown>

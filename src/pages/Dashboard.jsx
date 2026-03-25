@@ -606,7 +606,7 @@ if (description) {
 
     const getStatusInfo = () => {
       if (business.status === 'deleted') return { label: t('deleted'), className: 'status-deleted' };
-      if (business.access_mode === t('archived') || business.access_mode === 'hidden') return { label: 'Archived', className: 'status-archived' };
+      if (business.access_mode === 'archived' || business.access_mode === 'hidden') return { label: t('archived'), className: 'status-archived' };
       return { label: t('active'), className: 'status-active' };
     };
 
