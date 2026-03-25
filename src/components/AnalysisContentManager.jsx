@@ -521,7 +521,7 @@ const AnalysisContentManager = (props) => {
         streamingManager={streamingManager}
         hideRegenerateButtons={hideRegenerateButtons}
         canRegenerate={props.canRegenerate && (!!data || (config.category !== 'costs-financial' || analysisKey === 'productivityMetrics'))}
-        hasInsightAccess={props.hasInsightAccess}
+        hasInsightAccess={hasInsightAccess}
       >
         <div ref={ref} data-component={pdfComponent}>
           <Component

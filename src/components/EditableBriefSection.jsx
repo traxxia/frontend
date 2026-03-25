@@ -25,7 +25,8 @@ const EditableField = ({
   fieldRefs,
   handleSave,
   handleCancel,
-  handleAutoSave
+  handleAutoSave,
+  isLastField
 }) => {
   const { t } = useTranslation();
   const isEditing = editingField === field.key;
@@ -43,7 +44,7 @@ const EditableField = ({
         backgroundColor: isHighlighted ? '#fef3c7' : 'white',
         borderRadius: '8px',
         padding: isHighlighted ? '12px' : '8px',
-        margin: '8px 0',
+        margin: (isEditing && isLastField) ? '8px 0 80px 0' : '8px 0',
         transition: 'all 0.3s ease',
         position: 'relative'
       }}
@@ -1467,6 +1468,7 @@ const EditableBriefSection = ({
                     handleSave={handleSave}
                     handleCancel={handleCancel}
                     handleAutoSave={handleAutoSave}
+                    isLastField={index === briefFields.length - 1}
                   />
                 );
               });

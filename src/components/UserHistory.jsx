@@ -1452,6 +1452,7 @@ const AnalysisTab = ({
           userAnswers={analysisData.userAnswers}
           selectedBusinessId={selectedBusinessId}
           swotAnalysisResult={analysisData.swot}
+          hasInsightAccess={true}
           customerSegmentationData={analysisData.customerSegmentation}
           purchaseCriteriaData={analysisData.purchaseCriteria}
           channelHeatmapData={analysisData.channelHeatmap}
