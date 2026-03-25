@@ -162,7 +162,6 @@ const DowngradeSelectionModal = ({
                                 checked={isChecked}
                                 onChange={() => handleUserToggle(user._id, roleName)}
                                 className="mb-2 custom-check"
-                                disabled={isDisabled}
                             />
                         );
                     })}
@@ -239,7 +238,6 @@ const DowngradeSelectionModal = ({
                                 checked={isChecked}
                                 onChange={() => handleBusinessSelect(business._id)}
                                 className="mb-2 custom-check"
-                                disabled={isDisabled}
                             />
                         );
                     })}

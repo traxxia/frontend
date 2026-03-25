@@ -18,13 +18,33 @@ const UpgradeReactivationModal = ({
     const [selectedViewerIds, setSelectedViewerIds] = useState([]);
     const [error, setError] = useState(null);
 
+    useEffect(() => {
+        if (show && data) {
+            setSelectedBusinessIds(data.active_businesses?.map(b => b._id) || []);
+            setSelectedCollaboratorIds(data.active_collaborators?.map(u => u._id) || []);
+            setSelectedUserIds(data.active_users?.map(u => u._id) || []);
+            setSelectedViewerIds(data.active_viewers?.map(u => u._id) || []);
+            setError(null);
+        } else if (!show) {
+            setSelectedBusinessIds([]);
+            setSelectedCollaboratorIds([]);
+            setSelectedUserIds([]);
+            setSelectedViewerIds([]);
+            setError(null);
+        }
+    }, [show, data]);
+
     const errorMessage = externalError || error;
 
     const {
         archived_businesses = [],
+        active_businesses = [],
         inactive_collaborators = [],
         inactive_users = [],
         inactive_viewers = [],
+        active_collaborators = [],
+        active_users = [],
+        active_viewers = [],
         limits = {},
         plan_id,
         new_plan_name
@@ -38,9 +58,10 @@ const UpgradeReactivationModal = ({
     const handleBusinessToggle = (id) => {
         if (selectedBusinessIds.includes(id)) {
             setSelectedBusinessIds(selectedBusinessIds.filter(bid => bid !== id));
+            setError(null);
         } else {
-            if (selectedBusinessIds.length >= Math.max(0, maxWorkspaces - 1)) {
-                setError(`You can only reactivate up to ${Math.max(0, maxWorkspaces - 1)} additional workspaces.`);
+            if (selectedBusinessIds.length >= maxWorkspaces) {
+                setError(`You can only select up to ${maxWorkspaces} active workspaces.`);
                 return;
             }
             setSelectedBusinessIds([...selectedBusinessIds, id]);
@@ -56,9 +77,10 @@ const UpgradeReactivationModal = ({
 
         if (currentList.includes(id)) {
             setList(currentList.filter(uid => uid !== id));
+            setError(null);
         } else {
             if (currentList.length >= limit) {
-                setError(`You can only reactivate up to ${limit} ${roleName}.`);
+                setError(`You can only select up to ${limit} active ${roleName}.`);
                 return;
             }
             setList([...currentList, id]);
@@ -67,12 +89,33 @@ const UpgradeReactivationModal = ({
     };
 
     const handleConfirm = () => {
+        // Calculate diff between active arrays and selected arrays to find archives/reactivates
+        const activeBizIds = new Set(active_businesses?.map(b => b._id) || []);
+        const reactivate_business_ids = selectedBusinessIds.filter(id => !activeBizIds.has(id));
+        const archive_business_ids = Array.from(activeBizIds).filter(id => !selectedBusinessIds.includes(id));
+
+        const activeCollabIds = new Set(active_collaborators?.map(u => u._id) || []);
+        const reactivate_collaborator_ids = selectedCollaboratorIds.filter(id => !activeCollabIds.has(id));
+        const archive_collaborator_ids = Array.from(activeCollabIds).filter(id => !selectedCollaboratorIds.includes(id));
+
+        const activeUserIds = new Set(active_users?.map(u => u._id) || []);
+        const reactivate_user_ids = selectedUserIds.filter(id => !activeUserIds.has(id));
+        const archive_user_ids = Array.from(activeUserIds).filter(id => !selectedUserIds.includes(id));
+
+        const activeViewerIds = new Set(active_viewers?.map(u => u._id) || []);
+        const reactivate_viewer_ids = selectedViewerIds.filter(id => !activeViewerIds.has(id));
+        const archive_viewer_ids = Array.from(activeViewerIds).filter(id => !selectedViewerIds.includes(id));
+
         onConfirm({
             plan_id,
-            reactivate_business_ids: selectedBusinessIds,
-            reactivate_collaborator_ids: selectedCollaboratorIds,
-            reactivate_user_ids: selectedUserIds,
-            reactivate_viewer_ids: selectedViewerIds
+            reactivate_business_ids,
+            archive_business_ids,
+            reactivate_collaborator_ids,
+            archive_collaborator_ids,
+            reactivate_user_ids,
+            archive_user_ids,
+            reactivate_viewer_ids,
+            archive_viewer_ids
         });
     };
 
@@ -98,13 +141,35 @@ const UpgradeReactivationModal = ({
                 {errorMessage && <Alert variant="danger" className="py-2 small">{errorMessage}</Alert>}
 
                 {/* ARCHIVED BUSINESSES SECTION */}
-                {archived_businesses.length > 0 && (
+                {(archived_businesses.length > 0 || active_businesses?.length > 0) && (
                     <div className="mb-4">
                         <h6 className="mb-3 text-uppercase small fw-bold text-muted d-flex align-items-center">
                             <Briefcase size={16} className="me-1" />
-                            Restore Archived Workspaces ({selectedBusinessIds.length}/{maxWorkspaces - 1} allowed)
+                            Workspaces ({selectedBusinessIds.length + (active_businesses?.length || 0)}/{maxWorkspaces} limit)
                         </h6>
                         <Row xs={1} md={2} className="g-3">
+                            {active_businesses?.map(business => (
+                                <Col key={`active-${business._id}`}>
+                                    <Card 
+                                        className={`h-100 cursor-pointer selection-card ${selectedBusinessIds.includes(business._id) ? 'selected bg-light-blue border-primary' : ''}`} 
+                                        onClick={() => handleBusinessToggle(business._id)}
+                                    >
+                                        <Card.Body className="p-3 d-flex align-items-center">
+                                            <Form.Check
+                                                type="checkbox"
+                                                checked={selectedBusinessIds.includes(business._id)}
+                                                onChange={() => { }}
+                                                className="me-2"
+                                            />
+                                            <div className="ms-2 overflow-hidden flex-grow-1">
+                                                <div className="fw-bold text-truncate">{business.business_name}</div>
+                                                <div className="small text-primary fw-bold">Active Workspace</div>
+                                            </div>
+                                            <CheckCircle className="ms-auto text-primary" size={20} />
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            ))}
                             {archived_businesses.map(business => (
                                 <Col key={business._id}>
                                     <Card
@@ -133,21 +198,44 @@ const UpgradeReactivationModal = ({
                     </div>
                 )}
 
-                {/* INACTIVE USERS SECTIONS */}
+                {/* USERS SECTIONS */}
                 {[
-                    { title: 'Collaborators', data: inactive_collaborators, limit: maxCollaborators, roleType: 'collaborator', selectedList: selectedCollaboratorIds },
-                    { title: 'Standard Users', data: inactive_users, limit: maxUsers, roleType: 'user', selectedList: selectedUserIds },
-                    { title: 'Viewers', data: inactive_viewers, limit: maxViewers, roleType: 'viewer', selectedList: selectedViewerIds }
+                    { title: 'Collaborators', inactive: inactive_collaborators, active: active_collaborators, limit: maxCollaborators, roleType: 'collaborator', selectedList: selectedCollaboratorIds },
+                    { title: 'Standard Users', inactive: inactive_users, active: active_users, limit: maxUsers, roleType: 'user', selectedList: selectedUserIds },
+                    { title: 'Viewers', inactive: inactive_viewers, active: active_viewers, limit: maxViewers, roleType: 'viewer', selectedList: selectedViewerIds }
                 ].map((section, idx) => {
-                    if (section.data.length === 0) return null;
+                    if (section.inactive.length === 0 && section.active.length === 0) return null;
                     return (
                         <div className="mb-4" key={idx}>
                             <h6 className="mb-3 text-uppercase small fw-bold text-muted d-flex align-items-center">
                                 <Users size={16} className="me-1" />
-                                Restore {section.title} ({section.selectedList.length}/{section.limit} allowed)
+                                {section.title} ({section.selectedList.length + section.active.length}/{section.limit} limit)
                             </h6>
                             <div className="collaborator-list">
-                                {section.data.map(user => (
+                                {section.active.map(user => (
+                                    <Card 
+                                        key={`active-${user._id}`} 
+                                        className={`mb-3 cursor-pointer collaborator-card ${section.selectedList.includes(user._id) ? 'selected bg-light-blue border-primary' : ''}`}
+                                        onClick={() => handleUserToggle(user._id, section.roleType)}
+                                    >
+                                        <Card.Body className="p-3">
+                                            <div className="d-flex align-items-center mb-2">
+                                                <Form.Check
+                                                    type="checkbox"
+                                                    checked={section.selectedList.includes(user._id)}
+                                                    onChange={() => { }}
+                                                    className="me-2"
+                                                />
+                                                <div className="ms-2 overflow-hidden flex-grow-1">
+                                                    <div className="fw-bold text-truncate text-dark">{user.name || user.email}</div>
+                                                    <div className="small text-muted">{user.email}</div>
+                                                </div>
+                                                <Badge bg="primary" pill>Active</Badge>
+                                            </div>
+                                        </Card.Body>
+                                    </Card>
+                                ))}
+                                {section.inactive.map(user => (
                                     <Card
                                         key={user._id}
                                         className={`mb-3 collaborator-card ${section.selectedList.includes(user._id) ? 'selected' : ''}`}
