@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Modal, Form, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Modal, Form, Button, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
 import { X, ChevronLeft, ChevronRight, Clock, HelpCircle } from 'lucide-react';
 import Select from "react-select";
 import { useTranslation } from '../hooks/useTranslation';
@@ -62,6 +62,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
     usageContext: ''
   });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState(null);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   const loadingMessages = [
@@ -179,19 +180,19 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
     if (!companyName) {
       newErrors.companyName =
-         t('company_name_required') || 'Company name is required';
+        t('company_name_required') || 'Company name is required';
     }
-     else if (!/^[A-Za-z]/.test(companyName)) {
-     newErrors.companyName =
-    'Company name must start with a letter';
+    else if (!/^[A-Za-z]/.test(companyName)) {
+      newErrors.companyName =
+        'Company name must start with a letter';
     }
-     else if (!/[A-Za-z]{2,}/.test(companyName)) {
-     newErrors.companyName =
-    'Company name must contain meaningful letters';
-     }
-     else if (!/^[A-Za-z][A-Za-z0-9&.,()'’\- ]{1,100}$/.test(companyName)) {
-     newErrors.companyName =
-    'Company name contains invalid characters';
+    else if (!/[A-Za-z]{2,}/.test(companyName)) {
+      newErrors.companyName =
+        'Company name must contain meaningful letters';
+    }
+    else if (!/^[A-Za-z][A-Za-z0-9&.,()'’\- ]{1,100}$/.test(companyName)) {
+      newErrors.companyName =
+        'Company name contains invalid characters';
     }
 
     if (formData.website.trim()) {
@@ -371,36 +372,36 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
         return;
       }
     } else if (currentStep === 6) {
-  if (!validateStep6()) {
-    setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 100);
-    return;
-  }
-} else if (currentStep === 7) {
-  if (!validateStep7()) {
-    setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 100);
-    return;
-  }
-} else if (currentStep === 8) {
-  if (!validateStep8()) {
-    setTimeout(() => {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }, 100);
-    return;
-  }
-} else if (currentStep === 9) {
+      if (!validateStep6()) {
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }, 100);
+        return;
+      }
+    } else if (currentStep === 7) {
+      if (!validateStep7()) {
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }, 100);
+        return;
+      }
+    } else if (currentStep === 8) {
+      if (!validateStep8()) {
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }, 100);
+        return;
+      }
+    } else if (currentStep === 9) {
       if (!validateStep9()) return;
     }
 
@@ -422,6 +423,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
 
   const handleSubmit = async () => {
     try {
+      setApiError(null);
       setIsSubmitting(true);
       setSubmissionStep(1); // Saving data
 
@@ -495,20 +497,31 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
       await analysisService.savePMFExecutiveSummary(businessId, summaryResult);
 
       // 7. Fetch final PMF analysis to ensure data is updated
-      await analysisService.getPMFAnalysis(businessId);
+      const finalAnalysis = await analysisService.getPMFAnalysis(businessId);
+
+      // Mark that we expect to see our own data for this business
+      // This is the most robust way to detect a simultaneous overwrite
+      const currentUserId = sessionStorage.getItem("userId");
+      if (currentUserId && businessId) {
+        console.info(`PMF Save: Setting expectation flag for business ${businessId} and user ${currentUserId}`);
+        localStorage.setItem(`pmf_expecting_my_data_${businessId}`, currentUserId);
+        // Also clear any old submission data to prevent conflicts
+        localStorage.removeItem(`pmf_last_submission_${businessId}`);
+      }
 
       if (onSubmit) {
         onSubmit(formData);
       }
+
       handleClose();
     } catch (error) {
       console.error("Error during PMF onboarding submission:", error);
-      const errorMsg = t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
-      if (onToastMessage) {
-        onToastMessage(errorMsg, "error");
-      } else {
-        alert(errorMsg);
+      let backendError = error.response?.data?.error;
+      if (!backendError && error.message && error.message.includes("already started pmf")) {
+        backendError = error.message;
       }
+      const errorMsg = backendError || t("failed_to_complete_onboarding") || "Failed to complete onboarding. Please try again.";
+      setApiError(errorMsg);
     } finally {
       setIsSubmitting(false);
       setSubmissionStep(0);
@@ -520,6 +533,7 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
   const handleClose = () => {
     if (isSubmitting) return;
 
+    setApiError(null);
     setCurrentStep(1);
     setFormData({
       companyName: '',
@@ -1128,10 +1142,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             )}
 
             {errors.strategicObjective && (
-  <div ref={errorRef} className="text-danger mt-2">
-    {errors.strategicObjective}
-  </div>
-)}
+              <div ref={errorRef} className="text-danger mt-2">
+                {errors.strategicObjective}
+              </div>
+            )}
           </div>
         );
       case 7:
@@ -1187,10 +1201,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             )}
 
             {errors.keyChallenge && (
-  <div ref={errorRef} className="text-danger mt-2">
-    {errors.keyChallenge}
-  </div>
-)}
+              <div ref={errorRef} className="text-danger mt-2">
+                {errors.keyChallenge}
+              </div>
+            )}
           </div>
         );
       case 8:
@@ -1246,10 +1260,10 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             ))}
 
             {errors.differentiation && (
-  <div ref={errorRef} className="text-danger mt-2">
-    {errors.differentiation}
-  </div>
-)}
+              <div ref={errorRef} className="text-danger mt-2">
+                {errors.differentiation}
+              </div>
+            )}
           </div>
         );
 
@@ -1350,6 +1364,12 @@ const PMFOnboardingModal = ({ show, onHide, onSubmit, businessId, onToastMessage
             />
           </div>
         </div>
+
+        {apiError && (
+            <Alert variant="danger" onClose={() => setApiError(null)} dismissible className="mt-3 mb-4">
+                {apiError}
+            </Alert>
+        )}
 
         {renderStepContent()}
         {isSubmitting && (

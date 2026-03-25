@@ -545,17 +545,17 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           <div
             key={p._id}
             className="selection-item clickable-row"
-            onClick={() => !isArchived && handleToggleDraft(p._id)}
-            style={{ cursor: isArchived ? "not-allowed" : "pointer" }}
+            onClick={() => !isArchived && !isGeneratingAI && handleToggleDraft(p._id)}
+            style={{ cursor: (isArchived || isGeneratingAI) ? "not-allowed" : "pointer" }}
           >
             <Form.Check
               type="checkbox"
               id={`draft-${p._id}`}
               checked={selectedDraftIds.includes(p._id)}
-              onChange={() => handleToggleDraft(p._id)}
+              onChange={() => !isGeneratingAI && handleToggleDraft(p._id)}
               onClick={(e) => e.stopPropagation()}
               label={p.project_name}
-              disabled={isArchived}
+              disabled={isArchived || isGeneratingAI}
             />
           </div>
         ))}
@@ -784,17 +784,17 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           <Modal.Title>
             <div className="d-flex align-items-center gap-2">
               <AlertTriangle size={20} color="rgb(26, 115, 232)" />
-             {t("rationale_required")}
+              {t("rationale_required")}
             </div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p className="mb-3">
-  {t("moving_project_position", { project: movedProjectName })}
-</p>
-<p className="mb-3 text-muted">
-  {t("explain_project_ranking")}
-</p>
+            {t("moving_project_position", { project: movedProjectName })}
+          </p>
+          <p className="mb-3 text-muted">
+            {t("explain_project_ranking")}
+          </p>
           <Form.Group>
             <Form.Control
               as="textarea"
@@ -808,14 +808,14 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
           {pendingDragResult && (
             <div className="mt-3">
               <small className="text-info">
-  ℹ️ {t("rationale_auto_applied")}
-</small>
+                ℹ️ {t("rationale_auto_applied")}
+              </small>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleRationaleCancel}>
-           {t("cancel")}
+            {t("cancel")}
           </Button>
           <Button
             variant="primary"

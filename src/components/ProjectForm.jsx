@@ -345,6 +345,12 @@ const ProjectForm = ({
   const successCriteriaRef = useRef(null);
   const killCriteriaRef = useRef(null);
   const statusRef = useRef(null);
+  const dependenciesRef = useRef(null);
+  const highLevelReqRef = useRef(null);
+  const scopeRef = useRef(null);
+  const outcomeRef = useRef(null);
+  const successMetricsRef = useRef(null);
+  const keyAssumptionsRefs = [useRef(null), useRef(null), useRef(null)];
 
   const getTitle = () => {
     switch (mode) {
@@ -416,35 +422,26 @@ const ProjectForm = ({
   };
 
   const handleProjectNameChange = (e) => {
-  let value = e.target.value;
-  value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
+    let value = e.target.value;
+    // Allow standard characters
+    value = value.replace(/[^A-Za-z0-9\s!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/g, "");
 
-  setProjectName(value);
+    setProjectName(value);
 
- let customError = null;
-
-if (/^[0-9]+$/.test(value.trim())) {
-  customError = t("Project name cannot contain only numbers.");
-}
-
-if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
-  customError = t("Cannot use more than 5 consecutive special characters.");
-}
-
-  if (showErrors || customError) {
-    const validation = validateField('Project Name', value, {
-      required: true,
-      minLength: 3,
-      maxLength: 100,
-      requiresText: true
-    });
-    setFieldErrors(prev => ({
-      ...prev,
-      projectName: customError || (validation.isValid ? null : validation.message)
-    }));
-  }
-  handleFieldEdit("project_name");
-};
+    if (showErrors) {
+      const validation = validateField('Project Name', value, {
+        required: true,
+        minLength: 3,
+        maxLength: 100,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        projectName: validation.isValid ? null : t(validation.message)
+      }));
+    }
+    handleFieldEdit("project_name");
+  };
 
   const handleDescriptionChange = (e) => {
     const value = e.target.value;
@@ -503,34 +500,26 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
   };
 
   const handleAccountableOwnerChange = (e) => {
-  let value = e.target.value;
-
-  // Allow letters, numbers, spaces, dot, hyphen, @
-  value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
+    let value = e.target.value;
+    // Allow letters, numbers, spaces, dot, hyphen, @
+    value = value.replace(/[^A-Za-z0-9\s.@-]/g, "");
 
   setAccountableOwner(value);
 
-  let customError = null;
+    if (showErrors) {
+      const validation = validateField('Accountable Owner', value, {
+        required: true,
+        minLength: 2,
+        requiresText: true
+      });
+      setFieldErrors(prev => ({
+        ...prev,
+        accountableOwner: validation.isValid ? null : t(validation.message)
+      }));
+    }
 
-  // Required
-  if (!value.trim()) {
-    customError = t("Accountable Owner is required.");
-  }
-
-  // Must contain at least one alphabet
-  else if (!/[A-Za-z]/.test(value)) {
-    customError = "Accountable Owner must contain at least one alphabet.";
-  }
-
-  if (showErrors || customError) {
-    setFieldErrors(prev => ({
-      ...prev,
-      accountableOwner: customError
-    }));
-  }
-
-  handleFieldEdit("accountable_owner");
-};
+    handleFieldEdit("accountable_owner");
+  };
 
   const handleSuccessCriteriaChange = (e) => {
     const value = e.target.value;
@@ -594,6 +583,67 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
     }
   };
 
+  const handleDependenciesChange = (e) => {
+    const value = e.target.value;
+    setDependencies(value);
+    if (showErrors) {
+      const validation = validateField('Dependencies', value, { minLength: 10 });
+      setFieldErrors(prev => ({ ...prev, dependencies: validation.isValid ? null : t(validation.message) }));
+    }
+    handleFieldEdit("dependencies");
+  };
+
+  const handleSuccessMetricsChange = (e) => {
+    const value = e.target.value;
+    setSuccessMetrics(value);
+    if (showErrors) {
+      const validation = validateField('Success Metrics (KPIs)', value, { minLength: 10 });
+      setFieldErrors(prev => ({ ...prev, successMetrics: validation.isValid ? null : t(validation.message) }));
+    }
+    handleFieldEdit("success_metrics");
+  };
+
+  const handleConstraintsChange = (e) => {
+    const value = e.target.value;
+    setHighLevelReq(value);
+    if (showErrors) {
+      const validation = validateField('Constraints / Non-Negotiables', value, { minLength: 10 });
+      setFieldErrors(prev => ({ ...prev, highLevelReq: validation.isValid ? null : t(validation.message) }));
+    }
+    handleFieldEdit("high_level_requirements");
+  };
+
+  const handleScopeChange = (e) => {
+    const value = e.target.value;
+    setScope(value);
+    if (showErrors) {
+      const validation = validateField('Explicitly Out of Scope', value, { minLength: 10 });
+      setFieldErrors(prev => ({ ...prev, scope: validation.isValid ? null : t(validation.message) }));
+    }
+    handleFieldEdit("scope_definition");
+  };
+
+  const handleOutcomeChange = (e) => {
+    const value = e.target.value;
+    setOutcome(value);
+    if (showErrors) {
+      const validation = validateField('Expected Outcome', value, { minLength: 10 });
+      setFieldErrors(prev => ({ ...prev, outcome: validation.isValid ? null : t(validation.message) }));
+    }
+    handleFieldEdit("expected_outcome");
+  };
+
+  const handleKeyAssumptionChange = (idx, value) => {
+    const newAssumptions = [...keyAssumptions];
+    newAssumptions[idx] = value;
+    setKeyAssumptions(newAssumptions);
+    if (showErrors && value.trim().length > 0) {
+      const validation = validateField(`Assumption ${idx + 1}`, value, { minLength: 10 });
+      setFieldErrors(prev => ({ ...prev, [`keyAssumptions_${idx}`]: validation.isValid ? null : t(validation.message) }));
+    }
+    handleFieldEdit("key_assumptions");
+  };
+
   const handleSubmit = () => {
     // Validate project name only for new projects
     const projectNameValidation = mode === "new"
@@ -632,17 +682,38 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
       allowSpecialChars: ['.', ',', '-', '$', 'K', 'M']
     });
 
+    const depValidation = validateField('Dependencies', dependencies || '', { minLength: 10 });
+    const hlValidation = validateField('Constraints / Non-Negotiables', highLevelReq || '', { minLength: 10 });
+    const scopeValidation = validateField('Explicitly Out of Scope', scope || '', { minLength: 10 });
+    const outcomeValidation = validateField('Expected Outcome', outcome || '', { minLength: 10 });
+    const smValidation = validateField('Success Metrics (KPIs)', successMetrics || '', { minLength: 10 });
+
     const errors = {
-  projectName: projectNameValidation.isValid ? null : t(projectNameValidation.message),
-  description: descValidation.isValid ? null : t(descValidation.message),
-  importance: impValidation.isValid ? null : t(impValidation.message),
-  strategicDecision: decisionValidation.isValid ? null : t(decisionValidation.message),
-  accountableOwner: ownerValidation.isValid ? null : t(ownerValidation.message),
-  successCriteria: successValidation.isValid ? null : t(successValidation.message),
-  killCriteria: killValidation.isValid ? null : t(killValidation.message),
-  budget: budgetValidation.isValid ? null : t(budgetValidation.message),
-  status: (status && status.trim()) ? null : t("Status_is_required"),
-};
+      projectName: projectNameValidation.isValid ? null : t(projectNameValidation.message),
+      description: descValidation.isValid ? null : t(descValidation.message),
+      importance: impValidation.isValid ? null : t(impValidation.message),
+      strategicDecision: decisionValidation.isValid ? null : t(decisionValidation.message),
+      accountableOwner: ownerValidation.isValid ? null : t(ownerValidation.message),
+      successCriteria: successValidation.isValid ? null : t(successValidation.message),
+      killCriteria: killValidation.isValid ? null : t(killValidation.message),
+      budget: budgetValidation.isValid ? null : t(budgetValidation.message),
+      status: (status && status.trim()) ? null : t("Status_is_required"),
+      dependencies: depValidation.isValid ? null : t(depValidation.message),
+      highLevelReq: hlValidation.isValid ? null : t(hlValidation.message),
+      scope: scopeValidation.isValid ? null : t(scopeValidation.message),
+      outcome: outcomeValidation.isValid ? null : t(outcomeValidation.message),
+      successMetrics: smValidation.isValid ? null : t(smValidation.message),
+    };
+
+    // Add Key Assumptions errors
+    keyAssumptions.forEach((assumption, idx) => {
+      if (assumption && assumption.trim().length > 0) {
+        const val = validateField(`Assumption ${idx + 1}`, assumption, { minLength: 10 });
+        if (!val.isValid) {
+          errors[`keyAssumptions_${idx}`] = t(val.message);
+        }
+      }
+    });
     setFieldErrors(errors);
     setShowErrors(true);
 
@@ -658,6 +729,14 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
       else if (errors.successCriteria) scrollToError(successCriteriaRef);
       else if (errors.killCriteria) scrollToError(killCriteriaRef);
       else if (errors.status) scrollToError(statusRef);
+      else if (errors.dependencies) scrollToError(dependenciesRef);
+      else if (errors.highLevelReq) scrollToError(highLevelReqRef);
+      else if (errors.scope) scrollToError(scopeRef);
+      else if (errors.outcome) scrollToError(outcomeRef);
+      else if (errors.successMetrics) scrollToError(successMetricsRef);
+      else if (errors.keyAssumptions_0) scrollToError(keyAssumptionsRefs[0]);
+      else if (errors.keyAssumptions_1) scrollToError(keyAssumptionsRefs[1]);
+      else if (errors.keyAssumptions_2) scrollToError(keyAssumptionsRefs[2]);
       else if (errors.budget) scrollToError(budgetRef);
       return;
     }
@@ -829,21 +908,21 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {[0, 1, 2].map((idx) => (
-                  <input
-                    key={idx}
-                    type="text"
-                    value={keyAssumptions[idx] || ""}
-                    onChange={(e) => {
-                      const newAssumptions = [...keyAssumptions];
-                      newAssumptions[idx] = e.target.value;
-                      setKeyAssumptions(newAssumptions);
-                      handleFieldEdit("key_assumptions");
-                    }}
-                    placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
-                    className="field-input"
-                    readOnly={isFieldDisabled("key_assumptions")}
-                    onFocus={() => handleFieldFocus("key_assumptions")}
-                  />
+                  <React.Fragment key={idx}>
+                    <input
+                      ref={keyAssumptionsRefs[idx]}
+                      type="text"
+                      value={keyAssumptions[idx] || ""}
+                      onChange={(e) => handleKeyAssumptionChange(idx, e.target.value)}
+                      placeholder={`${t("Assumption_Placeholder")} ${idx + 1}...`}
+                      className={`field-input ${showErrors && fieldErrors[`keyAssumptions_${idx}`] ? "error" : ""}`}
+                      readOnly={isFieldDisabled("key_assumptions")}
+                      onFocus={() => handleFieldFocus("key_assumptions")}
+                    />
+                    {showErrors && fieldErrors[`keyAssumptions_${idx}`] && (
+                      <small className="error-text">{fieldErrors[`keyAssumptions_${idx}`]}</small>
+                    )}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
@@ -1077,9 +1156,10 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 {renderLockBadge("dependencies")}
               </div>
               <textarea
+                ref={dependenciesRef}
                 placeholder="List dependencies (one per line)"
                 rows={3}
-                className="field-textarea transparent"
+                className={`field-textarea transparent ${showErrors && fieldErrors.dependencies ? "error" : ""}`}
                 value={dependencies || ""}
                 onChange={e => {
                   setDependencies(e.target.value);
@@ -1088,6 +1168,9 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 readOnly={isFieldDisabled("dependencies")}
                 onFocus={() => handleFieldFocus("dependencies")}
               />
+              {showErrors && fieldErrors.dependencies && (
+                <small className="error-text">{fieldErrors.dependencies}</small>
+              )}
             </div>
           </div>
         </div>
@@ -1098,6 +1181,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
             <h3 className="section-title">{t("Detailed_Planning")}</h3>
 
             <TextAreaField
+              ref={highLevelReqRef}
               label={t("Constraints_Non_Negotiables")}
               value={highLevelReq}
               onChange={(e) => {
@@ -1105,12 +1189,14 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 handleFieldEdit("high_level_requirements");
               }}
               placeholder={t("what_are_the_main_requirements_or_constraints")}
+              error={showErrors && fieldErrors.highLevelReq}
               readOnly={isFieldDisabled("high_level_requirements")}
               onFocus={handleFieldFocus}
               fieldName="high_level_requirements"
             />
 
             <TextAreaField
+              ref={scopeRef}
               label={t("Explicitly_Out_of_Scope")}
               value={scope}
               onChange={(e) => {
@@ -1118,12 +1204,14 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 handleFieldEdit("scope_definition");
               }}
               placeholder={t("define_what_is_not_included_in_this_project")}
+              error={showErrors && fieldErrors.scope}
               readOnly={isFieldDisabled("scope_definition")}
               onFocus={handleFieldFocus}
               fieldName="scope_definition"
             />
 
             <TextAreaField
+              ref={outcomeRef}
               label={t("Expected_Outcome")}
               value={outcome}
               onChange={(e) => {
@@ -1131,6 +1219,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 handleFieldEdit("expected_outcome");
               }}
               placeholder={t("what_is_the_end_result_use_outcome_based_wording")}
+              error={showErrors && fieldErrors.outcome}
               readOnly={isFieldDisabled("expected_outcome")}
               onFocus={handleFieldFocus}
               fieldName="expected_outcome"
@@ -1142,9 +1231,10 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 {renderLockBadge("success_metrics")}
               </div>
               <textarea
+                ref={successMetricsRef}
                 placeholder={t("success_metrics_placeholder")}
                 rows={3}
-                className="field-textarea"
+                className={`field-textarea ${showErrors && fieldErrors.successMetrics ? "error" : ""}`}
                 value={successMetrics || ""}
                 onChange={e => {
                   setSuccessMetrics(e.target.value);
@@ -1153,6 +1243,9 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
                 readOnly={isFieldDisabled("success_metrics")}
                 onFocus={() => handleFieldFocus("success_metrics")}
               />
+              {showErrors && fieldErrors.successMetrics && (
+                <small className="error-text">{fieldErrors.successMetrics}</small>
+              )}
             </div>
 
             <div className="grid-2">
@@ -1204,7 +1297,7 @@ if (/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{4,}/.test(value)) {
         </div>
 
 
-      </fieldset>
+      </fieldset >
     </>
   );
 };

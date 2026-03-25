@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Card, Badge, Button, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Card, Badge, Button, Spinner, Modal } from "react-bootstrap";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   TrendingUp,
@@ -13,6 +13,8 @@ const PMFInsights = ({ businessId, onContinue }) => {
   const { t } = useTranslation();
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
+  const [overwrittenBy, setOverwrittenBy] = useState("");
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -31,6 +33,9 @@ const PMFInsights = ({ businessId, onContinue }) => {
       setLoading(true);
       const result = await analysisService.getPMFAnalysis(businessId);
 
+      // Detection is now isolated to the AHA Insights page (PMFInsightsTab.jsx)
+      // to avoid duplication and clutter in the main dashboard view.
+
       let rawInsights = [];
       if (result) {
         if (Array.isArray(result)) {
@@ -44,7 +49,6 @@ const PMFInsights = ({ businessId, onContinue }) => {
         }
       }
 
-      // Format insights for consistency
       const formattedInsights = rawInsights.map(insight => ({
         ...insight,
         details: insight.details || insight.key_points || []

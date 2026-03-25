@@ -255,16 +255,19 @@
   color: #e5e7eb !important;
 }
 
-[data-theme="dark"]  .container, .container-lg, .container-md, .container-sm {
-        background-color: #1a1d23 !important;
+[data-theme="dark"] .container,
+.container-lg,
+.container-md,
+.container-sm {
+  background-color: #1a1d23 !important;
 }
 
-[data-theme="dark"]  span{
-    color: #ffffff !important;
+[data-theme="dark"] span {
+  color: #ffffff !important;
 }
 
-[data-theme="dark"]  .property-badge {
-    color: #1a1d23 !important;
+[data-theme="dark"] .property-badge {
+  color: #1a1d23 !important;
 }
 
 
@@ -575,4 +578,28 @@
 
 [data-theme="dark"] .new-user-modal .btn-cancel:hover {
   color: #e5e7eb;
+}
+
+/* Prevents validation icons from being clickable and blocking inputs */
+.form-control.is-invalid {
+  background-position: right calc(0.375em + 0.1875rem) center !important;
+}
+
+.form-select.is-invalid {
+  background-position: right 0.75rem center, center right 2.25rem !important;
+  padding-right: 4.125rem !important;
+}
+
+/* Ensure the exclamation icon itself doesn't intercept clicks */
+.was-validated .form-control:invalid,
+.form-control.is-invalid,
+.was-validated .form-select:invalid,
+.form-select.is-invalid {
+  pointer-events: auto;
+  /* The control itself should be clickable */
+}
+
+/* If there's an absolute positioned feedback icon or similar */
+.invalid-feedback {
+  pointer-events: none;
 }

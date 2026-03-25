@@ -125,11 +125,11 @@
 }
 
 .dropdown-menu {
-  z-index: 9999 !important;
+    z-index: 9999 !important;
 }
 
 .dropdown {
-  position: static !important;
+    position: static !important;
 }
 
 
@@ -195,15 +195,17 @@
 }
 
 .admin-search-input {
-    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    padding: 0.55rem 0.75rem 0.55rem 2.25rem;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
     font-size: 0.875rem;
+    line-height: 1.25rem;
     color: #374151;
     background: #f9fafb;
     outline: none;
     width: 300px;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    display: block;
 }
 
 .admin-search-input:focus {
@@ -213,7 +215,9 @@
 }
 
 .admin-search-input::placeholder {
-    color: #4b5563;
+    color: #9ca3af;
+    opacity: 1;
+    vertical-align: middle;
 }
 
 /* Filter / Sort Buttons */
@@ -482,7 +486,7 @@
     background: #fef9c3 !important;
     color: #854d0e !important;
     border: 1px solid #fde68a !important;
-}       
+}
 
 .admin-table-empty p {
     font-size: 0.875rem;
@@ -608,7 +612,7 @@
 }
 
 [data-theme="dark"] .admin-cell-primary {
-   color: #ffffff !important;
+    color: #ffffff !important;
 }
 
 
@@ -619,7 +623,7 @@
 }
 
 [data-theme="dark"] .admin-cell-secondary {
-   color: #ffffff !important;
+    color: #ffffff !important;
 }
 
 .admin-collab-more-btn {
