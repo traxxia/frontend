@@ -18,6 +18,12 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem("token");
+  const userRole = (
+    sessionStorage.getItem("role") ||
+    sessionStorage.getItem("userRole") ||
+    ""
+  ).toLowerCase();
+  const isViewer = userRole === "viewer";
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   const fetchSummary = useCallback(async () => {
@@ -68,7 +74,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No executive summary available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate this summary."}</p>
-          {onStartOnboarding && (
+          {onStartOnboarding && !isViewer && (
             <button
               className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
               onClick={onStartOnboarding}

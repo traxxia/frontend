@@ -573,14 +573,14 @@ const EditableBriefSection = ({
   documentInfo = null,
   isFinancialRegeneratingProp = false,
   answerIds = {},
-  setAnswerIds
+  setAnswerIds,
+  isLoading = false
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichedAnswers, setEnrichedAnswers] = useState(null);
   const [isApplyingEnrichment, setIsApplyingEnrichment] = useState(false);

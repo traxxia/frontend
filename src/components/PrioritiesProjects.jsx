@@ -25,6 +25,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
     ""
   ).toLowerCase();
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+  const isViewer = userRole === "viewer";
   const hasProjectsAccess = getUserLimits().project === true;
 
   // API Service setup
@@ -127,7 +128,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No results available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && (
+          {onStartOnboarding && !isViewer && (
             <button
               className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
               onClick={onStartOnboarding}

@@ -209,11 +209,28 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     const urlTab = searchParams.get('tab');
     const initialTab = urlTab || location.state?.initialTab;
-    if (hasPmfAccess && initialTab) {
-      setActiveTab(initialTab);
-    } else if (hasPmfAccess) {
-      setActiveTab("aha");
+
+    // Helper to determine the best default tab based on plan limits
+    const getDefaultTab = () => {
+      if (hasPmfAccess) return "aha";
+      if (hasProjectAccess) return "projects";
+      return "advanced";
+    };
+
+    if (initialTab) {
+      // Check if user has access to the requested initial tab
+      const isPmfTab = ["aha", "executive", "priorities"].includes(initialTab);
+      const isProjectTab = initialTab === "projects";
+      
+      if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
+        setActiveTab(getDefaultTab());
+      } else {
+        setActiveTab(initialTab);
+      }
+    } else {
+      setActiveTab(getDefaultTab());
     }
+
     // Clean up the temporary window flag used by useBusinessSetup's initializer
     delete window.__businessPageNavState;
     // Always expand the analysis panel (no chat section)
@@ -1538,6 +1555,7 @@ const BusinessSetupPage = () => {
                             questions={questions}
                             userAnswers={userAnswers}
                             businessData={businessData}
+                            isLoading={!questionsLoaded}
                             onBusinessDataUpdate={handleBusinessDataUpdate}
                             onAnswerUpdate={async (questionId, newAnswer) => {
                               handleAnswerUpdate(questionId, newAnswer);
@@ -1699,6 +1717,7 @@ const BusinessSetupPage = () => {
                         questions={questions}
                         userAnswers={userAnswers}
                         businessData={businessData}
+                        isLoading={!questionsLoaded}
                         onBusinessDataUpdate={handleBusinessDataUpdate}
                         onAnswerUpdate={async (questionId, newAnswer) => {
                           handleAnswerUpdate(questionId, newAnswer);
@@ -1807,6 +1826,7 @@ const BusinessSetupPage = () => {
                       questions={questions}
                       userAnswers={userAnswers}
                       businessData={businessData}
+                      isLoading={!questionsLoaded}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={async (questionId, newAnswer) => {
                         handleAnswerUpdate(questionId, newAnswer);

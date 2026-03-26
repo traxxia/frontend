@@ -181,7 +181,7 @@ const ProjectCard = ({
       {/* Footer Info */}
       <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span className="status-badge">
-          {project.status?.toLowerCase() === "launched" ? t("Draft") : (project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft")))}
+          {project.status && t(project.status) !== project.status ? t(project.status) : (project.status || t("Draft"))}
         </span>
         <div className="project-card-footer" style={{ borderTop: "none", fontSize: "10px", color: "#94a3b8" }}>
           {t("Created")} {new Date(project.created_at).toLocaleDateString()}

@@ -326,7 +326,7 @@ const UserManagement = ({ onToast }) => {
   const handleAssign = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!assignUserId) newErrors.collaborator = t("select_collaborator_required");
+    if (!assignUserId) newErrors.collaborator = t("select_user_required");
     if (!assignBusinessId) newErrors.business = t("select_business_required");
     if (Object.keys(newErrors).length > 0) {
       setAssignErrors(newErrors);
@@ -338,12 +338,12 @@ const UserManagement = ({ onToast }) => {
 
     try {
       await axios.post(`${BACKEND_URL}/api/businesses/${assignBusinessId}/collaborators`, { user_id: assignUserId });
-      onToast(t("Collaborator_assigned_successfully"), "success");
+      onToast(t("User_assigned_successfully"), "success");
       handleCloseAssignModal();
       fetchPlanDetails();
     } catch (error) {
       console.error(error);
-      onToast(error.response?.data?.message || t("Failed_to_assign_collaborator"), "error");
+      onToast(error.response?.data?.message || error.response?.data?.error || t("Failed_to_assign_user"), "error");
     }
   };
 
@@ -649,7 +649,7 @@ const UserManagement = ({ onToast }) => {
               <Button className="admin-secondary-btn" onClick={() => {
                 handleOpenAssignModal();
               }}>
-                <UserCog size={16} /> {t("Assign_Collaborator")}
+                <UserCog size={16} /> {t("Assign_Business_Access")}
               </Button>
               <Button className="admin-secondary-btn" onClick={() => { loadLaunchedBusinessAndProjects(); setShowGiveAccessModal(true); }}>
                 <ShieldCheck size={16} /> {t("Project_Access")}
@@ -860,10 +860,10 @@ const UserManagement = ({ onToast }) => {
 
       {/* --- Modals for Assign, Access, Confirm --- */}
       <Modal show={showAssignModal} onHide={handleCloseAssignModal} centered>
-        <Modal.Header closeButton><Modal.Title>{t("Assign_Collaborator")}</Modal.Title></Modal.Header>
+        <Modal.Header closeButton><Modal.Title>{t("Assign_Business_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAssign} noValidate>
-            <Form.Group className="mb-3"><Form.Label>{t("Collaborator")}</Form.Label><Form.Select value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)} isInvalid={!!assignErrors.collaborator}><option value="">{t("Select_collaborator")}</option>{users.filter(u => ["Collaborator", "User", "Viewer"].includes(formatRole(u.role_name))).map(u => <option key={u._id} value={u._id}>{u.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback></Form.Group>
+            <Form.Group className="mb-3"><Form.Label>{t("User")}</Form.Label><Form.Select value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)} isInvalid={!!assignErrors.collaborator}><option value="">{t("Select_user")}</option>{users.filter(u => ["Collaborator", "User", "Viewer"].includes(formatRole(u.role_name))).map(u => <option key={u._id} value={u._id}>{u.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback></Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={assignBusinessId} onChange={(e) => setAssignBusinessId(e.target.value)} isInvalid={!!assignErrors.business}><option value="">{t("Select_Business")}</option>{allBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback></Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>{t("cancel")}</Button><Button variant="primary" type="submit">{t("save")}</Button></div>
           </Form>

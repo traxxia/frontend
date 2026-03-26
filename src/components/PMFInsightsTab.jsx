@@ -18,6 +18,12 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
   const [loading, setLoading] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [overwrittenBy, setOverwrittenBy] = useState("");
+  const userRole = (
+    sessionStorage.getItem("role") ||
+    sessionStorage.getItem("userRole") ||
+    ""
+  ).toLowerCase();
+  const isViewer = userRole === "viewer";
 
   // API Service setup
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
@@ -119,7 +125,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
           <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && (
+          {onStartOnboarding && !isViewer && (
             <Button
               variant="primary"
               className="mt-3 rounded-pill px-4"
@@ -159,7 +165,7 @@ const PMFInsightsTab = ({ selectedBusinessId, onStartOnboarding, refreshTrigger 
         <Container>
           <h3>{t("noInsightsAvailable") || "No insights available yet."}</h3>
           <p>{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to see results here."}</p>
-          {onStartOnboarding && (
+          {onStartOnboarding && !isViewer && (
             <Button
               variant="primary"
               className="mt-3 rounded-pill px-4"

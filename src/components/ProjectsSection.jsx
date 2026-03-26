@@ -163,7 +163,7 @@ const ProjectsSection = ({
   } = useProjectForm();
 
   const isViewer = userRole === "viewer";
-  const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator";
+  const isEditor = userRole === "super_admin" || userRole === "company_admin" || userRole === "collaborator" || userRole === "user";
   const isSuperAdmin = userRole === "super_admin" || userRole === "company_admin";
 
   const allCollaboratorsLocked =
