@@ -372,7 +372,8 @@ const SubscriptionTab = ({ onToast }) => {
         plan, usage, available_plans = [],
         billing_history = [], payment_methods = [],
         default_payment_method_id, company_name,
-        start_date, end_date, is_unlimited
+        start_date, end_date, is_unlimited,
+        billing_cycle, total_days
     } = subscription;
 
     const currentPlanName = plan.toLowerCase();
@@ -382,7 +383,7 @@ const SubscriptionTab = ({ onToast }) => {
 
 
     const daysRemaining = getDaysRemaining(end_date);
-    const totalDays = 31;
+    const totalDays = total_days || 31;
     const usedDays = Math.max(0, totalDays - daysRemaining);
     const renewalPct = Math.min(100, Math.max(0, (usedDays / totalDays) * 100));
 
@@ -449,12 +450,12 @@ const SubscriptionTab = ({ onToast }) => {
                         <h2 className="st-header-title">
                             {currentPlanName.charAt(0).toUpperCase() + currentPlanName.slice(1)} Plan
                         </h2>
-                        <p className="st-header-sub">{company_name} • Billed monthly</p>
+                        <p className="st-header-sub">{company_name} • {billing_cycle === 'yearly' ? 'Billed yearly' : 'Billed monthly'}</p>
                     </div>
 
                     <div className="st-header-stats">
                         <div className="st-h-stat">
-                            <span className="st-h-label">Monthly Billing</span>
+                            <span className="st-h-label">{billing_cycle === 'yearly' ? 'Yearly' : 'Monthly'} Billing</span>
                             <span className="st-h-value">${displayPrice}</span>
                         </div>
                     </div>
@@ -522,7 +523,7 @@ const SubscriptionTab = ({ onToast }) => {
                         </div>
                         <div className="st-ps-price-row">
                             <span className="st-ps-amount">${displayPrice}</span>
-                            <span className="st-ps-mo">/month</span>
+                            <span className="st-ps-mo">/{currentPlanData?.period === 'year' ? 'year' : 'month'}</span>
                         </div>
                         <p className="st-ps-desc">{currentPlanData?.description || ''}</p>
                         <div className="st-ps-limits">
@@ -569,7 +570,7 @@ const SubscriptionTab = ({ onToast }) => {
                                     <div className="st-pc-name" style={{ textTransform: 'capitalize' }}>{p.name}</div>
                                     <div className="st-pc-price">
                                         <span className="st-pc-amt">${p.price}</span>
-                                        <span className="st-pc-mo">/mo</span>
+                                        <span className="st-pc-mo">/{p.period === 'year' ? 'yr' : 'mo'}</span>
                                     </div>
                                 </div>
                                 <p className="st-pc-desc">{p.description}</p>
