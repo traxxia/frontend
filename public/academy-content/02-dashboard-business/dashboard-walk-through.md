@@ -27,6 +27,6 @@ On the left side you will see the the welcome message along with create business
 
 On the right side you will see the list of all the businesses you have created in the accordion.
 
-![Business List](/academy-screenshots/getting-started/dashboard-with-created-business.png)
+![Business List](/academy-screenshots/getting-started/dashboard-with-created-business1.png)
 *Screenshot of Traxxia Dashboard with created business list*
   

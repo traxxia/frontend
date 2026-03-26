@@ -10,7 +10,7 @@ The AI Assistant is aware of where you are in the application:
 -   **Questionnaire View**: Provides high-level business advice and helps you navigate the platform.
 -   **Project Edit View**: Automatically receives the current **Project ID**, allowing it to answer specific questions about that initiative’s goals, risks, and descriptions.
 
-![AI Assistant Context](/academy-screenshots/questionnaire/chat-qa-exchanges.png)
+![AI Assistant Context](/academy-screenshots/questionnaire/chat-qa-exchanges1.png)
 *AI Assistant in Project Edit View providing contextual answers.*
 
 ## 2. Monitoring Usage
