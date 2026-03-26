@@ -457,7 +457,10 @@ const SubscriptionTab = ({ onToast }) => {
                         <div className="st-h-stat">
                             <span className="st-h-label">Monthly Billing</span>
                             <span className="st-h-value">${displayPrice}</span>
-                        </div>
+                        </div> 
+                    </div>
+
+                    <div className="st-header-stats"> 
                         {!is_unlimited && end_date && (
                             <div className="st-h-stat">
                                 <span className="st-h-label">Renews On</span>
