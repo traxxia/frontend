@@ -124,8 +124,14 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!formData.name.trim()) {
+        const name = formData.name.trim();
+        if (!name) {
             onToast(t('plan_name_required') || 'Plan name is required', 'error');
+            return;
+        }
+
+        if (!/[a-zA-Z]/.test(name)) {
+            onToast(t('plan_name_invalid') || 'Plan name must contain at least one letter', 'error');
             return;
         }
 
@@ -188,6 +194,8 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                             name="isActive"
                             checked={formData.isActive}
                             onChange={handleChange}
+                            disabled={!plan && !formData.name.trim()}
+                            style={(!plan && !formData.name.trim()) ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
                         />
                         <span className={`plan-status-text ${formData.isActive ? 'text-active' : 'text-inactive'}`}>
                             {formData.isActive ? (t('active') || 'Active') : (t('inactive') || 'Inactive')}

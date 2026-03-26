@@ -895,6 +895,7 @@ const UserManagement = ({ onToast }) => {
       <PlanLimitModal
         show={showPlanLimitModal}
         onHide={() => setShowPlanLimitModal(false)}
+        onAction={handleCloseModal}
         title={planLimitConfig.title}
         message={planLimitConfig.message}
         subMessage={planLimitConfig.subMessage}
