@@ -341,7 +341,11 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
 
             if (data.requires_configuration) {
                 setConfigurationData({ ...data, plan_id: selectedPlanId });
-                setShowConfigurationModal(true);
+                // Sequential modal transition: Close this one, then open config
+                onHide();
+                setTimeout(() => {
+                    setShowConfigurationModal(true);
+                }, 100); // Small delay to let Bootstrap modal backdrop clean up
                 return;
             }
 

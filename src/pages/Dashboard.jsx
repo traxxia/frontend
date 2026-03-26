@@ -854,6 +854,7 @@ if (description) {
                             variant="primary"
                             className="flex-grow-1 create-business-btn"
                             onClick={handleShowCreateModal}
+                            disabled={usage && usage.workspaces?.current >= usage.workspaces?.limit}
                           >
                             {t('create_business')}
                           </Button>
@@ -889,6 +890,7 @@ if (description) {
                                   variant="primary"
                                   className="create-business-btn"
                                   onClick={handleShowCreateModal}
+                                  disabled={usage && usage.workspaces?.current >= usage.workspaces?.limit}
                                 >
                                   {t('create_business')}
                                 </Button>
