@@ -3,7 +3,7 @@
 For businesses with existing financial history, Traxxia allows you to bypass manual data entry by uploading financial documents directly.
 
 ## 1. Uploading Financial Data
-At the top of the **Advanced** tab, you will find the **Financial Data** block.
+At the top of the **Analysis** tab, you will find the **Financial Data** block.
 - **Accepted Files**: Excel (.xlsx, .xls) and CSV files.
 - **Template Types**: Traxxia auto-detects if your file matches our **Simplified, Standard, or Detailed** report templates.
 
