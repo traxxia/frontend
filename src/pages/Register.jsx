@@ -155,8 +155,9 @@ const Register = () => {
       const response = await axios.get(`${API_BASE_URL}/api/plans`);
       if (response.data.plans) {
         setPlans(response.data.plans);
-        const essential = response.data.plans.find(p => p.name === 'Essential');
-        if (essential) setSelectedPlanId(essential._id);
+        // Auto-select the cheapest available plan instead of hardcoding a name
+        const sorted = [...response.data.plans].sort((a, b) => a.price - b.price);
+        if (sorted.length > 0) setSelectedPlanId(sorted[0]._id);
       }
     } catch (error) {
       console.error('Error fetching plans:', error);

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
+import { getUserLimits } from '../utils/authUtils';
 
 export const useAccessControl = (selectedBusinessId) => {
   const [userHasRerankAccess, setUserHasRerankAccess] = useState(false);
@@ -76,8 +77,7 @@ export const useAccessControl = (selectedBusinessId) => {
   const canEditProject = useCallback(
     (project, isEditor, myUserId, businessStatus, isArchived) => {
       // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
-      const userPlan = sessionStorage.getItem("userPlan");
-      if (userPlan === 'essential' || isArchived) return false;
+      if (!getUserLimits().project || isArchived) return false;
 
       if (!project) return false;
 
@@ -111,8 +111,7 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const isReadOnlyMode = useCallback((isArchived) => {
-    const userPlan = sessionStorage.getItem("userPlan");
-    return userPlan === 'essential' || isArchived;
+    return !getUserLimits().project || isArchived;
   }, []);
 
   const checkAllAccess = useCallback(async () => {

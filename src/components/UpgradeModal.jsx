@@ -295,9 +295,9 @@ const UpgradeModal = ({ show, onHide, onUpgradeSuccess, paymentMethod, initialPl
             if (initialPlanId) {
                 setSelectedPlanId(initialPlanId);
             } else if (isDowngradeMode) {
-                const essentialPlan = plansData.plans.find(p => p.name.toLowerCase() === 'essential');
-                if (essentialPlan) {
-                    setSelectedPlanId(essentialPlan._id);
+                const cheapestPlan = [...plansData.plans].sort((a, b) => a.price - b.price)[0];
+                if (cheapestPlan) {
+                    setSelectedPlanId(cheapestPlan._id);
                 }
             } else {
                 const currentPlanName = subData.plan.toLowerCase();

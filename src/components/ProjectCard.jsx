@@ -22,6 +22,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
+import { getUserLimits } from "../utils/authUtils";
 
 // Helper to get strategic signal
 const getStrategicSignal = (project) => {
@@ -87,7 +88,7 @@ const ProjectCard = ({
     <div className={`project-card ${project.status === "Killed" ? "killed" : ""} ${(project.status?.toLowerCase() === "launched" ? "draft" : (project.status?.toLowerCase().replace(" ", "-") || "draft"))}-border`}>
       <div className="project-header">
         <div className="project-header-content">
-          {isAdmin && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
+          {isAdmin && !isArchived && getUserLimits().project && (
             <input
               type="checkbox"
               checked={isSelected}

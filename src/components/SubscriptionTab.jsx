@@ -17,8 +17,6 @@ const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 
 /* ─── helpers ─── */
-const TIER_ORDER = ['essential', 'advanced', 'team', 'professional'];
-const tierIndex = (name = '') => TIER_ORDER.indexOf(name.toLowerCase());
 
 const getDaysRemaining = (end) => {
     if (!end) return 0;
@@ -172,7 +170,7 @@ const AddCardModal = ({ show, onHide, onAddSuccess, apiBase, token, onToast }) =
     return (
         <Modal show={show} onHide={onHide} centered backdrop="static" size="lg">
             <Elements stripe={stripePromise}>
-                <AddCardModalContent 
+                <AddCardModalContent
                     onHide={onHide}
                     onAddSuccess={onAddSuccess}
                     apiBase={apiBase}
@@ -425,6 +423,7 @@ const SubscriptionTab = ({ onToast }) => {
         { icon: TrendingUp, label: 'Insight Access', desc: 'Data-driven business insights', active: usage.insight },
         { icon: Layers, label: 'Strategic Access', desc: 'Strategic planning tools', active: usage.strategic },
         { icon: Target, label: 'PMF Access', desc: 'Product-market fit analysis', active: usage.pmf },
+        { icon: FolderOpen, label: 'Project Access', desc: 'Project creation & management', active: usage.projects?.original_limit ?? usage.projects?.limit ?? usage.project },
     ];
 
     const defaultPM = payment_methods.find(m => m.id === default_payment_method_id);
@@ -439,7 +438,7 @@ const SubscriptionTab = ({ onToast }) => {
                     </div>
                 </Alert>
             </div>
-                    {/* ══ HEADER ══ */}
+            {/* ══ HEADER ══ */}
             <div className="st-header-clean">
                 <div className="st-header-main">
                     <div className="st-header-info">
@@ -457,10 +456,10 @@ const SubscriptionTab = ({ onToast }) => {
                         <div className="st-h-stat">
                             <span className="st-h-label">Monthly Billing</span>
                             <span className="st-h-value">${displayPrice}</span>
-                        </div> 
+                        </div>
                     </div>
 
-                    <div className="st-header-stats"> 
+                    <div className="st-header-stats">
                         {!is_unlimited && end_date && (
                             <div className="st-h-stat">
                                 <span className="st-h-label">Renews On</span>
@@ -482,11 +481,11 @@ const SubscriptionTab = ({ onToast }) => {
                         <div className="st-card-subtitle">Current billing period</div>
                     </div>
                     <div className="st-usage-list">
-                        <UsageBar icon={Briefcase} label="Workspaces"    current={usage.workspaces?.current ?? 0}    limit={usage.workspaces?.limit}    color="primary" />
-                        <UsageBar icon={Users}     label="Collaborators" current={usage.collaborators?.current ?? 0}  limit={usage.collaborators?.limit}  color="primary" />
-                        <UsageBar icon={Users}     label="Users"         current={usage.users?.current ?? 0}          limit={usage.users?.limit}          color="primary" />
-                        <UsageBar icon={Eye}       label="Viewers"       current={usage.viewers?.current ?? 0}        limit={usage.viewers?.limit}        color="primary" />
-                        <UsageBar icon={FolderOpen} label="Projects"     current={usage.projects?.current ?? 0}       limit={usage.projects?.limit}       color="primary" />
+                        <UsageBar icon={Briefcase} label="Workspaces" current={usage.workspaces?.current ?? 0} limit={usage.workspaces?.limit} color="primary" />
+                        <UsageBar icon={Users} label="Collaborators" current={usage.collaborators?.current ?? 0} limit={usage.collaborators?.limit} color="primary" />
+                        <UsageBar icon={Users} label="Users" current={usage.users?.current ?? 0} limit={usage.users?.limit} color="primary" />
+                        <UsageBar icon={Eye} label="Viewers" current={usage.viewers?.current ?? 0} limit={usage.viewers?.limit} color="primary" />
+                        <UsageBar icon={FolderOpen} label="Projects" current={usage.projects?.current ?? 0} limit={usage.projects?.limit} color="primary" />
                     </div>
                 </div>
 
@@ -529,9 +528,9 @@ const SubscriptionTab = ({ onToast }) => {
                         <div className="st-ps-limits">
                             {[
                                 { icon: Briefcase, label: 'Workspaces', val: displayLimits.workspaces },
-                                { icon: Users,     label: 'Collaborators', val: displayLimits.collaborators },
-                                { icon: Eye,       label: 'Viewers', val: displayLimits.viewers },
-                                { icon: Users,     label: 'Users',   val: displayLimits.users },
+                                { icon: Users, label: 'Collaborators', val: displayLimits.collaborators },
+                                { icon: Eye, label: 'Viewers', val: displayLimits.viewers },
+                                { icon: Users, label: 'Users', val: displayLimits.users },
                             ].map(({ icon: Icon, label, val }) => (
                                 <div key={label} className="st-ps-limit-item">
                                     <div className="st-ps-limit-val">{val ?? 0}</div>
@@ -563,31 +562,31 @@ const SubscriptionTab = ({ onToast }) => {
                 </div>
                 <div className="st-plans-grid">
                     {available_plans.map((p) => {
-                            return (
-                                <div key={p._id} className="st-plan-card" onClick={() => handleSelectPlan(p._id)}>
+                        return (
+                            <div key={p._id} className="st-plan-card" onClick={() => handleSelectPlan(p._id)}>
 
-                                    <div className="st-pc-header">
-                                        <div className="st-pc-name" style={{ textTransform: 'capitalize' }}>{p.name}</div>
-                                        <div className="st-pc-price">
-                                            <span className="st-pc-amt">${p.price}</span>
-                                            <span className="st-pc-mo">/mo</span>
-                                        </div>
-                                    </div>
-                                    <p className="st-pc-desc">{p.description}</p>
-                                    <div className="st-pc-divider" />
-                                    <ul className="st-pc-feats">
-                                        {buildFeatureRows(p.limits).map((f, i) => (
-                                            <FeatureRow key={i} label={f.label} active={f.active} />
-                                        ))}
-                                    </ul>
-                                    <div className="st-pc-action">
-                                        <button className="st-pc-btn-select">
-                                            Select Plan
-                                        </button>
+                                <div className="st-pc-header">
+                                    <div className="st-pc-name" style={{ textTransform: 'capitalize' }}>{p.name}</div>
+                                    <div className="st-pc-price">
+                                        <span className="st-pc-amt">${p.price}</span>
+                                        <span className="st-pc-mo">/mo</span>
                                     </div>
                                 </div>
-                            );
-                        })}
+                                <p className="st-pc-desc">{p.description}</p>
+                                <div className="st-pc-divider" />
+                                <ul className="st-pc-feats">
+                                    {buildFeatureRows(p.limits).map((f, i) => (
+                                        <FeatureRow key={i} label={f.label} active={f.active} />
+                                    ))}
+                                </ul>
+                                <div className="st-pc-action">
+                                    <button className="st-pc-btn-select">
+                                        Select Plan
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
             </div>

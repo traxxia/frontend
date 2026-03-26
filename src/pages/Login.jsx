@@ -56,7 +56,7 @@ const Login = () => {
       sessionStorage.setItem("userName", res.data.user.name);
       sessionStorage.setItem("userEmail", res.data.user.email);
       sessionStorage.setItem("userRole", res.data.user.role);
-      sessionStorage.setItem("userPlan", res.data.user.plan_name || "essential");
+      sessionStorage.setItem("userPlan", res.data.user.plan_name || "");
       sessionStorage.setItem("userCompany", res.data.user.company?.name || "");
       if (res.data.user.company) {
         sessionStorage.setItem("companyId", res.data.user.company.id || "");
