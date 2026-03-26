@@ -5,7 +5,7 @@ While most projects originate from the **Kickstart Process**, you can also creat
 ## 1. The "New Project" Button
 The **New Project** button is located in the top-right corner of the Projects dashboard. Clicking this button opens a modal where you can define the core parameters of your initiative.
 
-![New Project Button](/academy-screenshots/projects/new-project-button.png)
+![New Project Button](/academy-screenshots/projects/new-project-button1.png)
 
 ## 2. Initial Setup
 When creating a project, you'll provide:

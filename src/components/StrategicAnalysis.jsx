@@ -85,9 +85,7 @@ const StrategicAnalysis = ({
       const token = sessionStorage.getItem("token");
       const userId = sessionStorage.getItem("userId");
 
-      const userPlan = sessionStorage.getItem("userPlan");
-
-      if (userPlan === 'essential') {
+      if (!getUserLimits().strategic) {
         setShowPlanLimitModal(true);
         return;
       }
@@ -2228,7 +2226,7 @@ const StrategicAnalysis = ({
         !hideKickstart && canShowKickstart && !hasKickstarted && !hasProjectsTab && (
           <KickstartProjectsCard
             onKickstart={handleKickstart}
-            isLocked={sessionStorage.getItem("userPlan") === 'essential'}
+            isLocked={!getUserLimits().strategic}
           />
         )
       )}

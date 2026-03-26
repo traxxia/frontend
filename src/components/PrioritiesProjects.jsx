@@ -18,7 +18,6 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const [kickstarting, setKickstarting] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const navigate = useNavigate();
-  const userPlan = sessionStorage.getItem("userPlan")?.toLowerCase() || "essential";
   const userRole = (
     sessionStorage.getItem("role") ||
     sessionStorage.getItem("userRole") ||
@@ -68,7 +67,7 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
   const handleKickstart = async () => {
     if (selected.length === 0) return;
 
-    if (userPlan === 'essential') {
+    if (!hasProjectsAccess) {
       setShowPlanLimitModal(true);
       return;
     }
@@ -156,13 +155,13 @@ const PrioritiesProjects = ({ selectedBusinessId, companyAdminIds, onSuccess, on
               </small>
             </div>
             <Button
-              className={`kickstart-button d-flex align-items-center gap-2 ${userPlan === 'essential' ? 'upgrade-needed' : ''}`}
-              variant={userPlan === 'essential' ? "warning" : "success"}
-              disabled={(selected.length === 0 && userPlan !== 'essential') || kickstarting}
+              className={`kickstart-button d-flex align-items-center gap-2 ${!hasProjectsAccess ? 'upgrade-needed' : ''}`}
+              variant={!hasProjectsAccess ? "warning" : "success"}
+              disabled={(selected.length === 0 && hasProjectsAccess) || kickstarting}
               onClick={handleKickstart}
             >
-              {kickstarting ? <Spinner size="sm" /> : <span>{userPlan === 'essential' ? "⭐" : "🚀"}</span>}
-              <span>{userPlan === 'essential' ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}</span>
+              {kickstarting ? <Spinner size="sm" /> : <span>{!hasProjectsAccess ? "⭐" : "🚀"}</span>}
+              <span>{!hasProjectsAccess ? t("Upgrade to Kickstart") : t("Kickstart_Projects")}</span>
             </Button>
           </Card.Body>
         </Card>

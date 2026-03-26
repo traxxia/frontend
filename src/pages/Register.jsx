@@ -155,8 +155,9 @@ const Register = () => {
       const response = await axios.get(`${API_BASE_URL}/api/plans`);
       if (response.data.plans) {
         setPlans(response.data.plans);
-        const essential = response.data.plans.find(p => p.name === 'Essential');
-        if (essential) setSelectedPlanId(essential._id);
+        // Auto-select the cheapest available plan instead of hardcoding a name
+        const sorted = [...response.data.plans].sort((a, b) => a.price - b.price);
+        if (sorted.length > 0) setSelectedPlanId(sorted[0]._id);
       }
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -681,14 +682,14 @@ const Register = () => {
       </div>
 
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered dialogClassName="compact-success-modal">
-        <Modal.Body className="text-center py-4">
-          <div className={`mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
-            {isError ? <FaTimes size={48} /> : <FaCheck size={48} />}
+        <Modal.Body className="text-center">
+          <div className={`registration-icon-container mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
+            {isError ? <FaTimes size={32} /> : <FaCheck size={32} />}
           </div>
-          <h5 className="mb-2">
+          <h5 className="registration-status-title mb-2">
             {isError ? t('oops') : t('success')}
           </h5>
-          <p className="mb-0">{modalMessage}</p>
+          <p className="mb-0 registration-success-message">{modalMessage}</p>
         </Modal.Body>
         {isError && (
           <Modal.Footer className="justify-content-center">

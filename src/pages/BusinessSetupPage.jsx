@@ -1109,7 +1109,7 @@ const BusinessSetupPage = () => {
             Please upgrade your plan to reactivate this workspace.
           </span>
           <div className="ms-3 d-flex gap-2">
-            {userPlan?.toLowerCase() === 'essential' && (
+            {!getUserLimits().project && (
               <button
                 className="btn btn-warning btn-sm fw-bold border-dark"
                 onClick={() => {
@@ -1123,7 +1123,7 @@ const BusinessSetupPage = () => {
                 Upgrade Now
               </button>
             )}
-            {userPlan?.toLowerCase() === 'advanced' && (
+            {getUserLimits().project && (
               <button
                 className="btn btn-outline-dark btn-sm fw-bold"
                 onClick={() => {

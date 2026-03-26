@@ -29,5 +29,5 @@ The modal contains multiple sections such as:
 - Insights (6 Cs)
 - Strategic Framework data
 
-![User History Modal](/academy-screenshots/admin-panel/user-history-modal.png)
+![User History Modal](/academy-screenshots/admin-panel/user-history-modal1.png)
   

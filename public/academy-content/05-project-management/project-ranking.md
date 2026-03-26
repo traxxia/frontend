@@ -8,7 +8,7 @@ The process begins with the Admin. In the **Ranking** tab, under the **"Rank You
 2. The Admin clicks **"Generate AI Rank"**. Traxxia analyzes the metadata (Impact, Effort, Risk) and suggests an initial order.
 3. The Admin can then manually reorder the list as they wish.
 
-![Admin Ranking Setup](/academy-screenshots/projects/rank-project-selection.png)
+![Admin Ranking Setup](/academy-screenshots/projects/rank-project-selection1.png)
 
 ## Stage 2: Collaborative Input
 Once the Admin saves their initial rank:
@@ -19,5 +19,5 @@ Once the Admin saves their initial rank:
 ## Stage 3: Progress Tracking
 While the team is ranking, the Admin can monitor progress in real-time. A **Collaborator Progress Bar** in the Admin view updates as each team member hits "Save."
 
-![Ranking Progress Bar](/academy-screenshots/projects/rank-project-selection.png)
+![Ranking Progress Bar](/academy-screenshots/projects/rank-project-selection1.png)
   

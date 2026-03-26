@@ -10,6 +10,7 @@ import { useAccessControl } from "../hooks/useAccessControl";
 import { useProjectForm } from "../hooks/useProjectForm";
 import { callMLRankingAPI, saveAIRankings } from "../services/aiRankingService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
+import { getUserLimits } from "../utils/authUtils";
 
 import { MdArrowDownward } from "react-icons/md";
 import { Users, CheckCircle, Plus, ListOrdered, Lock, Rocket, Briefcase } from "lucide-react";
@@ -919,7 +920,7 @@ const ProjectsSection = ({
               </div>
 
               <div className="management-buttons d-flex gap-2">
-                {selectedProjectIds.length > 0 && !isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && isSuperAdmin && (
+                {selectedProjectIds.length > 0 && !isViewer && !isArchived && getUserLimits().project && isSuperAdmin && (
                   <button
                     onClick={handleLaunchProjects}
                     disabled={isSubmitting}
@@ -943,7 +944,7 @@ const ProjectsSection = ({
                   </button>
                 )}
 
-                {!isViewer && !isArchived && sessionStorage.getItem("userPlan") !== 'essential' && (
+                {!isViewer && !isArchived && getUserLimits().project && (
                   <button
                     onClick={handleNewProject}
                     style={{

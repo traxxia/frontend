@@ -40,9 +40,10 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                     plan.limits?.workspaces !== undefined ? plan.limits.workspaces
                         : (plan.workspace_limit !== undefined ? plan.workspace_limit
                             : (plan.max_workspaces !== undefined ? plan.max_workspaces : '')),
-                limit_projects: plan.limits?.projects !== undefined ? Boolean(plan.limits.projects)
-                    : (plan.can_create_projects !== undefined ? Boolean(plan.can_create_projects)
-                        : (plan.max_projects !== undefined ? Boolean(plan.max_projects) : false)),
+                limit_projects: plan.limits?.project !== undefined ? Boolean(plan.limits.project)
+                    : (plan.limits?.projects !== undefined ? Boolean(plan.limits.projects)
+                        : (plan.can_create_projects !== undefined ? Boolean(plan.can_create_projects)
+                            : (plan.max_projects !== undefined ? Boolean(plan.max_projects) : false))),
                 limit_collaborators: plan.limits?.collaborators !== undefined ? plan.limits.collaborators
                     : (plan.max_collaborators !== undefined ? plan.max_collaborators : ''),
                 limit_viewers: plan.limits?.viewers !== undefined ? plan.limits.viewers
@@ -86,7 +87,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
         if (formData.insight) featuresList.push('Insight Access');
         if (formData.strategic) featuresList.push('Strategic Access');
         if (formData.pmf) featuresList.push('PMF Access');
-        if (formData.pmf && formData.limit_projects) featuresList.push('Projects Access');
+        if (formData.limit_projects) featuresList.push('Projects Access');
 
         setFormData(prev => ({ ...prev, features: featuresList }));
     }, [

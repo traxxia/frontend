@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { Row, Col } from "react-bootstrap";
 import ProjectCard from "./ProjectCard";
 import { useTranslation } from '../hooks/useTranslation';
+import { getUserLimits } from '../utils/authUtils';
 
 const ProjectsList = ({
   sortedProjects,
@@ -109,7 +110,7 @@ const ProjectsList = ({
               isAdmin={isAdmin}
               isSelected={selectedProjectIds.includes(project._id)}
               onToggleSelection={onToggleSelection}
-              isCheckboxDisabled={isArchived || selectionDisabled || sessionStorage.getItem("userPlan") === 'essential'}
+              isCheckboxDisabled={isArchived || selectionDisabled || !getUserLimits().project}
             />
           </Col>
         ))}
