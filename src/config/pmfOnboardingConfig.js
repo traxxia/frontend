@@ -4,18 +4,10 @@
  * Making it easy to update content without modifying the component
  */
 
+import countryList from 'react-select-country-list'
+
 // Countries list
-export const COUNTRIES = [
-  'United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Chile',
-  'Colombia', 'Peru', 'United Kingdom', 'Germany', 'France', 'Spain',
-  'Italy', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Sweden',
-  'Norway', 'Denmark', 'Finland', 'Poland', 'Portugal', 'Greece',
-  'Ireland', 'Czech Republic', 'Hungary', 'Romania', 'Bulgaria', 'Croatia',
-  'Australia', 'New Zealand', 'Japan', 'China', 'India', 'South Korea',
-  'Singapore', 'Malaysia', 'Thailand', 'Indonesia', 'Philippines', 'Vietnam',
-  'South Africa', 'Egypt', 'Nigeria', 'Kenya', 'Morocco', 'Israel',
-  'Turkey', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Kuwait'
-];
+export const COUNTRIES = countryList().getData();
 
 // Industries organized by category
 export const INDUSTRIES_BY_CATEGORY = [

@@ -178,7 +178,12 @@ const AdminTable = ({
                                             width: col.width || 'auto'
                                         }}
                                     >
-                                        <div className="th-inner" style={{ justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start' }}>
+                                        <div 
+                                            className="th-inner" 
+                                            style={{ 
+                                                justifyContent: col.align === 'right' ? 'flex-end' : col.align === 'center' ? 'center' : 'flex-start' 
+                                            }}
+                                        >
                                             {t(col.label)}
                                         </div>
                                     </th>
@@ -201,7 +206,7 @@ const AdminTable = ({
                                                 <div
                                                     className="td-inner"
                                                     style={{
-                                                        justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start'
+                                                        justifyContent: col.align === 'right' ? 'flex-end' : col.align === 'center' ? 'center' : 'flex-start'
                                                     }}
                                                 >
                                                     {col.render

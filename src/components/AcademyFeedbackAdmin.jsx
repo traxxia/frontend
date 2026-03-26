@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import AdminTable from './AdminTable';
-import { ThumbsUp, ThumbsDown, MessageSquareMore } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquareMore, Eye } from 'lucide-react';
 import { formatDate } from '../utils/dateUtils';
+import { Modal, Button } from 'react-bootstrap';
 
 const AcademyFeedbackAdmin = ({ onToast }) => {
     const { t } = useTranslation();
@@ -11,6 +12,17 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterHelpful, setFilterHelpful] = useState('all'); // 'all', 'yes', 'no'
     const [currentPage, setCurrentPage] = useState(1);
+    const [lastPageBeforeSearch, setLastPageBeforeSearch] = useState(null);
+
+    // Modal state
+    const [showModal, setShowModal] = useState(false);
+    const [selectedFeedback, setSelectedFeedback] = useState('');
+
+    const handleCloseModal = () => setShowModal(false);
+    const handleShowModal = (feedback) => {
+        setSelectedFeedback(feedback);
+        setShowModal(true);
+    };
 
     // Configurable items per page
     const itemsPerPage = 10;
@@ -27,7 +39,6 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
             setIsLoading(true);
             const token = getAuthToken();
 
-            // Adjust the endpoint if necessary based on your actual backend route (e.g., /api/admin/academy-feedback)
             const response = await fetch(`${API_BASE_URL}/api/academy-feedback`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -37,10 +48,8 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                // Assuming the backend returns an array of objects directly or a { feedback: [...] } object
                 const feedbackArray = Array.isArray(data) ? data : data.feedback || data.data || [];
 
-                // Sort by date descending (newest first)
                 const sortedFeedback = feedbackArray.sort((a, b) => {
                     const dateA = new Date(a.created_at || a.createdAt || a.date);
                     const dateB = new Date(b.created_at || b.createdAt || b.date);
@@ -59,14 +68,11 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         }
     };
 
-    // Derived state: Filtering and Search
     const filteredFeedback = useMemo(() => {
         return feedbackData.filter(item => {
-            // 1. Helpfulness Filter
             if (filterHelpful === 'yes' && item.helpful !== true) return false;
             if (filterHelpful === 'no' && item.helpful !== false) return false;
 
-            // 2. Search Term Filter (Search by articleId, feedback text, or userId)
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
                 const textMatch = item.feedback?.toLowerCase().includes(term);
@@ -82,16 +88,26 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         });
     }, [feedbackData, searchTerm, filterHelpful]);
 
-    // Derived state: Pagination
     const totalItems = filteredFeedback.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
-    // Reset to page 1 if data filtering changes the total page count below current page
+    // Handle search term changes to manage page state
     useEffect(() => {
-        if (currentPage > totalPages) {
+        if (searchTerm) {
+            if (lastPageBeforeSearch === null) {
+                setLastPageBeforeSearch(currentPage);
+                setCurrentPage(1);
+            }
+        } else if (!searchTerm && lastPageBeforeSearch !== null) {
+            setCurrentPage(lastPageBeforeSearch);
+            setLastPageBeforeSearch(null);
+        }
+    }, [searchTerm]);
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
             setCurrentPage(1);
         }
-    }, [totalPages, currentPage]);
+    }, [totalPages]);
 
     const paginatedData = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -103,9 +119,8 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         {
             key: 'date',
             label: 'Date',
-            width: '150px',
+            width: '120px',
             render: (val, row) => {
-                // Read from created_at first since that's what the API returns 
                 const dateVal = row.created_at || row.createdAt || row.date;
                 if (!dateVal) return '-';
                 return (
@@ -118,13 +133,14 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
         {
             key: 'articleId',
             label: 'Article',
-            width: '150px',
+            width: '140px',
             render: (val) => <span className="admin-cell-secondary admin-text-mono">{val || '-'}</span>
         },
         {
             key: 'helpful',
             label: 'Helpful?',
             width: '100px',
+            align: 'center',
             render: (val) => {
                 if (val === true) {
                     return (
@@ -141,24 +157,14 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
             }
         },
         {
-            key: 'feedback',
-            label: 'Feedback / Comments',
-            render: (val) => (
-                <div className="admin-cell-primary admin-feedback-text">
-                    {val || <span className="admin-text-italic">No comment provided</span>}
-                </div>
-            )
-        },
-        {
             key: 'userName',
             label: 'User Info',
-            width: '150px',
+            width: '180px',
             render: (val) => {
                 if (!val) {
                     return <div className="admin-cell-secondary admin-text-italic admin-text-sm">Anonymous</div>;
                 }
 
-                // If the backend is ever updated to populate the user (.populate('userId', 'name email'))
                 if (typeof val === 'object' && val !== null) {
                     return (
                         <div className="admin-cell-primary admin-text-sm">
@@ -168,11 +174,33 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
                     );
                 }
 
-                // Temporary display when backend only returns the ID string
                 return (
                     <div className="admin-cell-secondary admin-text-sm">
                         <span className="admin-text-mono">{val}</span>
                     </div>
+                );
+            }
+        },
+        {
+            key: 'feedback',
+            label: 'Feedback / Comments',
+            width: '150px',
+            align: 'center',
+            render: (val) => {
+                if (!val) {
+                    return <span className="admin-text-italic admin-text-sm">No comment provided</span>;
+                }
+
+                return (
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="admin-text-xs d-flex align-items-center gap-1"
+                        onClick={() => handleShowModal(val)}
+                        title="View full feedback"
+                    >
+                        <Eye size={12} /> View Feedback
+                    </Button>
                 );
             }
         }
@@ -201,15 +229,12 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
                 data={paginatedData}
                 loading={isLoading}
 
-                // Search functionality
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 searchPlaceholder="Search by article or feedback..."
 
-                // Custom Toolbar for filters
                 toolbarContent={MyFilterToolbar}
 
-                // Pagination 
                 totalItems={totalItems}
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -218,6 +243,35 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
 
                 emptyMessage={filterHelpful !== 'all' || searchTerm ? "No feedback matches your filter" : "No feedback collected yet"}
             />
+
+            {/* Feedback Detail Modal */}
+            <Modal
+                show={showModal}
+                onHide={handleCloseModal}
+                centered
+                scrollable
+                className="admin-compact-modal"
+                contentClassName="admin-feedback-modal-content"
+            >
+                <Modal.Header closeButton className="admin-modal-header">
+                    <Modal.Title className="admin-modal-title d-flex align-items-center gap-2">
+                        <MessageSquareMore size={20} className="text-primary" />
+                        Feedback Details
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="admin-modal-body p-4">
+                    <div className="admin-feedback-content-full">
+                        <p className="admin-text-primary admin-lh-base pre-wrap" style={{ whiteSpace: 'pre-wrap', maxHeight: '400px', overflowY: 'auto' }}>
+                            {selectedFeedback}
+                        </p>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer className="admin-modal-footer">
+                    <Button variant="secondary" onClick={handleCloseModal} className="admin-btn-secondary">
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };

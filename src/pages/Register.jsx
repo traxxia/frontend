@@ -682,14 +682,14 @@ const Register = () => {
       </div>
 
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered dialogClassName="compact-success-modal">
-        <Modal.Body className="text-center py-4">
-          <div className={`mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
-            {isError ? <FaTimes size={48} /> : <FaCheck size={48} />}
+        <Modal.Body className="text-center">
+          <div className={`registration-icon-container mb-3 ${isError ? 'text-danger' : 'text-success'}`}>
+            {isError ? <FaTimes size={32} /> : <FaCheck size={32} />}
           </div>
-          <h5 className="mb-2">
+          <h5 className="registration-status-title mb-2">
             {isError ? t('oops') : t('success')}
           </h5>
-          <p className="mb-0">{modalMessage}</p>
+          <p className="mb-0 registration-success-message">{modalMessage}</p>
         </Modal.Body>
         {isError && (
           <Modal.Footer className="justify-content-center">

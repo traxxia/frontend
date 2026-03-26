@@ -264,7 +264,9 @@
 
 /* System Overview Styles */
 .system-overview {
-  space: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .overview-header {
@@ -353,7 +355,9 @@
 }
 
 .company-list {
-  space: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .company-item {
@@ -530,6 +534,11 @@
   overflow-y: auto;
 }
 
+.admin-feedback-modal-content {
+  min-height: auto !important;
+  max-height: 85vh;
+}
+
 .modal-content.large {
   max-width: 800px;
 }
@@ -633,7 +642,9 @@
 
 /* Question Management Styles */
 .questions-list {
-  space: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .question-card {
@@ -731,7 +742,9 @@
 }
 
 .edit-form {
-  space: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 
@@ -1857,7 +1870,9 @@
 
 /* System Overview Styles */
 .system-overview {
-  space: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .overview-header {
@@ -1946,7 +1961,9 @@
 }
 
 .company-list {
-  space: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .company-item {
@@ -2257,7 +2274,9 @@
 
 /* Question Management Styles */
 .questions-list {
-  space: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .question-card {
@@ -2355,7 +2374,9 @@
 }
 
 .edit-form {
-  space: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .question-textarea {
