@@ -900,7 +900,7 @@ const UserDetailsPanel = ({ user, userDetails, isLoading, onClose, onExport, onT
             businesses={businesses}
           />
 
-          <div className="tab-content">
+          <div className="tab-content tab-content-user-history">
             {isLoadingBusiness ? (
               <LoadingState message="Loading business data..." />
             ) : (
