@@ -45,6 +45,6 @@ Questions are displayed in a logical order that follows your strategic journey:
 - **Sequential Numbering**: Each question is assigned a clear sequential number for easy tracking.
 - **Required for Analysis**: If a specific insight (like SWOT or PESTEL) requires more data, the system will highlight the missing questions in **orange** with a label: *"(Required for analysis)"*.
 
-![Question Highlighting Placeholder](/academy-screenshots/questionnaire/ai-answer-support.png)
+![Question Highlighting Placeholder](/academy-screenshots/questionnaire/ai-enrichment1.png)
 *Questions highlighted to indicate they are required for generating deep insights.*
  

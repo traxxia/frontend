@@ -427,7 +427,7 @@
   /* Large Desktop screens */
   @media (min-width: 1200px) {
     .welcome-section {
-      padding: var(--spacing-4xl);
+      padding: var(--spacing-2xl);
     }
 
     .welcome-section h5 {
@@ -894,13 +894,16 @@
     overflow: hidden;
   }
 
+  .accordion .accordion-item{
+    margin:10px 0px;
+  }
   /* Individual accordion item */
   .businesses-section .accordion-item {
     /* border: 1px solid #e6e6e6; */
     border-radius: 10px;
     margin-bottom: 12px;
     overflow: hidden;
-    background: #ffffff;
+    background: #ffffff; 
   }
 
   [data-theme="dark"] .businesses-section .accordion-item {
@@ -1712,24 +1715,35 @@
   }
 
   /* Gradient Accordion Header */
-  .businesses-section .accordion-button {
-    background: #4864a1 !important;
-
-    color: #ffffff !important;
-
+  .businesses-section .accordion-button,
+  .mobile-view-card .accordion-button {
+    background: var(--gradient-primary) !important;
+    color: var(--color-text-white) !important;
+    border-radius: var(--border-radius-md) !important;
   }
 
-  .businesses-section .accordion-button::after {
+  .businesses-section .accordion-button::after,
+  .mobile-view-card .accordion-button::after {
     filter: brightness(0) invert(1);
   }
 
-  .businesses-section .accordion-button:not(.collapsed) {
-    background: #4864a1 !important;
+  .businesses-section .accordion-button:not(.collapsed),
+  .mobile-view-card .accordion-button:not(.collapsed) {
+    background: var(--gradient-primary) !important;
+    box-shadow: none;
   }
 
+  .businesses-section .accordion-title-text,
+  .mobile-view-card .accordion-title-text {
+    color: var(--color-text-white) !important;
+    font-weight: 600;
+  }
 
-  .businesses-section .accordion-title-text {
-    color: #ffffff !important;
+  .businesses-section .accordion-count-pill,
+  .mobile-view-card .accordion-count-pill {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: var(--color-text-white) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
   .status-badge {

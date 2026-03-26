@@ -63,6 +63,7 @@ const Dashboard = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [collaboratingBusinesses, setCollaboratingBusinesses] = useState([]);
+  const [deletedBusinesses, setDeletedBusinesses] = useState([]);
 
   // Deletion cooldown state
   const [showCooldownModal, setShowCooldownModal] = useState(false);
@@ -169,6 +170,7 @@ const Dashboard = () => {
         const collabList = data.collaboratingBusinesses || data.collaborating_businesses || [];
         setBusinesses(data.businesses || []);
         setCollaboratingBusinesses(Array.isArray(collabList) ? collabList : []);
+        setDeletedBusinesses(data.deleted_businesses || []);
         setBusinessError('');
       } else {
         const errorData = await response.json();
@@ -845,6 +847,30 @@ if (description) {
                             </Accordion.Body>
                           </Accordion.Item>
                         )}
+                        
+                        {/* Deleted Businesses */}
+                        {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
+                          <Accordion.Item eventKey="3">
+                            <Accordion.Header>
+                              <div className="accordion-header-content">
+                                <span className="accordion-title-text">
+                                  Deleted Business
+                                </span>
+                                <span className="accordion-count-pill">
+                                  {deletedBusinesses.length}
+                                </span>
+                              </div>
+                            </Accordion.Header>
+
+                            <Accordion.Body>
+                              <BusinessList
+                                businesses={deletedBusinesses}
+                                viewType="mobile"
+                                canDelete={false}
+                              />
+                            </Accordion.Body>
+                          </Accordion.Item>
+                        )}
 
                       </Accordion>
 
@@ -972,6 +998,29 @@ if (description) {
                                 <Accordion.Body>
                                   <BusinessList
                                     businesses={collaboratingBusinesses}
+                                    viewType="desktop"
+                                    canDelete={false}
+                                  />
+                                </Accordion.Body>
+                              </Accordion.Item>
+                            )}
+
+                            {/* Deleted Businesses */}
+                            {!isCollaborator && !isViewer && deletedBusinesses.length > 0 && (
+                              <Accordion.Item eventKey="3">
+                                <Accordion.Header>
+                                  <div className="accordion-header-content">
+                                    <span className="accordion-title-text">
+                                      Deleted Business
+                                    </span>
+                                    <span className="accordion-count-pill">
+                                      {deletedBusinesses.length}
+                                    </span>
+                                  </div>
+                                </Accordion.Header>
+                                <Accordion.Body>
+                                  <BusinessList
+                                    businesses={deletedBusinesses}
                                     viewType="desktop"
                                     canDelete={false}
                                   />

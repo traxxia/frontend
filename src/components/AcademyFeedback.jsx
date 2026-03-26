@@ -44,35 +44,40 @@ const AcademyFeedback = ({ articleId }) => {
             });
 
             if (!response.ok) {
-                console.error('Failed to submit feedback', await response.text());
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.message || t('feedback_submit_error');
+                setError(errorMessage);
+                console.error('Failed to submit feedback', errorMessage);
+                return;
             }
+            
+            setSubmitted(true);
+            setTimeout(() => {
+                setShowTextarea(false);
+            }, 2000);
         } catch (error) {
             console.error('Error submitting feedback:', error);
+            setError(t('feedback_submit_error'));
         }
-
-        setSubmitted(true);
-        setTimeout(() => {
-            setShowTextarea(false);
-        }, 2000);
     };
 
     const validateFeedback = (text) => {
         const trimmedText = text.trim();
         
         if (!trimmedText) {
-            return t('business_purpose_required') || 'Business Purpose is required';
+            return ''; // Optional
         }
         if (trimmedText.length < 10) {
-            return t('description_min_length') || 'Business description must be at least 10 characters long';
+            return t('feedback_min_length') || 'Feedback must be at least 10 characters long';
         }
         if (!/[A-Za-z]/.test(trimmedText)) {
-            return t('business_purpose_must_contain_alphabetic_characters') || 'Business purpose must contain alphabetic characters';
+            return t('feedback_alphabetic_required') || 'Feedback must contain at least one letter';
         }
         if (/[0-9]{5,}/.test(trimmedText)) {
-            return t('description_consecutive_numbers') || 'Too many consecutive numbers are not allowed';
+            return t('feedback_consecutive_numbers') || 'Too many consecutive numbers are not allowed';
         }
         if (/[^A-Za-z0-9\s]{5,}/.test(trimmedText)) {
-            return t('description_consecutive_special') || 'Too many consecutive special characters are not allowed';
+            return t('feedback_consecutive_special') || 'Too many consecutive special characters are not allowed';
         }
         return '';
     };

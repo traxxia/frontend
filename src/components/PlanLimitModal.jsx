@@ -1,18 +1,27 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import '../styles/PlanLimitModal.css';
 
-const PlanLimitModal = ({ show, onHide, title, message, subMessage, plan = 'Essential', limit = 1, isAdmin = true }) => {
+const PlanLimitModal = ({ show, onHide, onAction, title, message, subMessage, plan = 'Essential', limit = 1, isAdmin = true }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleAction = () => {
+        const currentPath = location.pathname;
+        const targetPath = currentPath.includes('/super-admin') ? '/super-admin' : '/admin';
+        
         onHide();
+        if (onAction) onAction();
+        
         if (isAdmin) {
-            navigate('/admin?tab=subscription');
+            // Increased delay to ensure modal backdrop and state cleanup before navigation
+            setTimeout(() => {
+                navigate(`${targetPath}?tab=subscription`);
+            }, 300);
         }
     };
 
