@@ -377,9 +377,6 @@ export const academyStructure = {
                 }
             ]
         }
-
-
-
     ]
 };
 

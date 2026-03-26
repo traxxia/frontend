@@ -13,27 +13,21 @@ When you first arrive at Traxxia, you have two options:
 ![Registration Form](/academy-screenshots/getting-started/registration-page-full.png)
 *Screenshot of Traxxia Registration Form*
 
-## 2. Choosing Your Tier
-Traxxia offers two distinct tiers designed for different stages of business growth:
+## 2. Choosing Your Plan
+Traxxia offers distinct plans designed for different stages of business growth:
 
-### **Tier 1: Essential (Insight-Focused)**
--   **Target**: Owner-CEOs and Small Business Managers.
--   **Price Point**: USD $29.00 – $39.00 / month.
--   **Value Prop**: Gain strategic clarity and validate Product-Market Fit (PMF) without a consultant.
--   **Limits**: **1 Workspace** (Single Business Entity).
--   **Features**: Full access to the Strategic Insights engine and the dedicated **PMF Flow**.
--   **Restriction**: **Zero Projects**. You cannot convert initiatives into projects or access execution workflows.
+### **Introductory Plans**
+These plans are designed for individual owner-CEOs and focus on tactical clarity and strategic validation.
 
-### **Tier 2: Advanced (Execution-Focused)**
--   **Target**: Strategy-literate execs and growing leadership teams.
--   **Price Point**: USD $89.00 – $129.00 / month.
--   **Value Prop**: Turn strategy into rigorous execution with team-wide alignment.
--   **Limits**: Up to **3 Active Workspaces**.
--   **Features**: Includes everything in Essential, plus the Complete Lifecycle (Initiative to Project conversion), Portfolio Management, and Execution Rigor.
--   **Collaboration**: Includes **3 Collaborator Seats** in the base price (Total of 4 users including the Admin).
+### **Expansion & Execution Plans**
+These plans are designed for growing organizations and include features like:
+-   **Complete Lifecycle**: Converge strategic initiatives into actionable projects.
+-   **Portfolio Management**: Prioritization matrix and scenario comparisons.
+-   **Collaboration Seats**: Invite team members to join your organization.
+-   **Execution Rigor**: Monitoring, maintenance, and project health tracking.
 
 ![Registration Form](/academy-screenshots/getting-started/chooseplan.png)
 *Screenshot of Choosing Your Tier*
 
-> [!IMPORTANT] Traxxia uses **USD-anchored pricing** for consistency, while providing high-value features like multiple workspaces and collaboration in the Advanced tier.
+> [!IMPORTANT] Traxxia uses **USD-anchored pricing** for consistency, providing high-value features like multiple workspaces and collaboration in premium plans.
  
