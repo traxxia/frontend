@@ -3293,3 +3293,58 @@ body {
     padding-bottom: 80px !important;
   }
 }
+
+/* ========== ARCHIVED STATE VISUALS ========== */
+.expanded-analysis-view {
+  position: relative;
+}
+
+.is-archived .desktop-tabs {
+  z-index: 1100 !important;
+  position: sticky !important;
+  background: white !important;
+}
+
+/* Hide utility buttons (PDF, Regenerate, Section Dropdown) in archived state */
+.is-archived .desktop-tabs-buttons {
+    display: none !important;
+}
+
+/* Hide all content inside expanded-analysis-content ONLY for archived workspaces */
+.is-archived .expanded-analysis-content {
+    opacity: 0.3; /* Show content but faded (70% obscured) */
+    pointer-events: none; /* Prevent any interaction */
+    user-select: none; /* Prevent text selection */
+    filter: blur(1px); /* Add a very light blur directly to content */
+}
+
+.is-archived .desktop-tabs {
+  z-index: 1100 !important;
+  position: sticky !important;
+  background: white !important;
+}
+
+.archived-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  z-index: 1050;
+  pointer-events: none;
+  border-radius: 8px;
+}
+
+/* Ensure banner is above everything else */
+.is-archived .alert-warning {
+  z-index: 2000 !important;
+}
+
+[data-theme="dark"] .archived-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+

@@ -32,7 +32,6 @@ export const AnalysisService = {
      * @param {string} businessId 
      * @returns {Promise<Array>}
      */
-    /*
     async getAnalysis(apiBaseUrl, token, businessId) {
         const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}`, {
             headers: {
@@ -47,7 +46,6 @@ export const AnalysisService = {
         const result = await response.json();
         return result.data || [];
     },
-    */
 
     /**
      * Get analysis by phase
@@ -57,7 +55,6 @@ export const AnalysisService = {
      * @param {string} phase 
      * @returns {Promise<Array>}
      */
-    /*
     async getAnalysisByPhase(apiBaseUrl, token, businessId, phase) {
         const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}/phase/${phase}`, {
             headers: {
@@ -72,7 +69,6 @@ export const AnalysisService = {
         const result = await response.json();
         return result.data || [];
     },
-    */
 
     /**
      * Get analysis by filter
@@ -82,7 +78,6 @@ export const AnalysisService = {
      * @param {object} filter - { type, name }
      * @returns {Promise<Array>}
      */
-    /*
     async getAnalysisByFilter(apiBaseUrl, token, businessId, filter) {
         const queryParams = new URLSearchParams(filter).toString();
         const response = await fetch(`${apiBaseUrl}/api/analysis/business/${businessId}/filter?${queryParams}`, {
@@ -98,5 +93,4 @@ export const AnalysisService = {
         const result = await response.json();
         return result.data || [];
     }
-    */
 };

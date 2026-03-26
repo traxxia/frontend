@@ -905,7 +905,7 @@
 
   [data-theme="dark"] .businesses-section .accordion-item {
     background-color: #1a1d23 !important;
-}
+  }
 
   /* Remove double borders */
   .businesses-section .accordion-item:not(:first-of-type) {
@@ -920,8 +920,8 @@
 
   /* Accordion button */
   .businesses-section .accordion-button {
-    background-color: #f8f9fb;
-    color: #1f2937;
+    background-color: #4864a1 !important;
+    color: #ffffff;
     padding: 14px 18px;
     border-radius: 10px;
     box-shadow: none;
@@ -930,19 +930,24 @@
 
   /* Expanded state */
   .businesses-section .accordion-button:not(.collapsed) {
-    background-color: #eef2ff;
-    color: #1d4ed8;
+    background-color: #4864a1;
+    color: #ffffff;
     font-weight: 600;
   }
 
   /* Hover effect */
   .businesses-section .accordion-button:hover {
-    background-color: #eef2ff;
+    background-color: #4864a1;
   }
 
   /* Remove default focus outline */
   .businesses-section .accordion-button:focus {
     box-shadow: none;
+  }
+
+  /* Chevron Icon color fix for dark backgrounds */
+  .businesses-section .accordion-button::after {
+    filter: brightness(0) invert(1);
   }
 
   /* Body */
@@ -953,7 +958,7 @@
 
   [data-theme="dark"] .businesses-section .accordion-body {
     background-color: #1a1d23 !important;
-}
+  }
 
   /* Business list spacing inside accordion */
   .businesses-section .accordion-body>*:not(:last-child) {
@@ -1001,10 +1006,10 @@
     line-height: 1.2;
   }
 
-  
+
   [data-theme="dark"] .businesses-section .accordion-body {
     color: #1a1d23 !important;
-}
+  }
 
   /* Active accordion */
   .accordion-button:not(.collapsed) .accordion-count-pill {
@@ -1015,7 +1020,7 @@
 
   [data-theme="dark"] .accordion-button:not(.collapsed) .accordion-count-pill {
     color: #1a1d23 !important;
-}
+  }
 
   /* Active accordion color tweak */
   .accordion-button:not(.collapsed) .accordion-count {
@@ -1039,24 +1044,30 @@
    ============================== */
 
     .accordion-button {
-      background-color: #f8f9fb;
-      color: #1f2937;
+      background-color: #217aff;
+      color: #ffffff;
       box-shadow: none;
       transition: background-color 0.2s ease;
     }
 
     .accordion-button:not(.collapsed) {
-      background-color: #eef2ff;
-      color: #1d4ed8;
+      background-color: #1a62cc;
+      /* Slightly darker shade for active state */
+      color: #ffffff;
       font-weight: 600;
     }
 
     .accordion-button:hover {
-      background-color: #eef2ff;
+      background-color: #1a62cc;
     }
 
     .accordion-button:focus {
       box-shadow: none;
+    }
+
+    /* Chevron Icon color fix for dark backgrounds */
+    .accordion-button::after {
+      filter: brightness(0) invert(1);
     }
 
     /* Header content layout */
@@ -1702,9 +1713,7 @@
 
   /* Gradient Accordion Header */
   .businesses-section .accordion-button {
-    background: linear-gradient(135deg,
-        #1f6bff 0%,
-        #2db4ff 100%) !important;
+    background: #4864a1 !important;
 
     color: #ffffff !important;
 
@@ -1715,9 +1724,7 @@
   }
 
   .businesses-section .accordion-button:not(.collapsed) {
-    background: linear-gradient(135deg,
-        #1a5ae0 0%,
-        #1f6bff 100%) !important;
+    background: #4864a1 !important;
   }
 
 

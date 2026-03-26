@@ -130,36 +130,14 @@ const PhaseManager = ({
     const loadExistingAnalysis = async () => {
         try {
             const token = getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.document_info) {
-                    const hasDocument = data.document_info.has_document;
-                    if (setHasUploadedDocument) {
-                        setHasUploadedDocument(hasDocument);
-                    }
-                    if (onDocumentInfoLoad) {
-                        onDocumentInfoLoad(data.document_info);
-                    }
-                }
-
-                if (data.conversations && data.conversations.length > 0) {
-                    const { completedSet, answersMap } = loadCompletedQuestionsFromAPI(data.conversations);
-                    onCompletedQuestionsUpdate(completedSet, answersMap);
 
                     const initialQuestions = questions.filter(q => q.phase === PHASES.INITIAL && q.severity === "mandatory");
                     const essentialQuestions = questions.filter(q => q.phase === PHASES.ESSENTIAL && q.severity === "mandatory");
                     const advancedQuestions = questions.filter(q => q.phase === PHASES.ADVANCED);
 
-                    const completedInitialQuestions = initialQuestions.filter(q => completedSet.has(q._id));
-                    const completedEssentialQuestions = essentialQuestions.filter(q => completedSet.has(q._id));
-                    const completedAdvancedQuestions = advancedQuestions.filter(q => completedSet.has(q._id));
+            const completedInitialQuestions = initialQuestions.filter(q => completedQuestions.has(q._id));
+            const completedEssentialQuestions = essentialQuestions.filter(q => completedQuestions.has(q._id));
+            const completedAdvancedQuestions = advancedQuestions.filter(q => completedQuestions.has(q._id));
 
                     const newCompletedPhases = new Set();
 
@@ -175,43 +153,24 @@ const PhaseManager = ({
                         newCompletedPhases.add('advanced');
                     }
 
-                    setCompletedPhases(newCompletedPhases);
-                    onCompletedPhasesUpdate(newCompletedPhases);
+            setCompletedPhases(newCompletedPhases);
+            if (onCompletedPhasesUpdate) {
+                onCompletedPhasesUpdate(newCompletedPhases);
+            }
+
+            const analysisArray = [];
+
+            try {
+                const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
+                if (newAnalysisData && Array.isArray(newAnalysisData)) {
+                    analysisArray.push(...newAnalysisData);
                 }
+            } catch (analysisErr) {
+                console.warn("Failed to load from Analysis API", analysisErr);
+            }
 
-                const analysisArray = [];
-                const phaseKeys = ['initial', 'essential', 'advanced', 'financial', 'good'];
-
-                // 1. Check in phase_analysis wrapper
-                if (data.phase_analysis && typeof data.phase_analysis === 'object') {
-                    Object.values(data.phase_analysis).forEach(phaseData => {
-                        if (phaseData.analyses && Array.isArray(phaseData.analyses)) {
-                            analysisArray.push(...phaseData.analyses);
-                        }
-                    });
-                }
-
-                // 2. Check at top level (matching user's provided structure)
-                phaseKeys.forEach(key => {
-                    if (data[key] && data[key].analyses && Array.isArray(data[key].analyses)) {
-                        analysisArray.push(...data[key].analyses);
-                    }
-                });
-
-                /*
-                try {
-                    const newAnalysisData = await AnalysisService.getAnalysis(API_BASE_URL, token, selectedBusinessId);
-                    if (newAnalysisData && Array.isArray(newAnalysisData)) {
-                        analysisArray.push(...newAnalysisData);
-                    }
-                } catch (analysisErr) {
-                    console.warn("Failed to load from Analysis API", analysisErr);
-                }
-                */
-
-                if (onAnalysisDataLoad && analysisArray.length > 0) {
-                    onAnalysisDataLoad(analysisArray);
-                }
+            if (onAnalysisDataLoad && analysisArray.length > 0) {
+                onAnalysisDataLoad(analysisArray);
             }
         } catch (error) {
             console.error('Error loading existing analysis:', error);

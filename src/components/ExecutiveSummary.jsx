@@ -18,6 +18,12 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const ML_API_BASE_URL = process.env.REACT_APP_ML_BACKEND_URL;
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
   const getAuthToken = () => sessionStorage.getItem("token");
+  const userRole = (
+    sessionStorage.getItem("role") ||
+    sessionStorage.getItem("userRole") ||
+    ""
+  ).toLowerCase();
+  const isViewer = userRole === "viewer";
   const analysisService = new AnalysisApiService(ML_API_BASE_URL, API_BASE_URL, getAuthToken);
 
   const fetchSummary = useCallback(async () => {
@@ -68,7 +74,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
         <div className="container" style={{ maxWidth: '600px' }}>
           <h3 className="fw-bold mb-3">{t("noInsightsAvailable") || "No executive summary available yet."}</h3>
           <p className="text-muted mb-4">{t("completeOnboardingPrompt") || "Please complete the PMF Onboarding to generate this summary."}</p>
-          {onStartOnboarding && (
+          {onStartOnboarding && !isViewer && (
             <button
               className="btn btn-primary rounded-pill px-5 py-2 fw-semibold"
               onClick={onStartOnboarding}
@@ -109,6 +115,7 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
   const excludes = howToCompete?.what_this_excludes || howToCompete?.excludes || howToCompete?.Excludes;
   const alternativeLevers = howToCompete?.alternative_levers || howToCompete?.["Alternative Levers"] || [];
   const newAdjacencies = whereToCompete?.new_adjacencies_to_explore || whereToCompete?.new_adjacencies || whereToCompete?.["New Adjacencies"];
+  const existingAdjacencies = whereToCompete?.existing_adjacencies || whereToCompete?.["Existing Adjacencies"];
 
   return (
     <div className="exc-executive-summary-container">
@@ -169,10 +176,24 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                   <p className="exc-source-label exc-orange-text">
                     <Info size={14} /> {t("AI-inferred from your core business data")}
                   </p>
-                  {(getNested(whereToCompete, 'existing_adjacencies.segments'))?.length > 0 ? (
-                    <p className="exc-content-text">
-                      <strong>{t("Segments")}:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments')).join(", ")}
-                    </p>
+                  {Array.isArray(existingAdjacencies) && existingAdjacencies.length > 0 ? (
+                    existingAdjacencies.map((adj, idx) => (
+                      <div className="exc-option-block" key={idx}>
+                        <p className="exc-option-title"><strong>{t("Recommendation Basis")}: {adj.recommendation_basis || adj.basis}</strong></p>
+                        <p className="exc-content-text"><strong>{t("Segments")}:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : (adj.segments || "N/A")}</p>
+                        <p className="exc-content-text"><strong>{t("Products")}:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : (adj.products || "N/A")}</p>
+                        <p className="exc-content-text"><strong>{t("Channels")}:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : (adj.channels || "N/A")}</p>
+                        {adj.geographies && (
+                          <p className="exc-content-text"><strong>{t("Geographies")}:</strong> {Array.isArray(adj.geographies) ? adj.geographies.join(", ") : adj.geographies}</p>
+                        )}
+                      </div>
+                    ))
+                  ) : (getNested(whereToCompete, 'existing_adjacencies.segments'))?.length > 0 ? (
+                    <div className="exc-option-block">
+                      <p className="exc-content-text">
+                        <strong>{t("Segments")}:</strong> {(getNested(whereToCompete, 'existing_adjacencies.segments')).join(", ")}
+                      </p>
+                    </div>
                   ) : (
                     <p className="exc-content-text exc-italic">{t("No existing adjacencies inferred. Business appears focused on core.")}</p>
                   )}
@@ -191,10 +212,16 @@ const ExecutiveSummary = ({ businessId, onStartOnboarding }) => {
                   </p>
                   {newAdjacencies?.map((adj, idx) => (
                     <div className="exc-option-block" key={idx}>
-                      <p className="exc-option-title"><strong>{t("Option")} {idx + 1}: {adj.title || adj.name}</strong></p>
+                      <p className="exc-option-title"><strong>{t("Recommendation Basis")}: {adj.recommendation_basis || adj.title || adj.name}</strong></p>
                       <p className="exc-content-text"><strong>{t("Segments")}:</strong> {Array.isArray(adj.segments) ? adj.segments.join(", ") : (adj.segments || "N/A")}</p>
                       <p className="exc-content-text"><strong>{t("Products")}:</strong> {Array.isArray(adj.products) ? adj.products.join(", ") : (adj.products || "N/A")}</p>
                       <p className="exc-content-text"><strong>{t("Channels")}:</strong> {Array.isArray(adj.channels) ? adj.channels.join(", ") : (adj.channels || "N/A")}</p>
+                      {adj.strategic_fit_score && (
+                        <p className="exc-content-text"><strong>{t("Strategic Fit Score")}:</strong> {adj.strategic_fit_score}</p>
+                      )}
+                      {adj.rationale && (
+                        <p className="exc-content-text"><strong>{t("Rationale")}:</strong> {adj.rationale}</p>
+                      )}
                     </div>
                   )) || <p className="exc-content-text exc-italic">{t("Analyzing potential adjacencies")}...</p>}
                 </div>

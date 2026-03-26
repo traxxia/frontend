@@ -64,7 +64,8 @@ const Login = () => {
         sessionStorage.setItem("companyLogo", res.data.user.company.logo || "");
         sessionStorage.setItem("companyIndustry", res.data.user.company.industry || "");
       }
-
+      // Store feature-access limits from the login response directly
+      sessionStorage.setItem("userLimits", JSON.stringify(res.data.user.limits || {}));
       sessionStorage.setItem(
         "isAdmin",
         ["super_admin", "company_admin"].includes(res.data.user.role) ? "true" : "false"

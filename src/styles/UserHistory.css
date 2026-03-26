@@ -439,6 +439,10 @@
   border: none;
   min-height: 400px;
 }
+.tab-content-user-history {
+  min-height: auto !important;
+  border-radius: 0px !important;
+}
 
 [data-theme="dark"] .tab-content {
   background: #0f0f0f !important;

@@ -21,6 +21,7 @@ const GlobalAiAssistant = () => {
   const location = useLocation();
   const [projectId, setProjectId] = useState(null);
   const [pageContext, setPageContext] = useState(null);
+  const [isArchived, setIsArchived] = useState(false);
 
   useEffect(() => {
     const handleContextChange = (event) => {
@@ -29,6 +30,9 @@ const GlobalAiAssistant = () => {
       }
       if (event.detail && event.detail.pageContext !== undefined) {
         setPageContext(event.detail.pageContext);
+      }
+      if (event.detail && event.detail.isArchived !== undefined) {
+        setIsArchived(event.detail.isArchived);
       }
     };
 
@@ -39,13 +43,15 @@ const GlobalAiAssistant = () => {
     };
   }, []);
 
-  // Reset project context on route change
+  // Reset project context and archived status on route change
   useEffect(() => {
     setProjectId(null);
     setPageContext(null);
+    setIsArchived(false);
   }, [location.pathname]);
 
   const isExcluded =
+    isArchived ||
     AI_EXCLUDED_EXACT_PATHS.includes(location.pathname) ||
     AI_EXCLUDED_PREFIX_PATHS.some((prefix) => location.pathname.startsWith(prefix));
 
