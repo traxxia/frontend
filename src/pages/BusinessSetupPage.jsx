@@ -23,7 +23,9 @@ import ExecutiveSummary from "../components/ExecutiveSummary";
 import PrioritiesProjects from "../components/PrioritiesProjects";
 import UpgradeModal from "../components/UpgradeModal";
 import PMFOnboardingModal from "../components/PMFOnboardingModal";
+import { answerService } from "../services/answerService";
 import { AI_PAGE_CONTEXTS } from "../utils/aiContexts";
+import { getUserLimits } from '../utils/authUtils';
 
 const CARD_TO_CATEGORY_MAP = {
   "profitability-analysis": "costs-financial",
@@ -67,8 +69,6 @@ const CARD_ID_MAP = {
   "Core": "core-adjacency",
 };
 
-const ENABLE_PMF = process.env.REACT_APP_ENABLE_PMF === 'true';
-
 // Helper: turn a business name into a URL-safe slug
 const toSlug = (name = '') =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -78,6 +78,7 @@ const BusinessSetupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
+  const { pmf: hasPmfAccess, insight: hasInsightAccess, strategic: hasStrategicAccess, project: hasProjectAccess } = getUserLimits();
 
   // State management for business context
   const [currentBusiness, setCurrentBusiness] = useState(location.state?.business || null);
@@ -138,6 +139,9 @@ const BusinessSetupPage = () => {
   const [showProjectsTab, setShowProjectsTab] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [pmfRefreshTrigger, setPmfRefreshTrigger] = useState(0);
+  const [answerIds, setAnswerIds] = useState({}); // Mapping of question_id to answer document _id
+
+  // hasInsightAccess and hasStrategicAccess are now derived from getUserLimits() above (line 79)
 
   const setApiLoading = (apiEndpoint, isLoading) => {
     setApiLoadingStates(prev => ({ ...prev, [apiEndpoint]: isLoading }));
@@ -205,11 +209,28 @@ const BusinessSetupPage = () => {
   useEffect(() => {
     const urlTab = searchParams.get('tab');
     const initialTab = urlTab || location.state?.initialTab;
-    if (ENABLE_PMF && initialTab) {
-      setActiveTab(initialTab);
-    } else if (ENABLE_PMF) {
-      setActiveTab("aha");
+
+    // Helper to determine the best default tab based on plan limits
+    const getDefaultTab = () => {
+      if (hasPmfAccess) return "aha";
+      if (hasProjectAccess) return "projects";
+      return "advanced";
+    };
+
+    if (initialTab) {
+      // Check if user has access to the requested initial tab
+      const isPmfTab = ["aha", "executive", "priorities"].includes(initialTab);
+      const isProjectTab = initialTab === "projects";
+      
+      if ((isPmfTab && !hasPmfAccess) || (isProjectTab && !hasProjectAccess)) {
+        setActiveTab(getDefaultTab());
+      } else {
+        setActiveTab(initialTab);
+      }
+    } else {
+      setActiveTab(getDefaultTab());
     }
+
     // Clean up the temporary window flag used by useBusinessSetup's initializer
     delete window.__businessPageNavState;
     // Always expand the analysis panel (no chat section)
@@ -240,11 +261,11 @@ const BusinessSetupPage = () => {
     if (pageContext) {
       window.dispatchEvent(
         new CustomEvent("ai_context_changed", {
-          detail: { pageContext: contextPayload }
+          detail: { pageContext: contextPayload, isArchived }
         })
       );
     }
-  }, [activeTab, questions, userAnswers]);
+  }, [activeTab, questions, userAnswers, isArchived]);
 
   // Effect to handle business context recovery on refresh
   useEffect(() => {
@@ -313,22 +334,19 @@ const BusinessSetupPage = () => {
         const token = sessionStorage.getItem('token');
         if (!token) return;
 
-        // Load conversation data for answers and document info
-        const conversationUrl = `${API_BASE_URL}/api/conversations?business_id=${selectedBusinessId}`;
-        const conversationsResponse = await fetch(conversationUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        // Use the enhanced Answers API universally for all tabs to get questions and answers
+        const responseData = await answerService.getAnswersByBusiness(selectedBusinessId);
 
-        if (conversationsResponse.ok) {
-          const conversationsData = await conversationsResponse.json();
-          const documentExists = conversationsData.document_info?.has_document === true;
+        if (responseData) {
+          // 1. Handle Document Info
+          const documentExists = responseData.document_info?.has_document === true;
           setHasUploadedDocument(documentExists);
-
-          // If on the 'advanced' tab (Advanced), specifically call the financial-document API as well
-          if (activeTab === 'advanced') {
+          
+          if (responseData.document_info && responseData.document_info.has_document) {
+            // Enhanced API returns document info directly
+            setDocumentInfo(responseData.document_info);
+          } else {
+            // Retain legacy financial-document fetch as a fallback, as requested
             try {
               const docResponse = await fetch(`${API_BASE_URL}/api/businesses/${selectedBusinessId}/financial-document`, {
                 headers: {
@@ -338,14 +356,8 @@ const BusinessSetupPage = () => {
               });
               if (docResponse.ok) {
                 const docData = await docResponse.json();
-                // Extract the nested document object to ensure filename and file_size are at the top level
-                if (docData.has_document && docData.document) {
-                  setDocumentInfo(docData.document);
-                } else {
-                  setDocumentInfo({ has_document: false });
-                }
+                setDocumentInfo(docData.has_document && docData.document ? docData.document : { has_document: false });
               } else {
-                // If 404 or other error, signal no document to child components
                 setDocumentInfo({ has_document: false });
               }
             } catch (docError) {
@@ -354,28 +366,27 @@ const BusinessSetupPage = () => {
             }
           }
 
-          // Populate questions from conversation data to keep UI functional
-          if (conversationsData.conversations?.length > 0) {
-            const mappedQuestions = conversationsData.conversations.map(conv => ({
-              _id: conv.question_id,
-              question_text: conv.question_text,
-              phase: conv.phase,
-              order: conv.order
-            }));
-            setQuestions(mappedQuestions);
-
+          // 2. Handle Questions and Answers mapping universally
+          if (responseData.questions?.length > 0) {
+            setQuestions(responseData.questions);
+            
             const answersMap = {};
+            const answerIdsMap = {};
             const completedSet = new Set();
-            conversationsData.conversations.forEach(conv => {
-              if (conv.question_id && conv.latest_answer) {
-                answersMap[conv.question_id] = conv.latest_answer;
-                if (conv.completion_status === 'complete') {
-                  completedSet.add(conv.question_id);
-                }
+            
+            // New API returns answers in 'data' array
+            responseData.data?.forEach(ans => {
+              if (ans.question_id && ans.answer) {
+                const qIdStr = String(ans.question_id);
+                answersMap[qIdStr] = ans.answer;
+                answerIdsMap[qIdStr] = ans._id;
+                completedSet.add(qIdStr);
               }
             });
+            
             if (Object.keys(answersMap).length > 0) {
               setUserAnswers(prev => ({ ...prev, ...answersMap }));
+              setAnswerIds(answerIdsMap);
               setCompletedQuestions(prev => new Set([...prev, ...completedSet]));
             }
           }
@@ -411,17 +422,18 @@ const BusinessSetupPage = () => {
     if (!selectedBusinessId) return;
     try {
       const stored = sessionStorage.getItem(`showProjectsTab_${selectedBusinessId}`);
-      if (stored === 'true') {
+      // Only restore the tab if the user has project access on their current plan
+      if (stored === 'true' && hasProjectAccess) {
         setShowProjectsTab(true);
       }
       // Set active business ID for AI Assistant fallback
       sessionStorage.setItem("activeBusinessId", selectedBusinessId);
     } catch { }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, hasProjectAccess]);
 
-  // Ensure Projects tab button appears once projects is active
+  // Ensure Projects tab button appears once projects is active (only if user has project access)
   useEffect(() => {
-    if (activeTab === 'projects' && !showProjectsTab) {
+    if (activeTab === 'projects' && !showProjectsTab && hasProjectAccess) {
       setShowProjectsTab(true);
       try {
         if (selectedBusinessId) {
@@ -429,7 +441,7 @@ const BusinessSetupPage = () => {
         }
       } catch { }
     }
-  }, [activeTab, showProjectsTab, selectedBusinessId]);
+  }, [activeTab, showProjectsTab, selectedBusinessId, hasProjectAccess]);
 
   // Automatically show Projects tab if this business already has projects
   // Skip this check when on tabs that never show the projects button (aha / executive)
@@ -457,7 +469,8 @@ const BusinessSetupPage = () => {
 
         const projects = res.data?.projects || [];
         const hasProjects = projects.length > 0;
-        setShowProjectsTab(hasProjects);
+        // Only show Projects tab if the plan allows it
+        setShowProjectsTab(hasProjects && hasProjectAccess);
         try {
           if (selectedBusinessId) {
             const key = `showProjectsTab_${selectedBusinessId}`;
@@ -982,8 +995,8 @@ const BusinessSetupPage = () => {
       // Add to current phase
       if (categoryOptions[phase]) {
         categoryOptions[phase]["Costs/Financial"] = [
-          ...(categoryOptions[phase]["Costs/Financial"] || []),
-          ...financialOptions
+          ...financialOptions,
+          ...(categoryOptions[phase]["Costs/Financial"] || [])
         ];
       }
     }
@@ -1005,14 +1018,18 @@ const BusinessSetupPage = () => {
     setSearchParams(params, { replace: true });
   }, [activeTab, selectedBusinessName, selectedBusinessId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Only load stored analysis data when user first visits the insights or strategic tab
+  const fetchedAnalysisKeys = useRef(new Set());
+
+  // Only load stored analysis data when user visits the insights or strategic tab
   useEffect(() => {
     if (activeTab !== 'insights' && activeTab !== 'strategic') return;
-    if (selectedBusinessId && questionsLoaded && questions.length > 0 && !hasLoadedAnalysis.current) {
-      hasLoadedAnalysis.current = true;
+    
+    const fetchKey = `${selectedBusinessId}-${activeTab}`;
+    if (selectedBusinessId && questionsLoaded && !fetchedAnalysisKeys.current.has(fetchKey)) {
+      fetchedAnalysisKeys.current.add(fetchKey);
       setTimeout(() => phaseManager.loadExistingAnalysis(), 100);
     }
-  }, [selectedBusinessId, questionsLoaded, questions.length, phaseManager, activeTab]);
+  }, [selectedBusinessId, questionsLoaded, activeTab]); // Intentionally not including phaseManager to avoid infinite loops
 
   useEffect(() => {
     const handleResize = () => {
@@ -1040,7 +1057,7 @@ const BusinessSetupPage = () => {
   const currentPhase = getCurrentPhase();
 
   const analysisProps = {
-    phaseManager, apiLoadingStates, businessData, questions, userAnswers, selectedBusinessId,
+    phaseManager, apiLoadingStates, businessData, questions, userAnswers, answerIds, setAnswerIds, selectedBusinessId,
     swotAnalysisResult, purchaseCriteriaData, loyaltyNPSData, portersData, pestelData,
     fullSwotData, competitiveAdvantageData, expandedCapabilityData, strategicRadarData,
     productivityData, maturityData, profitabilityData, growthTrackerData,
@@ -1080,7 +1097,7 @@ const BusinessSetupPage = () => {
   };
 
   return (
-    <div className="business-setup-container">
+    <div className={`business-setup-container ${isArchived ? 'is-archived' : ''}`}>
       <MenuBar />
 
       {/* Read-Only Banner for Archived Workspaces */}
@@ -1088,8 +1105,8 @@ const BusinessSetupPage = () => {
         <div className="alert alert-warning mb-0 border-0 rounded-0 text-center py-2 d-flex align-items-center justify-content-center shadow-sm" style={{ zIndex: 1000, position: 'relative' }}>
           <AlertTriangle size={18} className="me-2 text-warning" />
           <span>
-            This workspace is in <strong>Read-Only</strong> mode.
-            Upgrade to the Advanced plan to restore editing capabilities.
+            This workspace has been moved to an <strong>Archived</strong> state and is currently view-only. 
+            Please upgrade your plan to reactivate this workspace.
           </span>
           <div className="ms-3 d-flex gap-2">
             {userPlan?.toLowerCase() === 'essential' && (
@@ -1167,8 +1184,8 @@ const BusinessSetupPage = () => {
               {activeTab === "executive" && t("Executive Summary")}
               {activeTab === "priorities" && t("Priorities & Projects")}
               {activeTab === "advanced" && t("Questions and Answers")}
-              {activeTab === "insights" && (ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)")}
-              {activeTab === "strategic" && (ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
+              {activeTab === "insights" && (hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)")}
+              {activeTab === "strategic" && (hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C")}
               {activeTab === "projects" && t("Projects")}
             </div>
 
@@ -1187,7 +1204,7 @@ const BusinessSetupPage = () => {
                           {Object.entries(categoryOptions).map(([category, items]) =>
                             items.length > 0 && (
                               <div key={category}>
-                                <div className="dropdown-category-header">{category}</div>
+                                <div className="dropdown-category-header">{t(category)}</div>
                                 {items.map((item) => (
                                   <div key={item} onClick={() => {
                                     handleOptionClick(item);
@@ -1226,10 +1243,10 @@ const BusinessSetupPage = () => {
                     />
                   )}
 
-                  {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                  {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                     <button
                       onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                      disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                       className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                       title={t('RegenerateAll') || 'Regenerate All'}
                     >
@@ -1255,10 +1272,10 @@ const BusinessSetupPage = () => {
                       strategicData={strategicData}
                     />
                   )}
-                  {unlockedFeatures.analysis && (
+                  {unlockedFeatures.analysis && hasStrategicAccess && (
                     <button
                       onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                      disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
                       className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
                       title={t("regenerate") || "Regenerate Strategic Analysis"}
                     >
@@ -1284,7 +1301,7 @@ const BusinessSetupPage = () => {
                   </button>
                 </div>
                 <div className="mobile-menu-items">
-                  {ENABLE_PMF && (
+                  {hasPmfAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "aha" ? "active" : ""}`}
                       onClick={() => { handleAhaTabClick(); setShowMobileMenu(false); }}
@@ -1292,7 +1309,7 @@ const BusinessSetupPage = () => {
                       {t("aha")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
+                  {hasPmfAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "executive" ? "active" : ""}`}
                       onClick={() => { handleExecutiveTabClick(); setShowMobileMenu(false); }}
@@ -1300,7 +1317,7 @@ const BusinessSetupPage = () => {
                       {t("Executive Summary")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
+                  {hasPmfAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "priorities" ? "active" : ""}`}
                       onClick={() => { setActiveTab("priorities"); setShowMobileMenu(false); }}
@@ -1308,7 +1325,7 @@ const BusinessSetupPage = () => {
                       {t("Priorities & Projects")}
                     </button>
                   )}
-                  {showProjectsTab && (
+                  {showProjectsTab && hasProjectAccess && (
                     <button
                       className={`mobile-menu-item ${activeTab === "projects" ? "active" : ""}`}
                       onClick={() => { setActiveTab("projects"); setShowMobileMenu(false); }}
@@ -1316,26 +1333,28 @@ const BusinessSetupPage = () => {
                       {t("Projects")}
                     </button>
                   )}
-                  {ENABLE_PMF && (
+                  <button
+                    className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
+                    onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
+                  >
+                    {t("Questions and Answers")}
+                  </button>
+                  {hasInsightAccess && (
                     <button
-                      className={`mobile-menu-item ${activeTab === "advanced" ? "active" : ""}`}
-                      onClick={() => { handleBriefTabClick(); setShowMobileMenu(false); }}
+                      className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
+                      onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
                     >
-                      {t("Questions and Answers")}
+                      {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                     </button>
                   )}
-                  <button
-                    className={`mobile-menu-item ${activeTab === "insights" ? "active" : ""}`}
-                    onClick={() => { handleAnalysisTabClick(); setShowMobileMenu(false); }}
-                  >
-                    {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                  </button>
-                  <button
-                    className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
-                    onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
-                  >
-                    {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                  </button>
+                  {hasStrategicAccess && (
+                    <button
+                      className={`mobile-menu-item ${activeTab === "strategic" ? "active" : ""}`}
+                      onClick={() => { handleStrategicTabClick(); setShowMobileMenu(false); }}
+                    >
+                      {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1363,7 +1382,7 @@ const BusinessSetupPage = () => {
                           </div>
                         )}
                       </div>
-                      {ENABLE_PMF && (
+                      {hasPmfAccess && (
                         <button
                           className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
                           onClick={handleAhaTabClick}
@@ -1371,7 +1390,7 @@ const BusinessSetupPage = () => {
                           {t("aha")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
+                      {hasPmfAccess && (
                         <button
                           className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                           onClick={handleExecutiveTabClick}
@@ -1379,7 +1398,7 @@ const BusinessSetupPage = () => {
                           {t("Executive Summary")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
+                      {hasPmfAccess && (
                         <button
                           className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                           onClick={handlePrioritiesTabClick}
@@ -1387,26 +1406,28 @@ const BusinessSetupPage = () => {
                           {t("Priorities & Projects")}
                         </button>
                       )}
-                      {showProjectsTab && (
+                      {showProjectsTab && hasProjectAccess && (
                         <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                           {t("Projects")}
                         </button>
                       )}
-                      {ENABLE_PMF && (
-                        <button
-                          className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                          onClick={handleBriefTabClick}
-                        >
-                          {t("Questions and Answers")}
+                      <button
+                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                        onClick={handleBriefTabClick}
+                      >
+                        {t("Questions and Answers")}
+                      </button>
+
+                      {hasInsightAccess && (
+                        <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
+                          {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                         </button>
                       )}
-
-                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={() => setActiveTab("insights")}>
-                        {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                      </button>
-                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
-                        {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                      </button>
+                      {hasStrategicAccess && (
+                        <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={() => setActiveTab("strategic")}>
+                          {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                        </button>
+                      )}
                     </div>
 
                     <div className="desktop-tabs-buttons">
@@ -1423,7 +1444,7 @@ const BusinessSetupPage = () => {
                                 {Object.entries(categoryOptions).map(([category, items]) =>
                                   items.length > 0 && (
                                     <div key={category}>
-                                      <div className="dropdown-category-header">{category}</div>
+                                      <div className="dropdown-category-header">{t(category)}</div>
                                       {items.map((item) => (
                                         <div key={item} onClick={() => {
                                           handleOptionClick(item);
@@ -1462,10 +1483,10 @@ const BusinessSetupPage = () => {
                             />
                           )}
 
-                          {canShowRegenerateButtons && unlockedFeatures.analysis && (
+                          {canShowRegenerateButtons && unlockedFeatures.analysis && hasInsightAccess && (
                             <button
                               onClick={() => canRegenerate && handleRegeneratePhase(currentPhase)}
-                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate}
+                              disabled={isAnalysisRegenerating || !unlockedFeatures.analysis || !canRegenerate || !hasInsightAccess}
                               className={`regenerate-button ${isAnalysisRegenerating ? 'disabled' : ''}`}
                               title={t('RegenerateAll') || 'Regenerate All'}
                             >
@@ -1491,10 +1512,10 @@ const BusinessSetupPage = () => {
                               strategicData={strategicData}
                             />
                           )}
-                          {unlockedFeatures.analysis && (
+                          {unlockedFeatures.analysis && hasStrategicAccess && (
                             <button
                               onClick={() => canRegenerate && handleStrategicAnalysisRegenerate()}
-                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis}
+                              disabled={isStrategicRegenerating || isAnalysisRegenerating || !canRegenerate || !unlockedFeatures.analysis || !hasStrategicAccess}
                               className={`regenerate-button ${isStrategicRegenerating || isAnalysisRegenerating || !unlockedFeatures.analysis ? 'disabled' : ''}`}
                               title={t("regenerate") || "Regenerate Strategic Analysis"}
                             >
@@ -1507,33 +1528,34 @@ const BusinessSetupPage = () => {
                           )}
                         </>
                       )}
-
-
                     </div>
                   </div>
 
+                  {isArchived && <div className="archived-overlay" />}
+
                   <div className="expanded-analysis-content">
                     <div className="expanded-analysis-main">
-                      {ENABLE_PMF && activeTab === "aha" && (
+                      {hasPmfAccess && activeTab === "aha" && (
                         <PMFInsightsTab
                           selectedBusinessId={selectedBusinessId}
                           refreshTrigger={pmfRefreshTrigger}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "executive" && (
+                      {hasPmfAccess && activeTab === "executive" && (
                         <ExecutiveSummary
                           businessId={selectedBusinessId}
                           onStartOnboarding={() => setShowPMFOnboarding(true)}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "advanced" && (
+                      {activeTab === "advanced" && (
                         <div className="brief-section">
                           <EditableBriefSection
                             selectedBusinessId={selectedBusinessId}
                             questions={questions}
                             userAnswers={userAnswers}
                             businessData={businessData}
+                            isLoading={!questionsLoaded}
                             onBusinessDataUpdate={handleBusinessDataUpdate}
                             onAnswerUpdate={async (questionId, newAnswer) => {
                               handleAnswerUpdate(questionId, newAnswer);
@@ -1552,14 +1574,17 @@ const BusinessSetupPage = () => {
                             onClearHighlight={() => setHighlightedMissingQuestions(null)}
                             isLaunchedStatus={isLaunchedStatus}
                             documentInfo={documentInfo}
+                            answerIds={answerIds}
+                            setAnswerIds={setAnswerIds}
                           />
                         </div>
                       )}
-                      {activeTab === "insights" &&
+                      {activeTab === "insights" && hasInsightAccess &&
                         <AnalysisContentManager
                           {...analysisProps}
-                          canRegenerate={canShowRegenerateButtons} />}
-                      {activeTab === "strategic" && (
+                          canRegenerate={canShowRegenerateButtons}
+                          hasInsightAccess={hasInsightAccess} />}
+                      {activeTab === "strategic" && hasStrategicAccess && (
                         <div className="strategic-section">
                           <StrategicAnalysis
                             questions={questions}
@@ -1580,10 +1605,11 @@ const BusinessSetupPage = () => {
                             onKickstartProjects={() => setActiveTab("projects")}
                             hasProjectsTab={showProjectsTab}
                             onToastMessage={showToastMessage}
+                            hasStrategicAccess={hasStrategicAccess}
                           />
                         </div>
                       )}
-                      {activeTab === "projects" && (
+                      {activeTab === "projects" && hasProjectAccess && (
                         <ProjectsSection
                           selectedBusinessId={selectedBusinessId}
                           onProjectCountChange={handleProjectCountChange}
@@ -1591,7 +1617,7 @@ const BusinessSetupPage = () => {
                           companyAdminIds={companyAdminIds}
                         />
                       )}
-                      {ENABLE_PMF && activeTab === "priorities" && (
+                      {hasPmfAccess && activeTab === "priorities" && (
                         <PrioritiesProjects
                           selectedBusinessId={selectedBusinessId}
                           companyAdminIds={companyAdminIds}
@@ -1610,7 +1636,7 @@ const BusinessSetupPage = () => {
               <>
                 <div className="desktop-tabs">
                   <div className="desktop-tabs-controls">
-                    {ENABLE_PMF && (
+                    {hasPmfAccess && (
                       <button
                         className={`desktop-tab ${activeTab === "aha" ? "active" : ""}`}
                         onClick={handleAhaTabClick}
@@ -1618,7 +1644,7 @@ const BusinessSetupPage = () => {
                         {t("aha")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
+                    {hasPmfAccess && (
                       <button
                         className={`desktop-tab ${activeTab === "executive" ? "active" : ""}`}
                         onClick={handleExecutiveTabClick}
@@ -1626,7 +1652,7 @@ const BusinessSetupPage = () => {
                         {t("Executive Summary")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
+                    {hasPmfAccess && (
                       <button
                         className={`desktop-tab ${activeTab === "priorities" ? "active" : ""}`}
                         onClick={handlePrioritiesTabClick}
@@ -1634,25 +1660,27 @@ const BusinessSetupPage = () => {
                         {t("Priorities & Projects")}
                       </button>
                     )}
-                    {showProjectsTab && (
+                    {showProjectsTab && hasProjectAccess && (
                       <button className={`desktop-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>
                         {t("Projects")}
                       </button>
                     )}
-                    {ENABLE_PMF && (
-                      <button
-                        className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
-                        onClick={handleBriefTabClick}
-                      >
-                        {t("Questions and Answers")}
+                    <button
+                      className={`desktop-tab ${activeTab === "advanced" ? "active" : ""}`}
+                      onClick={handleBriefTabClick}
+                    >
+                      {t("Questions and Answers")}
+                    </button>
+                    {hasInsightAccess && (
+                      <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
+                        {hasPmfAccess ? t("Insight (6 C's)") : "Insights (6 Cs)"}
                       </button>
                     )}
-                    <button className={`desktop-tab ${activeTab === "insights" ? "active" : ""}`} onClick={handleAnalysisTabClick}>
-                      {ENABLE_PMF ? t("Insight (6 C's)") : "Insights (6 Cs)"}
-                    </button>
-                    <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
-                      {ENABLE_PMF ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
-                    </button>
+                    {hasStrategicAccess && (
+                      <button className={`desktop-tab ${activeTab === "strategic" ? "active" : ""}`} onClick={handleStrategicTabClick}>
+                        {hasPmfAccess ? t("strategic") : "S.T.R.A.T.E.G.I.C"}
+                      </button>
+                    )}
                   </div>
 
                   {activeTab === "insights" && unlockedFeatures.analysis && (
@@ -1689,6 +1717,7 @@ const BusinessSetupPage = () => {
                         questions={questions}
                         userAnswers={userAnswers}
                         businessData={businessData}
+                        isLoading={!questionsLoaded}
                         onBusinessDataUpdate={handleBusinessDataUpdate}
                         onAnswerUpdate={async (questionId, newAnswer) => {
                           handleAnswerUpdate(questionId, newAnswer);
@@ -1709,6 +1738,8 @@ const BusinessSetupPage = () => {
                         onClearHighlight={() => setHighlightedMissingQuestions(null)}
                         isLaunchedStatus={isLaunchedStatus}
                         documentInfo={documentInfo}
+                        answerIds={answerIds}
+                        setAnswerIds={setAnswerIds}
                       />
                     </div>
                   )}
@@ -1719,13 +1750,13 @@ const BusinessSetupPage = () => {
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
-                  {ENABLE_PMF && activeTab === "executive" && (
+                  {hasPmfAccess && activeTab === "executive" && (
                     <ExecutiveSummary
                       businessId={selectedBusinessId}
                       onStartOnboarding={() => setShowPMFOnboarding(true)}
                     />
                   )}
-                  {activeTab === "insights" && (
+                  {activeTab === "insights" && hasInsightAccess && (
                     <div className="analysis-section">
                       <div className="analysis-content">
                         <AnalysisContentManager
@@ -1734,7 +1765,7 @@ const BusinessSetupPage = () => {
                       </div>
                     </div>
                   )}
-                  {activeTab === "strategic" && (
+                  {activeTab === "strategic" && hasStrategicAccess && (
                     <div className="strategic-section">
                       <StrategicAnalysis
                         questions={questions}
@@ -1756,7 +1787,7 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {activeTab === "projects" && (
+                  {activeTab === "projects" && hasProjectAccess && (
                     <div className="projects-container">
                       <ProjectsSection
                         selectedBusinessId={selectedBusinessId}
@@ -1767,7 +1798,7 @@ const BusinessSetupPage = () => {
                       />
                     </div>
                   )}
-                  {ENABLE_PMF && activeTab === "priorities" && (
+                  {hasPmfAccess && activeTab === "priorities" && (
                     <PrioritiesProjects
                       selectedBusinessId={selectedBusinessId}
                       companyAdminIds={companyAdminIds}
@@ -1795,6 +1826,7 @@ const BusinessSetupPage = () => {
                       questions={questions}
                       userAnswers={userAnswers}
                       businessData={businessData}
+                      isLoading={!questionsLoaded}
                       onBusinessDataUpdate={handleBusinessDataUpdate}
                       onAnswerUpdate={async (questionId, newAnswer) => {
                         handleAnswerUpdate(questionId, newAnswer);
@@ -1814,23 +1846,25 @@ const BusinessSetupPage = () => {
                       onClearHighlight={() => setHighlightedMissingQuestions(null)}
                       isLaunchedStatus={isLaunchedStatus}
                       documentInfo={documentInfo}
+                      answerIds={answerIds}
+                      setAnswerIds={setAnswerIds}
                     />
                   </div>
                 )}
-                {ENABLE_PMF && activeTab === "aha" && (
+                {hasPmfAccess && activeTab === "aha" && (
                   <PMFInsightsTab
                     selectedBusinessId={selectedBusinessId}
                     refreshTrigger={pmfRefreshTrigger}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}
-                {ENABLE_PMF && activeTab === "executive" && (
+                {hasPmfAccess && activeTab === "executive" && (
                   <ExecutiveSummary
                     businessId={selectedBusinessId}
                     onStartOnboarding={() => setShowPMFOnboarding(true)}
                   />
                 )}
-                {activeTab === "insights" && (
+                {activeTab === "insights" && hasInsightAccess && (
                   <div className="analysis-section">
                     <div className="analysis-content">
                       <AnalysisContentManager
@@ -1839,7 +1873,7 @@ const BusinessSetupPage = () => {
                     </div>
                   </div>
                 )}
-                {activeTab === "strategic" && (
+                {activeTab === "strategic" && hasStrategicAccess && (
                   <div className="strategic-section">
                     <StrategicAnalysis
                       questions={questions}
@@ -1862,7 +1896,7 @@ const BusinessSetupPage = () => {
                     />
                   </div>
                 )}
-                {activeTab === "projects" && (
+                {activeTab === "projects" && hasProjectAccess && (
                   <ProjectsSection
                     selectedBusinessId={selectedBusinessId}
                     onProjectCountChange={handleProjectCountChange}
@@ -1871,7 +1905,7 @@ const BusinessSetupPage = () => {
                     isArchived={isArchived}
                   />
                 )}
-                {ENABLE_PMF && activeTab === "priorities" && (
+                {hasPmfAccess && activeTab === "priorities" && (
                   <PrioritiesProjects
                     selectedBusinessId={selectedBusinessId}
                     companyAdminIds={companyAdminIds}
@@ -1891,7 +1925,7 @@ const BusinessSetupPage = () => {
         onUpgradeSuccess={() => window.location.reload()}
       />
 
-      {ENABLE_PMF && (
+      {hasPmfAccess && (
         <PMFOnboardingModal
           show={showPMFOnboarding}
           onHide={() => setShowPMFOnboarding(false)}

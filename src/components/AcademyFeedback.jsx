@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import '../styles/academy.css';
 
-/**
- * AcademyFeedback Component
- * 
- * Provides "Was this helpful?" feedback mechanism for articles
- */
 const AcademyFeedback = ({ articleId }) => {
     const [submitted, setSubmitted] = useState(false);
     const [feedbackType, setFeedbackType] = useState(null); // 'yes' or 'no'
@@ -14,28 +9,45 @@ const AcademyFeedback = ({ articleId }) => {
 
     const handleFeedback = (type) => {
         setFeedbackType(type);
-
-        if (type === 'no') {
-            // Show textarea for negative feedback
-            setShowTextarea(true);
-        } else {
-            // Submit immediately for positive feedback
-            submitFeedback(type, '');
-        }
+        // Show textarea for both positive and negative feedback
+        setShowTextarea(true);
     };
 
-    const submitFeedback = (type, text) => {
-        // TODO: In future phase, send to analytics/backend
-        console.log('Feedback submitted:', {
+    const submitFeedback = async (type, text) => {
+        const payload = {
             articleId,
             helpful: type === 'yes',
-            feedback: text,
-            timestamp: new Date().toISOString()
-        });
+            feedback: text
+        };
+        try {
+            // App stores ID in sessionStorage as "userId" during login
+            const storedUserId = sessionStorage.getItem('userId');
+            if (storedUserId) {
+                payload.userId = storedUserId;
+            }
+        } catch (e) {
+            console.warn('Could not read userId from sessionStorage', e);
+        }
+
+        try {
+            // Using the base URL from the environment variables
+            const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+            const response = await fetch(`${baseUrl}/api/academy-feedback`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                console.error('Failed to submit feedback', await response.text());
+            }
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+        }
 
         setSubmitted(true);
-
-        // Hide textarea after submission
         setTimeout(() => {
             setShowTextarea(false);
         }, 2000);
@@ -81,7 +93,11 @@ const AcademyFeedback = ({ articleId }) => {
                 <div className="feedback-textarea-wrapper">
                     <textarea
                         className="feedback-textarea"
-                        placeholder="What could we improve? (optional)"
+                        placeholder={
+                            feedbackType === 'yes'
+                                ? "What did you like about it? (optional)"
+                                : "What could we improve? (optional)"
+                        }
                         value={feedbackText}
                         onChange={(e) => setFeedbackText(e.target.value)}
                         rows={3}

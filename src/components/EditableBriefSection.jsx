@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Check, X, Loader, AlertCircle, Sparkles, Wand2, Upload, FileText, Database, RefreshCw } from 'lucide-react';
 import { AnalysisApiService } from '../services/analysisApiService';
+import { answerService } from '../services/answerService';
 import { useTranslation } from "../hooks/useTranslation";
 import FinancialTemplatesPopup from './FinancialTemplatesPopup';
 import { detectTemplateType, validateAgainstTemplate } from '../utils/templateValidator';
@@ -24,7 +25,8 @@ const EditableField = ({
   fieldRefs,
   handleSave,
   handleCancel,
-  handleAutoSave
+  handleAutoSave,
+  isLastField
 }) => {
   const { t } = useTranslation();
   const isEditing = editingField === field.key;
@@ -42,7 +44,7 @@ const EditableField = ({
         backgroundColor: isHighlighted ? '#fef3c7' : 'white',
         borderRadius: '8px',
         padding: isHighlighted ? '12px' : '8px',
-        margin: '8px 0',
+        margin: (isEditing && isLastField) ? '8px 0 80px 0' : '8px 0',
         transition: 'all 0.3s ease',
         position: 'relative'
       }}
@@ -569,14 +571,16 @@ const EditableBriefSection = ({
   onClearHighlight,
   isLaunchedStatus = false,
   documentInfo = null,
-  isFinancialRegeneratingProp = false
+  isFinancialRegeneratingProp = false,
+  answerIds = {},
+  setAnswerIds,
+  isLoading = false
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
   const [editedFields, setEditedFields] = useState(new Set());
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichedAnswers, setEnrichedAnswers] = useState(null);
   const [isApplyingEnrichment, setIsApplyingEnrichment] = useState(false);
@@ -806,32 +810,53 @@ const EditableBriefSection = ({
 
       if (!question) throw new Error('Question not found');
 
-      const response = await fetch(`${API_BASE_URL}/api/conversations`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          question_id: question._id || question.question_id,
-          answer_text: newAnswer.trim(),
-          is_followup: false,
-          business_id: selectedBusinessId || null,
-          is_complete: true,
-          metadata: {
-            from_editable_brief: true,
-            timestamp: new Date().toISOString(),
-            is_edit: true
-          }
-        })
-      });
+      const questionId = String(question._id || question.question_id);
+      const existingAnswerId = answerIds[questionId];
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || 'Failed to update answer');
+      let response;
+      if (existingAnswerId) {
+        // Update existing answer
+        console.log(`Updating existing answer ${existingAnswerId} for question ${questionId}`);
+        response = await answerService.updateAnswer(existingAnswerId, newAnswer);
+      } else {
+        // Create new answer
+        console.log(`Creating new answer for question ${questionId}`);
+        response = await answerService.createAnswer(selectedBusinessId, questionId, newAnswer);
+        if (response && response.data && response.data._id) {
+          if (setAnswerIds) {
+            setAnswerIds(prev => ({ ...prev, [questionId]: response.data._id }));
+          }
+        }
       }
 
-      return await response.json();
+      /* 
+      // Sync with legacy conversation collection for backward compatibility
+      try {
+        await fetch(`${API_BASE_URL}/api/conversations`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            question_id: questionId,
+            answer_text: newAnswer.trim(),
+            is_followup: false,
+            business_id: selectedBusinessId || null,
+            is_complete: true,
+            metadata: {
+              from_editable_brief: true,
+              timestamp: new Date().toISOString(),
+              is_edit: true
+            }
+          })
+        });
+      } catch (convError) {
+        console.warn('Legacy conversation update failed, but answer was saved:', convError);
+      }
+      */
+
+      return response;
     } catch (error) {
       throw error;
     } finally {
@@ -1153,7 +1178,65 @@ const EditableBriefSection = ({
         return;
       }
 
-      await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
+      // 1. Save to the new answers collection (using bulk create for new answers)
+      const newAnswerIds = { ...answerIds };
+      let idsUpdated = false;
+
+      const toCreate = [];
+      const toUpdate = [];
+
+      answersToSave.forEach(item => {
+        const qIdStr = String(item.question_id);
+        const existingId = answerIds[qIdStr];
+        if (existingId) {
+          toUpdate.push({ id: existingId, ...item });
+        } else {
+          toCreate.push(item);
+        }
+      });
+
+      // Handle bulk create for new answers
+      if (toCreate.length > 0) {
+        try {
+          console.log(`[AI] Bulk creating ${toCreate.length} new answers`);
+          const bulkRes = await answerService.bulkCreateAnswers(selectedBusinessId, toCreate.map(item => ({
+            question_id: item.question_id,
+            answer: item.answer_text
+          })));
+
+          if (bulkRes && bulkRes.data && bulkRes.data.insertedIds) {
+            toCreate.forEach((item, index) => {
+              const newId = bulkRes.data.insertedIds[index];
+              if (newId) {
+                newAnswerIds[String(item.question_id)] = newId;
+                idsUpdated = true;
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Failed to bulk create answers:', err);
+        }
+      }
+
+      // Handle bulk updates for existing answers
+      if (toUpdate.length > 0) {
+        try {
+          console.log(`[AI] Bulk updating ${toUpdate.length} existing answers`);
+          await answerService.bulkUpdateAnswers(selectedBusinessId, toUpdate.map(item => ({
+            answer_id: item.id,
+            answer: item.answer_text
+          })));
+        } catch (err) {
+          console.error('Failed to bulk update answers:', err);
+        }
+      }
+
+      if (idsUpdated && setAnswerIds) {
+        setAnswerIds(newAnswerIds);
+      }
+
+      // 2. Legacy bulk update for conversations and side effects
+      // await analysisService.bulkUpdateConversations(selectedBusinessId, answersToSave);
 
       // Update local state for immediate UI feedback
       const newlyEdited = new Set(editedFields);
@@ -1385,6 +1468,7 @@ const EditableBriefSection = ({
                     handleSave={handleSave}
                     handleCancel={handleCancel}
                     handleAutoSave={handleAutoSave}
+                    isLastField={index === briefFields.length - 1}
                   />
                 );
               });

@@ -40,6 +40,13 @@ const Aiassistant = ({ businessId: propBusinessId, projectId, pageContext }) => 
     historyFetchedRef.current = false;
   }, [projectId]);
 
+  // Clear input when panel is closed
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+    }
+  }, [open]);
+
   // Check quota status and fetch history when panel is opened (lazy — not on mount)
   useEffect(() => {
     if (!open) {
