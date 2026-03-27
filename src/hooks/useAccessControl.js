@@ -75,17 +75,23 @@ export const useAccessControl = (selectedBusinessId) => {
   );
 
   const canEditProject = useCallback(
-    (project, isEditor, myUserId, businessStatus, isArchived) => {
+    (project, isEditor, myUserId, businessStatus, isArchived, isAdmin) => {
       // PROMPT: Essential users cannot edit projects (Downgrade Protocol)
       if (!getUserLimits().project || isArchived) return false;
 
       if (!project) return false;
+
+      // Terminal states are locked for EVERYONE (except Killed for Admins)
+      const status = (project.status || "").toLowerCase();
+      if (status === 'completed' || status === 'scaled') return false;
+      if (status === 'killed' && !isAdmin) return false;
 
       const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
       const isProjectActive = project.status?.toLowerCase() === 'active';
 
       // For launched projects, check if user has been granted access (admins always have true from backend)
       if (businessStatus === "launched" || isProjectLaunched || isProjectActive) {
+
         return userHasProjectEditAccess[project._id] === true;
       }
 
@@ -138,6 +144,22 @@ export const useAccessControl = (selectedBusinessId) => {
     }
   }, [selectedBusinessId]);
 
+  const canReviewProject = useCallback(
+    (project, isAdmin, myUserId, isArchived) => {
+      if (isArchived) return false;
+      if (!project) return false;
+
+      const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
+      if (!isProjectLaunched) return false;
+
+      if (isAdmin) return true;
+
+      const isOwner = project.accountable_owner_id && project.accountable_owner_id.toString() === myUserId;
+      return isOwner === true;
+    },
+    []
+  );
+
   return {
     userHasRerankAccess,
     userHasProjectEditAccess,
@@ -145,6 +167,7 @@ export const useAccessControl = (selectedBusinessId) => {
     checkProjectsAccess,
     checkAllAccess,
     canEditProject,
+    canReviewProject,
     isReadOnlyMode,
   };
 };
