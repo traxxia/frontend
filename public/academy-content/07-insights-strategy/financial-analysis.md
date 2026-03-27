@@ -16,7 +16,7 @@ Traxxia's Financial Analysis transforms your uploaded financial data into action
 ### 1. Profitability Analysis
 Measures how efficiently you convert revenue into profit (Gross, Operating, and Net margins).
 
-![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/profitability1.png)
+![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/profitability1-financial.png)
 *Screenshot of Profitability Analysis*
 
 ### 2. Growth Tracker
@@ -28,7 +28,7 @@ Tracks revenue and customer growth rates to identify business momentum.
 ### 3. Liquidity & Efficiency
 Assesses your ability to meet short-term obligations and how well you manage working capital.
 
-![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/liquidity.png)
+![Financial Analysis Dashboard](/academy-screenshots/financial-analysis/liquidity-financial.png)
 *Screenshot of Liquidity & Efficiency Analysis*
 
 ### 4. Investment Performance

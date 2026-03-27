@@ -11,7 +11,7 @@ You don't have to start from scratch. Traxxia features **AI Answer Support** to 
 - **Generate AI Answers**: By clicking the "Generate AI Answers" button, the system analyzes your initial PMF Onboarding data to suggest complete, professionally phrased answers for the questionnaire.
 - **Enrichment Preview**: Before applying suggestions, you can review them in a preview panel. You can then choose to "Apply All" or discard them if you prefer to write your own.
 
-![AI Answer Support Placeholder](/academy-screenshots/questionnaire/ai-enrichment.png)
+![AI Answer Support Placeholder](/academy-screenshots/questionnaire/ai-enrichment-question.png)
 *AI Answer Support helping to generate professional responses based on onboarding data.*
 
 ## 3. Dynamic Consistency
