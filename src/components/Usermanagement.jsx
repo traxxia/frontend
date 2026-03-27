@@ -375,7 +375,9 @@ const UserManagement = ({ onToast }) => {
   const fetchBusinesses = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/api/businesses`);
-      const data = Array.isArray(res.data) ? res.data : res.data.businesses || [];
+      const data = Array.isArray(res.data) 
+        ? res.data 
+        : [...(res.data.businesses || []), ...(res.data.collaborating_businesses || [])];
       setAllBusinesses(data);
     } catch (error) {
       console.error("Failed to fetch businesses", error);
@@ -438,7 +440,9 @@ const UserManagement = ({ onToast }) => {
     try {
       setLoadingProjects(true);
       const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`);
-      const allBiz = businessRes.data.businesses || businessRes.data || [];
+      const allBiz = Array.isArray(businessRes.data) 
+        ? businessRes.data 
+        : [...(businessRes.data.businesses || []), ...(businessRes.data.collaborating_businesses || [])];
       
       const validBusinesses = allBiz.filter((b) => 
         (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true
@@ -473,7 +477,7 @@ const UserManagement = ({ onToast }) => {
       const filtered = allProjects.filter(p => {
         const lp = (p.launch_status || "").toLowerCase();
         const s = (p.status || "").toLowerCase();
-        return lp === 'launched' || (isBizLaunched && (s === 'active' || lp === 'pending_launch'));
+        return lp === 'launched' || lp === 'pending_launch' || (isBizLaunched && s === 'active');
       });
       
       setProjects(filtered);
@@ -518,7 +522,7 @@ const UserManagement = ({ onToast }) => {
   };
 
   // Metrics calculation
-  const activeUsers = users.filter(u => u.status !== 'inactive' && u.access_mode !== 'archived');
+  const activeUsers = users.filter(u => u.status !== 'inactive' && u.status !== 'deleted' && u.access_mode !== 'archived');
   const orgAdminsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Org Admin").length;
   const collaboratorsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Collaborator").length;
   const viewersCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Viewer").length;
@@ -559,7 +563,7 @@ const UserManagement = ({ onToast }) => {
       key: "status",
       label: t("Status"),
       render: (_, row) => {
-        const isArchived = row.status === 'inactive' || row.access_mode === 'archived';
+        const isArchived = row.status === 'inactive' || row.status === 'deleted' || row.access_mode === 'archived';
         const label = isArchived ? t('archived') : t('active');
         let statusColor = "#16a34a";
         let statusBg = "#dcfce7";
@@ -589,7 +593,7 @@ const UserManagement = ({ onToast }) => {
         const roleName = (row.role_name || row.role)?.toLowerCase();
         if (roleName === "company_admin" || roleName === "super_admin") return null;
 
-        const isArchived = row.status === 'inactive' || row.access_mode === 'archived';
+        const isArchived = row.status === 'inactive' || row.status === 'deleted' || row.access_mode === 'archived';
         const disabled = isArchived;
         return (
           <>
@@ -903,9 +907,9 @@ const UserManagement = ({ onToast }) => {
                  <option value="">{t("Select_user")}</option>
                  {users
                    .filter(u => {
-                     const isArchived = u.status === 'inactive' || u.access_mode === 'archived';
+                     const isArchivedOrDeleted = u.status === 'inactive' || u.status === 'deleted' || u.access_mode === 'archived';
                      const roleName = formatRole(u.role_name || u.role);
-                     return !isArchived && ["User", "Viewer"].includes(roleName);
+                     return !isArchivedOrDeleted && ["Collaborator", "User", "Viewer"].includes(roleName);
                    })
                    .map(u => (
                      <option key={u._id} value={u._id}>{u.name}</option>
