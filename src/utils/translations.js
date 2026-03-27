@@ -457,6 +457,7 @@ export const staticTranslations = {
     // ===========================
     // COMMON UI ELEMENTS
     // ===========================
+    'participants': 'Participants',
     'loading': 'Loading...',
     'error': 'Error',
     'no_data': 'No data available',
@@ -2281,6 +2282,7 @@ export const staticTranslations = {
     // ===========================
     // ELEMENTOS COMUNES DE UI
     // ===========================
+    'participants': 'Participantes',
     'loading': 'Cargando...',
     'error': 'Error',
     'no_data': 'No hay datos disponibles',
