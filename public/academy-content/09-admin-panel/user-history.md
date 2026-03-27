@@ -15,7 +15,7 @@ The User History page lists:
 
 Each row includes a **View History** button.
 
-![User History Table](/academy-screenshots/admin-panel/user-history-list.png)
+![User History Table](/academy-screenshots/admin-panel/user-history-list-admin.png)
  
 
 ## Viewing Detailed User History
