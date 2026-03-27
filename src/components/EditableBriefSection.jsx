@@ -574,7 +574,8 @@ const EditableBriefSection = ({
   isFinancialRegeneratingProp = false,
   answerIds = {},
   setAnswerIds,
-  isLoading = false
+  isLoading = false,
+  hasPmfAccess = false
 }) => {
   const [editingField, setEditingField] = useState(null);
   const [briefFields, setBriefFields] = useState([]);
@@ -1427,15 +1428,17 @@ const EditableBriefSection = ({
                   marginBottom: '28px',
                   flexWrap: 'wrap'
                 }}>
-                  <AIAnswerSupportBlock
-                    onGenerateEnrichment={handleGenerateEnrichment}
-                    isEnriching={isEnriching}
-                    isApplyingEnrichment={isApplyingEnrichment}
-                    isAnalysisRegenerating={isAnalysisRegenerating}
-                    isStrategicRegenerating={isStrategicRegenerating}
-                    isSaving={isSaving}
-                    canEnrich={canEnrich}
-                  />
+                  {hasPmfAccess && (
+                    <AIAnswerSupportBlock
+                      onGenerateEnrichment={handleGenerateEnrichment}
+                      isEnriching={isEnriching}
+                      isApplyingEnrichment={isApplyingEnrichment}
+                      isAnalysisRegenerating={isAnalysisRegenerating}
+                      isStrategicRegenerating={isStrategicRegenerating}
+                      isSaving={isSaving}
+                      canEnrich={canEnrich}
+                    />
+                  )}
 
                   <FinancialUploadBlock
                     hasUploadedDocument={hasUploadedDocument}

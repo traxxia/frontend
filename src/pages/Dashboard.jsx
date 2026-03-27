@@ -251,6 +251,7 @@ const Dashboard = () => {
 
       if (response.ok) {
         await fetchBusinesses();
+        await fetchPlanDetails();
         setShowDeleteModal(false);
         setBusinessToDelete(null);
 
@@ -327,6 +328,7 @@ const Dashboard = () => {
         });
 
         await fetchBusinesses();
+        await fetchPlanDetails();
         setShowCreateModal(false);
 
         // Show PMF Onboarding modal after successful business creation (only if enabled)
@@ -342,8 +344,8 @@ const Dashboard = () => {
           sessionStorage.clear();
           navigate('/login');
         } else if (response.status === 403 && data.error && data.error.includes('limit reached')) {
-          handleShowCreateModal();
-          //setShowUpgradeModal(true);
+          handleCloseCreateModal();
+          setShowPlanLimitModal(true);
         } else {
           setBusinessError(data.error || t('failed_to_create_business'));
         }
@@ -880,7 +882,7 @@ if (description) {
                             variant="primary"
                             className="flex-grow-1 create-business-btn"
                             onClick={handleShowCreateModal}
-                            disabled={usage && usage.workspaces?.current >= usage.workspaces?.limit}
+                            disabled={(usage && usage.workspaces?.current >= usage.workspaces?.limit) || isLoadingBusinesses}
                           >
                             {t('create_business')}
                           </Button>
@@ -916,7 +918,7 @@ if (description) {
                                   variant="primary"
                                   className="create-business-btn"
                                   onClick={handleShowCreateModal}
-                                  disabled={usage && usage.workspaces?.current >= usage.workspaces?.limit}
+                                  disabled={(usage && usage.workspaces?.current >= usage.workspaces?.limit) || isLoadingBusinesses}
                                 >
                                   {t('create_business')}
                                 </Button>

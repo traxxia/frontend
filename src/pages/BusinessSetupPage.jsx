@@ -1576,6 +1576,7 @@ const BusinessSetupPage = () => {
                             documentInfo={documentInfo}
                             answerIds={answerIds}
                             setAnswerIds={setAnswerIds}
+                            hasPmfAccess={hasPmfAccess}
                           />
                         </div>
                       )}

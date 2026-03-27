@@ -103,13 +103,60 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
 
     if (!show) return null;
 
+    const handleKeyDown = (e) => {
+        const { name } = e.target;
+        
+        // Basic keys that should always be allowed
+        const isControlKey = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'].includes(e.key);
+        if (isControlKey) return;
+
+        // Prevent navigation keys like 'e', '+', '-', etc. that are sometimes allowed in type="number"
+        if (['e', 'E', '+', '-'].includes(e.key)) {
+            e.preventDefault();
+            return;
+        }
+
+        if (name === 'price') {
+            // Allow only digits and one dot
+            if (e.key === '.') {
+                if (formData.price.toString().includes('.')) {
+                    e.preventDefault();
+                }
+            } else if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        } else if (['workspace_limit', 'limit_users', 'limit_collaborators', 'limit_viewers'].includes(name)) {
+            // Allow only digits
+            if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         if (name === 'isActive' && !checked) {
             setShowStatusConfirm(true);
             return;
         }
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+
+        let processedValue = type === 'checkbox' ? checked : value;
+
+        // Double-check and filter value during change (catches paste, etc.)
+        if (name === 'price') {
+            // Allow only numbers and a single dot
+            processedValue = value.replace(/[^0-9.]/g, '');
+            const dots = processedValue.split('.').length - 1;
+            if (dots > 1) {
+                const parts = processedValue.split('.');
+                processedValue = parts[0] + '.' + parts.slice(1).join('');
+            }
+        } else if (['workspace_limit', 'limit_users', 'limit_collaborators', 'limit_viewers'].includes(name)) {
+            // Allow only whole numbers
+            processedValue = value.replace(/[^0-9]/g, '');
+        }
+
+        setFormData(prev => ({ ...prev, [name]: processedValue }));
     };
 
     const confirmStatusChange = () => {
@@ -135,8 +182,26 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
             return;
         }
 
-        if (Number(formData.price) < 0) {
-            onToast(t('price_negative') || 'Price cannot be negative', 'error');
+        const description = formData.description.trim();
+        if (!description) {
+            onToast(t('plan_description_required') || 'Description is required', 'error');
+            return;
+        }
+
+        if (!/[a-zA-Z]/.test(description)) {
+            onToast(t('plan_description_invalid') || 'Description must contain at least one letter', 'error');
+            return;
+        }
+
+        if (!formData.period) {
+            onToast(t('period_required') || 'Billing period is required', 'error');
+            return;
+        }
+
+        // Strict regex for price: non-negative, up to 2 decimal places
+        const priceStr = formData.price.toString().trim();
+        if (priceStr === '' || !/^\d+(\.\d{1,2})?$/.test(priceStr)) {
+            onToast(t('price_invalid') || 'Please enter a valid price (e.g. 10.99)', 'error');
             return;
         }
 
@@ -145,11 +210,11 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
         const maxViewers = formData.limit_viewers !== '' ? Number(formData.limit_viewers) : undefined;
         const maxUsers = formData.limit_users !== '' ? Number(formData.limit_users) : undefined;
 
-        if ((workspaceLimitValue !== undefined && workspaceLimitValue < 0) ||
-            (maxCollaborators !== undefined && maxCollaborators < 0) ||
-            (maxViewers !== undefined && maxViewers < 0) ||
-            (maxUsers !== undefined && maxUsers < 0)) {
-            onToast(t('limits_negative') || 'Limits cannot be negative', 'error');
+        if ((workspaceLimitValue !== undefined && (isNaN(workspaceLimitValue) || workspaceLimitValue < 0)) ||
+            (maxCollaborators !== undefined && (isNaN(maxCollaborators) || maxCollaborators < 0)) ||
+            (maxViewers !== undefined && (isNaN(maxViewers) || maxViewers < 0)) ||
+            (maxUsers !== undefined && (isNaN(maxUsers) || maxUsers < 0))) {
+            onToast(t('limits_negative') || 'Limits must be non-negative numbers', 'error');
             return;
         }
 
@@ -244,7 +309,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                         <div className="row g-3">
                             <div className="col-md-6">
                                 <label className="plan-field-label">
-                                    {t('Price') || 'Price'} <span className="plan-currency-tag">USD</span>
+                                    {t('Price') || 'Price'} <span className="required-star">*</span> <span className="plan-currency-tag">USD</span>
                                     {plan && <span className="plan-readonly-note">{t('not_editable') || '(not editable)'}</span>}
                                 </label>
                                 <div className="plan-price-input-wrap">
@@ -255,6 +320,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                         className="plan-form-input plan-price-input"
                                         value={formData.price}
                                         onChange={handleChange}
+                                        onKeyDown={handleKeyDown}
                                         required
                                         min="0"
                                         step="0.01"
@@ -265,7 +331,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                 </div>
                             </div>
                             <div className="col-md-6">
-                                <label className="plan-field-label">{t('period') || 'Billing Period'}</label>
+                                <label className="plan-field-label">{t('period') || 'Billing Period'} <span className="required-star">*</span></label>
                                 <select
                                     name="period"
                                     className="plan-form-input"
@@ -291,6 +357,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-form-input"
                                     value={formData.workspace_limit}
                                     onChange={handleChange}
+                                    onKeyDown={handleKeyDown}
                                     placeholder="e.g. 1"
                                     min="0"
                                 />
@@ -303,6 +370,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-form-input"
                                     value={formData.limit_users}
                                     onChange={handleChange}
+                                    onKeyDown={handleKeyDown}
                                     placeholder="e.g. 5"
                                     min="0"
                                 />
@@ -315,6 +383,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-form-input"
                                     value={formData.limit_collaborators}
                                     onChange={handleChange}
+                                    onKeyDown={handleKeyDown}
                                     placeholder="e.g. 10"
                                     min="0"
                                 />
@@ -327,6 +396,7 @@ const PlanModal = ({ show, plan, onClose, onSave, isSubmitting, onToast }) => {
                                     className="plan-form-input"
                                     value={formData.limit_viewers}
                                     onChange={handleChange}
+                                    onKeyDown={handleKeyDown}
                                     placeholder="e.g. 20"
                                     min="0"
                                 />

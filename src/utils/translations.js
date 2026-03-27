@@ -457,6 +457,7 @@ export const staticTranslations = {
     // ===========================
     // COMMON UI ELEMENTS
     // ===========================
+    'participants': 'Participants',
     'loading': 'Loading...',
     'error': 'Error',
     'no_data': 'No data available',
@@ -1802,6 +1803,11 @@ export const staticTranslations = {
     "edit_plan": "Edit Plan",
     "plan_name": "Plan Name",
     "plan_name_required": "Plan name is required",
+    "plan_name_invalid": "Plan name must contain at least one letter",
+    "plan_description_required": "Plan description is required",
+    "plan_description_invalid": "Plan description must contain at least one letter",
+    "price_invalid": "Please enter a valid price (e.g. 10.99)",
+    "period_required": "Billing period is required",
     "price_negative": "Price cannot be negative",
     "limits_negative": "Limits cannot be negative",
     
@@ -2276,6 +2282,7 @@ export const staticTranslations = {
     // ===========================
     // ELEMENTOS COMUNES DE UI
     // ===========================
+    'participants': 'Participantes',
     'loading': 'Cargando...',
     'error': 'Error',
     'no_data': 'No hay datos disponibles',
@@ -3631,6 +3638,11 @@ export const staticTranslations = {
     "edit_plan": "Editar Plan",
     "plan_name": "Nombre del Plan",
     "plan_name_required": "El nombre del plan es obligatorio",
+    "plan_name_invalid": "El nombre del plan debe contener al menos una letra",
+    "plan_description_required": "La descripción del plan es obligatoria",
+    "plan_description_invalid": "La descripción del plan debe contener al menos una letra",
+    "price_invalid": "Ingrese un precio válido (p. ej. 10.99)",
+    "period_required": "El período de facturación es obligatorio",
     "price_negative": "El precio no puede ser negativo",
     "limits_negative": "Los límites no pueden ser negativos"
   }
