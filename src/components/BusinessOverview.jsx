@@ -146,7 +146,7 @@ const BusinessOverview = ({ onToast }) => {
         },
         {
             key: "collaborators",
-            label: t("collaborators"),
+            label: t("participants"),
             render: (_, row) => {
                 const collabs = row.collaborators || [];
                 const displayed = collabs.slice(0, 2);
@@ -221,7 +221,7 @@ const BusinessOverview = ({ onToast }) => {
                         <div className="admin-modal-header">
                             <h3>
                                 <Users size={18} style={{ color: "#6366f1" }} />
-                                {selectedBizForCollab.business_name} — {t("collaborators")}
+                                {selectedBizForCollab.business_name} — {t("participants")}
                             </h3>
                             <button
                                 className="admin-modal-close"

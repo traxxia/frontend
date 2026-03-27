@@ -398,13 +398,16 @@ const UserManagement = ({ onToast }) => {
     setCurrentPage(1);
   };
 
+  // Filtered users for the table
   const filteredUsers = users.filter((user) => {
     const search = searchTerm.toLowerCase();
-
     const matchSearch =
       user.name?.toLowerCase().includes(search) ||
       user.email?.toLowerCase().includes(search) ||
-      user.company_name?.toLowerCase().includes(search);
+      user.company_name?.toLowerCase().includes(search) ||
+      formatRole(user.role_name || user.role).toLowerCase().includes(search) ||
+      user.status?.toLowerCase().includes(search) ||
+      user.access_mode?.toLowerCase().includes(search);
 
     const uiRole = formatRole(user.role_name || user.role);
     const matchRole = selectedRole === "All Roles" || uiRole === selectedRole;
@@ -493,9 +496,11 @@ const UserManagement = ({ onToast }) => {
   };
 
   // Metrics calculation
-  const orgAdminsCount = users.filter(u => formatRole(u.role_name || u.role) === "Org Admin").length;
-  const collaboratorsCount = users.filter(u => formatRole(u.role_name || u.role) === "Collaborator").length;
-  const viewersCount = users.filter(u => formatRole(u.role_name || u.role) === "Viewer").length;
+  const activeUsers = users.filter(u => u.status !== 'inactive' && u.access_mode !== 'archived');
+  const orgAdminsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Org Admin").length;
+  const collaboratorsCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Collaborator").length;
+  const viewersCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "Viewer").length;
+  const usersCount = activeUsers.filter(u => formatRole(u.role_name || u.role) === "User").length;
 
   const columns = [
     {
@@ -593,12 +598,6 @@ const UserManagement = ({ onToast }) => {
     <div>
       {/* ---- Metric Cards ---- */}
       <div className="admin-metrics-grid">
-        <MetricCard
-          label={t("Total_Users")}
-          value={users.length}
-          icon={Users}
-          iconColor="blue"
-        />
         {currentRole !== "company_admin" && (
           <MetricCard
             label={t("org_admins")}
@@ -612,6 +611,12 @@ const UserManagement = ({ onToast }) => {
           value={collaboratorsCount}
           icon={UserCog}
           iconColor="green"
+        />
+        <MetricCard
+          label={t("Users")}
+          value={usersCount}
+          icon={ShieldCheck}
+          iconColor="cyan"
         />
         <MetricCard
           label={t("Viewers")}
@@ -661,8 +666,8 @@ const UserManagement = ({ onToast }) => {
 
       <AdminTable
         title={t("User_Management")}
-        count={filteredUsers.length}
-        countLabel={filteredUsers.length === 1 ? t("User") : t("Users")}
+        count={activeUsers.length}
+        countLabel={activeUsers.length === 1 ? t("User") : t("Users")}
         columns={columns}
         data={paginatedUsers}
         searchTerm={searchTerm}
@@ -863,7 +868,27 @@ const UserManagement = ({ onToast }) => {
         <Modal.Header closeButton><Modal.Title>{t("Assign_Business_Access")}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleAssign} noValidate>
-            <Form.Group className="mb-3"><Form.Label>{t("User")}</Form.Label><Form.Select value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)} isInvalid={!!assignErrors.collaborator}><option value="">{t("Select_user")}</option>{users.filter(u => ["Collaborator", "User", "Viewer"].includes(formatRole(u.role_name))).map(u => <option key={u._id} value={u._id}>{u.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback></Form.Group>
+             <Form.Group className="mb-3">
+               <Form.Label>{t("User")}</Form.Label>
+               <Form.Select
+                 value={assignUserId}
+                 onChange={(e) => setAssignUserId(e.target.value)}
+                 isInvalid={!!assignErrors.collaborator}
+               >
+                 <option value="">{t("Select_user")}</option>
+                 {users
+                   .filter(u => {
+                     const isArchived = u.status === 'inactive' || u.access_mode === 'archived';
+                     const roleName = formatRole(u.role_name || u.role);
+                     return !isArchived && ["User", "Viewer"].includes(roleName);
+                   })
+                   .map(u => (
+                     <option key={u._id} value={u._id}>{u.name}</option>
+                   ))
+                 }
+               </Form.Select>
+               <Form.Control.Feedback type="invalid">{assignErrors.collaborator}</Form.Control.Feedback>
+             </Form.Group>
             <Form.Group className="mb-3"><Form.Label>{t("business")}</Form.Label><Form.Select value={assignBusinessId} onChange={(e) => setAssignBusinessId(e.target.value)} isInvalid={!!assignErrors.business}><option value="">{t("Select_Business")}</option>{allBusinesses.map(b => <option key={b._id} value={b._id}>{b.business_name || b.name}</option>)}</Form.Select><Form.Control.Feedback type="invalid">{assignErrors.business}</Form.Control.Feedback></Form.Group>
             <div className="d-flex justify-content-end"><Button variant="secondary" className="me-2" onClick={handleCloseAssignModal}>{t("cancel")}</Button><Button variant="primary" type="submit">{t("save")}</Button></div>
           </Form>
