@@ -81,7 +81,10 @@ export const useAccessControl = (selectedBusinessId) => {
 
       if (!project) return false;
 
-      const isProjectLaunched = project.launch_status?.toLowerCase() === 'launched' || project.status?.toLowerCase() === 'launched';
+      const isProjectLaunched = 
+        project.launch_status?.toLowerCase() === 'launched' || 
+        project.launch_status?.toLowerCase() === 'pending_launch' || 
+        project.status?.toLowerCase() === 'launched';
       const isProjectActive = project.status?.toLowerCase() === 'active';
 
       // For launched projects, check if user has been granted access (admins always have true from backend)

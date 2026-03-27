@@ -567,11 +567,13 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
 
   const renderStep2 = () => (
     <>
-      <div className={`d-flex ${isAdmin && !initialAllRanked ? "justify-content-end" : "justify-content-end"} align-items-center mb-3`}>
-        <p className="rank-description mb-0">
-          {t("Drag projects to reorder. AI suggested an initial order.")}
-        </p>
-      </div>
+      {projectList.length > 0 && (
+        <div className={`d-flex ${isAdmin && !initialAllRanked ? "justify-content-end" : "justify-content-end"} align-items-center mb-3`}>
+          <p className="rank-description mb-0">
+            {t("Drag projects to reorder. AI suggested an initial order.")}
+          </p>
+        </div>
+      )}
 
       {/* Validation Error Alert */}
       {validationError && (
@@ -755,7 +757,7 @@ const RankProjectsPanel = ({ show, projects, onLockRankings, businessId, onRankS
               ← {t("Back to Selection")}
             </Button>
           )}
-          {step === 2 && (isAdmin || userHasRerankAccess) && (
+          {step === 2 && (isAdmin || userHasRerankAccess) && projectList.length > 0 && (
             <Button
               className="btn-save-rank responsive-btn w-100-mobile"
               onClick={handleSaveRankings}

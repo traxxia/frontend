@@ -298,9 +298,6 @@ const UserManagement = ({ onToast }) => {
   const handleGiveProjectAccess = async () => {
     setIsGrantingAccess(true);
     try {
-      if (accessType === "projectEdit") {
-        await axios.put(`${BACKEND_URL}/api/projects/edit-access`, { scope: "projectEdit", business_id: accessBusinessId, project_id: selectedProjectId });
-      }
       if (accessType === "reRanking") {
         await axios.put(`${BACKEND_URL}/api/projects/edit-access`, { scope: "reRanking", business_id: accessBusinessId });
       }
@@ -440,20 +437,14 @@ const UserManagement = ({ onToast }) => {
   const loadLaunchedBusinessAndProjects = async () => {
     try {
       setLoadingProjects(true);
-      const projectRes = await axios.get(`${BACKEND_URL}/api/projects`, { params: { launch_status: "launched" } });
-      const launchedProjects = projectRes.data.projects || [];
       const businessRes = await axios.get(`${BACKEND_URL}/api/businesses`);
       const allBiz = businessRes.data.businesses || businessRes.data || [];
-      const map = {};
-      launchedProjects.forEach((p) => {
-        const bId = p.business_id?.toString();
-        if (!bId) return;
-        if (!map[bId]) map[bId] = [];
-        map[bId].push(p);
-      });
-      const validBusinesses = allBiz.filter((b) => map[b._id.toString()]);
+      
+      const validBusinesses = allBiz.filter((b) => 
+        (b.status || "").toLowerCase() === 'launched' || b.has_launched_projects === true
+      );
+      
       setLaunchedBusinesses(validBusinesses);
-      setLaunchedProjectMap(map);
       setAccessBusinessId("");
       setProjects([]);
       setSelectedProjectId("");
@@ -466,9 +457,43 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
+  const fetchProjectsByBusiness = async (businessId) => {
+    if (!businessId) {
+      setProjects([]);
+      return;
+    }
+    try {
+      setLoadingProjects(true);
+      const res = await axios.get(`${BACKEND_URL}/api/projects`, { params: { business_id: businessId } });
+      const allProjects = res.data.projects || [];
+      
+      const biz = launchedBusinesses.find(b => b._id === businessId);
+      const isBizLaunched = (biz?.status || "").toLowerCase() === 'launched';
+      
+      const filtered = allProjects.filter(p => {
+        const lp = (p.launch_status || "").toLowerCase();
+        const s = (p.status || "").toLowerCase();
+        return lp === 'launched' || (isBizLaunched && (s === 'active' || lp === 'pending_launch'));
+      });
+      
+      setProjects(filtered);
+    } catch (err) {
+      console.error("Failed to fetch projects", err);
+      setProjects([]);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
   useEffect(() => {
-    setProjects(launchedProjectMap[accessBusinessId] || []);
-  }, [accessBusinessId, launchedProjectMap]);
+    if (accessBusinessId) {
+      fetchCollaboratorsByBusiness(accessBusinessId);
+      fetchProjectsByBusiness(accessBusinessId);
+    } else {
+      setCollaborators([]);
+      setProjects([]);
+    }
+  }, [accessBusinessId]);
 
   const fetchCollaboratorsByBusiness = async (businessId) => {
     if (!businessId) return;
@@ -484,9 +509,6 @@ const UserManagement = ({ onToast }) => {
     }
   };
 
-  useEffect(() => {
-    if (accessBusinessId) fetchCollaboratorsByBusiness(accessBusinessId);
-  }, [accessBusinessId]);
 
   const getSelectedCollaboratorNames = () => collaborators.filter(c => selectedCollaboratorIds.includes(c._id)).map(c => c.name);
   const getSelectedProjectName = () => projects.find(p => p._id === selectedProjectId)?.project_name || "";
@@ -560,10 +582,13 @@ const UserManagement = ({ onToast }) => {
         );
       }
     },
-    ...((currentRole === "company_admin" || isSuperAdmin) ? [{
+    ...(currentRole === "company_admin" ? [{
       key: "actions",
       label: t("Action"),
       render: (_, row) => {
+        const roleName = (row.role_name || row.role)?.toLowerCase();
+        if (roleName === "company_admin" || roleName === "super_admin") return null;
+
         const isArchived = row.status === 'inactive' || row.access_mode === 'archived';
         const disabled = isArchived;
         return (
