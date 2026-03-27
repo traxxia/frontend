@@ -231,7 +231,7 @@ const AcademyFeedbackAdmin = ({ onToast }) => {
 
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
-                searchPlaceholder="Search by article or feedback..."
+                searchPlaceholder="Search by article..."
 
                 toolbarContent={MyFilterToolbar}
 

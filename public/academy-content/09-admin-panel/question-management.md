@@ -14,7 +14,7 @@ The question table displays:
 - Severity level
 - Available actions
 
-![Question Management](/academy-screenshots/admin-panel/question-management1.png)
+![Question Management](/academy-screenshots/admin-panel/question-management2.png)
  
 
 ## Question Actions
